@@ -1,0 +1,43 @@
+.figure { margin: 0; }
+
+.frame {
+  padding: 11px 11px 12px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 55%, transparent);
+  border-radius: 6px;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  border-radius: 3px 5px 4px 3px;
+  filter: saturate(0.96);
+}
+
+.caption {
+  margin-top: 8px;
+  text-align: center;
+  font-family: var(--font-chalk);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--chalk-muted);
+}
+
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  z-index: 2;
+  width: 74px;
+  height: 22px;
+  translate: -50% 0;
+  rotate: -4deg;
+  -webkit-mask-image: url("/textures/chalk-mask.webp");
+  mask-image: url("/textures/chalk-mask.webp");
+  -webkit-mask-size: 120px 120px;
+  mask-size: 120px 120px;
+  opacity: 0.8;
+  border-radius: 3px;
+}
+.yellow { background: var(--accent); }
+.blue { background: var(--accent-2); }
+.white { background: var(--accent-3); }

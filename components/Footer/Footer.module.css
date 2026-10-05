@@ -1,0 +1,64 @@
+.footer {
+  padding: clamp(36px, 6vw, 56px) 0 calc(28px + env(safe-area-inset-bottom, 0px));
+  border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent);
+}
+
+.columns {
+  display: grid;
+  gap: 28px;
+}
+@media (min-width: 720px) {
+  .columns { grid-template-columns: repeat(3, 1fr); gap: 32px; }
+}
+
+.heading {
+  margin: 0 0 10px;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: 1.45rem;
+  color: var(--sun-yellow);
+}
+
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-chalk);
+  font-size: 1.2rem;
+  color: var(--chalk-white);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.link:hover { color: var(--sun-yellow); text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 5px; }
+
+.iconLink { gap: 10px; }
+
+.note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.4;
+  color: var(--chalk-muted);
+}
+.note svg { flex: none; margin-top: 1px; }
+
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: clamp(28px, 5vw, 40px);
+  padding-top: 18px;
+  border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 10%, transparent);
+  font-family: var(--font-chalk);
+  font-size: 1.05rem;
+  color: var(--chalk-muted);
+}
+.bottom p { margin: 0; }
+
+.owner { flex-basis: 100%; font-size: 1rem; }
+.owner a { color: var(--cloud-blue); }

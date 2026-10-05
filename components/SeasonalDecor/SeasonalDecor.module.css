@@ -1,0 +1,18 @@
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: none;
+}
+
+/* Only where there is real margin beside the content column. */
+@media (min-width: 1240px) {
+  .layer { display: block; }
+}
+
+.item {
+  position: absolute;
+  opacity: 0.55;
+  translate: 0 -50%;
+}

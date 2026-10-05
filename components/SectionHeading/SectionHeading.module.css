@@ -1,0 +1,28 @@
+.wrap { position: relative; margin-bottom: clamp(32px, 5vw, 56px); }
+
+.title {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: clamp(2.3rem, 7vw, 3.6rem);
+  line-height: 1.05;
+  color: var(--chalk-white);
+}
+
+.doodle {
+  display: inline-block;
+  margin-left: 0.25em;
+  vertical-align: top;
+  transform: translateY(-0.35em) rotate(14deg);
+}
+
+.underline { display: block; margin-top: 4px; }
+
+.subtitle {
+  margin: 14px 0 0;
+  max-width: 34em;
+  color: var(--chalk-muted);
+  font-size: 1.2rem;
+}

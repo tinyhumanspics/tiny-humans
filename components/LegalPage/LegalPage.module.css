@@ -1,0 +1,45 @@
+.page { padding-top: clamp(28px, 5vw, 56px); padding-bottom: clamp(56px, 8vw, 96px); }
+
+.article { max-width: 720px; }
+
+.title {
+  margin: 0;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 7vw, 3.4rem);
+  line-height: 1.05;
+  color: var(--chalk-white);
+}
+
+.underline { display: block; margin-top: 4px; }
+
+.updated { margin: 12px 0 0; color: var(--chalk-muted); font-size: 1.05rem; }
+
+/* Long text stays in the readable hand font, without heavy chalk grain. */
+.intro { margin: 22px 0 0; font-size: 1.25rem; line-height: 1.6; color: var(--chalk-white); }
+
+.section { margin-top: 34px; }
+
+.heading {
+  margin: 0 0 8px;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: clamp(1.5rem, 4.5vw, 1.85rem);
+  color: var(--sun-yellow);
+}
+
+.section p,
+.section li {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  color: var(--chalk-white);
+}
+.section p { margin: 0 0 12px; }
+.section ul { margin: 0 0 12px; padding-left: 1.3em; }
+.section li { margin-bottom: 6px; }
+.section li::marker { color: var(--accent); }
+
+.other { margin-top: 44px; color: var(--chalk-muted); font-size: 1.1rem; }
+.other a { color: var(--cloud-blue); }
+
+.section a { color: var(--cloud-blue); }

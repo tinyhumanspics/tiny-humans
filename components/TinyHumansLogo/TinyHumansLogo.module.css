@@ -1,0 +1,33 @@
+.logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.stroke { stroke-dashoffset: 0; }
+
+.logo[data-state="hidden"] .stroke { stroke-dashoffset: var(--from); }
+
+.logo[data-state="drawing"] .stroke {
+  animation-name: chalkDraw;
+  animation-timing-function: cubic-bezier(0.35, 0.1, 0.5, 1);
+  animation-fill-mode: both;
+}
+
+@keyframes chalkDraw {
+  from { stroke-dashoffset: var(--from); }
+  to { stroke-dashoffset: 0; }
+}
+
+.dust circle { fill: var(--chalk-white); opacity: 0; }
+
+.logo[data-state="drawing"] .dust circle {
+  animation: chalkDust 0.9s ease-out both;
+}
+
+@keyframes chalkDust {
+  0% { opacity: 0; transform: translateY(0); }
+  25% { opacity: 0.55; }
+  100% { opacity: 0; transform: translateY(26px); }
+}

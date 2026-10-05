@@ -1,0 +1,211 @@
+/**
+ * Privacy Policy and Terms of Service text.
+ * Written as a sensible starting point for a small photography business in
+ * Florida. Have it reviewed before launch, and update the "lastUpdated"
+ * date whenever you change it.
+ */
+
+export type LegalBlock = string | { list: string[] };
+
+export interface LegalSection {
+  heading: string;
+  body: LegalBlock[];
+}
+
+export interface LegalDocument {
+  title: string;
+  lastUpdated: string;
+  intro: string;
+  sections: LegalSection[];
+}
+
+const contactLine =
+  "Questions? Email us at hello@tinyhumans.photography, or message us on Instagram at @tinyhumanspics.";
+
+export const privacyPolicy: LegalDocument = {
+  title: "Privacy Policy",
+  lastUpdated: "October 5, 2026",
+  intro:
+    "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
+  sections: [
+    {
+      heading: "Information we collect",
+      body: [
+        "When you book a session, you give us:",
+        {
+          list: [
+            "The parent or guardian's name, email address and phone number",
+            "Your baby's name (optional) and age",
+            "The package, date and time you choose",
+            "The home address where we'll set up for your session",
+            "Any notes or special requests you share",
+            "The portfolio photo you picked as inspiration, if any",
+          ],
+        },
+        "During your session we take photographs of your baby and, depending on your package, your family.",
+        "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. We do not use advertising or tracking cookies.",
+      ],
+    },
+    {
+      heading: "How we use your information",
+      body: [
+        {
+          list: [
+            "To schedule, prepare for and travel to your session at your home",
+            "To contact you about your booking, including reminders and any changes",
+            "To edit and deliver your photos through your online gallery",
+            "To keep business records we're required to keep",
+            "To keep our website working and secure",
+          ],
+        },
+        "We never sell or rent your information, and we don't use it for advertising.",
+      ],
+    },
+    {
+      heading: "Photos of your family",
+      body: [
+        "Your photos belong in your family's memories first. We will only show photos from your session in our portfolio, on this website or on social media (such as Instagram) if you give us permission. You can change your mind at any time, and we'll stop using them for anything new.",
+      ],
+    },
+    {
+      heading: "Who we share information with",
+      body: [
+        "We share information only with trusted services that help us run Tiny Humans, and only what they need to do their job:",
+        {
+          list: [
+            "Website hosting and storage (Vercel)",
+            "Our booking database (Neon)",
+            "Our calendar and email (Microsoft 365 / Outlook)",
+            "The online gallery service we use to deliver your photos",
+          ],
+        },
+        "We may also share information if the law requires it, or to protect the safety of our clients, our team or others.",
+      ],
+    },
+    {
+      heading: "Cookies and browser storage",
+      body: [
+        "Our website does not use advertising or analytics cookies. It may store small settings in your browser so pages work smoothly. A sign-in cookie is used only for the private owner area of the site.",
+      ],
+    },
+    {
+      heading: "Children's privacy",
+      body: [
+        "Our website is meant for parents and guardians aged 18 or older. We collect information about babies and children only from their parent or guardian, and only to provide the photography session they've booked.",
+      ],
+    },
+    {
+      heading: "How long we keep information",
+      body: [
+        "We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time.",
+      ],
+    },
+    {
+      heading: "Keeping your information safe",
+      body: [
+        "We use reasonable safeguards to protect your information, including secure connections on our website. No method of storing or sending information online is completely secure, but we work hard to protect yours.",
+      ],
+    },
+    {
+      heading: "Your choices",
+      body: [
+        "You can ask us to show you the information we have about you, correct it, or delete it. You can also ask us to stop sending you messages that aren't about an upcoming session. Just contact us and we'll take care of it.",
+      ],
+    },
+    {
+      heading: "Changes to this policy",
+      body: ["If we update this policy, we'll post the new version here and change the date at the top."],
+    },
+    { heading: "Contact us", body: [contactLine] },
+  ],
+};
+
+export const termsOfService: LegalDocument = {
+  title: "Terms of Service",
+  lastUpdated: "October 5, 2026",
+  intro:
+    "These terms explain how booking and sessions work with Tiny Humans, a newborn and baby photography studio in Miami, Florida. By using our website or booking a session, you agree to them. If anything is unclear, please ask before you book.",
+  sections: [
+    {
+      heading: "Booking a session",
+      body: [
+        "You can request a session through our website. Your session is confirmed once we confirm it with you directly. When we confirm, we'll share payment details, including any deposit, and anything you need to prepare.",
+        "The person booking must be the baby's parent or legal guardian and at least 18 years old.",
+      ],
+    },
+    {
+      heading: "Packages and prices",
+      body: [
+        "Packages and prices are listed on our website. Once your booking is confirmed, your price won't change, even if our prices change later. Each package includes the session length, setups and number of edited digital photos described at the time you book.",
+      ],
+    },
+    {
+      heading: "Baby-led sessions",
+      body: [
+        "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed. Your baby's safety and comfort always come first: we never force a pose, and a parent or guardian must stay present for the whole session.",
+      ],
+    },
+    {
+      heading: "Rescheduling and cancellations",
+      body: [
+        "Babies keep their own schedules, and we understand. If your baby or anyone in your family is unwell, please let us know and we'll find a new date.",
+        "If you need to cancel or reschedule, please tell us as early as possible. Any deposit or cancellation terms will be explained when your booking is confirmed.",
+        "If we ever need to cancel because of illness or an emergency, we'll reschedule at no cost, or refund anything you've paid for that session.",
+      ],
+    },
+    {
+      heading: "We bring the studio to you",
+      body: [
+        "Every session takes place at your home, so your little one can stay comfortable. We bring the lights, backdrops and props. Please provide a warm, safe space with room for our setup, ideally near a window, and let us know in advance about pets, parking or anything else we should be aware of.",
+      ],
+    },
+    {
+      heading: "Your photos",
+      body: [
+        "We carefully choose and edit your photos and deliver them through a private online gallery. The number of edited photos depends on your package. Editing style is part of our artistic work, and we don't provide unedited or raw files.",
+      ],
+    },
+    {
+      heading: "Copyright and how you can use your photos",
+      body: [
+        "Tiny Humans keeps the copyright to the photos. You receive a personal license to use them, which means you can:",
+        {
+          list: [
+            "Print them for yourself and your family",
+            "Share them with friends and family, including on your personal social media (a tag is always appreciated)",
+          ],
+        },
+        "Please don't sell the photos, use them for commercial purposes, or add filters or edits and present them as our work without asking us first.",
+      ],
+    },
+    {
+      heading: "Showing your photos",
+      body: [
+        "We only show photos from your session in our portfolio, website or social media with your permission. See our Privacy Policy for details.",
+      ],
+    },
+    {
+      heading: "Our responsibility",
+      body: [
+        "We take great care of every session and every file. In the unlikely event that we can't deliver your photos because of something within our control, such as equipment failure, our responsibility is limited to refunding what you paid for that session. We aren't responsible for indirect losses.",
+      ],
+    },
+    {
+      heading: "Using our website",
+      body: [
+        "The photos, drawings and text on this website belong to Tiny Humans. Please don't copy or reuse them without permission.",
+      ],
+    },
+    {
+      heading: "Governing law",
+      body: ["These terms are governed by the laws of the State of Florida."],
+    },
+    {
+      heading: "Changes to these terms",
+      body: [
+        "We may update these terms from time to time. The version on our website when you book is the one that applies to your session.",
+      ],
+    },
+    { heading: "Contact us", body: [contactLine] },
+  ],
+};

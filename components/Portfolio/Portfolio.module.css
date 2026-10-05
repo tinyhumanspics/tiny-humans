@@ -1,0 +1,50 @@
+.section { padding: clamp(64px, 9vw, 112px) 0 clamp(64px, 9vw, 110px); }
+
+/* Each group is a small organic row of photos. */
+.grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: clamp(26px, 3.4vw, 40px) clamp(22px, 3vw, 36px);
+  align-items: start;
+}
+
+@media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+.item { padding-top: 12px; }
+
+/* stagger the columns a little so it feels pinned by hand, not gridded */
+@media (min-width: 1024px) {
+  .item:nth-child(3n + 2) { margin-top: 36px; }
+  .item:nth-child(3n + 3) { margin-top: 12px; }
+}
+
+.trigger {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  text-align: inherit;
+  transition: transform 0.35s var(--ease-chalk);
+  rotate: var(--tilt, 0deg);
+}
+
+.item:nth-child(3n + 1) .trigger { --tilt: -1.6deg; }
+.item:nth-child(3n + 2) .trigger { --tilt: 1.2deg; }
+.item:nth-child(3n + 3) .trigger { --tilt: -0.7deg; }
+
+.trigger:hover { transform: rotate(calc(var(--tilt) * -0.8)) translateY(-4px); --chalkbox-opacity: 1; }
+.trigger:focus-visible { outline-offset: 8px; }
+
+/* Medium drawing in the empty grid spot (only when a row isn't full). */
+.sceneCell { display: none; align-self: center; justify-content: center; align-items: center; min-height: 320px; padding: 4px; }
+@media (min-width: 600px) and (max-width: 1023px) {
+  .grid[data-odd="true"] .sceneCell { display: flex; }
+}
+@media (min-width: 1024px) {
+  .grid[data-short="true"] .sceneCell { display: flex; }
+}

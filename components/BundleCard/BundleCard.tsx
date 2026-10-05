@@ -1,0 +1,72 @@
+"use client";
+
+import { formatPrice, type Bundle } from "@/config/bundles";
+import ChalkBox from "@/components/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import Reveal from "@/components/Reveal/Reveal";
+import { requestBookingScroll } from "@/lib/scroll/booking";
+import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
+import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import styles from "./BundleCard.module.css";
+
+interface Props {
+  bundle: Bundle;
+  index: number;
+  /** Where "Choose …" goes: the booking calendar for this bundle. */
+  href: string;
+}
+
+/** A package box drawn on the board. Every word inside is chalk. */
+export default function BundleCard({ bundle, index, href }: Props) {
+  const { theme } = useSiteSettings();
+  const doodle = theme.decorations.cards[index % 3];
+  const featured = Boolean(bundle.badge);
+  const titleId = `bundle-${bundle.id}`;
+  return (
+    <Reveal delay={index * 120} className={styles.revealWrap}>
+    <BoardDoodles area="card" only={index} />
+    <article className={`${styles.card} ${featured ? styles.featured : ""}`} aria-labelledby={titleId} data-index={index}>
+      <ChalkBox className={styles.box} seed={40 + index * 7} wobble={3.4} strokeWidth={2.8}>
+        <ChalkDoodle name={doodle} size={34} color={index === 1 ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
+        <div className={`${styles.content} chalk`}>
+          {bundle.badge && (
+            <p className={styles.badge}>
+              <ChalkDoodle grain={false} name="heart" size={18} color="var(--cloud-blue)" fill="var(--cloud-blue)" strokeWidth={2} />
+              {bundle.badge}
+            </p>
+          )}
+          <h3 id={titleId} className={styles.name}>{bundle.name}</h3>
+          <p className={styles.price}>
+            <span className="visually-hidden">Price: </span>
+            {formatPrice(bundle.price)}
+          </p>
+          <ChalkDoodle grain={false} name="underline" size={120} color="var(--sun-yellow)" strokeWidth={3} className={styles.priceLine} />
+          <ul className={styles.features}>
+            {bundle.features.map((f) => (
+              <li key={f}>
+                <ChalkDoodle grain={false} name="check" size={24} color="var(--sun-yellow)" strokeWidth={4.6} className={styles.check} />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <p className={styles.location}>
+            <ChalkDoodle grain={false} name="house" size={24} color="var(--cloud-blue)" strokeWidth={3.6} />
+            <span>{bundle.locationNote}</span>
+          </p>
+        </div>
+        <ChalkButton
+          variant={featured ? "solid" : "outline"}
+          href={href}
+          onClick={() => requestBookingScroll()}
+          className={styles.cta}
+          seed={60 + index}
+          aria-describedby={titleId}
+        >
+          {bundle.cta}
+        </ChalkButton>
+      </ChalkBox>
+    </article>
+    </Reveal>
+  );
+}

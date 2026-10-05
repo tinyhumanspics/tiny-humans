@@ -1,0 +1,85 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 64px) 16px calc(env(safe-area-inset-bottom, 0px) + 84px);
+  background-color: color-mix(in srgb, var(--chalkboard-dark) 96%, transparent);
+  background-image: url("/textures/board-grain.png");
+  background-size: 512px 512px;
+  animation: fadeIn 0.25s ease both;
+}
+
+@media (min-width: 768px) {
+  .backdrop { padding: 72px 96px; }
+}
+
+@keyframes fadeIn { from { opacity: 0; } }
+
+.figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.imageWrap {
+  padding: 10px;
+  background: color-mix(in srgb, var(--chalk-white) 8%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chalk-white) 55%, transparent);
+  rotate: -0.6deg;
+}
+
+.image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 1000px);
+  max-height: calc(100dvh - 210px);
+  border-radius: 3px;
+}
+
+.caption {
+  display: flex;
+  gap: 16px;
+  align-items: baseline;
+  margin-top: 14px;
+  font-family: var(--font-chalk);
+  font-size: 1.25rem;
+  color: var(--chalk-white);
+}
+
+.count { color: var(--chalk-muted); font-size: 1.05rem; }
+
+.control {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--chalkboard) 70%, transparent);
+  color: var(--chalk-white);
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.control:hover { color: var(--sun-yellow); transform: scale(1.08); }
+
+.close { top: calc(env(safe-area-inset-top, 0px) + 10px); right: 12px; }
+
+.prev, .next { bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); }
+.prev { left: calc(50% - 72px); }
+.next { right: calc(50% - 72px); }
+
+@media (min-width: 768px) {
+  .prev, .next { top: 50%; bottom: auto; translate: 0 -50%; }
+  .prev { left: 20px; }
+  .next { right: 20px; }
+}

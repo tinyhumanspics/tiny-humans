@@ -1,0 +1,79 @@
+.hero { padding: clamp(24px, 5vw, 64px) 0 0; }
+
+.grid {
+  display: grid;
+  gap: 36px;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: 1.05fr 1fr; gap: 48px; }
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  /* sized from the text column's own width, so each line always fits */
+  font-size: clamp(2.9rem, 10.5vw, 5rem);
+  font-size: clamp(2.1rem, 13.6cqi, 5rem);
+  line-height: 1.02;
+  color: var(--chalk-white);
+}
+
+/* "Tiny moments." and "Big memories." each stay on one line */
+.line { display: block; white-space: nowrap; }
+.line + .line { padding-left: 0.6em; }
+
+.underline { display: block; margin: 6px 0 0 0.6em; }
+
+.subtitle {
+  margin: 18px 0 0;
+  max-width: 26em;
+  font-size: clamp(1.25rem, 3.6vw, 1.45rem);
+  color: var(--chalk-muted);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 30px;
+}
+
+.snaps {
+  position: relative;
+  height: clamp(250px, 66vw, 420px);
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.snapsInner { position: absolute; inset: 0; }
+.snapA, .snapB { position: absolute; }
+.snapA { left: 2%; top: 4%; width: 44%; rotate: -5deg; }
+.snapB { right: 2%; top: 16%; width: 54%; rotate: 4deg; }
+
+.heart { position: absolute; left: 42%; bottom: 0; rotate: -10deg; }
+.sparkle { position: absolute; right: 6%; top: 0; }
+
+.copy { position: relative; container-type: inline-size; }
+
+/* The Tiny Humans difference: we come to you */
+.promise {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 14px 0 0;
+  max-width: 28em;
+  font-family: var(--font-chalk);
+  font-size: clamp(1.25rem, 3.6vw, 1.5rem);
+  line-height: 1.3;
+  color: var(--sun-yellow);
+}
+.promiseIcon { flex: none; margin-top: 1px; }
+
+/* wide screens: the text column is roomier, so the title can be larger */
+@media (min-width: 900px) {
+  .title { font-size: clamp(2.1rem, 15.5cqi, 5rem); }
+}

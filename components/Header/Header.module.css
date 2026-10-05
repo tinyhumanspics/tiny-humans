@@ -1,0 +1,117 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  /* The header owns the safe-area space, so it always sits in normal flow
+     above the hero and can never overlap it. */
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: var(--chalkboard);
+  background-image: url("/textures/board-grain.png");
+  background-size: 512px 512px;
+  box-shadow: 0 10px 24px -18px rgba(0, 0, 0, 0.7);
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.bar {
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.logoLink {
+  display: block;
+  flex: none;
+  border-radius: 10px;
+}
+
+/* Reserved space for the logo: no layout shift after the intro. */
+.logoSlot {
+  --logo-w: 82;
+  position: relative;
+  display: block;
+  width: calc(var(--logo-w) * 1px);
+  height: calc(var(--logo-w) * var(--logo-aspect, 0.8854) * 1px);
+}
+
+@media (min-width: 768px) {
+  .logoSlot { --logo-w: 112; }
+}
+
+/* Rendered at full size and scaled down, so it stays crisp at every scale. */
+.logoMover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 520px;
+  transform-origin: 0 0;
+  transform: scale(calc(var(--logo-w) / 520));
+  will-change: transform;
+}
+
+.nav ul {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3.6vw, 40px);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 2px;
+  font-family: var(--font-chalk);
+  font-size: clamp(1.12rem, 3.9vw, 1.55rem);
+  text-decoration: none;
+  color: var(--chalk-white);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.link:hover { color: var(--sun-yellow); transform: rotate(-2deg); }
+
+.emphasis { color: var(--sun-yellow); padding: 4px 10px; }
+
+.circle {
+  position: absolute;
+  inset: -2px -8px;
+  width: calc(100% + 16px);
+  height: calc(100% + 4px);
+  pointer-events: none;
+}
+
+/* ---------- Intro states ---------- */
+.introOverlay { display: none; }
+
+:global(html[data-intro]) .introOverlay {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background-color: var(--chalkboard);
+  background-image:
+    url("/textures/board-grain.png"),
+    url("/textures/board-smudges.webp"),
+    radial-gradient(ellipse 85% 75% at 50% 45%, transparent 50%, color-mix(in srgb, var(--board-shadow) 60%, transparent) 100%);
+  background-size: 512px 512px, 1200px 1200px, 100% 100%;
+  touch-action: none;
+  transition: opacity calc(var(--intro-move-ms, 1100ms) * 0.6) ease calc(var(--intro-move-ms, 1100ms) * 0.4);
+}
+
+:global(html[data-intro-phase="moving"]) .introOverlay { opacity: 0; }
+
+:global(html[data-intro]) .header { background-color: transparent; background-image: none; box-shadow: none; }
+
+:global(html[data-intro]) .nav {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.nav { transition: opacity 0.5s ease 0.15s, transform 0.5s ease 0.15s; }
+
+/* Hidden until the script has measured and centered it. */
+:global(html[data-intro]:not([data-intro-phase])) .logoMover { opacity: 0; }

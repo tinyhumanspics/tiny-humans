@@ -1,0 +1,38 @@
+/*
+ * Page open: a soft chalk wipe draws what is on screen (once).
+ * While scrolling: a smooth fade in and out.
+ */
+.reveal { transition: opacity 0.6s ease; }
+
+/* Keep fading sections on their own GPU layer so fades don't repaint them. */
+.reveal[data-reveal] { will-change: opacity; }
+
+.reveal[data-reveal="hidden"] { opacity: 0; }
+
+/* fading back out happens a little quicker than fading in */
+.reveal[data-reveal="hidden"][data-reveal-mode="fade"] { transition-duration: 0.45s; }
+
+.reveal[data-reveal="shown"][data-reveal-mode="fade"] {
+  opacity: 1;
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-reveal="shown"][data-reveal-mode="draw"] {
+  opacity: 1;
+  transition: none;
+  -webkit-mask-image: linear-gradient(to bottom, #000 40%, rgba(0, 0, 0, 0.55) 45%, transparent 50%);
+  mask-image: linear-gradient(to bottom, #000 40%, rgba(0, 0, 0, 0.55) 45%, transparent 50%);
+  -webkit-mask-size: 100% 300%;
+  mask-size: 100% 300%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  animation: chalkWipeDown 0.95s cubic-bezier(0.4, 0.1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-reveal="done"] { opacity: 1; }
+
+@keyframes chalkWipeDown {
+  from { -webkit-mask-position: 0 100%; mask-position: 0 100%; }
+  to { -webkit-mask-position: 0 0; mask-position: 0 0; }
+}

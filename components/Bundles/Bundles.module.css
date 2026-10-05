@@ -1,0 +1,11 @@
+.section { padding: clamp(40px, 6vw, 72px) 0 0; }
+
+.grid {
+  display: grid;
+  gap: clamp(30px, 4vw, 40px);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .grid { grid-template-columns: repeat(3, 1fr); gap: 28px; }
+}
