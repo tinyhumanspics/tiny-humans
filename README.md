@@ -316,3 +316,4 @@ Result on the home page: drawing (raster) work while scrolling down ~60%, total 
 ## Fonts
 
 Schoolbell (headings, chalk lettering) and Patrick Hand (small text), both SIL Open Font License, self-hosted via `next/font/local` in `app/fonts/`.
+
