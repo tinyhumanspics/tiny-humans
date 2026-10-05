@@ -28,7 +28,7 @@ Other scripts:
 | `npm run build` | Production build (what Vercel runs) |
 | `npm start` | Serve the production build locally |
 | `npm run typecheck` | TypeScript check |
-| `npm run build:static` | Static export to `out/` (used for the click-through prototype) |
+| `npm run build:static` | Static export to `out/` for the click-through prototype (temporarily sets `app/api` aside; not used by Vercel) |
 | `npm run db:generate` | Create a SQL migration from `lib/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations to `DATABASE_URL` (Neon) |
 | `npm run db:studio` | Browse the database locally (Drizzle Studio) |
@@ -112,8 +112,8 @@ Until storage is connected the site uses the built-in defaults, and the owner ar
 ### How it works
 
 - `lib/settings/server.ts` stores a small settings file (live theme, live picture set, and every picture set) in Vercel Blob. Uploaded photos no picture set uses any more are deleted automatically. Public pages read it through a tagged cache; saving calls `revalidateTag`, so pages update without a rebuild.
-- `lib/admin/auth.ts` checks the password and issues a signed, httpOnly session cookie (7 days). Every owner API route (`app/api/admin/*/route.server.ts`) verifies it on the server.
-- Owner API files end in `.server.ts` so they're left out of the static prototype build (`pageExtensions` in `next.config.ts`).
+- `lib/admin/auth.ts` checks the password and issues a signed, httpOnly session cookie (7 days). Every owner API route (`app/api/admin/*/route.ts`) verifies it on the server.
+- API routes are standard App Router `route.ts` files. The static prototype build (`npm run build:static`, see `scripts/build-static.mjs`) temporarily sets `app/api` aside, since API routes can't be statically exported; it never affects `npm run build`.
 - In the prototype (`npm run build:static`) the owner area saves to the browser instead (`lib/admin/client.ts`), password `tinyhumans`.
 
 ## Seasonal themes

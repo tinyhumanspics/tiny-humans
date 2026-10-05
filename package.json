@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "build:static": "STATIC_EXPORT=1 NEXT_PUBLIC_PROTOTYPE=1 next build",
+    "build:static": "node scripts/build-static.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio"
