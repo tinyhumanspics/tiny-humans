@@ -268,7 +268,6 @@
 
 .calSelected { color: var(--sun-yellow); }
 
-.calCircle { position: absolute; inset: -2px; width: calc(100% + 4px); height: calc(100% + 4px); }
 
 .calLegend {
   margin: 14px 0 0;
@@ -523,7 +522,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .calHeader { margin-bottom: 4px; }
 .calGrid, .calRow { gap: 2px; }
 .calDay { aspect-ratio: auto; height: 44px; min-height: 44px; }
-.calCircle { inset: -3px 8% ; width: auto; height: auto; }
 .calLegend { margin-top: 8px; }
 @media (min-width: 640px) {
   .bundleMeta { display: inline; margin-left: 10px; }
@@ -559,3 +557,41 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
   .bundleSummary { grid-template-columns: auto 1fr; }
   .bundleSummary .linkButton { grid-column: 1 / -1; justify-self: start; }
 }
+
+/* ---------- selected date: chalk circle centred on the number ----------
+   The date button is the positioning container. The circle is centred from
+   the middle (left/top 50% + translate) and sized in em, so it scales with the
+   number on every screen; it is capped to the cell so it never touches
+   neighbouring dates. */
+.calDay { position: relative; line-height: 1; }
+.calNum {
+  position: relative;
+  z-index: 1;
+  display: block;
+  line-height: 1;
+  /* Schoolbell digits sit 0.046em above the line box centre (measured from the
+     font's glyph outlines); this em-based nudge centres the visible ink at any size. */
+  transform: translateY(0.046em);
+}
+.calCircle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(2.3em, calc(100% - 2px));
+  height: 1.7em;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+/* ---------- confirmation details + payment ---------- */
+.confirmEyebrow { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; letter-spacing: 0.04em; color: var(--cloud-blue); }
+.confirmDetails, .paymentRows { margin: 0; width: 100%; max-width: 460px; display: grid; gap: 0; text-align: left; }
+.confirmRow { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; padding: 7px 0; border-bottom: 2px dashed color-mix(in srgb, var(--chalk-white) 14%, transparent); }
+.confirmRow:last-child { border-bottom: 0; }
+.confirmRow dt { color: var(--chalk-muted); font-size: 1.05rem; }
+.confirmRow dd { margin: 0; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--chalk-white); overflow-wrap: anywhere; }
+@media (max-width: 420px) { .confirmRow { grid-template-columns: 1fr; gap: 0; } }
+.paymentBox { width: 100%; max-width: 460px; padding: 14px 18px 16px; text-align: left; background: color-mix(in srgb, var(--sun-yellow) 6%, transparent); border-radius: 8px; }
+.paymentTitle { margin: 0 0 2px; font-family: var(--font-chalk); font-size: 1.45rem; color: var(--sun-yellow); }
+.paymentToday { color: var(--sun-yellow) !important; font-size: 1.45rem !important; }
+.paymentNote { margin: 8px 0 0; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }

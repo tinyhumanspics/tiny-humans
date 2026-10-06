@@ -2,6 +2,9 @@
 
 import { defaultSettings, parseSettings } from "@/lib/settings/defaults";
 import type { SiteSettings } from "@/lib/settings/types";
+import type { AvailabilityRules, BookingLimits, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
+import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
+import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
 
 /** What the owner area needs. Live site: HTTP API. Prototype: this browser only. */
 export interface AdminApi {
@@ -12,6 +15,13 @@ export interface AdminApi {
   getSettings(): Promise<SiteSettings>;
   saveSettings(settings: SiteSettings): Promise<SiteSettings>;
   uploadPhoto(file: Blob): Promise<{ src: string }>;
+  /* availability (owner only) */
+  getAvailability(): Promise<{ rules: AvailabilityRules; databaseConfigured: boolean }>;
+  saveWeekly(weekly: WeeklyDay[], limits: BookingLimits): Promise<AvailabilityRules>;
+  saveOverride(o: DateOverride): Promise<AvailabilityRules>;
+  deleteOverride(date: string): Promise<AvailabilityRules>;
+  addBlock(b: Omit<TimeBlock, "id">): Promise<AvailabilityRules>;
+  deleteBlock(id: string): Promise<AvailabilityRules>;
 }
 
 export const IS_PROTOTYPE = process.env.NEXT_PUBLIC_PROTOTYPE === "1";
@@ -44,6 +54,27 @@ const httpApi: AdminApi = {
     form.append("file", file, "photo.jpg");
     return json(await fetch("/api/admin/photos", { method: "POST", body: form }));
   },
+  getAvailability: async () => json(await fetch("/api/admin/availability", { cache: "no-store" })),
+  saveWeekly: async (weekly, limits) =>
+    (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ weekly, limits }) }))).rules,
+  saveOverride: async (o) =>
+    (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(o) }))).rules,
+  deleteOverride: async (date) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/overrides?date=${date}`, { method: "DELETE" }))).rules,
+  addBlock: async (b) =>
+    (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
+  deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
+};
+
+/** Prototype: validate like the server, then keep the rules in this browser. */
+function protoSave(update: (r: AvailabilityRules) => AvailabilityRules): AvailabilityRules {
+  const next = update(readPrototypeAvailability());
+  next.overrides.sort((a, b) => a.date.localeCompare(b.date));
+  next.blocks.sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start));
+  writePrototypeAvailability(next);
+  return next;
+}
+const firstIssue = (r: { success: boolean; error?: { issues: { message: string }[] } }) => {
+  if (!r.success) throw new Error(r.error?.issues[0]?.message ?? "Check the details and try again.");
 };
 
 export function readPrototypeSettings(): SiteSettings | null {
@@ -100,6 +131,22 @@ const prototypeApi: AdminApi = {
     });
     return { src };
   },
+  getAvailability: async () => ({ rules: readPrototypeAvailability(), databaseConfigured: true }),
+  saveWeekly: async (weekly, limits) => {
+    firstIssue(weeklyAndLimitsSchema.safeParse({ weekly, limits }));
+    return protoSave((r) => ({ ...r, weekly, limits }));
+  },
+  saveOverride: async (o) => {
+    firstIssue(overrideSchema.safeParse(o));
+    const clean: DateOverride = o.isClosed ? { date: o.date, isClosed: true } : o;
+    return protoSave((r) => ({ ...r, overrides: [...r.overrides.filter((x) => x.date !== o.date), clean] }));
+  },
+  deleteOverride: async (date) => protoSave((r) => ({ ...r, overrides: r.overrides.filter((x) => x.date !== date) })),
+  addBlock: async (b) => {
+    firstIssue(blockSchema.safeParse(b));
+    return protoSave((r) => ({ ...r, blocks: [...r.blocks, { ...b, id: `blk-${Math.random().toString(36).slice(2, 10)}` }] }));
+  },
+  deleteBlock: async (id) => protoSave((r) => ({ ...r, blocks: r.blocks.filter((x) => x.id !== id) })),
 };
 
 export function getAdminApi(): AdminApi {

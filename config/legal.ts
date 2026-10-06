@@ -75,7 +75,8 @@ export const privacyPolicy: LegalDocument = {
           list: [
             "Website hosting and storage (Vercel)",
             "Our booking database (Neon)",
-            "Our calendar and email (Microsoft 365 / Outlook)",
+            "Our calendar (Microsoft 365 / Outlook)",
+            "Our email delivery service (Resend)",
             "The online gallery service we use to deliver your photos",
           ],
         },
@@ -129,7 +130,7 @@ export const termsOfService: LegalDocument = {
     {
       heading: "Booking a session",
       body: [
-        "You can request a session through our website. Your session is confirmed once we confirm it with you directly. When we confirm, we'll share payment details, including any deposit, and anything you need to prepare.",
+        "You can book a session through our website. You'll receive a confirmation with your booking details. Nothing is paid at booking: payment for your bundle is due once your photoshoot is completed.",
         "The person booking must be the baby's parent or legal guardian and at least 18 years old.",
       ],
     },
@@ -149,8 +150,8 @@ export const termsOfService: LegalDocument = {
       heading: "Rescheduling and cancellations",
       body: [
         "Babies keep their own schedules, and we understand. If your baby or anyone in your family is unwell, please let us know and we'll find a new date.",
-        "If you need to cancel or reschedule, please tell us as early as possible. Any deposit or cancellation terms will be explained when your booking is confirmed.",
-        "If we ever need to cancel because of illness or an emergency, we'll reschedule at no cost, or refund anything you've paid for that session.",
+        "If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family.",
+        "If we ever need to cancel because of illness or an emergency, we'll find a new date with you at no cost.",
       ],
     },
     {

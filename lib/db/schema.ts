@@ -3,7 +3,7 @@
  * Change this file, then run `npm run db:generate` to create a migration.
  */
 import { sql } from "drizzle-orm";
-import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, index, integer, pgEnum, pgTable, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const bookingStatus = pgEnum("booking_status", ["pending", "confirmed", "rescheduled", "cancelled"]);
 
@@ -50,6 +50,11 @@ export const bookings = pgTable(
     /** Short reason if the confirmation email failed (no secrets). */
     confirmationEmailError: text("confirmation_email_error"),
 
+    /** Internal "new booking" notification to Tiny Humans (sent with Resend). */
+    internalNotificationSent: boolean("internal_notification_sent").notNull().default(false),
+    internalNotificationSentAt: timestamp("internal_notification_sent_at", { withTimezone: true }),
+    internalNotificationError: text("internal_notification_error"),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -64,3 +69,73 @@ export const bookings = pgTable(
 
 export type Booking = typeof bookings.$inferSelect;
 export type NewBooking = typeof bookings.$inferInsert;
+
+/* ---------------- owner-managed availability (/admin > Availability) ---------------- */
+
+/** Weekly schedule: one row per weekday (0 = Sunday ... 6 = Saturday). */
+export const availabilityWeekly = pgTable(
+  "availability_weekly",
+  {
+    weekday: smallint("weekday").primaryKey(),
+    isOpen: boolean("is_open").notNull().default(false),
+    startTime: time("start_time").notNull().default("09:00"),
+    endTime: time("end_time").notNull().default("18:00"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("availability_weekly_weekday_check", sql`${t.weekday} between 0 and 6`),
+    check("availability_weekly_hours_check", sql`${t.endTime} > ${t.startTime}`),
+  ],
+);
+
+/** Booking rules: a single row (id = 1). */
+export const bookingSettingsTable = pgTable(
+  "booking_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    minimumNoticeDays: integer("minimum_notice_days").notNull().default(1),
+    bookingWindowDays: integer("booking_window_days").notNull().default(90),
+    bufferMinutes: integer("buffer_minutes").notNull().default(45),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("booking_settings_single_row", sql`${t.id} = 1`),
+    check("booking_settings_notice_check", sql`${t.minimumNoticeDays} between 0 and 60`),
+    check("booking_settings_window_check", sql`${t.bookingWindowDays} between 1 and 365`),
+    check("booking_settings_buffer_check", sql`${t.bufferMinutes} between 0 and 240`),
+  ],
+);
+
+/** Special dates: closed all day, or custom hours replacing the weekly schedule. */
+export const availabilityOverrides = pgTable(
+  "availability_overrides",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    date: date("date", { mode: "string" }).notNull().unique(),
+    isClosed: boolean("is_closed").notNull().default(true),
+    startTime: time("start_time"),
+    endTime: time("end_time"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check(
+      "availability_overrides_hours_check",
+      sql`${t.isClosed} or (${t.startTime} is not null and ${t.endTime} is not null and ${t.endTime} > ${t.startTime})`,
+    ),
+  ],
+);
+
+/** Manual time blocks (e.g. a personal appointment). */
+export const availabilityBlocks = pgTable(
+  "availability_blocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    date: date("date", { mode: "string" }).notNull(),
+    startTime: time("start_time").notNull(),
+    endTime: time("end_time").notNull(),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("availability_blocks_date_idx").on(t.date), check("availability_blocks_hours_check", sql`${t.endTime} > ${t.startTime}`)],
+);

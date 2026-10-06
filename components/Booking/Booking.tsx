@@ -25,6 +25,7 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useBookingSelection } from "./BookingSelectionContext";
+import { formatAddress, PAYMENT_NOTE } from "@/lib/booking/templates";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
 import Calendar from "./Calendar";
@@ -396,6 +397,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       rows={[
                         { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
                         { label: "Price", value: formatPrice(bundle.price), step: -1 },
+                        { label: "Due today", value: "$0 · payment is due after your photoshoot", step: -1 },
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
                         { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)}`, step: STEP.time },
@@ -613,17 +615,51 @@ function Confirmation({
   const firstName = r.contact.parentName.split(" ")[0];
   const { photos } = useSiteSettings();
   const inspiration = findPhoto(photos, r.inspirationPhotoId);
+  const details: [string, string][] = [
+    ["Booking reference", result.id],
+    ["Bundle", bundle?.name ?? ""],
+    ["Session date", formatLongDate(r.slot.date)],
+    ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)}`],
+    ["Location", formatAddress(r.address)],
+    ["Package total", bundle ? formatPrice(bundle.price) : ""],
+  ];
   return (
     <div className={styles.confirm} role="status">
       <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
+      <p className={`${styles.confirmEyebrow} chalk-soft`}>Booking confirmed</p>
       <h3 ref={headingRef} tabIndex={-1} className={`${styles.confirmTitle} chalk`}>
         See you soon, {firstName}!
       </h3>
       <p className={`${styles.confirmText} chalk-soft`}>
-        Your {bundle?.name} session is penciled in for {formatLongDate(r.slot.date)} at {r.slot.label},{" "}
-        at your home in {r.address.city}. We&apos;ll bring the whole studio to you.
-        {r.contact.babyName ? ` We can't wait to meet ${r.contact.babyName}.` : ""}
+        We&apos;ll bring the whole studio to your home in {r.address.city}.
+        {r.contact.babyName ? ` We can't wait to meet ${r.contact.babyName}.` : " We can't wait to meet your little one."}
       </p>
+      <dl className={styles.confirmDetails}>
+        {details.map(([k, v]) => (
+          <div key={k} className={styles.confirmRow}>
+            <dt className="chalk-soft">{k}</dt>
+            <dd className="chalk-soft">{v}</dd>
+          </div>
+        ))}
+      </dl>
+      <ChalkBox className={styles.paymentBox} seed={93} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
+        <p className={`${styles.paymentTitle} chalk-soft`}>Payment</p>
+        <dl className={styles.paymentRows}>
+          <div className={styles.confirmRow}>
+            <dt className="chalk-soft">Due today</dt>
+            <dd className={`${styles.paymentToday} chalk-soft`}>$0</dd>
+          </div>
+          <div className={styles.confirmRow}>
+            <dt className="chalk-soft">Package total</dt>
+            <dd className="chalk-soft">{bundle ? formatPrice(bundle.price) : ""}</dd>
+          </div>
+          <div className={styles.confirmRow}>
+            <dt className="chalk-soft">Payment due</dt>
+            <dd className="chalk-soft">After the photoshoot</dd>
+          </div>
+        </dl>
+        <p className={`${styles.paymentNote} chalk-soft`}>{PAYMENT_NOTE.page}</p>
+      </ChalkBox>
       {inspiration && (
         <div className={styles.chip}>
           <InspirationThumb photo={inspiration} size={52} />
@@ -635,10 +671,10 @@ function Confirmation({
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
           {result.status === "mock"
-            ? `Prototype preview: no calendar event was created and no email was sent. Reference ${result.id}.`
+            ? `Prototype preview: no calendar event was created and no email was sent.`
             : result.emailSent
-              ? `A confirmation email is on its way to ${r.contact.email}. Your booking reference is ${result.id}.`
-              : `Your session is booked. Your booking reference is ${result.id}. We'll email your confirmation to ${r.contact.email} shortly.`}
+              ? `A confirmation email is on its way to ${r.contact.email}.`
+              : `We'll email your confirmation to ${r.contact.email} shortly.`}
         </p>
       </ChalkBox>
       <ChalkButton variant="outline" onClick={onReset} seed={92}>

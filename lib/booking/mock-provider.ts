@@ -1,5 +1,7 @@
 import { getBundle } from "@/config/bundles";
-import { bookingSettings, candidateStartTimes } from "@/config/booking";
+import { availabilityForRange } from "./availability";
+import { defaultAvailabilityRules } from "@/lib/availability/defaults";
+import type { AvailabilityRules } from "@/lib/availability/types";
 import { BookingError, friendly } from "./errors";
 import { generateBookingReference } from "./reference";
 import type {
@@ -25,42 +27,24 @@ function seeded(seed: string): number {
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * MOCK availability. Nothing here touches a real calendar.
- * - Closed on Sundays
- * - Some days are "fully booked"
- * - Longer bundles get fewer, longer slots
+ * MOCK provider. Nothing here touches a real calendar.
+ * Uses the owner's availability rules, plus simulated bookings
+ * (some days "fully booked", some times taken).
  */
 export class MockBookingProvider implements BookingProvider {
   readonly name = "mock";
 
+  /** Where the owner's availability rules come from (browser storage in the prototype, Neon on the server). */
+  constructor(private readonly rules: () => Promise<AvailabilityRules> = async () => defaultAvailabilityRules()) {}
+
   async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
     await wait(250);
-    const bundle = getBundle(query.bundleId);
-    const minutes = bundle?.durationMinutes ?? 60;
-    const today = startOfDay(new Date());
-    const earliest = addDays(today, bookingSettings.minDaysAhead);
-    const latest = addDays(today, bookingSettings.maxDaysAhead);
-
-    const days: DayAvailability[] = [];
-    for (let d = fromDateKey(query.from); d <= fromDateKey(query.to); d = addDays(d, 1)) {
-      const key = toDateKey(d);
-      let slots: TimeSlot[] = [];
-      const open = d >= earliest && d <= latest && d.getDay() !== 0;
-      const fullyBooked = seeded(`full-${key}`) < 0.16;
-      if (open && !fullyBooked) {
-        slots = candidateStartTimes(minutes, d.getDay())
-          .filter((t) => seeded(`${key}-${t}`) > 0.35)
-          .map((start) => ({
-            id: `${key}T${start}`,
-            date: key,
-            start,
-            end: addMinutes(start, minutes),
-            label: formatTimeLabel(start),
-          }));
-      }
-      days.push({ date: key, slots });
-    }
-    return days;
+    const minutes = getBundle(query.bundleId)?.durationMinutes ?? 60;
+    const rules = await this.rules();
+    // The owner's real rules, plus simulated existing bookings so the preview looks lived-in.
+    return availabilityForRange(query.from, query.to, minutes, [], rules).map((day) =>
+      seeded(`full-${day.date}`) < 0.16 ? { date: day.date, slots: [] } : { date: day.date, slots: day.slots.filter((t) => seeded(`${day.date}-${t.start}`) > 0.25) },
+    );
   }
 
   /** Bookings made in this session (memory only; nothing leaves the browser/server process). */

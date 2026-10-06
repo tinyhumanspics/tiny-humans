@@ -10,13 +10,14 @@ import { log } from "@/lib/log";
 import { GraphAuthError } from "@/lib/microsoft/auth";
 import { GraphError } from "@/lib/microsoft/graph";
 import { createCalendarEvent, deleteCalendarEvent, getBusyIntervals, moveCalendarEvent } from "@/lib/microsoft/calendar";
-import { sendMail } from "@/lib/microsoft/mail";
+import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
+import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
 import { addMinutes } from "./dates";
 import { generateBookingReference } from "./reference";
-import { confirmationEmail, eventBodyHtml, eventSubject, formatAddress, type BookingDetails } from "./templates";
+import { confirmationEmail, eventBodyHtml, eventSubject, formatAddress, internalNotificationEmail, type BookingDetails } from "./templates";
 import { addDaysKey, graphLocalDateTime, zonedTimeToUtc } from "./timezone";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, DayAvailability, TimeSlot } from "./types";
 
@@ -69,8 +70,8 @@ export class OutlookBookingProvider implements BookingProvider {
     const bundle = getBundle(query.bundleId);
     if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
     try {
-      const busy = await this.busyBetween(query.from, query.to);
-      return availabilityForRange(query.from, query.to, bundle.durationMinutes, busy);
+      const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
+      return availabilityForRange(query.from, query.to, bundle.durationMinutes, busy, rules);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }
@@ -95,12 +96,13 @@ export class OutlookBookingProvider implements BookingProvider {
 
     // 2. Re-check availability against the live calendar.
     let busy: Busy[];
+    let rules: Awaited<ReturnType<typeof getAvailabilityRules>>;
     try {
-      busy = await this.busyBetween(date, date);
+      [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(date, date)]);
     } catch (err) {
       asCalendarError(err, "createBooking.recheck");
     }
-    if (!slotsForDay(date, bundle.durationMinutes, busy).some((s) => s.start === start)) {
+    if (!slotsForDay(date, bundle.durationMinutes, busy, rules).some((s) => s.start === start)) {
       throw new BookingError("slot_unavailable", friendly.slotTaken);
     }
 
@@ -183,20 +185,53 @@ export class OutlookBookingProvider implements BookingProvider {
       throw new BookingError("server_error", friendly.server);
     }
 
-    // 6. Confirmation email. A failure here doesn't undo the booking; it's recorded.
-    let emailSent = false;
-    try {
-      const mail = confirmationEmail(details);
-      await sendMail({ to: { address: request.contact.email, name: request.contact.parentName }, subject: mail.subject, html: mail.html });
-      emailSent = true;
-      await db.update(bookings).set({ confirmationEmailSent: true, confirmationEmailSentAt: new Date(), confirmationEmailError: null, updatedAt: new Date() }).where(eq(bookings.id, row.id));
-    } catch (err) {
-      log.error("booking.mail", "Confirmation email failed", { error: err as Error, reference: row.bookingReference });
-      const reason = err instanceof GraphError ? `${err.status} ${err.code ?? ""}`.trim() : "send failed";
-      await db.update(bookings).set({ confirmationEmailSent: false, confirmationEmailError: reason, updatedAt: new Date() }).where(eq(bookings.id, row.id)).catch(() => undefined);
-    }
+    // 6 + 7. Emails via Resend: the customer confirmation and the internal "new booking"
+    // notification. Neither can undo the booking: failures are logged and recorded in Neon.
+    const reason = (err: unknown) => (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    const [customer, internal] = await Promise.allSettled([
+      (async () => {
+        const mail = confirmationEmail(details);
+        return sendEmail({
+          scope: "resend.customer",
+          to: request.contact.email,
+          subject: mail.subject,
+          html: mail.html,
+          replyTo: emailConfig().notify,
+          idempotencyKey: `booking-confirmation/${row.bookingReference}`,
+          reference: row.bookingReference,
+        });
+      })(),
+      (async () => {
+        const mail = internalNotificationEmail(details, row.createdAt);
+        return sendEmail({
+          scope: "resend.internal",
+          to: emailConfig().notify,
+          subject: mail.subject,
+          html: mail.html,
+          text: mail.text,
+          replyTo: request.contact.email,
+          idempotencyKey: `booking-internal/${row.bookingReference}`,
+          reference: row.bookingReference,
+        });
+      })(),
+    ]);
+    const emailSent = customer.status === "fulfilled";
+    const now = new Date();
+    await db
+      .update(bookings)
+      .set({
+        confirmationEmailSent: emailSent,
+        confirmationEmailSentAt: emailSent ? now : null,
+        confirmationEmailError: emailSent ? null : reason((customer as PromiseRejectedResult).reason),
+        internalNotificationSent: internal.status === "fulfilled",
+        internalNotificationSentAt: internal.status === "fulfilled" ? now : null,
+        internalNotificationError: internal.status === "fulfilled" ? null : reason((internal as PromiseRejectedResult).reason),
+        updatedAt: now,
+      })
+      .where(eq(bookings.id, row.id))
+      .catch((e) => log.error("booking.db", "Could not record email status", { error: e as Error, reference: row.bookingReference }));
 
-    log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, emailSent });
+    log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, customerEmailSent: emailSent, internalNotificationSent: internal.status === "fulfilled" });
     return { id: row.bookingReference, status: "confirmed", request, createdAt: row.createdAt.toISOString(), emailSent };
   }
 
@@ -226,10 +261,9 @@ export class OutlookBookingProvider implements BookingProvider {
     const end = addMinutes(slot.start, bundle.durationMinutes);
     try {
       // ignore this booking's own time when checking the new slot
-      const busy = (await this.busyBetween(slot.date, slot.date)).filter(
-        (b) => !(b.start.getTime() === row.sessionStart.getTime() && b.end.getTime() === row.sessionEnd.getTime()),
-      );
-      if (!slotsForDay(slot.date, bundle.durationMinutes, busy).some((s) => s.start === slot.start)) {
+      const [rules, allBusy] = await Promise.all([getAvailabilityRules(), this.busyBetween(slot.date, slot.date)]);
+      const busy = allBusy.filter((b) => !(b.start.getTime() === row.sessionStart.getTime() && b.end.getTime() === row.sessionEnd.getTime()));
+      if (!slotsForDay(slot.date, bundle.durationMinutes, busy, rules).some((s) => s.start === slot.start)) {
         throw new BookingError("slot_unavailable", friendly.slotTaken);
       }
       if (row.outlookEventId) {

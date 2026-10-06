@@ -10,6 +10,7 @@ import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider"
 import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import AvailabilityPanel from "./AvailabilityPanel";
 import styles from "./Admin.module.css";
 
 type Status = "loading" | "signedOut" | "ready";
@@ -85,6 +86,7 @@ export default function AdminApp() {
       )}
 
       <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />
+      <AvailabilityPanel api={api} />
       <PicturesPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />
     </div>
   );

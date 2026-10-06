@@ -8,6 +8,20 @@
       "when": 1791233201170,
       "tag": "0000_create_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791245472057,
+      "tag": "0001_owner_availability",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791251551799,
+      "tag": "0002_resend_internal_notification",
+      "breakpoints": true
     }
   ]
 }

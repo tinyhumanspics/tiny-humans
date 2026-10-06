@@ -86,7 +86,7 @@ export default function Calendar({ month, onMonthChange, days, loading, selected
                     aria-label={`${label}, ${available ? `${slots.length} times available` : known ? "unavailable" : "checking"}`}
                     onClick={() => onSelect(key)}
                   >
-                    <span className="chalk-soft">{date.getDate()}</span>
+                    <span className={`${styles.calNum} chalk-soft`}>{date.getDate()}</span>
                     {isSelected && <ChalkDoodle name="circle" size="100%" color="var(--sun-yellow)" strokeWidth={4} className={styles.calCircle} stretch />}
                   </button>
                 </span>

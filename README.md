@@ -42,7 +42,7 @@ Push to GitHub and import the repo in Vercel, then follow **Owner area → One-t
 - **Portfolio photos are placeholders** (`public/portfolio/`), replaceable from `/admin`.
 - **The click-through prototype** (single HTML file) always uses the in-browser mock booking provider. Nothing is saved or sent.
 - **`BOOKING_PROVIDER=mock`** (the default) uses mock availability on the server too: closed Sundays, some days fully booked, fewer slots for longer bundles. The confirmation clearly says no calendar event or email was created.
-- **`BOOKING_PROVIDER=outlook`** is the real system (Outlook Calendar + Outlook email via Microsoft Graph, stored in Neon). It needs the credentials below; until they exist it refuses bookings with a friendly message rather than pretending.
+- **`BOOKING_PROVIDER=outlook`** is the real system (Outlook Calendar via Microsoft Graph, stored in Neon, booking emails via Resend). It needs the credentials below; until they exist it refuses bookings with a friendly message rather than pretending.
 
 ## Where to change things
 
@@ -148,9 +148,10 @@ Browser (booking form)                 Server (Vercel functions)
                                     (Zod validation, friendly errors)│     BOOKING_PROVIDER
                                                                      │     ├─ mock    → MockBookingProvider
                                                                      │     └─ outlook → OutlookBookingProvider
-                                                                     │          ├─ Microsoft Graph (lib/microsoft/*)
-                                                                     │          │    calendar: busy times, create/move/delete events
-                                                                     │          │    mail: confirmation from hello@tinyhumans.photography
+                                                                     │          ├─ Microsoft Graph (lib/microsoft/*): CALENDAR ONLY
+                                                                     │          │    busy times, create/move/delete events
+                                                                     │          ├─ Resend (lib/email/resend.ts): BOOKING EMAILS
+                                                                     │          │    customer confirmation + internal new-booking email
                                                                      │          └─ Neon PostgreSQL (lib/db/*, Drizzle ORM)
 ```
 
@@ -158,11 +159,13 @@ Browser (booking form)                 Server (Vercel functions)
 - `lib/booking/mock-provider.ts`, `lib/booking/outlook-provider.ts`: the two providers.
 - `lib/booking/availability.ts`: real-calendar slot engine (business hours, lead time, booking window, travel buffers).
 - `lib/booking/validation.ts`: Zod schemas. The server takes the price and session length from `config/bundles.ts`, never from the browser.
-- `lib/booking/templates.ts`: calendar event text and the confirmation email (inline styles, table layout for Outlook/mobile).
-- `lib/microsoft/`: `auth.ts` (client-credentials token, cached server-side), `graph.ts`, `calendar.ts`, `mail.ts`, `config.ts`.
+- `lib/booking/templates.ts`: calendar event text, the customer confirmation email and the internal new-booking email (inline styles, table layouts).
+- `lib/microsoft/`: `auth.ts` (client-credentials token, cached server-side), `graph.ts`, `calendar.ts`, `config.ts`. Calendar only; no Graph mail.
+- `lib/email/resend.ts`: server-only Resend client (`RESEND_API_KEY`, `BOOKING_FROM_EMAIL`, `BOOKING_NOTIFICATION_EMAIL`).
 - `lib/db/`: `schema.ts` (bookings table), `client.ts` (Neon HTTP driver). Migrations live in `drizzle/`.
 - `lib/log.ts`: structured server logs (Graph auth, calendar, database, email failures). Secrets and tokens are never logged.
-- `config/booking.ts`: **booking rules** (time zone `America/New_York`, business hours, minimum lead time, booking window, start times per session length, slot interval, travel buffers).
+- `config/booking.ts`: fixed settings (time zone `America/New_York`, slot interval) and the **default** availability. The owner changes the real availability in `/admin` (see "Availability" below).
+- `lib/availability/`: owner availability (types, defaults, validation, Neon repository, prototype storage).
 
 ### Booking provider modes
 
@@ -171,8 +174,9 @@ Browser (booking form)                 Server (Vercel functions)
 | Availability | Mock (deterministic) | Outlook calendar of `OUTLOOK_CALENDAR_USER` + active bookings in Neon, minus travel buffers |
 | Booking saved | No | Yes, in Neon |
 | Calendar event | No | Yes, in Outlook |
-| Confirmation email | No | Yes, from `OUTLOOK_MAILBOX` |
-| Needs credentials | No | `DATABASE_URL`, `MICROSOFT_*` |
+| Confirmation email | No | Yes, via Resend from `BOOKING_FROM_EMAIL` to the customer |
+| Internal new-booking email | No | Yes, via Resend to `BOOKING_NOTIFICATION_EMAIL` |
+| Needs credentials | No | `DATABASE_URL`, `MICROSOFT_*`, `RESEND_API_KEY` |
 
 ### What happens when a family books (outlook mode)
 
@@ -181,17 +185,37 @@ Browser (booking form)                 Server (Vercel functions)
 3. The booking is saved in Neon as `pending` (a unique index stops two active bookings at the same start time; a `request_id` stops double-clicks creating duplicates).
 4. The Outlook event is created (Graph `transactionId` makes retries safe). **If this fails, the pending booking is deleted**, so nothing ever looks confirmed without a calendar event.
 5. The event id is saved and the booking becomes `confirmed`. If that save fails, the event is deleted again.
-6. The confirmation email is sent through Graph. **If the email fails, the booking stays confirmed** and the failure is recorded (`confirmation_email_sent = false`, `confirmation_email_error`). The family is told their session is booked and an email will follow.
-7. The browser receives the booking reference (e.g. `TH-20261005-4821`).
+6. The customer confirmation is sent through **Resend** to the email address entered in the form (replies go to `BOOKING_NOTIFICATION_EMAIL`).
+7. The internal **new-booking email** is sent through Resend to `BOOKING_NOTIFICATION_EMAIL` (replies go to the customer).
+   Neither email can undo the booking. A failure is logged (`resend.customer` / `resend.internal`) and recorded in Neon: `confirmation_email_sent/_at/_error` for the customer email, `internal_notification_sent/_at/_error` for the internal one. Resend idempotency keys stop duplicate emails on retries, and message ids are logged.
+8. The browser receives the booking reference (e.g. `TH-20261005-4821`).
 
 Calendar event subject: `Tiny Humans - {Package} - {Parent name}`. The body holds the reference, contact details, baby details, package, price, address, inspiration photo and notes.
 
-To find bookings whose email didn't go out (until the admin booking list exists), run in the Neon SQL editor:
+To find bookings whose emails didn't go out (until the admin booking list exists), run in the Neon SQL editor:
 
 ```sql
-select booking_reference, parent_name, email, confirmation_email_error
-from bookings where status <> 'cancelled' and confirmation_email_sent = false;
+select booking_reference, parent_name, email, confirmation_email_error, internal_notification_error
+from bookings
+where status <> 'cancelled' and (confirmation_email_sent = false or internal_notification_sent = false);
 ```
+
+## Availability (owner area)
+
+`/admin` → **Availability** controls when families can book, without code changes:
+
+- **Weekly schedule**: open/closed plus opening and closing time for each day.
+- **Booking rules**: minimum notice (same day … custom days), booking window (days ahead), buffer kept free before and after every session.
+- **Special dates**: close a whole date, or give it custom hours (replaces the weekly schedule that day).
+- **Time blocks**: block part of a day (e.g. a personal appointment); nothing overlapping it (including the buffer) can be booked.
+
+A time is offered only if it is inside these rules **and** free in Outlook **and** not held by an active booking in Neon. Start times run every `slotIntervalMinutes` (60) from opening time, and a session must end by closing time. The server re-checks all of this when a booking is submitted.
+
+Storage: Neon tables `availability_weekly`, `booking_settings`, `availability_overrides`, `availability_blocks` (migration `drizzle/0001_owner_availability.sql`). Without a database, or before that migration runs, the defaults in `config/booking.ts` apply (Mon–Sat 9 am–6 pm, Sunday closed, 1 day notice, 90 days ahead, 45 min buffer). Owner routes: `app/api/admin/availability` (GET/PUT), `/overrides` (POST/DELETE), `/blocks` (POST/DELETE), all requiring the admin session. Customers only read calculated times through `/api/booking/availability`.
+
+## Payment
+
+No payment is taken online. The review step shows "Due today: $0"; the confirmation page, confirmation email and Outlook event show the package total, "Due today: $0" and "Payment due: After the photoshoot". Wording lives in `PAYMENT_NOTE` (`lib/booking/templates.ts`).
 
 ## Environment variables
 
@@ -204,25 +228,31 @@ See `.env.example`. Add the same names in Vercel (Production, and Preview if wan
 | `MICROSOFT_TENANT_ID` | server | Entra tenant (directory) ID |
 | `MICROSOFT_CLIENT_ID` | server | Entra app (client) ID |
 | `MICROSOFT_CLIENT_SECRET` | server | Entra client secret **value** |
-| `OUTLOOK_MAILBOX` | server | Sends confirmations: `hello@tinyhumans.photography` |
+| `OUTLOOK_MAILBOX` | server | Fallback for the calendar user: `hello@tinyhumans.photography` |
 | `OUTLOOK_CALENDAR_USER` | server | Calendar that holds sessions: `hello@tinyhumans.photography` |
+| `RESEND_API_KEY` | server | Resend API key (booking emails) |
+| `BOOKING_FROM_EMAIL` | server | `Tiny Humans <hello@tinyhumans.photography>` (domain verified in Resend) |
+| `BOOKING_NOTIFICATION_EMAIL` | server | Receives the internal new-booking email: `hello@tinyhumans.photography` |
 | `NEXT_PUBLIC_SITE_URL` | public | `https://www.tinyhumans.photography` (links in emails, metadata) |
 | `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` | server | Owner area |
 | `BLOB_READ_WRITE_TOKEN` | server | Theme + photos storage |
 
-Only `NEXT_PUBLIC_SITE_URL` is visible in the browser. Microsoft secrets and the database URL are only read in server code (`server-only` modules).
+Only `NEXT_PUBLIC_SITE_URL` is visible in the browser. Microsoft secrets, the Resend key and the database URL are only read in server code (`server-only` modules).
 
 ## Neon database setup
 
 1. Create a Neon project (region close to Vercel's, e.g. US East). Copy the **pooled** connection string.
 2. Locally, put it in `.env.local` as `DATABASE_URL=...`.
-3. Apply the migration (creates the `booking_status` type and the `bookings` table; nothing is dropped):
+3. Apply the migrations (nothing is dropped or overwritten):
 
 ```bash
 npm run db:migrate
 ```
 
-Alternative: paste `drizzle/0000_create_bookings.sql` into the Neon SQL editor and run it once.
+Alternative: paste each file into the Neon SQL editor, in order, once:
+- `drizzle/0000_create_bookings.sql` (bookings table)
+- `drizzle/0001_owner_availability.sql` (availability tables + default hours; the default rows use `ON CONFLICT DO NOTHING`, so re-running never overwrites your settings)
+- `drizzle/0002_resend_internal_notification.sql` (adds `internal_notification_sent/_at/_error` to `bookings`)
 
 When the schema changes later: edit `lib/db/schema.ts`, run `npm run db:generate` to create a new migration file, review it, then `npm run db:migrate`. Never run destructive migrations against production without a backup/branch (Neon branches make this easy).
 
@@ -243,7 +273,8 @@ The website authenticates with the **client-credentials flow** (app-only). Token
 | Permission | Used for |
 |---|---|
 | `Calendars.ReadWrite` | Reading busy times; creating, moving and deleting session events |
-| `Mail.Send` | Sending confirmation (and later reminder) emails |
+
+`Mail.Send` is **not needed**: booking emails go through Resend. If it was granted earlier, it can be removed.
 
 These are application permissions, so **a Global Administrator must click "Grant admin consent"**. Do not assume consent exists until the status column shows a green check.
 
@@ -254,7 +285,6 @@ These are application permissions, so **a Global Administrator must click "Grant
 New-ServicePrincipal -AppId <MICROSOFT_CLIENT_ID> -ObjectId <enterprise-app-object-id> -DisplayName "Tiny Humans Website"
 New-ManagementScope -Name "Tiny Humans mailbox" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'hello@tinyhumans.photography'"
 New-ManagementRoleAssignment -App <MICROSOFT_CLIENT_ID> -Role "Application Calendars.ReadWrite" -CustomResourceScope "Tiny Humans mailbox"
-New-ManagementRoleAssignment -App <MICROSOFT_CLIENT_ID> -Role "Application Mail.Send" -CustomResourceScope "Tiny Humans mailbox"
 ```
 
 When using RBAC for Applications, the scoped Exchange role assignments replace the tenant-wide Entra grants for these permissions (remove the broad Entra consent once the scoped roles work). Test with `Test-ServicePrincipalAuthorization`. Check Microsoft's current documentation before running these, as names and steps change over time.
@@ -266,16 +296,21 @@ When using RBAC for Applications, the scoped Exchange role assignments replace t
 - New sessions are created with `POST /users/{user}/events` in the `Eastern Standard Time` zone, shown as Busy, category "Tiny Humans", reminder 2 hours before.
 - `rescheduleBooking` moves the event (`PATCH`); `cancelBooking` deletes it. They're ready for the future admin booking screens (no public routes yet).
 
-## Outlook email integration
+## Booking emails (Resend)
 
-- `POST /users/{OUTLOOK_MAILBOX}/sendMail`, saved to Sent Items; replies go to the mailbox.
-- Template: `confirmationEmail()` in `lib/booking/templates.ts`. Brand colors, inline styles, table layout, no external CSS. The header logo loads from `${NEXT_PUBLIC_SITE_URL}/brand/default/logo-full.jpg`, so set the real site URL in production.
-- Reminders can reuse `sendMail` plus a scheduled job (e.g. Vercel Cron) later.
+Microsoft Graph handles the calendar only; **Resend sends both booking emails** (`lib/email/resend.ts`):
+
+| Email | To | Reply-to | Template |
+|---|---|---|---|
+| Customer confirmation | The address entered in the booking form | `BOOKING_NOTIFICATION_EMAIL` | `confirmationEmail()` (brand colors, payment-after-photoshoot box) |
+| Internal new-booking notification | `BOOKING_NOTIFICATION_EMAIL` | The customer | `internalNotificationEmail()` (scannable table) |
+
+Both are sent from `BOOKING_FROM_EMAIL`. Setup: in Resend, add and verify the domain `tinyhumans.photography` (DNS records at your domain registrar), create an API key with sending access, and add `RESEND_API_KEY`, `BOOKING_FROM_EMAIL` and `BOOKING_NOTIFICATION_EMAIL` in Vercel. Without `RESEND_API_KEY`, bookings still succeed; the emails are recorded as not sent (`not_configured`).
 
 ## Vercel deployment
 
 1. Push to GitHub and import the repository in Vercel.
-2. Add all environment variables from the table above (start with `BOOKING_PROVIDER=mock`).
+2. Add all environment variables from the table above (start with `BOOKING_PROVIDER=mock`). Verify your sending domain in Resend.
 3. Connect the Blob store (owner area) and run the Neon migration.
 4. Deploy, check the site, then switch to `BOOKING_PROVIDER=outlook` once Microsoft and Neon are set up, and redeploy.
 5. Add the domain `www.tinyhumans.photography` in Vercel when ready (DNS changes are done at the domain registrar).
@@ -294,7 +329,8 @@ components/     Header (+ intro), TinyHumansLogo, Hero, Portfolio, PortfolioLigh
                 PortfolioCta, Reveal, Bundles, BundleCard, Booking, ChalkBox, ChalkButton, ChalkDoodle, ...
 config/         site, bundles, portfolio, booking, themes, logo drawing data
 lib/booking/    contracts, mock + Outlook providers, slot engine, validation, templates, HTTP client
-lib/microsoft/  Microsoft Graph: auth (client credentials), calendar, mail
+lib/microsoft/  Microsoft Graph (calendar only): auth (client credentials), calendar
+lib/email/      Resend client for booking emails
 lib/db/         Neon + Drizzle: schema, client (migrations in drizzle/)
 lib/settings/   site settings (theme + photos): validation, Vercel Blob storage
 lib/admin/      owner login (server) and owner-area API client
@@ -316,4 +352,3 @@ Result on the home page: drawing (raster) work while scrolling down ~60%, total 
 ## Fonts
 
 Schoolbell (headings, chalk lettering) and Patrick Hand (small text), both SIL Open Font License, self-hosted via `next/font/local` in `app/fonts/`.
-

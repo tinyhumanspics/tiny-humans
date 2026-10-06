@@ -169,3 +169,45 @@
 
 .emptySet { margin-top: 18px; padding: 18px; border: 2px dashed color-mix(in srgb, var(--cloud-blue) 50%, transparent); border-radius: 10px; display: grid; gap: 12px; justify-items: start; }
 .emptySet p { margin: 0; color: var(--chalk-muted); }
+
+/* ---------- availability ---------- */
+.availBlock { margin-top: 22px; padding-top: 16px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 16%, transparent); }
+.availBlock:first-of-type { border-top: 0; padding-top: 0; }
+.hintSmall { margin: 6px 0 0; font-size: 0.98rem; color: var(--chalk-muted); }
+
+.weekList { list-style: none; margin: 12px 0 18px; padding: 0; display: grid; gap: 8px; }
+.weekRow {
+  display: grid;
+  grid-template-columns: 110px 110px 1fr;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 8px 12px;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent);
+  border-radius: 10px;
+}
+.weekClosed { opacity: 0.72; }
+.weekName { font-family: var(--font-chalk); font-size: 1.2rem; color: var(--chalk-white); }
+.weekTimes { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 560px) {
+  .weekRow { grid-template-columns: 1fr auto; }
+  .weekTimes { grid-column: 1 / -1; }
+}
+
+.toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-family: var(--font-chalk); font-size: 1.1rem; color: var(--chalk-white); }
+.toggle input { width: 22px; height: 22px; accent-color: var(--sun-yellow); }
+.formToggle { align-self: end; }
+
+.timeInput { width: auto; min-width: 128px; color-scheme: dark; }
+.timeInput:disabled { opacity: 0.45; }
+
+.rulesGrid { display: grid; gap: 14px 22px; margin: 10px 0 6px; }
+@media (min-width: 760px) { .rulesGrid { grid-template-columns: repeat(3, 1fr); } }
+.ruleField { display: grid; gap: 6px; align-content: start; }
+
+.availForm { display: grid; gap: 12px 18px; margin-top: 12px; align-items: end; }
+@media (min-width: 900px) { .availForm { grid-template-columns: auto auto 1fr auto; } }
+
+.overrideList { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
+.overrideRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 12px; border: 2px dashed color-mix(in srgb, var(--cloud-blue) 40%, transparent); border-radius: 10px; color: var(--chalk-white); font-size: 1.1rem; }
+.overrideRow b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
+.blockReason { color: var(--chalk-muted); }
