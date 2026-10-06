@@ -15,6 +15,8 @@ export interface BookingLimits {
   bookingWindowDays: number;
   /** Kept free before and after every session. */
   bufferMinutes: number;
+  /** Customers can reschedule online until this many hours before their session. */
+  rescheduleNoticeHours: number;
 }
 
 /** A special date: closed all day, or custom hours that replace the weekly schedule. */

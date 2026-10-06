@@ -70,6 +70,41 @@ export interface BookingResult {
   createdAt: string;
   /** Whether the confirmation email went out (real bookings only). */
   emailSent?: boolean;
+  /** Prototype/mock only: lets the preview open the cancel page. Never set for real bookings. */
+  preview?: { cancelToken: string };
+}
+
+/** What the cancel page may show (no contact details, no address). */
+export interface CancellationSummary {
+  reference: string;
+  bundleName: string;
+  date: DateKey;
+  start: string;
+  end: string;
+  parentFirstName: string;
+  /** "active" = can be cancelled. */
+  status: "active" | "cancelled" | "past";
+}
+
+/** What the reschedule page shows (the token holder's own booking). */
+export interface ManagedBooking {
+  reference: string;
+  bundleId: string;
+  bundleName: string;
+  date: DateKey;
+  start: string;
+  end: string;
+  location: string;
+  parentFirstName: string;
+  status: "active" | "cancelled" | "past";
+  /** False when inside the reschedule notice window (or cancelled/past). */
+  canReschedule: boolean;
+  rescheduleNoticeHours: number;
+}
+
+export interface CancelOptions {
+  reason: string;
+  by: "customer" | "admin";
 }
 
 /** Used by the booking form in the browser. */
@@ -77,10 +112,20 @@ export interface BookingClient {
   readonly name: string;
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
   createBooking(request: BookingRequest): Promise<BookingResult>;
+  /** Customer cancel link: look up the booking behind a token. */
+  getCancellation(token: string): Promise<CancellationSummary>;
+  /** Customer cancel link: cancel with a required reason. */
+  cancelWithToken(token: string, reason: string): Promise<CancellationSummary>;
+  /** Customer reschedule link: the booking behind the token. */
+  getManagedBooking(token: string): Promise<ManagedBooking>;
+  /** Customer reschedule link: open times (the booking's own slot doesn't block itself). */
+  getRescheduleAvailability(token: string, from: DateKey, to: DateKey): Promise<DayAvailability[]>;
+  /** Customer reschedule link: move to a new date/time (rechecked on the server). */
+  rescheduleWithToken(token: string, slot: { date: DateKey; start: string }): Promise<ManagedBooking>;
 }
 
 /** Full server-side contract. */
 export interface BookingProvider extends BookingClient {
-  cancelBooking(reference: string): Promise<void>;
+  cancelBooking(reference: string, opts?: CancelOptions): Promise<void>;
   rescheduleBooking(reference: string, slot: Pick<TimeSlot, "date" | "start">): Promise<BookingResult>;
 }

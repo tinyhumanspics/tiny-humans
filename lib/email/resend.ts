@@ -10,7 +10,10 @@ import { log } from "@/lib/log";
 export function emailConfig() {
   return {
     apiKey: process.env.RESEND_API_KEY ?? "",
+    /** Customer emails. */
     from: process.env.BOOKING_FROM_EMAIL || "Tiny Humans <hello@tinyhumans.photography>",
+    /** Internal emails (falls back to BOOKING_FROM_EMAIL). */
+    internalFrom: process.env.BOOKING_INTERNAL_FROM_EMAIL || process.env.BOOKING_FROM_EMAIL || "Tiny Humans <hello@tinyhumans.photography>",
     notify: process.env.BOOKING_NOTIFICATION_EMAIL || "hello@tinyhumans.photography",
   };
 }
@@ -35,8 +38,12 @@ export class EmailSendError extends Error {
 }
 
 export interface OutgoingEmail {
-  /** "resend.customer" | "resend.internal" (used for logs) */
+  /** "resend.customer" | "resend.internal" | ... (used for logs) */
   scope: string;
+  /** Defaults to BOOKING_FROM_EMAIL. */
+  from?: string;
+  /** Inline images (src="cid:<contentId>"). */
+  attachments?: { filename: string; content: string; contentType: string; contentId: string }[];
   to: string;
   subject: string;
   html: string;
@@ -56,12 +63,13 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
   try {
     const { data, error } = await resend().emails.send(
       {
-        from: emailConfig().from,
+        from: email.from ?? emailConfig().from,
         to: email.to,
         subject: email.subject,
         html: email.html,
         text: email.text,
         replyTo: email.replyTo,
+        attachments: email.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType, contentId: a.contentId })),
         tags: [{ name: "category", value: email.scope.replace(/[^a-zA-Z0-9_-]/g, "_") }],
       },
       email.idempotencyKey ? { idempotencyKey: email.idempotencyKey } : undefined,

@@ -17,9 +17,14 @@ import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
 import { addMinutes } from "./dates";
 import { generateBookingReference } from "./reference";
-import { confirmationEmail, eventBodyHtml, eventSubject, formatAddress, internalNotificationEmail, type BookingDetails } from "./templates";
+import { eventBodyHtml, eventSubject, formatAddress, type BookingDetails } from "./templates";
+import { bookingConfirmationEmail, internalNewBookingEmail } from "@/lib/email";
+import { createCancelToken } from "./cancel-token";
+import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
+import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
+import { site } from "@/config/site";
 import { addDaysKey, graphLocalDateTime, zonedTimeToUtc } from "./timezone";
-import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, DayAvailability, TimeSlot } from "./types";
+import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
 
@@ -109,6 +114,7 @@ export class OutlookBookingProvider implements BookingProvider {
     // 3. Save as pending (unique index on start time blocks a simultaneous double booking).
     const sessionStart = zonedTimeToUtc(date, start, tz);
     const sessionEnd = zonedTimeToUtc(date, end, tz);
+    const cancel = createCancelToken();
     let row: Booking | undefined;
     for (let attempt = 0; attempt < 4 && !row; attempt++) {
       try {
@@ -135,6 +141,7 @@ export class OutlookBookingProvider implements BookingProvider {
             inspirationPhotoId: request.inspirationPhotoId ?? null,
             status: "pending",
             outlookCalendarUser: calendarUser,
+            cancelTokenHash: cancel.hash,
           })
           .returning();
       } catch (err) {
@@ -187,24 +194,30 @@ export class OutlookBookingProvider implements BookingProvider {
 
     // 6 + 7. Emails via Resend: the customer confirmation and the internal "new booking"
     // notification. Neither can undo the booking: failures are logged and recorded in Neon.
+    // Emails follow the website theme active right now (e.g. Christmas).
+    const themeId = await getSiteSettings().then((x) => x.themeId).catch(() => "default");
     const reason = (err: unknown) => (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
     const [customer, internal] = await Promise.allSettled([
       (async () => {
-        const mail = confirmationEmail(details);
+        const links = manageUrls(cancel.token);
+        const mail = bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule });
         return sendEmail({
           scope: "resend.customer",
           to: request.contact.email,
           subject: mail.subject,
           html: mail.html,
+          text: mail.text,
+          attachments: mail.attachments,
           replyTo: emailConfig().notify,
           idempotencyKey: `booking-confirmation/${row.bookingReference}`,
           reference: row.bookingReference,
         });
       })(),
       (async () => {
-        const mail = internalNotificationEmail(details, row.createdAt);
+        const mail = internalNewBookingEmail(details, row.createdAt);
         return sendEmail({
           scope: "resend.internal",
+          from: emailConfig().internalFrom,
           to: emailConfig().notify,
           subject: mail.subject,
           html: mail.html,
@@ -235,50 +248,59 @@ export class OutlookBookingProvider implements BookingProvider {
     return { id: row.bookingReference, status: "confirmed", request, createdAt: row.createdAt.toISOString(), emailSent };
   }
 
-  async cancelBooking(reference: string): Promise<void> {
+  async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {
     this.ensureConfigured();
-    const db = getDb();
-    const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+    const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
     if (!row) throw new BookingError("not_found", "We couldn't find that booking.");
-    if (row.status === "cancelled") return;
-    try {
-      if (row.outlookEventId) await deleteCalendarEvent(row.outlookEventId);
-    } catch (err) {
-      asCalendarError(err, "cancelBooking");
-    }
-    await db.update(bookings).set({ status: "cancelled", updatedAt: new Date() }).where(eq(bookings.id, row.id));
-    log.info("booking.outlook", "Booking cancelled", { reference });
+    await cancelBookingRow(row, opts ?? { reason: "Cancelled by Tiny Humans", by: "admin" });
+  }
+
+  async getCancellation(token: string): Promise<CancellationSummary> {
+    this.ensureConfigured();
+    const row = await findByCancelToken(token);
+    if (!row) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
+    return summaryOf(row);
+  }
+
+  private async rowForToken(token: string) {
+    this.ensureConfigured();
+    const row = await findByCancelToken(token);
+    if (!row) throw new BookingError("not_found", "This link isn't valid anymore. Please use the link in your most recent Tiny Humans email, or reply to it and we'll help.");
+    return row;
+  }
+
+  async getManagedBooking(token: string): Promise<ManagedBooking> {
+    const row = await this.rowForToken(token);
+    return managedOf(row, await getAvailabilityRules());
+  }
+
+  async getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
+    const row = await this.rowForToken(token);
+    if (!managedOf(row, await getAvailabilityRules()).canReschedule) return [];
+    return rescheduleAvailability(row, from, to);
+  }
+
+  async rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
+    const row = await this.rowForToken(token);
+    const updated = await rescheduleBookingRow(row, slot, "customer");
+    return managedOf(updated, await getAvailabilityRules());
+  }
+
+  async cancelWithToken(token: string, reason: string): Promise<CancellationSummary> {
+    this.ensureConfigured();
+    const row = await findByCancelToken(token);
+    if (!row) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
+    const s = summaryOf(row);
+    if (s.status === "past") throw new BookingError("invalid_request", "This session has already started, so it can't be cancelled online. Please reply to your confirmation email.");
+    if (s.status === "cancelled") return s;
+    return summaryOf(await cancelBookingRow(row, { reason, by: "customer" }));
   }
 
   async rescheduleBooking(reference: string, slot: Pick<TimeSlot, "date" | "start">): Promise<BookingResult> {
     this.ensureConfigured();
-    const db = getDb();
-    const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
-    if (!row || row.status === "cancelled") throw new BookingError("not_found", "We couldn't find that booking.");
-    const bundle = getBundle(row.packageId);
-    if (!bundle) throw new BookingError("server_error", friendly.server);
-    const tz = bookingRules.timeZone;
-    const end = addMinutes(slot.start, bundle.durationMinutes);
-    try {
-      // ignore this booking's own time when checking the new slot
-      const [rules, allBusy] = await Promise.all([getAvailabilityRules(), this.busyBetween(slot.date, slot.date)]);
-      const busy = allBusy.filter((b) => !(b.start.getTime() === row.sessionStart.getTime() && b.end.getTime() === row.sessionEnd.getTime()));
-      if (!slotsForDay(slot.date, bundle.durationMinutes, busy, rules).some((s) => s.start === slot.start)) {
-        throw new BookingError("slot_unavailable", friendly.slotTaken);
-      }
-      if (row.outlookEventId) {
-        await moveCalendarEvent(row.outlookEventId, graphLocalDateTime(slot.date, slot.start), graphLocalDateTime(slot.date, end), bookingRules.graphTimeZone);
-      }
-    } catch (err) {
-      asCalendarError(err, "rescheduleBooking");
-    }
-    const [updated] = await db
-      .update(bookings)
-      .set({ sessionDate: slot.date, sessionStart: zonedTimeToUtc(slot.date, slot.start, tz), sessionEnd: zonedTimeToUtc(slot.date, end, tz), status: "rescheduled", updatedAt: new Date() })
-      .where(eq(bookings.id, row.id))
-      .returning();
-    log.info("booking.outlook", "Booking rescheduled", { reference });
-    return this.toResult(updated);
+    const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+    if (!row) throw new BookingError("not_found", "We couldn't find that booking.");
+    return this.toResult(await rescheduleBookingRow(row, slot, "admin"));
   }
 
   /** Title of a portfolio photo from any of the owner's picture sets (or the built-in ones). */

@@ -11,7 +11,8 @@ export function readPrototypeAvailability(): AvailabilityRules {
     const raw = window.localStorage.getItem(PROTOTYPE_AVAILABILITY_KEY);
     if (!raw) return defaultAvailabilityRules();
     const r = JSON.parse(raw) as AvailabilityRules;
-    return { ...defaultAvailabilityRules(), ...r, weekly: completeWeekly(r.weekly ?? []) };
+    const d = defaultAvailabilityRules();
+    return { ...d, ...r, limits: { ...d.limits, ...(r.limits ?? {}) }, weekly: completeWeekly(r.weekly ?? []) };
   } catch {
     return defaultAvailabilityRules();
   }

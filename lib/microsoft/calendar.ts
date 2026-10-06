@@ -6,6 +6,8 @@ import { microsoftConfig } from "./config";
 export interface BusyInterval {
   start: Date;
   end: Date;
+  /** Outlook event id (lets a reschedule ignore the booking's own event). */
+  eventId?: string;
 }
 
 interface GraphEvent {
@@ -23,7 +25,7 @@ export async function getBusyIntervals(from: Date, to: Date): Promise<BusyInterv
   const params = new URLSearchParams({
     startDateTime: from.toISOString(),
     endDateTime: to.toISOString(),
-    $select: "start,end,showAs,isCancelled",
+    $select: "id,start,end,showAs,isCancelled",
     $top: "250",
   });
   const out: BusyInterval[] = [];
@@ -35,7 +37,7 @@ export async function getBusyIntervals(from: Date, to: Date): Promise<BusyInterv
     });
     for (const e of res.value) {
       if (e.isCancelled || e.showAs === "free") continue;
-      out.push({ start: new Date(e.start.dateTime + "Z"), end: new Date(e.end.dateTime + "Z") });
+      out.push({ start: new Date(e.start.dateTime + "Z"), end: new Date(e.end.dateTime + "Z"), eventId: e.id });
     }
     next = res["@odata.nextLink"];
   }

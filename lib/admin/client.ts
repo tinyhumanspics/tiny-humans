@@ -5,6 +5,8 @@ import type { SiteSettings } from "@/lib/settings/types";
 import type { AvailabilityRules, BookingLimits, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
 import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
+import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
+import { MockBookingProvider } from "@/lib/booking/mock-provider";
 
 /** What the owner area needs. Live site: HTTP API. Prototype: this browser only. */
 export interface AdminApi {
@@ -22,6 +24,11 @@ export interface AdminApi {
   deleteOverride(date: string): Promise<AvailabilityRules>;
   addBlock(b: Omit<TimeBlock, "id">): Promise<AvailabilityRules>;
   deleteBlock(id: string): Promise<AvailabilityRules>;
+  /* leads (owner only) */
+  listLeads(filter: LeadFilter, offset?: number): Promise<LeadList>;
+  cancelLead(reference: string, reason: string): Promise<Lead>;
+  leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
+  rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
 }
 
 export const IS_PROTOTYPE = process.env.NEXT_PUBLIC_PROTOTYPE === "1";
@@ -63,6 +70,13 @@ const httpApi: AdminApi = {
   addBlock: async (b) =>
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
+  leadAvailability: async (reference, from, to) =>
+    (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
+  rescheduleLead: async (reference, slot) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/reschedule", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...slot }) }))).lead,
+  listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
+  cancelLead: async (reference, reason) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason }) }))).lead,
 };
 
 /** Prototype: validate like the server, then keep the rules in this browser. */
@@ -147,6 +161,28 @@ const prototypeApi: AdminApi = {
     return protoSave((r) => ({ ...r, blocks: [...r.blocks, { ...b, id: `blk-${Math.random().toString(36).slice(2, 10)}` }] }));
   },
   deleteBlock: async (id) => protoSave((r) => ({ ...r, blocks: r.blocks.filter((x) => x.id !== id) })),
+  listLeads: async (filter) => {
+    const all = new MockBookingProvider().listLeads();
+    const counts = { all: all.length, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as LeadList["counts"];
+    all.forEach((l) => (counts[l.status] += 1));
+    const leads = filter === "all" ? all : all.filter((l) => l.status === filter);
+    return { leads, counts, total: leads.length };
+  },
+  leadAvailability: async (reference, from, to) => {
+    const lead = new MockBookingProvider().listLeads().find((l) => l.reference === reference);
+    return lead ? new MockBookingProvider(async () => readPrototypeAvailability()).getAvailability({ bundleId: lead.bundleId, from, to }) : [];
+  },
+  rescheduleLead: async (reference, slot) => {
+    const mock = new MockBookingProvider(async () => readPrototypeAvailability());
+    await mock.rescheduleBooking(reference, slot);
+    return mock.listLeads().find((l) => l.reference === reference)!;
+  },
+  cancelLead: async (reference, reason) => {
+    if (reason.trim().length < 3) throw new Error("Add a cancellation reason.");
+    const mock = new MockBookingProvider();
+    await mock.cancelBooking(reference, { reason: reason.trim(), by: "admin" });
+    return mock.listLeads().find((l) => l.reference === reference)!;
+  },
 };
 
 export function getAdminApi(): AdminApi {

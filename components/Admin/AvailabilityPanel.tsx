@@ -17,6 +17,7 @@ const DISPLAY_ORDER = [1, 2, 3, 4, 5, 6, 0];
 const NOTICE_OPTIONS = [0, 1, 2, 3];
 const WINDOW_OPTIONS = [7, 14, 30, 60, 90];
 const BUFFER_OPTIONS = [0, 15, 30, 45, 60, 90];
+const RESCHEDULE_OPTIONS = [12, 24, 48, 72];
 
 const errText = (e: unknown, fallback: string) => (e instanceof Error && e.message ? e.message : fallback);
 
@@ -102,6 +103,7 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
   const customNotice = !NOTICE_OPTIONS.includes(limits.minimumNoticeDays);
   const customWindow = !WINDOW_OPTIONS.includes(limits.bookingWindowDays);
   const customBuffer = !BUFFER_OPTIONS.includes(limits.bufferMinutes);
+  const customResched = !RESCHEDULE_OPTIONS.includes(limits.rescheduleNoticeHours);
 
   return (
     <div className={styles.availBlock}>
@@ -181,6 +183,24 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
             <input type="number" min={0} max={L.maxBufferMinutes} step={5} className={styles.input} value={limits.bufferMinutes} onChange={(e) => setLimit({ bufferMinutes: Math.max(0, Math.min(L.maxBufferMinutes, Number(e.target.value) || 0)) })} aria-label="Buffer in minutes" />
           )}
           <p className={`${styles.hintSmall} chalk-soft`}>Kept free before and after every session, for travel and setup.</p>
+        </div>
+        <div className={styles.ruleField}>
+          <label className={`${styles.label} chalk-soft`} htmlFor="rule-reschedule">Customer reschedule notice</label>
+          <select
+            id="rule-reschedule"
+            className={styles.input}
+            value={customResched ? "custom" : String(limits.rescheduleNoticeHours)}
+            onChange={(e) => setLimit({ rescheduleNoticeHours: e.target.value === "custom" ? 36 : Number(e.target.value) })}
+          >
+            {RESCHEDULE_OPTIONS.map((n) => (
+              <option key={n} value={n}>{n} hours before</option>
+            ))}
+            <option value="custom">Custom…</option>
+          </select>
+          {customResched && (
+            <input type="number" min={0} max={L.maxRescheduleNoticeHours} className={styles.input} value={limits.rescheduleNoticeHours} onChange={(e) => setLimit({ rescheduleNoticeHours: Math.max(0, Math.min(L.maxRescheduleNoticeHours, Number(e.target.value) || 0)) })} aria-label="Reschedule notice in hours" />
+          )}
+          <p className={`${styles.hintSmall} chalk-soft`}>Families can move their session online until this long before it starts.</p>
         </div>
       </div>
 

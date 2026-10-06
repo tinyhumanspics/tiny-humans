@@ -5,7 +5,7 @@ export function defaultAvailabilityRules(): AvailabilityRules {
   const d = bookingRules.defaults;
   return {
     weekly: d.weekly.map((w) => ({ ...w })),
-    limits: { minimumNoticeDays: d.minimumNoticeDays, bookingWindowDays: d.bookingWindowDays, bufferMinutes: d.bufferMinutes },
+    limits: { minimumNoticeDays: d.minimumNoticeDays, bookingWindowDays: d.bookingWindowDays, bufferMinutes: d.bufferMinutes, rescheduleNoticeHours: d.rescheduleNoticeHours },
     overrides: [],
     blocks: [],
   };

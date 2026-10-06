@@ -32,7 +32,7 @@ export const bookingRules = {
   /** Start times are offered every N minutes from opening time. */
   slotIntervalMinutes: 60,
   /** Limits for the owner's settings. */
-  limits: { maxNoticeDays: 60, maxWindowDays: 365, maxBufferMinutes: 240 },
+  limits: { maxNoticeDays: 60, maxWindowDays: 365, maxBufferMinutes: 240, maxRescheduleNoticeHours: 336 },
   /** Defaults (match the original prototype behaviour). */
   defaults: {
     weekly: [
@@ -48,6 +48,8 @@ export const bookingRules = {
     bookingWindowDays: 90,
     /** Kept free before and after every session (travel/setup). */
     bufferMinutes: 45,
+    /** Customers can reschedule online until this many hours before the session. */
+    rescheduleNoticeHours: 48,
   },
 };
 

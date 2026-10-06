@@ -1,0 +1,24 @@
+.page { padding-top: clamp(28px, 6vw, 64px); padding-bottom: clamp(56px, 8vw, 96px); }
+.panel { max-width: 620px; margin: 0 auto; padding: clamp(22px, 5vw, 40px) clamp(18px, 5vw, 40px); background: color-mix(in srgb, var(--chalkboard-dark) 35%, transparent); border-radius: 10px; }
+.eyebrow { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--cloud-blue); }
+.title { margin: 4px 0 12px; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; color: var(--chalk-white); outline: none; }
+.text { margin: 12px 0; font-size: 1.15rem; line-height: 1.5; color: var(--chalk-muted); }
+.muted { color: var(--chalk-muted); font-size: 1.15rem; }
+.details { margin: 14px 0; display: grid; border-top: 2px dashed color-mix(in srgb, var(--cloud-blue) 60%, transparent); border-bottom: 2px dashed color-mix(in srgb, var(--cloud-blue) 60%, transparent); }
+.details > div { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; padding: 8px 0; }
+.details > div + div { border-top: 1px dashed color-mix(in srgb, var(--chalk-white) 16%, transparent); }
+.details dt { color: var(--chalk-muted); font-size: 1.05rem; }
+.details dd { margin: 0; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--chalk-white); }
+@media (max-width: 440px) { .details > div { grid-template-columns: 1fr; gap: 0; } }
+.label { display: block; margin-top: 18px; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--sun-yellow); }
+.textarea {
+  width: 100%; margin-top: 8px; padding: 10px 14px; min-height: 110px; resize: vertical;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); border-radius: 6px 10px 7px 9px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 60%, transparent); font-family: var(--font-hand); font-size: 1.15rem; color: var(--chalk-white);
+}
+.textarea:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
+.textarea[aria-invalid="true"] { border-color: var(--chalk-error); }
+.error { margin: 8px 0 0; color: var(--chalk-error); font-size: 1.05rem; }
+.actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; }
+.done { display: grid; justify-items: start; gap: 4px; }
+.link { color: var(--cloud-blue); font-family: var(--font-chalk); font-size: 1.15rem; }

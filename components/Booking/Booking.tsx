@@ -5,6 +5,7 @@ import { site } from "@/config/site";
 import { formatPrice, getBundle } from "@/config/bundles";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import BabyLedNote from "./BabyLedNote";
 import { babyAgeOptions, bookingSettings, bookingSteps, bundlesHref, homeSession, STEP } from "@/config/booking";
@@ -397,7 +398,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       rows={[
                         { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
                         { label: "Price", value: formatPrice(bundle.price), step: -1 },
-                        { label: "Due today", value: "$0 · payment is due after your photoshoot", step: -1 },
+                        { label: "Payment due", value: "After the photoshoot", step: -1 },
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
                         { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)}`, step: STEP.time },
@@ -646,10 +647,6 @@ function Confirmation({
         <p className={`${styles.paymentTitle} chalk-soft`}>Payment</p>
         <dl className={styles.paymentRows}>
           <div className={styles.confirmRow}>
-            <dt className="chalk-soft">Due today</dt>
-            <dd className={`${styles.paymentToday} chalk-soft`}>$0</dd>
-          </div>
-          <div className={styles.confirmRow}>
             <dt className="chalk-soft">Package total</dt>
             <dd className="chalk-soft">{bundle ? formatPrice(bundle.price) : ""}</dd>
           </div>
@@ -668,6 +665,7 @@ function Confirmation({
           </p>
         </div>
       )}
+      {result.preview && <PrototypePreviews result={result} />}
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
           {result.status === "mock"
@@ -684,3 +682,62 @@ function Confirmation({
   );
 }
 
+
+/* ---------------- prototype only: preview the email + the cancel link ---------------- */
+
+function PrototypePreviews({ result }: { result: BookingResult }) {
+  const router = useRouter();
+  const { theme, photos } = useSiteSettings();
+  const [html, setHtml] = useState<string | null>(null);
+  const token = result.preview!.cancelToken;
+  const cancelPath = `/cancel?t=${token}`;
+  const reschedulePath = `/reschedule?t=${token}`;
+
+  const openEmail = async () => {
+    const { bookingConfirmationEmail } = await import("@/lib/email/templates/booking-confirmation");
+    const r = result.request;
+    const bundle = getBundle(r.bundleId)!;
+    const mail = bookingConfirmationEmail(
+      { reference: result.id, bundle, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
+      { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, images: "inline" },
+    );
+    setHtml(mail.html);
+  };
+
+  return (
+    <div className={styles.previewBar}>
+      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={openEmail}>Preview the confirmation email</button>
+      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => router.push(reschedulePath)}>Try the Reschedule link</button>
+      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => router.push(cancelPath)}>Try the Cancel Booking link</button>
+      {html && createPortal(
+        <div className={styles.previewModal} role="dialog" aria-modal="true" aria-label="Confirmation email preview">
+          <div className={styles.previewTop}>
+            <p className="chalk-soft">Email preview ({theme.label} theme)</p>
+            <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => setHtml(null)}>Close</button>
+          </div>
+          <iframe
+            title="Confirmation email preview"
+            className={styles.previewFrame}
+            srcDoc={html}
+            onLoad={(e) => {
+              const doc = e.currentTarget.contentDocument;
+              doc?.querySelectorAll("a").forEach((a) => {
+                const href = a.getAttribute("href") ?? "";
+                if (href.startsWith("/cancel") || href.startsWith("/reschedule")) {
+                  a.addEventListener("click", (ev) => {
+                    ev.preventDefault();
+                    setHtml(null);
+                    router.push(href);
+                  });
+                } else {
+                  a.setAttribute("target", "_blank");
+                }
+              });
+            }}
+          />
+        </div>,
+        document.body,
+      )}
+    </div>
+  );
+}

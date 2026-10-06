@@ -18,6 +18,7 @@ export const weeklyAndLimitsSchema = z.object({
     minimumNoticeDays: z.number().int().min(0).max(L.maxNoticeDays),
     bookingWindowDays: z.number().int().min(1).max(L.maxWindowDays),
     bufferMinutes: z.number().int().min(0).max(L.maxBufferMinutes),
+    rescheduleNoticeHours: z.number().int().min(0).max(L.maxRescheduleNoticeHours).default(48),
   }),
 });
 

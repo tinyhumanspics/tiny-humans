@@ -1,4 +1,4 @@
-import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, DayAvailability } from "./types";
+import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, CancellationSummary, DayAvailability, ManagedBooking } from "./types";
 import type { BookingErrorCode } from "./errors";
 
 /** Error from the booking API; `message` is already friendly and safe to show. */
@@ -40,6 +40,35 @@ export class HttpBookingClient implements BookingClient {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(request),
+    }).then((r) => r.booking);
+  }
+
+  getCancellation(token: string): Promise<CancellationSummary> {
+    return call<{ booking: CancellationSummary }>(`/api/booking/cancel?token=${encodeURIComponent(token)}`).then((r) => r.booking);
+  }
+
+  getManagedBooking(token: string): Promise<ManagedBooking> {
+    return call<{ booking: ManagedBooking }>(`/api/booking/manage?token=${encodeURIComponent(token)}`).then((r) => r.booking);
+  }
+
+  getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
+    const q = new URLSearchParams({ token, from, to });
+    return call<{ days: DayAvailability[] }>(`/api/booking/manage/availability?${q}`).then((r) => r.days);
+  }
+
+  rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
+    return call<{ booking: ManagedBooking }>("/api/booking/manage/reschedule", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, date: slot.date, start: slot.start }),
+    }).then((r) => r.booking);
+  }
+
+  cancelWithToken(token: string, reason: string): Promise<CancellationSummary> {
+    return call<{ booking: CancellationSummary }>("/api/booking/cancel", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, reason }),
     }).then((r) => r.booking);
   }
 }

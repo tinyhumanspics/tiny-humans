@@ -595,3 +595,10 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .paymentTitle { margin: 0 0 2px; font-family: var(--font-chalk); font-size: 1.45rem; color: var(--sun-yellow); }
 .paymentToday { color: var(--sun-yellow) !important; font-size: 1.45rem !important; }
 .paymentNote { margin: 8px 0 0; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }
+
+/* ---------- prototype previews ---------- */
+.previewBar { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; }
+.previewModal { position: fixed; inset: 0; z-index: 2000; display: grid; grid-template-rows: auto 1fr; background: color-mix(in srgb, var(--chalkboard-dark) 96%, transparent); padding: calc(env(safe-area-inset-top, 0px) + 10px) 10px 10px; }
+.previewTop { display: flex; justify-content: space-between; align-items: center; max-width: 680px; width: 100%; margin: 0 auto; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.15rem; }
+.previewTop p { margin: 0; }
+.previewFrame { width: 100%; max-width: 680px; height: 100%; margin: 0 auto; border: 0; border-radius: 10px; background: #10291a; }

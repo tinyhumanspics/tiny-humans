@@ -39,7 +39,7 @@ export async function getAvailabilityRules(): Promise<AvailabilityRules> {
     const s = settings[0];
     return {
       weekly: completeWeekly(weekly.map((w) => ({ weekday: w.weekday, isOpen: w.isOpen, start: hhmm(w.startTime)!, end: hhmm(w.endTime)! }))),
-      limits: s ? { minimumNoticeDays: s.minimumNoticeDays, bookingWindowDays: s.bookingWindowDays, bufferMinutes: s.bufferMinutes } : d.limits,
+      limits: s ? { minimumNoticeDays: s.minimumNoticeDays, bookingWindowDays: s.bookingWindowDays, bufferMinutes: s.bufferMinutes, rescheduleNoticeHours: s.customerRescheduleNoticeHours ?? d.limits.rescheduleNoticeHours } : d.limits,
       overrides: overrides.map((o) => ({ date: o.date, isClosed: o.isClosed, start: hhmm(o.startTime), end: hhmm(o.endTime) })),
       blocks: blocks.map((b) => ({ id: b.id, date: b.date, start: hhmm(b.startTime)!, end: hhmm(b.endTime)!, reason: b.reason ?? undefined })),
     };
@@ -65,8 +65,11 @@ export async function saveWeeklyAndLimits(weekly: WeeklyDay[], limits: BookingLi
     });
   await db
     .insert(bookingSettingsTable)
-    .values({ id: 1, ...limits, updatedAt: now })
-    .onConflictDoUpdate({ target: bookingSettingsTable.id, set: { ...limits, updatedAt: now } });
+    .values({ id: 1, minimumNoticeDays: limits.minimumNoticeDays, bookingWindowDays: limits.bookingWindowDays, bufferMinutes: limits.bufferMinutes, customerRescheduleNoticeHours: limits.rescheduleNoticeHours ?? 48, updatedAt: now })
+    .onConflictDoUpdate({
+      target: bookingSettingsTable.id,
+      set: { minimumNoticeDays: limits.minimumNoticeDays, bookingWindowDays: limits.bookingWindowDays, bufferMinutes: limits.bufferMinutes, customerRescheduleNoticeHours: limits.rescheduleNoticeHours ?? 48, updatedAt: now },
+    });
 }
 
 export async function upsertOverride(o: DateOverride): Promise<void> {

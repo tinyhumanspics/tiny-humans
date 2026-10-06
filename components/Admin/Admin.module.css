@@ -201,7 +201,8 @@
 .timeInput:disabled { opacity: 0.45; }
 
 .rulesGrid { display: grid; gap: 14px 22px; margin: 10px 0 6px; }
-@media (min-width: 760px) { .rulesGrid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 760px) { .rulesGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1100px) { .rulesGrid { grid-template-columns: repeat(4, 1fr); } }
 .ruleField { display: grid; gap: 6px; align-content: start; }
 
 .availForm { display: grid; gap: 12px 18px; margin-top: 12px; align-items: end; }
@@ -211,3 +212,36 @@
 .overrideRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 12px; border: 2px dashed color-mix(in srgb, var(--cloud-blue) 40%, transparent); border-radius: 10px; color: var(--chalk-white); font-size: 1.1rem; }
 .overrideRow b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
 .blockReason { color: var(--chalk-muted); }
+
+/* ---------- leads ---------- */
+.leadsTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.leadList { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 12px; }
+.leadCard { padding: 14px 16px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 12px; display: grid; gap: 4px; }
+.leadCancelled { border-color: color-mix(in srgb, var(--chalk-error) 55%, transparent); }
+.leadHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.leadName { font-family: var(--font-chalk); font-size: 1.45rem; color: var(--chalk-white); }
+.leadLine { margin: 0; font-size: 1.12rem; color: var(--chalk-white); }
+.leadLine b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
+.leadMeta { margin: 0; font-size: 1rem; color: var(--chalk-muted); overflow-wrap: anywhere; }
+.leadCancelNote { margin: 4px 0 0; color: var(--chalk-error); font-size: 1.02rem; }
+.statusPill { display: inline-block; padding: 2px 12px; border-radius: 999px; font-family: var(--font-chalk); font-size: 1.05rem; border: 2px solid currentColor; }
+.status_confirmed { color: var(--sun-yellow); }
+.status_rescheduled { color: var(--cloud-blue); }
+.status_pending { color: var(--chalk-muted); }
+.status_cancelled { color: var(--chalk-error); }
+.leadDetails { margin-top: 8px; padding-top: 10px; border-top: 1px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); display: grid; gap: 12px; justify-items: start; }
+.leadDetails dl { margin: 0; width: 100%; display: grid; }
+.leadDetails dl > div { display: grid; grid-template-columns: 180px 1fr; gap: 4px 12px; padding: 5px 0; }
+.leadDetails dt { color: var(--chalk-muted); font-size: 1rem; }
+.leadDetails dd { margin: 0; color: var(--chalk-white); font-size: 1.05rem; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .leadDetails dl > div { grid-template-columns: 1fr; gap: 0; } }
+.leadCancelForm { width: 100%; display: grid; gap: 6px; }
+.reasonInput { min-height: 84px; resize: vertical; }
+
+/* ---------- reschedule history + admin reschedule ---------- */
+.history { width: 100%; }
+.historyList { list-style: none; margin: 6px 0 0; padding: 0 0 0 14px; border-left: 3px dashed color-mix(in srgb, var(--cloud-blue) 60%, transparent); display: grid; gap: 8px; }
+.historyList li { display: grid; gap: 1px; }
+.historyList b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); font-size: 1.1rem; }
+.historyMeta { color: var(--chalk-muted); font-size: 0.98rem; }
+.adminReschedule { width: 100%; padding: 12px; border: 2px dashed var(--sun-yellow); border-radius: 12px; }

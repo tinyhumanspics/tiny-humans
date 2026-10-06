@@ -55,6 +55,19 @@ export const bookings = pgTable(
     internalNotificationSentAt: timestamp("internal_notification_sent_at", { withTimezone: true }),
     internalNotificationError: text("internal_notification_error"),
 
+    /* cancellation (customer link or admin) — the booking row is kept as history */
+    cancellationReason: text("cancellation_reason"),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    cancelledBy: text("cancelled_by"),
+    /** SHA-256 of the customer's booking-management token (cancel + reschedule links). The token itself is never stored. */
+    cancelTokenHash: text("cancel_token_hash").unique(),
+    cancellationEmailSent: boolean("cancellation_email_sent").notNull().default(false),
+    cancellationEmailSentAt: timestamp("cancellation_email_sent_at", { withTimezone: true }),
+    cancellationEmailError: text("cancellation_email_error"),
+    internalCancellationSent: boolean("internal_cancellation_sent").notNull().default(false),
+    internalCancellationSentAt: timestamp("internal_cancellation_sent_at", { withTimezone: true }),
+    internalCancellationError: text("internal_cancellation_error"),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -64,6 +77,8 @@ export const bookings = pgTable(
     index("bookings_session_date_idx").on(t.sessionDate),
     index("bookings_status_idx").on(t.status),
     index("bookings_email_idx").on(t.email),
+    index("bookings_created_at_idx").on(t.createdAt),
+    check("bookings_cancelled_by_check", sql`${t.cancelledBy} is null or ${t.cancelledBy} in ('customer', 'admin')`),
   ],
 );
 
@@ -96,6 +111,8 @@ export const bookingSettingsTable = pgTable(
     minimumNoticeDays: integer("minimum_notice_days").notNull().default(1),
     bookingWindowDays: integer("booking_window_days").notNull().default(90),
     bufferMinutes: integer("buffer_minutes").notNull().default(45),
+    /** Customers can reschedule online until this many hours before the session. */
+    customerRescheduleNoticeHours: integer("customer_reschedule_notice_hours").notNull().default(48),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -103,6 +120,7 @@ export const bookingSettingsTable = pgTable(
     check("booking_settings_notice_check", sql`${t.minimumNoticeDays} between 0 and 60`),
     check("booking_settings_window_check", sql`${t.bookingWindowDays} between 1 and 365`),
     check("booking_settings_buffer_check", sql`${t.bufferMinutes} between 0 and 240`),
+    check("booking_settings_reschedule_notice_check", sql`${t.customerRescheduleNoticeHours} between 0 and 336`),
   ],
 );
 
@@ -138,4 +156,24 @@ export const availabilityBlocks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("availability_blocks_date_idx").on(t.date), check("availability_blocks_hours_check", sql`${t.endTime} > ${t.startTime}`)],
+);
+
+/** Every reschedule appends a row (full history; never overwritten). */
+export const bookingRescheduleHistory = pgTable(
+  "booking_reschedule_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    oldSessionStart: timestamp("old_session_start", { withTimezone: true }).notNull(),
+    oldSessionEnd: timestamp("old_session_end", { withTimezone: true }).notNull(),
+    newSessionStart: timestamp("new_session_start", { withTimezone: true }).notNull(),
+    newSessionEnd: timestamp("new_session_end", { withTimezone: true }).notNull(),
+    rescheduledBy: text("rescheduled_by").notNull(),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("booking_reschedule_history_booking_idx").on(t.bookingId, t.createdAt),
+    check("booking_reschedule_history_by_check", sql`${t.rescheduledBy} in ('customer', 'admin')`),
+  ],
 );

@@ -217,6 +217,25 @@ Storage: Neon tables `availability_weekly`, `booking_settings`, `availability_ov
 
 No payment is taken online. The review step shows "Due today: $0"; the confirmation page, confirmation email and Outlook event show the package total, "Due today: $0" and "Payment due: After the photoshoot". Wording lives in `PAYMENT_NOTE` (`lib/booking/templates.ts`).
 
+## Managing bookings: cancel + reschedule (customer links and /admin)
+
+**Booking-management token.** Every booking gets one random 256-bit token (`lib/booking/cancel-token.ts`). Only its SHA-256 hash is stored (`bookings.cancel_token_hash`), so a database leak can't produce working links and a booking reference can't be used instead. The customer confirmation email carries two links on our own site (`NEXT_PUBLIC_SITE_URL`):
+
+- `/reschedule?t=<token>` — **Reschedule Booking**
+- `/cancel?t=<token>` — **Cancel Booking**
+
+Both pages live inside the website (so they use the active seasonal theme), are `noindex`/`no-referrer`, and the token is checked on the server for every request. Public routes are rate-limited (`lib/rate-limit.ts`). Tokens are never logged. The token **rotates on every reschedule**; the reschedule email contains the new working links (older links then show a friendly "use your most recent email" message).
+
+**Cancel** (`/cancel`): shows reference, bundle, date and time only; a reason is required; nothing changes until "Confirm Cancellation". Workflow (`lib/booking/cancellation.ts`): remove the Outlook event (if this fails, nothing changes) → mark `cancelled` with `cancellation_reason`, `cancelled_at`, `cancelled_by` (the row is kept as history; the slot is free again) → customer + internal emails.
+
+**Reschedule** (`/reschedule`): shows the current session (reference, bundle, date, time, location); only date and time can change. Choose date → time → review (current vs new) → "Confirm Reschedule" or "Keep My Current Booking". Availability uses the same engine as new bookings (weekly hours, special dates, blocks, notice, window, buffer, Neon bookings, Outlook events) and ignores **only this booking's own row and Outlook event**, identified from the token on the server. Workflow (`lib/booking/reschedule.ts`): recheck the slot → PATCH the existing Outlook event (if this fails, nothing changes) → update the same booking row (same reference, status `rescheduled`) **and** append a `booking_reschedule_history` row in one atomic batch (if that fails, the Outlook event is moved back) → customer + internal "Lead Updated — Rescheduled" emails.
+
+**Reschedule cutoff.** `/admin → Availability → Customer reschedule notice` (default **48 hours**, options 12/24/48/72/custom, stored in `booking_settings.customer_reschedule_notice_hours`, 0–336). Inside the window the page shows a friendly message and the API refuses too. Admin rescheduling isn't limited by it.
+
+**/admin → Leads.** Every booking, newest first, filters All / Confirmed / Rescheduled / Cancelled with counts from the database. Lead details show baby age, address, notes, inspiration, calendar status, email statuses, cancellation reason/time, and the full **Reschedule History** (original appointment → each change, who, when). Admins can **Reschedule Booking** (same calendar + engine) and **Cancel Booking** (reason required). Routes: `app/api/admin/leads` (+ `/availability`, `/reschedule`, `/cancel`), all requiring the admin session.
+
+**Emails** (`lib/email/`, Resend): reusable chalkboard layout + blocks (`layout.ts`), seasonal theme = the website theme active when the email is sent (`theme.ts`), logo and chalk doodles embedded as inline CID images (`assets.ts`; shows in Outlook/Gmail/Apple Mail without remote images). Templates: booking confirmation, reschedule confirmation, cancellation (customer, `BOOKING_FROM_EMAIL`, reply-to `BOOKING_NOTIFICATION_EMAIL`); new booking, lead updated/rescheduled, cancelled booking (internal, `BOOKING_INTERNAL_FROM_EMAIL` → falls back to `BOOKING_FROM_EMAIL`, sent to `BOOKING_NOTIFICATION_EMAIL`, reply-to the customer). Email failures never change booking state. New templates (reminders, announcements…) go in `lib/email/templates/` using the same blocks.
+
 ## Environment variables
 
 See `.env.example`. Add the same names in Vercel (Production, and Preview if wanted).
@@ -232,8 +251,9 @@ See `.env.example`. Add the same names in Vercel (Production, and Preview if wan
 | `OUTLOOK_CALENDAR_USER` | server | Calendar that holds sessions: `hello@tinyhumans.photography` |
 | `RESEND_API_KEY` | server | Resend API key (booking emails) |
 | `BOOKING_FROM_EMAIL` | server | `Tiny Humans <hello@tinyhumans.photography>` (domain verified in Resend) |
-| `BOOKING_NOTIFICATION_EMAIL` | server | Receives the internal new-booking email: `hello@tinyhumans.photography` |
-| `NEXT_PUBLIC_SITE_URL` | public | `https://www.tinyhumans.photography` (links in emails, metadata) |
+| `BOOKING_NOTIFICATION_EMAIL` | server | Receives internal emails (new / rescheduled / cancelled): `hello@tinyhumans.photography` |
+| `BOOKING_INTERNAL_FROM_EMAIL` | server | Sender for internal emails: `no-reply <hello@tinyhumans.photography>` (falls back to `BOOKING_FROM_EMAIL`) |
+| `NEXT_PUBLIC_SITE_URL` | public | `https://www.tinyhumans.photography` (manage links in emails, metadata). Must be the live site address. |
 | `ADMIN_PASSWORD`, `ADMIN_SESSION_SECRET` | server | Owner area |
 | `BLOB_READ_WRITE_TOKEN` | server | Theme + photos storage |
 
@@ -253,6 +273,8 @@ Alternative: paste each file into the Neon SQL editor, in order, once:
 - `drizzle/0000_create_bookings.sql` (bookings table)
 - `drizzle/0001_owner_availability.sql` (availability tables + default hours; the default rows use `ON CONFLICT DO NOTHING`, so re-running never overwrites your settings)
 - `drizzle/0002_resend_internal_notification.sql` (adds `internal_notification_sent/_at/_error` to `bookings`)
+- `drizzle/0003_booking_cancellation_and_leads.sql` (cancellation fields, hashed management token, cancellation email statuses)
+- `drizzle/0004_booking_reschedule_history.sql` (`booking_reschedule_history` table + `customer_reschedule_notice_hours` default 48)
 
 When the schema changes later: edit `lib/db/schema.ts`, run `npm run db:generate` to create a new migration file, review it, then `npm run db:migrate`. Never run destructive migrations against production without a backup/branch (Neon branches make this easy).
 

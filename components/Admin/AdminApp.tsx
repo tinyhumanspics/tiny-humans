@@ -11,6 +11,7 @@ import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
+import LeadsPanel from "./LeadsPanel";
 import styles from "./Admin.module.css";
 
 type Status = "loading" | "signedOut" | "ready";
@@ -85,6 +86,7 @@ export default function AdminApp() {
         </p>
       )}
 
+      <LeadsPanel api={api} />
       <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />
       <AvailabilityPanel api={api} />
       <PicturesPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />
