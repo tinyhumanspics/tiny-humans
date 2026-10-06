@@ -83,3 +83,21 @@
 }
 
 .cta { margin-top: 24px; width: 100%; }
+
+/* ---------- special offer (chalk sticker, crossed-out price) ---------- */
+.card.hasOffer { position: relative; }
+.offerSticker {
+  position: absolute; top: -14px; right: 10px; z-index: 3; margin: 0;
+  padding: 6px 14px 5px; transform: rotate(6deg);
+  background: var(--sun-yellow); color: var(--chalkboard);
+  border: 2px dashed color-mix(in srgb, var(--chalkboard) 55%, transparent);
+  border-radius: 10px 14px 9px 13px / 12px 9px 14px 10px;
+  font-family: var(--font-chalk); font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+  -webkit-mask-image: url("/textures/chalk-mask.webp"); mask-image: url("/textures/chalk-mask.webp");
+  -webkit-mask-size: 140px 140px; mask-size: 140px 140px;
+}
+.wasPrice { font-size: 0.55em; color: var(--chalk-muted); text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--chalk-white) 75%, transparent); }
+.offerPrice { color: var(--sun-yellow); }
+.offerEnds { margin: -6px 0 6px; font-size: 1.02rem; color: var(--cloud-blue); }
+.description { margin: -2px 0 6px; font-size: 1.05rem; color: var(--chalk-muted); line-height: 1.4; }

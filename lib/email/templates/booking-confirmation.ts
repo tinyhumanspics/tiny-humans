@@ -1,7 +1,7 @@
 import { site } from "@/config/site";
-import { formatPrice } from "@/config/bundles";
+import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, PAYMENT_NOTE, type BookingDetails } from "@/lib/booking/templates";
+import { formatAddress, PAYMENT_NOTE, pricingRows, type BookingDetails } from "@/lib/booking/templates";
 import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
 import { button, chalkBox, details, esc, heading, paragraph, renderLayout, textLines } from "../layout";
 import { emailTheme } from "../theme";
@@ -24,9 +24,9 @@ export function bookingConfirmationEmail(
       ["Date", formatLongDate(d.date)],
       ["Time", time],
       ["Location", formatAddress(d.address)],
-      ["Package total", formatPrice(d.bundle.price)],
+      ...pricingRows(d.pricing),
     ]),
-    chalkBox(t, "Payment", [["Package total", formatPrice(d.bundle.price)], ["Payment due", "After the photoshoot"]], PAYMENT_NOTE.email),
+    chalkBox(t, "Payment", [["Package total", formatMoney(d.pricing.finalCents)], ["Payment due", "After the photoshoot"]], PAYMENT_NOTE.email),
     paragraph(t, "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed."),
     paragraph(t, "If you need to make a change to your session, reply to this email."),
     opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? paragraph(t, esc(rescheduleNoticeText(opts.rescheduleNoticeHours)), { align: "center" }) : "",
@@ -42,7 +42,7 @@ export function bookingConfirmationEmail(
     `Date: ${formatLongDate(d.date)}`,
     `Time: ${time}`,
     `Location: ${formatAddress(d.address)}`,
-    `Package total: ${formatPrice(d.bundle.price)}`,
+    ...pricingRows(d.pricing).map(([k, v]) => `${k}: ${v}`),
     `Payment due: After the photoshoot`,
     "",
     PAYMENT_NOTE.email,

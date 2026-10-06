@@ -3,6 +3,7 @@ import { count, desc, eq, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { bookings, type Booking } from "@/lib/db/schema";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
+import { snapshotOf } from "@/lib/booking/outlook-provider";
 import type { Lead, LeadFilter, LeadList, LeadStatus } from "./types";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
@@ -21,7 +22,7 @@ export function toLead(r: Booking, history: HistoryRow[] = []): Lead {
     babyAge: r.babyAge,
     bundleId: r.packageId,
     bundleName: r.packageName,
-    packagePrice: r.packagePrice,
+    pricing: (({ bundleId: _b, bundleName: _n, offerEndsOn: _e, note: _x, ...p }) => p)(snapshotOf(r)),
     sessionDate: r.sessionDate,
     start: time(r.sessionStart, r.timezone),
     end: time(r.sessionEnd, r.timezone),

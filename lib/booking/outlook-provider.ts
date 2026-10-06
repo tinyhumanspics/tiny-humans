@@ -1,7 +1,8 @@
 import "server-only";
 import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
-import { getBundle } from "@/config/bundles";
+import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
+import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
 import { portfolio } from "@/config/portfolio";
 import { getSiteSettings } from "@/lib/settings/server";
 import { allMediaPhotos } from "@/lib/settings/defaults";
@@ -16,7 +17,7 @@ import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
-import { addMinutes } from "./dates";
+import { addMinutes, formatTimeLabel } from "./dates";
 import { generateBookingReference } from "./reference";
 import { eventBodyHtml, eventSubject, formatAddress, type BookingDetails } from "./templates";
 import { bookingConfirmationEmail, internalNewBookingEmail } from "@/lib/email";
@@ -24,7 +25,7 @@ import { createCancelToken } from "./cancel-token";
 import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
 import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
-import { addDaysKey, graphLocalDateTime, zonedTimeToUtc } from "./timezone";
+import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./timezone";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
@@ -73,7 +74,7 @@ export class OutlookBookingProvider implements BookingProvider {
 
   async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
     this.ensureConfigured();
-    const bundle = getBundle(query.bundleId);
+    const bundle = (await getCatalog()).find((b) => b.id === query.bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
     try {
       const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
@@ -86,8 +87,9 @@ export class OutlookBookingProvider implements BookingProvider {
   async createBooking(request: BookingRequest): Promise<BookingResult> {
     this.ensureConfigured();
     const db = getDb();
-    const bundle = getBundle(request.bundleId);
-    if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
+    // Price + bundle always come from the central catalog on the server (never from the browser).
+    const bundle = (await getCatalog()).find((b) => b.id === request.bundleId && b.active !== false);
+    if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const tz = bookingRules.timeZone;
     const { calendarUser } = microsoftConfig();
     const date = request.slot.date;
@@ -112,6 +114,12 @@ export class OutlookBookingProvider implements BookingProvider {
       throw new BookingError("slot_unavailable", friendly.slotTaken);
     }
 
+    // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
+    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email);
+    let usage: { usageId: string; release: () => Promise<void> } | null = null;
+    if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
+    const releaseUsage = () => usage?.release().catch(() => undefined);
+
     // 3. Save as pending (unique index on start time blocks a simultaneous double booking).
     const sessionStart = zonedTimeToUtc(date, start, tz);
     const sessionEnd = zonedTimeToUtc(date, end, tz);
@@ -126,7 +134,15 @@ export class OutlookBookingProvider implements BookingProvider {
             requestId: request.requestId,
             packageId: bundle.id,
             packageName: bundle.name,
-            packagePrice: bundle.price,
+            packagePrice: Math.round(pricing.finalCents / 100),
+            regularPriceCents: pricing.regularCents,
+            offerPriceCents: pricing.offerCents,
+            offerLabel: pricing.offerLabel,
+            discountCode: pricing.discountCode,
+            discountAmountCents: pricing.discountCents,
+            finalPriceCents: pricing.finalCents,
+            pricingType: pricing.pricingType,
+            packageInclusions: bundle.features,
             parentName: request.contact.parentName,
             email: request.contact.email,
             phone: request.contact.phone,
@@ -147,15 +163,21 @@ export class OutlookBookingProvider implements BookingProvider {
           .returning();
       } catch (err) {
         if (isUniqueViolation(err, "booking_reference")) continue; // rare: try another reference
+        await releaseUsage();
         if (isUniqueViolation(err, "request_id")) throw new BookingError("slot_unavailable", "This booking is already being saved. Please wait a moment.");
         if (isUniqueViolation(err)) throw new BookingError("slot_unavailable", friendly.slotTaken);
         log.error("booking.db", "Insert failed", { error: err as Error });
         throw new BookingError("server_error", friendly.server);
       }
     }
-    if (!row) throw new BookingError("server_error", friendly.server);
+    if (!row) {
+      await releaseUsage();
+      throw new BookingError("server_error", friendly.server);
+    }
+    if (usage) await attachUsage(usage.usageId, row.id);
 
     const details: BookingDetails = {
+      pricing,
       reference: row.bookingReference,
       bundle,
       date,
@@ -180,6 +202,7 @@ export class OutlookBookingProvider implements BookingProvider {
       }));
     } catch (err) {
       await db.delete(bookings).where(eq(bookings.id, row.id)).catch((e) => log.error("booking.db", "Rollback delete failed", { error: e }));
+      await releaseUsage();
       asCalendarError(err, "createBooking.event");
     }
 
@@ -190,6 +213,7 @@ export class OutlookBookingProvider implements BookingProvider {
       log.error("booking.db", "Confirm update failed; rolling back event", { error: err as Error, reference: row.bookingReference });
       await deleteCalendarEvent(eventId).catch((e) => log.error("booking.outlook", "Rollback event delete failed", { error: e }));
       await db.delete(bookings).where(eq(bookings.id, row.id)).catch(() => undefined);
+      await releaseUsage();
       throw new BookingError("server_error", friendly.server);
     }
 
@@ -246,7 +270,22 @@ export class OutlookBookingProvider implements BookingProvider {
       .catch((e) => log.error("booking.db", "Could not record email status", { error: e as Error, reference: row.bookingReference }));
 
     log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, customerEmailSent: emailSent, internalNotificationSent: internal.status === "fulfilled" });
-    return { id: row.bookingReference, status: "confirmed", request, createdAt: row.createdAt.toISOString(), emailSent, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
+    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot: { ...request.slot, end, label: formatTimeLabel(start) } }, createdAt: row.createdAt.toISOString(), emailSent, pricing, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
+  }
+
+  /** Server-side price for a bundle (+ optional code, re-validated here). Never trusts the browser. */
+  private async priceFor(bundleId: string, code: string | undefined, email: string | undefined): Promise<{ quote: PriceQuote; codeId: string | null }> {
+    const bundle = (await getCatalog()).find((b) => b.id === bundleId && b.active !== false);
+    if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    const today = todayInZone(bookingRules.timeZone);
+    if (!code?.trim()) return { quote: computeQuote(bundle, today), codeId: null };
+    const check = await validateCode(code, bundleId, email);
+    if (!check.ok) throw new BookingError("invalid_request", check.message);
+    return { quote: computeQuote(bundle, today, check.terms), codeId: check.codeId };
+  }
+
+  async quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote> {
+    return (await this.priceFor(bundleId, code, email)).quote;
   }
 
   async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {
@@ -323,6 +362,7 @@ export class OutlookBookingProvider implements BookingProvider {
       status: "confirmed",
       createdAt: row.createdAt.toISOString(),
       emailSent: row.confirmationEmailSent,
+      pricing: snapshotOf(row),
       request: request ?? {
         bundleId: row.packageId,
         address: { street: row.locationAddress, city: "", zip: "" },
@@ -331,4 +371,21 @@ export class OutlookBookingProvider implements BookingProvider {
       },
     };
   }
+}
+
+/** Price snapshot stored on a booking (older bookings fall back to package_price). */
+export function snapshotOf(row: Booking): PriceQuote {
+  const legacy = row.packagePrice * 100;
+  return {
+    bundleId: row.packageId,
+    bundleName: row.packageName,
+    regularCents: row.regularPriceCents ?? legacy,
+    offerCents: row.offerPriceCents,
+    offerLabel: row.offerLabel,
+    offerEndsOn: null,
+    discountCode: row.discountCode,
+    discountCents: row.discountAmountCents ?? 0,
+    finalCents: row.finalPriceCents ?? legacy,
+    pricingType: (row.pricingType as PriceQuote["pricingType"]) ?? "regular",
+  };
 }

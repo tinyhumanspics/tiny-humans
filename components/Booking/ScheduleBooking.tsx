@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { getBundle } from "@/config/bundles";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
@@ -15,6 +15,7 @@ export default function ScheduleBooking() {
   const params = useSearchParams();
   const { photos } = useSiteSettings();
   const { setInspirationId } = useBookingSelection();
+  const { getBundle } = useCatalog();
   const bundle = getBundle(params.get("bundle"));
   const inspirationId = params.get("inspiration");
 

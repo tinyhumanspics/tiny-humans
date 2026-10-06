@@ -1,5 +1,5 @@
 import { site } from "@/config/site";
-import { formatPrice } from "@/config/bundles";
+import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { PAYMENT_NOTE, type RescheduleDetails } from "@/lib/booking/templates";
 import { button, chalkBox, details, heading, paragraph, renderLayout, textLines } from "../layout";
@@ -23,9 +23,9 @@ export function bookingRescheduledEmail(r: RescheduleDetails, opts: { themeId: s
       ["New date", formatLongDate(r.newDate)],
       ["New time", newT],
       ["Location", r.location],
-      ["Package total", formatPrice(r.packagePrice)],
+      ["Package total", formatMoney(r.packageTotalCents)],
     ]),
-    chalkBox(t, "Payment", [["Package total", formatPrice(r.packagePrice)], ["Payment due", "After the photoshoot"]], PAYMENT_NOTE.email),
+    chalkBox(t, "Payment", [["Package total", formatMoney(r.packageTotalCents)], ["Payment due", "After the photoshoot"]], PAYMENT_NOTE.email),
     opts.manage ? button(t, "Reschedule Booking", opts.manage.reschedule, "outline") : "",
     opts.manage ? button(t, "Cancel Booking", opts.manage.cancel, "outline", "These links replace the ones in earlier emails.") : "",
     paragraph(t, "Questions? Just reply to this email.", { align: "center", muted: true }),
@@ -41,7 +41,7 @@ export function bookingRescheduledEmail(r: RescheduleDetails, opts: { themeId: s
     `Previous: ${formatLongDate(r.oldDate)}, ${oldT}`,
     `New: ${formatLongDate(r.newDate)}, ${newT}`,
     `Location: ${r.location}`,
-    `Package total: ${formatPrice(r.packagePrice)}`,
+    `Package total: ${formatMoney(r.packageTotalCents)}`,
     "Payment due: After the photoshoot",
     "",
     opts.manage && `Reschedule: ${opts.manage.reschedule}`,

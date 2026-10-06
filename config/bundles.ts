@@ -15,6 +15,22 @@ export interface Bundle {
   cta: string;
   /** Optional small chalk label, e.g. "Most loved". */
   badge?: string;
+  /** Optional short description (owner-editable). */
+  description?: string;
+  /** Inactive bundles are hidden from the public site (kept for history). */
+  active?: boolean;
+  sortOrder?: number;
+  /** Special offer (owner-editable). Active only while enabled and today <= endsOn. */
+  offer?: BundleOffer | null;
+}
+
+export interface BundleOffer {
+  enabled: boolean;
+  /** Offer price in dollars (may include cents). */
+  price: number;
+  label?: string | null;
+  /** Last day of the offer, YYYY-MM-DD (studio time zone). */
+  endsOn?: string | null;
 }
 
 export const bundles: Bundle[] = [

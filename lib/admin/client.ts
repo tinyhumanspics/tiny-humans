@@ -7,6 +7,11 @@ import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availa
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import { MockBookingProvider } from "@/lib/booking/mock-provider";
+import type { Bundle } from "@/config/bundles";
+import type { DiscountCode } from "@/lib/pricing/types";
+import { bundleInputSchema, codeInputSchema, type BundleInput, type CodeInput } from "@/lib/pricing/validation";
+import { prototypeUsageCount, readPrototypePricing, writePrototypePricing } from "@/lib/pricing/prototype";
+import { durationLabel } from "@/lib/pricing/engine";
 
 /** What the owner area needs. Live site: HTTP API. Prototype: this browser only. */
 export interface AdminApi {
@@ -30,6 +35,12 @@ export interface AdminApi {
   leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
   deleteLead(reference: string): Promise<void>;
+  /* pricing & promotions (owner only) */
+  getPricing(): Promise<{ bundles: Bundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
+  saveBundle(b: BundleInput): Promise<Bundle[]>;
+  deleteBundle(id: string): Promise<Bundle[]>;
+  saveCode(c: CodeInput): Promise<DiscountCode[]>;
+  deleteCode(id: string): Promise<DiscountCode[]>;
 }
 
 export const IS_PROTOTYPE = process.env.NEXT_PUBLIC_PROTOTYPE === "1";
@@ -75,6 +86,11 @@ const httpApi: AdminApi = {
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
   rescheduleLead: async (reference, slot) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/reschedule", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...slot }) }))).lead,
+  getPricing: async () => json(await fetch("/api/admin/pricing", { cache: "no-store" })),
+  saveBundle: async (b) => (await json<{ bundles: Bundle[] }>(await fetch("/api/admin/pricing/bundles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).bundles,
+  deleteBundle: async (id) => (await json<{ bundles: Bundle[] }>(await fetch(`/api/admin/pricing/bundles?id=${encodeURIComponent(id)}`, { method: "DELETE" }))).bundles,
+  saveCode: async (c) => (await json<{ codes: DiscountCode[] }>(await fetch("/api/admin/pricing/codes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(c) }))).codes,
+  deleteCode: async (id) => (await json<{ codes: DiscountCode[] }>(await fetch(`/api/admin/pricing/codes?id=${id}`, { method: "DELETE" }))).codes,
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
   },
@@ -186,6 +202,47 @@ const prototypeApi: AdminApi = {
   },
   deleteLead: async (reference) => {
     new MockBookingProvider().deleteLead(reference);
+  },
+  getPricing: async () => {
+    const p = readPrototypePricing();
+    return { bundles: p.bundles, codes: p.codes.map((c) => ({ ...c, usesCount: prototypeUsageCount(c.code) })), databaseConfigured: true };
+  },
+  saveBundle: async (input) => {
+    const r = bundleInputSchema.safeParse(input);
+    if (!r.success) throw new Error(r.error.issues[0]?.message ?? "Check the bundle details.");
+    const b = r.data;
+    const p = readPrototypePricing();
+    const id = b.id || `${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Math.random().toString(36).slice(2, 6)}`;
+    const next: Bundle = { id, name: b.name, price: b.price, description: b.description || undefined, duration: durationLabel(b.durationMinutes), durationMinutes: b.durationMinutes, people: "", setups: "", photos: b.photos || "", features: b.features, locationNote: "We bring the studio to your home", cta: `Choose ${b.name}`, badge: b.badge || undefined, active: b.active, sortOrder: b.sortOrder ?? p.bundles.length, offer: b.offer ?? null };
+    const bundles = p.bundles.some((x) => x.id === id) ? p.bundles.map((x) => (x.id === id ? next : x)) : [...p.bundles, next];
+    writePrototypePricing({ ...p, bundles });
+    return bundles;
+  },
+  deleteBundle: async (id) => {
+    const used = new MockBookingProvider().listLeads().filter((l) => l.bundleId === id).length;
+    if (used) throw new Error(`This bundle has ${used} booking${used === 1 ? "" : "s"} in its history, so it can't be deleted. Turn it off (inactive) instead.`);
+    const p = readPrototypePricing();
+    const bundles = p.bundles.filter((b) => b.id !== id);
+    writePrototypePricing({ bundles, codes: p.codes.map((c) => ({ ...c, bundleIds: c.bundleIds.filter((x) => x !== id) })) });
+    return bundles;
+  },
+  saveCode: async (input) => {
+    const r = codeInputSchema.safeParse(input);
+    if (!r.success) throw new Error(r.error.issues[0]?.message ?? "Check the code details.");
+    const c = r.data;
+    const p = readPrototypePricing();
+    if (p.codes.some((x) => x.code === c.code && x.id !== c.id)) throw new Error("A code with that name already exists.");
+    const existing = p.codes.find((x) => x.id === c.id);
+    const next: DiscountCode = { id: c.id ?? crypto.randomUUID(), code: c.code, type: c.type, value: c.value, bundleIds: c.bundleIds, active: c.active, expiresOn: c.expiresOn ?? null, maxUses: c.maxUses ?? null, onePerEmail: c.onePerEmail, internalNote: c.internalNote ?? null, usesCount: 0, createdAt: existing?.createdAt ?? new Date().toISOString() };
+    const codes = existing ? p.codes.map((x) => (x.id === next.id ? next : x)) : [...p.codes, next];
+    writePrototypePricing({ ...p, codes });
+    return codes.map((x) => ({ ...x, usesCount: prototypeUsageCount(x.code) }));
+  },
+  deleteCode: async (id) => {
+    const p = readPrototypePricing();
+    const codes = p.codes.filter((c) => c.id !== id);
+    writePrototypePricing({ ...p, codes });
+    return codes.map((x) => ({ ...x, usesCount: prototypeUsageCount(x.code) }));
   },
   cancelLead: async (reference, reason) => {
     if (reason.trim().length < 3) throw new Error("Add a cancellation reason.");

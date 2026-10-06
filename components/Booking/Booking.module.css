@@ -604,3 +604,14 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .previewFrame { width: 100%; max-width: 680px; height: 100%; margin: 0 auto; border: 0; border-radius: 10px; background: #10291a; }
 
 .rescheduleNote { margin: 0; max-width: 460px; text-align: center; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }
+
+/* ---------- discount code (review) ---------- */
+.discount { margin-top: 14px; padding: 12px 14px; border: 2px dashed color-mix(in srgb, var(--sun-yellow) 55%, transparent); border-radius: 10px; display: grid; gap: 8px; }
+.discountLabel { font-family: var(--font-chalk); font-size: 1.2rem; color: var(--sun-yellow); }
+.discountRow { display: flex; gap: 8px; flex-wrap: wrap; }
+.discountRow .input { flex: 1 1 160px; text-transform: uppercase; }
+.discountApply { min-height: 44px; padding: 6px 18px; border-radius: 8px; border: 2px solid var(--chalk-white); background: transparent; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.1rem; cursor: pointer; }
+.discountApply:disabled { opacity: 0.6; }
+.discountApplied { margin: 0; color: var(--chalk-white); font-size: 1.08rem; }
+.discountApplied b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
+.discountNote { margin: 0; color: var(--cloud-blue); font-size: 1.05rem; }

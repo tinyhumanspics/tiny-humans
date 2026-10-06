@@ -1,7 +1,6 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
-import { getBundle } from "@/config/bundles";
 import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
 import { bookingRescheduleHistory, bookings, type Booking } from "@/lib/db/schema";
@@ -70,7 +69,8 @@ async function busyExcluding(own: Booking, fromDate: string, toDate: string): Pr
 }
 
 export async function rescheduleAvailability(own: Booking, from: string, to: string): Promise<DayAvailability[]> {
-  const minutes = getBundle(own.packageId)?.durationMinutes ?? Math.round((own.sessionEnd.getTime() - own.sessionStart.getTime()) / 60_000);
+  // the booking keeps its own session length (even if the bundle changes later)
+  const minutes = Math.round((own.sessionEnd.getTime() - own.sessionStart.getTime()) / 60_000);
   try {
     const [rules, busy] = await Promise.all([getAvailabilityRules(), busyExcluding(own, from, to)]);
     return availabilityForRange(from, to, minutes, busy, rules);
@@ -101,7 +101,7 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     throw new BookingError("reschedule_closed", `This session is less than ${rules.limits.rescheduleNoticeHours} hours away, so online rescheduling is no longer available. Please contact Tiny Humans if you need help with your appointment.`);
   }
   const tz = row.timezone || bookingRules.timeZone;
-  const minutes = getBundle(row.packageId)?.durationMinutes ?? Math.round((row.sessionEnd.getTime() - row.sessionStart.getTime()) / 60_000);
+  const minutes = Math.round((row.sessionEnd.getTime() - row.sessionStart.getTime()) / 60_000);
   const end = addMinutes(slot.start, minutes);
   const newStart = zonedTimeToUtc(slot.date, slot.start, tz);
   const newEnd = zonedTimeToUtc(slot.date, end, tz);
@@ -158,8 +158,8 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     parentName: updated.parentName,
     email: updated.email,
     phone: updated.phone,
-    bundleName: getBundle(updated.packageId)?.name ?? updated.packageName,
-    packagePrice: updated.packagePrice,
+    bundleName: updated.packageName,
+    packageTotalCents: updated.finalPriceCents ?? updated.packagePrice * 100,
     location: updated.locationAddress,
     oldDate,
     oldStart: oldStartL,

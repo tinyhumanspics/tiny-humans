@@ -9,6 +9,9 @@
  * Outlook email via Microsoft Graph, bookings stored in Neon).
  */
 
+import type { PriceQuote } from "@/lib/pricing/engine";
+export type { PriceQuote };
+
 /** Calendar date in the studio's time zone, formatted YYYY-MM-DD. */
 export type DateKey = string;
 
@@ -59,6 +62,8 @@ export interface BookingRequest {
   inspirationPhotoId?: string;
   /** Same value for retries of one submission, so double-clicks can't double-book. */
   requestId?: string;
+  /** Optional discount code (validated + priced on the server). */
+  discountCode?: string;
 }
 
 export interface BookingResult {
@@ -70,6 +75,8 @@ export interface BookingResult {
   createdAt: string;
   /** Whether the confirmation email went out (real bookings only). */
   emailSent?: boolean;
+  /** The price actually booked (server-calculated snapshot). */
+  pricing?: PriceQuote;
   /** Owner's current "customer reschedule notice" (hours), for the policy line on the confirmation page. */
   rescheduleNoticeHours?: number;
   /** Prototype/mock only: lets the preview open the cancel page. Never set for real bookings. */
@@ -116,6 +123,8 @@ export interface BookingClient {
   readonly name: string;
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
   createBooking(request: BookingRequest): Promise<BookingResult>;
+  /** Price for a bundle (optionally with a code). Always calculated server-side for real bookings. */
+  quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote>;
   /** Customer cancel link: look up the booking behind a token. */
   getCancellation(token: string): Promise<CancellationSummary>;
   /** Customer cancel link: cancel with a required reason. */

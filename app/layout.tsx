@@ -4,6 +4,10 @@ import { getTheme, themeCssVariables } from "@/config/themes";
 import { site } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings/server";
 import { SiteSettingsProvider } from "@/components/SiteSettings/SiteSettingsProvider";
+import { CatalogProvider } from "@/components/Catalog/CatalogProvider";
+import { getPublicCatalog } from "@/lib/pricing/server";
+import { todayInZone } from "@/lib/booking/timezone";
+import { bookingRules } from "@/config/booking";
 import ChalkFilters from "@/components/ChalkFilters/ChalkFilters";
 import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
 import Header from "@/components/Header/Header";
@@ -67,6 +71,7 @@ const introScript = `(function(){try{if(location.pathname.indexOf('/admin')===0)
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // The owner's live theme + photos (falls back to the defaults).
   const settings = await getSiteSettings();
+  const catalog = await getPublicCatalog();
   const theme = getTheme(settings.themeId);
   return (
     <html
@@ -86,11 +91,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ChalkFilters />
         <SiteSettingsProvider initial={settings}>
+        <CatalogProvider initial={catalog} initialToday={todayInZone(bookingRules.timeZone)}>
           <SeasonalDecor />
           {/* Header lives in the layout so the logo intro never replays between pages. */}
           <Header />
           {children}
           <Footer />
+        </CatalogProvider>
         </SiteSettingsProvider>
       </body>
     </html>

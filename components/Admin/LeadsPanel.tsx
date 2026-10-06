@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadFilter, LeadList } from "@/lib/leads/types";
-import { formatPrice } from "@/config/bundles";
+import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
@@ -139,7 +139,13 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     }
   };
 
+  const pr = lead.pricing;
   const rows: [string, string][] = [
+    ["Pricing type", pr.pricingType === "offer" ? "Special Offer" : pr.pricingType === "discount" ? "Discount Code" : "Regular"],
+    ["Regular price", formatMoney(pr.regularCents)],
+    ...(pr.pricingType === "offer" ? [["Offer", `${pr.offerLabel ?? "Special offer"}: ${formatMoney(pr.offerCents ?? pr.finalCents)}`] as [string, string]] : []),
+    ...(pr.pricingType === "discount" ? [["Discount code", pr.discountCode ?? ""] as [string, string], ["Discount amount", formatMoney(pr.discountCents)] as [string, string]] : []),
+    ["Final booked price", formatMoney(pr.finalCents)],
     ["Baby age", lead.babyAge],
     ["Full address", lead.address],
     ["Notes", lead.notes || "None"],
@@ -163,7 +169,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         <span className={`${styles.statusPill} ${styles[`status_${lead.status}`]}`}>{STATUS_LABEL[lead.status]}</span>
       </div>
       <p className={`${styles.leadLine} chalk-soft`}>
-        <b>{lead.bundleName}</b> · {formatPrice(lead.packagePrice)} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
+        <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents)} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
       </p>
       <p className={`${styles.leadMeta} chalk-soft`}>
         {lead.email} · {lead.phone}

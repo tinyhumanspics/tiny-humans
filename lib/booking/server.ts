@@ -3,6 +3,7 @@ import { log } from "@/lib/log";
 import { MockBookingProvider } from "./mock-provider";
 import { OutlookBookingProvider } from "./outlook-provider";
 import { getAvailabilityRules } from "@/lib/availability/server";
+import { serverPricing } from "@/lib/pricing/server";
 import type { BookingProvider } from "./types";
 
 export type ProviderMode = "mock" | "outlook";
@@ -20,7 +21,7 @@ let instance: { mode: ProviderMode; provider: BookingProvider } | null = null;
 export function getBookingProvider(): BookingProvider {
   const mode = providerMode();
   if (!instance || instance.mode !== mode) {
-    instance = { mode, provider: mode === "outlook" ? new OutlookBookingProvider() : new MockBookingProvider(getAvailabilityRules) };
+    instance = { mode, provider: mode === "outlook" ? new OutlookBookingProvider() : new MockBookingProvider(getAvailabilityRules, serverPricing) };
   }
   return instance.provider;
 }

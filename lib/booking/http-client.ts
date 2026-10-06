@@ -1,4 +1,4 @@
-import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, CancellationSummary, DayAvailability, ManagedBooking } from "./types";
+import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, CancellationSummary, DayAvailability, ManagedBooking, PriceQuote } from "./types";
 import type { BookingErrorCode } from "./errors";
 
 /** Error from the booking API; `message` is already friendly and safe to show. */
@@ -41,6 +41,10 @@ export class HttpBookingClient implements BookingClient {
       headers: { "content-type": "application/json" },
       body: JSON.stringify(request),
     }).then((r) => r.booking);
+  }
+
+  quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote> {
+    return call<{ quote: PriceQuote }>("/api/booking/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ bundleId, code, email }) }).then((r) => r.quote);
   }
 
   getCancellation(token: string): Promise<CancellationSummary> {

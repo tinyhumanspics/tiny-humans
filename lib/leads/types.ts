@@ -17,7 +17,8 @@ export interface Lead {
   babyAge: string;
   bundleId: string;
   bundleName: string;
-  packagePrice: number;
+  /** Price snapshot from booking time (never recalculated). */
+  pricing: { regularCents: number; offerCents: number | null; offerLabel: string | null; discountCode: string | null; discountCents: number; finalCents: number; pricingType: "regular" | "offer" | "discount" };
   sessionDate: string;
   /** "HH:MM" local */
   start: string;

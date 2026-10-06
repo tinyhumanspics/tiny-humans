@@ -1,4 +1,8 @@
-import { getBundle } from "@/config/bundles";
+import { builtInCatalog } from "@/lib/pricing/catalog";
+import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
+import { CODE_MESSAGES, type PricingAdapter } from "@/lib/pricing/types";
+import { bookingRules } from "@/config/booking";
+import { todayInZone } from "./timezone";
 import { availabilityForRange } from "./availability";
 import { defaultAvailabilityRules } from "@/lib/availability/defaults";
 import type { AvailabilityRules } from "@/lib/availability/types";
@@ -39,11 +43,29 @@ export class MockBookingProvider implements BookingProvider {
   readonly name = "mock";
 
   /** Where the owner's availability rules come from (browser storage in the prototype, Neon on the server). */
-  constructor(private readonly rules: () => Promise<AvailabilityRules> = async () => defaultAvailabilityRules()) {}
+  constructor(
+    private readonly rules: () => Promise<AvailabilityRules> = async () => defaultAvailabilityRules(),
+    /** Bundles + codes (Neon on the server, browser storage in the prototype). */
+    private readonly pricing: PricingAdapter = { bundles: async () => builtInCatalog(), validateCode: async () => ({ ok: false, message: CODE_MESSAGES.notFound }) },
+  ) {}
+
+  private async bundle(id: string) {
+    return (await this.pricing.bundles()).find((b) => b.id === id && b.active !== false);
+  }
+
+  async quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote> {
+    const b = await this.bundle(bundleId);
+    if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    const today = todayInZone(bookingRules.timeZone);
+    if (!code?.trim()) return computeQuote(b, today);
+    const check = await this.pricing.validateCode(code, bundleId, email);
+    if (!check.ok) throw new BookingError("invalid_request", check.message);
+    return computeQuote(b, today, check.terms);
+  }
 
   async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
     await wait(250);
-    const minutes = getBundle(query.bundleId)?.durationMinutes ?? 60;
+    const minutes = (await this.bundle(query.bundleId))?.durationMinutes ?? 60;
     const rules = await this.rules();
     // The owner's real rules, plus simulated existing bookings so the preview looks lived-in.
     return availabilityForRange(query.from, query.to, minutes, [], rules).map((day) =>
@@ -56,12 +78,17 @@ export class MockBookingProvider implements BookingProvider {
 
   async createBooking(request: BookingRequest): Promise<BookingResult> {
     await wait(700);
+    const b = await this.bundle(request.bundleId);
+    if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    const pricing = await this.quote(request.bundleId, request.discountCode, request.contact.email);
+    request = { ...request, slot: { ...request.slot, end: addMinutes(request.slot.start, b.durationMinutes), label: formatTimeLabel(request.slot.start) } };
     const token = randomToken();
     const result: BookingResult = {
       id: generateBookingReference(),
       status: "mock",
       request,
       createdAt: new Date().toISOString(),
+      pricing,
       rescheduleNoticeHours: (await this.rules()).limits.rescheduleNoticeHours,
       preview: { cancelToken: token },
     };
@@ -136,8 +163,10 @@ export class MockBookingProvider implements BookingProvider {
     const all = this.store.read();
     const rec = all.find((r) => r.result.id === reference);
     if (!rec || rec.status === "cancelled") throw new BookingError("not_found", "We couldn't find that booking.");
-    const minutes = getBundle(rec.result.request.bundleId)?.durationMinutes ?? 60;
-    const [day] = await this.getAvailability({ bundleId: rec.result.request.bundleId, from: slot.date, to: slot.date });
+    const old0 = rec.result.request.slot;
+    const toMin = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
+    const minutes = old0.end ? toMin(old0.end) - toMin(old0.start) : 60;
+    const [day] = await this.availabilityFor(minutes, slot.date);
     if (!day?.slots.some((s) => s.start === slot.start)) throw new BookingError("slot_unavailable", friendly.rescheduleTaken);
     const old = rec.result.request.slot;
     const end = addMinutes(slot.start, minutes);
@@ -146,6 +175,12 @@ export class MockBookingProvider implements BookingProvider {
     rec.status = "rescheduled";
     this.store.write(all);
     return rec.result;
+  }
+
+  /** Availability for a session length (rescheduling keeps the booking's own length). */
+  private async availabilityFor(minutes: number, date: string) {
+    const rules = await this.rules();
+    return availabilityForRange(date, date, minutes, [], rules);
   }
 
   /** Prototype /admin > Leads: permanent delete. */
@@ -176,7 +211,7 @@ function mockManaged(rec: MockRecord, noticeHours: number): ManagedBooking {
   return {
     reference: rec.result.id,
     bundleId: r.bundleId,
-    bundleName: getBundle(r.bundleId)?.name ?? r.bundleId,
+    bundleName: rec.result.pricing?.bundleName ?? r.bundleId,
     date: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,
@@ -229,7 +264,7 @@ function mockSummary(rec: MockRecord): CancellationSummary {
   const past = new Date(`${r.slot.date}T${r.slot.start}:00`).getTime() <= Date.now();
   return {
     reference: rec.result.id,
-    bundleName: getBundle(r.bundleId)?.name ?? r.bundleId,
+    bundleName: rec.result.pricing?.bundleName ?? r.bundleId,
     date: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,
@@ -240,7 +275,7 @@ function mockSummary(rec: MockRecord): CancellationSummary {
 
 function mockLead(rec: MockRecord): Lead {
   const r = rec.result.request;
-  const b = getBundle(r.bundleId);
+  const p: PriceQuote = rec.result.pricing ?? { bundleId: r.bundleId, bundleName: r.bundleId, regularCents: 0, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: 0, pricingType: "regular" };
   const sent = { sent: false, at: null, error: "prototype (nothing sent)" };
   return {
     reference: rec.result.id,
@@ -251,8 +286,8 @@ function mockLead(rec: MockRecord): Lead {
     babyName: r.contact.babyName ?? null,
     babyAge: r.contact.babyAge,
     bundleId: r.bundleId,
-    bundleName: b?.name ?? r.bundleId,
-    packagePrice: b?.price ?? 0,
+    bundleName: p.bundleName,
+    pricing: { regularCents: p.regularCents, offerCents: p.offerCents, offerLabel: p.offerLabel, discountCode: p.discountCode, discountCents: p.discountCents, finalCents: p.finalCents, pricingType: p.pricingType },
     sessionDate: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,

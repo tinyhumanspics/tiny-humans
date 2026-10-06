@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { site } from "@/config/site";
-import { formatPrice, getBundle } from "@/config/bundles";
+import type { Bundle } from "@/config/bundles";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { activeOffer, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
+import { pricingRows } from "@/lib/booking/templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
@@ -239,7 +242,18 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
   const { photos } = useSiteSettings();
   const inspiration = findPhoto(photos, selection.inspirationId);
+  const { getBundle, today } = useCatalog();
   const bundle = getBundle(state.bundleId);
+  // review-step price: always calculated by the server (the browser only displays it)
+  const [quote, setQuote] = useState<PriceQuote | null>(null);
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  useEffect(() => {
+    if (state.step !== STEP.review || !state.bundleId) return;
+    if (quote && quote.bundleId === state.bundleId) return;
+    setAppliedCode(null);
+    provider.quote(state.bundleId).then(setQuote).catch(() => setQuote(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.step, state.bundleId]);
 
   const next = () => {
     switch (state.step) {
@@ -272,6 +286,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         bundleId: state.bundleId,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,
+        discountCode: appliedCode ?? undefined,
         contact: {
           parentName: c.parentName.trim(),
           email: c.email.trim(),
@@ -316,7 +331,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                 <span className={styles.chipLabel}>Your bundle</span>{" "}
                 <span className={styles.bundleName}>{bundle.name}</span>
                 <span className={styles.bundleMeta}>
-                  {formatPrice(bundle.price)} · {bundle.duration} · {bundle.photos} edited photos
+                  {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${bundle.photos} edited photos` : ""}
                 </span>
               </p>
               {inspiration && (
@@ -398,7 +413,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                     <Review
                       rows={[
                         { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
-                        { label: "Price", value: formatPrice(bundle.price), step: -1 },
+                        ...(quote ? pricingRows(quote) : [["Package total", formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))] as [string, string]]).map(([label, value]) => ({ label, value, step: -1 })),
                         { label: "Payment due", value: "After the photoshoot", step: -1 },
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
@@ -418,6 +433,22 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                     />
                   )}
 
+                  {state.step === STEP.review && bundle && (
+                    <DiscountField
+                      key={bundle.id}
+                      applied={appliedCode}
+                      onApply={async (code) => {
+                        const q = await provider.quote(bundle.id, code, state.contact.email.trim());
+                        setQuote(q);
+                        setAppliedCode(q.pricingType === "discount" ? q.discountCode : null);
+                        return q;
+                      }}
+                      onRemove={async () => {
+                        setAppliedCode(null);
+                        setQuote(await provider.quote(bundle.id).catch(() => null));
+                      }}
+                    />
+                  )}
                   {state.step === STEP.review && <BabyLedNote compact />}
 
                   {state.stepError && (
@@ -613,17 +644,21 @@ function Confirmation({
   onReset: () => void;
 }) {
   const r = result.request;
+  const { getBundle } = useCatalog();
   const bundle = getBundle(r.bundleId);
+  const price = result.pricing;
   const firstName = r.contact.parentName.split(" ")[0];
   const { photos } = useSiteSettings();
   const inspiration = findPhoto(photos, r.inspirationPhotoId);
   const details: [string, string][] = [
     ["Booking reference", result.id],
-    ["Bundle", bundle?.name ?? ""],
+    ["Bundle", price?.bundleName ?? bundle?.name ?? ""],
     ["Session date", formatLongDate(r.slot.date)],
     ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)}`],
     ["Location", formatAddress(r.address)],
-    ["Package total", bundle ? formatPrice(bundle.price) : ""],
+    ...(price?.pricingType === "offer" ? [["Special offer", price.offerLabel ?? "Special offer"] as [string, string]] : []),
+    ...(price?.pricingType === "discount" ? [["Discount code", `${price.discountCode} (-${formatMoney(price.discountCents)})`] as [string, string]] : []),
+    ["Package total", price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""],
   ];
   return (
     <div className={styles.confirm} role="status">
@@ -649,7 +684,7 @@ function Confirmation({
         <dl className={styles.paymentRows}>
           <div className={styles.confirmRow}>
             <dt className="chalk-soft">Package total</dt>
-            <dd className="chalk-soft">{bundle ? formatPrice(bundle.price) : ""}</dd>
+            <dd className="chalk-soft">{price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""}</dd>
           </div>
           <div className={styles.confirmRow}>
             <dt className="chalk-soft">Payment due</dt>
@@ -692,6 +727,7 @@ function Confirmation({
 /* ---------------- prototype only: preview the email + the cancel link ---------------- */
 
 function PrototypePreviews({ result }: { result: BookingResult }) {
+  const { getBundle } = useCatalog();
   const router = useRouter();
   const { theme, photos } = useSiteSettings();
   const [html, setHtml] = useState<string | null>(null);
@@ -702,9 +738,10 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
   const openEmail = async () => {
     const { bookingConfirmationEmail } = await import("@/lib/email/templates/booking-confirmation");
     const r = result.request;
-    const bundle = getBundle(r.bundleId)!;
+    const pricing = result.pricing!;
+    const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
     const mail = bookingConfirmationEmail(
-      { reference: result.id, bundle, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
+      { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
       { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline" },
     );
     setHtml(mail.html);
@@ -744,6 +781,44 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
         </div>,
         document.body,
       )}
+    </div>
+  );
+}
+
+/* ---------------- optional discount code (review step) ---------------- */
+
+function DiscountField({ applied, onApply, onRemove }: { applied: string | null; onApply: (code: string) => Promise<PriceQuote>; onRemove: () => Promise<void> }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<{ kind: "ok" | "info" | "error"; text: string } | null>(null);
+  const apply = async () => {
+    if (!code.trim()) return setNote({ kind: "error", text: "Enter a code, or skip this. It's optional." });
+    setBusy(true);
+    setNote(null);
+    try {
+      const q = await onApply(code.trim());
+      setNote(q.pricingType === "discount" ? { kind: "ok", text: `Code ${q.discountCode} applied: -${formatMoney(q.discountCents)}.${q.note ? " " + q.note : ""}` } : { kind: "info", text: q.note ?? "Your price is already the best available." });
+    } catch (e) {
+      setNote({ kind: "error", text: e instanceof Error ? e.message : "We couldn't check that code. Please try again." });
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className={styles.discount}>
+      <label htmlFor="discount-code" className={`${styles.discountLabel} chalk-soft`}>Have a discount code? <span className={styles.optional}>(optional)</span></label>
+      {applied ? (
+        <p className={`${styles.discountApplied} chalk-soft`}>
+          Code <b>{applied}</b> applied.{" "}
+          <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={async () => { setCode(""); setNote(null); await onRemove(); }}>Remove</button>
+        </p>
+      ) : (
+        <div className={styles.discountRow}>
+          <input id="discount-code" className={styles.input} value={code} maxLength={24} autoCapitalize="characters" autoComplete="off" placeholder="Enter code" onChange={(e) => { setCode(e.target.value); setNote(null); }} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), void apply())} />
+          <button type="button" className={styles.discountApply} onClick={apply} disabled={busy}>{busy ? "Checking…" : "Apply"}</button>
+        </div>
+      )}
+      {note && <p className={`${note.kind === "error" ? styles.error : styles.discountNote} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
     </div>
   );
 }

@@ -3,7 +3,7 @@
  * Change this file, then run `npm run db:generate` to create a migration.
  */
 import { sql } from "drizzle-orm";
-import { boolean, check, date, index, integer, pgEnum, pgTable, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const bookingStatus = pgEnum("booking_status", ["pending", "confirmed", "rescheduled", "cancelled"]);
 
@@ -68,6 +68,17 @@ export const bookings = pgTable(
     internalCancellationSentAt: timestamp("internal_cancellation_sent_at", { withTimezone: true }),
     internalCancellationError: text("internal_cancellation_error"),
 
+    /* price snapshot at booking time (never recalculated from current bundles) */
+    regularPriceCents: integer("regular_price_cents"),
+    offerPriceCents: integer("offer_price_cents"),
+    offerLabel: text("offer_label"),
+    discountCode: text("discount_code"),
+    discountAmountCents: integer("discount_amount_cents"),
+    finalPriceCents: integer("final_price_cents"),
+    pricingType: text("pricing_type"),
+    /** What the bundle included when it was booked. */
+    packageInclusions: jsonb("package_inclusions").$type<string[]>(),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -78,6 +89,7 @@ export const bookings = pgTable(
     index("bookings_status_idx").on(t.status),
     index("bookings_email_idx").on(t.email),
     index("bookings_created_at_idx").on(t.createdAt),
+    check("bookings_pricing_type_check", sql`${t.pricingType} is null or ${t.pricingType} in ('regular', 'offer', 'discount')`),
     check("bookings_cancelled_by_check", sql`${t.cancelledBy} is null or ${t.cancelledBy} in ('customer', 'admin')`),
   ],
 );
@@ -176,4 +188,92 @@ export const bookingRescheduleHistory = pgTable(
     index("booking_reschedule_history_booking_idx").on(t.bookingId, t.createdAt),
     check("booking_reschedule_history_by_check", sql`${t.rescheduledBy} in ('customer', 'admin')`),
   ],
+);
+
+/* ---------------- pricing & promotions (/admin/pricing) ---------------- */
+
+export const bundlesTable = pgTable(
+  "bundles",
+  {
+    id: text("id").primaryKey(),
+    name: text("name").notNull(),
+    description: text("description"),
+    regularPriceCents: integer("regular_price_cents").notNull(),
+    durationMinutes: integer("duration_minutes").notNull(),
+    durationLabel: text("duration_label"),
+    photosLabel: text("photos_label"),
+    badge: text("badge"),
+    active: boolean("active").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
+    offerEnabled: boolean("offer_enabled").notNull().default(false),
+    offerPriceCents: integer("offer_price_cents"),
+    offerLabel: text("offer_label"),
+    offerEndsOn: date("offer_ends_on", { mode: "string" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("bundles_price_check", sql`${t.regularPriceCents} >= 0`),
+    check("bundles_duration_check", sql`${t.durationMinutes} between 15 and 480`),
+    check("bundles_offer_check", sql`${t.offerPriceCents} is null or (${t.offerPriceCents} >= 0 and ${t.offerPriceCents} < ${t.regularPriceCents})`),
+  ],
+);
+
+export const bundleInclusions = pgTable(
+  "bundle_inclusions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bundleId: text("bundle_id").notNull().references(() => bundlesTable.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    text: text("text").notNull(),
+  },
+  (t) => [index("bundle_inclusions_bundle_idx").on(t.bundleId, t.position)],
+);
+
+export const discountCodes = pgTable(
+  "discount_codes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Stored uppercase; matched case-insensitively. */
+    code: text("code").notNull().unique(),
+    discountType: text("discount_type").notNull(),
+    /** percent: 1-100; fixed: cents */
+    discountValue: integer("discount_value").notNull(),
+    active: boolean("active").notNull().default(true),
+    expiresOn: date("expires_on", { mode: "string" }),
+    maxUses: integer("max_uses"),
+    onePerEmail: boolean("one_per_email").notNull().default(false),
+    internalNote: text("internal_note"),
+    usesCount: integer("uses_count").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("discount_codes_type_check", sql`${t.discountType} in ('percent', 'fixed')`),
+    check("discount_codes_value_check", sql`${t.discountValue} > 0 and (${t.discountType} <> 'percent' or ${t.discountValue} <= 100)`),
+    check("discount_codes_max_uses_check", sql`${t.maxUses} is null or ${t.maxUses} > 0`),
+  ],
+);
+
+export const discountCodeBundles = pgTable(
+  "discount_code_bundles",
+  {
+    codeId: uuid("code_id").notNull().references(() => discountCodes.id, { onDelete: "cascade" }),
+    bundleId: text("bundle_id").notNull().references(() => bundlesTable.id, { onDelete: "cascade" }),
+  },
+  (t) => [primaryKey({ columns: [t.codeId, t.bundleId] })],
+);
+
+export const discountCodeUsage = pgTable(
+  "discount_code_usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    codeId: uuid("code_id").notNull().references(() => discountCodes.id, { onDelete: "cascade" }),
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    email: text("email").notNull(),
+    /** lower(email) when the code is one-per-email, else null (so the unique index only applies then). */
+    emailKey: text("email_key"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("discount_code_usage_one_per_email_idx").on(t.codeId, t.emailKey), index("discount_code_usage_code_idx").on(t.codeId)],
 );

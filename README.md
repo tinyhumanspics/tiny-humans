@@ -217,6 +217,20 @@ Storage: Neon tables `availability_weekly`, `booking_settings`, `availability_ov
 
 No payment is taken online. The review step shows "Due today: $0"; the confirmation page, confirmation email and Outlook event show the package total, "Due today: $0" and "Payment due: After the photoshoot". Wording lives in `PAYMENT_NOTE` (`lib/booking/templates.ts`).
 
+## Pricing & Promotions (/admin/pricing)
+
+**Central pricing.** Bundles live in Neon (`bundles`, `bundle_inclusions`; seeded from `config/bundles.ts` by migration 0005). Everything customer-facing reads them: the public bundle cards and booking (via `CatalogProvider`, fed by `getPublicCatalog()` in the root layout: cached, refreshed on every admin save and every 5 minutes), the server-side booking/quote logic (`getCatalog()`, always fresh), emails and Leads. Without a database, or before migration 0005 runs, the built-in bundles are used. The prototype keeps bundles/codes in browser storage.
+
+**Bundles:** name, regular price, description, session length, edited photos, small label, "What's included" (add / edit / reorder / delete), active/inactive, special offer. Inactive bundles disappear from the site and can't be booked. A bundle with any booking in its history can't be deleted (deactivate it instead).
+
+**Special offers** (`activeOffer` in `lib/pricing/engine.ts`): active only while enabled AND today (studio time zone) is on/before the end date. Then the card shows a chalk sticker (offer label), the regular price crossed out, the offer price, and "Offer ends: <date>". After the end date the regular price returns automatically (checked on the server for every quote/booking, and again in the browser for cached pages).
+
+**Discount codes:** percentage or fixed amount, selected bundles only, active, expiration date, maximum total uses, one use per email, internal note (admin only), created date, usage count. Customers can enter one code on the review step (optional). The browser sends only the code text; `/api/booking/quote` and the booking itself validate it on the server (exists, active, not expired, applies to the bundle, under the limit, not already used by this email) and calculate the price. At booking time one use is reserved atomically (`claimCode`: the counter only increments while under the limit; a unique index enforces one-per-email) and released if the booking fails.
+
+**No stacking:** only one saving applies. If a bundle has an active offer and the customer enters a code, the single option with the lowest valid total is used, and the customer is told which one and why.
+
+**Price snapshots:** every booking stores what was actually booked (`regular_price_cents`, `offer_price_cents`, `offer_label`, `discount_code`, `discount_amount_cents`, `final_price_cents`, `pricing_type`, `package_inclusions`, plus `package_name`). Emails, the confirmation page and Leads use the snapshot, never the current bundle, so later price changes, deleted codes or deactivated bundles never change past bookings. Bookings made before 0005 are back-filled from their `package_price`.
+
 ## Owner area layout (/admin)
 
 Each section has its own page, with one shared navigation bar (`components/Admin/nav.ts`, shell in `components/Admin/AdminApp.tsx`):
@@ -226,6 +240,7 @@ Each section has its own page, with one shared navigation bar (`components/Admin
 | `/admin` Dashboard | Active / rescheduled / cancelled lead counts, current theme, links to every section |
 | `/admin/leads` | Full-width lead management: details, reschedule, cancel, **Delete Lead** |
 | `/admin/availability` | Weekly hours, booking rules (incl. customer reschedule notice), special dates, time blocks |
+| `/admin/pricing` | **Pricing & Promotions**: bundles, prices, inclusions, special offers, discount codes |
 | `/admin/photos` | **Photos / Media**: pictures by website section, per theme |
 | `/admin/theme` | Which seasonal theme visitors see |
 | `/admin/settings` | Sign out, connections (Blob, Neon, Outlook, Resend) |
@@ -304,6 +319,7 @@ Alternative: paste each file into the Neon SQL editor, in order, once:
 - `drizzle/0002_resend_internal_notification.sql` (adds `internal_notification_sent/_at/_error` to `bookings`)
 - `drizzle/0003_booking_cancellation_and_leads.sql` (cancellation fields, hashed management token, cancellation email statuses)
 - `drizzle/0004_booking_reschedule_history.sql` (`booking_reschedule_history` table + `customer_reschedule_notice_hours` default 48)
+- `drizzle/0005_pricing_and_promotions.sql` (bundles, inclusions, discount codes + usage, booking price snapshot columns; seeds the current bundles)
 
 When the schema changes later: edit `lib/db/schema.ts`, run `npm run db:generate` to create a new migration file, review it, then `npm run db:migrate`. Never run destructive migrations against production without a backup/branch (Neon branches make this easy).
 

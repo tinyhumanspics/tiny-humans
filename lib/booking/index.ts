@@ -2,6 +2,7 @@ import type { BookingClient } from "./types";
 import { MockBookingProvider } from "./mock-provider";
 import { HttpBookingClient } from "./http-client";
 import { readPrototypeAvailability } from "@/lib/availability/prototype";
+import { prototypePricingAdapter } from "@/lib/pricing/prototype";
 
 let client: BookingClient | null = null;
 
@@ -12,7 +13,7 @@ let client: BookingClient | null = null;
  *   provider from BOOKING_PROVIDER (mock or outlook).
  */
 export function getBookingClient(): BookingClient {
-  if (!client) client = process.env.NEXT_PUBLIC_PROTOTYPE === "1" ? new MockBookingProvider(async () => readPrototypeAvailability()) : new HttpBookingClient();
+  if (!client) client = process.env.NEXT_PUBLIC_PROTOTYPE === "1" ? new MockBookingProvider(async () => readPrototypeAvailability(), prototypePricingAdapter) : new HttpBookingClient();
   return client;
 }
 

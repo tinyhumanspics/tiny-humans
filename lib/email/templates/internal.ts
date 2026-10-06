@@ -1,6 +1,6 @@
-import { formatPrice } from "@/config/bundles";
+import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
+import { formatAddress, pricingRows, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
 import { esc } from "../layout";
 import type { RenderedEmail } from "../types";
 
@@ -40,7 +40,9 @@ export function internalNewBookingEmail(d: BookingDetails, createdAt: Date): Ren
     ["Baby name", d.contact.babyName || "Not provided"],
     ["Baby age", d.contact.babyAge],
     ["Bundle", d.bundle.name],
-    ["Package total", formatPrice(d.bundle.price)],
+    ["Pricing", d.pricing.pricingType === "offer" ? `Special offer (${d.pricing.offerLabel})` : d.pricing.pricingType === "discount" ? `Discount code ${d.pricing.discountCode}` : "Regular price"],
+    ...(d.pricing.pricingType === "regular" ? [["Regular price", formatMoney(d.pricing.regularCents)] as [string, string]] : []),
+    ...pricingRows(d.pricing).map(([k, v]) => [k === "Package total" ? "Final package total" : k, v] as [string, string]),
     ["Payment due", "After the photoshoot"],
     ["Session date", formatLongDate(d.date)],
     ["Session time", `${formatTimeLabel(d.start)} to ${formatTimeLabel(d.end)}`],

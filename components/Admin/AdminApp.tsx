@@ -13,6 +13,7 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
 import LeadsPanel from "./LeadsPanel";
 import MediaPanel from "./MediaPanel";
+import PricingPanel from "./PricingPanel";
 import { ADMIN_NAV, type AdminSection } from "./nav";
 import styles from "./Admin.module.css";
 
@@ -98,6 +99,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       {section === "dashboard" && <Dashboard api={api} settings={settings} />}
       {section === "leads" && <LeadsPanel api={api} />}
       {section === "availability" && <AvailabilityPanel api={api} />}
+      {section === "pricing" && <PricingPanel api={api} />}
       {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
       {section === "theme" && <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />}
       {section === "settings" && <SettingsPanel api={api} storageReady={storageReady} onSignOut={signOut} />}

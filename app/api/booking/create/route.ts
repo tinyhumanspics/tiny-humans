@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError, friendly } from "@/lib/booking/errors";
 import { bookingRequestSchema } from "@/lib/booking/validation";
-import { addMinutes, formatTimeLabel } from "@/lib/booking/dates";
-import { getBundle } from "@/config/bundles";
+import { formatTimeLabel } from "@/lib/booking/dates";
 import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
@@ -17,17 +16,16 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: first?.message && first.message.length < 120 ? first.message : "Please check your details and try again.", code: "invalid_request" }, { status: 400 });
   }
   const r = parsed.data;
-  const bundle = getBundle(r.bundleId)!;
-  // The server decides the session length; the browser's end time is never trusted.
-  const end = addMinutes(r.slot.start, bundle.durationMinutes);
+  // The server decides the session length and price; the browser's end time and prices are never trusted.
   try {
     const booking = await getBookingProvider().createBooking({
       bundleId: r.bundleId,
-      slot: { id: `${r.slot.date}T${r.slot.start}`, date: r.slot.date, start: r.slot.start, end, label: formatTimeLabel(r.slot.start) },
+      slot: { id: `${r.slot.date}T${r.slot.start}`, date: r.slot.date, start: r.slot.start, end: "", label: formatTimeLabel(r.slot.start) },
       contact: r.contact,
       address: r.address,
       inspirationPhotoId: r.inspirationPhotoId,
       requestId: r.requestId,
+      discountCode: r.discountCode,
     });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {

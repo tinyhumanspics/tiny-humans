@@ -1,6 +1,6 @@
 "use client";
 
-import { bundles } from "@/config/bundles";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import SectionHeading from "@/components/SectionHeading/SectionHeading";
@@ -12,6 +12,7 @@ import styles from "./Bundles.module.css";
 export default function Bundles() {
   const { id, title, subtitle } = site.sections.bundles;
   const { inspirationId } = useBookingSelection();
+  const { bundles } = useCatalog();
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">

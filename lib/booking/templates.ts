@@ -1,5 +1,6 @@
 import { site } from "@/config/site";
-import { formatPrice, type Bundle } from "@/config/bundles";
+import type { Bundle } from "@/config/bundles";
+import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
 import type { BookingContact, SessionAddress } from "./types";
 
@@ -13,6 +14,17 @@ export interface BookingDetails {
   contact: BookingContact;
   address: SessionAddress;
   inspirationTitle?: string;
+  /** Price actually booked. */
+  pricing: PriceQuote;
+}
+
+/** Price lines for emails/calendar: regular, offer or code, then the total. */
+export function pricingRows(p: PriceQuote): [string, string][] {
+  const rows: [string, string][] = [];
+  if (p.pricingType === "offer") rows.push(["Regular price", formatMoney(p.regularCents)], [p.offerLabel || "Special offer", formatMoney(p.offerCents ?? p.finalCents)]);
+  if (p.pricingType === "discount") rows.push(["Regular price", formatMoney(p.regularCents)], ["Discount code", p.discountCode ?? ""], ["Discount", `-${formatMoney(p.discountCents)}`]);
+  rows.push(["Package total", formatMoney(p.finalCents)]);
+  return rows;
 }
 
 /** What a reschedule email needs. */
@@ -22,7 +34,8 @@ export interface RescheduleDetails {
   email: string;
   phone: string;
   bundleName: string;
-  packagePrice: number;
+  /** Final booked price (cents). */
+  packageTotalCents: number;
   location: string;
   oldDate: string;
   oldStart: string;
@@ -70,7 +83,7 @@ export function eventBodyHtml(d: BookingDetails): string {
   const rows: [string, string | undefined][] = [
     ["Booking reference", d.reference],
     ["Package", d.bundle.name],
-    ["Package total", formatPrice(d.bundle.price)],
+    ...pricingRows(d.pricing),
     ["Due at booking", "$0 (nothing collected)"],
     ["Payment due", "After the photoshoot"],
     ["Parent / guardian", d.contact.parentName],

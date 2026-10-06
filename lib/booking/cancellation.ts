@@ -1,6 +1,5 @@
 import "server-only";
 import { and, eq, ne } from "drizzle-orm";
-import { getBundle } from "@/config/bundles";
 import { getDb } from "@/lib/db/client";
 import { bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
@@ -125,7 +124,7 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
     parentName: updated.parentName,
     email: updated.email,
     phone: updated.phone,
-    bundleName: getBundle(updated.packageId)?.name ?? updated.packageName,
+    bundleName: updated.packageName,
     date: updated.sessionDate,
     start: s.start,
     end: s.end,

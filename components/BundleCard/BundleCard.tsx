@@ -1,6 +1,9 @@
 "use client";
 
-import { formatPrice, type Bundle } from "@/config/bundles";
+import type { Bundle } from "@/config/bundles";
+import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
+import { formatLongDate } from "@/lib/booking/dates";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
@@ -20,13 +23,21 @@ interface Props {
 /** A package box drawn on the board. Every word inside is chalk. */
 export default function BundleCard({ bundle, index, href }: Props) {
   const { theme } = useSiteSettings();
+  const { today } = useCatalog();
+  // date-based only: the offer shows while enabled and today is on/before its end date
+  const offer = activeOffer(bundle, today);
   const doodle = theme.decorations.cards[index % 3];
   const featured = Boolean(bundle.badge);
   const titleId = `bundle-${bundle.id}`;
   return (
     <Reveal delay={index * 120} className={styles.revealWrap}>
     <BoardDoodles area="card" only={index} />
-    <article className={`${styles.card} ${featured ? styles.featured : ""}`} aria-labelledby={titleId} data-index={index}>
+    <article className={`${styles.card} ${featured ? styles.featured : ""} ${offer ? styles.hasOffer : ""}`} aria-labelledby={titleId} data-index={index}>
+      {offer && (
+        <p className={styles.offerSticker} aria-hidden="true">
+          <span>{offer.label}</span>
+        </p>
+      )}
       <ChalkBox className={styles.box} seed={40 + index * 7} wobble={3.4} strokeWidth={2.8}>
         <ChalkDoodle name={doodle} size={34} color={index === 1 ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
         <div className={`${styles.content} chalk`}>
@@ -37,14 +48,26 @@ export default function BundleCard({ bundle, index, href }: Props) {
             </p>
           )}
           <h3 id={titleId} className={styles.name}>{bundle.name}</h3>
-          <p className={styles.price}>
-            <span className="visually-hidden">Price: </span>
-            {formatPrice(bundle.price)}
-          </p>
+          {bundle.description && <p className={styles.description}>{bundle.description}</p>}
+          {offer ? (
+            <>
+              <p className={styles.price}>
+                <span className="visually-hidden">{offer.label}: was {formatMoney(toCents(bundle.price))}, now </span>
+                <s className={styles.wasPrice} aria-hidden="true">{formatMoney(toCents(bundle.price))}</s>{" "}
+                <span className={styles.offerPrice}>{formatMoney(offer.cents)}</span>
+              </p>
+              {offer.endsOn && <p className={styles.offerEnds}>Offer ends: {formatLongDate(offer.endsOn).replace(/^\w+, /, "")}</p>}
+            </>
+          ) : (
+            <p className={styles.price}>
+              <span className="visually-hidden">Price: </span>
+              {formatMoney(toCents(bundle.price))}
+            </p>
+          )}
           <ChalkDoodle grain={false} name="underline" size={120} color="var(--sun-yellow)" strokeWidth={3} className={styles.priceLine} />
           <ul className={styles.features}>
-            {bundle.features.map((f) => (
-              <li key={f}>
+            {bundle.features.map((f, fi) => (
+              <li key={`${fi}-${f}`}>
                 <ChalkDoodle grain={false} name="check" size={24} color="var(--sun-yellow)" strokeWidth={4.6} className={styles.check} />
                 <span>{f}</span>
               </li>
