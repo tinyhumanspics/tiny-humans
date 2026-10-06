@@ -1,8 +1,9 @@
+import { emptyThemeMedia, mediaFromList, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
 import { DEFAULT_THEME, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
-import type { PhotoSetId, SiteSettings } from "./types";
+import type { SiteSettings } from "./types";
 
-export const defaultSettings: SiteSettings = { themeId: DEFAULT_THEME, photoSetId: DEFAULT_THEME, photoSets: {}, updatedAt: null };
+export const defaultSettings: SiteSettings = { themeId: DEFAULT_THEME, media: {}, updatedAt: null };
 
 const MAX_PHOTOS = 60;
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -43,23 +44,52 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
 
 const isThemeId = (v: unknown): v is TinyHumansTheme => (THEME_IDS as string[]).includes(v as string);
 
+function parseSlot(v: unknown, allowDataUrls: boolean, where: string): PortfolioPhoto | null {
+  if (!v) return null;
+  return parsePhotos([v], allowDataUrls, where)[0] ?? null;
+}
+
+function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string): ThemeMedia {
+  const o = (raw ?? {}) as Record<string, unknown>;
+  const m = emptyThemeMedia();
+  const t = Array.isArray(o.title) ? o.title : [];
+  m.title = [0, 1].map((i) => parseSlot(t[i], allowDataUrls, `${id} title pictures`));
+  const gs = Array.isArray(o.groups) ? o.groups : [];
+  m.groups = m.groups.map((_, gi) => {
+    const g = (gs[gi] ?? {}) as Record<string, unknown>;
+    const ps = Array.isArray(g.photos) ? g.photos : [];
+    const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
+    return { photos: [0, 1, 2].map((i) => parseSlot(ps[i], allowDataUrls, `${id} pictures`)), title: text(g.title, 60), text: text(g.text, 120) };
+  });
+  const ex = Array.isArray(o.extra) ? o.extra.filter(Boolean) : [];
+  m.extra = ex.length ? parsePhotos(ex.slice(0, MEDIA_GROUPS.extra.max), allowDataUrls, `${id} extra pictures`) : [];
+  return m;
+}
+
 /** Validate untrusted settings (from the network or storage). Throws on bad input. */
 export function parseSettings(input: unknown, { allowDataUrls = false } = {}): SiteSettings {
   const o = (input ?? {}) as Record<string, unknown>;
   const themeId = isThemeId(o.themeId) ? o.themeId : DEFAULT_THEME;
-  const photoSets: Partial<Record<PhotoSetId, PortfolioPhoto[]>> = {};
-  const rawSets = (o.photoSets ?? {}) as Record<string, unknown>;
+  const media: Partial<Record<TinyHumansTheme, ThemeMedia>> = {};
+  const rawMedia = (o.media ?? {}) as Record<string, unknown>;
+  const legacySets = (o.photoSets ?? {}) as Record<string, unknown>;
   for (const id of THEME_IDS) {
-    const list = rawSets[id];
-    if (Array.isArray(list) && list.length) photoSets[id] = parsePhotos(list, allowDataUrls, id === "default" ? "the Original pictures" : `the ${id} pictures`);
+    if (rawMedia[id]) media[id] = parseThemeMedia(rawMedia[id], allowDataUrls, id);
+    else if (Array.isArray(legacySets[id]) && (legacySets[id] as unknown[]).length) {
+      // settings saved before media slots existed: same pictures, same positions
+      media[id] = mediaFromList(parsePhotos(legacySets[id] as unknown[], allowDataUrls, `the ${id} pictures`));
+    }
   }
-  // settings saved before picture sets existed
-  if (!photoSets.default && Array.isArray(o.photos) && o.photos.length) photoSets.default = parsePhotos(o.photos, allowDataUrls, "the Original pictures");
-  const photoSetId = isThemeId(o.photoSetId) && (o.photoSetId === "default" || photoSets[o.photoSetId]) ? o.photoSetId : DEFAULT_THEME;
-  return { themeId, photoSetId, photoSets, updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null };
+  if (!media.default && Array.isArray(o.photos) && o.photos.length) media.default = mediaFromList(parsePhotos(o.photos, allowDataUrls, "the Original pictures"));
+  return { themeId, media, updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null };
 }
 
-/** Every photo address used by any picture set. */
+/** Every custom photo in every theme. */
+export function allMediaPhotos(s: SiteSettings): PortfolioPhoto[] {
+  return Object.values(s.media).flatMap((m) => (m ? [...m.title, ...m.groups.flatMap((g) => g.photos), ...m.extra].filter(Boolean) as PortfolioPhoto[] : []));
+}
+
+/** Every photo address used by any theme. */
 export function allPhotoSources(s: SiteSettings): string[] {
-  return Object.values(s.photoSets).flatMap((list) => (list ?? []).map((p) => p.src));
+  return allMediaPhotos(s).map((p) => p.src);
 }

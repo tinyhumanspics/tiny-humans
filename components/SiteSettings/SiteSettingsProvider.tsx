@@ -1,5 +1,6 @@
 "use client";
 
+import { feedPhotos, resolveMedia, type ResolvedMedia } from "@/config/media";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme } from "@/config/themes";
 import { portfolio as builtInPhotos, type PortfolioPhoto } from "@/config/portfolio";
@@ -12,7 +13,9 @@ interface Ctx {
   settings: SiteSettings;
   themeId: TinyHumansTheme;
   theme: ThemeDefinition;
-  /** Photos shown on the site (owner's photos, or the built-in ones). */
+  /** Pictures for the active theme, by website section. */
+  media: ResolvedMedia;
+  /** "Little moments" photos in feed order (lightbox, inspiration links). */
   photos: PortfolioPhoto[];
   /** Apply settings immediately (used by /admin after saving). */
   applySettings: (s: SiteSettings) => void;
@@ -51,7 +54,8 @@ export function SiteSettingsProvider({ initial, children }: { initial: SiteSetti
       settings,
       themeId: theme.id,
       theme,
-      photos: livePhotos(settings),
+      media: liveMedia(settings),
+      photos: feedPhotos(liveMedia(settings)),
       applySettings,
       ready,
     }),
@@ -68,10 +72,9 @@ export function useSiteSettings(): Ctx {
 }
 
 /** Photos on the site: the live picture set, falling back to the Original set. */
-export function livePhotos(s: SiteSettings): PortfolioPhoto[] {
-  const live = s.photoSets[s.photoSetId];
-  if (live?.length) return live;
-  return s.photoSets.default?.length ? s.photoSets.default : builtInPhotos;
+/** Pictures for the theme visitors see (each theme independent). */
+export function liveMedia(s: SiteSettings): ResolvedMedia {
+  return resolveMedia(s.media[s.themeId]);
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {

@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Owner-only area: theme switching + portfolio photos. Not linked from the site. */
+/** Owner area dashboard (navigation to every section). Not linked from the site. */
 export default function AdminPage() {
   return (
     <main id="top" className="container">
-      <AdminApp />
+      <AdminApp section="dashboard" />
     </main>
   );
 }

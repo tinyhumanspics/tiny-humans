@@ -217,6 +217,35 @@ Storage: Neon tables `availability_weekly`, `booking_settings`, `availability_ov
 
 No payment is taken online. The review step shows "Due today: $0"; the confirmation page, confirmation email and Outlook event show the package total, "Due today: $0" and "Payment due: After the photoshoot". Wording lives in `PAYMENT_NOTE` (`lib/booking/templates.ts`).
 
+## Owner area layout (/admin)
+
+Each section has its own page, with one shared navigation bar (`components/Admin/nav.ts`, shell in `components/Admin/AdminApp.tsx`):
+
+| Page | What it does |
+|---|---|
+| `/admin` Dashboard | Active / rescheduled / cancelled lead counts, current theme, links to every section |
+| `/admin/leads` | Full-width lead management: details, reschedule, cancel, **Delete Lead** |
+| `/admin/availability` | Weekly hours, booking rules (incl. customer reschedule notice), special dates, time blocks |
+| `/admin/photos` | **Photos / Media**: pictures by website section, per theme |
+| `/admin/theme` | Which seasonal theme visitors see |
+| `/admin/settings` | Sign out, connections (Blob, Neon, Outlook, Resend) |
+
+**Lead filters:** All (every non-cancelled lead: confirmed, rescheduled, pending) · Confirmed · Rescheduled · Cancelled. Cancelled leads appear only under Cancelled. Counts come from the database.
+
+**Delete Lead** (permanent, for test bookings) is separate from Cancel and needs a confirmation dialog ("Delete this lead permanently?" → Cancel / Delete Permanently); the API also requires `confirm: "DELETE"`. Safety (`deleteLeadPermanently` in `lib/leads/server.ts`): an active booking is first cancelled through the consistent cancellation path **without emails** (Neon → Outlook, rolled back if Outlook fails), so a delete can never leave an orphaned Outlook event; if Outlook is unreachable, nothing is deleted. Then the row is removed: reschedule history cascades (FK `ON DELETE CASCADE`) and the management-token hash lives on the row. If that final step fails, the booking stays cleanly cancelled and the admin can retry.
+
+**Photos / Media** (`config/media.ts`): pictures are grouped by where they appear on the home page, and every theme (Original, Thanksgiving, Christmas, New Year) has its own copy:
+
+| Group | Slots | Where on the site |
+|---|---|---|
+| Title Pictures | 2 | The pinned photos next to "Tiny moments. Big memories." |
+| Love This One Pictures | 3 | "Little moments" photos above the "Love this one?" prompt |
+| Picture Your Family Here Pictures | 3 | Photos above the "Picture your family here" prompt |
+| Want A Moment Like This Pictures | 3 | Photos above the "Want a moment like this?" prompt |
+| More Little Moments Pictures | up to 12 | Extra photos at the end of the section (optional) |
+
+Each slot shows its thumbnail, "Image N", whether it's your picture or the built-in one, Replace, Details (title/alt) and "Use built-in picture". Each prompt's title/text can be edited per theme (empty = original wording). An empty slot shows the built-in picture for that position, never another theme's picture. The public site shows the media of the active theme. Stored in the existing Vercel Blob settings file (`media` per theme); settings saved in the old picture-set format are migrated automatically into the same positions. No database change.
+
 ## Managing bookings: cancel + reschedule (customer links and /admin)
 
 **Booking-management token.** Every booking gets one random 256-bit token (`lib/booking/cancel-token.ts`). Only its SHA-256 hash is stored (`bookings.cancel_token_hash`), so a database leak can't produce working links and a booking reference can't be used instead. The customer confirmation email carries two links on our own site (`NEXT_PUBLIC_SITE_URL`):

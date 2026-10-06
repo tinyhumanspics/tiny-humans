@@ -105,6 +105,8 @@ export interface ManagedBooking {
 export interface CancelOptions {
   reason: string;
   by: "customer" | "admin";
+  /** Skip customer/internal emails (used by admin "Delete Lead"). */
+  silent?: boolean;
 }
 
 /** Used by the booking form in the browser. */

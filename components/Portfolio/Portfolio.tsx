@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { buildPortfolioFeed } from "@/config/portfolio";
+import { buildFeedFromMedia } from "@/config/media";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import { site } from "@/config/site";
 import SectionHeading from "@/components/SectionHeading/SectionHeading";
@@ -19,8 +19,8 @@ export default function Portfolio() {
   const { id, title, subtitle } = site.sections.portfolio;
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
-  const { photos: portfolio } = useSiteSettings();
-  const feed = buildPortfolioFeed(portfolio);
+  const { photos: portfolio, media } = useSiteSettings();
+  const feed = buildFeedFromMedia(media);
 
   const close = () => {
     const i = openIndex;

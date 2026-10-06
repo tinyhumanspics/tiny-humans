@@ -117,6 +117,8 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
   let updated: Booking = claimed;
   log.info("booking.cancel", "Booking cancelled (Neon + Outlook consistent)", { reference: row.bookingReference, by: opts.by });
 
+  if (opts.silent) return updated;
+
   const s = summaryOf(updated);
   const details: CancellationDetails = {
     reference: updated.bookingReference,

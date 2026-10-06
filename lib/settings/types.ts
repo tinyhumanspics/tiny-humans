@@ -1,18 +1,14 @@
 import type { TinyHumansTheme } from "@/config/themes";
-import type { PortfolioPhoto } from "@/config/portfolio";
+import type { ThemeMedia } from "@/config/media";
 
-/** Picture sets use the same names as the themes, but are chosen separately. */
-export type PhotoSetId = TinyHumansTheme;
-
-/** Everything the owner can change from /admin. */
+/** Everything the owner can change from /admin (stored in Vercel Blob). */
 export interface SiteSettings {
+  /** The theme visitors see. */
   themeId: TinyHumansTheme;
-  /** Which picture set is on the site. Independent of the theme. */
-  photoSetId: PhotoSetId;
   /**
-   * Picture sets. A missing "default" set means the built-in photos from
-   * config/portfolio.ts; a missing seasonal set means "no photos yet".
+   * Pictures per theme, by website section (see config/media.ts). Each theme is
+   * independent: an empty slot shows the built-in picture, never another theme's.
    */
-  photoSets: Partial<Record<PhotoSetId, PortfolioPhoto[]>>;
+  media: Partial<Record<TinyHumansTheme, ThemeMedia>>;
   updatedAt: string | null;
 }

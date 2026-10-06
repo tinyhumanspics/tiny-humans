@@ -11,8 +11,8 @@ import styles from "./Hero.module.css";
 
 export default function Hero() {
   const { hero } = site;
-  const { photos, theme } = useSiteSettings();
-  const [first, second] = [photos[0], photos[Math.min(4, photos.length - 1)]];
+  const { media, theme } = useSiteSettings();
+  const [first, second] = media.title;
   const [doodleA, doodleB] = theme.decorations.hero;
   return (
     <section className={styles.hero} aria-labelledby="hero-title">

@@ -4,6 +4,7 @@ import { bookingRules } from "@/config/booking";
 import { getBundle } from "@/config/bundles";
 import { portfolio } from "@/config/portfolio";
 import { getSiteSettings } from "@/lib/settings/server";
+import { allMediaPhotos } from "@/lib/settings/defaults";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
 import { bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
@@ -307,7 +308,7 @@ export class OutlookBookingProvider implements BookingProvider {
   private async photoTitle(id: string): Promise<string | undefined> {
     try {
       const settings = await getSiteSettings();
-      const all = [...Object.values(settings.photoSets).flat(), ...portfolio];
+      const all = [...allMediaPhotos(settings), ...portfolio];
       return all.find((p) => p?.id === id)?.title;
     } catch {
       return portfolio.find((p) => p.id === id)?.title;

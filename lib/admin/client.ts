@@ -29,6 +29,7 @@ export interface AdminApi {
   cancelLead(reference: string, reason: string): Promise<Lead>;
   leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
+  deleteLead(reference: string): Promise<void>;
 }
 
 export const IS_PROTOTYPE = process.env.NEXT_PUBLIC_PROTOTYPE === "1";
@@ -74,6 +75,9 @@ const httpApi: AdminApi = {
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
   rescheduleLead: async (reference, slot) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/reschedule", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...slot }) }))).lead,
+  deleteLead: async (reference) => {
+    await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
+  },
   listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
   cancelLead: async (reference, reason) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason }) }))).lead,
@@ -163,9 +167,12 @@ const prototypeApi: AdminApi = {
   deleteBlock: async (id) => protoSave((r) => ({ ...r, blocks: r.blocks.filter((x) => x.id !== id) })),
   listLeads: async (filter) => {
     const all = new MockBookingProvider().listLeads();
-    const counts = { all: all.length, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as LeadList["counts"];
-    all.forEach((l) => (counts[l.status] += 1));
-    const leads = filter === "all" ? all : all.filter((l) => l.status === filter);
+    const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as LeadList["counts"];
+    all.forEach((l) => {
+      counts[l.status] += 1;
+      if (l.status !== "cancelled") counts.all += 1;
+    });
+    const leads = filter === "all" ? all.filter((l) => l.status !== "cancelled") : all.filter((l) => l.status === filter);
     return { leads, counts, total: leads.length };
   },
   leadAvailability: async (reference, from, to) => {
@@ -176,6 +183,9 @@ const prototypeApi: AdminApi = {
     const mock = new MockBookingProvider(async () => readPrototypeAvailability());
     await mock.rescheduleBooking(reference, slot);
     return mock.listLeads().find((l) => l.reference === reference)!;
+  },
+  deleteLead: async (reference) => {
+    new MockBookingProvider().deleteLead(reference);
   },
   cancelLead: async (reference, reason) => {
     if (reason.trim().length < 3) throw new Error("Add a cancellation reason.");

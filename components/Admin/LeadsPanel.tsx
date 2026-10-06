@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import { formatPrice } from "@/config/bundles";
@@ -10,11 +11,11 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
 import styles from "./Admin.module.css";
 
+/** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "all", label: "All", alwaysShow: true },
   { id: "confirmed", label: "Confirmed", alwaysShow: true },
   { id: "rescheduled", label: "Rescheduled", alwaysShow: true },
-  { id: "pending", label: "Pending", alwaysShow: false },
   { id: "cancelled", label: "Cancelled", alwaysShow: true },
 ];
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
@@ -49,6 +50,11 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     void load(filter);
   }, [filter, load]);
 
+  const onDeleted = () => {
+    setOpen(null);
+    void load(filter);
+  };
+
   const onCancelled = (lead: Lead) => {
     // refresh counts + list so the cancellation shows immediately
     void load(filter);
@@ -63,7 +69,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
           {loading ? "Loading…" : "Refresh"}
         </button>
       </div>
-      <p className={`${styles.muted} chalk-soft`}>Every booking, newest first. Cancelled bookings stay here as history.</p>
+      <p className={`${styles.muted} chalk-soft`}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
 
       <div className={styles.editTabs} role="group" aria-label="Filter leads">
         {FILTERS.filter((f) => f.alwaysShow || (data?.counts[f.id] ?? 0) > 0).map((f) => (
@@ -78,7 +84,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
 
       <ul className={styles.leadList}>
         {data?.leads.map((lead) => (
-          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} />
+          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onDeleted={onDeleted} />
         ))}
       </ul>
       {data && data.leads.length < data.total && (
@@ -90,10 +96,26 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   );
 }
 
-function LeadCard({ lead, api, open, onToggle, onCancelled }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void }) {
+function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onDeleted: () => void }) {
   const { photos } = useSiteSettings();
   const [cancelling, setCancelling] = useState(false);
   const [moving, setMoving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
+  const doDelete = async () => {
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      await api.deleteLead(lead.reference);
+      setConfirmDelete(false);
+      onDeleted();
+    } catch (e) {
+      setDeleteErr(e instanceof Error ? e.message : "Couldn't delete. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
+  };
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -230,7 +252,28 @@ function LeadCard({ lead, api, open, onToggle, onCancelled }: { lead: Lead; api:
                 Cancel Booking
               </button>
             ))}
+          <div className={styles.dangerZone}>
+            <p className={`${styles.hintSmall} chalk-soft`}>Delete is permanent and meant for test bookings. To keep the history, use Cancel instead.</p>
+            <button type="button" className={`${styles.smallButton} ${styles.deleteBtn}`} onClick={() => setConfirmDelete(true)}>Delete Lead</button>
+          </div>
         </div>
+      )}
+      {confirmDelete && createPortal(
+        <div className={styles.dialogBackdrop} role="presentation" onClick={() => !deleting && setConfirmDelete(false)}>
+          <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={`del-t-${lead.reference}`} aria-describedby={`del-d-${lead.reference}`} onClick={(e) => e.stopPropagation()}>
+            <h3 id={`del-t-${lead.reference}`} className={`${styles.h3} chalk`}>Delete this lead permanently?</h3>
+            <p id={`del-d-${lead.reference}`} className={`${styles.muted} chalk-soft`}>
+              This will permanently remove the booking record and cannot be undone. ({lead.parentName}, {lead.reference})
+              {lead.status !== "cancelled" ? " Its Outlook event is removed first; no emails are sent." : ""}
+            </p>
+            {deleteErr && <p className={`${styles.error} chalk-soft`} role="alert">{deleteErr}</p>}
+            <div className={styles.photoBar}>
+              <button type="button" className={styles.smallButton} onClick={() => setConfirmDelete(false)} disabled={deleting} autoFocus>Cancel</button>
+              <button type="button" className={`${styles.smallButton} ${styles.deleteBtn}`} onClick={doDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete Permanently"}</button>
+            </div>
+          </div>
+        </div>,
+        document.body,
       )}
     </li>
   );

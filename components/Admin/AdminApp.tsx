@@ -1,33 +1,40 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
-import { portfolio as builtInPhotos, type PortfolioPhoto } from "@/config/portfolio";
-import type { PhotoSetId, SiteSettings } from "@/lib/settings/types";
-import { getAdminApi, preparePhoto, PROTOTYPE_PASSWORD } from "@/lib/admin/client";
+import type { SiteSettings } from "@/lib/settings/types";
+import { getAdminApi, PROTOTYPE_PASSWORD } from "@/lib/admin/client";
+import type { LeadList } from "@/lib/leads/types";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
 import LeadsPanel from "./LeadsPanel";
+import MediaPanel from "./MediaPanel";
+import { ADMIN_NAV, type AdminSection } from "./nav";
 import styles from "./Admin.module.css";
 
 type Status = "loading" | "signedOut" | "ready";
 type Note = { kind: "ok" | "error"; text: string } | null;
 
-const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
-const titleFromFile = (name: string) =>
-  name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
+/** Where the admin menu was scrolled to (kept while moving between sections). */
+let navScrollLeft = 0;
 
-export default function AdminApp() {
+/** Owner area shell: sign-in, settings, navigation, then one section. */
+export default function AdminApp({ section = "dashboard" }: { section?: AdminSection }) {
   const api = useMemo(() => getAdminApi(), []);
   const { applySettings } = useSiteSettings();
   const [status, setStatus] = useState<Status>("loading");
   const [storageReady, setStorageReady] = useState(true);
   const [authReady, setAuthReady] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  // Each section is its own page, so the menu is rebuilt on every click: put it back where it was.
+  useLayoutEffect(() => {
+    if (navRef.current) navRef.current.scrollLeft = navScrollLeft;
+  }, [status]);
 
   const load = async () => {
     const s = await api.getSettings();
@@ -58,39 +65,98 @@ export default function AdminApp() {
     applySettings(saved);
     return saved;
   };
+  const signOut = async () => {
+    await api.logout();
+    setStatus("signedOut");
+  };
+  const current = ADMIN_NAV.find((n) => n.id === section)!;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${section === "leads" ? styles.pageWide : ""}`}>
       <div className={styles.topbar}>
-        <h1 className={`${styles.h1} chalk`}>Owner area</h1>
-        <button
-          type="button"
-          className={`${styles.linkButton} chalk-soft`}
-          onClick={async () => {
-            await api.logout();
-            setStatus("signedOut");
-          }}
-        >
-          Sign out
-        </button>
+        <p className={`${styles.areaName} chalk-soft`}>Owner area</p>
+        <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={signOut}>Sign out</button>
       </div>
+      <nav ref={navRef} className={styles.adminNav} aria-label="Owner area" onScroll={(e) => (navScrollLeft = e.currentTarget.scrollLeft)}>
+        <ul>
+          {ADMIN_NAV.map((n) => (
+            <li key={n.id}>
+              <Link href={n.href} className={`${styles.navLink} chalk-soft`} aria-current={n.id === section ? "page" : undefined}>{n.label}</Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <h1 className={`${styles.h1} chalk`}>{current.label}</h1>
 
       {api.mode === "prototype" && (
-        <p className={`${styles.banner} chalk-soft`}>
-          Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.
-        </p>
+        <p className={`${styles.banner} chalk-soft`}>Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.</p>
       )}
-      {api.mode === "live" && !storageReady && (
-        <p className={`${styles.bannerError} chalk-soft`} role="alert">
-          Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).
-        </p>
+      {api.mode === "live" && !storageReady && (section === "photos" || section === "theme") && (
+        <p className={`${styles.bannerError} chalk-soft`} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
       )}
 
-      <LeadsPanel api={api} />
-      <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />
-      <AvailabilityPanel api={api} />
-      <PicturesPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />
+      {section === "dashboard" && <Dashboard api={api} settings={settings} />}
+      {section === "leads" && <LeadsPanel api={api} />}
+      {section === "availability" && <AvailabilityPanel api={api} />}
+      {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
+      {section === "theme" && <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />}
+      {section === "settings" && <SettingsPanel api={api} storageReady={storageReady} onSignOut={signOut} />}
     </div>
+  );
+}
+
+/* ---------------- dashboard ---------------- */
+
+function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; settings: SiteSettings }) {
+  const [leads, setLeads] = useState<LeadList | null>(null);
+  const [leadsError, setLeadsError] = useState(false);
+  useEffect(() => {
+    api.listLeads("all").then(setLeads).catch(() => setLeadsError(true));
+  }, [api]);
+  const theme = themes[settings.themeId];
+  const stat = (n: number | undefined) => (leads ? String(n ?? 0) : leadsError ? "–" : "…");
+  return (
+    <section className={styles.section} aria-label="Dashboard">
+      <div className={styles.stats}>
+        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
+        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
+        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.cancelled)}</span><span className="chalk-soft">Cancelled</span></div>
+        <div className={styles.stat}><span className={`${styles.statNum} ${styles.statTheme} chalk`}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
+      </div>
+      {leadsError && <p className={`${styles.hintSmall} chalk-soft`}>Lead numbers appear once the database is connected.</p>}
+      <ul className={styles.dashCards}>
+        {ADMIN_NAV.filter((n) => n.id !== "dashboard").map((n) => (
+          <li key={n.id}>
+            <Link href={n.href} className={styles.dashCard}>
+              <span className={`${styles.dashTitle} chalk`}>{n.label}</span>
+              <span className={`${styles.dashBlurb} chalk-soft`}>{n.blurb}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/* ---------------- settings ---------------- */
+
+function SettingsPanel({ api, storageReady, onSignOut }: { api: ReturnType<typeof getAdminApi>; storageReady: boolean; onSignOut: () => void }) {
+  return (
+    <section className={styles.section} aria-label="Settings">
+      <h2 className={`${styles.h2} chalk`}>Account</h2>
+      <p className={`${styles.muted} chalk-soft`}>
+        {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel. To change it, update the variable and redeploy."}
+      </p>
+      <ChalkButton variant="outline" onClick={onSignOut} seed={970}>Sign out</ChalkButton>
+      <h2 className={`${styles.h2} chalk`}>Connections</h2>
+      <ul className={styles.connList}>
+        <li className="chalk-soft"><b>Photos &amp; theme storage (Vercel Blob):</b> {api.mode === "prototype" ? "this browser (prototype)" : storageReady ? "connected" : "not connected yet"}</li>
+        <li className="chalk-soft"><b>Bookings &amp; availability:</b> Neon database (DATABASE_URL)</li>
+        <li className="chalk-soft"><b>Calendar:</b> Outlook via Microsoft Graph (MICROSOFT_* variables)</li>
+        <li className="chalk-soft"><b>Booking emails:</b> Resend (RESEND_API_KEY, BOOKING_FROM_EMAIL, BOOKING_INTERNAL_FROM_EMAIL, BOOKING_NOTIFICATION_EMAIL)</li>
+      </ul>
+      <p className={`${styles.hintSmall} chalk-soft`}>These are set in Vercel → Settings → Environment Variables. The README explains each one.</p>
+    </section>
   );
 }
 
@@ -207,303 +273,3 @@ function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; o
   );
 }
 
-/* ---------------- pictures ---------------- */
-
-type Upload = (b: Blob) => Promise<{ src: string }>;
-
-function setPhotos(settings: SiteSettings, id: PhotoSetId): PortfolioPhoto[] {
-  if (id === "default") return settings.photoSets.default ?? builtInPhotos;
-  return settings.photoSets[id] ?? [];
-}
-
-const setLabel = (id: PhotoSetId) => `${themes[id].label} pictures`;
-
-/** Picture sets: choose which one is on the site, and edit any of them. */
-function PicturesPanel({ settings, onSave, upload }: { settings: SiteSettings; onSave: (s: SiteSettings) => Promise<SiteSettings>; upload: Upload }) {
-  const [busy, setBusy] = useState<PhotoSetId | null>(null);
-  const [note, setNote] = useState<Note>(null);
-  const [editing, setEditing] = useState<PhotoSetId>(settings.photoSetId);
-  const [editorDirty, setEditorDirty] = useState(false);
-
-  const choose = async (id: PhotoSetId) => {
-    setBusy(id);
-    setNote(null);
-    try {
-      await onSave({ ...settings, photoSetId: id });
-      setNote({ kind: "ok", text: `${themes[id].label} pictures are on the site now.` });
-    } catch (e) {
-      setNote({ kind: "error", text: e instanceof Error ? e.message : "Couldn't switch the pictures." });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const openEditor = (id: PhotoSetId) => {
-    if (id === editing) return;
-    if (editorDirty && !window.confirm("You have unsaved changes to these pictures. Leave without saving?")) return;
-    setEditorDirty(false);
-    setEditing(id);
-  };
-
-  return (
-    <section className={styles.section} aria-labelledby="pictures-title">
-      <h2 id="pictures-title" className={`${styles.h2} chalk`}>Portfolio pictures</h2>
-      <p className={`${styles.muted} chalk-soft`}>
-        Keep a set of pictures for each season. Choosing a set swaps every portfolio photo on the site. It never changes on its own when you switch the theme.
-      </p>
-
-      <div className={styles.themes}>
-        {THEME_IDS.map((id, i) => {
-          const photos = setPhotos(settings, id);
-          const live = settings.photoSetId === id;
-          return (
-            <ChalkBox key={id} className={`${styles.themeCard} ${live ? styles.themeLive : ""}`} seed={860 + i} wobble={2.4} strokeWidth={live ? 3 : 2.2} color={live ? "var(--sun-yellow)" : "var(--chalk-white)"}>
-              <div className={styles.setPreview}>
-                {photos.length ? (
-                  photos.slice(0, 3).map((p) => <Image key={p.id + p.src.slice(-12)} src={p.src} alt="" width={p.width} height={p.height} sizes="80px" className={styles.setThumb} />)
-                ) : (
-                  <p className={`${styles.setEmpty} chalk-soft`}>No pictures yet</p>
-                )}
-              </div>
-              <p className={`${styles.setName} chalk-soft`}>
-                {themes[id].label}
-                <span className={styles.setCount}> {photos.length} photo{photos.length === 1 ? "" : "s"}</span>
-              </p>
-              {live ? (
-                <p className={`${styles.liveTag} chalk-soft`}>On the site now</p>
-              ) : (
-                <ChalkButton variant="outline" onClick={() => choose(id)} disabled={busy !== null || photos.length === 0} seed={870 + i} className={styles.themeButton}>
-                  {busy === id ? "Switching…" : `${themes[id].label} Pictures`}
-                </ChalkButton>
-              )}
-            </ChalkBox>
-          );
-        })}
-      </div>
-      {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
-          {note.text}
-        </p>
-      )}
-
-      <div className={styles.editTabs} role="group" aria-label="Choose which pictures to edit">
-        <span className={`${styles.label} chalk-soft`}>Edit:</span>
-        {THEME_IDS.map((id) => (
-          <button key={id} type="button" className={`${styles.tab} ${editing === id ? styles.tabActive : ""}`} aria-pressed={editing === id} onClick={() => openEditor(id)}>
-            {themes[id].label}
-          </button>
-        ))}
-      </div>
-
-      <PhotoPanel key={editing} setId={editing} settings={settings} onSave={onSave} upload={upload} onDirtyChange={setEditorDirty} />
-    </section>
-  );
-}
-
-/* ---------------- one picture set ---------------- */
-
-function PhotoPanel({
-  setId,
-  settings,
-  onSave,
-  upload,
-  onDirtyChange,
-}: {
-  setId: PhotoSetId;
-  settings: SiteSettings;
-  onSave: (s: SiteSettings) => Promise<SiteSettings>;
-  upload: Upload;
-  onDirtyChange: (dirty: boolean) => void;
-}) {
-  const saved = setPhotos(settings, setId);
-  const isDefault = setId === "default";
-  const isLive = settings.photoSetId === setId;
-  const label = setLabel(setId);
-  const [draft, setDraft] = useState<PortfolioPhoto[]>(saved);
-  const [dirty, setDirtyState] = useState(false);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [note, setNote] = useState<Note>(null);
-  const addInput = useRef<HTMLInputElement>(null);
-
-  const setDirty = (d: boolean) => {
-    setDirtyState(d);
-    onDirtyChange(d);
-  };
-
-  useEffect(() => {
-    if (!dirty) setDraft(setPhotos(settings, setId));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [settings, setId]);
-
-  const edit = (next: PortfolioPhoto[]) => {
-    setDraft(next);
-    setDirty(true);
-    setNote(null);
-  };
-  const update = (i: number, patch: Partial<PortfolioPhoto>) => edit(draft.map((p, j) => (j === i ? { ...p, ...patch } : p)));
-  const move = (i: number, by: number) => {
-    const j = i + by;
-    if (j < 0 || j >= draft.length) return;
-    const next = [...draft];
-    [next[i], next[j]] = [next[j], next[i]];
-    edit(next);
-  };
-
-  const prepareAndUpload = async (file: File) => {
-    const { blob, width, height } = await preparePhoto(file);
-    const { src } = await upload(blob);
-    return { src, width, height };
-  };
-
-  const addPhotos = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setBusy("Adding photos…");
-    setNote(null);
-    const added: PortfolioPhoto[] = [];
-    try {
-      for (const file of Array.from(files)) {
-        const img = await prepareAndUpload(file);
-        const title = titleFromFile(file.name);
-        added.push({ id: newId(), ...img, title, alt: title });
-      }
-      edit([...draft, ...added]);
-      setNote({ kind: "ok", text: `${added.length} photo${added.length === 1 ? "" : "s"} added. Press Save to keep them.` });
-    } catch (e) {
-      if (added.length) edit([...draft, ...added]);
-      setNote({ kind: "error", text: e instanceof Error ? e.message : "Couldn't add that photo." });
-    } finally {
-      setBusy(null);
-      if (addInput.current) addInput.current.value = "";
-    }
-  };
-
-  const replace = async (i: number, file: File | undefined) => {
-    if (!file) return;
-    setBusy("Replacing photo…");
-    try {
-      update(i, await prepareAndUpload(file));
-    } catch (e) {
-      setNote({ kind: "error", text: e instanceof Error ? e.message : "Couldn't replace that photo." });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const publish = async (photos: PortfolioPhoto[] | null, okText: string) => {
-    if (isLive && !isDefault && !photos?.length) {
-      setNote({ kind: "error", text: "These pictures are on the site, so the set can't be empty. Switch to another set first." });
-      return;
-    }
-    setBusy("Saving…");
-    try {
-      const photoSets = { ...settings.photoSets };
-      if (photos?.length) photoSets[setId] = photos;
-      else delete photoSets[setId];
-      await onSave({ ...settings, photoSets });
-      setDirty(false);
-      setNote({ kind: "ok", text: okText });
-    } catch (e) {
-      setNote({ kind: "error", text: e instanceof Error ? e.message : "Couldn't save the photos." });
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const minPhotos = isDefault || isLive ? 1 : 0;
-
-  return (
-    <div className={styles.editor}>
-      <h3 className={`${styles.h3} chalk-soft`}>
-        {label}
-        {isLive && <span className={styles.liveSmall}> (on the site now)</span>}
-      </h3>
-      <p className={`${styles.muted} chalk-soft`}>
-        Shown on the home page in this order, in groups of three. The title is what parents see when they book a photo with &ldquo;Book a memory like this one&rdquo;.
-      </p>
-
-      {draft.length === 0 ? (
-        <div className={styles.emptySet}>
-          <p className="chalk-soft">No {label.toLowerCase()} yet. Add new photos, or start from the Original pictures and replace the ones you want.</p>
-          <button type="button" className={styles.smallButton} onClick={() => edit(setPhotos(settings, "default").map((p) => ({ ...p })))}>
-            Start with a copy of the Original pictures
-          </button>
-        </div>
-      ) : (
-        <ol className={styles.photoList}>
-          {draft.map((p, i) => (
-            <li key={p.id + i} className={styles.photoRow}>
-              <div className={styles.photoThumb}>
-                <Image src={p.src} alt="" width={p.width} height={p.height} sizes="120px" className={styles.photoImg} />
-                <span className={`${styles.photoNum} chalk-soft`}>{i + 1}</span>
-              </div>
-              <div className={styles.photoFields}>
-                <label className={`${styles.label} chalk-soft`} htmlFor={`title-${setId}-${i}`}>Title</label>
-                <input id={`title-${setId}-${i}`} className={styles.input} value={p.title} maxLength={80} onChange={(e) => update(i, { title: e.target.value })} />
-                <label className={`${styles.label} chalk-soft`} htmlFor={`caption-${setId}-${i}`}>
-                  Caption under the photo <span className={styles.optional}>(optional)</span>
-                </label>
-                <input id={`caption-${setId}-${i}`} className={styles.input} value={p.caption ?? ""} maxLength={60} onChange={(e) => update(i, { caption: e.target.value })} />
-                <label className={`${styles.label} chalk-soft`} htmlFor={`alt-${setId}-${i}`}>Description for screen readers</label>
-                <input id={`alt-${setId}-${i}`} className={styles.input} value={p.alt} maxLength={200} onChange={(e) => update(i, { alt: e.target.value })} />
-              </div>
-              <div className={styles.photoActions}>
-                <button type="button" className={styles.smallButton} onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move photo ${i + 1} up`}>↑ Up</button>
-                <button type="button" className={styles.smallButton} onClick={() => move(i, 1)} disabled={i === draft.length - 1} aria-label={`Move photo ${i + 1} down`}>↓ Down</button>
-                <label className={styles.smallButton}>
-                  Replace
-                  <input type="file" accept="image/jpeg,image/png,image/webp" className="visually-hidden" aria-label={`Replace photo ${i + 1}`} onChange={(e) => replace(i, e.target.files?.[0])} />
-                </label>
-                <button
-                  type="button"
-                  className={`${styles.smallButton} ${styles.danger}`}
-                  disabled={draft.length <= minPhotos}
-                  onClick={() => {
-                    if (window.confirm(`Remove "${p.title}" from the ${label.toLowerCase()}?`)) edit(draft.filter((_, j) => j !== i));
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <div className={styles.photoBar}>
-        <label className={styles.addButton}>
-          <span className="chalk-soft">+ Add photos</span>
-          <input ref={addInput} type="file" multiple accept="image/jpeg,image/png,image/webp" className="visually-hidden" aria-label={`Add photos to the ${label.toLowerCase()}`} onChange={(e) => addPhotos(e.target.files)} />
-        </label>
-        <div className={styles.photoBarRight}>
-          {dirty && (
-            <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => { setDraft(saved); setDirty(false); setNote(null); }}>
-              Discard changes
-            </button>
-          )}
-          <ChalkButton variant="solid" onClick={() => publish(draft, isLive ? "Saved. The new pictures are on the site." : `Saved. Choose "${themes[setId].label} Pictures" above when you want them on the site.`)} disabled={!dirty || busy !== null} seed={850}>
-            Save {themes[setId].label.toLowerCase()} pictures
-          </ChalkButton>
-        </div>
-      </div>
-
-      {busy && <p className={`${styles.muted} chalk-soft`} aria-live="polite">{busy}</p>}
-      {dirty && !busy && <p className={`${styles.unsaved} chalk-soft`}>You have unsaved changes.</p>}
-      {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
-          {note.text}
-        </p>
-      )}
-
-      {isDefault && settings.photoSets.default && (
-        <button type="button" className={`${styles.linkButton} ${styles.restore} chalk-soft`} onClick={() => { if (window.confirm("Go back to the original placeholder photos?")) publish(null, "Original photos restored."); }}>
-          Restore the original photos
-        </button>
-      )}
-      {!isDefault && !isLive && settings.photoSets[setId] && (
-        <button type="button" className={`${styles.linkButton} ${styles.restore} chalk-soft`} onClick={() => { if (window.confirm(`Delete all ${label.toLowerCase()}?`)) publish(null, `${themes[setId].label} pictures cleared.`); }}>
-          Clear the {label.toLowerCase()}
-        </button>
-      )}
-    </div>
-  );
-}

@@ -147,6 +147,11 @@ export class MockBookingProvider implements BookingProvider {
     return rec.result;
   }
 
+  /** Prototype /admin > Leads: permanent delete. */
+  deleteLead(reference: string): void {
+    this.store.write(this.store.read().filter((r) => r.result.id !== reference));
+  }
+
   /** Prototype /admin > Leads. */
   listLeads(): Lead[] {
     return this.store.read().map(mockLead).reverse();
