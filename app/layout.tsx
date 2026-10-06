@@ -13,10 +13,42 @@ import "@/styles/globals.css";
 const schoolbell = localFont({ src: "./fonts/schoolbell-400.woff2", variable: "--font-schoolbell", display: "swap", weight: "400" });
 const patrick = localFont({ src: "./fonts/patrick-hand-400.woff2", variable: "--font-patrick", display: "swap", weight: "400" });
 
+/**
+ * Social sharing (iMessage, WhatsApp, Facebook, X, other Open Graph crawlers).
+ * Link previews need ABSOLUTE https URLs: if NEXT_PUBLIC_SITE_URL isn't an https
+ * address (e.g. left as localhost), the production domain is used instead.
+ */
+const SOCIAL_BASE = /^https:\/\//.test(site.url) ? site.url.replace(/\/$/, "") : "https://www.tinyhumans.photography";
+const SOCIAL_TITLE = `${site.name} | Newborn & Baby Photography`;
+const SOCIAL_DESCRIPTION = "Newborn & baby photography made with love. We bring the studio to your home, so your little one stays comfy.";
+const SOCIAL_IMAGE = {
+  url: `${SOCIAL_BASE}/og/tiny-humans-og.jpg`,
+  secureUrl: `${SOCIAL_BASE}/og/tiny-humans-og.jpg`,
+  width: 1200,
+  height: 630,
+  type: "image/jpeg",
+  alt: "Tiny Humans logo on a chalkboard: Newborn & Baby Photography",
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL(site.url),
-  title: { default: `${site.name} | Newborn & Baby Photography`, template: `%s | ${site.name}` },
+  metadataBase: new URL(SOCIAL_BASE),
+  title: { default: SOCIAL_TITLE, template: `%s | ${site.name}` },
   description: site.description,
+  openGraph: {
+    type: "website",
+    siteName: site.name,
+    locale: "en_US",
+    url: `${SOCIAL_BASE}/`,
+    title: SOCIAL_TITLE,
+    description: SOCIAL_DESCRIPTION,
+    images: [SOCIAL_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SOCIAL_TITLE,
+    description: SOCIAL_DESCRIPTION,
+    images: [{ url: SOCIAL_IMAGE.url, alt: SOCIAL_IMAGE.alt }],
+  },
 };
 
 export const viewport: Viewport = {
