@@ -27,6 +27,7 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useBookingSelection } from "./BookingSelectionContext";
 import { formatAddress, PAYMENT_NOTE } from "@/lib/booking/templates";
+import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
 import Calendar from "./Calendar";
@@ -665,6 +666,11 @@ function Confirmation({
           </p>
         </div>
       )}
+      {result.rescheduleNoticeHours !== undefined && (
+        <p className={`${styles.rescheduleNote} chalk-soft`}>
+          {rescheduleNoticeText(result.rescheduleNoticeHours)} The Reschedule Booking link is in your confirmation email.
+        </p>
+      )}
       {result.preview && <PrototypePreviews result={result} />}
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
@@ -699,7 +705,7 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
     const bundle = getBundle(r.bundleId)!;
     const mail = bookingConfirmationEmail(
       { reference: result.id, bundle, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
-      { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, images: "inline" },
+      { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline" },
     );
     setHtml(mail.html);
   };

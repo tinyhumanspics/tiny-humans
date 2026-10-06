@@ -62,6 +62,7 @@ export class MockBookingProvider implements BookingProvider {
       status: "mock",
       request,
       createdAt: new Date().toISOString(),
+      rescheduleNoticeHours: (await this.rules()).limits.rescheduleNoticeHours,
       preview: { cancelToken: token },
     };
     const all = this.store.read();

@@ -201,7 +201,7 @@ export class OutlookBookingProvider implements BookingProvider {
     const [customer, internal] = await Promise.allSettled([
       (async () => {
         const links = manageUrls(cancel.token);
-        const mail = bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule });
+        const mail = bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours });
         return sendEmail({
           scope: "resend.customer",
           to: request.contact.email,
@@ -246,7 +246,7 @@ export class OutlookBookingProvider implements BookingProvider {
       .catch((e) => log.error("booking.db", "Could not record email status", { error: e as Error, reference: row.bookingReference }));
 
     log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, customerEmailSent: emailSent, internalNotificationSent: internal.status === "fulfilled" });
-    return { id: row.bookingReference, status: "confirmed", request, createdAt: row.createdAt.toISOString(), emailSent };
+    return { id: row.bookingReference, status: "confirmed", request, createdAt: row.createdAt.toISOString(), emailSent, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
   }
 
   async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {

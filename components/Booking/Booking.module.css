@@ -602,3 +602,5 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .previewTop { display: flex; justify-content: space-between; align-items: center; max-width: 680px; width: 100%; margin: 0 auto; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.15rem; }
 .previewTop p { margin: 0; }
 .previewFrame { width: 100%; max-width: 680px; height: 100%; margin: 0 auto; border: 0; border-radius: 10px; background: #10291a; }
+
+.rescheduleNote { margin: 0; max-width: 460px; text-align: center; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }

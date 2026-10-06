@@ -70,6 +70,8 @@ export interface BookingResult {
   createdAt: string;
   /** Whether the confirmation email went out (real bookings only). */
   emailSent?: boolean;
+  /** Owner's current "customer reschedule notice" (hours), for the policy line on the confirmation page. */
+  rescheduleNoticeHours?: number;
   /** Prototype/mock only: lets the preview open the cancel page. Never set for real bookings. */
   preview?: { cancelToken: string };
 }

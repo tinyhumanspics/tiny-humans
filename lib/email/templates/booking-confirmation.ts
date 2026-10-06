@@ -2,6 +2,7 @@ import { site } from "@/config/site";
 import { formatPrice } from "@/config/bundles";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { formatAddress, PAYMENT_NOTE, type BookingDetails } from "@/lib/booking/templates";
+import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
 import { button, chalkBox, details, esc, heading, paragraph, renderLayout, textLines } from "../layout";
 import { emailTheme } from "../theme";
 import type { ImageMode, RenderedEmail } from "../types";
@@ -9,7 +10,7 @@ import type { ImageMode, RenderedEmail } from "../types";
 /** Customer booking confirmation (follows the active website theme). */
 export function bookingConfirmationEmail(
   d: BookingDetails,
-  opts: { themeId: string; cancelUrl?: string; rescheduleUrl?: string; images?: ImageMode },
+  opts: { themeId: string; cancelUrl?: string; rescheduleUrl?: string; rescheduleNoticeHours?: number; images?: ImageMode },
 ): RenderedEmail {
   const t = emailTheme(opts.themeId);
   const first = d.contact.parentName.split(" ")[0];
@@ -28,6 +29,7 @@ export function bookingConfirmationEmail(
     chalkBox(t, "Payment", [["Package total", formatPrice(d.bundle.price)], ["Payment due", "After the photoshoot"]], PAYMENT_NOTE.email),
     paragraph(t, "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed."),
     paragraph(t, "If you need to make a change to your session, reply to this email."),
+    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? paragraph(t, esc(rescheduleNoticeText(opts.rescheduleNoticeHours)), { align: "center" }) : "",
     opts.rescheduleUrl ? button(t, "Reschedule Booking", opts.rescheduleUrl, "outline") : "",
     opts.cancelUrl ? button(t, "Cancel Booking", opts.cancelUrl, "outline", "You'll be asked to confirm on the next page.") : "",
   ].join("");
@@ -47,7 +49,8 @@ export function bookingConfirmationEmail(
     "",
     "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
     "If you need to make a change to your session, reply to this email.",
-    opts.rescheduleUrl && `\nNeed a different time? ${opts.rescheduleUrl}`,
+    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${rescheduleNoticeText(opts.rescheduleNoticeHours)}`,
+    opts.rescheduleUrl && `Need a different time? ${opts.rescheduleUrl}`,
     opts.cancelUrl && `Need to cancel? ${opts.cancelUrl}`,
     "",
     `Tiny Humans · ${site.contact.email}`,
