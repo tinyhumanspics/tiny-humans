@@ -24,16 +24,17 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(var(--steps, 4), minmax(0, 1fr));
   gap: 4px;
   position: relative;
 }
 
+/* from the first circle's center to the last one's */
 .tracker::before {
   content: "";
   position: absolute;
-  left: 8%;
-  right: 8%;
+  left: calc(50% / var(--steps, 4));
+  right: calc(50% / var(--steps, 4));
   top: 22px;
   border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 25%, transparent);
 }

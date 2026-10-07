@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { bookingSteps } from "@/config/booking";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
@@ -17,7 +18,7 @@ export default function StepTracker({ current, maxReached, onGo }: Props) {
       <p className={cn(styles.trackerMobile, "chalk-soft")}>
         Step {current + 1} of {bookingSteps.length}: {bookingSteps[current].label}
       </p>
-      <ol className={styles.tracker}>
+      <ol className={styles.tracker} style={{ "--steps": bookingSteps.length } as CSSProperties}>
         {bookingSteps.map((step, i) => {
           const done = i < current && i <= maxReached;
           const reachable = i <= maxReached;
