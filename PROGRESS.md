@@ -173,6 +173,16 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
       `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
+- [~] Cancel & reschedule notice + sneak peek (owner request, Oct 7; built + tested locally, waiting on the owner's yes
+      + migration 0010): **one setting** (/admin → Availability → "Cancel & reschedule notice", ≥ 1 h) now closes
+      online **cancelling and rescheduling**; inside it families see "text us at (786) 222-7194" (+ tap-to-text). Each
+      booking keeps the hours in force when it was made (table `booking_terms`, also the bundle's photo count; the
+      migration backfills existing bookings with today's setting). The number is never hard-coded: Terms ("{notice}"),
+      landing FAQ, confirmation + reminder emails, cancel/reschedule pages (`lib/booking/reschedule-policy.ts`);
+      saving the setting revalidates /terms and the landing page. **Sneak peek replaces "Session done"** and the
+      "3 sneak peeks in 24 h" promise: /admin → Send sneak peek (Pixieset link + favorites, pre-filled from the bundle:
+      8/20/35) → email "Choose your N favorites" + Pay button only if unpaid. New promise everywhere: photos to choose
+      from within 24 h of the session, edited favorites within 72 h of the pick. 21 local checks.
 - [x] Email photo slot (owner request, Oct 7): /admin → Photos → **Emails** → "Meet your photographers" (round preview).
       The confirmation email uses: theme's email photo → Original's email photo → "Adrian & Alondra" About Us photo
       (theme's, then Original's) → no photo. `photographersEmailPhoto()` in `config/media.ts`; `ThemeMedia.email`
@@ -284,6 +294,10 @@ them. Email changes: compare old vs new renders with screenshots before sending 
     just text us. If you miss a session without telling us, we may ask for a deposit to rebook."
 18. Editable in /admin: seasonal offers + cutoffs, FAQ, reviews, "Meet the photographers". Layouts stay in code.
 19. Spanish: "same time, no rush" → Phase 3 after Phase 2. Adrian/Alondra review the Spanish copy.
+
+Oct 7 (evening): cancel + reschedule share one notice setting; changes apply to new bookings only. Sneak peek = Pixieset
+gallery where families choose their favorites (as many as the bundle's edited photos); promise: 24 h to choose,
+edited favorites within 72 h of the pick (replaces "3 sneak peeks in 24 hours" + "gallery in 24–72 hours").
 
 Oct 7 (later): **payment = card only, through Stripe** (no Zelle for now; no cash). Owner's Stripe Payment Links:
 Little Moments $149 · Our Little Story $249 · Our Family Story (`forever-little`) $399 (checked: prices match the site).

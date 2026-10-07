@@ -124,6 +124,8 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Links in customer emails carry a 256-bit token; only its hash is stored (`bookings.cancel_token_hash` for the booking's
   own manage link, `booking_emails.link_token_hash` per reminder/after-session email). Which pages accept which kind
   is deliberate (reminders → manage pages; after_session → /pay; gallery_delivered → /pay + /review).
+- Cancel/reschedule notice: never hard-code "48". Use the booking's `booking_terms.notice_hours` (falls back to the
+  /admin setting) and the wording helpers in `lib/booking/reschedule-policy.ts`; pages use `getNoticeHoursSetting()`.
 - Payment links (`/pay?b=<reference>&s=…`) are signed with `ADMIN_SESSION_SECRET`: changing that secret changes every
   booking's payment link (links already sent stop working). The chalk logo intro is skipped on `NO_INTRO_PATHS`
   (`app/layout.tsx`: /review, /pay, /cancel, /reschedule — pages opened from emails) and the ad landing page.
