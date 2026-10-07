@@ -279,9 +279,9 @@
 /* photos / media */
 .editingFor { margin: 10px 0 4px; font-size: 1.15rem; color: var(--chalk-white); }
 .editingFor b { font-family: var(--font-chalk); font-weight: 400; font-size: 1.35rem; color: var(--sun-yellow); }
-.liveTag, .offTag { display: inline-block; margin-left: 8px; padding: 1px 10px; border-radius: 999px; font-size: 0.95rem; line-height: 1.5; white-space: nowrap; vertical-align: middle; }
-.liveTag { border: 2px solid var(--sun-yellow); color: var(--sun-yellow); }
-.offTag { border: 2px dashed var(--chalk-muted); color: var(--chalk-muted); }
+.mediaLiveTag, .mediaOffTag { display: inline-block; margin-left: 8px; padding: 1px 10px; border-radius: 999px; font-size: 0.95rem; line-height: 1.5; white-space: nowrap; vertical-align: middle; }
+.mediaLiveTag { border: 2px solid var(--sun-yellow); color: var(--sun-yellow); }
+.mediaOffTag { border: 2px dashed var(--chalk-muted); color: var(--chalk-muted); }
 .mediaGroup { margin-top: 20px; padding: 14px 16px 16px; border: 2px dashed color-mix(in srgb, var(--cloud-blue) 45%, transparent); border-radius: 14px; }
 .mediaGroupTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.55rem; color: var(--chalk-white); }
 .slotGrid { margin-top: 12px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }

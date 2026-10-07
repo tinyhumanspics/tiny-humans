@@ -90,7 +90,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         ))}
       </div>
       <p className={cn(styles.editingFor, "chalk-soft")} aria-live="polite">
-        Editing media for: <b>{label}</b> {live ? <span className={styles.liveTag}>live on the site now</span> : <span className={styles.offTag}>not the active theme</span>}
+        Editing media for: <b>{label}</b> {live ? <span className={styles.mediaLiveTag}>live on the site now</span> : <span className={styles.mediaOffTag}>not the active theme</span>}
       </p>
       {note && <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
 
