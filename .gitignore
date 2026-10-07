@@ -6,3 +6,6 @@ out
 *.tsbuildinfo
 .DS_Store
 .static-build-api
+
+# local screenshots (baseline for visual comparison)
+.screenshots/
