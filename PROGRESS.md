@@ -3,57 +3,55 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7, after 2a–2c)
-State: everything below is on `main` and live (last deploy `7f4113f` + this handoff's docs commit).
+## ▶ NEXT STEPS (handoff, Oct 7 evening, after Phase 2 + owner requests)
+State: everything below is on `main` and live (last deploy `e0c285a` + this handoff's docs commit).
 1. **1g production verification** with the owner (brief section 4: test event code → one real booking from
-   `/home-sweet-home` → check Events Manager, booking row source, emails, Outlook → cancel → remove the code), then send
-   him the ads message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for
-   `Schedule`). The owner got the 7-step checklist on Oct 7 and hasn't reported results yet. Pixel ID is confirmed in
-   the live bundle; `META_CAPI_ACCESS_TOKEN` can only be confirmed by the owner (step 1) or by server `Schedule`
-   events showing up in Test Events. His test booking will also be the first real send of the new confirmation email.
-2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
-   appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
-3. **Phase 2 (show rate)**: 2a, 2b, 2c **live** (Oct 7, `7f4113f`; owner approved the screenshots, ran migration 0007
-   in Neon and added `CRON_SECRET`). First automatic reminder run: Oct 8, 14:00–14:59 UTC. Card-only payment copy
-   live (`5097fe8`). **2d live** (`548aeac`, Oct 7): owner approved the screenshots + privacy Stripe line, ran migration
-   0008 and added `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`; /privacy visual baseline updated. Not yet exercised
-   for real: the first "Session done" after a real session is the first live Stripe payment page (check /admin shows
-   "Paid" afterwards; if not, Stripe Workbench → Webhooks → Event deliveries). 2e permissions checkboxes **live**
-   (owner approved + ran migration 0009). **Payment link any time** live: every booking has one never-expiring link
-   (/admin → Leads → details → Payment: Text / Copy / Email the link). Next: edge items, optional /admin "Today" view
-   with tap-to-text (uses the SMS permission).
-4. **Time-sensitive:** BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
-   were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
-   check: the calendar UI and availability on Nov 1 itself.
+   `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
+   message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
+   Checklist sent Oct 7; no results yet. His test booking is also the first real send of the new confirmation email.
+2. **Check with the owner that migration 0010 (`booking_terms`) ran in Neon** (he approved the change; SQL is in
+   `drizzle/0010_booking_terms.sql`). Code is safe without it (falls back to the current notice setting).
+3. **Phase 2 extras (the "rest" the owner wants finished before the deposit):** address unit/gate/parking/concierge
+   fields → Outlook event + 24 h reminder (BUG-7); out-of-area flag (Phase 4 travel fee still undecided);
+   Resend webhooks → bounced/complained emails flagged in /admin (+ SPF/DKIM/DMARC check); "block a day" in /admin +
+   notify/reschedule every affected family; duplicate-booking flag (same email/phone); optional /admin "Today" view
+   with tap-to-text (uses the SMS permission). Then BUG-5 overlap constraint (exclusion constraint, migration) and
+   the DST Nov 1 calendar-UI check.
+4. **Queued (owner, Oct 7) — $50 deposit**, build only after item 3: paid **while booking** (Stripe Checkout as the
+   last step; the date is confirmed only once paid), **required for every booking** (min($50, total); $0 bookings
+   skip it), **refunded automatically** when the family cancels online before the notice window; kept inside the
+   window / no-show; carries over on reschedule; **one deposit amount editable in /admin** (new bookings only). The
+   booking's payment link then charges the rest (total − deposit) automatically. Replaces "$0 today, pay after your
+   session" everywhere (landing, booking form, emails, Terms, Meta event timing) → new wording needs the owner's OK.
+   Open details to settle when building: how long a slot is held while Stripe is open; Meta `Schedule` fires after
+   the deposit; refund mechanics (Stripe Refunds API, key needs "Refunds: Write").
 5. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
-   Vercel → Settings → Cron Jobs → View Logs if one says "Not sent".
-6. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
-   partly covers it) — legal wording needs his OK. `/portfolio` page (see "Owner requests").
-7. Admin photo slots for the 6 placeholders are complete (About ×4, landing ×2); the owner can upload them in
-   `/admin/photos`, with editable alt text and per-theme versions.
-8. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
-   The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9 uses it.
+   Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". First real "Send sneak peek" = first live Stripe
+   page from an email; confirm /admin shows "Paid" after payment (else Stripe Workbench → Webhooks → Event deliveries).
+6. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner requests").
+7. Visual baselines in `.screenshots/parity/` are current (updated /privacy Oct 7). The old `.screenshots/baseline/`
+   set was captured mid-animation → recapture before Phase 9 uses it.
 
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
 Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7): main = 7f4113f (+ handoff docs commit), live and smoke-tested: Phase 2a React Email (pixel-identical
-templates in emails/), 2b upgraded confirmation (backdrop swatches, prep guide, what happens next, meet the
-photographers), 2c daily reminder cron (/api/cron/reminders, table booking_emails, migration 0007 applied by the owner,
-CRON_SECRET set). First real reminder run: Oct 8, 10–11 am Miami.
+State (Oct 7): main = e0c285a (+ handoff docs commit), live and smoke-tested: Phase 2 complete — React Email
+templates, upgraded confirmation, daily reminders, after-session flow ("Send sneak peek" with Pixieset + choose N
+favorites, "Gallery delivered" + review form, reviews in /admin), Stripe card payments (never-expiring payment link per
+booking: text/copy/email from /admin; paid status via webhook), optional SMS/photo permissions, one cancel & reschedule
+notice kept per booking and shown everywhere (booking_terms), email photo slot, theme photo fallback to Original.
 Not on main yet: nothing.
 
-Next: Phase 1g with the owner if he has results (checklist in PROGRESS → NEXT STEPS 1), then the ads message. Then
-Phase 2d: after-session emails (owner marks "session done" / "gallery delivered" in /admin; needs his payment details:
-Zelle name/number, card link; review + referral ask), then 2e (SMS consent + photo-use checkboxes, migration first).
-Research current official docs first (note links in PROGRESS.md).
-Time-sensitive: BUG-5 overlap constraint, DST Nov 1 UI check. (No Halloween: the owner dropped it Oct 7.)
-Waiting on the owner: 1g results, payment details for 2d, privacy-policy line for Vercel Analytics, /portfolio page.
-Watch out: the folder is on the iCloud Desktop: " 2"/" 3" duplicate files appear (e.g. .next/types/routes.d 3.ts
-breaks typecheck: delete the duplicates in .next). .agents/ + AGENTS.md are untracked files from another tool: leave
-them. Email changes: compare old vs new renders with screenshots before sending anything real.
+Next: confirm with the owner that migration 0010 ran; then Phase 2 extras in PROGRESS → NEXT STEPS 3 (address
+unit/gate/parking fields first). Research current official docs first (note links in PROGRESS.md).
+Queued after that: the $50 deposit (decisions recorded in NEXT STEPS 4; wording needs owner approval).
+Time-sensitive: BUG-5 overlap constraint, DST Nov 1 calendar check. (No Halloween: dropped by the owner.)
+Waiting on the owner: 1g Meta test results, migration 0010 confirmation, privacy line for Vercel Analytics, /portfolio.
+Watch out: iCloud Desktop folder (" 2"/" 3" duplicates; tsconfig ignores them in .next); .agents/ + AGENTS.md are
+another tool's untracked files — leave them. Local testing: scripts/local-db + fake Graph/Resend/Stripe (see PROGRESS
+→ Local test database). Never hard-code the 48-hour notice; never add bookings columns without migration-first.
 ```
 
 ## Owner requests (outside the original brief)
@@ -85,7 +83,8 @@ them. Email changes: compare old vs new renders with screenshots before sending 
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2e live (Oct 7); edge items next.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + owner requests live (Oct 7); Phase 2 extras next, then
+  the queued $50 deposit.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -173,8 +172,8 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
       `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
-- [~] Cancel & reschedule notice + sneak peek (owner request, Oct 7; built + tested locally, waiting on the owner's yes
-      + migration 0010): **one setting** (/admin → Availability → "Cancel & reschedule notice", ≥ 1 h) now closes
+- [x] Cancel & reschedule notice + sneak peek (owner request, Oct 7; live `e0c285a`, owner approved the wording;
+      confirm he ran migration 0010): **one setting** (/admin → Availability → "Cancel & reschedule notice", ≥ 1 h) now closes
       online **cancelling and rescheduling**; inside it families see "text us at (786) 222-7194" (+ tap-to-text). Each
       booking keeps the hours in force when it was made (table `booking_terms`, also the bundle's photo count; the
       migration backfills existing bookings with today's setting). The number is never hard-coded: Terms ("{notice}"),
