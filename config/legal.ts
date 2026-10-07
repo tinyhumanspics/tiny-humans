@@ -20,7 +20,7 @@ export interface LegalDocument {
 }
 
 const contactLine =
-  "Questions? Email us at hello@tinyhumans.photography, or message us on Instagram at @tinyhumanspics.";
+  "Questions? Email us at hello@tinyhumans.photography, or message us on Instagram at @tinyhumans.photography.";
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",

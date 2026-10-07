@@ -33,7 +33,7 @@ export const site = {
   babyLedNote: "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
   /** Footer: social + contact. */
   social: {
-    instagram: { label: "Instagram", handle: "@tinyhumanspics" as string | null, url: "https://www.instagram.com/tinyhumanspics/" },
+    instagram: { label: "Instagram", handle: "@tinyhumans.photography" as string | null, url: "https://www.instagram.com/tinyhumans.photography/" },
   },
   contact: {
     email: "hello@tinyhumans.photography" as string | null,

@@ -6,7 +6,7 @@ PROGRESS.md holds the phase plan, status, decisions, open owner questions, resea
 ## What this is
 Newborn & baby photography business (Miami Beach, travels anywhere in Florida up to Orlando). The photographers
 (Alondra Jimenez, with Adrian Orozco) bring the studio to the family's home. Live site: https://www.tinyhumans.photography
-(Vercel, auto-deploys every push to `main`). Contact hello@tinyhumans.photography, Instagram @tinyhumanspics.
+(Vercel, auto-deploys every push to `main`). Contact hello@tinyhumans.photography, Instagram @tinyhumans.photography.
 No online payment: "$0 today, pay after your session" (Stripe deposits may come later; keep a slot for a payment step).
 
 ## Stack
