@@ -7,7 +7,7 @@ import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, SOURCE_COOKIE, attributionFromRequest,
  * the link has a click id). The first touch is kept for 90 days; a plain "direct" first touch is replaced by a later
  * campaign touch. The latest Meta click id is also kept (for the Conversions API).
  */
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const res = NextResponse.next();
   const isDocument =
     req.headers.get("sec-fetch-dest") === "document" ||

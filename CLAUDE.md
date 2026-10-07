@@ -101,7 +101,7 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Drizzle inserts/selects list every schema column: **apply a migration to production BEFORE deploying code that adds
   columns to `lib/db/schema.ts`**, or bookings break. Migrations are applied in the Neon SQL editor (owner) for now;
   write them idempotent (`ADD COLUMN IF NOT EXISTS`).
-- Tracking: `lib/tracking/` (attribution cookie via `middleware.ts`, Pixel client, CAPI server). Never send baby data.
+- Tracking: `lib/tracking/` (attribution cookie via `proxy.ts`, Pixel client, CAPI server). Never send baby data.
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.

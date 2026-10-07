@@ -17,3 +17,6 @@ tiny-humans-claude-code-prompt.md
 # Playwright output
 /test-results/
 /playwright-report/
+
+# local AI-session screenshots / outputs
+Claude outputs/

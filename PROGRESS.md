@@ -4,10 +4,11 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff to the VS Code session, Oct 7 ~00:00 ET)
-1. **Local `main` is ahead of GitHub (1c source capture, 1d Pixel/CAPI, 1e legal, tests, docs). DO NOT PUSH until the
-   owner confirms he ran migration `drizzle/0006_booking_source.sql` in the Neon SQL editor (the SELECT must return
-   `new_columns = 9`).** Without it every booking insert fails. Then `git push origin main`, check the Vercel deploy,
-   smoke-test production (pages load, no console errors, /api/booking/availability 200, /privacy shows the Meta section).
+1. **Owner ran migration `0006_booking_source.sql` in Neon (confirmed Oct 7: 9 columns).** Local `main` (1c–1e, tests,
+   docs) is verified and ready; the AI terminal has no GitHub login, so the owner pushes from VS Code (Source Control →
+   Sync). Then check the Vercel deploy (GitHub commit status API) and smoke-test production (pages load, no console
+   errors, /api/booking/availability 200, /privacy shows the Meta section).
+   Branches waiting to merge after that, in order: `wip/next-16` (Next 16.4 upgrade) → `wip/routes` (/bundles + /book).
 2. **Landing page** is on branch `wip/landing-page` (`/home-sweet-home`, "The Stay-Home Session"). Before merging:
    show the owner phone + desktop screenshots and get a yes on the copy (bio "Meet Adrian & Alondra", FAQ — esp. the
    pets answer, bonuses incl. "3 sneak peeks in 24 hours", baby-led promise "within 14 days") and on the intro
@@ -31,6 +32,9 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
   1f on a branch for approval; 1g to do.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
+- Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
+- Oct 7: owner approved deleting the empty Finder/iCloud duplicate folders (`lib copy`, `components/* 2`, `lib/* 2`, …).
+  All were empty (only `.DS_Store`), never in git. Removed with `rmdir` (refuses non-empty folders).
 
 ## Phase 0 — Kickoff
 - [x] Read README + codebase; baseline typecheck/build; lint status noted above
@@ -116,6 +120,18 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
       second bug hunt
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
+- [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
+      TypeScript 5.9 → **7.0.2** (`tsc` = TS 7 via the `@typescript/native` alias; the `typescript` package name =
+      `@typescript/typescript6` because TS 7 has no programmatic API and typescript-eslint/Next need one — Microsoft's
+      documented side-by-side setup; drop the alias once typescript-eslint supports TS 7), ESLint flat config (`eslint` 10 + `eslint-config-next` 16.4). Changes: `middleware.ts` →
+      `proxy.ts` (Node runtime; cookie behavior re-verified with curl), `revalidateTag(tag, { expire: 0 })` (keeps "next
+      visitor sees the new price"; the `'max'` profile would serve one stale copy), `lint` script → `eslint .`, Next added
+      `jsx: react-jsx` + `.next/dev/types` to tsconfig. Turbopack is now the build tool: visual parity checked with
+      `tests/visual/parity.spec.ts` (8 pages × iPhone 14/1440, Next 15 baseline vs 16: all identical within 0.2%).
+      e2e now runs on a production build (`next build && next start`; Next 16 allows one `next dev` per project).
+      `npm audit --omit=dev`: 0 (Next 16 fixed the postcss advisories). Remaining 9 are dev-only (drizzle-kit's
+      esbuild-kit, eslint's braces chain); "fixes" are downgrades → ignore. Kept `@types/node` 22 (match Vercel's Node).
+- [ ] React Compiler lint rules are warnings for now (set-state-in-effect, purity, refs, immutability) → fix in Phase 8.
 ## Phase 8 — Structure move, route groups, split Booking.tsx, library evaluation, remove `config/bundles.ts`
 ## Phase 9 — Tailwind v4 + tokens, one component per slice vs baseline screenshots
 ## Phase 10 — Admin rebuild (light/dark, dashboard, charts, phone-friendly)
@@ -196,11 +212,19 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   Not shipped to the browser; browsers download separately (`npx playwright install`).
 - `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
   SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
+- `eslint` 10 + `eslint-config-next` 16.4 (dev only) — replaces the removed `next lint`. 0 KB to the site. Official.
 
 ## Research notes
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
-  `proxy` and removes `next lint` (we're on 15.5 until Phase 7). Route groups with separate root layouts → full page load
-  between them.
+  `proxy` and removes `next lint`. Route groups with separate root layouts → full page load between them.
+- **Next 16 upgrade guide** (https://nextjs.org/docs/app/guides/upgrading/version-16, checked Oct 7): Turbopack default
+  for dev + build (custom webpack config fails the build), sync request APIs removed, `proxy` = Node runtime only (edge
+  stays on `middleware`), `revalidateTag` needs a 2nd arg (`'max'` = stale-while-revalidate, `{ expire: 0 }` = old
+  immediate behavior; https://nextjs.org/docs/app/api-reference/functions/revalidateTag), image defaults (qualities
+  [75], minimumCacheTTL 4 h, max 3 redirects), `next dev` writes to `.next/dev` + one dev server per project,
+  `data-scroll-behavior="smooth"` needed to keep the old scroll override (we already have it).
+  Note: the very first Turbopack build right after the upgrade failed prerendering `/` (hidden prod error) while a
+  `next dev` was starting in the same folder; every build since (incl. a clean clone + `npm ci`) passes.
 - **Vercel BotID** (`botid` 1.5.11): `withBotId()` in next.config, `initBotId({ protect: [{ path, method }] })` in
   `instrumentation-client.ts` (Next 15.3+), `checkBotId()` in the route. Basic = free on all plans; Deep Analysis (Kasada)
   Pro/Enterprise and billed. Invisible. https://vercel.com/docs/botid · https://vercel.com/kb/guide/vercel-botid-vs-cloudflare-turnstile

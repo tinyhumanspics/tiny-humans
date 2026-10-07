@@ -15,7 +15,7 @@ async function guard() {
   return null;
 }
 const refresh = async () => {
-  try { revalidateTag(CATALOG_TAG); } catch { /* outside a request */ }
+  try { revalidateTag(CATALOG_TAG, { expire: 0 }); } catch { /* outside a request */ }
   await refreshCatalogSnapshot();
 };
 

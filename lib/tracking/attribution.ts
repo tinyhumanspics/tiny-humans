@@ -1,8 +1,8 @@
 /**
  * Booking source ("where did this family come from?"): the first touch of a visit, stored in a first-party,
- * httpOnly cookie for 90 days by `middleware.ts` and saved on the booking by the booking-create route.
+ * httpOnly cookie for 90 days by `proxy.ts` and saved on the booking by the booking-create route.
  *
- * Edge-safe (used by middleware): no Node APIs here.
+ * Used by proxy.ts (Node.js runtime in Next 16); keep it free of heavy imports.
  * Privacy: only campaign parameters, the landing path and the referring site's origin are kept (never a full
  * referrer URL, which can contain personal data).
  */

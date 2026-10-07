@@ -42,7 +42,7 @@ export async function POST(req: Request) {
       inspirationPhotoId: r.inspirationPhotoId,
       requestId: r.requestId,
       discountCode: r.discountCode,
-      // where this family came from (first-party cookie set by middleware; never taken from the request body)
+      // where this family came from (first-party cookie set by proxy.ts; never taken from the request body)
       attribution: decodeAttribution(jar.get(SOURCE_COOKIE)?.value) ?? undefined,
     });
     // Meta Conversions API: after the response is sent, so it can never slow down or fail the booking.

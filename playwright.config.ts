@@ -26,10 +26,12 @@ export default defineConfig({
     { name: "desktop-chrome", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
   ],
   webServer: {
-    command: `npm run dev -- --port ${PORT}`,
+    // a production build: closer to Vercel than `next dev`, no first-compile delays, and Next 16 allows only one
+    // `next dev` per project (so it can run next to yours)
+    command: `npm run build && npm run start -- --port ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 300_000,
     // mock booking provider + no tracking, whatever .env.local says
     env: { BOOKING_PROVIDER: "mock", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
   },

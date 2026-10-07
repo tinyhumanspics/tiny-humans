@@ -69,6 +69,6 @@ export async function saveSiteSettings(next: SiteSettings, previous: SiteSetting
   const removed = [...new Set(allPhotoSources(previous))].filter((src) => src.includes(".blob.vercel-storage.com") && !keep.has(src));
   if (removed.length) await del(removed);
 
-  revalidateTag(SETTINGS_TAG);
+  revalidateTag(SETTINGS_TAG, { expire: 0 }); // expire now: the next visitor sees the change (no stale copy)
   return saved;
 }
