@@ -24,7 +24,7 @@ const contactLine =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  lastUpdated: "October 5, 2026",
+  lastUpdated: "October 6, 2026",
   intro:
     "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
   sections: [
@@ -42,8 +42,9 @@ export const privacyPolicy: LegalDocument = {
             "The portfolio photo you picked as inspiration, if any",
           ],
         },
+        "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
         "During your session we take photographs of your baby and, depending on your package, your family.",
-        "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. We do not use advertising or tracking cookies.",
+        "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below).",
       ],
     },
     {
@@ -55,16 +56,31 @@ export const privacyPolicy: LegalDocument = {
             "To contact you about your booking, including reminders and any changes",
             "To edit and deliver your photos through your online gallery",
             "To keep business records we're required to keep",
-            "To keep our website working and secure",
+            "To keep our website working and secure, including limiting repeated requests from the same connection",
+            "To understand which ads and links bring families to us, and to measure and improve our ads on Facebook and Instagram",
           ],
         },
-        "We never sell or rent your information, and we don't use it for advertising.",
+        "We never sell or rent your information.",
       ],
     },
     {
       heading: "Photos of your family",
       body: [
         "Your photos belong in your family's memories first. We will only show photos from your session in our portfolio, on this website or on social media (such as Instagram) if you give us permission. You can change your mind at any time, and we'll stop using them for anything new.",
+      ],
+    },
+    {
+      heading: "Advertising and measurement (Meta)",
+      body: [
+        "We advertise on Facebook and Instagram. To measure how our ads work, we use the Meta Pixel on our website and the Meta Conversions API from our server, both provided by Meta Platforms, Inc.",
+        {
+          list: [
+            "When you visit our website, the Meta Pixel may collect the pages you view, actions such as choosing a bundle or starting and completing a booking, and technical information such as your IP address and browser. It uses cookies (see below).",
+            "When you complete a booking, we send Meta a booking event with the bundle and price, together with your email address, phone number, name, city, state and ZIP code in hashed (scrambled) form, plus your IP address and browser details, so Meta can match the booking to an ad and show our ads to people more likely to be interested.",
+            "We never send your baby's name, age, notes or photos to Meta or any other advertising service.",
+          ],
+        },
+        "Meta uses this information as described in its Privacy Policy (facebook.com/privacy/policy). You can control the ads you see in your Facebook and Instagram ad settings (facebook.com/adpreferences), and you can block or delete cookies in your browser settings.",
       ],
     },
     {
@@ -77,6 +93,8 @@ export const privacyPolicy: LegalDocument = {
             "Our booking database (Neon)",
             "Our calendar (Microsoft 365 / Outlook)",
             "Our email delivery service (Resend)",
+            "A security service that limits repeated requests to our website (Upstash), which briefly processes IP addresses",
+            "Meta Platforms, for advertising measurement as described above",
             "The online gallery service we use to deliver your photos",
           ],
         },
@@ -86,13 +104,21 @@ export const privacyPolicy: LegalDocument = {
     {
       heading: "Cookies and browser storage",
       body: [
-        "Our website does not use advertising or analytics cookies. It may store small settings in your browser so pages work smoothly. A sign-in cookie is used only for the private owner area of the site.",
+        "Our website uses these cookies:",
+        {
+          list: [
+            "Meta advertising cookies (_fbp and _fbc), set by the Meta Pixel to measure our ads, kept for up to 90 days",
+            "Our own cookies (th_src and th_fbc) that remember how you found our website, kept for 90 days",
+            "A sign-in cookie, used only for the private owner area of the site",
+          ],
+        },
+        "Our website may also store small settings in your browser so pages work smoothly. You can block or delete cookies in your browser settings; the website and booking will still work.",
       ],
     },
     {
       heading: "Children's privacy",
       body: [
-        "Our website is meant for parents and guardians aged 18 or older. We collect information about babies and children only from their parent or guardian, and only to provide the photography session they've booked.",
+        "Our website is meant for parents and guardians aged 18 or older. We collect information about babies and children only from their parent or guardian, and only to provide the photography session they've booked. We never share information about your baby or child with advertising or analytics services.",
       ],
     },
     {
@@ -123,7 +149,7 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Terms of Service",
-  lastUpdated: "October 5, 2026",
+  lastUpdated: "October 6, 2026",
   intro:
     "These terms explain how booking and sessions work with Tiny Humans, a newborn and baby photography studio in Miami, Florida. By using our website or booking a session, you agree to them. If anything is unclear, please ask before you book.",
   sections: [
@@ -150,7 +176,8 @@ export const termsOfService: LegalDocument = {
       heading: "Rescheduling and cancellations",
       body: [
         "Babies keep their own schedules, and we understand. If your baby or anyone in your family is unwell, please let us know and we'll find a new date.",
-        "If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family.",
+        "You're free to reschedule or cancel online, using the links in your confirmation email, up to 48 hours before your session. Inside 48 hours, just text us and we'll help.",
+        "If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family. If you miss a session without telling us, we may ask for a deposit to rebook.",
         "If we ever need to cancel because of illness or an emergency, we'll find a new date with you at no cost.",
       ],
     },

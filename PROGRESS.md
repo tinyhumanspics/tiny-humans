@@ -39,11 +39,17 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [~] 1c Migration `drizzle/0006_booking_source.sql` (ADD COLUMN IF NOT EXISTS ×9) — [?] owner runs it in Neon BEFORE push
 - [x] 1c Source in /admin leads (card line + details: label, campaign/ad set/ad, medium, first page, referring site)
 - [x] Local fake Microsoft Graph (`scripts/local-db/fake-graph.mjs`) → the real `outlook` booking path runs end to end locally
-- [ ] 1d `lib/tracking` (Meta only; pluggable): Pixel on site pages only (never /admin), PageView without double-firing
-- [ ] 1d Events: ViewContent (bundle viewed/selected), InitiateCheckout (schedule step), Schedule (booking created)
-- [ ] 1d CAPI `Schedule` from booking-create via `after()`; dedup `event_id` = booking `requestId`; hashed user_data
-- [ ] 1d Domain verification meta tag  [?] code from owner
-- [ ] 1e Privacy policy + terms: Pixel/CAPI, `_fbp`/`_fbc`, hashed contact data to Meta, source tracking, Resend; lastUpdated
+- [x] 1d `lib/tracking/client.ts` (provider-neutral functions, Meta adapter) + `components/layout/MetaPixel.tsx`: site pages
+      only (never /admin); `disablePushState` + manual PageView per pathname (one per page, verified with a stub);
+      `autoConfig` off (no automatic page scraping)
+- [x] 1d Events: ViewContent (bundle selected: card / CTA), InitiateCheckout (schedule step, once per bundle per session),
+      Schedule (booking created; `eventID` = requestId; advanced matching re-init with parent data; once per requestId)
+- [x] 1d CAPI `lib/tracking/meta-capi.ts`: Schedule via `after()` in the create route; Graph v26.0; hashed em/ph/fn/ln/ct/
+      st/zp/country/external_id; ip/UA/fbp/fbc (`_fbc` → `th_fbc` fallback); test_event_code from env; never throws.
+      Verified payload + hashing locally; live check in 1g. Baby data never sent (checked).
+- [x] 1d Domain verification: owner already verified by DNS TXT record → no meta tag needed
+- [x] 1e Privacy policy + terms updated (Meta Pixel/CAPI section, cookies list, Upstash, source tracking, baby data never
+      shared; terms: approved 48 h reschedule/cancel + no-show wording). Owner told to have it reviewed by someone qualified.
 - [ ] 1f Landing page (URL: owner pick, `/home-sweet-home` proposed) (blueprint order, copy in `messages/en.json`, CTA → booking w/ bundle)
 - [ ] 1f Intro on landing: prototype short vs skipped; owner picks
 - [ ] 1f Metadata + OG image; screenshots to owner before push
