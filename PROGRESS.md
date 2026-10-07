@@ -18,9 +18,10 @@ State: everything below is on `main` and live (last deploy `7f4113f` + this hand
    live (`5097fe8`). **2d live** (`548aeac`, Oct 7): owner approved the screenshots + privacy Stripe line, ran migration
    0008 and added `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`; /privacy visual baseline updated. Not yet exercised
    for real: the first "Session done" after a real session is the first live Stripe payment page (check /admin shows
-   "Paid" afterwards; if not, Stripe Workbench → Webhooks → Event deliveries). 2e (permissions checkboxes) built,
-   committed locally, waiting on the owner's yes + `drizzle/0009_booking_consents.sql` in Neon → push. Then: edge
-   items, optional /admin "Today" view with tap-to-text (uses the SMS permission).
+   "Paid" afterwards; if not, Stripe Workbench → Webhooks → Event deliveries). 2e permissions checkboxes **live**
+   (owner approved + ran migration 0009). **Payment link any time** live: every booking has one never-expiring link
+   (/admin → Leads → details → Payment: Text / Copy / Email the link). Next: edge items, optional /admin "Today" view
+   with tap-to-text (uses the SMS permission).
 4. **Time-sensitive:** BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
    were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
    check: the calendar UI and availability on Nov 1 itself.
@@ -84,7 +85,7 @@ them. Email changes: compare old vs new renders with screenshots before sending 
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2d live (Oct 7), 2e next.
+- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2e live (Oct 7); edge items next.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -171,7 +172,13 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 - [ ] 2c Optional /admin "Today" view with tap-to-text
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
-      `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once. [?] same for /cancel + /reschedule (opened from emails)? /admin → Leads → details →
+      `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
+- [x] Payment link before (or after) the session (owner request, Oct 7): `/pay?b=<reference>&s=<signature>`
+      (`lib/payments/link.ts`, HMAC with `ADMIN_SESSION_SECRET`, purpose "pay-link:v1"), never expires, same link every
+      time, survives reschedules, invalid once cancelled, "already paid" once paid. /admin → Leads → details →
+      **Payment**: status + Text the link (sms: with the message filled in) / Copy link / Email the link (new
+      "payment link" email, can be resent). Session done + gallery emails use the same link; old `/pay?t=` links still
+      work. Tested locally (15 checks). /admin → Leads → details →
       "After the Session": **Session done** (enabled once the session started) → thank-you email with "Pay $X" →
       `/pay?t=` (`app/pay/route.ts`) → Stripe Checkout for the booking's price snapshot (`finalPriceCents`, so codes and
       offers are exact; an open Checkout page is reused, a new one made after 24 h) → `/pay/status?s=…`. "Paid" from
@@ -182,7 +189,7 @@ them. Email changes: compare old vs new renders with screenshots before sending 
       un-picks it). Stripe via fetch (`lib/payments/stripe.ts`), no SDK. Tokens: `booking_emails.link_token_hash` per
       email kind (after_session → /pay; gallery_delivered → /pay + /review; reminders → manage pages only).
       Tested locally with fake Stripe + fake Resend (28 checks).
-- [~] 2e (Oct 7, built + tested locally, waiting on owner's yes + migration 0009): "Two quick permissions (optional)"
+- [x] 2e (Oct 7, live; owner approved + ran migration 0009): "Two quick permissions (optional)"
       at the end of the details step, both unticked by default: SMS (approved wording, decision 13) and photo use
       ("OK to feature our photos on the Tiny Humans website and social media", brief wording, decision 12). Shown on
       the review step, in the Outlook event body and the studio email ("OK to text" / "OK to feature photos"), and in

@@ -124,6 +124,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Links in customer emails carry a 256-bit token; only its hash is stored (`bookings.cancel_token_hash` for the booking's
   own manage link, `booking_emails.link_token_hash` per reminder/after-session email). Which pages accept which kind
   is deliberate (reminders → manage pages; after_session → /pay; gallery_delivered → /pay + /review).
+- Payment links (`/pay?b=<reference>&s=…`) are signed with `ADMIN_SESSION_SECRET`: changing that secret changes every
+  booking's payment link (links already sent stop working). The chalk logo intro is skipped on `NO_INTRO_PATHS`
+  (`app/layout.tsx`: /review, /pay, /cancel, /reschedule — pages opened from emails) and the ad landing page.
 - `NEXT_PUBLIC_SITE_URL` is baked in at build time (also in server code): local test servers on other ports still
   write `http://localhost:3000` links into emails.
 - Reminders: `vercel.json` cron (daily, Hobby) → `/api/cron/reminders` → `lib/booking/reminders.ts`; table
