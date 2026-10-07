@@ -13,6 +13,7 @@ import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import MetaPixel from "@/components/layout/MetaPixel";
+import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
 import "@/styles/globals.css";
 import { cn } from "@/lib/cn";
@@ -104,6 +105,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <MetaPixel />
         </CatalogProvider>
         </SiteSettingsProvider>
+        {/* only on Vercel: its /_vercel/* script routes don't exist locally */}
+        {process.env.VERCEL ? <VercelInsights /> : null}
       </body>
     </html>
   );
