@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import type { AdminApi } from "@/lib/admin/client";
-import type { EmailStatus, Lead, LeadFilter, LeadList } from "@/lib/leads/types";
+import type { EmailStatus, Lead, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
@@ -234,6 +234,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
               </ol>
             </div>
           )}
+          {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.status !== "cancelled" && moving && (
             <div className={styles.adminReschedule}>
               <p className={cn(styles.h3, "chalk-soft")}>Reschedule Booking</p>
@@ -302,5 +303,94 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         document.body,
       )}
     </li>
+  );
+}
+
+const sentLine = (e: SentEmail) => (e.status === "sent" ? `Sent ${when(e.at)}` : e.status === "failed" ? `Not sent (${e.error ?? "error"})` : "Sending…");
+
+/** After the session: "Session done" (thank-you + payment link), payment status, "Gallery delivered" (review request), the review. */
+function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
+  const a = lead.after!;
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const [galleryUrl, setGalleryUrl] = useState("");
+  const run = async (what: string, fn: () => Promise<Lead>) => {
+    setBusy(what);
+    setErr(null);
+    try {
+      onUpdated(await fn());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const amount = formatMoney(a.payment.amountCents);
+  const payment =
+    a.payment.amountCents <= 0
+      ? "Nothing to pay"
+      : a.payment.status === "paid"
+        ? `Paid ${amount}${a.payment.paidAt ? ` on ${when(a.payment.paidAt)}` : ""}`
+        : a.payment.status === "open"
+          ? `Not paid yet (${amount}). The family opened the payment page.`
+          : `Not paid yet (${amount})`;
+  const canRetry = (e: SentEmail | null) => !e || e.status === "failed";
+  const id = `after-${lead.reference}`;
+  if (lead.status === "cancelled") return null;
+  return (
+    <div className={styles.history}>
+      <p className={cn(styles.h3, "chalk-soft")}>After the Session</p>
+      <dl>
+        <div>
+          <dt className="chalk-soft">Thank-you + payment email</dt>
+          <dd className="chalk-soft">{a.sessionDone ? sentLine(a.sessionDone) : "Not sent yet"}</dd>
+        </div>
+        <div>
+          <dt className="chalk-soft">Payment</dt>
+          <dd className="chalk-soft">{payment}</dd>
+        </div>
+        <div>
+          <dt className="chalk-soft">Gallery + review email</dt>
+          <dd className="chalk-soft">{a.gallery ? sentLine(a.gallery) : "Not sent yet"}</dd>
+        </div>
+      </dl>
+      {canRetry(a.sessionDone) && (
+        <>
+          <button type="button" className={styles.smallButton} disabled={!a.canSend || busy !== null} onClick={() => run("done", () => api.sessionDone(lead.reference))}>
+            {busy === "done" ? "Sending…" : a.sessionDone ? "Try again: Session done" : "Session done: send thank-you + payment link"}
+          </button>
+          {!a.canSend && <p className={cn(styles.hintSmall, "chalk-soft")}>Available once the session has started.</p>}
+        </>
+      )}
+      {a.sessionDone?.status === "sent" && canRetry(a.gallery) && (
+        <div className={styles.adminReschedule}>
+          <label htmlFor={`${id}-gallery`} className={cn(styles.label, "chalk-soft")}>Pixieset gallery link (optional)</label>
+          <input id={`${id}-gallery`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Sends a thank-you with a link to leave a review{a.payment.status !== "paid" && a.payment.amountCents > 0 ? `, plus a ${amount} payment button (still unpaid)` : ""}.</p>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined))}>
+            {busy === "gallery" ? "Sending…" : a.gallery ? "Try again: Gallery delivered" : "Gallery delivered: send review request"}
+          </button>
+        </div>
+      )}
+      {a.review && (
+        <div className={styles.adminReschedule}>
+          <p className={cn(styles.label, "chalk-soft")}>
+            Review: {"★".repeat(a.review.rating)}
+            {"☆".repeat(5 - a.review.rating)} · {a.review.displayName}
+          </p>
+          <p className="chalk-soft">“{a.review.body}”</p>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>
+            {when(a.review.at)} · {a.review.consentPublic ? "OK to show on the website" : "Private: the family didn't say OK to show it"}
+            {a.review.approved ? " · Picked for the website" : ""}
+          </p>
+          {a.review.consentPublic && (
+            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("review", () => api.setReviewApproved(lead.reference, !a.review!.approved))}>
+              {busy === "review" ? "Saving…" : a.review.approved ? "Don't use on the website" : "Use on the website"}
+            </button>
+          )}
+        </div>
+      )}
+      {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+    </div>
   );
 }

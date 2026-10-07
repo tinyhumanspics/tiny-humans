@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { bookingEmails, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
@@ -31,7 +31,8 @@ export function summaryOf(row: Booking): CancellationSummary {
 
 /**
  * Booking behind a customer management token (null if the token is unknown): the booking's own token, or the link in
- * a reminder email, which stays valid only while the booking keeps the session time that email was about.
+ * a reminder email, which stays valid only while the booking keeps the session time that email was about. (Links in
+ * after-session emails open /pay and /review only.)
  */
 export async function findByCancelToken(token: string): Promise<Booking | null> {
   if (!looksLikeCancelToken(token)) return null;
@@ -43,7 +44,7 @@ export async function findByCancelToken(token: string): Promise<Booking | null> 
     .select({ booking: bookings })
     .from(bookingEmails)
     .innerJoin(bookings, and(eq(bookings.id, bookingEmails.bookingId), eq(bookings.sessionStart, bookingEmails.sessionStart)))
-    .where(eq(bookingEmails.linkTokenHash, hash))
+    .where(and(eq(bookingEmails.linkTokenHash, hash), inArray(bookingEmails.kind, ["reminder_72h", "reminder_24h"])))
     .limit(1)
     .catch((err) => {
       log.error("booking.token", "Reminder link lookup failed", { error: err as Error });

@@ -211,7 +211,7 @@ export const bookingEmails = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
-    /** "reminder_72h" | "reminder_24h" */
+    /** "reminder_72h" | "reminder_24h" | "after_session" | "gallery_delivered" */
     kind: text("kind").notNull(),
     /** The session time this email was about. */
     sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),
@@ -234,6 +234,50 @@ export const bookingEmails = pgTable(
 );
 
 export type BookingEmail = typeof bookingEmails.$inferSelect;
+
+/**
+ * Card payment after the session (Stripe Checkout, exact booked amount). One row per booking: the latest Checkout
+ * Session the family opened, and whether it's paid (Stripe webhook, or checked when the family opens the link again).
+ */
+export const bookingPayments = pgTable(
+  "booking_payments",
+  {
+    bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    /** "open" (payment page created) | "paid" */
+    status: text("status").notNull().default("open"),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntent: text("stripe_payment_intent"),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("booking_payments_status_check", sql`${t.status} in ('open', 'paid')`)],
+);
+
+export type BookingPayment = typeof bookingPayments.$inferSelect;
+
+/** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
+export const reviews = pgTable(
+  "reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id").notNull().unique().references(() => bookings.id, { onDelete: "cascade" }),
+    rating: smallint("rating").notNull(),
+    body: text("body").notNull(),
+    /** Name the family chose to show with the review, e.g. "Ana M." */
+    displayName: text("display_name").notNull(),
+    /** The family's OK to show the review on the website. */
+    consentPublic: boolean("consent_public").notNull().default(false),
+    /** Owner's pick for the website (only possible with the family's OK). */
+    approved: boolean("approved").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("reviews_rating_check", sql`${t.rating} between 1 and 5`)],
+);
+
+export type Review = typeof reviews.$inferSelect;
 
 /* ---------------- pricing & promotions (/admin/pricing) ---------------- */
 

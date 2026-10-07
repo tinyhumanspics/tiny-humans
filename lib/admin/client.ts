@@ -35,6 +35,10 @@ export interface AdminApi {
   leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
   deleteLead(reference: string): Promise<void>;
+  /** After the session (server mode only). */
+  sessionDone(reference: string): Promise<Lead>;
+  galleryDelivered(reference: string, galleryUrl?: string): Promise<Lead>;
+  setReviewApproved(reference: string, approved: boolean): Promise<Lead>;
   /* pricing & promotions (owner only) */
   getPricing(): Promise<{ bundles: Bundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
   saveBundle(b: BundleInput): Promise<Bundle[]>;
@@ -97,6 +101,11 @@ const httpApi: AdminApi = {
   listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
   cancelLead: async (reference, reason) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason }) }))).lead,
+  sessionDone: async (reference) => (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
+  galleryDelivered: async (reference, galleryUrl) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/gallery", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl }) }))).lead,
+  setReviewApproved: async (reference, approved) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, approved }) }))).lead,
 };
 
 /** Prototype: validate like the server, then keep the rules in this browser. */
@@ -249,6 +258,16 @@ const prototypeApi: AdminApi = {
     const mock = new MockBookingProvider();
     await mock.cancelBooking(reference, { reason: reason.trim(), by: "admin" });
     return mock.listLeads().find((l) => l.reference === reference)!;
+  },
+  // the prototype sends no emails and takes no payments
+  sessionDone: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  galleryDelivered: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  setReviewApproved: async () => {
+    throw new Error("Not available in the prototype.");
   },
 };
 

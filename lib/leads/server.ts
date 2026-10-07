@@ -1,10 +1,10 @@
 import "server-only";
 import { count, desc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { bookingEmails, bookings, type Booking, type BookingEmail } from "@/lib/db/schema";
+import { bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingEmail, type BookingPayment, type Review } from "@/lib/db/schema";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/outlook-provider";
-import type { Lead, LeadFilter, LeadList, LeadStatus } from "./types";
+import type { Lead, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
 import { sourceLabel } from "@/lib/tracking/attribution";
 import { log } from "@/lib/log";
 
@@ -15,20 +15,46 @@ type HistoryRow = Awaited<ReturnType<typeof historyFor>>[number];
 
 const REMINDER_KIND: Record<string, "72h" | "24h"> = { reminder_72h: "72h", reminder_24h: "24h" };
 
-/** Reminder emails of these bookings (empty if the table isn't there yet, so /admin keeps working). */
-async function emailsFor(bookingIds: string[]): Promise<BookingEmail[]> {
-  if (!bookingIds.length) return [];
-  return getDb()
-    .select()
-    .from(bookingEmails)
-    .where(inArray(bookingEmails.bookingId, bookingIds))
-    .catch((err) => {
-      log.error("leads", "Could not load reminder emails", { error: err as Error });
-      return [];
-    });
+interface Extras {
+  emails: BookingEmail[];
+  payments: BookingPayment[];
+  reviews: Review[];
 }
 
-export function toLead(r: Booking, history: HistoryRow[] = [], emails: BookingEmail[] = []): Lead {
+/** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
+async function extrasFor(bookingIds: string[]): Promise<Extras> {
+  if (!bookingIds.length) return { emails: [], payments: [], reviews: [] };
+  const db = getDb();
+  const safe = <T,>(what: string, q: Promise<T[]>) =>
+    q.catch((err) => {
+      log.error("leads", `Could not load ${what}`, { error: err as Error });
+      return [] as T[];
+    });
+  const [emails, payments, revs] = await Promise.all([
+    safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
+    safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
+    safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
+  ]);
+  return { emails, payments, reviews: revs };
+}
+
+const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
+
+function afterOf(r: Booking, x: Extras): Lead["after"] {
+  const current = (kind: string) => x.emails.find((e) => e.bookingId === r.id && e.kind === kind && e.sessionStart.getTime() === r.sessionStart.getTime());
+  const pay = x.payments.find((p) => p.bookingId === r.id);
+  const review = x.reviews.find((v) => v.bookingId === r.id);
+  return {
+    canSend: r.status !== "cancelled" && r.sessionStart.getTime() <= Date.now(),
+    sessionDone: sent(current("after_session")),
+    gallery: sent(current("gallery_delivered")),
+    payment: { amountCents: r.finalPriceCents ?? r.packagePrice * 100, status: pay?.status === "paid" ? "paid" : pay ? "open" : "unpaid", paidAt: iso(pay?.paidAt ?? null) },
+    review: review ? { rating: review.rating, body: review.body, displayName: review.displayName, consentPublic: review.consentPublic, approved: review.approved, at: review.updatedAt.toISOString() } : null,
+  };
+}
+
+export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = { emails: [], payments: [], reviews: [] }): Lead {
+  const emails = x.emails;
   return {
     reference: r.bookingReference,
     status: r.status as LeadStatus,
@@ -57,6 +83,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], emails: BookingEm
       .filter((e) => e.bookingId === r.id && REMINDER_KIND[e.kind] && e.sessionStart.getTime() === r.sessionStart.getTime())
       .map((e) => ({ kind: REMINDER_KIND[e.kind], status: e.status as "sending" | "sent" | "failed", at: iso(e.sentAt ?? e.updatedAt), error: e.error }))
       .sort((a, b) => (a.kind === "72h" ? -1 : 1) - (b.kind === "72h" ? -1 : 1)),
+    after: afterOf(r, x),
     cancellation:
       r.status === "cancelled"
         ? {
@@ -101,13 +128,13 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     if (g.status !== "cancelled") counts.all += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
-  const [history, emails] = await Promise.all([historyFor(ids), emailsFor(ids)]);
-  return { leads: rows.map((r) => toLead(r, history, emails)), counts, total: filter === "all" ? counts.all : counts[filter] };
+  const [history, extras] = await Promise.all([historyFor(ids), extrasFor(ids)]);
+  return { leads: rows.map((r) => toLead(r, history, extras)), counts, total: filter === "all" ? counts.all : counts[filter] };
 }
 
 export async function getLead(reference: string): Promise<Lead | null> {
   const row = await getLeadRow(reference);
-  return row ? toLead(row, await historyFor([row.id]), await emailsFor([row.id])) : null;
+  return row ? toLead(row, await historyFor([row.id]), await extrasFor([row.id])) : null;
 }
 
 export async function getLeadRow(reference: string): Promise<Booking | null> {

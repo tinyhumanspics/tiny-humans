@@ -24,7 +24,7 @@ const contactLine =
 
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
-  lastUpdated: "October 6, 2026",
+  lastUpdated: "October 7, 2026",
   intro:
     "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
   sections: [
@@ -93,6 +93,7 @@ export const privacyPolicy: LegalDocument = {
             "Our booking database (Neon)",
             "Our calendar (Microsoft 365 / Outlook)",
             "Our email delivery service (Resend)",
+            "Our payment processor (Stripe), which takes your card payment on its own secure page. We share your email address, bundle, amount due and booking reference with Stripe; we never see or store your card number",
             "A security service that limits repeated requests to our website (Upstash), which briefly processes IP addresses",
             "Meta Platforms, for advertising measurement as described above",
             "The online gallery service we use to deliver your photos",

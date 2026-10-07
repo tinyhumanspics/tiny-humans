@@ -115,3 +115,31 @@ export async function internalRescheduleEmail(r: RescheduleDetails): Promise<Ren
   );
   return { subject: `Tiny Humans Lead Updated — Rescheduled — ${r.parentName}`, html, text: text(["LEAD UPDATED", "RESCHEDULED"], rows), attachments: [] };
 }
+
+/** A family sent a review (from the link in the gallery email). */
+export async function internalNewReviewEmail(r: { reference: string; parentName: string; email: string; rating: number; body: string; displayName: string; consentPublic: boolean; updated: boolean }): Promise<RenderedEmail> {
+  const rows: [string, string][] = [
+    ["Booking reference", r.reference],
+    ["Customer", r.parentName],
+    ["Rating", `${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)} (${r.rating}/5)`],
+    ["Review", r.body],
+    ["Name to show", r.displayName],
+    ["OK to show on the website", r.consentPublic ? "Yes" : "No"],
+  ];
+  const banner = r.updated ? "REVIEW UPDATED" : "NEW REVIEW";
+  const html = await renderHtml(
+    <InternalLayout
+      banner={banner}
+      bannerBg={C.green}
+      bannerFg={C.yellow}
+      summary={
+        <>
+          <b>{r.parentName}</b> {r.updated ? "updated their review" : "left a review"}: <b>{`${r.rating} out of 5`}</b>.
+        </>
+      }
+      rows={rows}
+      footer="Reviews are saved with the lead in /admin → Leads → View details, where you can pick the ones to use on the website."
+    />,
+  );
+  return { subject: `${r.updated ? "Review updated" : "New review"} — ${r.parentName} — ${r.rating}/5`, html, text: text([banner], rows), attachments: [] };
+}

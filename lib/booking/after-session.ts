@@ -1,0 +1,105 @@
+import "server-only";
+import { and, eq, inArray, sql } from "drizzle-orm";
+import { site } from "@/config/site";
+import { getDb } from "@/lib/db/client";
+import { bookingEmails, bookingPayments, bookings, type Booking } from "@/lib/db/schema";
+import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
+import { afterSessionEmail, galleryDeliveredEmail } from "@/lib/email";
+import { getSiteSettings } from "@/lib/settings/server";
+import { log } from "@/lib/log";
+import { BookingError } from "./errors";
+import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./cancel-token";
+
+/**
+ * Emails the owner sends from /admin after a session: "Session done" (thank-you + pay link) and "Gallery delivered"
+ * (review request + referral, + pay link while unpaid). Each is one booking_emails row per booking and session time:
+ * sent once; a failed send can be tried again. The row's link token opens /pay (both kinds) and /review (gallery).
+ */
+export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_delivered" } as const;
+export type AfterKind = (typeof AFTER_KINDS)[keyof typeof AFTER_KINDS];
+
+/** What the family owes: the price booked (snapshot), never recalculated from today's bundles. */
+export const amountDueCents = (row: Booking) => row.finalPriceCents ?? row.packagePrice * 100;
+
+const base = () => site.url.replace(/\/$/, "");
+export const payUrl = (token: string) => `${base()}/pay?t=${token}`;
+export const reviewUrl = (token: string) => `${base()}/review?t=${token}`;
+
+/** Booking behind the link in one of these emails (null if unknown). */
+export async function findByEmailLink(token: string, kinds: AfterKind[]): Promise<Booking | null> {
+  if (!looksLikeCancelToken(token)) return null;
+  const [hit] = await getDb()
+    .select({ booking: bookings })
+    .from(bookingEmails)
+    .innerJoin(bookings, eq(bookings.id, bookingEmails.bookingId))
+    .where(and(eq(bookingEmails.linkTokenHash, hashCancelToken(token)), inArray(bookingEmails.kind, kinds)))
+    .limit(1);
+  return hit?.booking ?? null;
+}
+
+async function isPaid(bookingId: string): Promise<boolean> {
+  const [p] = await getDb().select({ status: bookingPayments.status }).from(bookingPayments).where(eq(bookingPayments.bookingId, bookingId)).limit(1);
+  return p?.status === "paid";
+}
+
+/** Claims the email (new row, or a failed one to try again). Throws if it was already sent or is being sent. */
+async function claim(row: Booking, kind: AfterKind, tokenHash: string): Promise<string> {
+  const now = new Date();
+  const [claimed] = await getDb()
+    .insert(bookingEmails)
+    .values({ bookingId: row.id, kind, sessionStart: row.sessionStart, linkTokenHash: tokenHash })
+    .onConflictDoUpdate({
+      target: [bookingEmails.bookingId, bookingEmails.kind, bookingEmails.sessionStart],
+      set: { status: "sending", attempts: sql`${bookingEmails.attempts} + 1`, error: null, linkTokenHash: tokenHash, updatedAt: now },
+      setWhere: sql`${bookingEmails.status} = 'failed'`,
+    })
+    .returning({ id: bookingEmails.id });
+  if (!claimed) throw new BookingError("invalid_request", "This email was already sent.");
+  return claimed.id;
+}
+
+async function deliver(row: Booking, kind: AfterKind, build: (token: string, themeId: string) => Promise<{ subject: string; html: string; text: string; attachments: { filename: string; content: string; contentType: string; contentId: string }[] }>) {
+  if (row.status === "cancelled") throw new BookingError("invalid_request", "This booking is cancelled.");
+  if (row.sessionStart.getTime() > Date.now()) throw new BookingError("invalid_request", "You can send this once the session has started.");
+  const token = createCancelToken();
+  const id = await claim(row, kind, token.hash);
+  const db = getDb();
+  try {
+    const themeId = await getSiteSettings().then((s) => s.themeId).catch(() => "default");
+    const mail = await build(token.token, themeId);
+    const { id: resendId } = await sendEmail({
+      scope: `resend.${kind}`,
+      to: row.email,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+      attachments: mail.attachments,
+      replyTo: emailConfig().notify,
+      idempotencyKey: `${kind}/${row.bookingReference}/${id}`,
+      reference: row.bookingReference,
+    });
+    await db.update(bookingEmails).set({ status: "sent", resendId, sentAt: new Date(), updatedAt: new Date() }).where(eq(bookingEmails.id, id));
+  } catch (err) {
+    const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    log.error("after-session", "Email not sent", { reference: row.bookingReference, kind, code, error: err instanceof EmailSendError ? undefined : (err as Error) });
+    await db.update(bookingEmails).set({ status: "failed", error: code, updatedAt: new Date() }).where(eq(bookingEmails.id, id)).catch(() => undefined);
+    throw new BookingError("server_error", `The email wasn't sent (${code}). Please try again.`);
+  }
+}
+
+const detailsOf = (row: Booking) => ({ reference: row.bookingReference, parentName: row.parentName, babyName: row.babyName, bundleName: row.packageName });
+
+/** "Session done": thank-you + what happens next + pay button (exact booked amount). */
+export function sendAfterSessionEmail(row: Booking) {
+  const amountCents = amountDueCents(row);
+  return deliver(row, AFTER_KINDS.afterSession, (token, themeId) => afterSessionEmail(detailsOf(row), { themeId, amountCents, payUrl: amountCents > 0 ? payUrl(token) : undefined }));
+}
+
+/** "Gallery delivered": review request + referral, and a pay button while the session is still unpaid. */
+export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
+  const amountCents = amountDueCents(row);
+  const unpaid = amountCents > 0 && !(await isPaid(row.id));
+  return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(token) } : null }),
+  );
+}

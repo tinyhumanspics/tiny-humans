@@ -60,6 +60,14 @@ export interface ReminderDetails {
   location: string;
 }
 
+/** What the after-session and gallery emails need. */
+export interface AfterSessionDetails {
+  reference: string;
+  parentName: string;
+  babyName?: string | null;
+  bundleName: string;
+}
+
 /** What a cancellation email needs. */
 export interface CancellationDetails {
   reference: string;

@@ -379,6 +379,105 @@
       "reach": "Running late or need to reach us? Just text us.",
       "today": "today",
       "tomorrow": "tomorrow"
+    },
+    "afterSession": {
+      "subject": "Thank you for having us, {name}!",
+      "preheader": "Your sneak peeks are on the way. Here's how to pay for your session.",
+      "eyebrow": "Thank you",
+      "title": "Thank you for having us, {name}!",
+      "intro": "It was such a joy to photograph {baby}. Thank you for welcoming us into your home.",
+      "nextTitle": "What happens next",
+      "next": [
+        "3 sneak peeks land in your inbox within 24 hours of your session.",
+        "Your fully edited gallery follows within 24–72 hours."
+      ],
+      "payTitle": "Payment",
+      "amountDue": "Amount due",
+      "payNote": "Pay securely by card. The button opens a Stripe payment page for exactly this amount.",
+      "payButton": "Pay {amount}",
+      "payText": "Pay {amount} by card: {url}",
+      "nothingDue": "Nothing to pay for this session. Thank you!"
+    },
+    "gallery": {
+      "subject": "Your Tiny Humans gallery is ready, {name}!",
+      "preheader": "We hope you love your photos. Would you tell us about your session?",
+      "eyebrow": "Your gallery is ready",
+      "title": "We hope you love them, {name}!",
+      "intro": "Your fully edited gallery is ready to view and download.",
+      "pixieset": "You'll find your gallery link in the email from Pixieset, our gallery service.",
+      "viewGallery": "View your gallery",
+      "galleryText": "View your gallery: {url}",
+      "reviewTitle": "Would you tell us about your session?",
+      "reviewText": "It takes about a minute, and it means the world to a small family business like ours.",
+      "reviewButton": "Share your experience",
+      "reviewTextLine": "Share your experience: {url}",
+      "referralTitle": "Know someone expecting?",
+      "referralText": "We'd love to meet them. Just forward this email, or share {site}.",
+      "payReminder": "Still to pay: {amount}. You can pay by card any time with the button below.",
+      "payButton": "Pay {amount}",
+      "payText": "Pay {amount} by card: {url}"
     }
+  },
+  "review": {
+    "metaTitle": "Share your experience",
+    "eyebrow": "Hi {name}",
+    "title": "How was your session?",
+    "intro": "Thank you for letting us photograph your family. A few words from you mean the world to us.",
+    "loading": "Opening your review…",
+    "ratingLabel": "Your rating",
+    "stars": [
+      "1 star",
+      "2 stars",
+      "3 stars",
+      "4 stars",
+      "5 stars"
+    ],
+    "bodyLabel": "Tell us about your session",
+    "bodyPlaceholder": "What did you love? Anything we could do better?",
+    "nameLabel": "Name to show with your review",
+    "nameHint": "For example, your first name and last initial.",
+    "consent": "You can share my review, with this name, on the Tiny Humans website.",
+    "submit": "Send my review",
+    "update": "Update my review",
+    "sending": "Sending…",
+    "errors": {
+      "rating": "Pick a rating from 1 to 5 stars.",
+      "body": "Please write a few words about your session.",
+      "name": "Add the name to show with your review.",
+      "failed": "We couldn't save your review just now. Please try again."
+    },
+    "doneTitle": "Thank you!",
+    "doneText": "Your review means the world to us. We're so glad we got to capture these little moments with you.",
+    "invalidTitle": "We couldn't open this link",
+    "invalidText": "This review link isn't valid anymore. Reply to your Tiny Humans email and we'll help.",
+    "home": "Back to Tiny Humans"
+  },
+  "pay": {
+    "metaTitle": "Payment",
+    "paid": {
+      "title": "Thank you!",
+      "text": "Your payment is complete. We can't wait for you to see your photos."
+    },
+    "already": {
+      "title": "You're all paid",
+      "text": "This session is already paid. Thank you!"
+    },
+    "nothing": {
+      "title": "Nothing to pay",
+      "text": "There's nothing to pay for this session. Thank you!"
+    },
+    "cancelled": {
+      "title": "No payment was made",
+      "text": "You can pay any time with the button in your Tiny Humans email."
+    },
+    "invalid": {
+      "title": "We couldn't open this payment link",
+      "text": "Reply to your Tiny Humans email and we'll help."
+    },
+    "error": {
+      "title": "The payment page didn't open",
+      "text": "Please try again in a minute from the button in your email, or reply to it and we'll help."
+    },
+    "home": "Back to Tiny Humans"
   }
 }

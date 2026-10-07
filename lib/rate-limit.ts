@@ -23,6 +23,10 @@ export const RULES = {
   manageGet: { limit: 40, windowSec: 600 },
   managePost: { limit: 10, windowSec: 600 },
   manageAvailability: { limit: 120, windowSec: 600 },
+  // after-session links: opening the payment page, loading + sending a review
+  pay: { limit: 30, windowSec: 600 },
+  reviewGet: { limit: 40, windowSec: 600 },
+  reviewPost: { limit: 10, windowSec: 600 },
   // owner login: per IP, and across all IPs (slows a distributed password-guessing attempt)
   adminLogin: { limit: 5, windowSec: 900 },
   adminLoginGlobal: { limit: 60, windowSec: 3600 },
