@@ -41,6 +41,14 @@ test("a family can book a session (mock provider)", async ({ page }) => {
   await bookLittleMoments(page);
 });
 
+test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
+  await bookLittleMoments(page);
+  await page.getByRole("button", { name: "Preview the confirmation email" }).click();
+  const email = page.frameLocator('iframe[title="Confirmation email preview"]');
+  await expect(email.getByRole("heading", { name: /You're booked, José!/ })).toBeVisible();
+  await expect(email.getByRole("link", { name: "Reschedule Booking" })).toBeVisible();
+});
+
 test("booking works in the Instagram in-app browser", async ({ browser }) => {
   const ctx = await browser.newContext({ userAgent: INSTAGRAM_UA, viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true });
   await bookLittleMoments(await ctx.newPage());
