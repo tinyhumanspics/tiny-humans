@@ -39,6 +39,7 @@ import InspirationThumb from "./InspirationThumb";
 import Reveal, { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import en from "@/messages/en.json";
+import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
 import styles from "./Booking.module.css";
 
 /* ---------------- state ---------------- */
@@ -262,6 +263,12 @@ export default function Booking({ bundleId }: { bundleId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step, state.bundleId]);
 
+  // conversion tracking: the visitor started booking this bundle
+  useEffect(() => {
+    if (bundle) trackBeginBooking({ id: bundle.id, name: bundle.name, value: (activeOffer(bundle, today)?.cents ?? toCents(bundle.price)) / 100 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle?.id]);
+
   const next = () => {
     switch (state.step) {
       case STEP.date:
@@ -321,6 +328,16 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         }
       }
       requestIdRef.current = null;
+      if (result.status !== "mock") {
+        trackBooked({
+          eventId: request.requestId,
+          id: request.bundleId,
+          name: result.pricing?.bundleName ?? bundle?.name ?? request.bundleId,
+          value: (result.pricing?.finalCents ?? 0) / 100,
+          contact: request.contact,
+          address: request.address,
+        });
+      }
       dispatch({ type: "done", result });
     } catch (err) {
       if (err instanceof BookingApiError && err.code === "slot_unavailable" && state.slot) {

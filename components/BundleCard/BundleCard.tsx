@@ -6,6 +6,7 @@ import { formatLongDate } from "@/lib/booking/dates";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import { trackSelectBundle } from "@/lib/tracking/client";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import Reveal from "@/components/Reveal/Reveal";
 import { requestBookingScroll } from "@/lib/scroll/booking";
@@ -81,7 +82,10 @@ export default function BundleCard({ bundle, index, href }: Props) {
         <ChalkButton
           variant={featured ? "solid" : "outline"}
           href={href}
-          onClick={() => requestBookingScroll()}
+          onClick={() => {
+            trackSelectBundle({ id: bundle.id, name: bundle.name, value: (offer?.cents ?? toCents(bundle.price)) / 100 });
+            requestBookingScroll();
+          }}
           className={styles.cta}
           seed={60 + index}
           aria-describedby={titleId}

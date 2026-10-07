@@ -1,11 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError, friendly } from "@/lib/booking/errors";
 import { bookingRequestSchema } from "@/lib/booking/validation";
 import { formatTimeLabel } from "@/lib/booking/dates";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
-import { SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
+import { FBC_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
+import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
+import { site } from "@/config/site";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "We couldn't confirm this booking automatically. Please try again, or email hello@tinyhumans.photography and we'll book you in.", code: "invalid_request" }, { status: 400 });
   }
   // The server decides the session length and price; the browser's end time and prices are never trusted.
+  const jar = await cookies();
   try {
     const booking = await getBookingProvider().createBooking({
       bundleId: r.bundleId,
@@ -40,8 +43,26 @@ export async function POST(req: Request) {
       requestId: r.requestId,
       discountCode: r.discountCode,
       // where this family came from (first-party cookie set by middleware; never taken from the request body)
-      attribution: decodeAttribution((await cookies()).get(SOURCE_COOKIE)?.value) ?? undefined,
+      attribution: decodeAttribution(jar.get(SOURCE_COOKIE)?.value) ?? undefined,
     });
+    // Meta Conversions API: after the response is sent, so it can never slow down or fail the booking.
+    if (booking.status !== "mock") {
+      const referer = req.headers.get("referer");
+      const sameSite = referer && new URL(referer, site.url).host === new URL(req.url).host;
+      const eventSourceUrl = sameSite ? referer! : `${site.url.replace(/\/$/, "")}/book/schedule?bundle=${encodeURIComponent(r.bundleId)}`;
+      after(() =>
+        sendScheduleEvent({
+          eventId: r.requestId ?? booking.id,
+          eventSourceUrl,
+          value: (booking.pricing?.finalCents ?? 0) / 100,
+          bundleId: r.bundleId,
+          bundleName: booking.pricing?.bundleName ?? r.bundleId,
+          contact: { parentName: r.contact.parentName, email: r.contact.email, phone: r.contact.phone },
+          address: { city: r.address.city, zip: r.address.zip },
+          client: { ip: ((ip) => (ip === "unknown" ? undefined : ip))(clientIp(req)), userAgent: req.headers.get("user-agent") ?? undefined, fbp: jar.get("_fbp")?.value, fbc: jar.get("_fbc")?.value ?? jar.get(FBC_COOKIE)?.value },
+        }),
+      );
+    }
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });

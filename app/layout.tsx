@@ -12,6 +12,7 @@ import ChalkFilters from "@/components/ChalkFilters/ChalkFilters";
 import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
+import MetaPixel from "@/components/layout/MetaPixel";
 import "@/styles/globals.css";
 
 const schoolbell = localFont({ src: "./fonts/schoolbell-400.woff2", variable: "--font-schoolbell", display: "swap", weight: "400" });
@@ -97,6 +98,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Header />
           {children}
           <Footer />
+          <MetaPixel />
         </CatalogProvider>
         </SiteSettingsProvider>
       </body>
