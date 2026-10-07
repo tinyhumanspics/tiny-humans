@@ -176,11 +176,11 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
   const n = (await db.select({ id: bookingRescheduleHistory.id }).from(bookingRescheduleHistory).where(eq(bookingRescheduleHistory.bookingId, row.id)).catch(() => [])).length;
   await Promise.allSettled([
     (async () => {
-      const m = bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token) });
+      const m = await bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token) });
       return sendEmail({ scope: "resend.reschedule", to: updated.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments, replyTo: cfg.notify, idempotencyKey: `booking-reschedule/${updated.bookingReference}/${n}`, reference: updated.bookingReference });
     })(),
     (async () => {
-      const m = internalRescheduleEmail(details);
+      const m = await internalRescheduleEmail(details);
       return sendEmail({ scope: "resend.internal-reschedule", from: cfg.internalFrom, to: cfg.notify, subject: m.subject, html: m.html, text: m.text, replyTo: updated.email, idempotencyKey: `booking-internal-reschedule/${updated.bookingReference}/${n}`, reference: updated.bookingReference });
     })(),
   ]).then((rs) => rs.forEach((r) => r.status === "rejected" && log.warn("booking.reschedule", "Email not sent (booking still rescheduled)", { code: r.reason instanceof EmailSendError ? r.reason.code : "send_failed", reference: updated.bookingReference })));

@@ -249,5 +249,70 @@
       "cta": "Book your Stay-Home Session",
       "ctaNote": "$0 today · pay after your session"
     }
+  },
+  "emails": {
+    "layout": {
+      "logoAlt": "Tiny Humans",
+      "footer": "Tiny Humans · Newborn & baby photography in {location}. We bring the studio to you.",
+      "signature": "Tiny Humans · {email}"
+    },
+    "common": {
+      "timeRange": "{start} to {end}",
+      "reference": "Reference",
+      "bundle": "Bundle",
+      "date": "Date",
+      "time": "Time",
+      "location": "Location",
+      "packageTotal": "Package total",
+      "payment": "Payment",
+      "paymentDue": "Payment due",
+      "paymentDueValue": "After the photoshoot",
+      "questions": "Questions? Just reply to this email.",
+      "greeting": "Hi {name},"
+    },
+    "confirmation": {
+      "subject": "Your Tiny Humans session is booked ({reference}): {date}, {time}",
+      "preheader": "Your Tiny Humans session on {date} is booked.",
+      "eyebrow": "Booking confirmed",
+      "title": "You're booked, {name}!",
+      "intro": "Thank you for choosing Tiny Humans. We can't wait to meet {baby}. We'll bring the whole studio to your home, so all you need to do is stay comfy.",
+      "babyFallback": "your little one",
+      "babyLed": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
+      "changes": "If you need to make a change to your session, reply to this email.",
+      "reschedule": "Reschedule Booking",
+      "cancel": "Cancel Booking",
+      "cancelCaption": "You'll be asked to confirm on the next page.",
+      "rescheduleText": "Need a different time? {url}",
+      "cancelText": "Need to cancel? {url}"
+    },
+    "cancellation": {
+      "subject": "Your Tiny Humans session has been cancelled — {reference}",
+      "preheader": "Your Tiny Humans session ({reference}) has been cancelled.",
+      "eyebrow": "Booking cancelled",
+      "title": "Your session has been cancelled",
+      "message": "Your Tiny Humans session has been cancelled. We're sorry we won't get to capture these little moments this time. If you'd like to book another session in the future, we'd love to see you.",
+      "name": "Name",
+      "originalDate": "Original date",
+      "originalTime": "Original time",
+      "reason": "Reason",
+      "bookAgain": "Book another session",
+      "bookAgainText": "Book another session: {url}"
+    },
+    "rescheduled": {
+      "subject": "Your Tiny Humans session has been rescheduled — {reference}",
+      "preheader": "Your session is now on {date} at {time}.",
+      "eyebrow": "Booking rescheduled",
+      "title": "All set, {name}!",
+      "message": "Your Tiny Humans session has been successfully rescheduled. We've updated your appointment and can't wait to capture these little moments with you.",
+      "previous": "Previous",
+      "newDate": "New date",
+      "newTime": "New time",
+      "newText": "New",
+      "reschedule": "Reschedule Booking",
+      "cancel": "Cancel Booking",
+      "linksCaption": "These links replace the ones in earlier emails.",
+      "rescheduleText": "Reschedule: {url}",
+      "cancelText": "Cancel: {url}"
+    }
   }
 }

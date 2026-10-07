@@ -786,11 +786,11 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
   const reschedulePath = `/reschedule?t=${token}`;
 
   const openEmail = async () => {
-    const { bookingConfirmationEmail } = await import("@/lib/email/templates/booking-confirmation");
+    const { bookingConfirmationEmail } = await import("@/emails/BookingConfirmation");
     const r = result.request;
     const pricing = result.pricing!;
     const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
-    const mail = bookingConfirmationEmail(
+    const mail = await bookingConfirmationEmail(
       { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
       { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline" },
     );

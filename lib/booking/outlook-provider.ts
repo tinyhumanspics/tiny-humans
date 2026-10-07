@@ -244,7 +244,7 @@ export class OutlookBookingProvider implements BookingProvider {
     const [customer, internal] = await Promise.allSettled([
       (async () => {
         const links = manageUrls(cancel.token);
-        const mail = bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours });
+        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours });
         return sendEmail({
           scope: "resend.customer",
           to: request.contact.email,
@@ -258,7 +258,7 @@ export class OutlookBookingProvider implements BookingProvider {
         });
       })(),
       (async () => {
-        const mail = internalNewBookingEmail(details, row.createdAt);
+        const mail = await internalNewBookingEmail(details, row.createdAt);
         return sendEmail({
           scope: "resend.internal",
           from: emailConfig().internalFrom,

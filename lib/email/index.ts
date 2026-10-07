@@ -1,9 +1,10 @@
 /**
- * Transactional email templates. Add new templates (reminders, mini-session
- * announcements, ...) under ./templates, composing the blocks in ./layout.
+ * Transactional emails (React Email templates in /emails, rendered to HTML + plain text, sent with Resend).
+ * Add new templates (reminders, after-session emails, ...) in /emails, composing emails/components.
  */
-export { bookingConfirmationEmail } from "./templates/booking-confirmation";
-export { bookingCancellationEmail } from "./templates/booking-cancellation";
-export { bookingRescheduledEmail } from "./templates/booking-rescheduled";
-export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail } from "./templates/internal";
+export { bookingConfirmationEmail } from "@/emails/BookingConfirmation";
+export { bookingCancellationEmail } from "@/emails/BookingCancellation";
+export { bookingRescheduledEmail } from "@/emails/BookingRescheduled";
+export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail } from "@/emails/Internal";
 export type { RenderedEmail, EmailAttachment, ImageMode } from "./types";
+export type { EmailLocale } from "./messages";
