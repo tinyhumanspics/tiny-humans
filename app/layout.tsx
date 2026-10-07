@@ -67,7 +67,7 @@ export const viewport: Viewport = {
 };
 
 /** Pages families open straight from an email or from Stripe: they see their page at once, never the intro. */
-const NO_INTRO_PATHS = ["/review", "/pay"];
+const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule"];
 
 /**
  * Runs before first paint: decides whether the chalk intro plays.
