@@ -13,6 +13,7 @@ import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
 import Header from "@/components/Header/Header";
 import Footer from "@/components/Footer/Footer";
 import MetaPixel from "@/components/layout/MetaPixel";
+import { LANDING_PATH } from "@/config/landing";
 import "@/styles/globals.css";
 
 const schoolbell = localFont({ src: "./fonts/schoolbell-400.woff2", variable: "--font-schoolbell", display: "swap", weight: "400" });
@@ -65,9 +66,10 @@ export const viewport: Viewport = {
 
 /**
  * Runs before first paint: decides whether the chalk intro plays.
- * Skipped in the owner area. Without JavaScript the site simply shows.
+ * Skipped in the owner area. On the ad landing page it's skipped too (paid visitors see content at once);
+ * preview the alternatives with ?intro=short (logo slides in, ~0.6 s) or ?intro=full. Without JavaScript the site simply shows.
  */
-const introScript = `(function(){try{if(location.pathname.indexOf('/admin')===0)return;var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
+const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(p.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // The owner's live theme + photos (falls back to the defaults).

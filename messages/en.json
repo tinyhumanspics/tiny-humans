@@ -102,5 +102,150 @@
       "heading": "About us",
       "story": "Our story"
     }
+  },
+  "landing": {
+    "meta": {
+      "title": "The Stay-Home Session: newborn & baby photos at home",
+      "description": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos, $0 today, pay after your session."
+    },
+    "hero": {
+      "eyebrow": "The Stay-Home Session",
+      "title": [
+        "Newborn & baby photos,",
+        "at home."
+      ],
+      "sub": "We bring the studio to your living room, anywhere from Miami to Orlando. Baby-led, with feeding breaks built in.",
+      "cta": "See open dates",
+      "ctaNote": "2-minute booking · $0 today · pay after your session",
+      "secondary": "See the bundles"
+    },
+    "trust": [
+      "At your home",
+      "Baby-led",
+      "$0 today, pay after",
+      "Miami to Orlando"
+    ],
+    "spanish": "Hablamos español",
+    "portfolio": {
+      "title": "Real homes, tiny humans",
+      "sub": "Every one of these was taken in a family's own home.",
+      "cta": "I want photos like these"
+    },
+    "how": {
+      "title": "How it works",
+      "steps": [
+        {
+          "title": "Pick your bundle",
+          "text": "One, two or three hours, baby only or the whole family."
+        },
+        {
+          "title": "Pick a date and time",
+          "text": "See real open times and book in about two minutes. $0 today."
+        },
+        {
+          "title": "We bring the studio",
+          "text": "Lights, backdrops, props and outfits for baby. You just stay comfy."
+        }
+      ],
+      "after": "Your fully edited gallery arrives within 24–72 hours. Then you pay, by Zelle, card or cash."
+    },
+    "offer": {
+      "title": "Pick your bundle",
+      "sub": "Every bundle is a Stay-Home Session: we come to you, wherever you are in Florida.",
+      "bonusTitle": "Every session also includes",
+      "bonuses": [
+        {
+          "title": "Home Session Prep Guide",
+          "text": "A one-page guide to get your home and baby ready (warmth, light, feeding, outfits)."
+        },
+        {
+          "title": "3 sneak peeks in 24 hours",
+          "text": "A few favorites in your inbox the day after your session."
+        },
+        {
+          "title": "Pick your backdrop",
+          "text": "We'll send you the options to choose from before your session."
+        }
+      ],
+      "promiseTitle": "Our baby-led promise",
+      "promise": "If baby just can't settle, we'll come back once, free, within 14 days.",
+      "deliverNote": "Your prep guide and backdrop options arrive after you book."
+    },
+    "meet": {
+      "title": "Meet Adrian & Alondra",
+      "paragraphs": [
+        "Tiny Humans started with our own newborn. We wanted photos at home, and we couldn't find anyone who would come to us. So we became that photographer.",
+        "Home is where babies, and parents, are most comfortable: no car seat, no packing the whole nursery, and feeding whenever baby wants.",
+        "Adrian photographs and edits every session. Alondra designs the set-ups, styling and little details. We're parents too, and we know how fast these first weeks go."
+      ],
+      "spanish": "Hablamos español."
+    },
+    "faq": {
+      "title": "Questions parents ask",
+      "items": [
+        {
+          "q": "Is it safe for a newborn?",
+          "a": "Yes, safety always comes first. We keep the room warm, wash and sanitize our hands, and never use unsupported poses: any tricky pose is a safe composite of two photos. A parent stays within arm's reach, and we don't wear fragrance."
+        },
+        {
+          "q": "How soon after birth should we book?",
+          "a": "Any time that suits you. The first couple of weeks are lovely for sleepy, curled-up newborn photos, and we photograph little ones up to 5 years old. Expecting? Book with your due date and we'll adjust the day once baby arrives."
+        },
+        {
+          "q": "What if baby comes early or late, or is fussy or hungry?",
+          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move your session online up to 48 hours before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
+        },
+        {
+          "q": "How much space do we need?",
+          "a": "Just a little space, ideally near a window. We bring the lights, backdrops, props and outfits for baby."
+        },
+        {
+          "q": "What should we wear?",
+          "a": "We bring outfits and wraps for baby. For family photos, soft solid colors look beautiful: cream, beige, sage or light blue. Skip big logos and busy patterns."
+        },
+        {
+          "q": "Can siblings and pets be in the photos?",
+          "a": "Siblings and parents join with Our Family Story. Little Moments and Our Little Story are baby only. Want a pet in the photos? Tell us in your booking notes and we'll plan for it."
+        },
+        {
+          "q": "Which areas do you cover? Is there a travel fee?",
+          "a": "We're based in Miami Beach and travel anywhere from Miami to Orlando. Homes farther away may have a travel fee, and we'll always confirm it with you before your session."
+        },
+        {
+          "q": "When do we get the photos, and how do we pay?",
+          "a": "Your fully edited gallery arrives within 24–72 hours, with 3 sneak peeks in the first 24. Nothing is due today: you pay after your session, by Zelle, card or cash."
+        }
+      ]
+    },
+    "area": {
+      "title": "Where we go",
+      "sub": "Based in Miami Beach. We come to you anywhere from Miami to Orlando.",
+      "cities": [
+        "Miami",
+        "Miami Beach",
+        "Aventura",
+        "North Miami",
+        "Coral Gables",
+        "Doral",
+        "Kendall",
+        "Hialeah",
+        "Hollywood",
+        "Fort Lauderdale",
+        "Boca Raton",
+        "West Palm Beach",
+        "Port St. Lucie",
+        "Orlando"
+      ],
+      "more": "…and everywhere in between."
+    },
+    "final": {
+      "title": "Your little one won't be this little for long",
+      "nextDates": "Next open dates",
+      "loading": "Checking the calendar…",
+      "cap": "We take up to 10 home sessions a week.",
+      "seasonal": "Holiday photos: Halloween sessions through Oct 28 · Thanksgiving through Nov 23 · Christmas cards shot by Dec 5.",
+      "cta": "Book your Stay-Home Session",
+      "ctaNote": "$0 today · pay after your session"
+    }
   }
 }
