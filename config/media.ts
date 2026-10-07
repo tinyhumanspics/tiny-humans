@@ -78,7 +78,11 @@ export function mediaFromList(list: PortfolioPhoto[]): ThemeMedia {
   return m;
 }
 
-/** What the site shows for a theme: custom slot, else the built-in picture for that position. */
+/**
+ * What the site shows for a theme: the theme's own picture for a slot, else the Default theme's picture for that slot
+ * (`fallback`, for every other theme), else the built-in picture / "photo coming soon". The same goes for the
+ * "Little moments" prompts and the extra pictures, so a theme nobody customized looks like Default in its own colors.
+ */
 export interface ResolvedMedia {
   title: PortfolioPhoto[];
   landing: (PortfolioPhoto | null)[];
@@ -87,23 +91,28 @@ export interface ResolvedMedia {
   extra: PortfolioPhoto[];
 }
 
-export function resolveMedia(m: ThemeMedia | undefined): ResolvedMedia {
+export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia): ResolvedMedia {
   const media = m ?? emptyThemeMedia();
+  const f = fallback;
   return {
-    title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => media.title[i] ?? BUILT_IN.title[i]) : [],
-    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? null),
-    about: MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? null),
+    title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => media.title[i] ?? f?.title[i] ?? BUILT_IN.title[i]) : [],
+    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? f?.landing?.[i] ?? null),
+    about: MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? f?.about?.[i] ?? null),
     groups: MEDIA_GROUPS.feed.map((def, gi) => {
       const g = media.groups[gi];
+      const fg = f?.groups[gi];
       return {
-        photos: [0, 1, 2].map((i) => g?.photos[i] ?? BUILT_IN.groups[gi][i]).filter(Boolean) as PortfolioPhoto[],
-        title: g?.title?.trim() || def.defaultTitle,
-        text: g?.text?.trim() || def.defaultText,
+        photos: [0, 1, 2].map((i) => g?.photos[i] ?? fg?.photos[i] ?? BUILT_IN.groups[gi][i]).filter(Boolean) as PortfolioPhoto[],
+        title: g?.title?.trim() || fg?.title?.trim() || def.defaultTitle,
+        text: g?.text?.trim() || fg?.text?.trim() || def.defaultText,
       };
     }),
-    extra: media.extra,
+    extra: media.extra.length ? media.extra : (f?.extra ?? []),
   };
 }
+
+/** The Default theme's pictures, used for empty slots of every other theme. */
+export const fallbackMediaFor = (themeId: string, all: Partial<Record<string, ThemeMedia>>): ThemeMedia | undefined => (themeId === "default" ? undefined : all.default);
 
 /** Photos in feed order (for the lightbox and inspiration links). */
 export const feedPhotos = (r: ResolvedMedia) => [...r.groups.flatMap((g) => g.photos), ...r.extra];

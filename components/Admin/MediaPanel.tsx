@@ -28,6 +28,10 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note>(null);
   const media = settings.media[themeId] ?? emptyThemeMedia();
+  /** Other themes show the Original theme's picture wherever they have none of their own. */
+  const base = themeId === "default" ? undefined : settings.media.default;
+  const baseLabel = themes.default.label;
+  const back = (where: string, inherited: PortfolioPhoto | null | undefined, otherwise: string) => `${where} ${inherited ? `now shows the ${baseLabel} theme's picture.` : otherwise}`;
   const live = themeId === settings.themeId;
   const label = themes[themeId].label;
 
@@ -76,7 +80,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   return (
     <section className={styles.section} aria-labelledby="media-title">
       <h2 id="media-title" className={cn(styles.h2, "chalk")}>Pictures by website section</h2>
-      <p className={cn(styles.muted, "chalk-soft")}>Each theme has its own pictures. Changing one theme never changes another. Which theme visitors see is set in <b>Theme</b>.</p>
+      <p className={cn(styles.muted, "chalk-soft")}>Each theme has its own pictures. In the other themes, any spot you leave empty shows the {themes.default.label} theme&apos;s picture, so you only need to replace the ones you want different. Which theme visitors see is set in <b>Theme</b>.</p>
       <div className={styles.editTabs} role="group" aria-label="Theme to edit">
         {THEME_IDS.map((id) => (
           <button key={id} type="button" className={cn(styles.tab, themeId === id ? styles.tabActive : "")} aria-pressed={themeId === id} onClick={() => { setThemeId(id); setNote(null); }}>
@@ -91,9 +95,10 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
       <MediaGroupBlock label={MEDIA_GROUPS.title.label} where={`${MEDIA_GROUPS.title.where} These two are shown without captions.`}>
         {[0, 1].map((i) => (
-          <Slot key={`t${i}-${themeId}-${media.title[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={MEDIA_GROUPS.title.label} custom={media.title[i]} builtIn={BUILT_IN.title[i]} busy={busy === `title-${i}`}
+          <Slot key={`t${i}-${themeId}-${media.title[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={MEDIA_GROUPS.title.label} custom={media.title[i]} inherited={base?.title[i]} inheritedLabel={baseLabel} builtIn={BUILT_IN.title[i]} busy={busy === `title-${i}`}
             onReplace={(e) => replace(["title", i], media.title[i], `${MEDIA_GROUPS.title.label} · Image ${i + 1}`, e)}
-            onReset={() => setSlot(["title", i], null, `${MEDIA_GROUPS.title.label} · Image ${i + 1} is back to the built-in picture.`)}
+            onReset={() => setSlot(["title", i], null, back(`${MEDIA_GROUPS.title.label} · Image ${i + 1}`, base?.title[i], "is back to the built-in picture."))}
+            resetLabel={base?.title[i] ? `Use the ${baseLabel} picture` : undefined}
             onDetails={(p) => setSlot(["title", i], p, "Details saved.")} captions={false} />
         ))}
       </MediaGroupBlock>
@@ -102,6 +107,8 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         definition={MEDIA_GROUPS.landing}
         kind="landing"
         photos={media.landing}
+        inherited={base?.landing}
+        inheritedLabel={baseLabel}
         themeId={themeId}
         busy={busy}
         replace={replace}
@@ -112,6 +119,8 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         definition={MEDIA_GROUPS.about}
         kind="about"
         photos={media.about}
+        inherited={base?.about}
+        inheritedLabel={baseLabel}
         themeId={themeId}
         busy={busy}
         replace={replace}
@@ -120,18 +129,24 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
       {MEDIA_GROUPS.feed.map((g, gi) => (
         <MediaGroupBlock key={g.label} label={g.label} where={g.where}
-          prompt={{ title: media.groups[gi]?.title ?? "", text: media.groups[gi]?.text ?? "", defaultTitle: g.defaultTitle, defaultText: g.defaultText, busy: busy === `prompt-${gi}`,
+          prompt={{ title: media.groups[gi]?.title ?? "", text: media.groups[gi]?.text ?? "", defaultTitle: base?.groups[gi]?.title?.trim() || g.defaultTitle, defaultText: base?.groups[gi]?.text?.trim() || g.defaultText, busy: busy === `prompt-${gi}`,
             onSave: (title, text) => { const next = clone(media); next.groups[gi].title = title.trim() || null; next.groups[gi].text = text.trim() || null; return saveMedia(next, `prompt-${gi}`, "Prompt text saved."); } }}>
           {[0, 1, 2].map((i) => (
-            <Slot key={`g${gi}-${i}-${themeId}-${media.groups[gi]?.photos[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
+            <Slot key={`g${gi}-${i}-${themeId}-${media.groups[gi]?.photos[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} inherited={base?.groups[gi]?.photos[i]} inheritedLabel={baseLabel} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
               onReplace={(e) => replace(["group", gi, i], media.groups[gi]?.photos[i] ?? null, `${g.label} · Image ${i + 1}`, e)}
-              onReset={() => setSlot(["group", gi, i], null, `${g.label} · Image ${i + 1} is back to the built-in picture.`)}
+              onReset={() => setSlot(["group", gi, i], null, back(`${g.label} · Image ${i + 1}`, base?.groups[gi]?.photos[i], "is back to the built-in picture."))}
+              resetLabel={base?.groups[gi]?.photos[i] ? `Use the ${baseLabel} picture` : undefined}
               onDetails={(p) => setSlot(["group", gi, i], p, p.caption ? `Caption saved: “${p.caption}”.` : "Saved. No caption, so the photo fills the frame.")} />
           ))}
         </MediaGroupBlock>
       ))}
 
       <MediaGroupBlock label={MEDIA_GROUPS.extra.label} where={MEDIA_GROUPS.extra.where}>
+        {!media.extra.length && Boolean(base?.extra.length) && (
+          <p className={cn(styles.hintSmall, "chalk-soft")}>
+            Visitors see the {baseLabel} theme&apos;s {base!.extra.length} extra picture{base!.extra.length > 1 ? "s" : ""} until you add some here.
+          </p>
+        )}
         {media.extra.map((p, i) => (
           <Slot key={p.id} name={`Extra image ${i + 1}`} groupLabel={MEDIA_GROUPS.extra.label} custom={p} builtIn={null} busy={busy === `extra-${i}`}
             onReplace={async (e) => {
@@ -159,10 +174,13 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   );
 }
 
-function FixedPlaceholderGroup({ definition, kind, photos, themeId, busy, replace, setSlot }: {
+function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedLabel, themeId, busy, replace, setSlot }: {
   definition: { label: string; where: string; slots: string[] };
   kind: "landing" | "about";
   photos: (PortfolioPhoto | null)[];
+  /** The Original theme's pictures (shown in empty slots of other themes). */
+  inherited?: (PortfolioPhoto | null)[];
+  inheritedLabel: string;
   themeId: TinyHumansTheme;
   busy: string | null;
   replace: (path: SlotPath, current: PortfolioPhoto | null, slotName: string, e: ChangeEvent<HTMLInputElement>) => Promise<void>;
@@ -176,10 +194,12 @@ function FixedPlaceholderGroup({ definition, kind, photos, themeId, busy, replac
           name={name}
           groupLabel={definition.label}
           custom={photos[i] ?? null}
+          inherited={inherited?.[i]}
+          inheritedLabel={inheritedLabel}
           builtIn={null}
           busy={busy === `${kind}-${i}`}
           onReplace={(e) => replace([kind, i], photos[i] ?? null, `${definition.label} · ${name}`, e)}
-          onReset={() => setSlot([kind, i], null, `${definition.label} · ${name} removed. The placeholder is showing again.`)}
+          onReset={() => setSlot([kind, i], null, `${definition.label} · ${name} removed. ${inherited?.[i] ? `The ${inheritedLabel} theme's picture is showing again.` : "The placeholder is showing again."}`)}
           onDetails={(p) => setSlot([kind, i], p, "Photo details saved.")}
           resetLabel="Remove picture"
           captions={false}
@@ -213,13 +233,15 @@ function MediaGroupBlock({ label, where, prompt, children }: { label: string; wh
   );
 }
 
-function Slot({ name, groupLabel, custom, builtIn, busy, onReplace, onReset, onDetails, resetLabel = "Use built-in picture", captions = true }: {
+function Slot({ name, groupLabel, custom, inherited, inheritedLabel, builtIn, busy, onReplace, onReset, onDetails, resetLabel = "Use built-in picture", captions = true }: {
   name: string; groupLabel: string; custom: PortfolioPhoto | null; builtIn: PortfolioPhoto | null; busy: boolean;
+  /** The Original theme's picture for this slot (shown when this theme has none). */
+  inherited?: PortfolioPhoto | null; inheritedLabel?: string;
   onReplace: (e: ChangeEvent<HTMLInputElement>) => void; onReset: () => void; onDetails: (p: PortfolioPhoto) => void; resetLabel?: string;
   /** Show the caption field (pictures in "Little moments" show a caption under the photo). */
   captions?: boolean;
 }) {
-  const shown = custom ?? builtIn;
+  const shown = custom ?? inherited ?? builtIn;
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState(shown?.title ?? "");
   const [alt, setAlt] = useState(shown?.alt ?? "");
@@ -231,7 +253,7 @@ function Slot({ name, groupLabel, custom, builtIn, busy, onReplace, onReset, onD
         {shown ? <Image src={shown.src} alt={shown.alt} fill sizes="220px" style={{ objectFit: "cover" }} unoptimized={shown.src.startsWith("data:")} /> : null}
         {busy && <span className={cn(styles.slotBusy, "chalk-soft")}>Saving…</span>}
       </div>
-      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : builtIn ? "Built-in picture" : "Photo coming soon"}</p>
+      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : inherited ? `Same as the ${inheritedLabel} theme` : builtIn ? "Built-in picture" : "Photo coming soon"}</p>
       <label className={cn(styles.smallButton, styles.replaceBtn)}>
         <input type="file" accept="image/*" className={styles.visuallyHidden} onChange={onReplace} aria-label={`Replace ${groupLabel} ${name}`} disabled={busy} />
         {shown ? "Replace" : "Add picture"}

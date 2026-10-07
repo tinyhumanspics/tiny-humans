@@ -1,6 +1,6 @@
 "use client";
 
-import { feedPhotos, resolveMedia, type ResolvedMedia } from "@/config/media";
+import { fallbackMediaFor, feedPhotos, resolveMedia, type ResolvedMedia } from "@/config/media";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme } from "@/config/themes";
 import { portfolio as builtInPhotos, type PortfolioPhoto } from "@/config/portfolio";
@@ -71,10 +71,9 @@ export function useSiteSettings(): Ctx {
   return ctx;
 }
 
-/** Photos on the site: the live picture set, falling back to the Original set. */
-/** Pictures for the theme visitors see (each theme independent). */
+/** Pictures for the theme visitors see (empty slots show the Default theme's picture). */
 export function liveMedia(s: SiteSettings): ResolvedMedia {
-  return resolveMedia(s.media[s.themeId]);
+  return resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media));
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {
