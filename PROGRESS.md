@@ -21,6 +21,25 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
 7. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
    The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9 uses it.
 
+## ▶ Next session prompt
+(Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
+```
+Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
+
+State (Oct 7): main = 65410a6 (+ docs-only commits after it), live and smoke-tested: Phase 1a–1f incl. the landing
+page /home-sweet-home (copy approved), Next 16.4 / React 19.3 / TS 7, /bundles + /book?bundle= + 404, /about,
+cn() refactor, Instagram @tinyhumans.photography, Vercel Analytics + Speed Insights.
+Not on main yet: nothing (local wip/* branches are merged; delete them when convenient).
+
+Next: Phase 1g, production verification with the owner (test event code → one real booking from /home-sweet-home →
+Events Manager, booking source, emails, Outlook → cancel → remove the code), then the ads message. First confirm
+NEXT_PUBLIC_META_PIXEL_ID and META_CAPI_ACCESS_TOKEN are set in Vercel. Then Phase 2 (show-rate emails and reminders)
+before the first booked sessions. Research current official docs first (note links in PROGRESS.md).
+Time-sensitive: Halloween cutoff Oct 28, DST Nov 1, BUG-5 overlap constraint.
+Waiting on the owner: privacy-policy line for Vercel Analytics, /portfolio page, photos for 6 placeholders.
+Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/homebrew/bin/gh.
+```
+
 ## Owner requests (outside the original brief)
 - [x] **Routes** (Oct 7, branch `wip/routes`): bundles page `/book` → **`/bundles`**, calendar `/book/schedule?bundle=` →
       **`/book?bundle=`** (`?inspiration=` kept). Owner: no redirects for the old URLs (new project). `/book` without a

@@ -1,7 +1,8 @@
 # CLAUDE.md — Tiny Humans
 
 Working notes for AI coding sessions. **Start every session with: "Read CLAUDE.md and PROGRESS.md and continue."**
-PROGRESS.md holds the phase plan, status, decisions, open owner questions, research notes and the bug log.
+PROGRESS.md holds the phase plan, status, decisions, open owner questions, research notes and the bug log. Its
+"▶ Next session prompt" section always has the latest copy-paste prompt (written by `/handoff`).
 
 ## What this is
 Newborn & baby photography business (Miami Beach, travels anywhere in Florida up to Orlando). The photographers
@@ -10,7 +11,8 @@ Newborn & baby photography business (Miami Beach, travels anywhere in Florida up
 No online payment: "$0 today, pay after your session" (Stripe deposits may come later; keep a slot for a payment step).
 
 ## Stack
-- Next.js 15.5 App Router, React 19.1, TypeScript (strict), npm. Root layout is an async server component.
+- Next.js 16.4 App Router (Turbopack), React 19.3, TypeScript 7 (strict; `typescript` = the TS 6 API alias for tools,
+  `tsc` = TS 7), npm, ESLint 10 flat config. Root layout is an async server component.
 - Neon Postgres + Drizzle ORM (`drizzle-orm/neon-http`, `lib/db`), migrations in `drizzle/`.
 - Booking providers: `BOOKING_PROVIDER=mock|outlook` (Outlook = Microsoft Graph calendar only).
 - Email: Resend (`lib/email`). Storage: Vercel Blob (theme + photos, `lib/settings`). Validation: Zod 4.
@@ -22,9 +24,9 @@ npm run dev          # local dev (use BOOKING_PROVIDER=mock)
 npm run typecheck    # tsc --noEmit
 npm run build        # production build (what Vercel runs)
 npm run db:generate  # SQL migration from lib/db/schema.ts
-npm run test:e2e     # Playwright booking-funnel tests (mock provider)
+npm run lint         # ESLint flat config (0 errors expected; warnings are known)
+npm run test:e2e     # Playwright booking-funnel tests (mock provider, production build)
 ```
-Lint: `next lint` is deprecated and unconfigured (prompts interactively) — ESLint flat config arrives in Phase 7.
 
 ## Rules (condensed from the owner's brief)
 - **Ship small slices straight to `main`.** Before every push: typecheck, lint (once configured), build, tests (once they
@@ -46,6 +48,9 @@ Lint: `next lint` is deprecated and unconfigured (prompts interactively) — ESL
   line in PROGRESS.md (why, bundle impact, maintenance).
 - The owner is not deeply technical: explain decisions in 1–2 plain sentences; give numbered one-line steps for anything
   he must do; after each phase send a 3–5 line summary.
+- **End of every phase** (also when the chat is getting long, or the owner asks): run the `/handoff` skill
+  (`.claude/skills/handoff/SKILL.md`). It updates PROGRESS.md, saves a copy-paste prompt for the next session in
+  PROGRESS.md → "▶ Next session prompt", and ends the reply with the summary + that prompt.
 
 ## Project structure (target — confirmed in Phase 0)
 New code goes here from Phase 1 on; existing code moves in Phase 8.
