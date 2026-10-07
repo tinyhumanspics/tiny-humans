@@ -24,9 +24,11 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await page.fill("#field-parentName", "José Muñoz");
   await page.fill("#field-email", "jose.test@example.com");
   await page.fill("#field-phone", "(305) 555-0142");
-  await page.fill("#field-street", "1500 Bay Rd Apt 1204");
+  await page.fill("#field-street", "1500 Bay Rd");
+  await page.fill("#field-unit", "1204");
   await page.fill("#field-city", "Miami Beach");
   await page.fill("#field-zip", "33139");
+  await page.fill("#field-access", "Gate code 4821, guest parking on level 2");
   await page.selectOption("#field-babyAge", { index: 1 });
   // optional permissions: both start unticked
   await expect(page.locator("#field-consent-sms")).not.toBeChecked();
@@ -34,6 +36,8 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await page.locator("#field-consent-sms").check();
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect(page.getByText("Check everything")).toBeVisible();
+  await expect(page.getByText("1500 Bay Rd, Unit 1204, Miami Beach 33139")).toBeVisible();
+  await expect(page.getByText("Gate code 4821, guest parking on level 2")).toBeVisible();
   await expect(page.getByText("OK to text you")).toBeVisible();
   await expect(page.getByText("Kept private")).toBeVisible();
   // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
@@ -53,6 +57,7 @@ test("mock mode previews the confirmation email (React Email rendered in the bro
   const email = page.frameLocator('iframe[title="Confirmation email preview"]');
   await expect(email.getByRole("heading", { name: /You're booked, José!/ })).toBeVisible();
   await expect(email.getByRole("link", { name: "Reschedule Booking" })).toBeVisible();
+  await expect(email.getByText("1500 Bay Rd, Unit 1204, Miami Beach, FL 33139").first()).toBeVisible();
 });
 
 test("booking works in the Instagram in-app browser", async ({ browser }) => {
