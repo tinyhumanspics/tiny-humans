@@ -66,12 +66,16 @@ export const viewport: Viewport = {
   themeColor: "#183a22",
 };
 
+/** Pages families open straight from an email or from Stripe: they see their page at once, never the intro. */
+const NO_INTRO_PATHS = ["/review", "/pay"];
+
 /**
  * Runs before first paint: decides whether the chalk intro plays.
- * Skipped in the owner area. On the ad landing page it's skipped too (paid visitors see content at once);
- * preview the alternatives with ?intro=short (logo slides in, ~0.6 s) or ?intro=full. Without JavaScript the site simply shows.
+ * Skipped in the owner area and on NO_INTRO_PATHS. On the ad landing page it's skipped too (paid visitors see content
+ * at once); preview the alternatives with ?intro=short (logo slides in, ~0.6 s) or ?intro=full. Without JavaScript the
+ * site simply shows.
  */
-const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(p.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
+const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var n=${JSON.stringify(NO_INTRO_PATHS)};for(var k=0;k<n.length;k++){if(p===n[k]||p.indexOf(n[k]+'/')===0)return;}var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(p.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // The owner's live theme + photos (falls back to the defaults).
