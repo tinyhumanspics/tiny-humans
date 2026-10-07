@@ -20,9 +20,8 @@ State: everything below is on `main` and live (last deploy `7f4113f` + this hand
    for real: the first "Session done" after a real session is the first live Stripe payment page (check /admin shows
    "Paid" afterwards; if not, Stripe Workbench → Webhooks → Event deliveries). 2e (permissions checkboxes) built,
    committed locally, waiting on the owner's yes + `drizzle/0009_booking_consents.sql` in Neon → push. Then: edge
-   items, optional /admin "Today" view with tap-to-text (uses the SMS permission), Halloween (cutoff Oct 28).
-4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page + Halloween email logo/strip in
-   `lib/email/assets.ts`), BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
+   items, optional /admin "Today" view with tap-to-text (uses the SMS permission).
+4. **Time-sensitive:** BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
    were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
    check: the calendar UI and availability on Nov 1 itself.
 5. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
@@ -49,7 +48,7 @@ Next: Phase 1g with the owner if he has results (checklist in PROGRESS → NEXT 
 Phase 2d: after-session emails (owner marks "session done" / "gallery delivered" in /admin; needs his payment details:
 Zelle name/number, card link; review + referral ask), then 2e (SMS consent + photo-use checkboxes, migration first).
 Research current official docs first (note links in PROGRESS.md).
-Time-sensitive: Halloween cutoff Oct 28 (theme, seasonal page, email images), BUG-5 overlap constraint, DST Nov 1 UI check.
+Time-sensitive: BUG-5 overlap constraint, DST Nov 1 UI check. (No Halloween: the owner dropped it Oct 7.)
 Waiting on the owner: 1g results, payment details for 2d, privacy-policy line for Vercel Analytics, /portfolio page.
 Watch out: the folder is on the iCloud Desktop: " 2"/" 3" duplicate files appear (e.g. .next/types/routes.d 3.ts
 breaks typecheck: delete the duplicates in .next). .agents/ + AGENTS.md are untracked files from another tool: leave
@@ -170,7 +169,9 @@ them. Email changes: compare old vs new renders with screenshots before sending 
       per email (HMAC of the row id with `CRON_SECRET`, only the hash stored), valid while the booking keeps that session
       time; confirmation links keep working. Tested locally end to end (21 scenarios incl. DST night Nov 1).
 - [ ] 2c Optional /admin "Today" view with tap-to-text
-- [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook): /admin → Leads → details →
+- [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
+      chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
+      `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once. [?] same for /cancel + /reschedule (opened from emails)? /admin → Leads → details →
       "After the Session": **Session done** (enabled once the session started) → thank-you email with "Pay $X" →
       `/pay?t=` (`app/pay/route.ts`) → Stripe Checkout for the booking's price snapshot (`finalPriceCents`, so codes and
       offers are exact; an open Checkout page is reused, a new one made after 24 h) → `/pay/status?s=…`. "Paid" from
@@ -201,8 +202,9 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 
 ## Phase 4 — Add-ons + seasonal
 - [ ] Extra babies add-on ($75 each, editable per bundle in /admin; extra minutes/photos/max TBD) end to end
-- [ ] Halloween theme (`config/themes.ts` pattern) — owner wants Halloween
-- [ ] Seasonal landing variants with real cutoffs (Halloween, Thanksgiving, Christmas cards + First Christmas), editable in /admin
+- ~~Halloween theme~~ — **dropped by the owner (Oct 7): no Halloween anything; keep only the existing themes**
+  (default, Thanksgiving, Christmas, New Year).
+- [ ] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in /admin
 
 ## Phase 5 — SEO basics
 - [ ] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable
@@ -242,7 +244,7 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 4. Ages: **up to 5 years old, flexible on age**; booking before birth OK (flexible).
 5. Capacity: 10–15 sessions a week; publish **"up to 10 home sessions a week"** (owner: 10 builds scarcity).
 6. Gallery delivery: **24–72 hours** from shoot to fully edited.
-7. Seasonal: **run Halloween too**. Last sessions: Halloween **Oct 28**, Thanksgiving **Nov 23**, Christmas cards **Dec 5**,
+7. Seasonal: ~~run Halloween too~~ (**dropped Oct 7: no Halloween theme or offer**). Last sessions: Thanksgiving **Nov 23**, Christmas cards **Dec 5**,
    First Christmas **Dec 21** (editable in /admin later).
 8. "Most loved" is true and recommended. Mobile order (owner: "you choose"): **Family Story first, highlight Our Little Story ($249)**.
 9. Service area: **anywhere in Florida**, based in Miami Beach, up to Orlando. Travel fee idea (owner, still deciding):
