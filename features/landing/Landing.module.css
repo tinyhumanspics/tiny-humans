@@ -9,6 +9,8 @@
 .heroGrid { display: grid; gap: 28px; align-items: center; }
 @media (min-width: 900px) { .heroGrid { grid-template-columns: 1.1fr 1fr; gap: 48px; } }
 .heroCopy { position: relative; container-type: inline-size; }
+/* phones: room under the note for the bottom board doodle (it sat on "…pay after your session") */
+@media (max-width: 899px) { .heroCopy { padding-bottom: 44px; } }
 .eyebrow {
   margin: 0 0 10px;
   font-family: var(--font-chalk);
@@ -86,8 +88,13 @@
 .promise { margin: 16px 0 0; padding-top: 14px; border-top: 1px dashed var(--chalk-faint); }
 .promise b { font-weight: 400; font-family: var(--font-chalk); color: var(--sun-yellow); }
 
+/* 4. how it works: behind-the-scenes photo */
+.howPhoto { width: min(100%, 560px); margin: 28px auto 0; }
+
 /* 6. meet */
-.meet { position: relative; max-width: 760px; margin: 0 auto; padding: clamp(24px, 4vw, 36px); rotate: 0.4deg; }
+.meet { position: relative; max-width: 960px; margin: 0 auto; padding: clamp(24px, 4vw, 36px); rotate: 0.4deg; display: grid; gap: 24px; align-items: center; }
+@media (min-width: 760px) { .meet { grid-template-columns: 300px 1fr; gap: 36px; } }
+.meetPhoto { width: min(100%, 300px); justify-self: center; rotate: -1.2deg; }
 .meet p { margin: 10px 0 0; }
 .meetTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(2rem, 6vw, 2.8rem); line-height: 1.1; }
 .meetDoodle { position: absolute; top: -18px; right: 22px; rotate: 10deg; }

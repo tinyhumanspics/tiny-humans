@@ -12,8 +12,9 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 2. **Landing page** is on branch `wip/landing-page` (`/home-sweet-home`, "The Stay-Home Session"). Before merging:
    show the owner phone + desktop screenshots and get a yes on the copy (bio "Meet Adrian & Alondra", FAQ — esp. the
    pets answer, bonuses incl. "3 sneak peeks in 24 hours", baby-led promise "within 14 days") and on the intro
-   (default = skipped on this page; preview `?intro=short` / `?intro=full`). Fix: on phones the hero's board doodle
-   (cloud) overlaps the "…pay after your session" note. Then merge into main and push.
+   (default = skipped on this page; preview `?intro=short` / `?intro=full`). Phone cloud-over-note overlap fixed
+   (Oct 7). Photo placeholders added: "Meet" (Adrian & Alondra) + "How it works" (set-up in a living room).
+   Then merge into main and push.
 3. **1g production verification** with the owner (section 4 of the brief), then send him the ads message (landing URL
    `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`, page must be live first).
 4. Owner must deliver the **prep guide + backdrop options manually** after each booking until Phase 2 emails ship

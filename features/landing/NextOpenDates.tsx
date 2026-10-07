@@ -5,6 +5,7 @@ import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { fromDateKey } from "@/lib/booking/dates";
 import styles from "./Landing.module.css";
+import { cn } from "@/lib/cn";
 
 /** The real next open days (from the live calendar): honest urgency, no countdown timers. */
 export default function NextOpenDates({ bundleId, label, loading }: { bundleId?: string; label: string; loading: string }) {
@@ -24,7 +25,7 @@ export default function NextOpenDates({ bundleId, label, loading }: { bundleId?:
 
   if (!bundleId || (days && days.length === 0)) return null;
   return (
-    <p className={`${styles.nextDates} chalk-soft`} aria-live="polite">
+    <p className={cn(styles.nextDates, "chalk-soft")} aria-live="polite">
       <span className={styles.nextLabel}>{label}:</span>{" "}
       {days === null
         ? loading
