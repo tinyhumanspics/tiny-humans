@@ -8,6 +8,7 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import { useBookingSelection } from "./BookingSelectionContext";
 import Booking from "./Booking";
+import BookingPaused from "@/features/booking/BookingPaused";
 import styles from "./Booking.module.css";
 
 /** Reads ?bundle= and ?inspiration= from the link, then shows the calendar. */
@@ -15,7 +16,7 @@ export default function ScheduleBooking() {
   const params = useSearchParams();
   const { photos } = useSiteSettings();
   const { setInspirationId } = useBookingSelection();
-  const { getBundle } = useCatalog();
+  const { getBundle, available } = useCatalog();
   const bundle = getBundle(params.get("bundle"));
   const inspirationId = params.get("inspiration");
 
@@ -23,6 +24,15 @@ export default function ScheduleBooking() {
     if (inspirationId && findPhoto(photos, inspirationId)) setInspirationId(inspirationId);
   }, [inspirationId, photos, setInspirationId]);
 
+  if (!bundle && !available) {
+    return (
+      <section className={styles.section}>
+        <div className="container">
+          <BookingPaused />
+        </div>
+      </section>
+    );
+  }
   if (!bundle) {
     return (
       <section className={styles.section} aria-labelledby="pick-bundle-title">

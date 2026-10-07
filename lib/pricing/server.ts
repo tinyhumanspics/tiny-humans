@@ -10,6 +10,7 @@ import { log } from "@/lib/log";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
 import { durationLabel, toCents } from "./engine";
+import { lastGoodCatalog, rememberCatalog } from "./snapshot";
 import { CODE_MESSAGES, type CodeCheck, type DiscountCode, type PricingAdapter } from "./types";
 import type { BundleInput, CodeInput } from "./validation";
 
@@ -19,51 +20,101 @@ const LOCATION = "We bring the studio to your home";
 const missingTable = (err: unknown) => JSON.stringify(err ?? "").includes("42P01") || String((err as Error)?.message ?? "").includes("does not exist");
 
 
-/** Every bundle (active + inactive), from Neon; built-in bundles until the database/migration exists. */
+export class CatalogUnavailableError extends Error {}
+
+/**
+ * Every bundle (active + inactive), from Neon. The built-in bundles in
+ * config/bundles.ts are used ONLY when no database is configured (local
+ * development / prototype). With a database, an error or an empty table throws:
+ * production never shows hardcoded prices the server wouldn't honor.
+ */
 export async function getCatalog(): Promise<Bundle[]> {
   if (!isDatabaseConfigured()) return builtInCatalog();
+  let rows: (typeof bundlesTable.$inferSelect)[];
+  let inc: (typeof bundleInclusions.$inferSelect)[];
   try {
     const db = getDb();
-    const [rows, inc] = await Promise.all([
+    [rows, inc] = await Promise.all([
       db.select().from(bundlesTable).orderBy(asc(bundlesTable.sortOrder), asc(bundlesTable.createdAt)),
       db.select().from(bundleInclusions).orderBy(asc(bundleInclusions.position)),
     ]);
-    if (!rows.length) return builtInCatalog();
-    return rows.map((r) => ({
-      id: r.id,
-      name: r.name,
-      price: r.regularPriceCents / 100,
-      duration: r.durationLabel || durationLabel(r.durationMinutes),
-      durationMinutes: r.durationMinutes,
-      people: "",
-      setups: "",
-      photos: r.photosLabel ?? "",
-      features: inc.filter((i) => i.bundleId === r.id).map((i) => i.text),
-      locationNote: LOCATION,
-      cta: `Choose ${r.name}`,
-      badge: r.badge ?? undefined,
-      description: r.description ?? undefined,
-      active: r.active,
-      sortOrder: r.sortOrder,
-      offer: r.offerEnabled || r.offerPriceCents != null ? { enabled: r.offerEnabled, price: (r.offerPriceCents ?? 0) / 100, label: r.offerLabel, endsOn: r.offerEndsOn } : null,
-    }));
   } catch (err) {
-    if (missingTable(err)) {
-      log.warn("pricing", "Pricing tables not found: using built-in bundles. Run drizzle/0005_pricing_and_promotions.sql in Neon.");
-      return builtInCatalog();
+    if (missingTable(err)) log.error("pricing.db", "Pricing tables not found. Run drizzle/0005_pricing_and_promotions.sql in Neon.");
+    else log.error("pricing.db", "Could not load bundles", { error: err as Error });
+    throw new CatalogUnavailableError("Bundles could not be loaded");
+  }
+  if (!rows.length) {
+    log.error("pricing.db", "The bundles table is empty");
+    throw new CatalogUnavailableError("No bundles in the database");
+  }
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    price: r.regularPriceCents / 100,
+    duration: r.durationLabel || durationLabel(r.durationMinutes),
+    durationMinutes: r.durationMinutes,
+    people: "",
+    setups: "",
+    photos: r.photosLabel ?? "",
+    features: inc.filter((i) => i.bundleId === r.id).map((i) => i.text),
+    locationNote: LOCATION,
+    cta: `Choose ${r.name}`,
+    badge: r.badge ?? undefined,
+    description: r.description ?? undefined,
+    active: r.active,
+    sortOrder: r.sortOrder,
+    offer: r.offerEnabled || r.offerPriceCents != null ? { enabled: r.offerEnabled, price: (r.offerPriceCents ?? 0) / 100, label: r.offerLabel, endsOn: r.offerEndsOn } : null,
+  }));
+}
+
+/**
+ * What the public site shows.
+ * - live: from Neon (cached; refreshed when the owner saves, and every 5 minutes)
+ * - snapshot: Neon is unreachable, so the last good copy (memory / Blob) is shown — the prices the owner last published
+ * - builtin: no database configured (local development / prototype only)
+ * With a database and no good copy, this throws on purpose: pages are statically regenerated (ISR), so Next keeps
+ * serving the last good page, and a build fails instead of deploying wrong prices (the previous deployment stays live).
+ * It never falls back to the hardcoded bundles in production.
+ */
+export type CatalogStatus = "live" | "snapshot" | "builtin";
+export interface PublicCatalog {
+  bundles: Bundle[];
+  status: CatalogStatus;
+}
+
+const activeOnly = (list: Bundle[]) => list.filter((b) => b.active !== false);
+
+export async function getPublicCatalog(): Promise<PublicCatalog> {
+  if (!isDatabaseConfigured()) return { bundles: activeOnly(builtInCatalog()), status: "builtin" };
+  try {
+    const { unstable_cache } = await import("next/cache");
+    const bundles = await unstable_cache(
+      async () => {
+        const list = activeOnly(await getCatalog());
+        await rememberCatalog(list);
+        return list;
+      },
+      ["public-catalog-v2"],
+      { tags: [CATALOG_TAG], revalidate: 300 },
+    )();
+    return { bundles, status: "live" };
+  } catch (err) {
+    const copy = await lastGoodCatalog();
+    if (copy) {
+      log.error("pricing.catalog", "Live bundles unavailable: showing the last good copy", { error: err as Error });
+      return { bundles: copy, status: "snapshot" };
     }
-    log.error("pricing.db", "Could not load bundles", { error: err as Error });
+    log.error("pricing.catalog", "Live bundles unavailable and no saved copy: keeping the last good page", { error: err as Error });
     throw err;
   }
 }
 
-/** Active bundles for the public site (cached; refreshed when the owner saves, and every 5 minutes). */
-export async function getPublicCatalog(): Promise<Bundle[]> {
+/** After the owner changes bundles: store the new public list as the last good copy. */
+export async function refreshCatalogSnapshot(): Promise<void> {
   try {
-    const { unstable_cache } = await import("next/cache");
-    return await unstable_cache(async () => (await getCatalog()).filter((b) => b.active !== false), ["public-catalog"], { tags: [CATALOG_TAG], revalidate: 300 })();
+    await rememberCatalog(activeOnly(await getCatalog()));
   } catch {
-    return (await getCatalog().catch(() => builtInCatalog())).filter((b) => b.active !== false);
+    /* logged in getCatalog */
   }
 }
 

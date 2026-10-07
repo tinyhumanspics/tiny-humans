@@ -19,7 +19,12 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
       lives in the owner's local folder `tiny-humans-live/.screenshots/baseline/`)
 
 ## Phase 1 — Launch blockers (tonight)
-- [ ] 1a Fix booking bugs: BUG-1 in-progress retry, BUG-2 stale-price fallback, BUG-4 Miami time labels
+- [x] 1a BUG-2 stale prices: no hardcoded fallback with a DB; last-good copy (memory + content-hashed Blob file); with no
+      copy the render throws so ISR keeps the last good page / a build fails (old deployment stays live); friendly
+      global-error page; "booking paused" box when no bundles are bookable
+- [x] 1a BUG-1 `in_progress` code: browser waits + retries with the same requestId (never "pick another time")
+- [x] 1a BUG-4 "Miami time" on time step, review, confirmation, reschedule; calendar "today" = Miami date
+- [x] Local test DB: `scripts/local-db` (embedded Postgres + Neon-HTTP shim, separate package; `.down` file simulates outage)
 - [ ] 1b Durable rate limiting (Upstash, `@upstash/ratelimit`) on create/quote/availability/cancel/manage/reschedule + strict admin login
 - [ ] 1b Bot protection (Vercel BotID basic — decision pending research) on booking create
 - [ ] 1b Baseline security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors/XFO)
@@ -31,7 +36,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [ ] 1d CAPI `Schedule` from booking-create via `after()`; dedup `event_id` = booking `requestId`; hashed user_data
 - [ ] 1d Domain verification meta tag  [?] code from owner
 - [ ] 1e Privacy policy + terms: Pixel/CAPI, `_fbp`/`_fbc`, hashed contact data to Meta, source tracking, Resend; lastUpdated
-- [ ] 1f Landing page `/newborn-photos-at-home` (blueprint order, copy in `messages/en.json`, CTA → booking w/ bundle)
+- [ ] 1f Landing page (URL: owner pick, `/home-sweet-home` proposed) (blueprint order, copy in `messages/en.json`, CTA → booking w/ bundle)
 - [ ] 1f Intro on landing: prototype short vs skipped; owner picks
 - [ ] 1f Metadata + OG image; screenshots to owner before push
 - [ ] 1g Production verification with owner (test event code → one real booking → verify → cancel → remove code)
@@ -81,36 +86,41 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
    photos within 24 hours" — confirm wording), "Pick your backdrop" at booking.
 3. Baby-led promise (free return visit if baby can't settle): **yes** (within 14 days — confirm).
 4. Ages: **up to 5 years old, flexible on age**; booking before birth OK (flexible).
-5. Capacity: **10–15 sessions a week** [?] publish "up to 15 home sessions a week"?
+5. Capacity: 10–15 sessions a week; publish **"up to 10 home sessions a week"** (owner: 10 builds scarcity).
 6. Gallery delivery: **24–72 hours** from shoot to fully edited.
-7. Seasonal: **run Halloween too**. [?] cutoffs — proposed Halloween Oct 28, Thanksgiving Nov 23, Christmas cards Dec 5,
-   First Christmas Dec 21.
+7. Seasonal: **run Halloween too**. Last sessions: Halloween **Oct 28**, Thanksgiving **Nov 23**, Christmas cards **Dec 5**,
+   First Christmas **Dec 21** (editable in /admin later).
 8. "Most loved" is true and recommended. Mobile order (owner: "you choose"): **Family Story first, highlight Our Little Story ($249)**.
-9. Service area: **anywhere in Florida**, based in Miami Beach, up to Orlando. **Travel fee for drives ≥ 2 hours**, amount
-   editable in /admin [?] amount.
+9. Service area: **anywhere in Florida**, based in Miami Beach, up to Orlando. Travel fee idea (owner, still deciding):
+   **free up to N miles (e.g. 50) from his address, then $X per mile for the extra miles only** (60 mi → 10 billable);
+   free miles + per-mile price editable in /admin. Distance: estimate without paid APIs (ZIP centroid × road factor) —
+   confirm approach + cost before building (Phase 4).
 10. Safety practices for FAQ: **yes** to warm room, washed/sanitized hands, no unsupported poses (composites), parent within
     arm's reach, no fragrance.
-11. "Meet the photographers": **Alondra Jimenez (photographer) and Adrian Orozco**. Photo uploaded in /admin; bio editable
-    in /admin. [?] answers to bio questions.
+11. "Meet the photographers": **Adrian Orozco** (photography + editing) and his wife **Alondra Jimenez** (creative: set-up,
+    styling, decorating). Story: they wanted a home session for their own newborn and couldn't find anyone who came to the
+    home; home is the most comfortable place for baby AND parents (feeding, attention, nothing to carry). ~2 years shooting
+    (other subjects before babies). Parents themselves. Photo uploaded in /admin; bio editable in /admin.
 12. Photo-use permission checkbox at booking: **yes**; first reviews: Google review request at gallery delivery: **yes**.
 13. SMS consent wording approved ("OK to text me about my session (reminders, arrival updates). Reply STOP anytime.")
-    [?] texting phone number.
-14. Landing URL: owner wants it universal (travels statewide) → **`/newborn-photos-at-home`**.
-15. Extra baby: **$75**, editable in /admin. [?] extra minutes/photos, max per booking, codes apply?
+    Texting number: **(786) 222-7194**.
+14. Landing URL: owner wants it short, universal (newborns up to 5 years, statewide) and memorable/punny → proposed
+    `/home-sweet-home` [?] owner pick.
+15. Extra baby: **$75, +30 min, +5 photos, max 3 per booking** — all editable in /admin. [?] do discount codes apply to add-ons
+    (default: codes apply to the bundle price only).
 16. Payment after session: **Zelle, card link or cash** (any).
 17. Cancellation/no-show wording approved: "Free to reschedule or cancel online up to 48 hours before. Inside 48 hours,
     just text us. If you miss a session without telling us, we may ask for a deposit to rebook."
 18. Editable in /admin: seasonal offers + cutoffs, FAQ, reviews, "Meet the photographers". Layouts stay in code.
-19. Spanish: "same time, no rush" → Phase 3 after Phase 2. [?] who reviews the Spanish copy.
+19. Spanish: "same time, no rush" → Phase 3 after Phase 2. Adrian/Alondra review the Spanish copy.
 
 ## Open owner questions
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
-- Texting phone number · weekly cap wording · travel fee amount · extra-baby time/photos/max · seasonal cutoffs ·
-  bio answers · Spanish reviewer.
+- Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 
 ## Placeholders (must be approved before showing)
-- Weekly cap number, seasonal cutoff dates, travel fee amount, photographers' bio + photo, reviews (hidden until real),
-  prep guide text, texting number.
+- Travel fee numbers, photographers' photo (owner uploads in /admin), bio text (drafted from owner's answers → approval),
+  reviews (hidden until real), prep guide text (draft → approval).
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
@@ -138,6 +148,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 
 ## Dependencies log
 (one line per new dependency: why · bundle impact · maintenance)
+- `scripts/local-db` (own package.json, NOT an app dependency, never installed by Vercel): `embedded-postgres`
+  18.4.0-beta.17 + `pg` 8 — local Postgres for tests because the AI workspace can't reach Neon. 0 KB to the site.
 
 ## Research notes
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
@@ -152,4 +164,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
 
 ## Local test database
-(Phase 1c) Embedded Postgres + a tiny Neon-HTTP-compatible shim so `drizzle-orm/neon-http` code runs unchanged locally.
+`cd scripts/local-db && npm install && node start.mjs` (add `--reset` to start over; as root set `LOCAL_DB_DIR=/tmp/...`).
+Applies every `drizzle/*.sql` in journal order, seeds a mirror of production's bundles, and serves a Neon-HTTP-compatible
+endpoint. `.env.local`: `DATABASE_URL=postgres://tiny:tiny@localhost:5433/tinyhumans`,
+`NEON_LOCAL_FETCH_ENDPOINT=http://localhost:4444/sql` (ignored on Vercel). `touch scripts/local-db/.down` = simulated outage.
+Note: pages are static ISR (revalidate 5 min); `next start` keeps its data cache in `.next/cache/fetch-cache`.

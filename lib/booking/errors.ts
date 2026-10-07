@@ -9,6 +9,7 @@ export type BookingErrorCode =
   | "not_configured"
   | "calendar_unavailable"
   | "reschedule_closed"
+  | "in_progress"
   | "server_error";
 
 const STATUS: Record<BookingErrorCode, number> = {
@@ -18,6 +19,7 @@ const STATUS: Record<BookingErrorCode, number> = {
   not_configured: 503,
   calendar_unavailable: 502,
   reschedule_closed: 403,
+  in_progress: 409,
   server_error: 500,
 };
 
@@ -38,4 +40,5 @@ export const friendly = {
   calendar: "We couldn't reach our calendar just now. Please try again in a minute.",
   server: "Something went wrong saving your booking. Please try again, or email hello@tinyhumans.photography.",
   notConfigured: "Online booking isn't available right now. Please email hello@tinyhumans.photography to book.",
+  inProgress: "We're still saving your booking. One moment, please.",
 };

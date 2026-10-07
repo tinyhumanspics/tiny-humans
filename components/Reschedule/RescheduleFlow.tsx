@@ -5,6 +5,8 @@ import { addDays, formatLongDate, formatTimeLabel, fromDateKey, startOfDay, toDa
 import Calendar from "@/components/Booking/Calendar";
 import ChoiceCard from "@/components/Booking/ChoiceCard";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import en from "@/messages/en.json";
 import bstyles from "@/components/Booking/Booking.module.css";
 import styles from "./Reschedule.module.css";
 
@@ -29,7 +31,8 @@ type Step = "date" | "time" | "review";
 
 /** Choose new date -> time -> review -> confirm. Shared by the customer page and /admin Leads. */
 export default function RescheduleFlow({ current, loadDays, submit, onKeep, keepLabel = "Keep My Current Booking", idPrefix = "rs" }: Props) {
-  const today = startOfDay(new Date());
+  const { today: studioToday } = useCatalog();
+  const today = startOfDay(fromDateKey(studioToday));
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [days, setDays] = useState<Record<DateKey, TimeSlot[]>>({});
   const [loading, setLoading] = useState(false);
@@ -105,7 +108,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
       {step === "date" && (
         <>
           <h3 className={`${bstyles.stepTitle} chalk`}>Choose a new day</h3>
-          <Calendar month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} />
+          <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} />
           <div className={styles.actions}>
             <ChalkButton variant="outline" onClick={onKeep} seed={421}>{keepLabel}</ChalkButton>
             <ChalkButton variant="solid" disabled={!date} onClick={() => date && setStep("time")} seed={422}>Next: Time</ChalkButton>
@@ -116,6 +119,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
       {step === "time" && date && (
         <>
           <h3 className={`${bstyles.stepTitle} chalk`}>Pick a time on {formatLongDate(date)}</h3>
+          <p className={`${styles.muted} chalk-soft`}>{en.booking.timeZone.note}</p>
           {slotsForDate.length === 0 ? (
             <p className={`${styles.muted} chalk-soft`}>{loading ? "Checking the calendar…" : "No open times left on this day. Please choose another day."}</p>
           ) : (
@@ -135,6 +139,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
       {step === "review" && slot && (
         <>
           <h3 className={`${bstyles.stepTitle} chalk`}>Check the change</h3>
+          <p className={`${styles.muted} chalk-soft`}>{en.booking.timeZone.note}</p>
           <div className={styles.compare}>
             <div className={styles.compareCol}>
               <p className={`${styles.compareLabel} chalk-soft`}>Current session</p>

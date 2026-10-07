@@ -2,13 +2,15 @@
 
 import { useMemo } from "react";
 import { bookingSettings } from "@/config/booking";
-import { addDays, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
+import { addDays, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
 interface Props {
+  /** Today in the studio's time zone (YYYY-MM-DD). */
+  todayKey: DateKey;
   month: Date;
   onMonthChange: (month: Date) => void;
   days: Record<DateKey, TimeSlot[]>;
@@ -17,8 +19,8 @@ interface Props {
   onSelect: (date: DateKey) => void;
 }
 
-export default function Calendar({ month, onMonthChange, days, loading, selected, onSelect }: Props) {
-  const today = startOfDay(new Date());
+export default function Calendar({ todayKey, month, onMonthChange, days, loading, selected, onSelect }: Props) {
+  const today = startOfDay(fromDateKey(todayKey));
   const firstMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = addDays(today, bookingSettings.maxDaysAhead);
   const lastMonth = new Date(lastDay.getFullYear(), lastDay.getMonth(), 1);

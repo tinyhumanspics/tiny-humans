@@ -91,7 +91,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ChalkFilters />
         <SiteSettingsProvider initial={settings}>
-        <CatalogProvider initial={catalog} initialToday={todayInZone(bookingRules.timeZone)}>
+        <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)}>
           <SeasonalDecor />
           {/* Header lives in the layout so the logo intro never replays between pages. */}
           <Header />

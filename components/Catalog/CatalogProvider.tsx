@@ -14,12 +14,16 @@ interface Ctx {
   getBundle: (id: string | null | undefined) => Bundle | undefined;
   /** Today in the studio time zone (offers are active through their end date). */
   today: string;
+  /** False when there are no bookable bundles (booking shows a friendly pause message). */
+  available: boolean;
+  /** "snapshot" = Neon was unreachable and the last good copy is shown. */
+  status: "live" | "snapshot" | "builtin";
 }
 
 const CatalogContext = createContext<Ctx | null>(null);
 
 /** Central bundle/price data for every customer-facing page (from Neon; browser storage in the prototype). */
-export function CatalogProvider({ initial, initialToday, children }: { initial: Bundle[]; initialToday: string; children: ReactNode }) {
+export function CatalogProvider({ initial, status = "live", initialToday, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin"; initialToday: string; children: ReactNode }) {
   const [all, setAll] = useState<Bundle[]>(initial);
   const [today, setToday] = useState(initialToday);
   useEffect(() => {
@@ -33,8 +37,8 @@ export function CatalogProvider({ initial, initialToday, children }: { initial: 
   }, []);
   const value = useMemo<Ctx>(() => {
     const bundles = sortBundles(all.filter((b) => b.active !== false));
-    return { bundles, getBundle: (id) => bundles.find((b) => b.id === id), today };
-  }, [all, today]);
+    return { bundles, getBundle: (id) => bundles.find((b) => b.id === id), today, available: bundles.length > 0, status };
+  }, [all, today, status]);
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }
 

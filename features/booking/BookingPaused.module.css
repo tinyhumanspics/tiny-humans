@@ -1,0 +1,4 @@
+.wrap { max-width: 560px; margin: clamp(24px, 6vw, 60px) auto; }
+.box { padding: 28px; display: grid; gap: 14px; justify-items: start; }
+.box p { margin: 0; color: var(--chalk-muted); font-size: 1.15rem; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 6px; }

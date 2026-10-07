@@ -33,46 +33,51 @@ export interface BundleOffer {
   endsOn?: string | null;
 }
 
+/**
+ * LOCAL DEVELOPMENT / PROTOTYPE ONLY. The live bundles are managed in /admin/pricing and stored in Neon
+ * (tables `bundles`, `bundle_inclusions`). This copy mirrors them (as of 2026-10-06) so local previews look
+ * like production; it is never shown when a database is configured. Removed in Phase 8.
+ */
 export const bundles: Bundle[] = [
   {
     id: "little-moments",
     name: "Little Moments",
-    price: 99,
-    duration: "Up to 45 minutes",
-    durationMinutes: 45,
+    price: 149,
+    duration: "Up to 1 hour",
+    durationMinutes: 60,
     people: "Baby only",
     setups: "1 setup",
-    photos: "5–8",
-    features: ["Up to 45 minutes", "Baby only", "1 setup", "5–8 edited digital photos"],
+    photos: "8",
+    features: ["Up to 1 hour", "Baby only", "1 setup", "8 edited digital photos"],
     locationNote: "We bring the studio to your home",
     cta: "Choose Little Moments",
   },
   {
     id: "our-little-story",
     name: "Our Little Story",
-    price: 199,
-    duration: "Up to 90 minutes",
-    durationMinutes: 90,
-    people: "Baby + parents + siblings",
+    price: 249,
+    duration: "Up to 2 hours",
+    durationMinutes: 120,
+    people: "Baby only",
     setups: "2 setups",
-    photos: "15–20",
-    features: ["Up to 90 minutes", "Baby + parents + siblings", "2 setups", "15–20 edited digital photos"],
+    photos: "20",
+    features: ["Up to 2 hours", "Baby only", "2 setups", "20 edited digital photos"],
     locationNote: "We bring the studio to your home",
     cta: "Choose Our Little Story",
     badge: "Most loved",
   },
   {
     id: "forever-little",
-    name: "Forever Little",
-    price: 249,
-    duration: "Up to 2 hours",
-    durationMinutes: 120,
+    name: "Our Family Story",
+    price: 399,
+    duration: "Up to 3 hours",
+    durationMinutes: 180,
     people: "Baby + parents + siblings",
-    setups: "Up to 3 setups",
-    photos: "25–35",
-    features: ["Up to 2 hours", "Baby + parents + siblings", "Up to 3 setups", "25–35 edited digital photos"],
+    setups: "3 setups",
+    photos: "35",
+    features: ["Up to 3 hours", "Baby + parents + siblings", "3 setups", "35 edited digital photos"],
     locationNote: "We bring the studio to your home",
-    cta: "Choose Forever Little",
+    cta: "Choose Our Family Story",
   },
 ];
 

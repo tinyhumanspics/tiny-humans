@@ -14,6 +14,7 @@ import BabyLedNote from "./BabyLedNote";
 import { babyAgeOptions, bookingSettings, bookingSteps, bundlesHref, homeSession, STEP } from "@/config/booking";
 import {
   addDays,
+  fromDateKey,
   formatLongDate,
   formatTimeLabel,
   getBookingClient,
@@ -37,6 +38,7 @@ import Calendar from "./Calendar";
 import InspirationThumb from "./InspirationThumb";
 import Reveal, { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
+import en from "@/messages/en.json";
 import styles from "./Booking.module.css";
 
 /* ---------------- state ---------------- */
@@ -174,7 +176,9 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   // availability cache for the current bundle
   const [days, setDays] = useState<Record<DateKey, TimeSlot[]>>({});
   const [loadingDays, setLoadingDays] = useState(false);
-  const earliest = addDays(startOfDay(new Date()), bookingSettings.minDaysAhead);
+  // "today" is the studio's (Miami) date, not the visitor's, so relatives booking from other time zones see the same calendar
+  const { today: studioToday } = useCatalog();
+  const earliest = addDays(startOfDay(fromDateKey(studioToday)), bookingSettings.minDaysAhead);
   const [month, setMonth] = useState(() => new Date(earliest.getFullYear(), earliest.getMonth(), 1));
 
   // Arriving from a bundle's "Choose …" button: show the whole booking box.
@@ -282,7 +286,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
     dispatch({ type: "submitting" });
     try {
       const c = state.contact;
-      const result = await provider.createBooking({
+      const request = {
         bundleId: state.bundleId,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,
@@ -297,7 +301,20 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         },
         address: { street: c.street.trim(), city: c.city.trim(), zip: c.zip.trim() },
         requestId: (requestIdRef.current ??= newRequestId()),
-      });
+      };
+      let result: BookingResult | null = null;
+      for (let attempt = 0; !result; attempt++) {
+        try {
+          result = await provider.createBooking(request);
+        } catch (err) {
+          // The first try is still being saved on the server: wait and ask again with the SAME requestId.
+          if (err instanceof BookingApiError && err.code === "in_progress" && attempt < 8) {
+            await new Promise((r) => setTimeout(r, 2000));
+            continue;
+          }
+          throw err;
+        }
+      }
       requestIdRef.current = null;
       dispatch({ type: "done", result });
     } catch (err) {
@@ -370,6 +387,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
                   {state.step === STEP.date && (
                     <Calendar
+                      todayKey={studioToday}
                       month={month}
                       onMonthChange={setMonth}
                       days={days}
@@ -381,7 +399,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
                   {state.step === STEP.time && state.date && (
                     <fieldset className={styles.fieldset}>
-                      <legend className={`${styles.subtle} chalk-soft`}>{formatLongDate(state.date)}</legend>
+                      <legend className={`${styles.subtle} chalk-soft`}>{formatLongDate(state.date)} · {en.booking.timeZone.short}</legend>
                       {daySlots === undefined ? (
                         <p className={`${styles.subtle} chalk-soft`}>Checking open times…</p>
                       ) : daySlots.length === 0 ? (
@@ -417,7 +435,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                         { label: "Payment due", value: "After the photoshoot", step: -1 },
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
-                        { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)}`, step: STEP.time },
+                        { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)} (${en.booking.timeZone.short})`, step: STEP.time },
                         { label: "We'll come to", value: `${state.contact.street.trim()}, ${state.contact.city.trim()} ${state.contact.zip.trim()}`, step: STEP.details },
                         { label: "Parent / guardian", value: state.contact.parentName, step: STEP.details },
                         { label: "Email", value: state.contact.email, step: STEP.details },
@@ -654,7 +672,7 @@ function Confirmation({
     ["Booking reference", result.id],
     ["Bundle", price?.bundleName ?? bundle?.name ?? ""],
     ["Session date", formatLongDate(r.slot.date)],
-    ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)}`],
+    ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)} (${en.booking.timeZone.short})`],
     ["Location", formatAddress(r.address)],
     ...(price?.pricingType === "offer" ? [["Special offer", price.offerLabel ?? "Special offer"] as [string, string]] : []),
     ...(price?.pricingType === "discount" ? [["Discount code", `${price.discountCode} (-${formatMoney(price.discountCents)})`] as [string, string]] : []),

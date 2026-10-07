@@ -1,0 +1,22 @@
+{
+  "booking": {
+    "paused": {
+      "title": "Booking is taking a short break",
+      "body": "We can't load our bundles and prices right this minute. Please try again in a few minutes, or email us and we'll book your session for you.",
+      "retry": "Try again",
+      "emailLabel": "Email us"
+    },
+    "timeZone": {
+      "short": "Miami time",
+      "note": "All times are Miami time (Eastern)."
+    },
+    "inProgress": "Still saving your booking… please keep this page open."
+  },
+  "errors": {
+    "global": {
+      "title": "We'll be right back",
+      "body": "Our website hit a small bump. Please try again in a minute. To book now, email us and we'll take care of you.",
+      "retry": "Try again"
+    }
+  }
+}

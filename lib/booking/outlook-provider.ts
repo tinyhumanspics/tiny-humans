@@ -100,6 +100,9 @@ export class OutlookBookingProvider implements BookingProvider {
     if (request.requestId) {
       const [existing] = await db.select().from(bookings).where(eq(bookings.requestId, request.requestId)).limit(1);
       if (existing && existing.status !== "cancelled" && existing.outlookEventId) return this.toResult(existing, request);
+      // The first attempt is still being saved (e.g. a retry after a slow network): tell the browser to wait and
+      // retry with the same requestId, never to pick another time (that could create a second booking).
+      if (existing && existing.status === "pending") throw new BookingError("in_progress", friendly.inProgress);
     }
 
     // 2. Re-check availability against the live calendar.
@@ -164,7 +167,7 @@ export class OutlookBookingProvider implements BookingProvider {
       } catch (err) {
         if (isUniqueViolation(err, "booking_reference")) continue; // rare: try another reference
         await releaseUsage();
-        if (isUniqueViolation(err, "request_id")) throw new BookingError("slot_unavailable", "This booking is already being saved. Please wait a moment.");
+        if (isUniqueViolation(err, "request_id")) throw new BookingError("in_progress", friendly.inProgress);
         if (isUniqueViolation(err)) throw new BookingError("slot_unavailable", friendly.slotTaken);
         log.error("booking.db", "Insert failed", { error: err as Error });
         throw new BookingError("server_error", friendly.server);
