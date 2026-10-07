@@ -17,7 +17,9 @@ import type { CancelOptions, CancellationSummary } from "./types";
 
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 
-export function summaryOf(row: Booking): CancellationSummary {
+/** `noticeHours`: the booking's own online cancel/reschedule notice (see ./terms). */
+export function summaryOf(row: Booking, noticeHours: number, now = new Date()): CancellationSummary {
+  const status = row.status === "cancelled" ? "cancelled" : row.sessionStart.getTime() <= now.getTime() ? "past" : "active";
   return {
     reference: row.bookingReference,
     bundleName: row.packageName,
@@ -25,7 +27,9 @@ export function summaryOf(row: Booking): CancellationSummary {
     start: localTime(row.sessionStart, row.timezone),
     end: localTime(row.sessionEnd, row.timezone),
     parentFirstName: row.parentName.split(" ")[0],
-    status: row.status === "cancelled" ? "cancelled" : row.sessionStart.getTime() <= Date.now() ? "past" : "active",
+    status,
+    canCancel: status === "active" && (row.sessionStart.getTime() - now.getTime()) / 3_600_000 >= noticeHours,
+    noticeHours,
   };
 }
 
@@ -135,7 +139,7 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
 
   if (opts.silent) return updated;
 
-  const s = summaryOf(updated);
+  const s = summaryOf(updated, 0); // local start/end times only
   const details: CancellationDetails = {
     reference: updated.bookingReference,
     parentName: updated.parentName,

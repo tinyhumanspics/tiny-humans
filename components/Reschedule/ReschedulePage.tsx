@@ -9,6 +9,9 @@ import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import RescheduleFlow from "./RescheduleFlow";
 import styles from "./Reschedule.module.css";
 import { cn } from "@/lib/cn";
+import { rescheduleClosedText } from "@/lib/booking/reschedule-policy";
+import { site } from "@/config/site";
+import en from "@/messages/en.json";
 
 type View = "loading" | "invalid" | "ready" | "done";
 
@@ -92,9 +95,10 @@ export default function ReschedulePage() {
             ) : booking.status === "past" ? (
               <p className={cn(styles.notice, "chalk-soft")}>This session has already taken place.</p>
             ) : !booking.canReschedule ? (
-              <p className={cn(styles.notice, "chalk-soft")}>
-                This session is less than {booking.rescheduleNoticeHours} hours away, so online rescheduling is no longer available. Please contact Tiny Humans if you need help with your appointment.
-              </p>
+              <>
+                <p className={cn(styles.notice, "chalk-soft")}>{rescheduleClosedText(booking.rescheduleNoticeHours)}</p>
+                <ChalkButton href={`sms:${site.contact.sms}`} variant="solid" seed={318}>{en.policy.textUs.replace("{phone}", site.contact.phone)}</ChalkButton>
+              </>
             ) : (
               <>
                 <p className={cn(styles.text, "chalk-soft")}>You can change the day and time. Everything else stays the same.</p>

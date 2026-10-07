@@ -107,8 +107,12 @@ export interface CancellationSummary {
   start: string;
   end: string;
   parentFirstName: string;
-  /** "active" = can be cancelled. */
+  /** "active" = not cancelled and not started. */
   status: "active" | "cancelled" | "past";
+  /** False inside the booking's notice window (or cancelled/past): the family texts instead. */
+  canCancel: boolean;
+  /** The booking's online cancel/reschedule notice. */
+  noticeHours: number;
 }
 
 /** What the reschedule page shows (the token holder's own booking). */

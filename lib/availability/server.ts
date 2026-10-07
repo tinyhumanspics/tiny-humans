@@ -95,3 +95,15 @@ export async function addBlock(b: Omit<TimeBlock, "id">): Promise<TimeBlock> {
 export async function deleteBlock(id: string): Promise<void> {
   await getDb().delete(availabilityBlocks).where(and(eq(availabilityBlocks.id, id)));
 }
+
+/** Today's online cancel/reschedule notice (hours) for wording on pages; the default if the database can't be read. */
+export async function getNoticeHoursSetting(): Promise<number> {
+  const fallback = defaultAvailabilityRules().limits.rescheduleNoticeHours;
+  if (!isDatabaseConfigured()) return fallback;
+  try {
+    const [s] = await getDb().select({ hours: bookingSettingsTable.customerRescheduleNoticeHours }).from(bookingSettingsTable).limit(1);
+    return s?.hours ?? fallback;
+  } catch {
+    return fallback;
+  }
+}

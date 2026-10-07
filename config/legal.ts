@@ -22,6 +22,12 @@ export interface LegalDocument {
 const contactLine =
   "Questions? Email us at hello@tinyhumans.photography, or message us on Instagram at @tinyhumans.photography.";
 
+/** Fills "{notice}" ("48 hours", from /admin) and "{phone}" in a document's text. */
+export function fillLegal(doc: LegalDocument, values: Record<string, string>): LegalDocument {
+  const f = (t: string) => t.replace(/\{(\w+)\}/g, (all, k: string) => values[k] ?? all);
+  return JSON.parse(JSON.stringify(doc), (_k, v) => (typeof v === "string" ? f(v) : v));
+}
+
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
   lastUpdated: "October 7, 2026",
@@ -177,7 +183,7 @@ export const termsOfService: LegalDocument = {
       heading: "Rescheduling and cancellations",
       body: [
         "Babies keep their own schedules, and we understand. If your baby or anyone in your family is unwell, please let us know and we'll find a new date.",
-        "You're free to reschedule or cancel online, using the links in your confirmation email, up to 48 hours before your session. Inside 48 hours, just text us and we'll help.",
+        "You're free to reschedule or cancel online, using the links in your confirmation email, up to {notice} before your session. Inside {notice}, just text us at {phone} and we'll help.",
         "If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family. If you miss a session without telling us, we may ask for a deposit to rebook.",
         "If we ever need to cancel because of illness or an emergency, we'll find a new date with you at no cost.",
       ],

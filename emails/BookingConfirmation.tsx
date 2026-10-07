@@ -2,7 +2,7 @@ import { site } from "@/config/site";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { formatAddress, PAYMENT_NOTE, pricingRows, type BookingDetails } from "@/lib/booking/templates";
-import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
+import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
@@ -22,6 +22,9 @@ interface Options {
   images?: ImageMode;
   locale?: EmailLocale;
 }
+
+/** "What happens next", with the bundle's photo count ("choose your 20 favorites"). */
+const nextSteps = (d: BookingDetails, locale: EmailLocale) => emailMessages(locale).confirmation.next.map((i) => fill(i, { count: d.bundle.photos?.trim() ?? "" }).replace(/\s+/g, " "));
 
 function content(d: BookingDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
@@ -71,13 +74,13 @@ export function BookingConfirmation({
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={PAYMENT_NOTE.email} />
       <Swatches theme={t} title={m.backdrops.title} text={m.backdrops.text} swatches={backdropSwatches(locale)} />
       <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
-      <ChalkList theme={t} title={c.nextTitle} items={c.next} color={t.chalk} mark="•" />
+      <ChalkList theme={t} title={c.nextTitle} items={nextSteps(d, locale)} color={t.chalk} mark="•" />
       <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
       <Paragraph theme={t}>{`${c.babyLed} ${c.promise}`}</Paragraph>
       <Paragraph theme={t}>{c.changes}</Paragraph>
       {rescheduleUrl && rescheduleNoticeHours !== undefined && (
         <Paragraph theme={t} align="center">
-          {rescheduleNoticeText(rescheduleNoticeHours)}
+          {changePolicyText(rescheduleNoticeHours)}
         </Paragraph>
       )}
       {rescheduleUrl && <ChalkButton theme={t} label={c.reschedule} href={rescheduleUrl} variant="outline" />}
@@ -123,13 +126,13 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     ...m.prepGuide.items.map((i) => `- ${i}`),
     "",
     `${c.nextTitle}:`,
-    ...c.next.map((i) => `- ${i}`),
+    ...nextSteps(d, locale).map((i) => `- ${i}`),
     "",
     `${c.meetTitle}: ${c.meet} ${c.spanish}`,
     "",
     `${c.babyLed} ${c.promise}`,
     c.changes,
-    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${rescheduleNoticeText(opts.rescheduleNoticeHours)}`,
+    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${changePolicyText(opts.rescheduleNoticeHours)}`,
     opts.rescheduleUrl && fill(c.rescheduleText, { url: opts.rescheduleUrl }),
     opts.cancelUrl && fill(c.cancelText, { url: opts.cancelUrl }),
     "",

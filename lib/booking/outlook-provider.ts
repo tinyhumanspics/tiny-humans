@@ -25,6 +25,8 @@ import { eventBodyHtml, eventSubject, formatAddress, type BookingDetails } from 
 import { bookingConfirmationEmail, internalNewBookingEmail } from "@/lib/email";
 import { createCancelToken } from "./cancel-token";
 import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
+import { cancelClosedText } from "./reschedule-policy";
+import { noticeHoursFor, saveBookingTerms } from "./terms";
 import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
 import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./timezone";
@@ -246,6 +248,9 @@ export class OutlookBookingProvider implements BookingProvider {
       throw new BookingError("server_error", friendly.server);
     }
 
+    // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch it.
+    await saveBookingTerms(row.id, rules.limits.rescheduleNoticeHours, bundle.photos, row.bookingReference);
+
     // Optional permissions (best effort: the booking is already confirmed; they're also in the event + studio email).
     if (request.consents) {
       const at = request.consents.sms || request.consents.photos ? new Date() : null;
@@ -340,7 +345,7 @@ export class OutlookBookingProvider implements BookingProvider {
     this.ensureConfigured();
     const row = await findByCancelToken(token);
     if (!row) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
-    return summaryOf(row);
+    return summaryOf(row, (await this.notice(row)).hours);
   }
 
   private async rowForToken(token: string) {
@@ -350,31 +355,42 @@ export class OutlookBookingProvider implements BookingProvider {
     return row;
   }
 
+  /** The booking's own online cancel/reschedule notice (booking_terms), else today's setting. */
+  private async notice(row: Booking): Promise<{ rules: Awaited<ReturnType<typeof getAvailabilityRules>>; hours: number }> {
+    const rules = await getAvailabilityRules();
+    return { rules, hours: await noticeHoursFor(row, rules.limits.rescheduleNoticeHours) };
+  }
+
   async getManagedBooking(token: string): Promise<ManagedBooking> {
     const row = await this.rowForToken(token);
-    return managedOf(row, await getAvailabilityRules());
+    const { rules, hours } = await this.notice(row);
+    return managedOf(row, rules, new Date(), hours);
   }
 
   async getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
     const row = await this.rowForToken(token);
-    if (!managedOf(row, await getAvailabilityRules()).canReschedule) return [];
+    const { rules, hours } = await this.notice(row);
+    if (!managedOf(row, rules, new Date(), hours).canReschedule) return [];
     return rescheduleAvailability(row, from, to);
   }
 
   async rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
     const row = await this.rowForToken(token);
     const updated = await rescheduleBookingRow(row, slot, "customer");
-    return managedOf(updated, await getAvailabilityRules());
+    const { rules, hours } = await this.notice(updated);
+    return managedOf(updated, rules, new Date(), hours);
   }
 
   async cancelWithToken(token: string, reason: string): Promise<CancellationSummary> {
     this.ensureConfigured();
     const row = await findByCancelToken(token);
     if (!row) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
-    const s = summaryOf(row);
+    const { hours } = await this.notice(row);
+    const s = summaryOf(row, hours);
     if (s.status === "past") throw new BookingError("invalid_request", "This session has already started, so it can't be cancelled online. Please reply to your confirmation email.");
     if (s.status === "cancelled") return s;
-    return summaryOf(await cancelBookingRow(row, { reason, by: "customer" }));
+    if (!s.canCancel) throw new BookingError("cancel_closed", cancelClosedText(hours));
+    return summaryOf(await cancelBookingRow(row, { reason, by: "customer" }), hours);
   }
 
   async rescheduleBooking(reference: string, slot: Pick<TimeSlot, "date" | "start">): Promise<BookingResult> {

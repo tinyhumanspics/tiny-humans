@@ -7,6 +7,7 @@ import { availabilityForRange } from "./availability";
 import { defaultAvailabilityRules } from "@/lib/availability/defaults";
 import type { AvailabilityRules } from "@/lib/availability/types";
 import { BookingError, friendly } from "./errors";
+import { cancelClosedText, rescheduleClosedText } from "./reschedule-policy";
 import { generateBookingReference } from "./reference";
 import type { Lead } from "@/lib/leads/types";
 import { sourceLabel } from "@/lib/tracking/attribution";
@@ -103,12 +104,14 @@ export class MockBookingProvider implements BookingProvider {
     await wait(200);
     const rec = this.store.read().find((r) => r.token === token);
     if (!rec) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
-    return mockSummary(rec);
+    return mockSummary(rec, rec.result.rescheduleNoticeHours ?? (await this.rulesNow()).limits.rescheduleNoticeHours);
   }
 
   async cancelWithToken(token: string, reason: string): Promise<CancellationSummary> {
     const rec = this.store.read().find((r) => r.token === token);
     if (!rec) throw new BookingError("not_found", "This cancellation link isn't valid. Please reply to your confirmation email and we'll help.");
+    const s = await this.getCancellation(token);
+    if (s.status === "active" && !s.canCancel) throw new BookingError("cancel_closed", cancelClosedText(s.noticeHours));
     await this.cancelBooking(rec.result.id, { reason, by: "customer" });
     return this.getCancellation(token);
   }
@@ -136,21 +139,22 @@ export class MockBookingProvider implements BookingProvider {
 
   async getManagedBooking(token: string): Promise<ManagedBooking> {
     await wait(200);
-    return mockManaged(this.recordFor(token), (await this.rulesNow()).limits.rescheduleNoticeHours);
+    const rec = this.recordFor(token);
+    return mockManaged(rec, rec.result.rescheduleNoticeHours ?? (await this.rulesNow()).limits.rescheduleNoticeHours);
   }
 
   async getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
     const rec = this.recordFor(token);
-    if (!mockManaged(rec, (await this.rulesNow()).limits.rescheduleNoticeHours).canReschedule) return [];
+    if (!mockManaged(rec, rec.result.rescheduleNoticeHours ?? (await this.rulesNow()).limits.rescheduleNoticeHours).canReschedule) return [];
     return this.getAvailability({ bundleId: rec.result.request.bundleId, from, to });
   }
 
   async rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
     const rec = this.recordFor(token);
-    const hours = (await this.rulesNow()).limits.rescheduleNoticeHours;
+    const hours = rec.result.rescheduleNoticeHours ?? (await this.rulesNow()).limits.rescheduleNoticeHours;
     const m = mockManaged(rec, hours);
     if (m.status === "cancelled") throw new BookingError("invalid_request", "This booking has already been cancelled.");
-    if (!m.canReschedule) throw new BookingError("reschedule_closed", `This session is less than ${hours} hours away, so online rescheduling is no longer available. Please contact Tiny Humans if you need help with your appointment.`);
+    if (!m.canReschedule) throw new BookingError("reschedule_closed", rescheduleClosedText(hours));
     await this.moveBooking(rec.result.id, slot, "customer");
     return this.getManagedBooking(token);
   }
@@ -260,9 +264,11 @@ function randomToken(): string {
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function mockSummary(rec: MockRecord): CancellationSummary {
+function mockSummary(rec: MockRecord, noticeHours: number): CancellationSummary {
   const r = rec.result.request;
-  const past = new Date(`${r.slot.date}T${r.slot.start}:00`).getTime() <= Date.now();
+  const startMs = new Date(`${r.slot.date}T${r.slot.start}:00`).getTime();
+  const past = startMs <= Date.now();
+  const status = rec.status === "cancelled" ? "cancelled" : past ? "past" : "active";
   return {
     reference: rec.result.id,
     bundleName: rec.result.pricing?.bundleName ?? r.bundleId,
@@ -270,7 +276,9 @@ function mockSummary(rec: MockRecord): CancellationSummary {
     start: r.slot.start,
     end: r.slot.end,
     parentFirstName: r.contact.parentName.split(" ")[0],
-    status: rec.status === "cancelled" ? "cancelled" : past ? "past" : "active",
+    status,
+    canCancel: status === "active" && (startMs - Date.now()) / 3_600_000 >= noticeHours,
+    noticeHours,
   };
 }
 

@@ -8,9 +8,12 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./CancelBooking.module.css";
+import { site } from "@/config/site";
+import { cancelClosedText } from "@/lib/booking/reschedule-policy";
+import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
 
-type View = "loading" | "invalid" | "form" | "done" | "already" | "past";
+type View = "loading" | "invalid" | "form" | "done" | "already" | "past" | "closed";
 
 /** Shows the booking behind a cancel link and cancels only after an explicit confirmation with a reason. */
 export default function CancelBooking() {
@@ -31,7 +34,7 @@ export default function CancelBooking() {
       .getCancellation(token)
       .then((b) => {
         setBooking(b);
-        setView(b.status === "cancelled" ? "already" : b.status === "past" ? "past" : "form");
+        setView(b.status === "cancelled" ? "already" : b.status === "past" ? "past" : b.canCancel ? "form" : "closed");
       })
       .catch((e) => {
         setMessage(e instanceof BookingApiError || e instanceof Error ? e.message : "This cancellation link isn't valid.");
@@ -90,6 +93,19 @@ export default function CancelBooking() {
               {view === "already" ? "Nothing else to do. If you'd like to book another session, we'd love to see you." : "It can't be cancelled online anymore. Please reply to your confirmation email."}
             </p>
             <ChalkButton href="/bundles" variant="solid" seed={313}>Book a session</ChalkButton>
+          </>
+        )}
+
+        {view === "closed" && booking && (
+          <>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>Hi {booking.parentFirstName}</p>
+            <h1 id="cancel-title" className={cn(styles.title, "chalk")}>{en.policy.closedCancelTitle}</h1>
+            {info}
+            <p className={cn(styles.text, "chalk-soft")}>{cancelClosedText(booking.noticeHours)}</p>
+            <div className={styles.actions}>
+              <Link href="/" className={cn(styles.link, "chalk-soft")}>Back to Tiny Humans</Link>
+              <ChalkButton href={`sms:${site.contact.sms}`} variant="solid" seed={317}>{en.policy.textUs.replace("{phone}", site.contact.phone)}</ChalkButton>
+            </div>
           </>
         )}
 

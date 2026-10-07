@@ -9,6 +9,7 @@ export type BookingErrorCode =
   | "not_configured"
   | "calendar_unavailable"
   | "reschedule_closed"
+  | "cancel_closed"
   | "in_progress"
   | "server_error";
 
@@ -19,6 +20,7 @@ const STATUS: Record<BookingErrorCode, number> = {
   not_configured: 503,
   calendar_unavailable: 502,
   reschedule_closed: 403,
+  cancel_closed: 403,
   in_progress: 409,
   server_error: 500,
 };

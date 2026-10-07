@@ -32,7 +32,7 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useBookingSelection } from "./BookingSelectionContext";
 import { formatAddress, PAYMENT_NOTE } from "@/lib/booking/templates";
-import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
+import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
 import Calendar from "./Calendar";
@@ -788,7 +788,7 @@ function Confirmation({
       )}
       {result.rescheduleNoticeHours !== undefined && (
         <p className={cn(styles.rescheduleNote, "chalk-soft")}>
-          {rescheduleNoticeText(result.rescheduleNoticeHours)} The Reschedule Booking link is in your confirmation email.
+          {changePolicyText(result.rescheduleNoticeHours)} The links are in your confirmation email.
         </p>
       )}
       {result.preview && <PrototypePreviews result={result} />}

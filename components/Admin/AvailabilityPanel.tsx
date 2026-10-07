@@ -186,7 +186,7 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
           <p className={cn(styles.hintSmall, "chalk-soft")}>Kept free before and after every session, for travel and setup.</p>
         </div>
         <div className={styles.ruleField}>
-          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-reschedule">Customer reschedule notice</label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-reschedule">Cancel &amp; reschedule notice</label>
           <select
             id="rule-reschedule"
             className={styles.input}
@@ -199,9 +199,12 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
             <option value="custom">Custom…</option>
           </select>
           {customResched && (
-            <input type="number" min={0} max={L.maxRescheduleNoticeHours} className={styles.input} value={limits.rescheduleNoticeHours} onChange={(e) => setLimit({ rescheduleNoticeHours: Math.max(0, Math.min(L.maxRescheduleNoticeHours, Number(e.target.value) || 0)) })} aria-label="Reschedule notice in hours" />
+            <input type="number" min={1} max={L.maxRescheduleNoticeHours} className={styles.input} value={limits.rescheduleNoticeHours} onChange={(e) => setLimit({ rescheduleNoticeHours: Math.max(1, Math.min(L.maxRescheduleNoticeHours, Number(e.target.value) || 1)) })} aria-label="Cancel and reschedule notice in hours" />
           )}
-          <p className={cn(styles.hintSmall, "chalk-soft")}>Families can move their session online until this long before it starts.</p>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>
+            Families can cancel or move their session online until this long before it starts; after that they text you. Applies to new bookings
+            (earlier ones keep the hours they were promised). Your Terms, the FAQ and the emails show this number automatically.
+          </p>
         </div>
       </div>
 

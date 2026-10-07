@@ -1,6 +1,7 @@
 "use client";
 
 import en from "@/messages/en.json";
+import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
@@ -27,7 +28,8 @@ const PHONE_ORDER = ["forever-little", "our-little-story", "little-moments"];
 const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
 
 /** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
-export default function LandingPage() {
+/** `noticeHours`: today's online cancel/reschedule notice (/admin > Availability), for the FAQ. */
+export default function LandingPage({ noticeHours }: { noticeHours: number }) {
   const { bundles, today, available } = useCatalog();
   const { media, photos } = useSiteSettings();
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
@@ -195,7 +197,7 @@ export default function LandingPage() {
           {t.faq.items.map((f) => (
             <details key={f.q} className={styles.faqItem}>
               <summary className="chalk-soft">{f.q}</summary>
-              <p className="chalk-soft">{f.a}</p>
+              <p className="chalk-soft">{f.a.replace("{notice}", noticeLabel(noticeHours))}</p>
             </details>
           ))}
         </div>

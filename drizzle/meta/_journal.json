@@ -71,6 +71,13 @@
       "when": 1791395425954,
       "tag": "0009_booking_consents",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791402192267,
+      "tag": "0010_booking_terms",
+      "breakpoints": true
     }
   ]
 }

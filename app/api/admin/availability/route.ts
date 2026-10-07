@@ -1,4 +1,6 @@
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { LANDING_PATH } from "@/config/landing";
 import { isAdmin } from "@/lib/admin/auth";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { getAvailabilityRules, saveWeeklyAndLimits } from "@/lib/availability/server";
@@ -25,6 +27,9 @@ export async function PUT(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Check the hours and try again." }, { status: 400 });
   try {
     await saveWeeklyAndLimits(parsed.data.weekly, parsed.data.limits);
+    // pages that show the cancel/reschedule notice
+    revalidatePath("/terms");
+    revalidatePath(LANDING_PATH);
     return NextResponse.json({ rules: await getAvailabilityRules() });
   } catch (err) {
     return availabilityError(err, "save weekly");

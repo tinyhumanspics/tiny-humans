@@ -160,7 +160,7 @@
           "text": "Lights, backdrops, props and outfits for baby. You just stay comfy."
         }
       ],
-      "after": "Your fully edited gallery arrives within 24–72 hours. Then you pay by card, with a secure link we email you.",
+      "after": "Within 24 hours you'll see your photos and choose your favorites. Your edited favorites arrive within 72 hours of your pick. You pay after your session by card, with a secure link we email you.",
       "photo": "Our set-up in a family's living room"
     },
     "offer": {
@@ -173,8 +173,8 @@
           "text": "A one-page guide to get your home and baby ready (warmth, light, feeding, outfits)."
         },
         {
-          "title": "3 sneak peeks in 24 hours",
-          "text": "A few favorites in your inbox the day after your session."
+          "title": "Your photos in 24 hours",
+          "text": "See your whole session the next day and pick your favorites. We edit them and deliver within 72 hours."
         },
         {
           "title": "Pick your backdrop",
@@ -208,7 +208,7 @@
         },
         {
           "q": "What if baby comes early or late, or is fussy or hungry?",
-          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move your session online up to 48 hours before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
+          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
         },
         {
           "q": "How much space do we need?",
@@ -228,7 +228,7 @@
         },
         {
           "q": "When do we get the photos, and how do we pay?",
-          "a": "Your fully edited gallery arrives within 24–72 hours, with 3 sneak peeks in the first 24. Nothing is due today: you pay after your session by card, with a secure link we email you."
+          "a": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. Nothing is due today: you pay after your session by card, with a secure link we email you."
         }
       ]
     },
@@ -303,8 +303,8 @@
       "nextTitle": "What happens next",
       "next": [
         "On the day, we bring the lights, backdrops, props and outfits for baby. You just stay comfy.",
-        "3 sneak peeks land in your inbox within 24 hours of your session.",
-        "Your fully edited gallery follows within 24–72 hours. Then you pay by card, with a secure link we email you."
+        "Within 24 hours of your session, you'll get your photos to choose your {count} favorites.",
+        "We edit your favorites and deliver them within 72 hours of your pick. You pay after your session by card, with a secure link we email you."
       ],
       "meetTitle": "Meet your photographers",
       "meet": "We're Adrian and Alondra, a husband-and-wife team and parents ourselves. Adrian photographs every session and edits every photo in your gallery. Alondra designs each set-up: the backdrops, the wraps, the styling and all the little details.",
@@ -394,21 +394,25 @@
       "tomorrow": "tomorrow"
     },
     "afterSession": {
-      "subject": "Thank you for having us, {name}!",
-      "preheader": "Your sneak peeks are on the way. Here's how to pay for your session.",
-      "eyebrow": "Thank you",
+      "subject": "Your sneak peek is here, {name}! Choose your {count} favorites",
+      "preheader": "See your photos from your session and choose your {count} favorites.",
+      "eyebrow": "Your sneak peek",
       "title": "Thank you for having us, {name}!",
-      "intro": "It was such a joy to photograph {baby}. Thank you for welcoming us into your home.",
-      "nextTitle": "What happens next",
-      "next": [
-        "3 sneak peeks land in your inbox within 24 hours of your session.",
-        "Your fully edited gallery follows within 24–72 hours."
+      "intro": "It was such a joy to photograph {baby}. Your photos are ready for a first look.",
+      "galleryButton": "See your photos",
+      "galleryText": "See your photos: {url}",
+      "pickTitle": "Choose your {count} favorites",
+      "pick": [
+        "Open your gallery with the button above.",
+        "Tap the heart on your {count} favorite photos. Your {bundle} includes {count} edited photos.",
+        "Once you've chosen, we'll edit your favorites and send your finished gallery within 72 hours."
       ],
       "payTitle": "Payment",
       "amountDue": "Amount due",
       "payNote": "Pay securely by card. The button opens a Stripe payment page for exactly this amount.",
       "payButton": "Pay {amount}",
       "payText": "Pay {amount} by card: {url}",
+      "paid": "Your session is all paid. Thank you!",
       "nothingDue": "Nothing to pay for this session. Thank you!"
     },
     "gallery": {
@@ -504,5 +508,14 @@
       "text": "Please try again in a minute from the button in your email, or reply to it and we'll help."
     },
     "home": "Back to Tiny Humans"
+  },
+  "policy": {
+    "hour": "{n} hour",
+    "hours": "{n} hours",
+    "online": "You can reschedule or cancel online up to {notice} before your session. After that, just text us at {phone}.",
+    "closedCancel": "This session is less than {notice} away, so it can't be cancelled online anymore. Please text us at {phone} and we'll help.",
+    "closedReschedule": "This session is less than {notice} away, so it can't be moved online anymore. Please text us at {phone} and we'll help.",
+    "closedCancelTitle": "Need to cancel?",
+    "textUs": "Text us at {phone}"
   }
 }

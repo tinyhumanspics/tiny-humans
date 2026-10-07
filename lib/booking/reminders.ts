@@ -12,6 +12,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import { log } from "@/lib/log";
 import { hashCancelToken } from "./cancel-token";
 import { managedOf } from "./reschedule";
+import { termsFor } from "./terms";
 import { addDaysKey, todayInZone } from "./timezone";
 
 /**
@@ -93,7 +94,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   }
   if (!due.length) return result;
 
-  const [rules, themeId] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default")]);
+  const [rules, themeId, terms] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(due.map((d) => d.row.id))]);
   for (const { row, kind } of due) {
     const reference = row.bookingReference;
     const [claim] = await db
@@ -108,7 +109,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
     if (!claim) continue; // another run has it
 
     try {
-      const managed = managedOf(row, rules, now);
+      const managed = managedOf(row, rules, now, terms.find((t) => t.bookingId === row.id)?.noticeHours ?? rules.limits.rescheduleNoticeHours);
       let rescheduleUrl: string | undefined;
       if (kind === "72h" && managed.canReschedule) {
         const token = linkToken(claim.id, opts.secret);

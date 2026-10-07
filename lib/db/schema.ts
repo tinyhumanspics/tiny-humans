@@ -273,6 +273,19 @@ export const bookingConsents = pgTable("booking_consents", {
 
 export type BookingConsent = typeof bookingConsents.$inferSelect;
 
+/**
+ * What each booking was promised when it was made, so later changes in /admin only affect new bookings:
+ * the online cancel/reschedule notice (hours) and how many edited photos the bundle included (e.g. "20").
+ */
+export const bookingTerms = pgTable("booking_terms", {
+  bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+  noticeHours: integer("notice_hours").notNull(),
+  photosLabel: text("photos_label"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type BookingTerm = typeof bookingTerms.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",
