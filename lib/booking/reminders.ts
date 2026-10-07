@@ -13,6 +13,7 @@ import { log } from "@/lib/log";
 import { hashCancelToken } from "./cancel-token";
 import { managedOf } from "./reschedule";
 import { termsFor } from "./terms";
+import { accessFor } from "./access";
 import { addDaysKey, todayInZone } from "./timezone";
 
 /**
@@ -94,7 +95,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   }
   if (!due.length) return result;
 
-  const [rules, themeId, terms] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(due.map((d) => d.row.id))]);
+  const [rules, themeId, terms, access] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(due.map((d) => d.row.id)), accessFor(due.map((d) => d.row.id))]);
   for (const { row, kind } of due) {
     const reference = row.bookingReference;
     const [claim] = await db
@@ -118,7 +119,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
       }
       const mail = await sessionReminderEmail(
         kind,
-        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress },
+        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes },
         { themeId, today, rescheduleUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours },
       );
       const { id } = await sendEmail({

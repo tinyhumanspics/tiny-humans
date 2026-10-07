@@ -23,6 +23,12 @@
       "reviewPhotos": "Your photos",
       "reviewPhotosYes": "OK to feature them",
       "reviewPhotosNo": "Kept private"
+    },
+    "address": {
+      "unit": "Apt / unit",
+      "access": "Gate code, parking or concierge",
+      "accessPlaceholder": "Gate code, where to park, check in at the front desk…",
+      "reviewAccess": "Getting in"
     }
   },
   "errors": {
@@ -283,7 +289,8 @@
       "questions": "Questions? Just reply to this email.",
       "greeting": "Hi {name},",
       "textUs": "Text us at {phone}",
-      "payAfter": "Nothing to pay today. You'll pay after your session by card, with a secure link we email you."
+      "payAfter": "Nothing to pay today. You'll pay after your session by card, with a secure link we email you.",
+      "access": "Getting in"
     },
     "confirmation": {
       "subject": "Your Tiny Humans session is booked ({reference}): {date}, {time}",

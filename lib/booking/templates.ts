@@ -68,6 +68,8 @@ export interface ReminderDetails {
   start: string;
   end: string;
   location: string;
+  /** Gate code, parking, concierge (the family's own notes; shown in the 24-hour reminder). */
+  accessNotes?: string | null;
 }
 
 /** What the after-session and gallery emails need. */
@@ -101,7 +103,16 @@ export const PAYMENT_NOTE = {
   email: "Payment is not required at the time of booking. Payment for your session will be due once your photoshoot is completed.",
 };
 
-export const formatAddress = (a: SessionAddress) => `${a.street}, ${a.city}, FL ${a.zip}`;
+/** "1204" → "Unit 1204"; "Apt 4B", "#4B" or "PH 2" stay as typed. */
+export const unitLine = (unit?: string) => {
+  const u = unit?.trim();
+  return !u ? "" : /^\d/.test(u) ? `Unit ${u}` : u;
+};
+
+export const formatAddress = (a: SessionAddress) => [a.street, unitLine(a.unit), a.city].filter(Boolean).join(", ") + `, FL ${a.zip}`;
+
+/** Studio-facing label for the gate / parking / concierge notes (calendar, studio email, /admin). */
+export const ACCESS_LABEL = "Gate / parking / concierge";
 
 /** Calendar event subject: no sensitive details in the title. */
 export function eventSubject(d: BookingDetails): string {
@@ -122,6 +133,7 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Baby's name", d.contact.babyName],
     ["Baby's age", d.contact.babyAge],
     ["Address", formatAddress(d.address)],
+    [ACCESS_LABEL, d.address.accessNotes],
     ["Inspiration photo", d.inspirationTitle],
     ["Notes", d.contact.notes],
     ...consentRows(d.consents),

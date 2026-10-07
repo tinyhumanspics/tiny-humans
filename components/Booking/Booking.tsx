@@ -31,7 +31,7 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useBookingSelection } from "./BookingSelectionContext";
-import { formatAddress, PAYMENT_NOTE } from "@/lib/booking/templates";
+import { formatAddress, PAYMENT_NOTE, unitLine } from "@/lib/booking/templates";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
@@ -55,8 +55,11 @@ interface ContactDraft {
   notes: string;
   /** We bring the studio to the family's home. */
   street: string;
+  unit: string;
   city: string;
   zip: string;
+  /** Gate code, parking, concierge. */
+  access: string;
 }
 
 type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
@@ -76,7 +79,7 @@ interface State {
   result: BookingResult | null;
 }
 
-const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", babyName: "", babyAge: "", notes: "", street: "", city: "", zip: "" };
+const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", babyName: "", babyAge: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
 
 const initialState: State = {
   step: STEP.date,
@@ -317,7 +320,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
           babyAge: c.babyAge,
           notes: c.notes.trim() || undefined,
         },
-        address: { street: c.street.trim(), city: c.city.trim(), zip: c.zip.trim() },
+        address: { street: c.street.trim(), unit: c.unit.trim() || undefined, city: c.city.trim(), zip: c.zip.trim(), accessNotes: c.access.trim() || undefined },
         consents: state.consents,
         requestId: (requestIdRef.current ??= newRequestId()),
         hp: hp || undefined,
@@ -475,7 +478,8 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
                         { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)} (${en.booking.timeZone.short})`, step: STEP.time },
-                        { label: "We'll come to", value: `${state.contact.street.trim()}, ${state.contact.city.trim()} ${state.contact.zip.trim()}`, step: STEP.details },
+                        { label: "We'll come to", value: `${[state.contact.street.trim(), unitLine(state.contact.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.details },
+                        ...(state.contact.access.trim() ? [{ label: en.booking.address.reviewAccess, value: state.contact.access.trim(), step: STEP.details }] : []),
                         { label: "Parent / guardian", value: state.contact.parentName, step: STEP.details },
                         { label: "Email", value: state.contact.email, step: STEP.details },
                         { label: "Phone", value: state.contact.phone, step: STEP.details },
@@ -567,7 +571,7 @@ function DetailsForm({
   const field = (
     name: keyof ContactDraft,
     label: string,
-    opts: { type?: string; autoComplete?: string; optional?: boolean; inputMode?: "tel" | "email" | "text" | "numeric" } = {},
+    opts: { type?: string; autoComplete?: string; optional?: boolean; inputMode?: "tel" | "email" | "text" | "numeric"; maxLength?: number } = {},
   ) => {
     const errId = `field-${name}-error`;
     return (
@@ -582,6 +586,7 @@ function DetailsForm({
           type={opts.type ?? "text"}
           inputMode={opts.inputMode}
           autoComplete={opts.autoComplete}
+          maxLength={opts.maxLength}
           value={contact[name]}
           onChange={(e) => onChange(name, e.target.value)}
           aria-invalid={Boolean(errors[name])}
@@ -611,9 +616,27 @@ function DetailsForm({
         <p className={cn(styles.homeTitle, "chalk-soft")}>Where should we bring the studio?</p>
         <p className={cn(styles.homeText, "chalk-soft")}>{homeSession.addressHelp}</p>
       </div>
-      <div className={styles.fieldWide}>{field("street", "Street address", { autoComplete: "street-address" })}</div>
+      <div className={cn(styles.fieldWide, styles.streetRow)}>
+        {field("street", "Street address", { autoComplete: "address-line1" })}
+        {field("unit", en.booking.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
+      </div>
       {field("city", "City", { autoComplete: "address-level2" })}
       {field("zip", "ZIP code", { autoComplete: "postal-code", inputMode: "numeric" })}
+      <div className={cn(styles.field, styles.fieldWide)}>
+        <label htmlFor="field-access" className={cn(styles.label, "chalk-soft")}>
+          {en.booking.address.access}
+          <span className={styles.optional}> (optional)</span>
+        </label>
+        <textarea
+          id="field-access"
+          className={cn(styles.input, styles.textareaShort)}
+          rows={2}
+          maxLength={300}
+          value={contact.access}
+          onChange={(e) => onChange("access", e.target.value)}
+          placeholder={en.booking.address.accessPlaceholder}
+        />
+      </div>
       {field("babyName", "Baby's name", { optional: true, autoComplete: "off" })}
       <div className={styles.field}>
         <label htmlFor="field-babyAge" className={cn(styles.label, "chalk-soft")}>

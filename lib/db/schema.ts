@@ -286,6 +286,19 @@ export const bookingTerms = pgTable("booking_terms", {
 
 export type BookingTerm = typeof bookingTerms.$inferSelect;
 
+/**
+ * How to get in, from the booking form (gate code, parking, concierge), for the studio's calendar, /admin and the
+ * 24-hour reminder. The unit number is part of `bookings.location_address`. A separate table so a missing migration
+ * can never break bookings.
+ */
+export const bookingAccess = pgTable("booking_access", {
+  bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+  notes: text("notes").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type BookingAccess = typeof bookingAccess.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

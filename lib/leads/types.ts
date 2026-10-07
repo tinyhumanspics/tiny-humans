@@ -52,6 +52,8 @@ export interface Lead {
   end: string;
   locationType: string;
   address: string;
+  /** Gate code, parking, concierge (from the booking form). */
+  access?: string | null;
   notes: string | null;
   inspirationPhotoId: string | null;
   calendarLinked: boolean;

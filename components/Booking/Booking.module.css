@@ -281,6 +281,9 @@
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .fieldWide { grid-column: 1 / -1; }
+/* street + apt/unit share one row on wider screens */
+.streetRow { display: grid; gap: 18px 26px; }
+@media (min-width: 720px) { .streetRow { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }
 
 .label {
   font-family: var(--font-chalk);
@@ -317,6 +320,7 @@ select.input {
 select.input option { background: var(--chalkboard-dark); color: var(--chalk-white); }
 
 .textarea { min-height: 96px; resize: vertical; }
+.textareaShort { min-height: 74px; resize: vertical; }
 
 .fieldError, .error {
   margin: 0;

@@ -24,8 +24,10 @@ export const bookingRequestSchema = z.object({
   }),
   address: z.object({
     street: text(200).min(4, "Add the street address."),
+    unit: text(40).optional().transform((v) => v || undefined),
     city: text(100).min(2, "Add the city."),
     zip: z.string().trim().regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code."),
+    accessNotes: text(300).optional().transform((v) => v || undefined),
   }),
   inspirationPhotoId: text(64).optional(),
   requestId: z.string().trim().min(8).max(100).optional(),

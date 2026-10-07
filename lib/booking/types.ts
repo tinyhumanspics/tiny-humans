@@ -58,8 +58,12 @@ export interface BookingConsents {
 /** Where the studio comes to (every session is at the family's home). */
 export interface SessionAddress {
   street: string;
+  /** Apartment / unit (Miami condos), part of the address line. */
+  unit?: string;
   city: string;
   zip: string;
+  /** Gate code, parking, concierge: studio calendar, /admin and the 24-hour reminder only (never on public pages). */
+  accessNotes?: string;
 }
 
 export interface BookingRequest {

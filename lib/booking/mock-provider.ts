@@ -9,6 +9,7 @@ import type { AvailabilityRules } from "@/lib/availability/types";
 import { BookingError, friendly } from "./errors";
 import { cancelClosedText, rescheduleClosedText } from "./reschedule-policy";
 import { generateBookingReference } from "./reference";
+import { formatAddress } from "./templates";
 import type { Lead } from "@/lib/leads/types";
 import { sourceLabel } from "@/lib/tracking/attribution";
 import type {
@@ -220,7 +221,7 @@ function mockManaged(rec: MockRecord, noticeHours: number): ManagedBooking {
     date: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,
-    location: `${r.address.street}, ${r.address.city}, FL ${r.address.zip}`,
+    location: formatAddress(r.address),
     parentFirstName: r.contact.parentName.split(" ")[0],
     status,
     canReschedule: status === "active" && (startMs - Date.now()) / 3_600_000 >= noticeHours,
@@ -301,7 +302,8 @@ function mockLead(rec: MockRecord): Lead {
     start: r.slot.start,
     end: r.slot.end,
     locationType: "client_home",
-    address: `${r.address.street}, ${r.address.city}, FL ${r.address.zip}`,
+    address: formatAddress(r.address),
+    access: r.address.accessNotes ?? null,
     notes: r.contact.notes ?? null,
     inspirationPhotoId: r.inspirationPhotoId ?? null,
     calendarLinked: false,

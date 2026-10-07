@@ -58,6 +58,7 @@ export function SessionReminder({
     [m.common.date, date],
     [m.common.time, time],
     [m.common.location, r.location],
+    ...(kind === "24h" && r.accessNotes ? [[m.common.access, r.accessNotes] as [string, string]] : []),
     [m.common.bundle, r.bundleName],
     [m.common.reference, r.reference],
   ];
@@ -117,7 +118,14 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   const html = await renderHtml(
     <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} />,
   );
-  const details = [`${m.common.date}: ${date}`, `${m.common.time}: ${time}`, `${m.common.location}: ${r.location}`, `${m.common.bundle}: ${r.bundleName}`, `${m.common.reference}: ${r.reference}`];
+  const details = (withAccess: boolean): (string | false)[] => [
+    `${m.common.date}: ${date}`,
+    `${m.common.time}: ${time}`,
+    `${m.common.location}: ${r.location}`,
+    withAccess && r.accessNotes ? `${m.common.access}: ${r.accessNotes}` : false,
+    `${m.common.bundle}: ${r.bundleName}`,
+    `${m.common.reference}: ${r.reference}`,
+  ];
   const textUs = fill(m.common.textUs, { phone: site.contact.phone });
   const signature = fill(m.layout.signature, { email: site.contact.email ?? "" });
 
@@ -128,7 +136,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       "",
       x.intro,
       "",
-      ...details,
+      ...details(false),
       "",
       `${m.prepGuide.title}:`,
       ...m.prepGuide.items.map((i) => `- ${i}`),
@@ -149,7 +157,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     "",
     fill(x.intro, { day, time: start }),
     "",
-    ...details,
+    ...details(true),
     "",
     `${x.checklistTitle}:`,
     ...x.checklist.map((i) => `- ${i}`),

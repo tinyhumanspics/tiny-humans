@@ -27,6 +27,7 @@ import { createCancelToken } from "./cancel-token";
 import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
 import { cancelClosedText } from "./reschedule-policy";
 import { noticeHoursFor, saveBookingTerms } from "./terms";
+import { saveAccessNotes } from "./access";
 import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
 import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./timezone";
@@ -250,6 +251,7 @@ export class OutlookBookingProvider implements BookingProvider {
 
     // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch it.
     await saveBookingTerms(row.id, rules.limits.rescheduleNoticeHours, bundle.photos, row.bookingReference);
+    await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
 
     // Optional permissions (best effort: the booking is already confirmed; they're also in the event + studio email).
     if (request.consents) {

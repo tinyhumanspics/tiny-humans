@@ -6,6 +6,7 @@ import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
+import { ACCESS_LABEL } from "@/lib/booking/templates";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
@@ -166,6 +167,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Final booked price", formatMoney(pr.finalCents)],
     ["Baby age", lead.babyAge],
     ["Full address", lead.address],
+    [ACCESS_LABEL, lead.access || "None"],
     ["Notes", lead.notes || "None"],
     ["Inspiration", inspiration || "None"],
     ...consentRows(lead),
