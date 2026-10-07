@@ -3,8 +3,32 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
+## ▶ NEXT STEPS (handoff to the VS Code session, Oct 7 ~00:00 ET)
+1. **Local `main` is ahead of GitHub (1c source capture, 1d Pixel/CAPI, 1e legal, tests, docs). DO NOT PUSH until the
+   owner confirms he ran migration `drizzle/0006_booking_source.sql` in the Neon SQL editor (the SELECT must return
+   `new_columns = 9`).** Without it every booking insert fails. Then `git push origin main`, check the Vercel deploy,
+   smoke-test production (pages load, no console errors, /api/booking/availability 200, /privacy shows the Meta section).
+2. **Landing page** is on branch `wip/landing-page` (`/home-sweet-home`, "The Stay-Home Session"). Before merging:
+   show the owner phone + desktop screenshots and get a yes on the copy (bio "Meet Adrian & Alondra", FAQ — esp. the
+   pets answer, bonuses incl. "3 sneak peeks in 24 hours", baby-led promise "within 14 days") and on the intro
+   (default = skipped on this page; preview `?intro=short` / `?intro=full`). Fix: on phones the hero's board doodle
+   (cloud) overlaps the "…pay after your session" note. Then merge into main and push.
+3. **1g production verification** with the owner (section 4 of the brief), then send him the ads message (landing URL
+   `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`, page must be live first).
+4. Owner must deliver the **prep guide + backdrop options manually** after each booking until Phase 2 emails ship
+   (the landing page promises them "after you book"). Prep guide text: draft it for his approval (Phase 2b).
+5. New owner request: **`/portfolio` page** like `/book` (see "Owner requests").
+6. Baseline screenshots in `.screenshots/baseline/` were captured mid-animation (intro/Reveal fades) → recapture at
+   commit `cd667b1` with `reducedMotion: "reduce"` before Phase 9 uses them.
+
+## Owner requests (outside the original brief)
+- **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
+  same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
+  lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
+
 ## Status
-- **Now:** Phase 0 → Phase 1 (launch blockers for tonight's Meta ads, 2026-10-06).
+- **Now:** Phase 1 (launch blockers for the Meta ads). 1a, 1b live; 1c–1e committed, waiting on the migration;
+  1f on a branch for approval; 1g to do.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 
@@ -50,9 +74,12 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [x] 1d Domain verification: owner already verified by DNS TXT record → no meta tag needed
 - [x] 1e Privacy policy + terms updated (Meta Pixel/CAPI section, cookies list, Upstash, source tracking, baby data never
       shared; terms: approved 48 h reschedule/cancel + no-show wording). Owner told to have it reviewed by someone qualified.
-- [ ] 1f Landing page (URL: owner pick, `/home-sweet-home` proposed) (blueprint order, copy in `messages/en.json`, CTA → booking w/ bundle)
-- [ ] 1f Intro on landing: prototype short vs skipped; owner picks
-- [ ] 1f Metadata + OG image; screenshots to owner before push
+- [~] 1f Landing page `/home-sweet-home` ("The Stay-Home Session", owner-approved name + URL) built on branch
+      `wip/landing-page`: blueprint order, copy in `messages/en.json` (`landing.*`), CTAs → calendar with the "most
+      loved" bundle preselected + ViewContent, phone bundle order (Family Story first, Our Little Story highlighted),
+      real next open dates, reviews hidden. [?] owner approval of copy from screenshots
+- [~] 1f Intro on landing: skipped by default; `?intro=short` (logo slides in) / `?intro=full` previews. [?] owner pick
+- [~] 1f Metadata (title, description, canonical, OG text; reuses the brand OG image)
 - [ ] 1g Production verification with owner (test event code → one real booking → verify → cancel → remove code)
 
 ## Phase 2 — Show rate (next 24–48h)
@@ -85,7 +112,8 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [ ] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit)
 - [ ] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc)
 - [ ] WCAG 2.2 AA audit (axe + manual) and fixes; gitleaks history scan; CSP report-only → enforce
-- [ ] Playwright e2e + Vitest units + GitHub Actions CI; second bug hunt
+- [~] Playwright e2e started early (`tests/e2e/booking.spec.ts`, `npm run test:e2e`); Vitest units + GitHub Actions CI;
+      second bug hunt
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 ## Phase 8 — Structure move, route groups, split Booking.tsx, library evaluation, remove `config/bundles.ts`
@@ -164,6 +192,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 (one line per new dependency: why · bundle impact · maintenance)
 - `scripts/local-db` (own package.json, NOT an app dependency, never installed by Vercel): `embedded-postgres`
   18.4.0-beta.17 + `pg` 8 — local Postgres for tests because the AI workspace can't reach Neon. 0 KB to the site.
+- `@playwright/test` 1.63 (dev only) — e2e booking-funnel tests across iPhone Safari / Android / desktop / Instagram UA.
+  Not shipped to the browser; browsers download separately (`npx playwright install`).
 - `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
   SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
 

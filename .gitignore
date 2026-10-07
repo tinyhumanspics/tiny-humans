@@ -9,3 +9,11 @@ out
 
 # local screenshots (baseline for visual comparison)
 .screenshots/
+
+# never commit the owner's brief / prompts
+tiny-humans-claude-code-prompt.md
+*-prompt.md
+
+# Playwright output
+/test-results/
+/playwright-report/

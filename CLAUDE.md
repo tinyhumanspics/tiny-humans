@@ -22,6 +22,7 @@ npm run dev          # local dev (use BOOKING_PROVIDER=mock)
 npm run typecheck    # tsc --noEmit
 npm run build        # production build (what Vercel runs)
 npm run db:generate  # SQL migration from lib/db/schema.ts
+npm run test:e2e     # Playwright booking-funnel tests (mock provider)
 ```
 Lint: `next lint` is deprecated and unconfigured (prompts interactively) — ESLint flat config arrives in Phase 7.
 
@@ -73,13 +74,24 @@ feature's `index.ts`); use the `@/` alias; customer-facing text lives in `messag
 Route groups: `(site)` and `(admin)` will each get their own root layout; navigating between different root layouts is
 a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps only html/body/fonts after Phase 8.
 
-## Environment / how this repo is worked on (AI sessions)
-- The AI workspace's network can't reach Vercel, Neon, Meta, Upstash or Resend (account egress allowlist). So:
-  - Local testing uses `BOOKING_PROVIDER=mock` and a local Postgres (see PROGRESS.md "Local test database").
-  - Pushes go through the owner's linked folder `~/Desktop/tiny-humans-live` (git bundle → fast-forward → push).
-  - Vercel deploy status: GitHub commit status API (`context: "Vercel"`) for the pushed SHA.
-  - Production smoke tests: the Claude desktop built-in browser (read-only checks; never book on production).
-- Commit author: `tinyhumanspics <hello@tinyhumans.photography>`, conventional commit messages.
+## Environment / how this repo is worked on
+- **On the owner's Mac (VS Code + Claude extension)** — the normal setup from Oct 7, 2026: full network access,
+  push with the owner's own git credentials (`git push origin main`), Vercel CLI / Neon console reachable.
+  Local run: `npm install` → `.env.local` (see below) → `npm run dev` → http://localhost:3000.
+  - Safe `.env.local` for local work: `BOOKING_PROVIDER=mock`, `NEXT_PUBLIC_SITE_URL=http://localhost:3000`,
+    `ADMIN_PASSWORD` + `ADMIN_SESSION_SECRET` (local values). No `DATABASE_URL` = built-in bundles (dev only).
+  - For database work use a **Neon dev branch** (or `scripts/local-db`). **Never put the production `DATABASE_URL` in
+    `.env.local`** and never run tests against production (a real booking = real Outlook event + real emails).
+  - Don't load the Meta Pixel locally unless testing it (leave `NEXT_PUBLIC_META_PIXEL_ID` unset).
+- **Earlier cloud sessions (Oct 6–7)** couldn't reach Vercel/Neon/Meta, so they built `scripts/local-db` (embedded
+  Postgres + Neon-HTTP shim + fake Microsoft Graph) and pushed through the owner's folder. Those tools still work.
+- Vercel deploy status: Vercel dashboard, or the GitHub commit status (`context: "Vercel"`) for the pushed SHA.
+- Commit as the owner (his git config), conventional commit messages.
+
+## Tests
+- `npm run test:e2e` (Playwright; first time `npx playwright install`): starts its own dev server on :3100 in **mock**
+  mode with tracking off, then books a session on iPhone Safari, Android Chrome, desktop Chrome and an Instagram
+  in-app user agent. The booking API refuses forms finished in < 4 s (spam check), so tests wait on the review step.
 
 ## Gotchas
 - Chalk grain is a texture mask (`.chalk-grain` in `styles/globals.css`), NOT a live SVG `feTurbulence` filter — keep it
@@ -87,7 +99,10 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - The intro animation = `components/Header/useIntroAnimation.ts` + the inline `introScript` in `app/layout.tsx`
   (sets `data-intro` before first paint; skipped under /admin). It must never replay between site pages.
 - Drizzle inserts/selects list every schema column: **apply a migration to production BEFORE deploying code that adds
-  columns to `lib/db/schema.ts`**, or bookings break. Migrations are applied in the Neon SQL editor (owner) for now.
+  columns to `lib/db/schema.ts`**, or bookings break. Migrations are applied in the Neon SQL editor (owner) for now;
+  write them idempotent (`ADD COLUMN IF NOT EXISTS`).
+- Tracking: `lib/tracking/` (attribution cookie via `middleware.ts`, Pixel client, CAPI server). Never send baby data.
+- Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.
   Browser-side date helpers in `lib/booking/dates.ts` use the visitor's local zone — show and label times as Miami time.
