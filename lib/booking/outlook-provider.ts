@@ -6,6 +6,7 @@ import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/
 import { portfolio } from "@/config/portfolio";
 import { getSiteSettings } from "@/lib/settings/server";
 import type { SiteSettings } from "@/lib/settings/types";
+import { photographersEmailPhoto } from "@/config/media";
 import { allMediaPhotos } from "@/lib/settings/defaults";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
 import { bookingConsents, bookings, type Booking } from "@/lib/db/schema";
@@ -31,10 +32,9 @@ import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult,
 
 const ACTIVE = ne(bookings.status, "cancelled");
 
-/** The "Adrian & Alondra" photo from /admin (About page, first slot) for the confirmation email, as an absolute URL. */
+/** The "Meet your photographers" photo from /admin (Emails, else About Us) for the confirmation email, absolute URL. */
 function photographersPhotoUrl(settings: SiteSettings | null, themeId: string): string | null {
-  const media = settings?.media;
-  const src = (media?.[themeId as keyof typeof media]?.about[0] ?? media?.default?.about[0])?.src;
+  const src = settings ? photographersEmailPhoto(settings.media, themeId)?.src : undefined;
   if (!src) return null;
   return src.startsWith("/") ? `${site.url.replace(/\/$/, "")}${src}` : src;
 }

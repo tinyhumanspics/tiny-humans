@@ -325,3 +325,4 @@
 .codeNote { display: block; color: var(--chalk-muted); font-size: 0.92rem; }
 .codeActions { display: flex; flex-wrap: wrap; gap: 6px; }
 a.smallButton { text-decoration: none; display: inline-flex; align-items: center; }
+.slotThumbRound { aspect-ratio: 1; max-width: 180px; border-radius: 50%; }

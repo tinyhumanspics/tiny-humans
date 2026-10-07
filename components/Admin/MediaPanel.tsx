@@ -13,7 +13,7 @@ import { cn } from "@/lib/cn";
 
 type Upload = (b: Blob) => Promise<{ src: string }>;
 type Note = { kind: "ok" | "error"; text: string } | null;
-type SlotPath = ["title" | "landing" | "about", number] | ["group", number, number];
+type SlotPath = ["title" | "landing" | "about" | "email", number] | ["group", number, number];
 
 const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
 const titleFromFile = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
@@ -60,6 +60,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
     if (path[0] === "title") next.title[path[1]] = photo;
     else if (path[0] === "landing") next.landing[path[1]] = photo;
     else if (path[0] === "about") next.about[path[1]] = photo;
+    else if (path[0] === "email") (next.email ??= emptyThemeMedia().email)[path[1]] = photo;
     else next.groups[path[1]].photos[path[2]!] = photo;
     await saveMedia(next, path.join("-"), okText);
   };
@@ -126,6 +127,23 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         replace={replace}
         setSlot={setSlot}
       />
+
+      <MediaGroupBlock label={MEDIA_GROUPS.email.label} where={MEDIA_GROUPS.email.where}>
+        {MEDIA_GROUPS.email.slots.map((name, i) => {
+          const own = media.email?.[i] ?? null;
+          const fromBase = base?.email?.[i] ?? null;
+          const fromAbout = media.about[0] ?? base?.about[0] ?? null;
+          const inherited = fromBase ?? fromAbout;
+          return (
+            <Slot key={`email-${i}-${themeId}-${own?.id ?? "empty"}`} name={name} groupLabel={MEDIA_GROUPS.email.label} custom={own} inherited={inherited}
+              inheritedNote={fromBase ? `Same as the ${baseLabel} theme` : "Using the About Us photo"} round builtIn={null} busy={busy === `email-${i}`}
+              onReplace={(e) => replace(["email", i], own, `${MEDIA_GROUPS.email.label} · ${name}`, e)}
+              onReset={() => setSlot(["email", i], null, `${MEDIA_GROUPS.email.label} · ${name} removed. ${inherited ? (fromBase ? `The email uses the ${baseLabel} theme's photo again.` : "The email uses the About Us photo again.") : "The email shows no photo."}`)}
+              onDetails={(ph) => setSlot(["email", i], ph, "Photo details saved.")}
+              resetLabel="Remove picture" captions={false} />
+          );
+        })}
+      </MediaGroupBlock>
 
       {MEDIA_GROUPS.feed.map((g, gi) => (
         <MediaGroupBlock key={g.label} label={g.label} where={g.where}
@@ -233,10 +251,14 @@ function MediaGroupBlock({ label, where, prompt, children }: { label: string; wh
   );
 }
 
-function Slot({ name, groupLabel, custom, inherited, inheritedLabel, builtIn, busy, onReplace, onReset, onDetails, resetLabel = "Use built-in picture", captions = true }: {
+function Slot({ name, groupLabel, custom, inherited, inheritedLabel, inheritedNote, round, builtIn, busy, onReplace, onReset, onDetails, resetLabel = "Use built-in picture", captions = true }: {
   name: string; groupLabel: string; custom: PortfolioPhoto | null; builtIn: PortfolioPhoto | null; busy: boolean;
   /** The Original theme's picture for this slot (shown when this theme has none). */
   inherited?: PortfolioPhoto | null; inheritedLabel?: string;
+  /** Overrides "Same as the … theme" (e.g. the email photo borrowed from About Us). */
+  inheritedNote?: string;
+  /** Round preview (the email shows this photo as a circle). */
+  round?: boolean;
   onReplace: (e: ChangeEvent<HTMLInputElement>) => void; onReset: () => void; onDetails: (p: PortfolioPhoto) => void; resetLabel?: string;
   /** Show the caption field (pictures in "Little moments" show a caption under the photo). */
   captions?: boolean;
@@ -249,11 +271,11 @@ function Slot({ name, groupLabel, custom, inherited, inheritedLabel, builtIn, bu
   return (
     <div className={styles.slot}>
       <p className={cn(styles.slotName, "chalk-soft")}>{name}</p>
-      <div className={styles.slotThumb}>
+      <div className={cn(styles.slotThumb, round && styles.slotThumbRound)}>
         {shown ? <Image src={shown.src} alt={shown.alt} fill sizes="220px" style={{ objectFit: "cover" }} unoptimized={shown.src.startsWith("data:")} /> : null}
         {busy && <span className={cn(styles.slotBusy, "chalk-soft")}>Saving…</span>}
       </div>
-      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : inherited ? `Same as the ${inheritedLabel} theme` : builtIn ? "Built-in picture" : "Photo coming soon"}</p>
+      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : inherited ? (inheritedNote ?? `Same as the ${inheritedLabel} theme`) : builtIn ? "Built-in picture" : round ? "No photo: the email skips it" : "Photo coming soon"}</p>
       <label className={cn(styles.smallButton, styles.replaceBtn)}>
         <input type="file" accept="image/*" className={styles.visuallyHidden} onChange={onReplace} aria-label={`Replace ${groupLabel} ${name}`} disabled={busy} />
         {shown ? "Replace" : "Add picture"}

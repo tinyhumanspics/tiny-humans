@@ -21,6 +21,11 @@ export const MEDIA_GROUPS = {
     where: "The four photos on the /about page. Until you add one, visitors see the matching “photo coming soon” card.",
     slots: ["Adrian & Alondra", "Behind the scenes", "Adrian at work", "Alondra styling a set"],
   },
+  email: {
+    label: "Emails",
+    where: "The round photo in “Meet your photographers” in the booking confirmation email. It's shown as a small circle, so a close-up of your faces works best. Until you add one, the email uses the “Adrian & Alondra” photo from the About Us Page.",
+    slots: ["Meet your photographers"],
+  },
   feed: portfolioCtas.map((cta) => ({
     label: `${cta.title.replace(/[?.!]/g, "").replace(/\b\w/g, (c) => c.toUpperCase())} Pictures`,
     where: `The 3 photos in the “Little moments” section just above the “${cta.title}” prompt. The middle one is also shown inside that prompt.`,
@@ -48,6 +53,8 @@ export interface ThemeMedia {
   title: (PortfolioPhoto | null)[];
   landing: (PortfolioPhoto | null)[];
   about: (PortfolioPhoto | null)[];
+  /** Photos used in emails (not on the website). */
+  email: (PortfolioPhoto | null)[];
   groups: MediaGroup[];
   extra: PortfolioPhoto[];
 }
@@ -63,6 +70,7 @@ export function emptyThemeMedia(): ThemeMedia {
     title: [null, null],
     landing: MEDIA_GROUPS.landing.slots.map(() => null),
     about: MEDIA_GROUPS.about.slots.map(() => null),
+    email: MEDIA_GROUPS.email.slots.map(() => null),
     groups: MEDIA_GROUPS.feed.map(() => ({ photos: [null, null, null], title: null, text: null })),
     extra: [],
   };
@@ -113,6 +121,16 @@ export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia): 
 
 /** The Default theme's pictures, used for empty slots of every other theme. */
 export const fallbackMediaFor = (themeId: string, all: Partial<Record<string, ThemeMedia>>): ThemeMedia | undefined => (themeId === "default" ? undefined : all.default);
+
+/**
+ * The "Meet your photographers" photo in the confirmation email for a theme: its own Emails photo, else the Original
+ * theme's, else the "Adrian & Alondra" About Us photo (theme's own, then Original's). null = the email shows no photo.
+ */
+export function photographersEmailPhoto(all: Partial<Record<string, ThemeMedia>>, themeId: string): PortfolioPhoto | null {
+  const own = all[themeId];
+  const base = themeId === "default" ? undefined : all.default;
+  return own?.email?.[0] ?? base?.email?.[0] ?? own?.about?.[0] ?? base?.about?.[0] ?? null;
+}
 
 /** Photos in feed order (for the lightbox and inspiration links). */
 export const feedPhotos = (r: ResolvedMedia) => [...r.groups.flatMap((g) => g.photos), ...r.extra];

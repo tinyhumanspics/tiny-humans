@@ -58,6 +58,8 @@ function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string): Them
   m.landing = MEDIA_GROUPS.landing.slots.map((_, i) => parseSlot(landing[i], allowDataUrls, `${id} landing pictures`));
   const about = Array.isArray(o.about) ? o.about : [];
   m.about = MEDIA_GROUPS.about.slots.map((_, i) => parseSlot(about[i], allowDataUrls, `${id} about pictures`));
+  const email = Array.isArray(o.email) ? o.email : [];
+  m.email = MEDIA_GROUPS.email.slots.map((_, i) => parseSlot(email[i], allowDataUrls, `${id} email pictures`));
   const gs = Array.isArray(o.groups) ? o.groups : [];
   m.groups = m.groups.map((_, gi) => {
     const g = (gs[gi] ?? {}) as Record<string, unknown>;
@@ -91,7 +93,7 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
 /** Every custom photo in every theme. */
 export function allMediaPhotos(s: SiteSettings): PortfolioPhoto[] {
   return Object.values(s.media).flatMap((m) =>
-    m ? [...m.title, ...m.landing, ...m.about, ...m.groups.flatMap((g) => g.photos), ...m.extra].filter(Boolean) as PortfolioPhoto[] : [],
+    m ? [...m.title, ...m.landing, ...m.about, ...(m.email ?? []), ...m.groups.flatMap((g) => g.photos), ...m.extra].filter(Boolean) as PortfolioPhoto[] : [],
   );
 }
 
