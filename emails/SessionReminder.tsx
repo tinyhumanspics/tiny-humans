@@ -2,7 +2,7 @@ import { site } from "@/config/site";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { formatLongDate, formatTimeLabel, fromDateKey } from "@/lib/booking/dates";
 import type { ReminderDetails } from "@/lib/booking/templates";
-import { rescheduleNoticeText } from "@/lib/booking/reschedule-policy";
+import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
@@ -76,7 +76,7 @@ export function SessionReminder({
         <Swatches theme={t} title={m.backdrops.reminderTitle} text={m.backdrops.reminderText} swatches={backdropSwatches(locale)} />
         <Paragraph theme={t} align="center">
           <span style={{ display: "block", marginTop: 10, fontSize: 18, fontWeight: "bold" }}>{x.rescheduleTitle}</span>
-          {rescheduleUrl && rescheduleNoticeHours !== undefined ? rescheduleNoticeText(rescheduleNoticeHours) : x.closed}
+          {rescheduleUrl && rescheduleNoticeHours !== undefined ? changePolicyText(rescheduleNoticeHours) : x.closed}
         </Paragraph>
         {rescheduleUrl ? <ChalkButton theme={t} label={x.reschedule} href={rescheduleUrl} variant="solid" /> : textUs}
         <Paragraph theme={t} align="center" muted>
@@ -135,7 +135,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       "",
       fill(m.backdrops.textLine, { list: backdropList(locale) }),
       "",
-      opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? rescheduleNoticeText(opts.rescheduleNoticeHours) : `${x.closed} ${textUs}.`,
+      opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? changePolicyText(opts.rescheduleNoticeHours) : `${x.closed} ${textUs}.`,
       opts.rescheduleUrl && fill(x.rescheduleText, { url: opts.rescheduleUrl }),
       "",
       signature,
