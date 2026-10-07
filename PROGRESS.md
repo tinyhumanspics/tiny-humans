@@ -9,8 +9,8 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
    `/home-sweet-home` → check Events Manager, booking row source, emails, Outlook → cancel → remove the code), then send
    him the ads message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for
    `Schedule`). Check first that `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` are set in Vercel.
-2. **Vercel dashboard (owner):** Analytics → Enable (Web Analytics needs it; Speed Insights routes come with each
-   deployment), then redeploy. Until enabled, `/_vercel/insights/script.js` 404s → a console error on every page.
+2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
+   appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
 3. **Phase 2 (show rate)** before the first booked sessions: React Email, confirmation upgrade, 72 h/24 h reminders,
    after-session emails, SMS + photo-use checkboxes. Until then the owner delivers the prep guide + backdrop options by
    hand after each booking (the landing page promises them "after you book"); draft the prep guide for his approval.
