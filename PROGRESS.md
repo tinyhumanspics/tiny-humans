@@ -11,9 +11,11 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
    `Schedule`). Check first that `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` are set in Vercel.
 2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
    appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
-3. **Phase 2 (show rate)** before the first booked sessions: ~~React Email~~ (2a done Oct 7), confirmation upgrade, 72 h/24 h reminders,
-   after-session emails, SMS + photo-use checkboxes. Until then the owner delivers the prep guide + backdrop options by
-   hand after each booking (the landing page promises them "after you book"); draft the prep guide for his approval.
+3. **Phase 2 (show rate)**: 2a live. **2b + 2c built and tested locally, NOT pushed yet** (commits on local `main`
+   after d181079). Deploy order: (1) owner approves the screenshots in `Claude outputs/emails-phase-2/`, (2) owner runs
+   `drizzle/0007_booking_emails.sql` in the Neon SQL editor, (3) owner adds `CRON_SECRET` (Production) in Vercel,
+   (4) push, then check Vercel → Settings → Cron Jobs lists `/api/cron/reminders`. Left in Phase 2: 2d after-session
+   emails, 2e SMS + photo-use checkboxes, edge items.
 4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page), DST check (Nov 1), BUG-5 overlap constraint.
 5. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
    partly covers it) — legal wording needs his OK. `/portfolio` page (see "Owner requests").
@@ -139,8 +141,22 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
       plain text, subjects and attachments byte-identical. Real send path checked locally (Outlook mode + fake Graph +
       fake Resend via `RESEND_BASE_URL`): book → reschedule → cancel sent all 6 emails with the right idempotency keys.
       Mock-mode "Preview the confirmation email" now renders in the browser (new e2e test, passes on WebKit too).
-- [ ] 2b Confirmation email upgrade (photographers intro, prep guide, sneak peek, pay after, manage links, backdrop question)
-- [ ] 2c Reminders 72h (prep + reschedule) and 24h (logistics); idempotent; reschedule/cancel aware; backfill; failures in /admin
+- [~] 2b Confirmation email upgrade (Oct 7, waiting on owner's yes + deploy): "Pick your backdrop" swatches (Blue Aura,
+      Burgundy, Cream, White; colors designed by Claude in `config/backdrops.ts`, reply with your pick), Home Session
+      Prep Guide (owner-approved text), "What happens next" (3 sneak peeks within 24 h, gallery in 24–72 h, pay after),
+      "Meet your photographers" (+ the /admin About "Adrian & Alondra" photo once uploaded), baby-led promise (landing
+      wording). Copy in `messages/en.json` → `emails.*`.
+- [~] 2c Reminders (Oct 7, waiting on deploy steps above): Vercel Hobby cron once a day at 14:00 UTC (fires 10–11 am
+      EDT / 9–10 am EST) → `GET /api/cron/reminders` (Bearer `CRON_SECRET`; `?dryRun=1` lists due references).
+      `lib/booking/reminders.ts` decides at send time from the booking as it is now: "72h" (prep guide, backdrops, big
+      "Need another time?" button while online rescheduling is open, else "text us") when the session is 2–3 Miami days
+      away and was confirmed ≥ 72 h before; "24h" (logistics + texting number) when today/tomorrow, ≥ 3 h away and
+      confirmed ≥ 24 h before. "Confirmed" = booked or last rescheduled. Table `booking_emails` (migration 0007): one row
+      claims each email (unique booking + kind + session time) → no doubles from duplicate cron runs; reschedule = new
+      session time = due again; cancelled = never due; failures retried by later runs (max 3 attempts) and shown in
+      /admin → Leads → details ("Not sent (code). Text the family."). Backfill is automatic. Reminder links: own token
+      per email (HMAC of the row id with `CRON_SECRET`, only the hash stored), valid while the booking keeps that session
+      time; confirmation links keep working. Tested locally end to end (21 scenarios incl. DST night Nov 1).
 - [ ] 2c Optional /admin "Today" view with tap-to-text
 - [ ] 2d After-session (thank you + how to pay) and gallery-delivered (review + referral) emails
 - [ ] 2e Optional SMS consent checkbox (+ timestamp); photo-use permission checkbox
@@ -223,9 +239,11 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
 18. Editable in /admin: seasonal offers + cutoffs, FAQ, reviews, "Meet the photographers". Layouts stay in code.
 19. Spanish: "same time, no rush" → Phase 3 after Phase 2. Adrian/Alondra review the Spanish copy.
 
+Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue Aura, Burgundy, Cream, White** (owner:
+"create the colors yourself"). Sneak-peek wording "3 sneak peeks within 24 hours" OK. Prep guide draft approved, without
+a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
+
 ## Open owner questions
-- Vercel plan: Hobby or Pro? (Decides how reminders run: Hobby cron = once a day, e.g. "your session is tomorrow"
-  at ~10 am; Pro = exactly 72 h / 24 h before.)
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 
@@ -235,8 +253,8 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
   uploads its per-theme replacement in `/admin/photos`.
 - About copy (`about.*`): "husband-and-wife team", "about two years… photographing all kinds of things", "Hablamos
   español" → owner approval.
-- Travel fee numbers, photographers' photo (owner uploads in /admin), bio text (drafted from owner's answers → approval),
-  reviews (hidden until real), prep guide text (draft → approval).
+- Travel fee numbers, photographers' photo (owner uploads in /admin; the confirmation email uses it too), bio text
+  (drafted from owner's answers → approval), reviews (hidden until real).
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
@@ -312,6 +330,9 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **Vercel Cron** (checked Oct 7): Hobby = once per day per job, fires anytime within the scheduled hour; Pro = per
   minute, on time. Cron runs a normal function (same pricing). Schedules are UTC.
   https://vercel.com/docs/cron-jobs/usage-and-pricing
+- **Vercel Cron security/delivery** (checked Oct 7): set `CRON_SECRET` and Vercel sends `Authorization: Bearer <it>`
+  (GET). Delivery is best effort: a run can be missed or arrive twice, no retries → jobs must be idempotent and catch up.
+  Doesn't follow redirects. https://vercel.com/docs/cron-jobs/manage-cron-jobs
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain

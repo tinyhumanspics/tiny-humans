@@ -117,6 +117,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Tracking: `lib/tracking/` (attribution cookie via `proxy.ts`, Pixel client, CAPI server). Never send baby data.
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
+- Reminders: `vercel.json` cron (daily, Hobby) → `/api/cron/reminders` → `lib/booking/reminders.ts`; table
+  `booking_emails` claims each email. Manage links are found by token hash on `bookings` OR `booking_emails`
+  (`findByCancelToken`). Never send reminders from a test against production; test locally with `?now=` + fake Resend.
 - Emails: React adds `<!-- -->` between adjacent text pieces in JSX (`{a} {b}`) — build one string per text run.
   Check email changes with screenshots of the rendered HTML (old vs new) before sending anything real.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.
