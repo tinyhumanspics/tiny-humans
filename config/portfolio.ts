@@ -4,7 +4,7 @@
  * (keep width/height accurate for best layout).
  */
 export interface PortfolioPhoto {
-  /** Stable id, used in booking links (/book?inspiration=<id>). */
+  /** Stable id, used in booking links (/bundles?inspiration=<id>). */
   id: string;
   src: string;
   width: number;

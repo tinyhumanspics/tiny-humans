@@ -1,27 +1,21 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { site } from "@/config/site";
-import Bundles from "@/components/Bundles/Bundles";
-import InspirationBanner from "@/components/Booking/InspirationBanner";
-import InspirationFromUrl from "@/components/Booking/InspirationFromUrl";
+import ScheduleBooking from "@/components/Booking/ScheduleBooking";
 import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
 
 export const metadata: Metadata = {
-  title: site.bookPage.title,
-  description: site.bookPage.description,
+  title: "Pick your date",
+  description: "Choose a day and time, and we'll bring the studio to your home.",
 };
 
-/** Booking, step one: pick a bundle. Each bundle leads to /book/schedule. */
+/** Booking, step two (/book): calendar for the bundle in ?bundle=<id>. Without one, it points to /bundles. */
 export default function BookPage() {
   return (
     <BookingSelectionProvider>
-      {/* Reads ?inspiration=<photo id> from "Book a memory like this one" links */}
-      <Suspense fallback={null}>
-        <InspirationFromUrl />
-      </Suspense>
       <main id="top" className="book-page">
-        <InspirationBanner />
-        <Bundles />
+        <Suspense fallback={null}>
+          <ScheduleBooking />
+        </Suspense>
       </main>
     </BookingSelectionProvider>
   );

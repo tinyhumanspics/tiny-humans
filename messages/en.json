@@ -17,6 +17,13 @@
       "title": "We'll be right back",
       "body": "Our website hit a small bump. Please try again in a minute. To book now, email us and we'll take care of you.",
       "retry": "Try again"
+    },
+    "notFound": {
+      "metaTitle": "Page not found",
+      "title": "Oops! This page wandered off",
+      "body": "Like a tiny sock in the laundry, the page you're looking for is nowhere to be found. It may have moved, or the link has a typo.",
+      "home": "Back to the home page",
+      "bundles": "See the bundles"
     }
   }
 }

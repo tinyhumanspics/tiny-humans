@@ -396,7 +396,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
               <Confirmation
                 result={state.result}
                 headingRef={headingRef}
-                onReset={() => router.push("/book")}
+                onReset={() => router.push(bundlesHref())}
               />
             ) : (
               <>

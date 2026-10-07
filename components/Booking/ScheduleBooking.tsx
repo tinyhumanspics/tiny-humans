@@ -1,28 +1,46 @@
 "use client";
 
-import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import { useBookingSelection } from "./BookingSelectionContext";
 import Booking from "./Booking";
 import BookingPaused from "@/features/booking/BookingPaused";
+import { bundlesHref, scheduleHref } from "@/config/booking";
+import { lastBundle, rememberBundle } from "@/lib/booking/last-bundle";
 import styles from "./Booking.module.css";
 
-/** Reads ?bundle= and ?inspiration= from the link, then shows the calendar. */
+/**
+ * Reads ?bundle= and ?inspiration= from the link, then shows the calendar.
+ * No (known) bundle in the link: back to the bundle opened earlier in this visit, otherwise to the bundles page.
+ */
 export default function ScheduleBooking() {
   const params = useSearchParams();
+  const router = useRouter();
   const { photos } = useSiteSettings();
   const { setInspirationId } = useBookingSelection();
   const { getBundle, available } = useCatalog();
   const bundle = getBundle(params.get("bundle"));
+  const bundleId = bundle?.id;
   const inspirationId = params.get("inspiration");
+  const redirected = useRef(false);
 
   useEffect(() => {
     if (inspirationId && findPhoto(photos, inspirationId)) setInspirationId(inspirationId);
   }, [inspirationId, photos, setInspirationId]);
+
+  useEffect(() => {
+    if (bundleId) {
+      rememberBundle(bundleId);
+      redirected.current = false;
+      return;
+    }
+    if (!available || redirected.current) return;
+    redirected.current = true;
+    const last = getBundle(lastBundle());
+    router.replace(last ? scheduleHref(last.id, inspirationId) : bundlesHref(inspirationId));
+  }, [bundleId, available, getBundle, inspirationId, router]);
 
   if (!bundle && !available) {
     return (
@@ -33,21 +51,8 @@ export default function ScheduleBooking() {
       </section>
     );
   }
-  if (!bundle) {
-    return (
-      <section className={styles.section} aria-labelledby="pick-bundle-title">
-        <div className="container">
-          <ChalkBox className={styles.noBundle} seed={77} wobble={3} strokeWidth={2.6}>
-            <h1 id="pick-bundle-title" className={`${styles.stepTitle} chalk`}>Choose a bundle first</h1>
-            <p className="chalk-soft">Pick the bundle that fits your family, and we&apos;ll show you the open dates.</p>
-            <ChalkButton href="/book" variant="solid" seed={78}>
-              See the bundles
-            </ChalkButton>
-          </ChalkBox>
-        </div>
-      </section>
-    );
-  }
+  // on its way to the right page (see above)
+  if (!bundle) return null;
   // key: a different bundle starts a fresh booking
   return <Booking key={bundle.id} bundleId={bundle.id} />;
 }

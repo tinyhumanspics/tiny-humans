@@ -46,7 +46,7 @@ export function useIntroAnimation(logoRef: RefObject<HTMLDivElement | null>, rea
     let cancelled = false;
 
     // The intro always starts and ends at the top of the page, unless the
-    // visitor arrived on a section link (e.g. /book#book).
+    // visitor arrived on a section link (e.g. /book?bundle=…#book).
     const keepTop = !window.location.hash;
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     const toTop = () => keepTop && window.scrollTo({ top: 0, behavior: "instant" });

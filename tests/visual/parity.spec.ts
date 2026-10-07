@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
  * 2. On the new code: `npm run build && npx playwright test -c playwright.visual.config.ts`
  * Snapshots live in `.screenshots/parity/` (gitignored). Motion is reduced so captures are stable.
  */
-const PAGES = ["/", "/book", "/book/schedule?bundle=little-moments", "/privacy", "/terms", "/cancel", "/reschedule", "/admin"];
+const PAGES = ["/", "/bundles", "/book?bundle=little-moments", "/privacy", "/terms", "/cancel", "/reschedule", "/admin"];
 
 for (const path of PAGES) {
   test(`looks the same: ${path}`, async ({ page }) => {

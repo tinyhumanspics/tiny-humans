@@ -9,7 +9,7 @@ export const site = {
     subtitle: "Newborn & baby photography made with love.",
     /** What makes Tiny Humans different, shown under the hero text. */
     promise: "We bring the studio to your home, so your little one stays comfy.",
-    primaryCta: { label: "Book a session", href: "/book" },
+    primaryCta: { label: "Book a session", href: "/bundles" },
     secondaryCta: { label: "View our work", href: "#portfolio" },
   },
   sections: {
@@ -38,7 +38,7 @@ export const site = {
   contact: {
     email: "hello@tinyhumans.photography" as string | null,
   },
-  /** Booking page (/book). */
+  /** Bundles page (/bundles), booking step one. */
   bookPage: {
     title: "Book a session",
     description: "Choose a Tiny Humans bundle and book your newborn or baby session.",
@@ -55,6 +55,6 @@ export const site = {
 export const navigation = [
   { label: "Portfolio", href: "/#portfolio" },
   // Both lead to the bundles page: families pick a bundle, then the calendar.
-  { label: "Bundles", href: "/book" },
-  { label: "Book", href: "/book", emphasis: true },
+  { label: "Bundles", href: "/bundles" },
+  { label: "Book", href: "/bundles", emphasis: true },
 ] as const;

@@ -88,7 +88,7 @@ export default function CancelBooking() {
             <p className={`${styles.text} chalk-soft`}>
               {view === "already" ? "Nothing else to do. If you'd like to book another session, we'd love to see you." : "It can't be cancelled online anymore. Please reply to your confirmation email."}
             </p>
-            <ChalkButton href="/book" variant="solid" seed={313}>Book a session</ChalkButton>
+            <ChalkButton href="/bundles" variant="solid" seed={313}>Book a session</ChalkButton>
           </>
         )}
 
@@ -133,7 +133,7 @@ export default function CancelBooking() {
             </p>
             <div className={styles.actions}>
               <Link href="/" className={`${styles.link} chalk-soft`}>Back to Tiny Humans</Link>
-              <ChalkButton href="/book" variant="solid" seed={316}>Book another session</ChalkButton>
+              <ChalkButton href="/bundles" variant="solid" seed={316}>Book another session</ChalkButton>
             </div>
           </div>
         )}

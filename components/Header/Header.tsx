@@ -20,7 +20,7 @@ export default function Header() {
   const { theme, ready } = useSiteSettings();
   const logo = theme.logo;
   const drawState = useIntroAnimation(logoRef, ready, Object.values(logo.layers) as string[]);
-  // static builds report "/book/" (trailing slash); normalize it
+  // static builds report "/bundles/" (trailing slash); normalize it
   const pathname = usePathname().replace(/(.)\/$/, "$1");
 
   // On the home page the logo scrolls to the top; elsewhere it links home.

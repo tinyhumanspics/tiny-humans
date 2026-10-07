@@ -79,10 +79,10 @@ export const STEP = { date: 0, time: 1, details: 2, review: 3 } as const;
 export function scheduleHref(bundleId: string, inspirationId?: string | null): string {
   const q = new URLSearchParams({ bundle: bundleId });
   if (inspirationId) q.set("inspiration", inspirationId);
-  return `/book/schedule?${q.toString()}`;
+  return `/book?${q.toString()}`;
 }
 
 /** Link back to the bundles page (keeps the inspiration photo). */
 export function bundlesHref(inspirationId?: string | null): string {
-  return inspirationId ? `/book?inspiration=${encodeURIComponent(inspirationId)}` : "/book";
+  return inspirationId ? `/bundles?inspiration=${encodeURIComponent(inspirationId)}` : "/bundles";
 }

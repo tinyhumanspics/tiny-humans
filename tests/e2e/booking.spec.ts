@@ -9,9 +9,9 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource/.test(m.text()) && errors.push(m.text()));
 
-  await page.goto("/book?utm_source=facebook&utm_medium=paid_social&fbclid=TEST");
+  await page.goto("/bundles?utm_source=facebook&utm_medium=paid_social&fbclid=TEST");
   await page.getByRole("link", { name: /Choose Little Moments/i }).click();
-  await expect(page).toHaveURL(/\/book\/schedule\?bundle=little-moments/);
+  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
 
   const day = page.locator('button[aria-label*="times available"]').first();
   if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
@@ -48,8 +48,26 @@ test("booking works in the Instagram in-app browser", async ({ browser }) => {
 });
 
 test("the landing page and legal pages load", async ({ page }) => {
-  for (const path of ["/", "/book", "/privacy", "/terms"]) {
+  for (const path of ["/", "/bundles", "/privacy", "/terms"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(200);
   }
+});
+
+test("/book without a bundle: the bundle picked earlier this visit, otherwise the bundles page", async ({ page }) => {
+  await page.goto("/book");
+  await expect(page).toHaveURL(/\/bundles$/);
+  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
+  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
+  await page.goto("/book");
+  await expect(page).toHaveURL(/\/book\?bundle=little-moments$/);
+  await expect(page.getByRole("button", { name: /Next: Time/ })).toBeVisible();
+});
+
+test("unknown pages show the chalkboard 404", async ({ page }) => {
+  const res = await page.goto("/book/schedule?bundle=little-moments");
+  expect(res?.status()).toBe(404);
+  await expect(page.getByRole("heading", { name: /This page wandered off/ })).toBeVisible();
+  await page.getByRole("link", { name: "Back to the home page" }).click();
+  await expect(page).toHaveURL(/\/$/);
 });

@@ -8,6 +8,7 @@ import { allow, clientIp } from "@/lib/rate-limit";
 import { FBC_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
 import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
 import { site } from "@/config/site";
+import { scheduleHref } from "@/config/booking";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
     if (booking.status !== "mock") {
       const referer = req.headers.get("referer");
       const sameSite = referer && new URL(referer, site.url).host === new URL(req.url).host;
-      const eventSourceUrl = sameSite ? referer! : `${site.url.replace(/\/$/, "")}/book/schedule?bundle=${encodeURIComponent(r.bundleId)}`;
+      const eventSourceUrl = sameSite ? referer! : `${site.url.replace(/\/$/, "")}${scheduleHref(r.bundleId)}`;
       after(() =>
         sendScheduleEvent({
           eventId: r.requestId ?? booking.id,

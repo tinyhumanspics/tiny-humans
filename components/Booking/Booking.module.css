@@ -504,8 +504,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .bundleName { color: var(--sun-yellow); font-size: 1.3rem; }
 .bundleMeta { display: block; font-family: var(--font-hand); font-size: 1.02rem; color: var(--chalk-muted); }
 
-.noBundle { max-width: 560px; margin: clamp(24px, 6vw, 60px) auto; padding: 28px; display: grid; gap: 14px; justify-items: start; }
-.noBundle p { margin: 0; color: var(--chalk-muted); font-size: 1.15rem; }
 
 /* the calendar sits in the middle of the booking box */
 .calendar { margin-left: auto; margin-right: auto; }
