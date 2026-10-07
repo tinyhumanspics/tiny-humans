@@ -50,6 +50,13 @@
       "when": 1791341682965,
       "tag": "0006_booking_source",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791382377865,
+      "tag": "0007_booking_emails",
+      "breakpoints": true
     }
   ]
 }

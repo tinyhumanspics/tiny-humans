@@ -1,18 +1,34 @@
 import "server-only";
-import { count, desc, eq, ne } from "drizzle-orm";
+import { count, desc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { bookings, type Booking } from "@/lib/db/schema";
+import { bookingEmails, bookings, type Booking, type BookingEmail } from "@/lib/db/schema";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/outlook-provider";
 import type { Lead, LeadFilter, LeadList, LeadStatus } from "./types";
 import { sourceLabel } from "@/lib/tracking/attribution";
+import { log } from "@/lib/log";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 type HistoryRow = Awaited<ReturnType<typeof historyFor>>[number];
 
-export function toLead(r: Booking, history: HistoryRow[] = []): Lead {
+const REMINDER_KIND: Record<string, "72h" | "24h"> = { reminder_72h: "72h", reminder_24h: "24h" };
+
+/** Reminder emails of these bookings (empty if the table isn't there yet, so /admin keeps working). */
+async function emailsFor(bookingIds: string[]): Promise<BookingEmail[]> {
+  if (!bookingIds.length) return [];
+  return getDb()
+    .select()
+    .from(bookingEmails)
+    .where(inArray(bookingEmails.bookingId, bookingIds))
+    .catch((err) => {
+      log.error("leads", "Could not load reminder emails", { error: err as Error });
+      return [];
+    });
+}
+
+export function toLead(r: Booking, history: HistoryRow[] = [], emails: BookingEmail[] = []): Lead {
   return {
     reference: r.bookingReference,
     status: r.status as LeadStatus,
@@ -37,6 +53,10 @@ export function toLead(r: Booking, history: HistoryRow[] = []): Lead {
     history: history
       .filter((h) => h.bookingId === r.id)
       .map((h) => ({ oldDate: localDate(h.oldSessionStart, r.timezone), oldStart: time(h.oldSessionStart, r.timezone), newDate: localDate(h.newSessionStart, r.timezone), newStart: time(h.newSessionStart, r.timezone), newEnd: time(h.newSessionEnd, r.timezone), by: h.rescheduledBy as "customer" | "admin", at: h.createdAt.toISOString() })),
+    reminders: emails
+      .filter((e) => e.bookingId === r.id && REMINDER_KIND[e.kind] && e.sessionStart.getTime() === r.sessionStart.getTime())
+      .map((e) => ({ kind: REMINDER_KIND[e.kind], status: e.status as "sending" | "sent" | "failed", at: iso(e.sentAt ?? e.updatedAt), error: e.error }))
+      .sort((a, b) => (a.kind === "72h" ? -1 : 1) - (b.kind === "72h" ? -1 : 1)),
     cancellation:
       r.status === "cancelled"
         ? {
@@ -80,13 +100,14 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     counts[g.status as LeadStatus] = Number(g.n);
     if (g.status !== "cancelled") counts.all += Number(g.n);
   }
-  const history = await historyFor(rows.map((r) => r.id));
-  return { leads: rows.map((r) => toLead(r, history)), counts, total: filter === "all" ? counts.all : counts[filter] };
+  const ids = rows.map((r) => r.id);
+  const [history, emails] = await Promise.all([historyFor(ids), emailsFor(ids)]);
+  return { leads: rows.map((r) => toLead(r, history, emails)), counts, total: filter === "all" ? counts.all : counts[filter] };
 }
 
 export async function getLead(reference: string): Promise<Lead | null> {
   const row = await getLeadRow(reference);
-  return row ? toLead(row, await historyFor([row.id])) : null;
+  return row ? toLead(row, await historyFor([row.id]), await emailsFor([row.id])) : null;
 }
 
 export async function getLeadRow(reference: string): Promise<Booking | null> {

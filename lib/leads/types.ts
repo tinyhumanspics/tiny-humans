@@ -32,6 +32,8 @@ export interface Lead {
   internalNotification: EmailStatus;
   /** Oldest first. Empty if never rescheduled. */
   history: { oldDate: string; oldStart: string; newDate: string; newStart: string; newEnd: string; by: "customer" | "admin"; at: string }[];
+  /** Reminder emails for the current session time (none yet = empty). */
+  reminders?: { kind: "72h" | "24h"; status: "sending" | "sent" | "failed"; at: string | null; error: string | null }[];
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;

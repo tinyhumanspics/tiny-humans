@@ -22,6 +22,13 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 const emailLine = (e: EmailStatus) => (e.sent ? `Sent ${when(e.at)}` : e.error ? `Not sent (${e.error})` : "Not sent");
+const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
+/** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
+const reminderRows = (lead: Lead): [string, string][] => {
+  if (!lead.reminders || lead.status === "cancelled") return [];
+  if (!lead.reminders.length) return [["Reminders", "None sent yet"]];
+  return lead.reminders.map((r) => [REMINDER_LABEL[r.kind], r.status === "sent" ? `Sent ${when(r.at)}` : r.status === "failed" ? `Not sent (${r.error ?? "error"}). Text the family.` : "Sending…"]);
+};
 
 /** Owner area: every booking/lead, filterable, with details and admin cancellation. */
 export default function LeadsPanel({ api }: { api: AdminApi }) {
@@ -154,6 +161,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : "Not on the calendar"],
     ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
+    ...reminderRows(lead),
     ...(lead.source
       ? ([
           ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],

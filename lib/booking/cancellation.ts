@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { bookings, type Booking } from "@/lib/db/schema";
+import { bookingEmails, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { GraphAuthError } from "@/lib/microsoft/auth";
 import { GraphError } from "@/lib/microsoft/graph";
@@ -29,11 +29,27 @@ export function summaryOf(row: Booking): CancellationSummary {
   };
 }
 
-/** Booking behind a customer cancel token (null if the token is unknown). */
+/**
+ * Booking behind a customer management token (null if the token is unknown): the booking's own token, or the link in
+ * a reminder email, which stays valid only while the booking keeps the session time that email was about.
+ */
 export async function findByCancelToken(token: string): Promise<Booking | null> {
   if (!looksLikeCancelToken(token)) return null;
-  const [row] = await getDb().select().from(bookings).where(eq(bookings.cancelTokenHash, hashCancelToken(token))).limit(1);
-  return row ?? null;
+  const hash = hashCancelToken(token);
+  const db = getDb();
+  const [row] = await db.select().from(bookings).where(eq(bookings.cancelTokenHash, hash)).limit(1);
+  if (row) return row;
+  const [viaEmail] = await db
+    .select({ booking: bookings })
+    .from(bookingEmails)
+    .innerJoin(bookings, and(eq(bookings.id, bookingEmails.bookingId), eq(bookings.sessionStart, bookingEmails.sessionStart)))
+    .where(eq(bookingEmails.linkTokenHash, hash))
+    .limit(1)
+    .catch((err) => {
+      log.error("booking.token", "Reminder link lookup failed", { error: err as Error });
+      return [];
+    });
+  return viaEmail?.booking ?? null;
 }
 
 /** Theme the website is using right now (emails follow it). */

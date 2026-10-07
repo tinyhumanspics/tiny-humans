@@ -201,6 +201,40 @@ export const bookingRescheduleHistory = pgTable(
   ],
 );
 
+/**
+ * Scheduled customer emails (session reminders now; after-session emails later). One row per booking, kind and
+ * session time: inserting the row claims the email, so it can never be sent twice, and a reschedule (new session
+ * time) makes the booking due again. Failures stay visible in /admin.
+ */
+export const bookingEmails = pgTable(
+  "booking_emails",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    /** "reminder_72h" | "reminder_24h" */
+    kind: text("kind").notNull(),
+    /** The session time this email was about. */
+    sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),
+    /** "sending" | "sent" | "failed" */
+    status: text("status").notNull().default("sending"),
+    attempts: integer("attempts").notNull().default(1),
+    resendId: text("resend_id"),
+    /** Short reason if sending failed (no secrets). */
+    error: text("error"),
+    /** SHA-256 of the manage-link token in this email. Valid only while the booking keeps this session time. */
+    linkTokenHash: text("link_token_hash").unique(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("booking_emails_once_idx").on(t.bookingId, t.kind, t.sessionStart),
+    check("booking_emails_status_check", sql`${t.status} in ('sending', 'sent', 'failed')`),
+  ],
+);
+
+export type BookingEmail = typeof bookingEmails.$inferSelect;
+
 /* ---------------- pricing & promotions (/admin/pricing) ---------------- */
 
 export const bundlesTable = pgTable(
