@@ -5,6 +5,7 @@ import { bookings, type Booking } from "@/lib/db/schema";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/outlook-provider";
 import type { Lead, LeadFilter, LeadList, LeadStatus } from "./types";
+import { sourceLabel } from "@/lib/tracking/attribution";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
@@ -44,6 +45,20 @@ export function toLead(r: Booking, history: HistoryRow[] = []): Lead {
             by: (r.cancelledBy as "customer" | "admin" | null) ?? null,
             email: { sent: r.cancellationEmailSent, at: iso(r.cancellationEmailSentAt), error: r.cancellationEmailError },
             internal: { sent: r.internalCancellationSent, at: iso(r.internalCancellationSentAt), error: r.internalCancellationError },
+          }
+        : null,
+    source:
+      r.firstTouchAt || r.utmSource || r.fbclid || r.referrer || r.landingPath
+        ? {
+            label: sourceLabel({ utmSource: r.utmSource ?? undefined, utmMedium: r.utmMedium ?? undefined, fbclid: r.fbclid ?? undefined, referrer: r.referrer ?? undefined }),
+            campaign: r.utmCampaign,
+            medium: r.utmMedium,
+            content: r.utmContent,
+            term: r.utmTerm,
+            landingPath: r.landingPath,
+            referrer: r.referrer,
+            metaClick: Boolean(r.fbclid),
+            at: iso(r.firstTouchAt),
           }
         : null,
     createdAt: r.createdAt.toISOString(),

@@ -43,6 +43,13 @@
       "when": 1791321278147,
       "tag": "0005_pricing_and_promotions",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791341682965,
+      "tag": "0006_booking_source",
+      "breakpoints": true
     }
   ]
 }

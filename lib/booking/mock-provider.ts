@@ -9,6 +9,7 @@ import type { AvailabilityRules } from "@/lib/availability/types";
 import { BookingError, friendly } from "./errors";
 import { generateBookingReference } from "./reference";
 import type { Lead } from "@/lib/leads/types";
+import { sourceLabel } from "@/lib/tracking/attribution";
 import type {
   CancelOptions,
   CancellationSummary,
@@ -298,6 +299,9 @@ function mockLead(rec: MockRecord): Lead {
     calendarLinked: false,
     confirmationEmail: sent,
     internalNotification: sent,
+    source: r.attribution
+      ? { label: sourceLabel(r.attribution), campaign: r.attribution.utmCampaign ?? null, medium: r.attribution.utmMedium ?? null, content: r.attribution.utmContent ?? null, term: r.attribution.utmTerm ?? null, landingPath: r.attribution.landingPath ?? null, referrer: r.attribution.referrer ?? null, metaClick: Boolean(r.attribution.fbclid), at: r.attribution.at }
+      : null,
     history: (rec.history ?? []).map((h) => ({ oldDate: h.oldDate, oldStart: h.oldStart, newDate: h.newDate, newStart: h.newStart, newEnd: h.newEnd, by: h.by, at: h.at })),
     cancellation: rec.cancellation ? { ...rec.cancellation, email: sent, internal: sent } : null,
     createdAt: rec.result.createdAt,

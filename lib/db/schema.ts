@@ -79,6 +79,17 @@ export const bookings = pgTable(
     /** What the bundle included when it was booked. */
     packageInclusions: jsonb("package_inclusions").$type<string[]>(),
 
+    /* booking source: first touch of the visit (utm tags, Meta click id, landing page, referring site origin) */
+    utmSource: text("utm_source"),
+    utmMedium: text("utm_medium"),
+    utmCampaign: text("utm_campaign"),
+    utmContent: text("utm_content"),
+    utmTerm: text("utm_term"),
+    fbclid: text("fbclid"),
+    landingPath: text("landing_path"),
+    referrer: text("referrer"),
+    firstTouchAt: timestamp("first_touch_at", { withTimezone: true }),
+
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

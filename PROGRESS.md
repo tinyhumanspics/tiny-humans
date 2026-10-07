@@ -33,9 +33,12 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
       hangs forever. Revisit in Phase 6 (Turnstile, or BotID behind a timeout + fallback), monitor-mode first.
 - [x] 1b Baseline security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, X-Frame-Options SAMEORIGIN,
       CSP `frame-ancestors 'self'` only)
-- [ ] 1c First-touch source cookie (utm_*, fbclid, landing path, referrer, 90 days) → booking request
-- [ ] 1c Additive migration: nullable source columns on `bookings` (apply in Neon BEFORE deploying the code)
-- [ ] 1c Show source in /admin leads
+- [x] 1c First-touch source: `middleware.ts` sets httpOnly first-party cookie `th_src` (utm_*, fbclid, landing path,
+      referring-site ORIGIN only, 90 days; a "direct" first touch is upgraded by a later campaign touch) + `th_fbc`
+      (latest Meta click id, `_fbc` format). The create route reads the cookie (never the request body).
+- [~] 1c Migration `drizzle/0006_booking_source.sql` (ADD COLUMN IF NOT EXISTS ×9) — [?] owner runs it in Neon BEFORE push
+- [x] 1c Source in /admin leads (card line + details: label, campaign/ad set/ad, medium, first page, referring site)
+- [x] Local fake Microsoft Graph (`scripts/local-db/fake-graph.mjs`) → the real `outlook` booking path runs end to end locally
 - [ ] 1d `lib/tracking` (Meta only; pluggable): Pixel on site pages only (never /admin), PageView without double-firing
 - [ ] 1d Events: ViewContent (bundle viewed/selected), InitiateCheckout (schedule step), Schedule (booking created)
 - [ ] 1d CAPI `Schedule` from booking-create via `after()`; dedup `event_id` = booking `requestId`; hashed user_data
@@ -181,3 +184,7 @@ Applies every `drizzle/*.sql` in journal order, seeds a mirror of production's b
 endpoint. `.env.local`: `DATABASE_URL=postgres://tiny:tiny@localhost:5433/tinyhumans`,
 `NEON_LOCAL_FETCH_ENDPOINT=http://localhost:4444/sql` (ignored on Vercel). `touch scripts/local-db/.down` = simulated outage.
 Note: pages are static ISR (revalidate 5 min); `next start` keeps its data cache in `.next/cache/fetch-cache`.
+Fake Graph: `node scripts/local-db/fake-graph.mjs` (port 4545) + `.env.local`: `BOOKING_PROVIDER=outlook`,
+`MICROSOFT_TENANT_ID/CLIENT_ID/CLIENT_SECRET=local`, `MICROSOFT_GRAPH_BASE_URL=http://localhost:4545/v1.0`,
+`MICROSOFT_LOGIN_BASE_URL=http://localhost:4545` (both ignored on Vercel). `GET :4545/_events` lists created events.
+Booking spam check refuses forms finished in < 4 s: automated tests must wait on the review step.

@@ -2,7 +2,8 @@ import "server-only";
 import { log } from "@/lib/log";
 import { getGraphToken } from "./auth";
 
-const GRAPH = "https://graph.microsoft.com/v1.0";
+// Local development only: scripts/local-db/fake-graph.mjs (ignored on Vercel).
+const GRAPH = (!process.env.VERCEL && process.env.MICROSOFT_GRAPH_BASE_URL) || "https://graph.microsoft.com/v1.0";
 
 export class GraphError extends Error {
   readonly status: number;
@@ -18,7 +19,7 @@ export class GraphError extends Error {
 /** Authenticated Microsoft Graph request (server only). Retries once on throttling. */
 export async function graphFetch<T = unknown>(path: string, init: RequestInit & { scope?: string } = {}): Promise<T> {
   const { scope = "graph", ...req } = init;
-  const url = path.startsWith("https://") ? path : `${GRAPH}${path}`;
+  const url = /^https?:\/\//.test(path) ? path : `${GRAPH}${path}`;
   for (let attempt = 0; attempt < 2; attempt++) {
     const token = await getGraphToken();
     let res: Response;

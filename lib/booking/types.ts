@@ -10,6 +10,7 @@
  */
 
 import type { PriceQuote } from "@/lib/pricing/engine";
+import type { Attribution } from "@/lib/tracking/attribution";
 export type { PriceQuote };
 
 /** Calendar date in the studio's time zone, formatted YYYY-MM-DD. */
@@ -67,6 +68,8 @@ export interface BookingRequest {
   /** Spam signals (never stored): hidden honeypot field + how long the booking form was open. */
   hp?: string;
   elapsedMs?: number;
+  /** Booking source (set on the server from the first-party cookie, never by the browser). */
+  attribution?: Attribution;
 }
 
 export interface BookingResult {

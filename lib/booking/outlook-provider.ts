@@ -30,6 +30,21 @@ import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult,
 
 const ACTIVE = ne(bookings.status, "cancelled");
 
+/** Booking source columns (first touch of the visit). */
+function sourceColumns(a: BookingRequest["attribution"]) {
+  return {
+    utmSource: a?.utmSource ?? null,
+    utmMedium: a?.utmMedium ?? null,
+    utmCampaign: a?.utmCampaign ?? null,
+    utmContent: a?.utmContent ?? null,
+    utmTerm: a?.utmTerm ?? null,
+    fbclid: a?.fbclid ?? null,
+    landingPath: a?.landingPath ?? null,
+    referrer: a?.referrer ?? null,
+    firstTouchAt: a?.at ? new Date(a.at) : null,
+  };
+}
+
 function asCalendarError(err: unknown, action: string): never {
   if (err instanceof BookingError) throw err;
   if (err instanceof GraphAuthError || err instanceof GraphError) {
@@ -162,6 +177,7 @@ export class OutlookBookingProvider implements BookingProvider {
             status: "pending",
             outlookCalendarUser: calendarUser,
             cancelTokenHash: cancel.hash,
+            ...sourceColumns(request.attribution),
           })
           .returning();
       } catch (err) {

@@ -153,6 +153,16 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : "Not on the calendar"],
     ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
+    ...(lead.source
+      ? ([
+          ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],
+          ["Campaign / ad set / ad", [lead.source.campaign, lead.source.term, lead.source.content].map((v) => v || "–").join(" / ")],
+          ["Medium", lead.source.medium || "–"],
+          ["First page visited", lead.source.landingPath || "–"],
+          ["Came from site", lead.source.referrer || "–"],
+          ["First visit", lead.source.at ? when(lead.source.at) : "–"],
+        ] as [string, string][])
+      : ([["Source", "Not tracked (booked before source tracking)"]] as [string, string][])),
   ];
   if (lead.cancellation) {
     rows.push(
@@ -176,7 +186,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         {lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
       </p>
       <p className={`${styles.leadMeta} chalk-soft`}>
-        {lead.reference} · Booked {when(lead.createdAt)}
+        {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? "Not tracked"}</b>
+        {lead.source?.campaign ? ` · ${lead.source.campaign}` : ""}
       </p>
       {lead.cancellation && (
         <p className={`${styles.leadCancelNote} chalk-soft`}>

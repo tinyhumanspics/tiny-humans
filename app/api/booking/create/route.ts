@@ -5,6 +5,8 @@ import { bookingRequestSchema } from "@/lib/booking/validation";
 import { formatTimeLabel } from "@/lib/booking/dates";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,8 @@ export async function POST(req: Request) {
       inspirationPhotoId: r.inspirationPhotoId,
       requestId: r.requestId,
       discountCode: r.discountCode,
+      // where this family came from (first-party cookie set by middleware; never taken from the request body)
+      attribution: decodeAttribution((await cookies()).get(SOURCE_COOKIE)?.value) ?? undefined,
     });
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {

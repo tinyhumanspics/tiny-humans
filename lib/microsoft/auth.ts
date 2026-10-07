@@ -30,7 +30,8 @@ export async function getGraphToken(): Promise<string> {
     });
     let res: Response;
     try {
-      res = await fetch(`https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`, {
+      const login = (!process.env.VERCEL && process.env.MICROSOFT_LOGIN_BASE_URL) || "https://login.microsoftonline.com";
+      res = await fetch(`${login}/${encodeURIComponent(tenantId)}/oauth2/v2.0/token`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded" },
         body,
