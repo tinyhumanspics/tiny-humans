@@ -173,6 +173,10 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
       `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
+- [x] Email photo slot (owner request, Oct 7): /admin → Photos → **Emails** → "Meet your photographers" (round preview).
+      The confirmation email uses: theme's email photo → Original's email photo → "Adrian & Alondra" About Us photo
+      (theme's, then Original's) → no photo. `photographersEmailPhoto()` in `config/media.ts`; `ThemeMedia.email`
+      (older saved settings load with an empty slot; email photos count as "in use" so they're never cleaned up).
 - [x] Theme photos fall back to the Original theme (owner request, Oct 7): in Thanksgiving / Christmas / New Year,
       an empty photo slot (title, landing, About, "Little moments" + prompts, extras) shows the Original (default)
       theme's picture, then the built-in picture / "photo coming soon". `resolveMedia(media, fallbackMediaFor(...))`
