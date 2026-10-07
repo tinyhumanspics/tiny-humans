@@ -9,6 +9,6 @@ export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleE
 export type { RenderedEmail, EmailAttachment, ImageMode } from "./types";
 export type { EmailLocale } from "./messages";
 export { sessionReminderEmail, type ReminderKind } from "@/emails/SessionReminder";
-export { afterSessionEmail } from "@/emails/AfterSession";
+export { sneakPeekEmail } from "@/emails/AfterSession";
 export { galleryDeliveredEmail } from "@/emails/GalleryDelivered";
 export { paymentLinkEmail } from "@/emails/PaymentLink";

@@ -17,7 +17,10 @@ export interface SentEmail {
 export interface AfterSessionStatus {
   /** The session has started and isn't cancelled, so the after-session emails can be sent. */
   canSend: boolean;
+  /** The sneak peek email (thank-you + Pixieset gallery to choose favorites). */
   sessionDone: SentEmail | null;
+  /** Favorites they can choose: the bundle's edited photos when they booked (e.g. "20"). */
+  favorites: string | null;
   gallery: SentEmail | null;
   payment: {
     amountCents: number;

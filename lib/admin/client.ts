@@ -36,7 +36,7 @@ export interface AdminApi {
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
   deleteLead(reference: string): Promise<void>;
   /** After the session (server mode only). */
-  sessionDone(reference: string): Promise<Lead>;
+  sendSneakPeek(reference: string, galleryUrl: string, favorites: string): Promise<Lead>;
   galleryDelivered(reference: string, galleryUrl?: string): Promise<Lead>;
   setReviewApproved(reference: string, approved: boolean): Promise<Lead>;
   setConsent(reference: string, change: { sms?: boolean; photos?: boolean }): Promise<Lead>;
@@ -103,7 +103,8 @@ const httpApi: AdminApi = {
   listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
   cancelLead: async (reference, reason) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason }) }))).lead,
-  sessionDone: async (reference) => (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
+  sendSneakPeek: async (reference, galleryUrl, favorites) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, favorites }) }))).lead,
   galleryDelivered: async (reference, galleryUrl) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/gallery", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl }) }))).lead,
   setReviewApproved: async (reference, approved) =>
@@ -266,7 +267,7 @@ const prototypeApi: AdminApi = {
     return mock.listLeads().find((l) => l.reference === reference)!;
   },
   // the prototype sends no emails and takes no payments
-  sessionDone: async () => {
+  sendSneakPeek: async () => {
     throw new Error("Not available in the prototype.");
   },
   galleryDelivered: async () => {

@@ -11,28 +11,47 @@ import { ChalkLayout } from "./components/ChalkLayout";
 
 interface Options {
   themeId: string;
+  /** The Pixieset gallery where the family picks their favorites. */
+  galleryUrl: string;
+  /** How many favorites they choose (the bundle's edited photos, e.g. "20"). */
+  favorites: string;
   /** Exact amount still due (cents). 0 = nothing to pay. */
   amountCents: number;
-  /** Our /pay link (opens a Stripe payment page for the exact amount). */
+  /** Already paid (e.g. with the payment link before the session): no payment request. */
+  paid: boolean;
+  /** The booking's payment link (never expires). */
   payUrl?: string;
   images?: ImageMode;
   locale?: EmailLocale;
 }
 
-/** "Session done": thank-you, what happens next and how to pay (sent when the owner taps "Session done" in /admin). */
-export function AfterSession({ details: d, theme: t, images, locale, amountCents, payUrl }: { details: AfterSessionDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; amountCents: number; payUrl?: string }) {
+/**
+ * "Send sneak peek" (from /admin after the session): thank-you, the Pixieset gallery to choose their favorites, and
+ * the payment button only while the session is unpaid.
+ */
+export function SneakPeek({ details: d, theme: t, images, locale, galleryUrl, favorites, amountCents, paid, payUrl }: { details: AfterSessionDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale } & Omit<Options, "themeId" | "images" | "locale">) {
   const m = emailMessages(locale);
   const x = m.afterSession;
   const first = d.parentName.split(" ")[0];
   const amount = formatMoney(amountCents);
+  const v = { count: favorites, bundle: d.bundleName };
   return (
-    <ChalkLayout theme={t} images={images} locale={locale} preheader={x.preheader}>
+    <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(x.preheader, v)}>
       <Heading theme={t} eyebrow={x.eyebrow} title={fill(x.title, { name: first })} />
       <Paragraph theme={t} align="center">
         {fill(x.intro, { baby: d.babyName || m.confirmation.babyFallback })}
       </Paragraph>
-      <ChalkList theme={t} title={x.nextTitle} items={x.next} color={t.chalk} mark="•" />
-      {amountCents > 0 && payUrl ? (
+      <ChalkButton theme={t} label={x.galleryButton} href={galleryUrl} variant="solid" />
+      <ChalkList theme={t} title={fill(x.pickTitle, v)} items={x.pick.map((i) => fill(i, v))} />
+      {amountCents <= 0 ? (
+        <Paragraph theme={t} align="center">
+          {x.nothingDue}
+        </Paragraph>
+      ) : paid || !payUrl ? (
+        <Paragraph theme={t} align="center">
+          {x.paid}
+        </Paragraph>
+      ) : (
         <>
           <ChalkBox
             theme={t}
@@ -43,12 +62,8 @@ export function AfterSession({ details: d, theme: t, images, locale, amountCents
             ]}
             note={x.payNote}
           />
-          <ChalkButton theme={t} label={fill(x.payButton, { amount })} href={payUrl} variant="solid" />
+          <ChalkButton theme={t} label={fill(x.payButton, { amount })} href={payUrl} variant="outline" />
         </>
-      ) : (
-        <Paragraph theme={t} align="center">
-          {x.nothingDue}
-        </Paragraph>
       )}
       <Paragraph theme={t} align="center" muted>
         {m.common.questions}
@@ -57,7 +72,7 @@ export function AfterSession({ details: d, theme: t, images, locale, amountCents
   );
 }
 
-export async function afterSessionEmail(d: AfterSessionDetails, opts: Options): Promise<RenderedEmail> {
+export async function sneakPeekEmail(d: AfterSessionDetails, opts: Options): Promise<RenderedEmail> {
   const locale = opts.locale ?? "en";
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
@@ -65,20 +80,23 @@ export async function afterSessionEmail(d: AfterSessionDetails, opts: Options): 
   const x = m.afterSession;
   const first = d.parentName.split(" ")[0];
   const amount = formatMoney(opts.amountCents);
-  const html = await renderHtml(<AfterSession details={d} theme={theme} images={images} locale={locale} amountCents={opts.amountCents} payUrl={opts.payUrl} />);
+  const v = { count: opts.favorites, bundle: d.bundleName };
+  const html = await renderHtml(<SneakPeek details={d} theme={theme} images={images} locale={locale} galleryUrl={opts.galleryUrl} favorites={opts.favorites} amountCents={opts.amountCents} paid={opts.paid} payUrl={opts.payUrl} />);
+  const owes = opts.amountCents > 0 && !opts.paid && opts.payUrl;
   const text = textLines([
     fill(x.title, { name: first }),
     "",
     fill(x.intro, { baby: d.babyName || m.confirmation.babyFallback }),
+    fill(x.galleryText, { url: opts.galleryUrl }),
     "",
-    `${x.nextTitle}:`,
-    ...x.next.map((i) => `- ${i}`),
+    `${fill(x.pickTitle, v)}:`,
+    ...x.pick.map((i) => `- ${fill(i, v)}`),
     "",
-    opts.amountCents > 0 && opts.payUrl ? `${x.amountDue}: ${amount} (${d.bundleName})` : x.nothingDue,
-    opts.amountCents > 0 && opts.payUrl && fill(x.payText, { amount, url: opts.payUrl }),
+    opts.amountCents <= 0 ? x.nothingDue : owes ? `${x.amountDue}: ${amount} (${d.bundleName})` : x.paid,
+    owes && fill(x.payText, { amount, url: opts.payUrl! }),
     "",
     m.common.questions,
     fill(m.layout.signature, { email: site.contact.email ?? "" }),
   ]);
-  return { subject: fill(x.subject, { name: first }), html, text, attachments: images.attachments };
+  return { subject: fill(x.subject, { name: first, count: opts.favorites }), html, text, attachments: images.attachments };
 }

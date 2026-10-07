@@ -321,12 +321,14 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
 
 const sentLine = (e: SentEmail) => (e.status === "sent" ? `Sent ${when(e.at)}` : e.status === "failed" ? `Not sent (${e.error ?? "error"})` : "Sending…");
 
-/** After the session: "Session done" (thank-you + payment link), payment status, "Gallery delivered" (review request), the review. */
+/** After the session: "Send sneak peek" (thank-you + Pixieset gallery to choose favorites + pay button if unpaid), "Gallery delivered" (review request), the review. */
 function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
   const a = lead.after!;
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [galleryUrl, setGalleryUrl] = useState("");
+  const [peekUrl, setPeekUrl] = useState("");
+  const [favorites, setFavorites] = useState(a.favorites ?? "");
   const run = async (what: string, fn: () => Promise<Lead>) => {
     setBusy(what);
     setErr(null);
@@ -347,7 +349,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
       <p className={cn(styles.h3, "chalk-soft")}>After the Session</p>
       <dl>
         <div>
-          <dt className="chalk-soft">Thank-you + payment email</dt>
+          <dt className="chalk-soft">Sneak peek email</dt>
           <dd className="chalk-soft">{a.sessionDone ? sentLine(a.sessionDone) : "Not sent yet"}</dd>
         </div>
         <div>
@@ -355,17 +357,27 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
           <dd className="chalk-soft">{a.gallery ? sentLine(a.gallery) : "Not sent yet"}</dd>
         </div>
       </dl>
-      {canRetry(a.sessionDone) && (
-        <>
-          <button type="button" className={styles.smallButton} disabled={!a.canSend || busy !== null} onClick={() => run("done", () => api.sessionDone(lead.reference))}>
-            {busy === "done" ? "Sending…" : a.sessionDone ? "Try again: Session done" : "Session done: send thank-you + payment link"}
-          </button>
-          {!a.canSend && <p className={cn(styles.hintSmall, "chalk-soft")}>Available once the session has started.</p>}
-        </>
-      )}
+      {canRetry(a.sessionDone) &&
+        (a.canSend ? (
+          <div className={styles.adminReschedule}>
+            <label htmlFor={`${id}-peek`} className={cn(styles.label, "chalk-soft")}>Pixieset sneak peek link</label>
+            <input id={`${id}-peek`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={peekUrl} onChange={(e) => setPeekUrl(e.target.value)} />
+            <label htmlFor={`${id}-favorites`} className={cn(styles.label, "chalk-soft")}>Favorites they can choose</label>
+            <input id={`${id}-favorites`} className={styles.input} inputMode="numeric" maxLength={12} value={favorites} onChange={(e) => setFavorites(e.target.value)} />
+            <p className={cn(styles.hintSmall, "chalk-soft")}>
+              Sends a thank-you with your gallery and &ldquo;choose your {favorites.trim() || "…"} favorites&rdquo;
+              {a.payment.amountCents > 0 ? (a.payment.status === "paid" ? ". They've already paid, so there's no payment button." : `, plus a ${amount} payment button (not paid yet).`) : "."}
+            </p>
+            <button type="button" className={styles.smallButton} disabled={busy !== null || !peekUrl.trim() || !favorites.trim()} onClick={() => run("done", () => api.sendSneakPeek(lead.reference, peekUrl.trim(), favorites.trim()))}>
+              {busy === "done" ? "Sending…" : a.sessionDone ? "Try again: send sneak peek" : "Send sneak peek"}
+            </button>
+          </div>
+        ) : (
+          <p className={cn(styles.hintSmall, "chalk-soft")}>The sneak peek can be sent once the session has started.</p>
+        ))}
       {a.sessionDone?.status === "sent" && canRetry(a.gallery) && (
         <div className={styles.adminReschedule}>
-          <label htmlFor={`${id}-gallery`} className={cn(styles.label, "chalk-soft")}>Pixieset gallery link (optional)</label>
+          <label htmlFor={`${id}-gallery`} className={cn(styles.label, "chalk-soft")}>Final gallery link (optional)</label>
           <input id={`${id}-gallery`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
           <p className={cn(styles.hintSmall, "chalk-soft")}>Sends a thank-you with a link to leave a review{a.payment.status !== "paid" && a.payment.amountCents > 0 ? `, plus a ${amount} payment button (still unpaid)` : ""}.</p>
           <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined))}>

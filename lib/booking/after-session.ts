@@ -4,7 +4,7 @@ import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
 import { bookingEmails, bookingPayments, bookings, type Booking } from "@/lib/db/schema";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
-import { afterSessionEmail, galleryDeliveredEmail, paymentLinkEmail } from "@/lib/email";
+import { galleryDeliveredEmail, paymentLinkEmail, sneakPeekEmail } from "@/lib/email";
 import { bookingPayUrl } from "@/lib/payments/link";
 import { getSiteSettings } from "@/lib/settings/server";
 import { log } from "@/lib/log";
@@ -12,8 +12,9 @@ import { BookingError } from "./errors";
 import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./cancel-token";
 
 /**
- * Emails the owner sends from /admin after a session: "Session done" (thank-you + pay link) and "Gallery delivered"
- * (review request + referral, + pay link while unpaid). Each is one booking_emails row per booking and session time:
+ * Emails the owner sends from /admin after a session: "Send sneak peek" (thank-you + Pixieset gallery to choose their
+ * favorites + pay link while unpaid; kind "after_session") and "Gallery delivered" (review request + referral, + pay
+ * link while unpaid). Each is one booking_emails row per booking and session time:
  * sent once; a failed send can be tried again. The row's link token opens /pay (both kinds) and /review (gallery).
  */
 export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_delivered", paymentLink: "payment_link" } as const;
@@ -91,10 +92,16 @@ async function deliver(row: Booking, kind: AfterKind, build: (token: string, the
 
 const detailsOf = (row: Booking) => ({ reference: row.bookingReference, parentName: row.parentName, babyName: row.babyName, bundleName: row.packageName });
 
-/** "Session done": thank-you + what happens next + pay button (exact booked amount). */
-export function sendAfterSessionEmail(row: Booking) {
+/**
+ * "Send sneak peek": thank-you + the Pixieset gallery + "choose your N favorites". The pay button is included only if
+ * the session isn't paid yet when the email is sent (e.g. no button if they already paid with the payment link).
+ */
+export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favorites: string) {
   const amountCents = amountDueCents(row);
-  return deliver(row, AFTER_KINDS.afterSession, (token, themeId) => afterSessionEmail(detailsOf(row), { themeId, amountCents, payUrl: amountCents > 0 ? payUrl(row, token) : undefined }));
+  const paid = await isPaid(row.id);
+  return deliver(row, AFTER_KINDS.afterSession, (token, themeId) =>
+    sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined }),
+  );
 }
 
 /** "Gallery delivered": review request + referral, and a pay button while the session is still unpaid. */
