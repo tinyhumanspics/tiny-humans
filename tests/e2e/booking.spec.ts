@@ -28,8 +28,14 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await page.fill("#field-city", "Miami Beach");
   await page.fill("#field-zip", "33139");
   await page.selectOption("#field-babyAge", { index: 1 });
+  // optional permissions: both start unticked
+  await expect(page.locator("#field-consent-sms")).not.toBeChecked();
+  await expect(page.locator("#field-consent-photos")).not.toBeChecked();
+  await page.locator("#field-consent-sms").check();
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect(page.getByText("Check everything")).toBeVisible();
+  await expect(page.getByText("OK to text you")).toBeVisible();
+  await expect(page.getByText("Kept private")).toBeVisible();
   // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
   await page.waitForTimeout(4500);
   await page.getByRole("button", { name: /Book my session/ }).click();
