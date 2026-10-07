@@ -30,7 +30,11 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
       `event_source_url` fallback uses `scheduleHref()` too. ⚠ The Meta ads must point at `/home-sweet-home` (landing)
       or `/bundles`, never the old paths.
 - [x] **404 page** (`app/not-found.tsx`, chalkboard style, copy in `messages/en.json` → `errors.notFound`).
-- [~] **`/about`** (Oct 7): story page from the owner's answers, linked only in the footer; photo placeholders.
+- [~] **`/about`** (Oct 7, branch `wip/about`): "Our story" page from the owner's answers (decisions 10, 11 + the landing
+      bio), linked only in the footer (new "About us" column: 4 columns ≥1024 px, 2 at ≥720 px; every page's footer is
+      117 px taller on phones; visual diff = footer only). Copy in `messages/en.json` → `about.*`. 4 photo placeholders
+      (`components/PhotoPlaceholder`, same frame as PinnedPhoto). [?] owner approval of copy + footer from screenshots.
+      Later: editable in /admin with the "Meet the photographers" work (decision 18).
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
@@ -185,6 +189,11 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 
 ## Placeholders (must be approved before showing)
+- Photo placeholders (`PhotoPlaceholder`, "photo coming soon"): /about → "Adrian & Alondra", "Behind the scenes at a
+  home session", "Adrian at work", "Alondra styling a set"; landing → see 1f. Swap for `PinnedPhoto` when the owner
+  sends the photos (until /admin upload exists, photos go in `public/` + code).
+- About copy (`about.*`): "husband-and-wife team", "about two years… photographing all kinds of things", "Hablamos
+  español" → owner approval.
 - Travel fee numbers, photographers' photo (owner uploads in /admin), bio text (drafted from owner's answers → approval),
   reviews (hidden until real), prep guide text (draft → approval).
 

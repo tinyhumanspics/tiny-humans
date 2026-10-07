@@ -4,6 +4,7 @@ import Link from "next/link";
 import { site } from "@/config/site";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { IS_PROTOTYPE } from "@/lib/admin/client";
+import en from "@/messages/en.json";
 import styles from "./Footer.module.css";
 
 export default function Footer() {
@@ -12,6 +13,15 @@ export default function Footer() {
   return (
     <footer className={styles.footer}>
       <div className={`container ${styles.columns}`}>
+        <nav aria-labelledby="footer-about" className={styles.col}>
+          <h2 id="footer-about" className={`${styles.heading} chalk-soft`}>{en.footer.about.heading}</h2>
+          <ul className={styles.list}>
+            <li>
+              <Link href="/about" prefetch={false} className={`${styles.link} chalk-soft`}>{en.footer.about.story}</Link>
+            </li>
+          </ul>
+        </nav>
+
         <nav aria-labelledby="footer-legal" className={styles.col}>
           <h2 id="footer-legal" className={`${styles.heading} chalk-soft`}>The fine print</h2>
           <ul className={styles.list}>

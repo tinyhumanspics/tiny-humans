@@ -25,5 +25,82 @@
       "home": "Back to the home page",
       "bundles": "See the bundles"
     }
+  },
+  "about": {
+    "meta": {
+      "title": "Our story",
+      "description": "Meet Adrian and Alondra, the parents behind Tiny Humans: newborn and baby photos at home, anywhere from Miami to Orlando."
+    },
+    "hero": {
+      "eyebrow": "Our story",
+      "title": "Hi, we're Adrian & Alondra",
+      "intro": "We're the husband-and-wife team behind Tiny Humans, and parents ourselves. We bring the studio to your home, so your little one can stay warm, fed and comfy while we capture these first weeks.",
+      "photo": "Adrian & Alondra"
+    },
+    "story": {
+      "title": "How Tiny Humans started",
+      "paragraphs": [
+        "It started with our own newborn. We wanted those sleepy, curled-up first photos, but we didn't want to pack up a brand-new baby and drive across town to a studio. We looked for a photographer who would come to our home, and we couldn't find one.",
+        "So we became that photographer.",
+        "Adrian had been behind the camera for about two years, photographing all kinds of things. Once our baby arrived, newborns and little ones became the moments we most wanted to capture."
+      ],
+      "photo": "Behind the scenes at a home session"
+    },
+    "why": {
+      "title": "Why at home?",
+      "items": [
+        {
+          "title": "Baby stays comfy",
+          "text": "Home is where babies feel most at ease: familiar smells and sounds, their own room, and no car seat."
+        },
+        {
+          "title": "So do you",
+          "text": "Feed whenever baby wants, change in your own nursery, and skip packing half the house. You don't have to go anywhere."
+        },
+        {
+          "title": "All about your family",
+          "text": "Every session goes at baby's pace, with feeding and cuddle breaks built in. We bring the lights, backdrops and props."
+        }
+      ]
+    },
+    "team": {
+      "title": "Who does what",
+      "people": [
+        {
+          "name": "Adrian",
+          "role": "Photography & editing",
+          "text": "Adrian photographs every session and edits every photo in your gallery.",
+          "photo": "Adrian at work"
+        },
+        {
+          "name": "Alondra",
+          "role": "Set-ups, styling & details",
+          "text": "Alondra designs each set-up: the backdrops, the wraps, the styling and all the little details.",
+          "photo": "Alondra styling a set"
+        }
+      ]
+    },
+    "safety": {
+      "title": "Baby's safety comes first",
+      "items": [
+        "We keep the room warm and cozy.",
+        "We wash and sanitize our hands before we hold your baby.",
+        "We never use unsupported poses: any tricky pose is a safe composite of two photos.",
+        "A parent stays within arm's reach the whole time.",
+        "We don't wear fragrance."
+      ]
+    },
+    "cta": {
+      "title": "We'd love to meet your tiny human",
+      "text": "Pick a bundle and a time that suits you. $0 today: you pay after your session.",
+      "button": "See the bundles",
+      "spanish": "Hablamos español."
+    }
+  },
+  "footer": {
+    "about": {
+      "heading": "About us",
+      "story": "Our story"
+    }
   }
 }

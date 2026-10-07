@@ -48,7 +48,7 @@ test("booking works in the Instagram in-app browser", async ({ browser }) => {
 });
 
 test("the landing page and legal pages load", async ({ page }) => {
-  for (const path of ["/", "/bundles", "/privacy", "/terms"]) {
+  for (const path of ["/", "/bundles", "/about", "/privacy", "/terms"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(200);
   }

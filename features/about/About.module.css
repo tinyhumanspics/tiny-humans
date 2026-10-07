@@ -1,0 +1,72 @@
+.page { padding-top: clamp(28px, 5vw, 56px); padding-bottom: clamp(56px, 8vw, 96px); }
+
+.section { padding-top: clamp(56px, 9vw, 104px); }
+
+/* ---------- hello ---------- */
+.hero { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 860px) {
+  .hero { grid-template-columns: 1.15fr 0.85fr; gap: 56px; }
+}
+.heroPhoto { width: min(100%, 420px); justify-self: center; }
+
+.eyebrow { margin: 0 0 6px; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--sun-yellow); }
+
+.title {
+  margin: 0;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 7vw, 3.6rem);
+  line-height: 1.05;
+  color: var(--chalk-white);
+}
+.underline { display: block; margin-top: 4px; }
+
+.lead { margin: 18px 0 0; font-size: clamp(1.2rem, 3.2vw, 1.4rem); line-height: 1.6; color: var(--chalk-white); }
+
+/* ---------- shared text ---------- */
+.heading {
+  margin: 0 0 12px;
+  font-family: var(--font-chalk);
+  font-weight: 400;
+  font-size: clamp(1.8rem, 5vw, 2.4rem);
+  line-height: 1.15;
+  color: var(--chalk-white);
+}
+.text { margin: 0 0 14px; font-size: 1.18rem; line-height: 1.6; color: var(--chalk-white); }
+.punch { font-family: var(--font-chalk); font-size: 1.5rem; color: var(--sun-yellow); }
+
+/* ---------- how it started ---------- */
+.story { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 860px) {
+  .story { grid-template-columns: 0.9fr 1.1fr; gap: 56px; }
+}
+
+/* ---------- why at home ---------- */
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 22px; }
+@media (min-width: 860px) {
+  .cards { grid-template-columns: repeat(3, 1fr); }
+}
+.card { height: 100%; padding: 24px; display: grid; align-content: start; gap: 8px; }
+.card p { margin: 0; font-size: 1.12rem; line-height: 1.55; color: var(--chalk-muted); }
+.cardTitle { margin: 4px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.5rem; color: var(--sun-yellow); }
+
+/* ---------- the two of us ---------- */
+.team { list-style: none; margin: 0; padding: 0; display: grid; gap: 40px; }
+@media (min-width: 720px) {
+  .team { grid-template-columns: repeat(2, 1fr); gap: 48px; }
+}
+.person { max-width: 440px; justify-self: center; width: 100%; }
+.personName { margin: 18px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.9rem; color: var(--chalk-white); }
+.role { margin: 0 0 8px; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
+
+/* ---------- safety ---------- */
+.safety { max-width: 760px; margin: 0 auto; padding: clamp(22px, 5vw, 34px); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.checks li { display: flex; align-items: flex-start; gap: 12px; font-size: 1.15rem; line-height: 1.5; color: var(--chalk-white); }
+.checks li > svg, .checks li > span:first-child { flex: none; margin-top: 2px; }
+
+/* ---------- book ---------- */
+.ctaSection { display: grid; justify-items: center; }
+.cta { width: min(100%, 620px); padding: clamp(24px, 5vw, 36px); display: grid; justify-items: center; gap: 10px; text-align: center; }
+.cta .text { margin: 0 0 8px; color: var(--chalk-muted); }
+.spanish { margin: 6px 0 0; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--cloud-blue); }

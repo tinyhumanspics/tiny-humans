@@ -1,0 +1,63 @@
+/* Same frame + tape as PinnedPhoto, so swapping in the real photo changes nothing around it. */
+.figure { margin: 0; }
+
+.frame {
+  padding: 11px 11px 12px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 55%, transparent);
+  border-radius: 6px;
+}
+
+.slot {
+  width: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 8px;
+  padding: 16px;
+  text-align: center;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 35%, transparent);
+  border-radius: 3px 5px 4px 3px;
+  background: color-mix(in srgb, var(--chalk-white) 4%, transparent);
+}
+
+.label {
+  font-family: var(--font-chalk);
+  font-size: 1.25rem;
+  line-height: 1.2;
+  color: var(--chalk-white);
+}
+
+.soon {
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: var(--chalk-muted);
+}
+
+.caption {
+  margin-top: 8px;
+  text-align: center;
+  font-family: var(--font-chalk);
+  font-size: 1.15rem;
+  line-height: 1.2;
+  color: var(--chalk-muted);
+}
+
+.tape {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  z-index: 2;
+  width: 74px;
+  height: 22px;
+  translate: -50% 0;
+  rotate: -4deg;
+  -webkit-mask-image: url("/textures/chalk-mask.webp");
+  mask-image: url("/textures/chalk-mask.webp");
+  -webkit-mask-size: 120px 120px;
+  mask-size: 120px 120px;
+  opacity: 0.8;
+  border-radius: 3px;
+}
+.yellow { background: var(--accent); }
+.blue { background: var(--accent-2); }
+.white { background: var(--accent-3); }
