@@ -147,7 +147,7 @@
           "text": "Lights, backdrops, props and outfits for baby. You just stay comfy."
         }
       ],
-      "after": "Your fully edited gallery arrives within 24–72 hours. Then you pay, by Zelle, card or cash.",
+      "after": "Your fully edited gallery arrives within 24–72 hours. Then you pay by card, with a secure link we email you.",
       "photo": "Our set-up in a family's living room"
     },
     "offer": {
@@ -215,7 +215,7 @@
         },
         {
           "q": "When do we get the photos, and how do we pay?",
-          "a": "Your fully edited gallery arrives within 24–72 hours, with 3 sneak peeks in the first 24. Nothing is due today: you pay after your session, by Zelle, card or cash."
+          "a": "Your fully edited gallery arrives within 24–72 hours, with 3 sneak peeks in the first 24. Nothing is due today: you pay after your session by card, with a secure link we email you."
         }
       ]
     },
@@ -270,7 +270,7 @@
       "questions": "Questions? Just reply to this email.",
       "greeting": "Hi {name},",
       "textUs": "Text us at {phone}",
-      "payAfter": "Nothing to pay today. You'll pay after your session, by Zelle, card or cash."
+      "payAfter": "Nothing to pay today. You'll pay after your session by card, with a secure link we email you."
     },
     "confirmation": {
       "subject": "Your Tiny Humans session is booked ({reference}): {date}, {time}",
@@ -291,7 +291,7 @@
       "next": [
         "On the day, we bring the lights, backdrops, props and outfits for baby. You just stay comfy.",
         "3 sneak peeks land in your inbox within 24 hours of your session.",
-        "Your fully edited gallery follows within 24–72 hours. Then you pay, by Zelle, card or cash."
+        "Your fully edited gallery follows within 24–72 hours. Then you pay by card, with a secure link we email you."
       ],
       "meetTitle": "Meet your photographers",
       "meet": "We're Adrian and Alondra, a husband-and-wife team and parents ourselves. Adrian photographs every session and edits every photo in your gallery. Alondra designs each set-up: the backdrops, the wraps, the styling and all the little details.",
@@ -336,7 +336,7 @@
         "Parents: wear soft, solid colors (no logos or busy patterns) if you'll be in the photos.",
         "Skip perfume and scented lotion on the day.",
         "Want a pet in the photos? Reply to this email and we'll plan for it.",
-        "Nothing to pay today: you pay after your session, by Zelle, card or cash."
+        "Nothing to pay today: you pay after your session by card, with a secure link we email you."
       ]
     },
     "backdrops": {

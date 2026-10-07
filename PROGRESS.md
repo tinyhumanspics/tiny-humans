@@ -241,11 +241,18 @@ them. Email changes: compare old vs new renders with screenshots before sending 
     `/home-sweet-home` [?] owner pick.
 15. Extra baby: **$75, +30 min, +5 photos, max 3 per booking** — all editable in /admin. [?] do discount codes apply to add-ons
     (default: codes apply to the bundle price only).
-16. Payment after session: **Zelle, card link or cash** (any).
+16. Payment after session: ~~Zelle, card link or cash~~ → **card only, Stripe** (owner, Oct 7; see below).
 17. Cancellation/no-show wording approved: "Free to reschedule or cancel online up to 48 hours before. Inside 48 hours,
     just text us. If you miss a session without telling us, we may ask for a deposit to rebook."
 18. Editable in /admin: seasonal offers + cutoffs, FAQ, reviews, "Meet the photographers". Layouts stay in code.
 19. Spanish: "same time, no rush" → Phase 3 after Phase 2. Adrian/Alondra review the Spanish copy.
+
+Oct 7 (later): **payment = card only, through Stripe** (no Zelle for now; no cash). Owner's Stripe Payment Links:
+Little Moments $149 · Our Little Story $249 · Our Family Story (`forever-little`) $399 (checked: prices match the site).
+Discounted/offer bookings must pay the **exact booked amount, automatically** → the site creates the Stripe payment
+itself (from the booking's price snapshot). "Thank you + how to pay" email goes out when the owner taps **"Session
+done"** in /admin. Reviews: galleries are delivered with Pixieset; owner wants an **internal review form** whose answers
+are saved per lead in /admin, to use later on the landing page / portfolio.
 
 Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue Aura, Burgundy, Cream, White** (owner:
 "create the colors yourself"). Sneak-peek wording "3 sneak peeks within 24 hours" OK. Prep guide draft approved, without
