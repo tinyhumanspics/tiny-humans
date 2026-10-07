@@ -15,10 +15,11 @@ State: everything below is on `main` and live (last deploy `7f4113f` + this hand
    appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
 3. **Phase 2 (show rate)**: 2a, 2b, 2c **live** (Oct 7, `7f4113f`; owner approved the screenshots, ran migration 0007
    in Neon and added `CRON_SECRET`). First automatic reminder run: Oct 8, 14:00–14:59 UTC. Card-only payment copy
-   live (`5097fe8`). **2d built + tested locally, NOT pushed** (commits after `5097fe8`): deploy order = owner approves
-   `Claude outputs/after-session/` + the privacy-policy Stripe line → owner runs `drizzle/0008_payments_and_reviews.sql`
-   in Neon → owner adds `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (Production) → push → update the /privacy visual
-   baseline. Left in Phase 2: 2e SMS + photo-use checkboxes, edge items.
+   live (`5097fe8`). **2d live** (`548aeac`, Oct 7): owner approved the screenshots + privacy Stripe line, ran migration
+   0008 and added `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET`; /privacy visual baseline updated. Not yet exercised
+   for real: the first "Session done" after a real session is the first live Stripe payment page (check /admin shows
+   "Paid" afterwards; if not, Stripe Workbench → Webhooks → Event deliveries). Left in Phase 2: 2e SMS + photo-use
+   checkboxes, edge items.
 4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page + Halloween email logo/strip in
    `lib/email/assets.ts`), BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
    were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
@@ -83,7 +84,7 @@ them. Email changes: compare old vs new renders with screenshots before sending 
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2c live (Oct 7), 2d/2e next.
+- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2d live (Oct 7), 2e next.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -168,7 +169,7 @@ them. Email changes: compare old vs new renders with screenshots before sending 
       per email (HMAC of the row id with `CRON_SECRET`, only the hash stored), valid while the booking keeps that session
       time; confirmation links keep working. Tested locally end to end (21 scenarios incl. DST night Nov 1).
 - [ ] 2c Optional /admin "Today" view with tap-to-text
-- [~] 2d After-session (Oct 7, built + tested locally, waiting on the owner's yes + setup): /admin → Leads → details →
+- [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook): /admin → Leads → details →
       "After the Session": **Session done** (enabled once the session started) → thank-you email with "Pay $X" →
       `/pay?t=` (`app/pay/route.ts`) → Stripe Checkout for the booking's price snapshot (`finalPriceCents`, so codes and
       offers are exact; an open Checkout page is reused, a new one made after 24 h) → `/pay/status?s=…`. "Paid" from
