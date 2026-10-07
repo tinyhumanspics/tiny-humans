@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from "react";
+import { Img } from "react-email";
 import type { EmailTheme } from "@/lib/email/theme";
 
 /**
@@ -115,6 +116,94 @@ export function ChalkButton({ theme: t, label, href, variant = "solid", caption 
           </tr>
         </table>
         {caption && <p style={{ margin: "8px 0 0", fontFamily: BODY_FONT, fontSize: 12, color: t.muted }}>{caption}</p>}
+      </td>
+    </tr>
+  );
+}
+
+/** A framed list with chalk ticks (prep guide, checklists, "what happens next"). */
+export function ChalkList({ theme: t, title, items, color, mark = "✓" }: { theme: EmailTheme; title: string; items: readonly string[]; color?: string; mark?: string }) {
+  const c = color ?? t.blue;
+  return (
+    <tr>
+      <td className="th-pad" style={{ padding: "18px 36px 0" }}>
+        <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0} style={{ border: `2px dashed ${c}`, borderRadius: 10 }}>
+          <tr>
+            <td style={{ padding: "14px 18px 10px" }}>
+              <p style={{ margin: "0 0 6px", fontFamily: CHALK_FONT, fontSize: 22, color: c }}>{title}</p>
+              <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
+                {items.map((item) => (
+                  <tr key={item}>
+                    <td valign="top" style={{ padding: "5px 10px 5px 0", width: 18, fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.3, color: t.yellow }}>
+                      {mark}
+                    </td>
+                    <td valign="top" style={{ padding: "5px 0", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>
+                      {item}
+                    </td>
+                  </tr>
+                ))}
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  );
+}
+
+/** Color swatches with names underneath (backdrop picker). Outlook shows the solid color, others a soft glow. */
+export function Swatches({ theme: t, title, text, swatches }: { theme: EmailTheme; title: string; text: string; swatches: { name: string; color: string; glow: string; edge: string }[] }) {
+  const width = `${Math.floor(100 / swatches.length)}%`;
+  return (
+    <tr>
+      <td className="th-pad" align="center" style={{ padding: "22px 36px 0" }}>
+        <p style={{ margin: "0 0 4px", fontFamily: CHALK_FONT, fontSize: 24, color: t.yellow }}>{title}</p>
+        <p style={{ margin: "0 0 14px", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>{text}</p>
+        <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
+          <tr>
+            {swatches.map((s) => (
+              <td key={s.name} width={width} align="center" valign="top" style={{ width, padding: "0 2px" }}>
+                <table role="presentation" cellPadding="0" cellSpacing="0" border={0} align="center">
+                  <tr>
+                    <td
+                      width="72"
+                      height="72"
+                      bgcolor={s.color}
+                      style={{ width: 72, height: 72, background: s.color, backgroundImage: `radial-gradient(circle at 50% 42%, ${s.glow} 0%, ${s.color} 55%, ${s.edge} 100%)`, border: "2px solid rgba(244,242,234,0.7)", borderRadius: 12, fontSize: 0, lineHeight: 0 }}
+                    >
+                      {" "}
+                    </td>
+                  </tr>
+                </table>
+                <p style={{ margin: "8px 0 0", fontFamily: CHALK_FONT, fontSize: 16, lineHeight: 1.2, color: t.chalk }}>{s.name}</p>
+              </td>
+            ))}
+          </tr>
+        </table>
+      </td>
+    </tr>
+  );
+}
+
+/** "Meet your photographers": optional round photo (uploaded in /admin) next to a short intro. */
+export function PhotographersIntro({ theme: t, title, text, footnote, photo }: { theme: EmailTheme; title: string; text: string; footnote?: string; photo?: { src: string; alt: string } | null }) {
+  return (
+    <tr>
+      <td className="th-pad" style={{ padding: "22px 36px 0" }}>
+        <p style={{ margin: "0 0 8px", fontFamily: CHALK_FONT, fontSize: 24, color: t.yellow }}>{title}</p>
+        <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
+          <tr>
+            {photo && (
+              <td valign="top" width="104" style={{ width: 104, padding: "4px 16px 0 0" }}>
+                <Img src={photo.src} width="88" height="88" alt={photo.alt} style={{ display: "block", width: 88, height: 88, objectFit: "cover", borderRadius: "50%", border: `2px solid ${t.chalk}` }} />
+              </td>
+            )}
+            <td valign="top" style={{ fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.6, color: t.chalk }}>
+              {text}
+              {footnote && <span style={{ display: "block", marginTop: 6, fontFamily: CHALK_FONT, fontSize: 18, color: t.blue }}>{footnote}</span>}
+            </td>
+          </tr>
+        </table>
       </td>
     </tr>
   );

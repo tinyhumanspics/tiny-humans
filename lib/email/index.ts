@@ -8,3 +8,4 @@ export { bookingRescheduledEmail } from "@/emails/BookingRescheduled";
 export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail } from "@/emails/Internal";
 export type { RenderedEmail, EmailAttachment, ImageMode } from "./types";
 export type { EmailLocale } from "./messages";
+export { sessionReminderEmail, type ReminderKind } from "@/emails/SessionReminder";

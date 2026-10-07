@@ -5,6 +5,7 @@ import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
 import { portfolio } from "@/config/portfolio";
 import { getSiteSettings } from "@/lib/settings/server";
+import type { SiteSettings } from "@/lib/settings/types";
 import { allMediaPhotos } from "@/lib/settings/defaults";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
 import { bookings, type Booking } from "@/lib/db/schema";
@@ -29,6 +30,14 @@ import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./t
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
+
+/** The "Adrian & Alondra" photo from /admin (About page, first slot) for the confirmation email, as an absolute URL. */
+function photographersPhotoUrl(settings: SiteSettings | null, themeId: string): string | null {
+  const media = settings?.media;
+  const src = (media?.[themeId as keyof typeof media]?.about[0] ?? media?.default?.about[0])?.src;
+  if (!src) return null;
+  return src.startsWith("/") ? `${site.url.replace(/\/$/, "")}${src}` : src;
+}
 
 /** Booking source columns (first touch of the visit). */
 function sourceColumns(a: BookingRequest["attribution"]) {
@@ -239,12 +248,14 @@ export class OutlookBookingProvider implements BookingProvider {
     // 6 + 7. Emails via Resend: the customer confirmation and the internal "new booking"
     // notification. Neither can undo the booking: failures are logged and recorded in Neon.
     // Emails follow the website theme active right now (e.g. Christmas).
-    const themeId = await getSiteSettings().then((x) => x.themeId).catch(() => "default");
+    const settings = await getSiteSettings().catch(() => null);
+    const themeId = settings?.themeId ?? "default";
+    const photographersPhoto = photographersPhotoUrl(settings, themeId);
     const reason = (err: unknown) => (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
     const [customer, internal] = await Promise.allSettled([
       (async () => {
         const links = manageUrls(cancel.token);
-        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours });
+        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours, photographersPhoto });
         return sendEmail({
           scope: "resend.customer",
           to: request.contact.email,

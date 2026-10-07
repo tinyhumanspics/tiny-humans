@@ -48,6 +48,18 @@ export interface RescheduleDetails {
   status: string;
 }
 
+/** What a session reminder email needs. */
+export interface ReminderDetails {
+  reference: string;
+  parentName: string;
+  bundleName: string;
+  /** Session date (studio time zone), start and end ("HH:MM"). */
+  date: string;
+  start: string;
+  end: string;
+  location: string;
+}
+
 /** What a cancellation email needs. */
 export interface CancellationDetails {
   reference: string;

@@ -268,7 +268,9 @@
       "paymentDue": "Payment due",
       "paymentDueValue": "After the photoshoot",
       "questions": "Questions? Just reply to this email.",
-      "greeting": "Hi {name},"
+      "greeting": "Hi {name},",
+      "textUs": "Text us at {phone}",
+      "payAfter": "Nothing to pay today. You'll pay after your session, by Zelle, card or cash."
     },
     "confirmation": {
       "subject": "Your Tiny Humans session is booked ({reference}): {date}, {time}",
@@ -278,12 +280,23 @@
       "intro": "Thank you for choosing Tiny Humans. We can't wait to meet {baby}. We'll bring the whole studio to your home, so all you need to do is stay comfy.",
       "babyFallback": "your little one",
       "babyLed": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
+      "promise": "And if baby just can't settle, we'll come back once, free, within 14 days.",
       "changes": "If you need to make a change to your session, reply to this email.",
       "reschedule": "Reschedule Booking",
       "cancel": "Cancel Booking",
       "cancelCaption": "You'll be asked to confirm on the next page.",
       "rescheduleText": "Need a different time? {url}",
-      "cancelText": "Need to cancel? {url}"
+      "cancelText": "Need to cancel? {url}",
+      "nextTitle": "What happens next",
+      "next": [
+        "On the day, we bring the lights, backdrops, props and outfits for baby. You just stay comfy.",
+        "3 sneak peeks land in your inbox within 24 hours of your session.",
+        "Your fully edited gallery follows within 24–72 hours. Then you pay, by Zelle, card or cash."
+      ],
+      "meetTitle": "Meet your photographers",
+      "meet": "We're Adrian and Alondra, a husband-and-wife team and parents ourselves. Adrian photographs every session and edits every photo in your gallery. Alondra designs each set-up: the backdrops, the wraps, the styling and all the little details.",
+      "spanish": "Hablamos español.",
+      "meetPhotoAlt": "Adrian and Alondra"
     },
     "cancellation": {
       "subject": "Your Tiny Humans session has been cancelled — {reference}",
@@ -313,6 +326,59 @@
       "linksCaption": "These links replace the ones in earlier emails.",
       "rescheduleText": "Reschedule: {url}",
       "cancelText": "Cancel: {url}"
+    },
+    "prepGuide": {
+      "title": "Your Home Session Prep Guide",
+      "items": [
+        "Warm the room you'd like photos in, so baby stays sleepy and comfy.",
+        "Pick the room with your biggest window. Just a little space is all we need.",
+        "Feed baby just before we arrive. A full tummy means a sleepy baby, and we'll pause for more feeds anytime.",
+        "Parents: wear soft, solid colors (no logos or busy patterns) if you'll be in the photos.",
+        "Skip perfume and scented lotion on the day.",
+        "Want a pet in the photos? Reply to this email and we'll plan for it.",
+        "Nothing to pay today: you pay after your session, by Zelle, card or cash."
+      ]
+    },
+    "backdrops": {
+      "title": "Pick your backdrop",
+      "text": "Reply to this email with your pick, and we'll bring it to your session.",
+      "reminderTitle": "Picked your backdrop?",
+      "reminderText": "If you haven't yet, just reply to this email with your pick.",
+      "textLine": "Pick your backdrop: reply with {list}.",
+      "or": "or",
+      "names": {
+        "blueAura": "Blue Aura",
+        "burgundy": "Burgundy",
+        "cream": "Cream",
+        "white": "White"
+      }
+    },
+    "reminder72": {
+      "subject": "Your Tiny Humans session is coming up: {date} at {time}",
+      "preheader": "Your prep guide, and an easy way to change the time if you need to.",
+      "eyebrow": "Coming up soon",
+      "title": "See you {day}, {name}!",
+      "intro": "Your session is almost here. Here's everything you need in one place.",
+      "rescheduleTitle": "Something came up?",
+      "reschedule": "Need another time?",
+      "rescheduleText": "Need another time? {url}",
+      "closed": "Need to change something? Just text us."
+    },
+    "reminder24": {
+      "subject": "See you {day}: your Tiny Humans session at {time}",
+      "preheader": "Your session starts {day} at {time}. Here are the details.",
+      "eyebrow": "See you {day}",
+      "title": "Almost time, {name}!",
+      "intro": "Your session starts {day} at {time}. We bring the lights, backdrops, props and outfits for baby.",
+      "checklistTitle": "A quick checklist",
+      "checklist": [
+        "Warm the room you'd like photos in, so baby stays sleepy and comfy.",
+        "Feed baby just before we arrive.",
+        "Skip perfume and scented lotion on the day."
+      ],
+      "reach": "Running late or need to reach us? Just text us.",
+      "today": "today",
+      "tomorrow": "tomorrow"
     }
   }
 }

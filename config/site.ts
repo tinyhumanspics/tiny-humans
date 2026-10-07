@@ -37,6 +37,9 @@ export const site = {
   },
   contact: {
     email: "hello@tinyhumans.photography" as string | null,
+    /** Texting number for families (owner decision 13), shown in emails. */
+    phone: "(786) 222-7194",
+    sms: "+17862227194",
   },
   /** Bundles page (/bundles), booking step one. */
   bookPage: {

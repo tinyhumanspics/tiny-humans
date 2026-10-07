@@ -8,7 +8,8 @@ import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
-import { ChalkBox, ChalkButton, Details, Heading, Paragraph } from "./components/blocks";
+import { backdropList, backdropSwatches } from "./components/backdrops";
+import { ChalkBox, ChalkButton, ChalkList, Details, Heading, Paragraph, PhotographersIntro, Swatches } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 interface Options {
@@ -16,6 +17,8 @@ interface Options {
   cancelUrl?: string;
   rescheduleUrl?: string;
   rescheduleNoticeHours?: number;
+  /** "Adrian & Alondra" photo from /admin (absolute URL), if uploaded. */
+  photographersPhoto?: string | null;
   images?: ImageMode;
   locale?: EmailLocale;
 }
@@ -36,7 +39,16 @@ function content(d: BookingDetails, locale: EmailLocale) {
 }
 
 /** Customer booking confirmation (follows the active website theme). */
-export function BookingConfirmation({ details: d, theme: t, images, locale, cancelUrl, rescheduleUrl, rescheduleNoticeHours }: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale }) {
+export function BookingConfirmation({
+  details: d,
+  theme: t,
+  images,
+  locale,
+  cancelUrl,
+  rescheduleUrl,
+  rescheduleNoticeHours,
+  photographersPhoto,
+}: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale }) {
   const { m, date, first, time, paymentRows } = content(d, locale);
   const c = m.confirmation;
   return (
@@ -57,7 +69,11 @@ export function BookingConfirmation({ details: d, theme: t, images, locale, canc
         ]}
       />
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={PAYMENT_NOTE.email} />
-      <Paragraph theme={t}>{c.babyLed}</Paragraph>
+      <Swatches theme={t} title={m.backdrops.title} text={m.backdrops.text} swatches={backdropSwatches(locale)} />
+      <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
+      <ChalkList theme={t} title={c.nextTitle} items={c.next} color={t.chalk} mark="•" />
+      <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
+      <Paragraph theme={t}>{`${c.babyLed} ${c.promise}`}</Paragraph>
       <Paragraph theme={t}>{c.changes}</Paragraph>
       {rescheduleUrl && rescheduleNoticeHours !== undefined && (
         <Paragraph theme={t} align="center">
@@ -77,7 +93,16 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
   const { m, date, first, time } = content(d, locale);
   const c = m.confirmation;
   const html = await renderHtml(
-    <BookingConfirmation details={d} theme={theme} images={images} locale={locale} cancelUrl={opts.cancelUrl} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} />,
+    <BookingConfirmation
+      details={d}
+      theme={theme}
+      images={images}
+      locale={locale}
+      cancelUrl={opts.cancelUrl}
+      rescheduleUrl={opts.rescheduleUrl}
+      rescheduleNoticeHours={opts.rescheduleNoticeHours}
+      photographersPhoto={opts.photographersPhoto}
+    />,
   );
   const text = textLines([
     fill(c.title, { name: first }),
@@ -92,7 +117,17 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     "",
     PAYMENT_NOTE.email,
     "",
-    c.babyLed,
+    fill(m.backdrops.textLine, { list: backdropList(locale) }),
+    "",
+    `${m.prepGuide.title}:`,
+    ...m.prepGuide.items.map((i) => `- ${i}`),
+    "",
+    `${c.nextTitle}:`,
+    ...c.next.map((i) => `- ${i}`),
+    "",
+    `${c.meetTitle}: ${c.meet} ${c.spanish}`,
+    "",
+    `${c.babyLed} ${c.promise}`,
     c.changes,
     opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${rescheduleNoticeText(opts.rescheduleNoticeHours)}`,
     opts.rescheduleUrl && fill(c.rescheduleText, { url: opts.rescheduleUrl }),
