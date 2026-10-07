@@ -29,7 +29,9 @@ State: everything below is on `main` and live (last deploy `e0c285a` + this hand
    Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". First real "Send sneak peek" = first live Stripe
    page from an email; confirm /admin shows "Paid" after payment (else Stripe Workbench → Webhooks → Event deliveries).
 6. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner requests").
-7. Visual baselines in `.screenshots/parity/` are current (updated /privacy Oct 7). The old `.screenshots/baseline/`
+7. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7 after the owner approved ages, step
+   tracker and "Live now"). ⚠ The parity check allows 0.2% of a full page to differ, which missed the step tracker
+   move (3 small circles): add element-level screenshots for key components in Phase 6. The old `.screenshots/baseline/`
    set was captured mid-animation → recapture before Phase 9 uses it.
 
 ## ▶ Next session prompt
@@ -78,6 +80,16 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       `MEDIA_GROUPS` in `config/media.ts` (per-theme slots saved in Vercel Blob, same uploader as the home photos) with
       an "About" and a "Landing" group; `PhotoPlaceholder` shows until a slot has a photo, then `PinnedPhoto`. Alt text
       per photo is editable. Later, with decision 18: bio text editable in /admin too.
+- [x] **Ages: newborns up to 2 years for now** (owner, Oct 7, live `fd5942f`; more ages later). Booking form age list:
+      "1 year or older" → "1–2 years" ("Not born yet" kept), note under the age box ("Your little one is over 2? Email
+      us at … and we'll let you know when we open more ages.", `booking.age.olderNote`), landing FAQ "up to 2 years
+      old". Siblings still welcome with Our Family Story (owner). Server validation uses the same list.
+- [x] **"Live now" centered** on /admin → Theme (owner, Oct 7, `9a929a0`): the Photos page badge (added Oct 6) shared
+      the `liveTag` class and overrode the card's centered style → badge renamed `mediaLiveTag`/`mediaOffTag`.
+- [x] **Booking step tracker evenly spread** (owner, Oct 7, `cbbacbd`): the grid still had 6 columns from the old
+      6-step flow → one column per step (`--steps`), dashed line from the first circle's center to the last.
+      Offered, not requested: steps not reached yet are see-through (`opacity` on the button), so the line shows
+      faintly inside circles 2–4.
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
@@ -226,7 +238,13 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       cancel/reschedule pages). Never sent to Meta (only city/ZIP are). Without a unit or notes everything is
       pixel-identical to before. Tested: 18 e2e, 16 visual parity, 29 local Outlook-mode checks (fake Graph/Resend,
       incl. the table missing).
-- [ ] Edge: flag addresses ≥2h drive (travel fee, editable in /admin)
+- [~] Edge: out-of-area flag (owner, Oct 7: flag bookings over **30 road miles** from the home-base ZIP; both editable in
+      /admin → Availability → Travel; the ZIP is entered there by the owner and never written in the repo). Distance =
+      straight line between Florida ZIP centers (Census 2026 ZCTA gazetteer, `scripts/fl-zip-centroids.mjs` →
+      `lib/travel/fl-zips.ts`, 1013 ZIPs, 32 KB server-only) × 1.2 road factor (rough Florida highway trips from Miami
+      Beach run ~1.15–1.2×; an estimate, labeled as such). Flag only: shown to the owner in /admin, the studio email and
+      the Outlook event; families see nothing (FAQ already says a fee is confirmed before the session). In progress,
+      uncommitted. Owner asked (Oct 7) whether it can calculate the price automatically → answer pending.
 - [ ] Edge: Resend webhooks → flag bounces/complaints in /admin; SPF/DKIM/DMARC check
 - [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
 
@@ -276,7 +294,8 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
 2. Bonuses: **all three** — Home Session Prep Guide (draft for approval), sneak peek (with 24–72h delivery → "3 sneak-peek
    photos within 24 hours" — confirm wording), "Pick your backdrop" at booking.
 3. Baby-led promise (free return visit if baby can't settle): **yes** (within 14 days — confirm).
-4. Ages: **up to 5 years old, flexible on age**; booking before birth OK (flexible).
+4. Ages: ~~up to 5 years old~~ → **newborn up to 2 years for now** (owner, Oct 7; more ages later); booking before
+   birth OK (flexible).
 5. Capacity: 10–15 sessions a week; publish **"up to 10 home sessions a week"** (owner: 10 builds scarcity).
 6. Gallery delivery: **24–72 hours** from shoot to fully edited.
 7. Seasonal: ~~run Halloween too~~ (**dropped Oct 7: no Halloween theme or offer**). Last sessions: Thanksgiving **Nov 23**, Christmas cards **Dec 5**,
@@ -427,6 +446,10 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   `address-line2` (unit); `street-address` is meant for one multi-line box and the two styles shouldn't be mixed.
   https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill ·
   https://web.dev/articles/payment-and-address-form-best-practices
+- **ZIP code centers** (checked Oct 7): US Census Bureau Gazetteer Files, newest = 2026, ZCTA national file (pipe-
+  delimited: GEOID, …, INTPTLAT, INTPTLONG; ZCTAs approximate USPS ZIPs; PO-box-only ZIPs have no ZCTA).
+  https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html ·
+  https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2026_Gazetteer/2026_Gaz_zcta_national.zip
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
