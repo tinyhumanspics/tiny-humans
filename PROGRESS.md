@@ -14,9 +14,11 @@ State: everything below is on `main` and live (last deploy `7f4113f` + this hand
 2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
    appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
 3. **Phase 2 (show rate)**: 2a, 2b, 2c **live** (Oct 7, `7f4113f`; owner approved the screenshots, ran migration 0007
-   in Neon and added `CRON_SECRET`). First automatic reminder run: Oct 8, 14:00–14:59 UTC. Left in Phase 2: 2d
-   after-session emails (needs the owner's payment details: Zelle name/number, card link), 2e SMS + photo-use
-   checkboxes, edge items.
+   in Neon and added `CRON_SECRET`). First automatic reminder run: Oct 8, 14:00–14:59 UTC. Card-only payment copy
+   live (`5097fe8`). **2d built + tested locally, NOT pushed** (commits after `5097fe8`): deploy order = owner approves
+   `Claude outputs/after-session/` + the privacy-policy Stripe line → owner runs `drizzle/0008_payments_and_reviews.sql`
+   in Neon → owner adds `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` (Production) → push → update the /privacy visual
+   baseline. Left in Phase 2: 2e SMS + photo-use checkboxes, edge items.
 4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page + Halloween email logo/strip in
    `lib/email/assets.ts`), BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
    were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
@@ -166,7 +168,17 @@ them. Email changes: compare old vs new renders with screenshots before sending 
       per email (HMAC of the row id with `CRON_SECRET`, only the hash stored), valid while the booking keeps that session
       time; confirmation links keep working. Tested locally end to end (21 scenarios incl. DST night Nov 1).
 - [ ] 2c Optional /admin "Today" view with tap-to-text
-- [ ] 2d After-session (thank you + how to pay) and gallery-delivered (review + referral) emails
+- [~] 2d After-session (Oct 7, built + tested locally, waiting on the owner's yes + setup): /admin → Leads → details →
+      "After the Session": **Session done** (enabled once the session started) → thank-you email with "Pay $X" →
+      `/pay?t=` (`app/pay/route.ts`) → Stripe Checkout for the booking's price snapshot (`finalPriceCents`, so codes and
+      offers are exact; an open Checkout page is reused, a new one made after 24 h) → `/pay/status?s=…`. "Paid" from
+      the signed webhook `/api/stripe/webhook` (or checked when the link is opened again) → table `booking_payments`.
+      **Gallery delivered** (optional Pixieset link) → email with review button (`/review?t=`), referral line, and a
+      pay button while unpaid. Reviews (table `reviews`): rating, text, display name, family's OK to show publicly;
+      studio gets a "New review" email; owner can "Use on the website" only with the family's OK (withdrawing the OK
+      un-picks it). Stripe via fetch (`lib/payments/stripe.ts`), no SDK. Tokens: `booking_emails.link_token_hash` per
+      email kind (after_session → /pay; gallery_delivered → /pay + /review; reminders → manage pages only).
+      Tested locally with fake Stripe + fake Resend (28 checks).
 - [ ] 2e Optional SMS consent checkbox (+ timestamp); photo-use permission checkbox
 - [ ] Edge: unit/gate/parking/concierge fields → Outlook event + 24h reminder
 - [ ] Edge: flag addresses ≥2h drive (travel fee, editable in /admin)
@@ -308,6 +320,7 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   the browser. Both widely used and maintained.
 - `@vercel/analytics` 2 + `@vercel/speed-insights` 2 — owner request (Oct 7). Tiny client scripts served from
   `/_vercel/*`, loaded only on Vercel. Official Vercel packages.
+- Stripe: no SDK (two REST calls + webhook signature check with `fetch`/`crypto`, `lib/payments/stripe.ts`). 0 KB.
 - `react-email` 6.11 — email templates as React components (brief Phase 2a). Server-side when sending; in the browser
   only in the lazy mock-mode email preview chunk (no page preloads it). It also installs its preview CLI's toolchain
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
@@ -348,6 +361,13 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **Vercel Cron security/delivery** (checked Oct 7): set `CRON_SECRET` and Vercel sends `Authorization: Bearer <it>`
   (GET). Delivery is best effort: a run can be missed or arrive twice, no retries → jobs must be idempotent and catch up.
   Doesn't follow redirects. https://vercel.com/docs/cron-jobs/manage-cron-jobs
+- **Stripe Checkout** (checked Oct 7): Checkout Sessions expire 30 min–24 h after creation (default 24 h) → emails link
+  to our `/pay`, which makes or reuses one. Inline `line_items[0][price_data]` (currency, unit_amount,
+  product_data[name]) works without creating Products/Prices. Webhook: `Stripe-Signature: t=…,v1=…`, HMAC-SHA256 of
+  `"<t>.<raw body>"` with the endpoint's `whsec_` secret, 5-min tolerance, retries for 3 days in live mode; listen to
+  `checkout.session.completed` (+ `checkout.session.async_payment_succeeded`). Restricted keys `rk_live_…` are
+  recommended over secret keys. https://docs.stripe.com/api/checkout/sessions/create ·
+  https://docs.stripe.com/webhooks#verify-manually · https://docs.stripe.com/keys#limit-access
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
@@ -362,3 +382,8 @@ Fake Graph: `node scripts/local-db/fake-graph.mjs` (port 4545) + `.env.local`: `
 `MICROSOFT_TENANT_ID/CLIENT_ID/CLIENT_SECRET=local`, `MICROSOFT_GRAPH_BASE_URL=http://localhost:4545/v1.0`,
 `MICROSOFT_LOGIN_BASE_URL=http://localhost:4545` (both ignored on Vercel). `GET :4545/_events` lists created events.
 Booking spam check refuses forms finished in < 4 s: automated tests must wait on the review step.
+Fake Resend: `node scripts/local-db/fake-resend.mjs` (port 4646; emails saved to `scripts/local-db/.emails/`;
+addresses containing `fail@` are rejected) + `RESEND_API_KEY=re_local RESEND_BASE_URL=http://localhost:4646`.
+Fake Stripe: `node scripts/local-db/fake-stripe.mjs` (port 4747; `POST /_pay/<session id>` marks it paid and sends a
+signed webhook to `FAKE_STRIPE_WEBHOOK_URL`) + `STRIPE_SECRET_KEY=rk_test_local STRIPE_API_BASE=http://localhost:4747
+STRIPE_WEBHOOK_SECRET=whsec_local`. Reminder runs: `GET /api/cron/reminders?now=<ISO>` with `Bearer $CRON_SECRET`.

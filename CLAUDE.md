@@ -15,6 +15,7 @@ No online payment: "$0 today, pay after your session" (Stripe deposits may come 
   `tsc` = TS 7), npm, ESLint 10 flat config. Root layout is an async server component.
 - Neon Postgres + Drizzle ORM (`drizzle-orm/neon-http`, `lib/db`), migrations in `drizzle/`.
 - Booking providers: `BOOKING_PROVIDER=mock|outlook` (Outlook = Microsoft Graph calendar only).
+- Payments: card only, after the session, Stripe Checkout via `fetch` (`lib/payments`), exact booked amount.
 - Email: React Email templates (`emails/`) rendered + sent with Resend (`lib/email`). Storage: Vercel Blob (theme +
   photos, `lib/settings`). Validation: Zod 4.
 - Styling: CSS Modules + `styles/globals.css`; theme colors are CSS variables from `config/themes.ts`.
@@ -120,6 +121,11 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - The project lives on the iCloud-synced Desktop: Finder/iCloud " 2"/" 3" duplicates appear (seen Oct 7 in
   `.next/types/*.d 3.ts`, which breaks `npm run typecheck`). Duplicates inside `.next/` are safe to delete; ask before
   touching any elsewhere.
+- Links in customer emails carry a 256-bit token; only its hash is stored (`bookings.cancel_token_hash` for the booking's
+  own manage link, `booking_emails.link_token_hash` per reminder/after-session email). Which pages accept which kind
+  is deliberate (reminders → manage pages; after_session → /pay; gallery_delivered → /pay + /review).
+- `NEXT_PUBLIC_SITE_URL` is baked in at build time (also in server code): local test servers on other ports still
+  write `http://localhost:3000` links into emails.
 - Reminders: `vercel.json` cron (daily, Hobby) → `/api/cron/reminders` → `lib/booking/reminders.ts`; table
   `booking_emails` claims each email. Manage links are found by token hash on `bookings` OR `booking_emails`
   (`findByCancelToken`). Never send reminders from a test against production; test locally with `?now=` + fake Resend.
