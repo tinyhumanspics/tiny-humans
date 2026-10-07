@@ -8,6 +8,7 @@ import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
 import Reveal from "@/components/Reveal/Reveal";
 import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import styles from "./Hero.module.css";
+import { cn } from "@/lib/cn";
 
 export default function Hero() {
   const { hero } = site;
@@ -16,17 +17,17 @@ export default function Hero() {
   const [doodleA, doodleB] = theme.decorations.hero;
   return (
     <section className={styles.hero} aria-labelledby="hero-title">
-      <div className={`container ${styles.grid}`}>
+      <div className={cn("container", styles.grid)}>
         <Reveal className={styles.copy}>
           <BoardDoodles area="hero" />
-          <h1 id="hero-title" className={`${styles.title} chalk`}>
+          <h1 id="hero-title" className={cn(styles.title, "chalk")}>
             {hero.title.map((line) => (
               <span key={line} className={styles.line}>{line}</span>
             ))}
           </h1>
           <ChalkDoodle name="underline" size={230} color="var(--sun-yellow)" strokeWidth={3} className={styles.underline} />
-          <p className={`${styles.subtitle} chalk-soft`}>{hero.subtitle}</p>
-          <p className={`${styles.promise} chalk-soft`}>
+          <p className={cn(styles.subtitle, "chalk-soft")}>{hero.subtitle}</p>
+          <p className={cn(styles.promise, "chalk-soft")}>
             <ChalkDoodle name="house" size={30} color="var(--accent)" strokeWidth={3} className={styles.promiseIcon} />
             <span>{hero.promise}</span>
           </p>

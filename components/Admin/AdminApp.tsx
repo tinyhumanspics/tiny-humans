@@ -16,6 +16,7 @@ import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import { ADMIN_NAV, type AdminSection } from "./nav";
 import styles from "./Admin.module.css";
+import { cn } from "@/lib/cn";
 
 type Status = "loading" | "signedOut" | "ready";
 type Note = { kind: "ok" | "error"; text: string } | null;
@@ -57,7 +58,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (status === "loading") return <p className={`${styles.loading} chalk-soft`}>Opening the owner area…</p>;
+  if (status === "loading") return <p className={cn(styles.loading, "chalk-soft")}>Opening the owner area…</p>;
   if (status === "signedOut" || !settings) return <Login api={api} authReady={authReady} onSignedIn={load} />;
 
   const save = async (next: SiteSettings) => {
@@ -73,27 +74,27 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
   const current = ADMIN_NAV.find((n) => n.id === section)!;
 
   return (
-    <div className={`${styles.page} ${section === "leads" ? styles.pageWide : ""}`}>
+    <div className={cn(styles.page, section === "leads" ? styles.pageWide : "")}>
       <div className={styles.topbar}>
-        <p className={`${styles.areaName} chalk-soft`}>Owner area</p>
-        <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={signOut}>Sign out</button>
+        <p className={cn(styles.areaName, "chalk-soft")}>Owner area</p>
+        <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={signOut}>Sign out</button>
       </div>
       <nav ref={navRef} className={styles.adminNav} aria-label="Owner area" onScroll={(e) => (navScrollLeft = e.currentTarget.scrollLeft)}>
         <ul>
           {ADMIN_NAV.map((n) => (
             <li key={n.id}>
-              <Link href={n.href} className={`${styles.navLink} chalk-soft`} aria-current={n.id === section ? "page" : undefined}>{n.label}</Link>
+              <Link href={n.href} className={cn(styles.navLink, "chalk-soft")} aria-current={n.id === section ? "page" : undefined}>{n.label}</Link>
             </li>
           ))}
         </ul>
       </nav>
-      <h1 className={`${styles.h1} chalk`}>{current.label}</h1>
+      <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>
 
       {api.mode === "prototype" && (
-        <p className={`${styles.banner} chalk-soft`}>Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.</p>
+        <p className={cn(styles.banner, "chalk-soft")}>Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.</p>
       )}
       {api.mode === "live" && !storageReady && (section === "photos" || section === "theme") && (
-        <p className={`${styles.bannerError} chalk-soft`} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
+        <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
       )}
 
       {section === "dashboard" && <Dashboard api={api} settings={settings} />}
@@ -120,18 +121,18 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
   return (
     <section className={styles.section} aria-label="Dashboard">
       <div className={styles.stats}>
-        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
-        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
-        <div className={styles.stat}><span className={`${styles.statNum} chalk`}>{stat(leads?.counts.cancelled)}</span><span className="chalk-soft">Cancelled</span></div>
-        <div className={styles.stat}><span className={`${styles.statNum} ${styles.statTheme} chalk`}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.cancelled)}</span><span className="chalk-soft">Cancelled</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, styles.statTheme, "chalk")}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
       </div>
-      {leadsError && <p className={`${styles.hintSmall} chalk-soft`}>Lead numbers appear once the database is connected.</p>}
+      {leadsError && <p className={cn(styles.hintSmall, "chalk-soft")}>Lead numbers appear once the database is connected.</p>}
       <ul className={styles.dashCards}>
         {ADMIN_NAV.filter((n) => n.id !== "dashboard").map((n) => (
           <li key={n.id}>
             <Link href={n.href} className={styles.dashCard}>
-              <span className={`${styles.dashTitle} chalk`}>{n.label}</span>
-              <span className={`${styles.dashBlurb} chalk-soft`}>{n.blurb}</span>
+              <span className={cn(styles.dashTitle, "chalk")}>{n.label}</span>
+              <span className={cn(styles.dashBlurb, "chalk-soft")}>{n.blurb}</span>
             </Link>
           </li>
         ))}
@@ -145,19 +146,19 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
 function SettingsPanel({ api, storageReady, onSignOut }: { api: ReturnType<typeof getAdminApi>; storageReady: boolean; onSignOut: () => void }) {
   return (
     <section className={styles.section} aria-label="Settings">
-      <h2 className={`${styles.h2} chalk`}>Account</h2>
-      <p className={`${styles.muted} chalk-soft`}>
+      <h2 className={cn(styles.h2, "chalk")}>Account</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>
         {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel. To change it, update the variable and redeploy."}
       </p>
       <ChalkButton variant="outline" onClick={onSignOut} seed={970}>Sign out</ChalkButton>
-      <h2 className={`${styles.h2} chalk`}>Connections</h2>
+      <h2 className={cn(styles.h2, "chalk")}>Connections</h2>
       <ul className={styles.connList}>
         <li className="chalk-soft"><b>Photos &amp; theme storage (Vercel Blob):</b> {api.mode === "prototype" ? "this browser (prototype)" : storageReady ? "connected" : "not connected yet"}</li>
         <li className="chalk-soft"><b>Bookings &amp; availability:</b> Neon database (DATABASE_URL)</li>
         <li className="chalk-soft"><b>Calendar:</b> Outlook via Microsoft Graph (MICROSOFT_* variables)</li>
         <li className="chalk-soft"><b>Booking emails:</b> Resend (RESEND_API_KEY, BOOKING_FROM_EMAIL, BOOKING_INTERNAL_FROM_EMAIL, BOOKING_NOTIFICATION_EMAIL)</li>
       </ul>
-      <p className={`${styles.hintSmall} chalk-soft`}>These are set in Vercel → Settings → Environment Variables. The README explains each one.</p>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>These are set in Vercel → Settings → Environment Variables. The README explains each one.</p>
     </section>
   );
 }
@@ -182,13 +183,13 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
 
   return (
     <ChalkBox className={styles.login} seed={801} wobble={3} strokeWidth={2.6}>
-      <h1 className={`${styles.h1} chalk`}>Owner area</h1>
-      <p className={`${styles.muted} chalk-soft`}>Sign in to change the website theme and photos.</p>
+      <h1 className={cn(styles.h1, "chalk")}>Owner area</h1>
+      <p className={cn(styles.muted, "chalk-soft")}>Sign in to change the website theme and photos.</p>
       {!authReady && (
-        <p className={`${styles.bannerError} chalk-soft`}>The owner password isn&apos;t set up yet. Add ADMIN_PASSWORD and ADMIN_SESSION_SECRET in Vercel (see README).</p>
+        <p className={cn(styles.bannerError, "chalk-soft")}>The owner password isn&apos;t set up yet. Add ADMIN_PASSWORD and ADMIN_SESSION_SECRET in Vercel (see README).</p>
       )}
       <form onSubmit={submit} className={styles.loginForm} noValidate>
-        <label htmlFor="admin-password" className={`${styles.label} chalk-soft`}>
+        <label htmlFor="admin-password" className={cn(styles.label, "chalk-soft")}>
           Password
         </label>
         <input
@@ -202,7 +203,7 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
           aria-describedby={error ? "admin-password-error" : undefined}
         />
         {error && (
-          <p id="admin-password-error" className={`${styles.error} chalk-soft`} role="alert">
+          <p id="admin-password-error" className={cn(styles.error, "chalk-soft")} role="alert">
             {error}
           </p>
         )}
@@ -210,7 +211,7 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
           {busy ? "Signing in…" : "Sign in"}
         </ChalkButton>
       </form>
-      {api.mode === "prototype" && <p className={`${styles.hint} chalk-soft`}>Prototype password: {PROTOTYPE_PASSWORD}</p>}
+      {api.mode === "prototype" && <p className={cn(styles.hint, "chalk-soft")}>Prototype password: {PROTOTYPE_PASSWORD}</p>}
     </ChalkBox>
   );
 }
@@ -236,19 +237,19 @@ function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; o
 
   return (
     <section className={styles.section} aria-labelledby="theme-title">
-      <h2 id="theme-title" className={`${styles.h2} chalk`}>Website theme</h2>
-      <p className={`${styles.muted} chalk-soft`}>Changes the logo, the opening animation, colors and decorations across the whole site.</p>
+      <h2 id="theme-title" className={cn(styles.h2, "chalk")}>Website theme</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>Changes the logo, the opening animation, colors and decorations across the whole site.</p>
       <div className={styles.themes}>
         {THEME_IDS.map((id, i) => {
           const t = themes[id];
           const live = settings.themeId === id;
           return (
-            <ChalkBox key={id} className={`${styles.themeCard} ${live ? styles.themeLive : ""}`} seed={820 + i} wobble={2.4} strokeWidth={live ? 3 : 2.2} color={live ? "var(--sun-yellow)" : "var(--chalk-white)"}>
+            <ChalkBox key={id} className={cn(styles.themeCard, live ? styles.themeLive : "")} seed={820 + i} wobble={2.4} strokeWidth={live ? 3 : 2.2} color={live ? "var(--sun-yellow)" : "var(--chalk-white)"}>
               <div className={styles.themeLogo}>
                 <TinyHumansLogo logo={t.logo} state="drawn" />
               </div>
               {live ? (
-                <p className={`${styles.liveTag} chalk-soft`} aria-live="polite">Live now</p>
+                <p className={cn(styles.liveTag, "chalk-soft")} aria-live="polite">Live now</p>
               ) : (
                 <ChalkButton variant="outline" onClick={() => choose(id)} disabled={busy !== null} seed={830 + i} className={styles.themeButton}>
                   {busy === id ? "Switching…" : t.buttonLabel}
@@ -259,7 +260,7 @@ function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; o
         })}
       </div>
       {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
           {note.text}{" "}
           {note.kind === "ok" &&
             (prototype ? (

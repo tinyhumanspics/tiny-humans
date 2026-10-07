@@ -6,6 +6,7 @@ import { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import type { BoardArea, DoodleColor } from "@/config/themes";
 import styles from "./BoardDoodles.module.css";
+import { cn } from "@/lib/cn";
 
 export const colorVar: Record<DoodleColor, string> = {
   accent: "var(--accent)",
@@ -30,11 +31,11 @@ export default function BoardDoodles({ area, only }: { area: BoardArea; /** show
   useDrawOnce(ref, theme.id);
 
   return (
-    <div ref={ref} className={`${styles.layer} chalk-grain`} aria-hidden="true" key={theme.id}>
+    <div ref={ref} className={cn(styles.layer, "chalk-grain")} aria-hidden="true" key={theme.id}>
       {items.map((d, i) => (
         <span
           key={i}
-          className={`${styles.item} ${d.desktopOnly ? styles.desktopOnly : ""}`}
+          className={cn(styles.item, d.desktopOnly ? styles.desktopOnly : "")}
           style={{ top: d.top, right: d.right, bottom: d.bottom, left: d.left, rotate: `${d.rotate}deg`, "--i": i } as CSSProperties}
         >
           <ChalkDoodle name={d.shape} size={d.size} color={colorVar[d.color]} strokeWidth={2.6} drawable grain={false} />

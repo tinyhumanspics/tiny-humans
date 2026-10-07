@@ -4,6 +4,7 @@ import type { MouseEventHandler, ReactNode } from "react";
 import Link from "next/link";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import styles from "./ChalkButton.module.css";
+import { cn } from "@/lib/cn";
 
 interface ChalkButtonProps {
   children: ReactNode;
@@ -29,7 +30,7 @@ export default function ChalkButton({ children, variant = "outline", href, onCli
       color={variant === "solid" ? "var(--sun-yellow)" : "var(--chalk-white)"}
     >
       {variant === "solid" && <span className={styles.fill} aria-hidden="true" />}
-      <span className={`${styles.label} chalk-soft`}>{children}</span>
+      <span className={cn(styles.label, "chalk-soft")}>{children}</span>
     </ChalkBox>
   );
   if (href && href.startsWith("/")) {

@@ -8,6 +8,7 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import RescheduleFlow from "./RescheduleFlow";
 import styles from "./Reschedule.module.css";
+import { cn } from "@/lib/cn";
 
 type View = "loading" | "invalid" | "ready" | "done";
 
@@ -57,7 +58,7 @@ export default function ReschedulePage() {
 
   const session = (b: ManagedBooking, title: string) => (
     <div className={styles.current}>
-      <p className={`${styles.currentTitle} chalk-soft`}>{title}</p>
+      <p className={cn(styles.currentTitle, "chalk-soft")}>{title}</p>
       <dl className={styles.details}>
         <div><dt className="chalk-soft">Booking reference</dt><dd className="chalk-soft">{b.reference}</dd></div>
         <div><dt className="chalk-soft">Bundle</dt><dd className="chalk-soft">{b.bundleName}</dd></div>
@@ -69,41 +70,41 @@ export default function ReschedulePage() {
   );
 
   return (
-    <section className={`container ${styles.page}`} aria-labelledby="rs-title">
+    <section className={cn("container", styles.page)} aria-labelledby="rs-title">
       <ChalkBox className={styles.panel} seed={411} wobble={3.4} strokeWidth={2.8}>
-        {view === "loading" && <p className={`${styles.muted} chalk-soft`}>Finding your booking…</p>}
+        {view === "loading" && <p className={cn(styles.muted, "chalk-soft")}>Finding your booking…</p>}
 
         {view === "invalid" && (
           <>
-            <h1 id="rs-title" className={`${styles.title} chalk`}>We couldn&apos;t open this link</h1>
-            <p className={`${styles.text} chalk-soft`}>{message}</p>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>We couldn&apos;t open this link</h1>
+            <p className={cn(styles.text, "chalk-soft")}>{message}</p>
             <ChalkButton href="/" variant="outline" seed={412}>Back to Tiny Humans</ChalkButton>
           </>
         )}
 
         {view === "ready" && booking && (
           <>
-            <p className={`${styles.eyebrow} chalk-soft`}>Hi {booking.parentFirstName}</p>
-            <h1 id="rs-title" className={`${styles.title} chalk`}>Reschedule your session</h1>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>Hi {booking.parentFirstName}</p>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>Reschedule your session</h1>
             {session(booking, "Your Current Session")}
             {booking.status === "cancelled" ? (
-              <p className={`${styles.notice} chalk-soft`}>This booking has already been cancelled.</p>
+              <p className={cn(styles.notice, "chalk-soft")}>This booking has already been cancelled.</p>
             ) : booking.status === "past" ? (
-              <p className={`${styles.notice} chalk-soft`}>This session has already taken place.</p>
+              <p className={cn(styles.notice, "chalk-soft")}>This session has already taken place.</p>
             ) : !booking.canReschedule ? (
-              <p className={`${styles.notice} chalk-soft`}>
+              <p className={cn(styles.notice, "chalk-soft")}>
                 This session is less than {booking.rescheduleNoticeHours} hours away, so online rescheduling is no longer available. Please contact Tiny Humans if you need help with your appointment.
               </p>
             ) : (
               <>
-                <p className={`${styles.text} chalk-soft`}>You can change the day and time. Everything else stays the same.</p>
+                <p className={cn(styles.text, "chalk-soft")}>You can change the day and time. Everything else stays the same.</p>
                 <RescheduleFlow current={booking} loadDays={loadDays} submit={submit} onKeep={() => router.push("/")} />
               </>
             )}
             {(booking.status !== "active" || !booking.canReschedule) && (
               <div className={styles.actions}>
                 <ChalkButton href="/" variant="outline" seed={413}>Back to Tiny Humans</ChalkButton>
-                <a className={`${styles.textLink} chalk-soft`} href="mailto:hello@tinyhumans.photography">hello@tinyhumans.photography</a>
+                <a className={cn(styles.textLink, "chalk-soft")} href="mailto:hello@tinyhumans.photography">hello@tinyhumans.photography</a>
               </div>
             )}
           </>
@@ -112,14 +113,14 @@ export default function ReschedulePage() {
         {view === "done" && booking && (
           <div role="status">
             <ChalkDoodle name="star" size={60} color="var(--sun-yellow)" strokeWidth={3} />
-            <p className={`${styles.eyebrow} chalk-soft`}>Booking rescheduled</p>
-            <h1 id="rs-title" className={`${styles.title} chalk`}>You&apos;re all set!</h1>
-            <p className={`${styles.text} chalk-soft`}>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>Booking rescheduled</p>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>You&apos;re all set!</h1>
+            <p className={cn(styles.text, "chalk-soft")}>
               Your Tiny Humans session has been successfully rescheduled. We&apos;ve updated your appointment and can&apos;t wait to capture these little moments with you.
             </p>
-            {previous && <p className={`${styles.muted} chalk-soft`}>Previously: {formatLongDate(previous.date)}, {formatTimeLabel(previous.start)}</p>}
+            {previous && <p className={cn(styles.muted, "chalk-soft")}>Previously: {formatLongDate(previous.date)}, {formatTimeLabel(previous.start)}</p>}
             {session(booking, "Your New Session")}
-            <p className={`${styles.text} chalk-soft`}>A confirmation with new links to manage your booking is on its way to your inbox.</p>
+            <p className={cn(styles.text, "chalk-soft")}>A confirmation with new links to manage your booking is on its way to your inbox.</p>
             <ChalkButton href="/" variant="outline" seed={414}>Back to Tiny Humans</ChalkButton>
           </div>
         )}

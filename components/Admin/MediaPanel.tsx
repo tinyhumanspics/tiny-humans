@@ -9,6 +9,7 @@ import type { SiteSettings } from "@/lib/settings/types";
 import { preparePhoto } from "@/lib/admin/client";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import styles from "./Admin.module.css";
+import { cn } from "@/lib/cn";
 
 type Upload = (b: Blob) => Promise<{ src: string }>;
 type Note = { kind: "ok" | "error"; text: string } | null;
@@ -72,19 +73,19 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
   return (
     <section className={styles.section} aria-labelledby="media-title">
-      <h2 id="media-title" className={`${styles.h2} chalk`}>Pictures by website section</h2>
-      <p className={`${styles.muted} chalk-soft`}>Each theme has its own pictures. Changing one theme never changes another. Which theme visitors see is set in <b>Theme</b>.</p>
+      <h2 id="media-title" className={cn(styles.h2, "chalk")}>Pictures by website section</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>Each theme has its own pictures. Changing one theme never changes another. Which theme visitors see is set in <b>Theme</b>.</p>
       <div className={styles.editTabs} role="group" aria-label="Theme to edit">
         {THEME_IDS.map((id) => (
-          <button key={id} type="button" className={`${styles.tab} ${themeId === id ? styles.tabActive : ""}`} aria-pressed={themeId === id} onClick={() => { setThemeId(id); setNote(null); }}>
+          <button key={id} type="button" className={cn(styles.tab, themeId === id ? styles.tabActive : "")} aria-pressed={themeId === id} onClick={() => { setThemeId(id); setNote(null); }}>
             {themes[id].label}{id === settings.themeId ? " · live" : ""}
           </button>
         ))}
       </div>
-      <p className={`${styles.editingFor} chalk-soft`} aria-live="polite">
+      <p className={cn(styles.editingFor, "chalk-soft")} aria-live="polite">
         Editing media for: <b>{label}</b> {live ? <span className={styles.liveTag}>live on the site now</span> : <span className={styles.offTag}>not the active theme</span>}
       </p>
-      {note && <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
+      {note && <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
 
       <MediaGroupBlock label={MEDIA_GROUPS.title.label} where={`${MEDIA_GROUPS.title.where} These two are shown without captions.`}>
         {[0, 1].map((i) => (
@@ -121,7 +122,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
             onDetails={(ph) => { const next = clone(media); next.extra[i] = ph; return saveMedia(next, `extra-${i}`, "Details saved."); }} />
         ))}
         {media.extra.length < MEDIA_GROUPS.extra.max && (
-          <label className={`${styles.addTile} chalk-soft`}>
+          <label className={cn(styles.addTile, "chalk-soft")}>
             <input type="file" accept="image/*" multiple className={styles.visuallyHidden}
               onChange={async (e) => {
                 const files = Array.from(e.target.files ?? []).slice(0, MEDIA_GROUPS.extra.max - media.extra.length); e.target.value = ""; if (!files.length) return;
@@ -142,16 +143,16 @@ function MediaGroupBlock({ label, where, prompt, children }: { label: string; wh
   const dirty = prompt ? title !== prompt.title || text !== prompt.text : false;
   return (
     <div className={styles.mediaGroup}>
-      <h3 className={`${styles.mediaGroupTitle} chalk`}>{label}</h3>
-      <p className={`${styles.hintSmall} chalk-soft`}>{where}</p>
+      <h3 className={cn(styles.mediaGroupTitle, "chalk")}>{label}</h3>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>{where}</p>
       <div className={styles.slotGrid}>{children}</div>
       {prompt && (
         <div className={styles.promptEdit}>
-          <p className={`${styles.label} chalk-soft`}>Prompt shown below these pictures</p>
+          <p className={cn(styles.label, "chalk-soft")}>Prompt shown below these pictures</p>
           <input className={styles.input} value={title} maxLength={60} placeholder={prompt.defaultTitle} onChange={(e) => setTitle(e.target.value)} aria-label={`${label}: prompt title`} />
           <input className={styles.input} value={text} maxLength={120} placeholder={prompt.defaultText} onChange={(e) => setText(e.target.value)} aria-label={`${label}: prompt text`} />
           <div className={styles.photoBar}>
-            <span className={`${styles.hintSmall} chalk-soft`}>Leave empty to use the original wording.</span>
+            <span className={cn(styles.hintSmall, "chalk-soft")}>Leave empty to use the original wording.</span>
             <button type="button" className={styles.smallButton} disabled={!dirty || prompt.busy} onClick={() => prompt.onSave(title, text)}>{prompt.busy ? "Saving…" : "Save prompt"}</button>
           </div>
         </div>
@@ -173,32 +174,32 @@ function Slot({ name, groupLabel, custom, builtIn, busy, onReplace, onReset, onD
   const [caption, setCaption] = useState(shown?.caption ?? "");
   return (
     <div className={styles.slot}>
-      <p className={`${styles.slotName} chalk-soft`}>{name}</p>
+      <p className={cn(styles.slotName, "chalk-soft")}>{name}</p>
       <div className={styles.slotThumb}>
         {shown ? <Image src={shown.src} alt={shown.alt} fill sizes="220px" style={{ objectFit: "cover" }} unoptimized={shown.src.startsWith("data:")} /> : null}
-        {busy && <span className={`${styles.slotBusy} chalk-soft`}>Saving…</span>}
+        {busy && <span className={cn(styles.slotBusy, "chalk-soft")}>Saving…</span>}
       </div>
-      <p className={`${styles.slotSource} chalk-soft`}>{custom ? "Your picture" : "Built-in picture"}</p>
-      <label className={`${styles.smallButton} ${styles.replaceBtn}`}>
+      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : "Built-in picture"}</p>
+      <label className={cn(styles.smallButton, styles.replaceBtn)}>
         <input type="file" accept="image/*" className={styles.visuallyHidden} onChange={onReplace} aria-label={`Replace ${groupLabel} ${name}`} disabled={busy} />
         Replace
       </label>
-      {captions && shown && <p className={`${styles.slotCaption} chalk-soft`}>{shown.caption ? `Caption: “${shown.caption}”` : "No caption: the photo fills the frame"}</p>}
+      {captions && shown && <p className={cn(styles.slotCaption, "chalk-soft")}>{shown.caption ? `Caption: “${shown.caption}”` : "No caption: the photo fills the frame"}</p>}
       {shown && (
-        <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Hide details" : captions ? "Caption & details" : "Details"}</button>
+        <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Hide details" : captions ? "Caption & details" : "Details"}</button>
       )}
-      {custom && <button type="button" className={`${styles.linkButton} ${styles.dangerText} chalk-soft`} onClick={onReset} disabled={busy}>{resetLabel}</button>}
+      {custom && <button type="button" className={cn(styles.linkButton, styles.dangerText, "chalk-soft")} onClick={onReset} disabled={busy}>{resetLabel}</button>}
       {open && shown && (
         <div className={styles.slotDetails}>
           {captions && (
-            <label className={`${styles.label} chalk-soft`}>
+            <label className={cn(styles.label, "chalk-soft")}>
               Caption under the photo (optional)
               <input className={styles.input} value={caption} maxLength={40} placeholder="e.g. First week" onChange={(e) => setCaption(e.target.value)} aria-label={`${groupLabel} ${name} caption`} />
-              <span className={`${styles.hintSmall} chalk-soft`}>Leave empty and the photo fills the whole frame.</span>
+              <span className={cn(styles.hintSmall, "chalk-soft")}>Leave empty and the photo fills the whole frame.</span>
             </label>
           )}
-          <label className={`${styles.label} chalk-soft`}>Title (shown when a parent books this photo)<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
-          <label className={`${styles.label} chalk-soft`}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Title (shown when a parent books this photo)<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
           <button
             type="button"
             className={styles.smallButton}

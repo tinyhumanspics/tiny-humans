@@ -1,6 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { doodleShapes, type DoodleShape } from "./shapes";
+import { cn } from "@/lib/cn";
 
 export type { DoodleShape };
 
@@ -31,7 +32,7 @@ export default function ChalkDoodle({ name, size = 28, color = "currentColor", s
   const height = typeof size === "number" ? (size * vh) / vw : undefined;
   return (
     <svg
-      className={`${grain ? "chalk-grain " : ""}${className ?? ""}`}
+      className={cn(grain ? "chalk-grain " : "", className)}
       style={style}
       viewBox={shape.viewBox}
       width={width}

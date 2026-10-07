@@ -5,6 +5,7 @@ import Reveal from "@/components/Reveal/Reveal";
 import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import styles from "./SectionHeading.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   id: string;
@@ -20,12 +21,12 @@ export default function SectionHeading({ id, title, subtitle, slot }: Props) {
   return (
     <Reveal className={styles.wrap}>
       <BoardDoodles area="heading" />
-      <h2 id={id} className={`${styles.title} chalk`}>
+      <h2 id={id} className={cn(styles.title, "chalk")}>
         {title}
         <ChalkDoodle grain={false} name={doodle} size={30} color={slot === "portfolio" ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
       </h2>
       <ChalkDoodle name="underline" size={170} color="var(--chalk-dim)" strokeWidth={2.4} className={styles.underline} />
-      {subtitle && <p className={`${styles.subtitle} chalk-soft`}>{subtitle}</p>}
+      {subtitle && <p className={cn(styles.subtitle, "chalk-soft")}>{subtitle}</p>}
     </Reveal>
   );
 }

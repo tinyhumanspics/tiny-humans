@@ -10,6 +10,7 @@ import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import InspirationThumb from "@/components/Booking/InspirationThumb";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import styles from "./PortfolioCta.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   photo: PortfolioPhoto;
@@ -25,9 +26,9 @@ export default function PortfolioCta({ photo, title, text, seed, flip }: Props) 
   return (
     <Reveal className={styles.wrap}>
       <BoardDoodles area="cta" />
-      <ChalkBox className={`${styles.box} ${flip ? styles.flip : ""}`} seed={seed} wobble={3} strokeWidth={2.6} color="var(--sun-yellow)">
+      <ChalkBox className={cn(styles.box, flip ? styles.flip : "")} seed={seed} wobble={3} strokeWidth={2.6} color="var(--sun-yellow)">
         <InspirationThumb photo={photo} size={96} />
-        <div className={`${styles.text} chalk`}>
+        <div className={cn(styles.text, "chalk")}>
           <p className={styles.title}>{title}</p>
           <p className={styles.sub}>{text}</p>
         </div>

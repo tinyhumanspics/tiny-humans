@@ -15,6 +15,7 @@ import Footer from "@/components/Footer/Footer";
 import MetaPixel from "@/components/layout/MetaPixel";
 import { LANDING_PATH } from "@/config/landing";
 import "@/styles/globals.css";
+import { cn } from "@/lib/cn";
 
 const schoolbell = localFont({ src: "./fonts/schoolbell-400.woff2", variable: "--font-schoolbell", display: "swap", weight: "400" });
 const patrick = localFont({ src: "./fonts/patrick-hand-400.woff2", variable: "--font-patrick", display: "swap", weight: "400" });
@@ -82,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       data-theme={theme.id}
       data-scroll-behavior="smooth"
       style={themeCssVariables(theme) as React.CSSProperties}
-      className={`${schoolbell.variable} ${patrick.variable}`}
+      className={cn(schoolbell.variable, patrick.variable)}
       suppressHydrationWarning
     >
       <head>

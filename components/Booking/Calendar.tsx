@@ -5,6 +5,7 @@ import { bookingSettings } from "@/config/booking";
 import { addDays, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
+import { cn } from "@/lib/cn";
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
@@ -49,7 +50,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
         >
           <ChalkDoodle name="arrowLeft" size={28} />
         </button>
-        <p className={`${styles.calTitle} chalk-soft`} aria-live="polite">{title}</p>
+        <p className={cn(styles.calTitle, "chalk-soft")} aria-live="polite">{title}</p>
         <button
           type="button"
           className={styles.calNav}
@@ -64,7 +65,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
       <div className={styles.calGrid} role="grid" aria-label={`${title} availability`} aria-busy={loading}>
         <div role="row" className={styles.calRow}>
           {WEEKDAYS.map((d) => (
-            <span role="columnheader" key={d} className={`${styles.calWeekday} chalk-soft`}>{d}</span>
+            <span role="columnheader" key={d} className={cn(styles.calWeekday, "chalk-soft")}>{d}</span>
           ))}
         </div>
         {Array.from({ length: Math.ceil(cells.length / 7) }, (_, r) => (
@@ -82,13 +83,13 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
                 <span role="gridcell" key={key}>
                   <button
                     type="button"
-                    className={`${styles.calDay} ${available ? styles.calAvailable : ""} ${isSelected ? styles.calSelected : ""} ${isToday ? styles.calToday : ""}`}
+                    className={cn(styles.calDay, available ? styles.calAvailable : "", isSelected ? styles.calSelected : "", isToday ? styles.calToday : "")}
                     disabled={!available}
                     aria-pressed={isSelected}
                     aria-label={`${label}, ${available ? `${slots.length} times available` : known ? "unavailable" : "checking"}`}
                     onClick={() => onSelect(key)}
                   >
-                    <span className={`${styles.calNum} chalk-soft`}>{date.getDate()}</span>
+                    <span className={cn(styles.calNum, "chalk-soft")}>{date.getDate()}</span>
                     {isSelected && <ChalkDoodle name="circle" size="100%" color="var(--sun-yellow)" strokeWidth={4} className={styles.calCircle} stretch />}
                   </button>
                 </span>
@@ -98,7 +99,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
         ))}
       </div>
 
-      <p className={`${styles.calLegend} chalk-soft`}>
+      <p className={cn(styles.calLegend, "chalk-soft")}>
         {loading ? "Checking the calendar…" : "Faded days are booked or closed."}
       </p>
     </div>

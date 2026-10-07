@@ -9,6 +9,7 @@ import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { todayInZone } from "@/lib/booking/timezone";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import styles from "./Admin.module.css";
+import { cn } from "@/lib/cn";
 
 type Note = { kind: "ok" | "error"; text: string } | null;
 
@@ -39,17 +40,17 @@ export default function AvailabilityPanel({ api }: { api: AdminApi }) {
 
   return (
     <section className={styles.section} aria-labelledby="availability-title">
-      <h2 id="availability-title" className={`${styles.h2} chalk`}>Availability</h2>
-      <p className={`${styles.muted} chalk-soft`}>
+      <h2 id="availability-title" className={cn(styles.h2, "chalk")}>Availability</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>
         Families can only book times inside these hours that are also free in your Outlook calendar.
       </p>
       {!dbReady && (
-        <p className={`${styles.bannerError} chalk-soft`} role="alert">
+        <p className={cn(styles.bannerError, "chalk-soft")} role="alert">
           The database isn&apos;t connected yet, so changes can&apos;t be saved. Showing the default hours.
         </p>
       )}
       {loadError && (
-        <p className={`${styles.error} chalk-soft`} role="alert">
+        <p className={cn(styles.error, "chalk-soft")} role="alert">
           {loadError}
         </p>
       )}
@@ -107,32 +108,32 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
 
   return (
     <div className={styles.availBlock}>
-      <h3 className={`${styles.h3} chalk-soft`}>Weekly schedule</h3>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Weekly schedule</h3>
       <ul className={styles.weekList}>
         {DISPLAY_ORDER.map((wd) => {
           const d = weekly.find((x) => x.weekday === wd)!;
           const name = WEEKDAY_NAMES[wd];
           return (
-            <li key={wd} className={`${styles.weekRow} ${d.isOpen ? "" : styles.weekClosed}`}>
-              <span className={`${styles.weekName} chalk-soft`}>{name}</span>
+            <li key={wd} className={cn(styles.weekRow, d.isOpen ? "" : styles.weekClosed)}>
+              <span className={cn(styles.weekName, "chalk-soft")}>{name}</span>
               <label className={styles.toggle}>
                 <input type="checkbox" checked={d.isOpen} onChange={(e) => setDay(wd, { isOpen: e.target.checked })} aria-label={`${name} open`} />
                 <span className="chalk-soft">{d.isOpen ? "Open" : "Closed"}</span>
               </label>
               <span className={styles.weekTimes}>
-                <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={d.start} disabled={!d.isOpen} onChange={(e) => setDay(wd, { start: e.target.value })} aria-label={`${name} opening time`} />
-                <span className={`${styles.muted} chalk-soft`}>to</span>
-                <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={d.end} disabled={!d.isOpen} onChange={(e) => setDay(wd, { end: e.target.value })} aria-label={`${name} closing time`} />
+                <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={d.start} disabled={!d.isOpen} onChange={(e) => setDay(wd, { start: e.target.value })} aria-label={`${name} opening time`} />
+                <span className={cn(styles.muted, "chalk-soft")}>to</span>
+                <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={d.end} disabled={!d.isOpen} onChange={(e) => setDay(wd, { end: e.target.value })} aria-label={`${name} closing time`} />
               </span>
             </li>
           );
         })}
       </ul>
 
-      <h3 className={`${styles.h3} chalk-soft`}>Booking rules</h3>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Booking rules</h3>
       <div className={styles.rulesGrid}>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="rule-notice">Minimum notice</label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-notice">Minimum notice</label>
           <select
             id="rule-notice"
             className={styles.input}
@@ -150,7 +151,7 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
           )}
         </div>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="rule-window">Booking window</label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-window">Booking window</label>
           <select
             id="rule-window"
             className={styles.input}
@@ -167,7 +168,7 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
           )}
         </div>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="rule-buffer">Buffer between sessions</label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-buffer">Buffer between sessions</label>
           <select
             id="rule-buffer"
             className={styles.input}
@@ -182,10 +183,10 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
           {customBuffer && (
             <input type="number" min={0} max={L.maxBufferMinutes} step={5} className={styles.input} value={limits.bufferMinutes} onChange={(e) => setLimit({ bufferMinutes: Math.max(0, Math.min(L.maxBufferMinutes, Number(e.target.value) || 0)) })} aria-label="Buffer in minutes" />
           )}
-          <p className={`${styles.hintSmall} chalk-soft`}>Kept free before and after every session, for travel and setup.</p>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Kept free before and after every session, for travel and setup.</p>
         </div>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="rule-reschedule">Customer reschedule notice</label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="rule-reschedule">Customer reschedule notice</label>
           <select
             id="rule-reschedule"
             className={styles.input}
@@ -200,18 +201,18 @@ function WeeklyAndRules({ rules, api, onSaved }: { rules: AvailabilityRules; api
           {customResched && (
             <input type="number" min={0} max={L.maxRescheduleNoticeHours} className={styles.input} value={limits.rescheduleNoticeHours} onChange={(e) => setLimit({ rescheduleNoticeHours: Math.max(0, Math.min(L.maxRescheduleNoticeHours, Number(e.target.value) || 0)) })} aria-label="Reschedule notice in hours" />
           )}
-          <p className={`${styles.hintSmall} chalk-soft`}>Families can move their session online until this long before it starts.</p>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Families can move their session online until this long before it starts.</p>
         </div>
       </div>
 
       <div className={styles.photoBar}>
-        {dirty && !busy ? <p className={`${styles.unsaved} chalk-soft`}>You have unsaved changes.</p> : <span />}
+        {dirty && !busy ? <p className={cn(styles.unsaved, "chalk-soft")}>You have unsaved changes.</p> : <span />}
         <ChalkButton variant="solid" onClick={save} disabled={!dirty || busy} seed={880}>
           {busy ? "Saving…" : "Save changes"}
         </ChalkButton>
       </div>
       {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
           {note.text}
         </p>
       )}
@@ -263,29 +264,29 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
 
   return (
     <div className={styles.availBlock}>
-      <h3 className={`${styles.h3} chalk-soft`}>Special dates</h3>
-      <p className={`${styles.muted} chalk-soft`}>Close a whole day, or give one date different hours. These replace the weekly schedule for that day.</p>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Special dates</h3>
+      <p className={cn(styles.muted, "chalk-soft")}>Close a whole day, or give one date different hours. These replace the weekly schedule for that day.</p>
       <form onSubmit={add} className={styles.availForm} noValidate>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="sd-date">Date</label>
-          <input id="sd-date" type="date" min={today} className={`${styles.input} ${styles.timeInput}`} value={date} onChange={(e) => setDate(e.target.value)} />
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="sd-date">Date</label>
+          <input id="sd-date" type="date" min={today} className={cn(styles.input, styles.timeInput)} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <label className={`${styles.toggle} ${styles.formToggle}`}>
+        <label className={cn(styles.toggle, styles.formToggle)}>
           <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} />
           <span className="chalk-soft">Closed all day</span>
         </label>
         <div className={styles.ruleField}>
-          <span className={`${styles.label} chalk-soft`}>Custom hours</span>
+          <span className={cn(styles.label, "chalk-soft")}>Custom hours</span>
           <span className={styles.weekTimes}>
-            <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={start} disabled={closed} onChange={(e) => setStart(e.target.value)} aria-label="Special date opening time" />
-            <span className={`${styles.muted} chalk-soft`}>to</span>
-            <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={end} disabled={closed} onChange={(e) => setEnd(e.target.value)} aria-label="Special date closing time" />
+            <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={start} disabled={closed} onChange={(e) => setStart(e.target.value)} aria-label="Special date opening time" />
+            <span className={cn(styles.muted, "chalk-soft")}>to</span>
+            <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={end} disabled={closed} onChange={(e) => setEnd(e.target.value)} aria-label="Special date closing time" />
           </span>
         </div>
         <ChalkButton type="submit" variant="outline" disabled={busy} seed={881}>Save date</ChalkButton>
       </form>
       {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
           {note.text}
         </p>
       )}
@@ -296,14 +297,14 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
               <span className="chalk-soft">
                 <b>{formatLongDate(o.date)}</b> — {o.isClosed ? "Closed" : `${formatTimeLabel(o.start!)} – ${formatTimeLabel(o.end!)}`}
               </span>
-              <button type="button" className={`${styles.smallButton} ${styles.danger}`} onClick={() => remove(o.date)} disabled={busy} aria-label={`Delete special date ${formatLongDate(o.date)}`}>
+              <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => remove(o.date)} disabled={busy} aria-label={`Delete special date ${formatLongDate(o.date)}`}>
                 Delete
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className={`${styles.hintSmall} chalk-soft`}>No special dates yet.</p>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>No special dates yet.</p>
       )}
     </div>
   );
@@ -354,29 +355,29 @@ function TimeBlocks({ rules, api, onSaved }: { rules: AvailabilityRules; api: Ad
 
   return (
     <div className={styles.availBlock}>
-      <h3 className={`${styles.h3} chalk-soft`}>Time blocks</h3>
-      <p className={`${styles.muted} chalk-soft`}>Block part of a day, like a personal appointment. Families can&apos;t book anything that overlaps it (including the buffer).</p>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Time blocks</h3>
+      <p className={cn(styles.muted, "chalk-soft")}>Block part of a day, like a personal appointment. Families can&apos;t book anything that overlaps it (including the buffer).</p>
       <form onSubmit={add} className={styles.availForm} noValidate>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="tb-date">Date</label>
-          <input id="tb-date" type="date" min={today} className={`${styles.input} ${styles.timeInput}`} value={date} onChange={(e) => setDate(e.target.value)} />
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tb-date">Date</label>
+          <input id="tb-date" type="date" min={today} className={cn(styles.input, styles.timeInput)} value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
         <div className={styles.ruleField}>
-          <span className={`${styles.label} chalk-soft`}>Time</span>
+          <span className={cn(styles.label, "chalk-soft")}>Time</span>
           <span className={styles.weekTimes}>
-            <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={start} onChange={(e) => setStart(e.target.value)} aria-label="Block start time" />
-            <span className={`${styles.muted} chalk-soft`}>to</span>
-            <input type="time" step={900} className={`${styles.input} ${styles.timeInput}`} value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Block end time" />
+            <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={start} onChange={(e) => setStart(e.target.value)} aria-label="Block start time" />
+            <span className={cn(styles.muted, "chalk-soft")}>to</span>
+            <input type="time" step={900} className={cn(styles.input, styles.timeInput)} value={end} onChange={(e) => setEnd(e.target.value)} aria-label="Block end time" />
           </span>
         </div>
         <div className={styles.ruleField}>
-          <label className={`${styles.label} chalk-soft`} htmlFor="tb-reason">Reason <span className={styles.optional}>(optional, only you see it)</span></label>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tb-reason">Reason <span className={styles.optional}>(optional, only you see it)</span></label>
           <input id="tb-reason" className={styles.input} maxLength={120} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Personal appointment" />
         </div>
         <ChalkButton type="submit" variant="outline" disabled={busy} seed={882}>Block this time</ChalkButton>
       </form>
       {note && (
-        <p className={`${note.kind === "ok" ? styles.ok : styles.error} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
           {note.text}
         </p>
       )}
@@ -388,14 +389,14 @@ function TimeBlocks({ rules, api, onSaved }: { rules: AvailabilityRules; api: Ad
                 <b>{formatLongDate(b.date)}</b> — {formatTimeLabel(b.start)} – {formatTimeLabel(b.end)}
                 {b.reason ? <span className={styles.blockReason}> · {b.reason}</span> : null}
               </span>
-              <button type="button" className={`${styles.smallButton} ${styles.danger}`} onClick={() => remove(b.id)} disabled={busy} aria-label={`Delete time block on ${formatLongDate(b.date)}`}>
+              <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => remove(b.id)} disabled={busy} aria-label={`Delete time block on ${formatLongDate(b.date)}`}>
                 Delete
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className={`${styles.hintSmall} chalk-soft`}>No time blocks yet.</p>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>No time blocks yet.</p>
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   name: string;
@@ -20,7 +21,7 @@ interface Props {
 export default function ChoiceCard({ name, value, checked, onSelect, title, detail, aside, seed }: Props) {
   const id = `${name}-${value}`;
   return (
-    <div className={`${styles.choice} ${checked ? styles.choiceChecked : ""}`}>
+    <div className={cn(styles.choice, checked ? styles.choiceChecked : "")}>
       <input
         id={id}
         className={styles.choiceInput}
@@ -42,11 +43,11 @@ export default function ChoiceCard({ name, value, checked, onSelect, title, deta
           <span className={styles.choiceMark} aria-hidden="true">
             {checked && <ChalkDoodle name="check" size={26} color="var(--sun-yellow)" strokeWidth={3.6} />}
           </span>
-          <span className={`${styles.choiceText} chalk-soft`}>
+          <span className={cn(styles.choiceText, "chalk-soft")}>
             <span className={styles.choiceTitle}>{title}</span>
             {detail && <span className={styles.choiceDetail}>{detail}</span>}
           </span>
-          {aside && <span className={`${styles.choiceAside} chalk-soft`}>{aside}</span>}
+          {aside && <span className={cn(styles.choiceAside, "chalk-soft")}>{aside}</span>}
         </ChalkBox>
       </label>
     </div>

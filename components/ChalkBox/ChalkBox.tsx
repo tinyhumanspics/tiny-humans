@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { roughRectPath } from "@/lib/chalk/rough";
 import styles from "./ChalkBox.module.css";
+import { cn } from "@/lib/cn";
 
 interface ChalkBoxProps {
   children?: ReactNode;
@@ -56,9 +57,9 @@ export default function ChalkBox({
   }, [size, seed, wobble]);
 
   return (
-    <div ref={ref} className={`${styles.box} ${className ?? ""}`} style={style}>
+    <div ref={ref} className={cn(styles.box, className)} style={style}>
       {size && size.w > 0 && (
-        <svg ref={svgRef} className={`${styles.frame} chalk-grain`} viewBox={`0 0 ${size.w} ${size.h}`} width={size.w} height={size.h} aria-hidden="true" focusable="false">
+        <svg ref={svgRef} className={cn(styles.frame, "chalk-grain")} viewBox={`0 0 ${size.w} ${size.h}`} width={size.w} height={size.h} aria-hidden="true" focusable="false">
           <g fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round">
             <path className={styles.main} d={roughRectPath(size.w, size.h, seed, wobble)} strokeWidth={strokeWidth} />
             {double && (

@@ -41,6 +41,7 @@ import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import en from "@/messages/en.json";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
 import styles from "./Booking.module.css";
+import { cn } from "@/lib/cn";
 
 /* ---------------- state ---------------- */
 
@@ -374,15 +375,15 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                 </span>
               </p>
               {inspiration && (
-                <p className={`${styles.summaryPhoto} chalk-soft`}>
+                <p className={cn(styles.summaryPhoto, "chalk-soft")}>
                   <span className={styles.chipLabel}>Inspired by</span> {inspiration.title}{" "}
-                  <button type="button" className={`${styles.inlineLink} chalk-soft`} onClick={() => selection.setInspirationId(null)} aria-label="Remove inspiration photo">
+                  <button type="button" className={cn(styles.inlineLink, "chalk-soft")} onClick={() => selection.setInspirationId(null)} aria-label="Remove inspiration photo">
                     Remove
                   </button>
                 </p>
               )}
             </div>
-            <Link href={bundlesHref(selection.inspirationId)} className={`${styles.linkButton} chalk-soft`}>
+            <Link href={bundlesHref(selection.inspirationId)} className={cn(styles.linkButton, "chalk-soft")}>
               Change bundle
             </Link>
           </div>
@@ -403,7 +404,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                 <StepTracker current={state.step} maxReached={state.maxStep} onGo={(s) => dispatch({ type: "go", step: s })} />
 
                 <div className={styles.stepBody}>
-                  <h3 ref={headingRef} tabIndex={-1} className={`${styles.stepTitle} chalk`}>
+                  <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
                     {stepTitles[state.step]}
                   </h3>
 
@@ -421,11 +422,11 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
                   {state.step === STEP.time && state.date && (
                     <fieldset className={styles.fieldset}>
-                      <legend className={`${styles.subtle} chalk-soft`}>{formatLongDate(state.date)} · {en.booking.timeZone.short}</legend>
+                      <legend className={cn(styles.subtle, "chalk-soft")}>{formatLongDate(state.date)} · {en.booking.timeZone.short}</legend>
                       {daySlots === undefined ? (
-                        <p className={`${styles.subtle} chalk-soft`}>Checking open times…</p>
+                        <p className={cn(styles.subtle, "chalk-soft")}>Checking open times…</p>
                       ) : daySlots.length === 0 ? (
-                        <p className={`${styles.subtle} chalk-soft`}>This day just filled up. Go back and pick another day.</p>
+                        <p className={cn(styles.subtle, "chalk-soft")}>This day just filled up. Go back and pick another day.</p>
                       ) : (
                         <div className={styles.slots}>
                           {daySlots.map((slot, i) => (
@@ -492,7 +493,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                   {state.step === STEP.review && <BabyLedNote compact />}
 
                   {state.stepError && (
-                    <p className={`${styles.error} chalk-soft`} role="alert">
+                    <p className={cn(styles.error, "chalk-soft")} role="alert">
                       {state.stepError}
                     </p>
                   )}
@@ -549,7 +550,7 @@ function DetailsForm({
     const errId = `field-${name}-error`;
     return (
       <div className={styles.field}>
-        <label htmlFor={`field-${name}`} className={`${styles.label} chalk-soft`}>
+        <label htmlFor={`field-${name}`} className={cn(styles.label, "chalk-soft")}>
           {label}
           {opts.optional && <span className={styles.optional}> (optional)</span>}
         </label>
@@ -566,7 +567,7 @@ function DetailsForm({
           required={!opts.optional}
         />
         {errors[name] && (
-          <p id={errId} className={`${styles.fieldError} chalk-soft`}>
+          <p id={errId} className={cn(styles.fieldError, "chalk-soft")}>
             {errors[name]}
           </p>
         )}
@@ -584,16 +585,16 @@ function DetailsForm({
       {field("parentName", "Parent / guardian name", { autoComplete: "name" })}
       {field("email", "Email", { type: "email", autoComplete: "email", inputMode: "email" })}
       {field("phone", "Phone", { type: "tel", autoComplete: "tel", inputMode: "tel" })}
-      <div className={`${styles.fieldWide} ${styles.homeBlock}`}>
-        <p className={`${styles.homeTitle} chalk-soft`}>Where should we bring the studio?</p>
-        <p className={`${styles.homeText} chalk-soft`}>{homeSession.addressHelp}</p>
+      <div className={cn(styles.fieldWide, styles.homeBlock)}>
+        <p className={cn(styles.homeTitle, "chalk-soft")}>Where should we bring the studio?</p>
+        <p className={cn(styles.homeText, "chalk-soft")}>{homeSession.addressHelp}</p>
       </div>
       <div className={styles.fieldWide}>{field("street", "Street address", { autoComplete: "street-address" })}</div>
       {field("city", "City", { autoComplete: "address-level2" })}
       {field("zip", "ZIP code", { autoComplete: "postal-code", inputMode: "numeric" })}
       {field("babyName", "Baby's name", { optional: true, autoComplete: "off" })}
       <div className={styles.field}>
-        <label htmlFor="field-babyAge" className={`${styles.label} chalk-soft`}>
+        <label htmlFor="field-babyAge" className={cn(styles.label, "chalk-soft")}>
           Baby&apos;s age
         </label>
         <select
@@ -613,18 +614,18 @@ function DetailsForm({
           ))}
         </select>
         {errors.babyAge && (
-          <p id="field-babyAge-error" className={`${styles.fieldError} chalk-soft`}>
+          <p id="field-babyAge-error" className={cn(styles.fieldError, "chalk-soft")}>
             {errors.babyAge}
           </p>
         )}
       </div>
-      <div className={`${styles.field} ${styles.fieldWide}`}>
-        <label htmlFor="field-notes" className={`${styles.label} chalk-soft`}>
+      <div className={cn(styles.field, styles.fieldWide)}>
+        <label htmlFor="field-notes" className={cn(styles.label, "chalk-soft")}>
           Notes or special requests<span className={styles.optional}> (optional)</span>
         </label>
         <textarea
           id="field-notes"
-          className={`${styles.input} ${styles.textarea}`}
+          className={cn(styles.input, styles.textarea)}
           rows={3}
           value={contact.notes}
           onChange={(e) => onChange("notes", e.target.value)}
@@ -652,8 +653,8 @@ function Review({ rows, onEdit }: { rows: ReviewRow[]; onEdit: (step: number) =>
     <dl className={styles.review}>
       {rows.map((r) => (
         <div key={r.label} className={styles.reviewRow}>
-          <dt className={`${styles.reviewLabel} chalk-soft`}>{r.label}</dt>
-          <dd className={`${styles.reviewValue} chalk-soft`}>
+          <dt className={cn(styles.reviewLabel, "chalk-soft")}>{r.label}</dt>
+          <dd className={cn(styles.reviewValue, "chalk-soft")}>
             {r.photo ? (
               <span className={styles.reviewPhoto}>
                 <InspirationThumb photo={r.photo} size={56} />
@@ -665,12 +666,12 @@ function Review({ rows, onEdit }: { rows: ReviewRow[]; onEdit: (step: number) =>
           </dd>
           <dd className={styles.reviewEdit}>
             {r.href && (
-              <Link href={r.href} className={`${styles.linkButton} chalk-soft`} aria-label={`Change ${r.label.toLowerCase()}`}>
+              <Link href={r.href} className={cn(styles.linkButton, "chalk-soft")} aria-label={`Change ${r.label.toLowerCase()}`}>
                 Change
               </Link>
             )}
             {r.step >= 0 && (
-              <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => onEdit(r.step)} aria-label={`Edit ${r.label.toLowerCase()}`}>
+              <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => onEdit(r.step)} aria-label={`Edit ${r.label.toLowerCase()}`}>
                 Edit
               </button>
             )}
@@ -712,11 +713,11 @@ function Confirmation({
   return (
     <div className={styles.confirm} role="status">
       <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
-      <p className={`${styles.confirmEyebrow} chalk-soft`}>Booking confirmed</p>
-      <h3 ref={headingRef} tabIndex={-1} className={`${styles.confirmTitle} chalk`}>
+      <p className={cn(styles.confirmEyebrow, "chalk-soft")}>Booking confirmed</p>
+      <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>
         See you soon, {firstName}!
       </h3>
-      <p className={`${styles.confirmText} chalk-soft`}>
+      <p className={cn(styles.confirmText, "chalk-soft")}>
         We&apos;ll bring the whole studio to your home in {r.address.city}.
         {r.contact.babyName ? ` We can't wait to meet ${r.contact.babyName}.` : " We can't wait to meet your little one."}
       </p>
@@ -729,7 +730,7 @@ function Confirmation({
         ))}
       </dl>
       <ChalkBox className={styles.paymentBox} seed={93} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
-        <p className={`${styles.paymentTitle} chalk-soft`}>Payment</p>
+        <p className={cn(styles.paymentTitle, "chalk-soft")}>Payment</p>
         <dl className={styles.paymentRows}>
           <div className={styles.confirmRow}>
             <dt className="chalk-soft">Package total</dt>
@@ -740,7 +741,7 @@ function Confirmation({
             <dd className="chalk-soft">After the photoshoot</dd>
           </div>
         </dl>
-        <p className={`${styles.paymentNote} chalk-soft`}>{PAYMENT_NOTE.page}</p>
+        <p className={cn(styles.paymentNote, "chalk-soft")}>{PAYMENT_NOTE.page}</p>
       </ChalkBox>
       {inspiration && (
         <div className={styles.chip}>
@@ -751,7 +752,7 @@ function Confirmation({
         </div>
       )}
       {result.rescheduleNoticeHours !== undefined && (
-        <p className={`${styles.rescheduleNote} chalk-soft`}>
+        <p className={cn(styles.rescheduleNote, "chalk-soft")}>
           {rescheduleNoticeText(result.rescheduleNoticeHours)} The Reschedule Booking link is in your confirmation email.
         </p>
       )}
@@ -798,14 +799,14 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
 
   return (
     <div className={styles.previewBar}>
-      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={openEmail}>Preview the confirmation email</button>
-      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => router.push(reschedulePath)}>Try the Reschedule link</button>
-      <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => router.push(cancelPath)}>Try the Cancel Booking link</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={openEmail}>Preview the confirmation email</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(reschedulePath)}>Try the Reschedule link</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(cancelPath)}>Try the Cancel Booking link</button>
       {html && createPortal(
         <div className={styles.previewModal} role="dialog" aria-modal="true" aria-label="Confirmation email preview">
           <div className={styles.previewTop}>
             <p className="chalk-soft">Email preview ({theme.label} theme)</p>
-            <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => setHtml(null)}>Close</button>
+            <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setHtml(null)}>Close</button>
           </div>
           <iframe
             title="Confirmation email preview"
@@ -855,11 +856,11 @@ function DiscountField({ applied, onApply, onRemove }: { applied: string | null;
   };
   return (
     <div className={styles.discount}>
-      <label htmlFor="discount-code" className={`${styles.discountLabel} chalk-soft`}>Have a discount code? <span className={styles.optional}>(optional)</span></label>
+      <label htmlFor="discount-code" className={cn(styles.discountLabel, "chalk-soft")}>Have a discount code? <span className={styles.optional}>(optional)</span></label>
       {applied ? (
-        <p className={`${styles.discountApplied} chalk-soft`}>
+        <p className={cn(styles.discountApplied, "chalk-soft")}>
           Code <b>{applied}</b> applied.{" "}
-          <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={async () => { setCode(""); setNote(null); await onRemove(); }}>Remove</button>
+          <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={async () => { setCode(""); setNote(null); await onRemove(); }}>Remove</button>
         </p>
       ) : (
         <div className={styles.discountRow}>
@@ -867,7 +868,7 @@ function DiscountField({ applied, onApply, onRemove }: { applied: string | null;
           <button type="button" className={styles.discountApply} onClick={apply} disabled={busy}>{busy ? "Checking…" : "Apply"}</button>
         </div>
       )}
-      {note && <p className={`${note.kind === "error" ? styles.error : styles.discountNote} chalk-soft`} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
+      {note && <p className={cn(note.kind === "error" ? styles.error : styles.discountNote, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
     </div>
   );
 }

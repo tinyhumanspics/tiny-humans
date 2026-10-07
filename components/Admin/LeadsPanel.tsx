@@ -10,6 +10,7 @@ import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettin
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
 import styles from "./Admin.module.css";
+import { cn } from "@/lib/cn";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
@@ -64,23 +65,23 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   return (
     <section className={styles.section} aria-labelledby="leads-title">
       <div className={styles.leadsTop}>
-        <h2 id="leads-title" className={`${styles.h2} chalk`}>Leads</h2>
-        <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => load(filter)} disabled={loading}>
+        <h2 id="leads-title" className={cn(styles.h2, "chalk")}>Leads</h2>
+        <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => load(filter)} disabled={loading}>
           {loading ? "Loading…" : "Refresh"}
         </button>
       </div>
-      <p className={`${styles.muted} chalk-soft`}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
+      <p className={cn(styles.muted, "chalk-soft")}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
 
       <div className={styles.editTabs} role="group" aria-label="Filter leads">
         {FILTERS.filter((f) => f.alwaysShow || (data?.counts[f.id] ?? 0) > 0).map((f) => (
-          <button key={f.id} type="button" className={`${styles.tab} ${filter === f.id ? styles.tabActive : ""}`} aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+          <button key={f.id} type="button" className={cn(styles.tab, filter === f.id ? styles.tabActive : "")} aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
             {f.label} ({data?.counts[f.id] ?? 0})
           </button>
         ))}
       </div>
 
-      {error && <p className={`${styles.bannerError} chalk-soft`} role="alert">{error}</p>}
-      {data && data.leads.length === 0 && !loading && <p className={`${styles.hintSmall} chalk-soft`}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>}
+      {error && <p className={cn(styles.bannerError, "chalk-soft")} role="alert">{error}</p>}
+      {data && data.leads.length === 0 && !loading && <p className={cn(styles.hintSmall, "chalk-soft")}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>}
 
       <ul className={styles.leadList}>
         {data?.leads.map((lead) => (
@@ -173,28 +174,28 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
   }
 
   return (
-    <li className={`${styles.leadCard} ${lead.status === "cancelled" ? styles.leadCancelled : ""}`}>
+    <li className={cn(styles.leadCard, lead.status === "cancelled" ? styles.leadCancelled : "")}>
       <div className={styles.leadHead}>
-        <span className={`${styles.leadName} chalk-soft`}>{lead.parentName}</span>
-        <span className={`${styles.statusPill} ${styles[`status_${lead.status}`]}`}>{STATUS_LABEL[lead.status]}</span>
+        <span className={cn(styles.leadName, "chalk-soft")}>{lead.parentName}</span>
+        <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{STATUS_LABEL[lead.status]}</span>
       </div>
-      <p className={`${styles.leadLine} chalk-soft`}>
+      <p className={cn(styles.leadLine, "chalk-soft")}>
         <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents)} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
       </p>
-      <p className={`${styles.leadMeta} chalk-soft`}>
+      <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
         {lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
       </p>
-      <p className={`${styles.leadMeta} chalk-soft`}>
+      <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? "Not tracked"}</b>
         {lead.source?.campaign ? ` · ${lead.source.campaign}` : ""}
       </p>
       {lead.cancellation && (
-        <p className={`${styles.leadCancelNote} chalk-soft`}>
+        <p className={cn(styles.leadCancelNote, "chalk-soft")}>
           Cancelled on {when(lead.cancellation.at)}: “{lead.cancellation.reason}”
         </p>
       )}
-      <button type="button" className={`${styles.linkButton} chalk-soft`} aria-expanded={open} onClick={onToggle}>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} aria-expanded={open} onClick={onToggle}>
         {open ? "Hide details" : "View details"}
       </button>
       {open && (
@@ -209,7 +210,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
           </dl>
           {lead.history.length > 0 && (
             <div className={styles.history}>
-              <p className={`${styles.h3} chalk-soft`}>Reschedule History</p>
+              <p className={cn(styles.h3, "chalk-soft")}>Reschedule History</p>
               <ol className={styles.historyList}>
                 <li>
                   <b className="chalk-soft">Original Appointment</b>
@@ -219,7 +220,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
                   <li key={h.at}>
                     <b className="chalk-soft">{i === 0 ? "Rescheduled" : "Rescheduled Again"}</b>
                     <span className="chalk-soft">{formatLongDate(h.newDate)}, {formatTimeLabel(h.newStart)}</span>
-                    <span className={`${styles.historyMeta} chalk-soft`}>By {h.by === "admin" ? "Admin" : "Customer"} · {when(h.at)}</span>
+                    <span className={cn(styles.historyMeta, "chalk-soft")}>By {h.by === "admin" ? "Admin" : "Customer"} · {when(h.at)}</span>
                   </li>
                 ))}
               </ol>
@@ -227,7 +228,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
           )}
           {lead.status !== "cancelled" && moving && (
             <div className={styles.adminReschedule}>
-              <p className={`${styles.h3} chalk-soft`}>Reschedule Booking</p>
+              <p className={cn(styles.h3, "chalk-soft")}>Reschedule Booking</p>
               <RescheduleFlow
                 idPrefix={`adm-${lead.reference}`}
                 current={{ date: lead.sessionDate, start: lead.start, end: lead.end }}
@@ -255,38 +256,38 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
           {lead.status !== "cancelled" && !moving &&
             (cancelling ? (
               <form onSubmit={cancel} className={styles.leadCancelForm} noValidate>
-                <label htmlFor={`reason-${lead.reference}`} className={`${styles.label} chalk-soft`}>Reason for cancellation (sent to the customer)</label>
-                <textarea id={`reason-${lead.reference}`} className={`${styles.input} ${styles.reasonInput}`} rows={3} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} aria-invalid={Boolean(err)} />
-                {err && <p className={`${styles.error} chalk-soft`} role="alert">{err}</p>}
+                <label htmlFor={`reason-${lead.reference}`} className={cn(styles.label, "chalk-soft")}>Reason for cancellation (sent to the customer)</label>
+                <textarea id={`reason-${lead.reference}`} className={cn(styles.input, styles.reasonInput)} rows={3} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} aria-invalid={Boolean(err)} />
+                {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
                 <div className={styles.photoBar}>
-                  <button type="button" className={`${styles.linkButton} chalk-soft`} onClick={() => { setCancelling(false); setErr(null); }}>Keep booking</button>
+                  <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => { setCancelling(false); setErr(null); }}>Keep booking</button>
                   <ChalkButton type="submit" variant="solid" disabled={busy} seed={890}>{busy ? "Cancelling…" : "Confirm cancellation"}</ChalkButton>
                 </div>
-                <p className={`${styles.hintSmall} chalk-soft`}>This removes the Outlook event, frees the time and emails the customer.</p>
+                <p className={cn(styles.hintSmall, "chalk-soft")}>This removes the Outlook event, frees the time and emails the customer.</p>
               </form>
             ) : (
-              <button type="button" className={`${styles.smallButton} ${styles.danger}`} onClick={() => setCancelling(true)}>
+              <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => setCancelling(true)}>
                 Cancel Booking
               </button>
             ))}
           <div className={styles.dangerZone}>
-            <p className={`${styles.hintSmall} chalk-soft`}>Delete is permanent and meant for test bookings. To keep the history, use Cancel instead.</p>
-            <button type="button" className={`${styles.smallButton} ${styles.deleteBtn}`} onClick={() => setConfirmDelete(true)}>Delete Lead</button>
+            <p className={cn(styles.hintSmall, "chalk-soft")}>Delete is permanent and meant for test bookings. To keep the history, use Cancel instead.</p>
+            <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={() => setConfirmDelete(true)}>Delete Lead</button>
           </div>
         </div>
       )}
       {confirmDelete && createPortal(
         <div className={styles.dialogBackdrop} role="presentation" onClick={() => !deleting && setConfirmDelete(false)}>
           <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={`del-t-${lead.reference}`} aria-describedby={`del-d-${lead.reference}`} onClick={(e) => e.stopPropagation()}>
-            <h3 id={`del-t-${lead.reference}`} className={`${styles.h3} chalk`}>Delete this lead permanently?</h3>
-            <p id={`del-d-${lead.reference}`} className={`${styles.muted} chalk-soft`}>
+            <h3 id={`del-t-${lead.reference}`} className={cn(styles.h3, "chalk")}>Delete this lead permanently?</h3>
+            <p id={`del-d-${lead.reference}`} className={cn(styles.muted, "chalk-soft")}>
               This will permanently remove the booking record and cannot be undone. ({lead.parentName}, {lead.reference})
               {lead.status !== "cancelled" ? " Its Outlook event is removed first; no emails are sent." : ""}
             </p>
-            {deleteErr && <p className={`${styles.error} chalk-soft`} role="alert">{deleteErr}</p>}
+            {deleteErr && <p className={cn(styles.error, "chalk-soft")} role="alert">{deleteErr}</p>}
             <div className={styles.photoBar}>
               <button type="button" className={styles.smallButton} onClick={() => setConfirmDelete(false)} disabled={deleting} autoFocus>Cancel</button>
-              <button type="button" className={`${styles.smallButton} ${styles.deleteBtn}`} onClick={doDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete Permanently"}</button>
+              <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={doDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete Permanently"}</button>
             </div>
           </div>
         </div>,

@@ -5,6 +5,7 @@ import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type Touch
 import type { PortfolioPhoto } from "@/config/portfolio";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./PortfolioLightbox.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   photos: PortfolioPhoto[];
@@ -85,7 +86,7 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose }: 
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <button ref={closeRef} type="button" className={`${styles.control} ${styles.close}`} onClick={onClose} aria-label="Close photo viewer">
+      <button ref={closeRef} type="button" className={cn(styles.control, styles.close)} onClick={onClose} aria-label="Close photo viewer">
         <ChalkDoodle name="close" size={30} />
       </button>
 
@@ -101,7 +102,7 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose }: 
             className={styles.image}
           />
         </div>
-        <figcaption className={`${styles.caption} chalk-soft`}>
+        <figcaption className={cn(styles.caption, "chalk-soft")}>
           {photo.caption && <span>{photo.caption}</span>}
           <span className={styles.count} aria-live="polite">
             {index + 1} of {photos.length}
@@ -109,10 +110,10 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose }: 
         </figcaption>
       </figure>
 
-      <button type="button" className={`${styles.control} ${styles.prev}`} onClick={prev} aria-label="Previous photo">
+      <button type="button" className={cn(styles.control, styles.prev)} onClick={prev} aria-label="Previous photo">
         <ChalkDoodle name="arrowLeft" size={34} />
       </button>
-      <button type="button" className={`${styles.control} ${styles.next}`} onClick={next} aria-label="Next photo">
+      <button type="button" className={cn(styles.control, styles.next)} onClick={next} aria-label="Next photo">
         <ChalkDoodle name="arrowRight" size={34} />
       </button>
     </div>

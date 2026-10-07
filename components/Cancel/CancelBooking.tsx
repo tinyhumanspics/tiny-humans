@@ -8,6 +8,7 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./CancelBooking.module.css";
+import { cn } from "@/lib/cn";
 
 type View = "loading" | "invalid" | "form" | "done" | "already" | "past";
 
@@ -68,24 +69,24 @@ export default function CancelBooking() {
   );
 
   return (
-    <section className={`container ${styles.page}`} aria-labelledby="cancel-title">
+    <section className={cn("container", styles.page)} aria-labelledby="cancel-title">
       <ChalkBox className={styles.panel} seed={311} wobble={3.4} strokeWidth={2.8}>
-        {view === "loading" && <p className={`${styles.muted} chalk-soft`}>Finding your booking…</p>}
+        {view === "loading" && <p className={cn(styles.muted, "chalk-soft")}>Finding your booking…</p>}
 
         {view === "invalid" && (
           <>
-            <h1 id="cancel-title" className={`${styles.title} chalk`}>We couldn&apos;t open this link</h1>
-            <p className={`${styles.text} chalk-soft`}>{message || "This cancellation link isn't valid."}</p>
-            <p className={`${styles.text} chalk-soft`}>Reply to your confirmation email, or write to hello@tinyhumans.photography, and we&apos;ll help.</p>
+            <h1 id="cancel-title" className={cn(styles.title, "chalk")}>We couldn&apos;t open this link</h1>
+            <p className={cn(styles.text, "chalk-soft")}>{message || "This cancellation link isn't valid."}</p>
+            <p className={cn(styles.text, "chalk-soft")}>Reply to your confirmation email, or write to hello@tinyhumans.photography, and we&apos;ll help.</p>
             <ChalkButton href="/" variant="outline" seed={312}>Back to Tiny Humans</ChalkButton>
           </>
         )}
 
         {(view === "already" || view === "past") && (
           <>
-            <h1 id="cancel-title" className={`${styles.title} chalk`}>{view === "already" ? "This session is already cancelled" : "This session has already started"}</h1>
+            <h1 id="cancel-title" className={cn(styles.title, "chalk")}>{view === "already" ? "This session is already cancelled" : "This session has already started"}</h1>
             {info}
-            <p className={`${styles.text} chalk-soft`}>
+            <p className={cn(styles.text, "chalk-soft")}>
               {view === "already" ? "Nothing else to do. If you'd like to book another session, we'd love to see you." : "It can't be cancelled online anymore. Please reply to your confirmation email."}
             </p>
             <ChalkButton href="/bundles" variant="solid" seed={313}>Book a session</ChalkButton>
@@ -94,11 +95,11 @@ export default function CancelBooking() {
 
         {view === "form" && booking && (
           <form onSubmit={submit} noValidate>
-            <p className={`${styles.eyebrow} chalk-soft`}>Hi {booking.parentFirstName}</p>
-            <h1 id="cancel-title" className={`${styles.title} chalk`}>Cancel your session?</h1>
-            <p className={`${styles.text} chalk-soft`}>Here&apos;s the session you&apos;re about to cancel:</p>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>Hi {booking.parentFirstName}</p>
+            <h1 id="cancel-title" className={cn(styles.title, "chalk")}>Cancel your session?</h1>
+            <p className={cn(styles.text, "chalk-soft")}>Here&apos;s the session you&apos;re about to cancel:</p>
             {info}
-            <label htmlFor="cancel-reason" className={`${styles.label} chalk-soft`}>Reason for cancellation</label>
+            <label htmlFor="cancel-reason" className={cn(styles.label, "chalk-soft")}>Reason for cancellation</label>
             <textarea
               id="cancel-reason"
               className={styles.textarea}
@@ -114,7 +115,7 @@ export default function CancelBooking() {
               aria-invalid={Boolean(error)}
               aria-describedby={error ? "cancel-error" : undefined}
             />
-            {error && <p id="cancel-error" className={`${styles.error} chalk-soft`} role="alert">{error}</p>}
+            {error && <p id="cancel-error" className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
             <div className={styles.actions}>
               <ChalkButton href="/" variant="outline" seed={314}>Keep My Booking</ChalkButton>
               <ChalkButton type="submit" variant="solid" disabled={busy} seed={315}>{busy ? "Cancelling…" : "Confirm Cancellation"}</ChalkButton>
@@ -125,14 +126,14 @@ export default function CancelBooking() {
         {view === "done" && booking && (
           <div className={styles.done} role="status">
             <ChalkDoodle name="heart" size={64} color="var(--cloud-blue)" strokeWidth={3} />
-            <p className={`${styles.eyebrow} chalk-soft`}>Booking cancelled</p>
-            <h1 id="cancel-title" className={`${styles.title} chalk`} tabIndex={-1}>Your session has been cancelled</h1>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>Booking cancelled</p>
+            <h1 id="cancel-title" className={cn(styles.title, "chalk")} tabIndex={-1}>Your session has been cancelled</h1>
             {info}
-            <p className={`${styles.text} chalk-soft`}>
+            <p className={cn(styles.text, "chalk-soft")}>
               We&apos;re sorry we won&apos;t get to capture these little moments this time. A confirmation is on its way to your inbox. If you&apos;d like to book another session in the future, we&apos;d love to see you.
             </p>
             <div className={styles.actions}>
-              <Link href="/" className={`${styles.link} chalk-soft`}>Back to Tiny Humans</Link>
+              <Link href="/" className={cn(styles.link, "chalk-soft")}>Back to Tiny Humans</Link>
               <ChalkButton href="/bundles" variant="solid" seed={316}>Book another session</ChalkButton>
             </div>
           </div>

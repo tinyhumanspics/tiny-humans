@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type CSSProperties, type ElementType, type ReactNode } from "react";
 import styles from "./Reveal.module.css";
+import { cn } from "@/lib/cn";
 
 export const INTRO_DONE_EVENT = "tinyhumans:intro-done";
 
@@ -81,7 +82,7 @@ export default function Reveal({ children, as: Tag = "div", className, delay = 0
     <Tag
       ref={ref}
       id={id}
-      className={`${styles.reveal} ${className ?? ""}`}
+      className={cn(styles.reveal, className)}
       style={{ ...style, ...(delay ? ({ "--reveal-delay": `${delay}ms` } as CSSProperties) : null) }}
     >
       {children}

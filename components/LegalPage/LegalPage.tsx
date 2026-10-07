@@ -4,6 +4,7 @@ import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { site } from "@/config/site";
 import type { ReactNode } from "react";
 import styles from "./LegalPage.module.css";
+import { cn } from "@/lib/cn";
 
 /** Turns the business email and Instagram handle into links. */
 function linkify(text: string): ReactNode[] {
@@ -22,15 +23,15 @@ function linkify(text: string): ReactNode[] {
 /** Readable page for the Privacy Policy and Terms of Service. */
 export default function LegalPage({ doc, other }: { doc: LegalDocument; other: { href: string; label: string } }) {
   return (
-    <main id="top" className={`container ${styles.page}`}>
+    <main id="top" className={cn("container", styles.page)}>
       <article className={styles.article}>
-        <h1 className={`${styles.title} chalk`}>{doc.title}</h1>
+        <h1 className={cn(styles.title, "chalk")}>{doc.title}</h1>
         <ChalkDoodle name="underline" size={200} color="var(--accent)" strokeWidth={3} className={styles.underline} />
-        <p className={`${styles.updated} chalk-soft`}>Last updated {doc.lastUpdated}</p>
+        <p className={cn(styles.updated, "chalk-soft")}>Last updated {doc.lastUpdated}</p>
         <p className={styles.intro}>{doc.intro}</p>
         {doc.sections.map((section) => (
           <section key={section.heading} className={styles.section}>
-            <h2 className={`${styles.heading} chalk-soft`}>{section.heading}</h2>
+            <h2 className={cn(styles.heading, "chalk-soft")}>{section.heading}</h2>
             {section.body.map((block, i) =>
               typeof block === "string" ? (
                 <p key={i}>{linkify(block)}</p>
@@ -44,7 +45,7 @@ export default function LegalPage({ doc, other }: { doc: LegalDocument; other: {
             )}
           </section>
         ))}
-        <p className={`${styles.other} chalk-soft`}>
+        <p className={cn(styles.other, "chalk-soft")}>
           See also our <Link href={other.href}>{other.label}</Link>.
         </p>
       </article>

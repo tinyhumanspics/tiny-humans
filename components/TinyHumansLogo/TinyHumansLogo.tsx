@@ -3,6 +3,7 @@
 import { useId, type CSSProperties } from "react";
 import { LOGO_LAYER_ORDER, type LogoAsset } from "@/config/logo/types";
 import styles from "./TinyHumansLogo.module.css";
+import { cn } from "@/lib/cn";
 
 export type LogoDrawState = "hidden" | "drawing" | "drawn";
 
@@ -23,7 +24,7 @@ export default function TinyHumansLogo({ logo, state, className }: Props) {
   const layers = LOGO_LAYER_ORDER.filter((l) => logo.layers[l] && logo.drawing.layers[l]?.length);
   const dustDots = Array.from({ length: 9 }, (_, i) => [dust.x0 + ((dust.x1 - dust.x0) * i) / 8, dust.y + (i % 3) * 5]);
   return (
-    <svg className={`${styles.logo} ${className ?? ""}`} viewBox={`0 0 ${w} ${h}`} data-state={state} role="img" aria-label={logo.alt}>
+    <svg className={cn(styles.logo, className)} viewBox={`0 0 ${w} ${h}`} data-state={state} role="img" aria-label={logo.alt}>
       <defs>
         {layers.map((layer) => (
           <mask key={layer} id={`${uid}-${layer}`} maskUnits="userSpaceOnUse" x="0" y="0" width={w} height={h}>

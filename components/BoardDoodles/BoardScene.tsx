@@ -5,6 +5,7 @@ import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import { colorVar, useDrawOnce } from "./BoardDoodles";
 import styles from "./BoardDoodles.module.css";
+import { cn } from "@/lib/cn";
 
 /** A medium-sized chalk drawing (theme-based) that fills an empty spot on the board. */
 export default function BoardScene({ index }: { index: number }) {
@@ -14,7 +15,7 @@ export default function BoardScene({ index }: { index: number }) {
   useDrawOnce(ref, theme.id);
   const [[aShape, aColor], [bShape, bColor]] = scene.accents;
   return (
-    <div ref={ref} className={`${styles.scene} chalk-grain`} aria-hidden="true" key={theme.id}>
+    <div ref={ref} className={cn(styles.scene, "chalk-grain")} aria-hidden="true" key={theme.id}>
       <span className={styles.sceneMain} style={{ "--i": 0 } as React.CSSProperties}>
         <ChalkDoodle name={scene.main[0]} size="100%" color={colorVar[scene.main[1]]} strokeWidth={2.2} drawable grain={false} />
       </span>

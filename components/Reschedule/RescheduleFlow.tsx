@@ -9,6 +9,7 @@ import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import en from "@/messages/en.json";
 import bstyles from "@/components/Booking/Booking.module.css";
 import styles from "./Reschedule.module.css";
+import { cn } from "@/lib/cn";
 
 export interface CurrentSession {
   date: DateKey;
@@ -100,14 +101,14 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
         ))}
       </ol>
       {error && (
-        <p className={`${styles.error} chalk-soft`} role="alert">
+        <p className={cn(styles.error, "chalk-soft")} role="alert">
           {error}
         </p>
       )}
 
       {step === "date" && (
         <>
-          <h3 className={`${bstyles.stepTitle} chalk`}>Choose a new day</h3>
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>Choose a new day</h3>
           <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} />
           <div className={styles.actions}>
             <ChalkButton variant="outline" onClick={onKeep} seed={421}>{keepLabel}</ChalkButton>
@@ -118,10 +119,10 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
 
       {step === "time" && date && (
         <>
-          <h3 className={`${bstyles.stepTitle} chalk`}>Pick a time on {formatLongDate(date)}</h3>
-          <p className={`${styles.muted} chalk-soft`}>{en.booking.timeZone.note}</p>
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>Pick a time on {formatLongDate(date)}</h3>
+          <p className={cn(styles.muted, "chalk-soft")}>{en.booking.timeZone.note}</p>
           {slotsForDate.length === 0 ? (
-            <p className={`${styles.muted} chalk-soft`}>{loading ? "Checking the calendar…" : "No open times left on this day. Please choose another day."}</p>
+            <p className={cn(styles.muted, "chalk-soft")}>{loading ? "Checking the calendar…" : "No open times left on this day. Please choose another day."}</p>
           ) : (
             <div className={bstyles.slots}>
               {slotsForDate.map((s, i) => (
@@ -138,26 +139,26 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
 
       {step === "review" && slot && (
         <>
-          <h3 className={`${bstyles.stepTitle} chalk`}>Check the change</h3>
-          <p className={`${styles.muted} chalk-soft`}>{en.booking.timeZone.note}</p>
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>Check the change</h3>
+          <p className={cn(styles.muted, "chalk-soft")}>{en.booking.timeZone.note}</p>
           <div className={styles.compare}>
             <div className={styles.compareCol}>
-              <p className={`${styles.compareLabel} chalk-soft`}>Current session</p>
-              <p className={`${styles.compareDate} ${styles.strike} chalk-soft`}>{formatLongDate(current.date)}</p>
-              <p className={`${styles.compareTime} ${styles.strike} chalk-soft`}>{formatTimeLabel(current.start)} – {formatTimeLabel(current.end)}</p>
+              <p className={cn(styles.compareLabel, "chalk-soft")}>Current session</p>
+              <p className={cn(styles.compareDate, styles.strike, "chalk-soft")}>{formatLongDate(current.date)}</p>
+              <p className={cn(styles.compareTime, styles.strike, "chalk-soft")}>{formatTimeLabel(current.start)} – {formatTimeLabel(current.end)}</p>
             </div>
-            <span className={`${styles.arrow} chalk-soft`} aria-hidden="true">→</span>
-            <div className={`${styles.compareCol} ${styles.compareNew}`}>
-              <p className={`${styles.compareLabel} chalk-soft`}>New session</p>
-              <p className={`${styles.compareDate} chalk-soft`}>{formatLongDate(slot.date)}</p>
-              <p className={`${styles.compareTime} chalk-soft`}>{formatTimeLabel(slot.start)} – {formatTimeLabel(slot.end)}</p>
+            <span className={cn(styles.arrow, "chalk-soft")} aria-hidden="true">→</span>
+            <div className={cn(styles.compareCol, styles.compareNew)}>
+              <p className={cn(styles.compareLabel, "chalk-soft")}>New session</p>
+              <p className={cn(styles.compareDate, "chalk-soft")}>{formatLongDate(slot.date)}</p>
+              <p className={cn(styles.compareTime, "chalk-soft")}>{formatTimeLabel(slot.start)} – {formatTimeLabel(slot.end)}</p>
             </div>
           </div>
           <div className={styles.actions}>
             <ChalkButton variant="outline" onClick={onKeep} seed={425}>{keepLabel}</ChalkButton>
             <ChalkButton variant="solid" disabled={busy} onClick={confirm} seed={426}>{busy ? "Rescheduling…" : "Confirm Reschedule"}</ChalkButton>
           </div>
-          <button type="button" className={`${styles.textLink} chalk-soft`} onClick={() => setStep("time")}>Choose a different time</button>
+          <button type="button" className={cn(styles.textLink, "chalk-soft")} onClick={() => setStep("time")}>Choose a different time</button>
         </>
       )}
     </div>

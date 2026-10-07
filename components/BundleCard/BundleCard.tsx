@@ -13,6 +13,7 @@ import { requestBookingScroll } from "@/lib/scroll/booking";
 import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import styles from "./BundleCard.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   bundle: Bundle;
@@ -33,7 +34,7 @@ export default function BundleCard({ bundle, index, href }: Props) {
   return (
     <Reveal delay={index * 120} className={styles.revealWrap}>
     <BoardDoodles area="card" only={index} />
-    <article className={`${styles.card} ${featured ? styles.featured : ""} ${offer ? styles.hasOffer : ""}`} aria-labelledby={titleId} data-index={index}>
+    <article className={cn(styles.card, featured ? styles.featured : "", offer ? styles.hasOffer : "")} aria-labelledby={titleId} data-index={index}>
       {offer && (
         <p className={styles.offerSticker} aria-hidden="true">
           <span>{offer.label}</span>
@@ -41,7 +42,7 @@ export default function BundleCard({ bundle, index, href }: Props) {
       )}
       <ChalkBox className={styles.box} seed={40 + index * 7} wobble={3.4} strokeWidth={2.8}>
         <ChalkDoodle name={doodle} size={34} color={index === 1 ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
-        <div className={`${styles.content} chalk`}>
+        <div className={cn(styles.content, "chalk")}>
           {bundle.badge && (
             <p className={styles.badge}>
               <ChalkDoodle grain={false} name="heart" size={18} color="var(--cloud-blue)" fill="var(--cloud-blue)" strokeWidth={2} />

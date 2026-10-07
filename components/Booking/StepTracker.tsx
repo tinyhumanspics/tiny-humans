@@ -3,6 +3,7 @@
 import { bookingSteps } from "@/config/booking";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
+import { cn } from "@/lib/cn";
 
 interface Props {
   current: number;
@@ -13,7 +14,7 @@ interface Props {
 export default function StepTracker({ current, maxReached, onGo }: Props) {
   return (
     <nav aria-label="Booking steps" className={styles.trackerNav}>
-      <p className={`${styles.trackerMobile} chalk-soft`}>
+      <p className={cn(styles.trackerMobile, "chalk-soft")}>
         Step {current + 1} of {bookingSteps.length}: {bookingSteps[current].label}
       </p>
       <ol className={styles.tracker}>
@@ -21,7 +22,7 @@ export default function StepTracker({ current, maxReached, onGo }: Props) {
           const done = i < current && i <= maxReached;
           const reachable = i <= maxReached;
           return (
-            <li key={step.id} className={`${styles.trackerItem} ${i === current ? styles.trackerCurrent : ""} ${done ? styles.trackerDone : ""}`}>
+            <li key={step.id} className={cn(styles.trackerItem, i === current ? styles.trackerCurrent : "", done ? styles.trackerDone : "")}>
               <button
                 type="button"
                 className={styles.trackerButton}
@@ -30,11 +31,11 @@ export default function StepTracker({ current, maxReached, onGo }: Props) {
                 aria-current={i === current ? "step" : undefined}
                 aria-label={`Step ${i + 1}, ${step.label}${done ? ", done" : ""}`}
               >
-                <span className={`${styles.trackerNum} chalk-soft`}>
+                <span className={cn(styles.trackerNum, "chalk-soft")}>
                   {done ? <ChalkDoodle name="check" size={22} color="var(--sun-yellow)" strokeWidth={3.6} /> : i + 1}
                   <ChalkDoodle name="circle" size="100%" strokeWidth={3.5} className={styles.trackerCircle} stretch />
                 </span>
-                <span className={`${styles.trackerLabel} chalk-soft`}>{step.label}</span>
+                <span className={cn(styles.trackerLabel, "chalk-soft")}>{step.label}</span>
               </button>
             </li>
           );
