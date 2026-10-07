@@ -117,6 +117,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Tracking: `lib/tracking/` (attribution cookie via `proxy.ts`, Pixel client, CAPI server). Never send baby data.
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
+- The project lives on the iCloud-synced Desktop: Finder/iCloud " 2"/" 3" duplicates appear (seen Oct 7 in
+  `.next/types/*.d 3.ts`, which breaks `npm run typecheck`). Duplicates inside `.next/` are safe to delete; ask before
+  touching any elsewhere.
 - Reminders: `vercel.json` cron (daily, Hobby) → `/api/cron/reminders` → `lib/booking/reminders.ts`; table
   `booking_emails` claims each email. Manage links are found by token hash on `bookings` OR `booking_emails`
   (`findByCancelToken`). Never send reminders from a test against production; test locally with `?now=` + fake Resend.

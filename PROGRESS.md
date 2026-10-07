@@ -3,25 +3,31 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7)
-State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 16 → routes → cn/landing/about/handle/analytics).
+## ▶ NEXT STEPS (handoff, Oct 7, after 2a–2c)
+State: everything below is on `main` and live (last deploy `7f4113f` + this handoff's docs commit).
 1. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → check Events Manager, booking row source, emails, Outlook → cancel → remove the code), then send
    him the ads message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for
-   `Schedule`). Check first that `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` are set in Vercel.
+   `Schedule`). The owner got the 7-step checklist on Oct 7 and hasn't reported results yet. Pixel ID is confirmed in
+   the live bundle; `META_CAPI_ACCESS_TOKEN` can only be confirmed by the owner (step 1) or by server `Schedule`
+   events showing up in Test Events. His test booking will also be the first real send of the new confirmation email.
 2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
    appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
-3. **Phase 2 (show rate)**: 2a live. **2b + 2c built and tested locally, NOT pushed yet** (commits on local `main`
-   after d181079). Deploy order: (1) owner approves the screenshots in `Claude outputs/emails-phase-2/`, (2) owner runs
-   `drizzle/0007_booking_emails.sql` in the Neon SQL editor, (3) owner adds `CRON_SECRET` (Production) in Vercel,
-   (4) push, then check Vercel → Settings → Cron Jobs lists `/api/cron/reminders`. Left in Phase 2: 2d after-session
-   emails, 2e SMS + photo-use checkboxes, edge items.
-4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page), DST check (Nov 1), BUG-5 overlap constraint.
-5. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
+3. **Phase 2 (show rate)**: 2a, 2b, 2c **live** (Oct 7, `7f4113f`; owner approved the screenshots, ran migration 0007
+   in Neon and added `CRON_SECRET`). First automatic reminder run: Oct 8, 14:00–14:59 UTC. Left in Phase 2: 2d
+   after-session emails (needs the owner's payment details: Zelle name/number, card link), 2e SMS + photo-use
+   checkboxes, edge items.
+4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page + Halloween email logo/strip in
+   `lib/email/assets.ts`), BUG-5 overlap constraint, DST (Nov 1): reminders + Outlook-mode slot times across the change
+   were checked locally Oct 7 (Nov 2/5 9:00 am stored as 14:00 UTC, day-before reminder on Nov 1 correct); still to
+   check: the calendar UI and availability on Nov 1 itself.
+5. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
+   Vercel → Settings → Cron Jobs → View Logs if one says "Not sent".
+6. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
    partly covers it) — legal wording needs his OK. `/portfolio` page (see "Owner requests").
-6. Admin photo slots for the 6 placeholders are complete (About ×4, landing ×2); the owner can upload them in
+7. Admin photo slots for the 6 placeholders are complete (About ×4, landing ×2); the owner can upload them in
    `/admin/photos`, with editable alt text and per-theme versions.
-7. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
+8. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
    The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9 uses it.
 
 ## ▶ Next session prompt
@@ -29,19 +35,21 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
 ```
 Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7): main = 65410a6 (+ docs-only commits after it), live and smoke-tested: Phase 1a–1f incl. the landing
-page /home-sweet-home (copy approved), Next 16.4 / React 19.3 / TS 7, /bundles + /book?bundle= + 404, /about,
-cn() refactor, Instagram @tinyhumans.photography, Vercel Analytics + Speed Insights.
-Not on main yet: nothing (local wip/* branches are merged; delete them when convenient).
+State (Oct 7): main = 7f4113f (+ handoff docs commit), live and smoke-tested: Phase 2a React Email (pixel-identical
+templates in emails/), 2b upgraded confirmation (backdrop swatches, prep guide, what happens next, meet the
+photographers), 2c daily reminder cron (/api/cron/reminders, table booking_emails, migration 0007 applied by the owner,
+CRON_SECRET set). First real reminder run: Oct 8, 10–11 am Miami.
+Not on main yet: nothing.
 
-Next: Phase 1g, production verification with the owner (test event code → one real booking from /home-sweet-home →
-Events Manager, booking source, emails, Outlook → cancel → remove the code), then the ads message. First confirm
-NEXT_PUBLIC_META_PIXEL_ID and META_CAPI_ACCESS_TOKEN are set in Vercel. Then Phase 2 (show-rate emails and reminders)
-before the first booked sessions. Research current official docs first (note links in PROGRESS.md).
-Time-sensitive: Halloween cutoff Oct 28, DST Nov 1, BUG-5 overlap constraint.
-Completed Oct 7: admin photo slots for the /about (4) and landing (2) placeholders (see "Owner requests").
-Waiting on the owner: privacy-policy line for Vercel Analytics, /portfolio page.
-Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/homebrew/bin/gh.
+Next: Phase 1g with the owner if he has results (checklist in PROGRESS → NEXT STEPS 1), then the ads message. Then
+Phase 2d: after-session emails (owner marks "session done" / "gallery delivered" in /admin; needs his payment details:
+Zelle name/number, card link; review + referral ask), then 2e (SMS consent + photo-use checkboxes, migration first).
+Research current official docs first (note links in PROGRESS.md).
+Time-sensitive: Halloween cutoff Oct 28 (theme, seasonal page, email images), BUG-5 overlap constraint, DST Nov 1 UI check.
+Waiting on the owner: 1g results, payment details for 2d, privacy-policy line for Vercel Analytics, /portfolio page.
+Watch out: the folder is on the iCloud Desktop: " 2"/" 3" duplicate files appear (e.g. .next/types/routes.d 3.ts
+breaks typecheck: delete the duplicates in .next). .agents/ + AGENTS.md are untracked files from another tool: leave
+them. Email changes: compare old vs new renders with screenshots before sending anything real.
 ```
 
 ## Owner requests (outside the original brief)
@@ -73,7 +81,7 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g (production verification) waits on the owner; Phase 2 started (2a React Email live Oct 7).
+- **Now:** Phase 1g (production verification) waits on the owner; Phase 2: 2a–2c live (Oct 7), 2d/2e next.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -141,12 +149,12 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
       plain text, subjects and attachments byte-identical. Real send path checked locally (Outlook mode + fake Graph +
       fake Resend via `RESEND_BASE_URL`): book → reschedule → cancel sent all 6 emails with the right idempotency keys.
       Mock-mode "Preview the confirmation email" now renders in the browser (new e2e test, passes on WebKit too).
-- [~] 2b Confirmation email upgrade (Oct 7, waiting on owner's yes + deploy): "Pick your backdrop" swatches (Blue Aura,
+- [x] 2b Confirmation email upgrade (Oct 7, live, owner approved the screenshots): "Pick your backdrop" swatches (Blue Aura,
       Burgundy, Cream, White; colors designed by Claude in `config/backdrops.ts`, reply with your pick), Home Session
       Prep Guide (owner-approved text), "What happens next" (3 sneak peeks within 24 h, gallery in 24–72 h, pay after),
       "Meet your photographers" (+ the /admin About "Adrian & Alondra" photo once uploaded), baby-led promise (landing
       wording). Copy in `messages/en.json` → `emails.*`.
-- [~] 2c Reminders (Oct 7, waiting on deploy steps above): Vercel Hobby cron once a day at 14:00 UTC (fires 10–11 am
+- [x] 2c Reminders (Oct 7, live; migration 0007 + `CRON_SECRET` done by the owner): Vercel Hobby cron once a day at 14:00 UTC (fires 10–11 am
       EDT / 9–10 am EST) → `GET /api/cron/reminders` (Bearer `CRON_SECRET`; `?dryRun=1` lists due references).
       `lib/booking/reminders.ts` decides at send time from the booking as it is now: "72h" (prep guide, backdrops, big
       "Need another time?" button while online rescheduling is open, else "text us") when the session is 2–3 Miami days
