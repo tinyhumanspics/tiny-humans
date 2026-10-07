@@ -324,3 +324,4 @@
 .codeName { font-family: var(--font-chalk); font-weight: 400; font-size: 1.15rem; letter-spacing: 0.04em; }
 .codeNote { display: block; color: var(--chalk-muted); font-size: 0.92rem; }
 .codeActions { display: flex; flex-wrap: wrap; gap: 6px; }
+a.smallButton { text-decoration: none; display: inline-flex; align-items: center; }

@@ -2,17 +2,18 @@ import "server-only";
 import { eq, sql } from "drizzle-orm";
 import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
-import { bookingPayments, bookings } from "@/lib/db/schema";
+import { bookingPayments, bookings, type Booking } from "@/lib/db/schema";
 import { formatLongDate } from "@/lib/booking/dates";
 import { AFTER_KINDS, amountDueCents, findByEmailLink } from "@/lib/booking/after-session";
 import { log } from "@/lib/log";
+import { verifyPayLink } from "./link";
 import { createCheckoutSession, getCheckoutSession, isStripeConfigured, type CheckoutSession } from "./stripe";
 
 /**
- * Card payments after the session. The pay link in our emails opens /pay?t=…, which sends the family to a Stripe
- * Checkout page for exactly the booked amount (a Checkout page lives 24 h at most, so a fresh one is made when
- * needed; an unexpired one is reused). "Paid" comes from the Stripe webhook, or from checking the last page when the
- * family opens the link again.
+ * Card payments, before or after the session. The booking's payment link (/pay?b=…&s=…, see ./link; older emails:
+ * /pay?t=…) sends the family to a Stripe Checkout page for exactly the booked amount (a Checkout page lives 24 h at
+ * most, so a fresh one is made when needed; an unexpired one is reused). "Paid" comes from the Stripe webhook, or from
+ * checking the last page when the family opens the link again.
  */
 export type PayOutcome = { redirect: string } | { status: "already" | "nothing" | "invalid" | "error" };
 
@@ -29,8 +30,17 @@ export async function markPaid(bookingId: string, session: CheckoutSession): Pro
     .onConflictDoUpdate({ target: bookingPayments.bookingId, set: { ...values, amountCents: session.amount_total ?? sql`${bookingPayments.amountCents}` } });
 }
 
-export async function openPayment(token: string, now = new Date()): Promise<PayOutcome> {
-  const row = await findByEmailLink(token, [AFTER_KINDS.afterSession, AFTER_KINDS.gallery]);
+/** The booking behind a payment link: the signed booking link, or a token from an after-session/gallery email. */
+export async function bookingForPayLink(q: { reference?: string | null; signature?: string | null; token?: string | null }): Promise<Booking | null> {
+  if (q.reference && q.signature) {
+    if (!verifyPayLink(q.reference, q.signature)) return null;
+    const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, q.reference)).limit(1);
+    return row ?? null;
+  }
+  return q.token ? findByEmailLink(q.token, [AFTER_KINDS.afterSession, AFTER_KINDS.gallery]) : null;
+}
+
+export async function openPayment(row: Booking | null, now = new Date()): Promise<PayOutcome> {
   if (!row || row.status === "cancelled") return { status: "invalid" };
   const amount = amountDueCents(row);
   if (amount <= 0) return { status: "nothing" };

@@ -40,6 +40,7 @@ export interface AdminApi {
   galleryDelivered(reference: string, galleryUrl?: string): Promise<Lead>;
   setReviewApproved(reference: string, approved: boolean): Promise<Lead>;
   setConsent(reference: string, change: { sms?: boolean; photos?: boolean }): Promise<Lead>;
+  emailPaymentLink(reference: string): Promise<Lead>;
   /* pricing & promotions (owner only) */
   getPricing(): Promise<{ bundles: Bundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
   saveBundle(b: BundleInput): Promise<Bundle[]>;
@@ -109,6 +110,8 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, approved }) }))).lead,
   setConsent: async (reference, change) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/consent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...change }) }))).lead,
+  emailPaymentLink: async (reference) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
 };
 
 /** Prototype: validate like the server, then keep the rules in this browser. */
@@ -273,6 +276,9 @@ const prototypeApi: AdminApi = {
     throw new Error("Not available in the prototype.");
   },
   setConsent: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  emailPaymentLink: async () => {
     throw new Error("Not available in the prototype.");
   },
 };

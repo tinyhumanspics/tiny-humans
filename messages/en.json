@@ -429,6 +429,18 @@
       "payReminder": "Still to pay: {amount}. You can pay by card any time with the button below.",
       "payButton": "Pay {amount}",
       "payText": "Pay {amount} by card: {url}"
+    },
+    "paymentLink": {
+      "subject": "Your Tiny Humans payment link",
+      "preheader": "Pay for your session whenever it suits you, before or after.",
+      "eyebrow": "Payment",
+      "title": "Here's your payment link, {name}",
+      "intro": "Pay for your session whenever it suits you, before or after. This link doesn't expire and always shows the right amount.",
+      "session": "Session",
+      "payNote": "Pay securely by card. The button opens a Stripe payment page for exactly this amount.",
+      "payButton": "Pay {amount}",
+      "payText": "Pay {amount} by card: {url}",
+      "smsBody": "Hi {name}! Here's the payment link for your Tiny Humans session: {url}"
     }
   },
   "review": {

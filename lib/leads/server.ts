@@ -7,6 +7,7 @@ import { snapshotOf } from "@/lib/booking/outlook-provider";
 import type { Lead, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
 import { sourceLabel } from "@/lib/tracking/attribution";
 import { log } from "@/lib/log";
+import { bookingPayUrl } from "@/lib/payments/link";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
@@ -45,12 +46,20 @@ const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e
 function afterOf(r: Booking, x: Extras): Lead["after"] {
   const current = (kind: string) => x.emails.find((e) => e.bookingId === r.id && e.kind === kind && e.sessionStart.getTime() === r.sessionStart.getTime());
   const pay = x.payments.find((p) => p.bookingId === r.id);
+  const amountCents = r.finalPriceCents ?? r.packagePrice * 100;
+  const linkEmail = x.emails.filter((e) => e.bookingId === r.id && e.kind === "payment_link").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
   const review = x.reviews.find((v) => v.bookingId === r.id);
   return {
     canSend: r.status !== "cancelled" && r.sessionStart.getTime() <= Date.now(),
     sessionDone: sent(current("after_session")),
     gallery: sent(current("gallery_delivered")),
-    payment: { amountCents: r.finalPriceCents ?? r.packagePrice * 100, status: pay?.status === "paid" ? "paid" : pay ? "open" : "unpaid", paidAt: iso(pay?.paidAt ?? null) },
+    payment: {
+      amountCents,
+      status: pay?.status === "paid" ? "paid" : pay ? "open" : "unpaid",
+      paidAt: iso(pay?.paidAt ?? null),
+      link: r.status !== "cancelled" && amountCents > 0 ? bookingPayUrl(r.bookingReference) : null,
+      linkEmail: sent(linkEmail),
+    },
     review: review ? { rating: review.rating, body: review.body, displayName: review.displayName, consentPublic: review.consentPublic, approved: review.approved, at: review.updatedAt.toISOString() } : null,
   };
 }

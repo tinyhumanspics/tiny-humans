@@ -11,6 +11,7 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
+import en from "@/messages/en.json";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
@@ -244,6 +245,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
               </ol>
             </div>
           )}
+          {lead.after && <PaymentPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.status !== "cancelled" && moving && (
@@ -337,14 +339,6 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
     }
   };
   const amount = formatMoney(a.payment.amountCents);
-  const payment =
-    a.payment.amountCents <= 0
-      ? "Nothing to pay"
-      : a.payment.status === "paid"
-        ? `Paid ${amount}${a.payment.paidAt ? ` on ${when(a.payment.paidAt)}` : ""}`
-        : a.payment.status === "open"
-          ? `Not paid yet (${amount}). The family opened the payment page.`
-          : `Not paid yet (${amount})`;
   const canRetry = (e: SentEmail | null) => !e || e.status === "failed";
   const id = `after-${lead.reference}`;
   if (lead.status === "cancelled") return null;
@@ -355,10 +349,6 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
         <div>
           <dt className="chalk-soft">Thank-you + payment email</dt>
           <dd className="chalk-soft">{a.sessionDone ? sentLine(a.sessionDone) : "Not sent yet"}</dd>
-        </div>
-        <div>
-          <dt className="chalk-soft">Payment</dt>
-          <dd className="chalk-soft">{payment}</dd>
         </div>
         <div>
           <dt className="chalk-soft">Gallery + review email</dt>
@@ -430,6 +420,92 @@ function ConsentButtons({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; o
       <button type="button" className={styles.smallButton} disabled={busy} onClick={() => change({ photos: !c.photos })}>
         {c.photos ? "Keep their photos private" : "They said OK to feature photos"}
       </button>
+      {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+    </div>
+  );
+}
+
+/** "sms:" link that opens Messages with the text filled in (works on iPhone and Android). */
+function smsHref(phone: string, body: string): string {
+  const digits = phone.replace(/\D/g, "");
+  const number = digits.length === 10 ? `+1${digits}` : `+${digits}`;
+  return `sms:${number}?&body=${encodeURIComponent(body)}`;
+}
+
+/** Payment: status + the booking's payment link (never expires) to text, copy or email — before or after the session. */
+function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
+  const p = lead.after!.payment;
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  if (lead.status === "cancelled") return null;
+  const amount = formatMoney(p.amountCents);
+  const status =
+    p.amountCents <= 0
+      ? "Nothing to pay"
+      : p.status === "paid"
+        ? `Paid ${amount}${p.paidAt ? ` on ${when(p.paidAt)}` : ""}`
+        : p.status === "open"
+          ? `Not paid yet (${amount}). The family opened the payment page.`
+          : `Not paid yet (${amount})`;
+  const showLink = p.link && p.status !== "paid";
+  const copy = async () => {
+    setErr(null);
+    try {
+      await navigator.clipboard.writeText(p.link!);
+      setNote("Link copied.");
+    } catch {
+      setNote(null);
+      setErr("Couldn't copy. Press and hold the link below to copy it.");
+    }
+  };
+  const email = async () => {
+    setBusy(true);
+    setErr(null);
+    setNote(null);
+    try {
+      onUpdated(await api.emailPaymentLink(lead.reference));
+      setNote(`Emailed to ${lead.email}.`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't send. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const first = lead.parentName.split(" ")[0];
+  return (
+    <div className={styles.history}>
+      <p className={cn(styles.h3, "chalk-soft")}>Payment</p>
+      <dl>
+        <div>
+          <dt className="chalk-soft">Status</dt>
+          <dd className="chalk-soft">{status}</dd>
+        </div>
+        {p.linkEmail && (
+          <div>
+            <dt className="chalk-soft">Payment link email</dt>
+            <dd className="chalk-soft">{sentLine(p.linkEmail)}</dd>
+          </div>
+        )}
+      </dl>
+      {showLink && (
+        <>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>This link never expires and always charges {amount}. Send it any time, before or after the session.</p>
+          <div className={styles.photoBarRight}>
+            <a className={styles.smallButton} href={smsHref(lead.phone, en.emails.paymentLink.smsBody.replace("{name}", first).replace("{url}", p.link!))}>
+              Text the link
+            </a>
+            <button type="button" className={styles.smallButton} onClick={copy}>
+              Copy link
+            </button>
+            <button type="button" className={styles.smallButton} disabled={busy} onClick={email}>
+              {busy ? "Sending…" : "Email the link"}
+            </button>
+          </div>
+          <input className={styles.input} readOnly value={p.link!} aria-label="Payment link" onFocus={(e) => e.currentTarget.select()} />
+        </>
+      )}
+      {note && <p className={cn(styles.hintSmall, "chalk-soft")} role="status">{note}</p>}
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
     </div>
   );

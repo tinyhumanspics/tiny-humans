@@ -19,7 +19,15 @@ export interface AfterSessionStatus {
   canSend: boolean;
   sessionDone: SentEmail | null;
   gallery: SentEmail | null;
-  payment: { amountCents: number; status: "unpaid" | "open" | "paid"; paidAt: string | null };
+  payment: {
+    amountCents: number;
+    status: "unpaid" | "open" | "paid";
+    paidAt: string | null;
+    /** The booking's payment link (never expires; null if cancelled or nothing to pay). */
+    link: string | null;
+    /** Last "Email the link". */
+    linkEmail: SentEmail | null;
+  };
   review: { rating: number; body: string; displayName: string; consentPublic: boolean; approved: boolean; at: string } | null;
 }
 

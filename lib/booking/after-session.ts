@@ -4,7 +4,8 @@ import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
 import { bookingEmails, bookingPayments, bookings, type Booking } from "@/lib/db/schema";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
-import { afterSessionEmail, galleryDeliveredEmail } from "@/lib/email";
+import { afterSessionEmail, galleryDeliveredEmail, paymentLinkEmail } from "@/lib/email";
+import { bookingPayUrl } from "@/lib/payments/link";
 import { getSiteSettings } from "@/lib/settings/server";
 import { log } from "@/lib/log";
 import { BookingError } from "./errors";
@@ -15,14 +16,15 @@ import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./canc
  * (review request + referral, + pay link while unpaid). Each is one booking_emails row per booking and session time:
  * sent once; a failed send can be tried again. The row's link token opens /pay (both kinds) and /review (gallery).
  */
-export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_delivered" } as const;
+export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_delivered", paymentLink: "payment_link" } as const;
 export type AfterKind = (typeof AFTER_KINDS)[keyof typeof AFTER_KINDS];
 
 /** What the family owes: the price booked (snapshot), never recalculated from today's bundles. */
 export const amountDueCents = (row: Booking) => row.finalPriceCents ?? row.packagePrice * 100;
 
 const base = () => site.url.replace(/\/$/, "");
-export const payUrl = (token: string) => `${base()}/pay?t=${token}`;
+/** The booking's permanent payment link; the email's own token link only if the signing secret is missing. */
+export const payUrl = (row: Booking, token: string) => bookingPayUrl(row.bookingReference) ?? `${base()}/pay?t=${token}`;
 export const reviewUrl = (token: string) => `${base()}/review?t=${token}`;
 
 /** Booking behind the link in one of these emails (null if unknown). */
@@ -92,7 +94,7 @@ const detailsOf = (row: Booking) => ({ reference: row.bookingReference, parentNa
 /** "Session done": thank-you + what happens next + pay button (exact booked amount). */
 export function sendAfterSessionEmail(row: Booking) {
   const amountCents = amountDueCents(row);
-  return deliver(row, AFTER_KINDS.afterSession, (token, themeId) => afterSessionEmail(detailsOf(row), { themeId, amountCents, payUrl: amountCents > 0 ? payUrl(token) : undefined }));
+  return deliver(row, AFTER_KINDS.afterSession, (token, themeId) => afterSessionEmail(detailsOf(row), { themeId, amountCents, payUrl: amountCents > 0 ? payUrl(row, token) : undefined }));
 }
 
 /** "Gallery delivered": review request + referral, and a pay button while the session is still unpaid. */
@@ -100,6 +102,44 @@ export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
   const amountCents = amountDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
-    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(token) } : null }),
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null }),
   );
+}
+
+/** "Email the payment link": any time (before or after the session), and as often as needed — it's always the same link. */
+export async function sendPaymentLinkEmail(row: Booking) {
+  if (row.status === "cancelled") throw new BookingError("invalid_request", "This booking is cancelled.");
+  const amountCents = amountDueCents(row);
+  if (amountCents <= 0) throw new BookingError("invalid_request", "There's nothing to pay for this booking.");
+  if (await isPaid(row.id)) throw new BookingError("invalid_request", "This booking is already paid.");
+  const link = bookingPayUrl(row.bookingReference);
+  if (!link) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
+  const db = getDb();
+  const now = new Date();
+  const [claimed] = await db
+    .insert(bookingEmails)
+    .values({ bookingId: row.id, kind: AFTER_KINDS.paymentLink, sessionStart: row.sessionStart })
+    .onConflictDoUpdate({ target: [bookingEmails.bookingId, bookingEmails.kind, bookingEmails.sessionStart], set: { status: "sending", attempts: sql`${bookingEmails.attempts} + 1`, error: null, updatedAt: now } })
+    .returning({ id: bookingEmails.id, attempts: bookingEmails.attempts });
+  try {
+    const themeId = await getSiteSettings().then((s) => s.themeId).catch(() => "default");
+    const mail = await paymentLinkEmail(detailsOf(row), { themeId, amountCents, payUrl: link, date: row.sessionDate });
+    const { id: resendId } = await sendEmail({
+      scope: "resend.payment_link",
+      to: row.email,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+      attachments: mail.attachments,
+      replyTo: emailConfig().notify,
+      idempotencyKey: `payment_link/${row.bookingReference}/${claimed.attempts}`,
+      reference: row.bookingReference,
+    });
+    await db.update(bookingEmails).set({ status: "sent", resendId, sentAt: new Date(), updatedAt: new Date() }).where(eq(bookingEmails.id, claimed.id));
+  } catch (err) {
+    const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    log.error("after-session", "Payment link email not sent", { reference: row.bookingReference, code, error: err instanceof EmailSendError ? undefined : (err as Error) });
+    await db.update(bookingEmails).set({ status: "failed", error: code, updatedAt: new Date() }).where(eq(bookingEmails.id, claimed.id)).catch(() => undefined);
+    throw new BookingError("server_error", `The email wasn't sent (${code}). Please try again.`);
+  }
 }
