@@ -29,6 +29,9 @@
       "access": "Gate code, parking or concierge",
       "accessPlaceholder": "Gate code, where to park, check in at the front desk…",
       "reviewAccess": "Getting in"
+    },
+    "age": {
+      "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages."
     }
   },
   "errors": {
@@ -210,7 +213,7 @@
         },
         {
           "q": "How soon after birth should we book?",
-          "a": "Any time that suits you. The first couple of weeks are lovely for sleepy, curled-up newborn photos, and we photograph little ones up to 5 years old. Expecting? Book with your due date and we'll adjust the day once baby arrives."
+          "a": "Any time that suits you. The first couple of weeks are lovely for sleepy, curled-up newborn photos, and we photograph little ones up to 2 years old. Expecting? Book with your due date and we'll adjust the day once baby arrives."
         },
         {
           "q": "What if baby comes early or late, or is fussy or hungry?",

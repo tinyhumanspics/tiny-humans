@@ -172,6 +172,9 @@ function newRequestId(): string {
 
 const stepTitles = ["Pick a day", "Pick a time", "Tell us about your family", "Check everything"];
 
+/** Newborns up to 2 years for now: the note under the age box, split around the email link. */
+const olderNote = en.booking.age.olderNote.split("{email}");
+
 /** The booking calendar for one bundle (chosen on the bundles page). */
 export default function Booking({ bundleId }: { bundleId: string }) {
   const { id, title, subtitle } = site.sections.book;
@@ -648,7 +651,7 @@ function DetailsForm({
           value={contact.babyAge}
           onChange={(e) => onChange("babyAge", e.target.value)}
           aria-invalid={Boolean(errors.babyAge)}
-          aria-describedby={errors.babyAge ? "field-babyAge-error" : undefined}
+          aria-describedby={[errors.babyAge && "field-babyAge-error", site.contact.email && "field-babyAge-hint"].filter(Boolean).join(" ") || undefined}
           required
         >
           <option value="">Choose an age</option>
@@ -661,6 +664,15 @@ function DetailsForm({
         {errors.babyAge && (
           <p id="field-babyAge-error" className={cn(styles.fieldError, "chalk-soft")}>
             {errors.babyAge}
+          </p>
+        )}
+        {site.contact.email && (
+          <p id="field-babyAge-hint" className={cn(styles.optional, "chalk-soft")}>
+            {olderNote[0]}
+            <a href={`mailto:${site.contact.email}`} className={styles.inlineLink}>
+              {site.contact.email}
+            </a>
+            {olderNote[1]}
           </p>
         )}
       </div>

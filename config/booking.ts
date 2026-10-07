@@ -14,7 +14,7 @@ export const babyAgeOptions = [
   "6 weeks – 3 months",
   "3–6 months",
   "6–12 months",
-  "1 year or older",
+  "1–2 years",
   "Not born yet",
 ] as const;
 
