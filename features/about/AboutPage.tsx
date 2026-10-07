@@ -3,7 +3,7 @@ import { bundlesHref } from "@/config/booking";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import PhotoPlaceholder from "@/components/PhotoPlaceholder/PhotoPlaceholder";
+import SitePhotoSlot from "@/components/SitePhotoSlot/SitePhotoSlot";
 import Reveal from "@/components/Reveal/Reveal";
 import SectionHeading from "@/components/SectionHeading/SectionHeading";
 import styles from "./About.module.css";
@@ -14,7 +14,7 @@ const whyDoodles = ["house", "heart", "sun"] as const;
 
 /**
  * /about: the story behind Tiny Humans (linked from the footer only). Copy from the owner's answers, in messages/en.json.
- * Photos are placeholders until the owner uploads them (later: editable in /admin, "Meet the photographers").
+ * Photos stay as placeholders until the owner uploads replacements in /admin → Photos.
  */
 export default function AboutPage() {
   return (
@@ -28,14 +28,14 @@ export default function AboutPage() {
           <p className={cn(styles.lead, "chalk-soft")}>{t.hero.intro}</p>
         </div>
         <Reveal className={styles.heroPhoto}>
-          <PhotoPlaceholder label={t.hero.photo} ratio={4 / 5} seed={501} tape="yellow" />
+          <SitePhotoSlot group="about" index={0} placeholderLabel={t.hero.photo} ratio={4 / 5} seed={501} sizes="(min-width: 860px) 420px, 100vw" priority tape="yellow" />
         </Reveal>
       </section>
 
       {/* How it started */}
       <section className={cn("container", styles.section, styles.story)} aria-labelledby="about-story">
         <Reveal className={styles.storyPhoto}>
-          <PhotoPlaceholder label={t.story.photo} ratio={3 / 2} seed={511} tape="blue" />
+          <SitePhotoSlot group="about" index={1} placeholderLabel={t.story.photo} ratio={3 / 2} seed={511} sizes="(min-width: 860px) 480px, 100vw" tape="blue" />
         </Reveal>
         <div>
           <h2 id="about-story" className={cn(styles.heading, "chalk")}>{t.story.title}</h2>
@@ -67,7 +67,7 @@ export default function AboutPage() {
         <ul className={styles.team}>
           {t.team.people.map((person, i) => (
             <Reveal as="li" key={person.name} delay={i * 120} className={styles.person}>
-              <PhotoPlaceholder label={person.photo} ratio={4 / 5} seed={530 + i} tape={i === 0 ? "white" : "yellow"} />
+              <SitePhotoSlot group="about" index={i + 2} placeholderLabel={person.photo} ratio={4 / 5} seed={530 + i} sizes="(min-width: 720px) 440px, 100vw" tape={i === 0 ? "white" : "yellow"} />
               <h3 className={cn(styles.personName, "chalk")}>{person.name}</h3>
               <p className={cn(styles.role, "chalk-soft")}>{person.role}</p>
               <p className={cn(styles.text, "chalk-soft")}>{person.text}</p>

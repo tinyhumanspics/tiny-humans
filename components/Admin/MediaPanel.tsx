@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 
 type Upload = (b: Blob) => Promise<{ src: string }>;
 type Note = { kind: "ok" | "error"; text: string } | null;
+type SlotPath = ["title" | "landing" | "about", number] | ["group", number, number];
 
 const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
 const titleFromFile = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
@@ -50,15 +51,16 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
     return { id: newId(), src, width, height, title, alt: previous?.alt || title, caption: previous?.caption ?? "" };
   };
 
-  /** slot: ["title", i] | ["group", g, i] */
-  const setSlot = async (path: [string, number, number?], photo: PortfolioPhoto | null, okText: string) => {
+  const setSlot = async (path: SlotPath, photo: PortfolioPhoto | null, okText: string) => {
     const next = clone(media);
     if (path[0] === "title") next.title[path[1]] = photo;
+    else if (path[0] === "landing") next.landing[path[1]] = photo;
+    else if (path[0] === "about") next.about[path[1]] = photo;
     else next.groups[path[1]].photos[path[2]!] = photo;
     await saveMedia(next, path.join("-"), okText);
   };
 
-  const replace = async (path: [string, number, number?], current: PortfolioPhoto | null, slotName: string, e: ChangeEvent<HTMLInputElement>) => {
+  const replace = async (path: SlotPath, current: PortfolioPhoto | null, slotName: string, e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
@@ -89,19 +91,39 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
       <MediaGroupBlock label={MEDIA_GROUPS.title.label} where={`${MEDIA_GROUPS.title.where} These two are shown without captions.`}>
         {[0, 1].map((i) => (
-          <Slot key={`t${i}-${themeId}`} name={`Image ${i + 1}`} groupLabel={MEDIA_GROUPS.title.label} custom={media.title[i]} builtIn={BUILT_IN.title[i]} busy={busy === `title-${i}`}
+          <Slot key={`t${i}-${themeId}-${media.title[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={MEDIA_GROUPS.title.label} custom={media.title[i]} builtIn={BUILT_IN.title[i]} busy={busy === `title-${i}`}
             onReplace={(e) => replace(["title", i], media.title[i], `${MEDIA_GROUPS.title.label} · Image ${i + 1}`, e)}
             onReset={() => setSlot(["title", i], null, `${MEDIA_GROUPS.title.label} · Image ${i + 1} is back to the built-in picture.`)}
             onDetails={(p) => setSlot(["title", i], p, "Details saved.")} captions={false} />
         ))}
       </MediaGroupBlock>
 
+      <FixedPlaceholderGroup
+        definition={MEDIA_GROUPS.landing}
+        kind="landing"
+        photos={media.landing}
+        themeId={themeId}
+        busy={busy}
+        replace={replace}
+        setSlot={setSlot}
+      />
+
+      <FixedPlaceholderGroup
+        definition={MEDIA_GROUPS.about}
+        kind="about"
+        photos={media.about}
+        themeId={themeId}
+        busy={busy}
+        replace={replace}
+        setSlot={setSlot}
+      />
+
       {MEDIA_GROUPS.feed.map((g, gi) => (
         <MediaGroupBlock key={g.label} label={g.label} where={g.where}
           prompt={{ title: media.groups[gi]?.title ?? "", text: media.groups[gi]?.text ?? "", defaultTitle: g.defaultTitle, defaultText: g.defaultText, busy: busy === `prompt-${gi}`,
             onSave: (title, text) => { const next = clone(media); next.groups[gi].title = title.trim() || null; next.groups[gi].text = text.trim() || null; return saveMedia(next, `prompt-${gi}`, "Prompt text saved."); } }}>
           {[0, 1, 2].map((i) => (
-            <Slot key={`g${gi}-${i}-${themeId}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
+            <Slot key={`g${gi}-${i}-${themeId}-${media.groups[gi]?.photos[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
               onReplace={(e) => replace(["group", gi, i], media.groups[gi]?.photos[i] ?? null, `${g.label} · Image ${i + 1}`, e)}
               onReset={() => setSlot(["group", gi, i], null, `${g.label} · Image ${i + 1} is back to the built-in picture.`)}
               onDetails={(p) => setSlot(["group", gi, i], p, p.caption ? `Caption saved: “${p.caption}”.` : "Saved. No caption, so the photo fills the frame.")} />
@@ -134,6 +156,36 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         )}
       </MediaGroupBlock>
     </section>
+  );
+}
+
+function FixedPlaceholderGroup({ definition, kind, photos, themeId, busy, replace, setSlot }: {
+  definition: { label: string; where: string; slots: string[] };
+  kind: "landing" | "about";
+  photos: (PortfolioPhoto | null)[];
+  themeId: TinyHumansTheme;
+  busy: string | null;
+  replace: (path: SlotPath, current: PortfolioPhoto | null, slotName: string, e: ChangeEvent<HTMLInputElement>) => Promise<void>;
+  setSlot: (path: SlotPath, photo: PortfolioPhoto | null, okText: string) => Promise<void>;
+}) {
+  return (
+    <MediaGroupBlock label={definition.label} where={`${definition.where} These photos are shown without captions.`}>
+      {definition.slots.map((name, i) => (
+        <Slot
+          key={`${kind}-${i}-${themeId}-${photos[i]?.id ?? "empty"}`}
+          name={name}
+          groupLabel={definition.label}
+          custom={photos[i] ?? null}
+          builtIn={null}
+          busy={busy === `${kind}-${i}`}
+          onReplace={(e) => replace([kind, i], photos[i] ?? null, `${definition.label} · ${name}`, e)}
+          onReset={() => setSlot([kind, i], null, `${definition.label} · ${name} removed. The placeholder is showing again.`)}
+          onDetails={(p) => setSlot([kind, i], p, "Photo details saved.")}
+          resetLabel="Remove picture"
+          captions={false}
+        />
+      ))}
+    </MediaGroupBlock>
   );
 }
 
@@ -179,10 +231,10 @@ function Slot({ name, groupLabel, custom, builtIn, busy, onReplace, onReset, onD
         {shown ? <Image src={shown.src} alt={shown.alt} fill sizes="220px" style={{ objectFit: "cover" }} unoptimized={shown.src.startsWith("data:")} /> : null}
         {busy && <span className={cn(styles.slotBusy, "chalk-soft")}>Saving…</span>}
       </div>
-      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : "Built-in picture"}</p>
+      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : builtIn ? "Built-in picture" : "Photo coming soon"}</p>
       <label className={cn(styles.smallButton, styles.replaceBtn)}>
         <input type="file" accept="image/*" className={styles.visuallyHidden} onChange={onReplace} aria-label={`Replace ${groupLabel} ${name}`} disabled={busy} />
-        Replace
+        {shown ? "Replace" : "Add picture"}
       </label>
       {captions && shown && <p className={cn(styles.slotCaption, "chalk-soft")}>{shown.caption ? `Caption: “${shown.caption}”` : "No caption: the photo fills the frame"}</p>}
       {shown && (
@@ -198,7 +250,7 @@ function Slot({ name, groupLabel, custom, builtIn, busy, onReplace, onReset, onD
               <span className={cn(styles.hintSmall, "chalk-soft")}>Leave empty and the photo fills the whole frame.</span>
             </label>
           )}
-          <label className={cn(styles.label, "chalk-soft")}>Title (shown when a parent books this photo)<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (shown when a parent books this photo)" : "Photo title"}<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
           <button
             type="button"

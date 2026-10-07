@@ -17,8 +17,8 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
 4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page), DST check (Nov 1), BUG-5 overlap constraint.
 5. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
    partly covers it) — legal wording needs his OK. `/portfolio` page (see "Owner requests").
-6. **Admin photo slots for the 6 placeholders** (queued right after 1g; see "Owner requests"), so the owner uploads
-   the About ×4 and landing ×2 photos himself instead of sending them for a code change.
+6. Admin photo slots for the 6 placeholders are complete (About ×4, landing ×2); the owner can upload them in
+   `/admin/photos`, with editable alt text and per-theme versions.
 7. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
    The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9 uses it.
 
@@ -37,7 +37,7 @@ Events Manager, booking source, emails, Outlook → cancel → remove the code),
 NEXT_PUBLIC_META_PIXEL_ID and META_CAPI_ACCESS_TOKEN are set in Vercel. Then Phase 2 (show-rate emails and reminders)
 before the first booked sessions. Research current official docs first (note links in PROGRESS.md).
 Time-sensitive: Halloween cutoff Oct 28, DST Nov 1, BUG-5 overlap constraint.
-Queued after 1g: admin photo slots for the /about (4) and landing (2) placeholders (see "Owner requests").
+Completed Oct 7: admin photo slots for the /about (4) and landing (2) placeholders (see "Owner requests").
 Waiting on the owner: privacy-policy line for Vercel Analytics, /portfolio page.
 Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/homebrew/bin/gh.
 ```
@@ -62,10 +62,10 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
       Insights 10k events/30 days then paused); Pro: Analytics $0.03 per 1k events, basic Speed Insights free.
 - [x] **`cn()` helper** (`lib/cn.ts`, clsx + tailwind-merge) across components (owner's refactor, committed Oct 7;
       visual diff vs baseline = none besides the footer/handle).
-- [ ] **Admin photo slots for `/about` (4) and the landing page (2)** (owner, Oct 7; queued after 1g). Extend
+- [x] **Admin photo slots for `/about` (4) and the landing page (2)** (owner, Oct 7). Extended
       `MEDIA_GROUPS` in `config/media.ts` (per-theme slots saved in Vercel Blob, same uploader as the home photos) with
       an "About" and a "Landing" group; `PhotoPlaceholder` shows until a slot has a photo, then `PinnedPhoto`. Alt text
-      per photo (Phase 5 wants it editable anyway). Later, with decision 18: bio text editable in /admin too.
+      per photo is editable. Later, with decision 18: bio text editable in /admin too.
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
@@ -220,8 +220,8 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
 
 ## Placeholders (must be approved before showing)
 - Photo placeholders (`PhotoPlaceholder`, "photo coming soon"): /about → "Adrian & Alondra", "Behind the scenes at a
-  home session", "Adrian at work", "Alondra styling a set"; landing → see 1f. Swap for `PinnedPhoto` when the owner
-  sends the photos (until /admin upload exists, photos go in `public/` + code).
+  home session", "Adrian at work", "Alondra styling a set"; landing → see 1f. Each swaps to `PinnedPhoto` when the owner
+  uploads its per-theme replacement in `/admin/photos`.
 - About copy (`about.*`): "husband-and-wife team", "about two years… photographing all kinds of things", "Hablamos
   español" → owner approval.
 - Travel fee numbers, photographers' photo (owner uploads in /admin), bio text (drafted from owner's answers → approval),

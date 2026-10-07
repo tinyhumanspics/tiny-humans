@@ -11,6 +11,16 @@ export const MEDIA_GROUPS = {
     where: "The two pinned photos next to the main title (“Tiny moments. Big memories.”) at the top of the home page.",
     slots: 2,
   },
+  landing: {
+    label: "Stay-Home Session Page",
+    where: "The two photos on the /home-sweet-home page. Until you add one, visitors see the matching “photo coming soon” card.",
+    slots: ["Behind the scenes", "Meet the photographers"],
+  },
+  about: {
+    label: "About Us Page",
+    where: "The four photos on the /about page. Until you add one, visitors see the matching “photo coming soon” card.",
+    slots: ["Adrian & Alondra", "Behind the scenes", "Adrian at work", "Alondra styling a set"],
+  },
   feed: portfolioCtas.map((cta) => ({
     label: `${cta.title.replace(/[?.!]/g, "").replace(/\b\w/g, (c) => c.toUpperCase())} Pictures`,
     where: `The 3 photos in the “Little moments” section just above the “${cta.title}” prompt. The middle one is also shown inside that prompt.`,
@@ -36,6 +46,8 @@ export interface MediaGroup {
 /** One theme's pictures. */
 export interface ThemeMedia {
   title: (PortfolioPhoto | null)[];
+  landing: (PortfolioPhoto | null)[];
+  about: (PortfolioPhoto | null)[];
   groups: MediaGroup[];
   extra: PortfolioPhoto[];
 }
@@ -47,7 +59,13 @@ export const BUILT_IN = {
 };
 
 export function emptyThemeMedia(): ThemeMedia {
-  return { title: [null, null], groups: MEDIA_GROUPS.feed.map(() => ({ photos: [null, null, null], title: null, text: null })), extra: [] };
+  return {
+    title: [null, null],
+    landing: MEDIA_GROUPS.landing.slots.map(() => null),
+    about: MEDIA_GROUPS.about.slots.map(() => null),
+    groups: MEDIA_GROUPS.feed.map(() => ({ photos: [null, null, null], title: null, text: null })),
+    extra: [],
+  };
 }
 
 /** Old single-list picture sets -> slots, keeping the same visual positions. */
@@ -63,6 +81,8 @@ export function mediaFromList(list: PortfolioPhoto[]): ThemeMedia {
 /** What the site shows for a theme: custom slot, else the built-in picture for that position. */
 export interface ResolvedMedia {
   title: PortfolioPhoto[];
+  landing: (PortfolioPhoto | null)[];
+  about: (PortfolioPhoto | null)[];
   groups: { photos: PortfolioPhoto[]; title: string; text: string }[];
   extra: PortfolioPhoto[];
 }
@@ -71,6 +91,8 @@ export function resolveMedia(m: ThemeMedia | undefined): ResolvedMedia {
   const media = m ?? emptyThemeMedia();
   return {
     title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => media.title[i] ?? BUILT_IN.title[i]) : [],
+    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? null),
+    about: MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? null),
     groups: MEDIA_GROUPS.feed.map((def, gi) => {
       const g = media.groups[gi];
       return {

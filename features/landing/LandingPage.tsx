@@ -8,7 +8,7 @@ import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
-import PhotoPlaceholder from "@/components/PhotoPlaceholder/PhotoPlaceholder";
+import SitePhotoSlot from "@/components/SitePhotoSlot/SitePhotoSlot";
 import Reveal from "@/components/Reveal/Reveal";
 import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import SectionHeading from "@/components/SectionHeading/SectionHeading";
@@ -122,7 +122,7 @@ export default function LandingPage() {
           ))}
         </ol>
         <Reveal className={styles.howPhoto}>
-          <PhotoPlaceholder label={t.how.photo} ratio={3 / 2} seed={45} tape="white" />
+          <SitePhotoSlot group="landing" index={0} placeholderLabel={t.how.photo} ratio={3 / 2} seed={45} sizes="(min-width: 600px) 560px, 100vw" tape="white" />
         </Reveal>
         <Reveal>
           <p className={cn(styles.after, "chalk-soft")}>
@@ -173,7 +173,7 @@ export default function LandingPage() {
           <ChalkBox className={styles.meet} seed={61} wobble={2.6} strokeWidth={2.4}>
             <ChalkDoodle name="heart" size={44} color="var(--accent-2)" strokeWidth={3} className={styles.meetDoodle} />
             <div className={styles.meetPhoto}>
-              <PhotoPlaceholder label={t.meet.photo} ratio={4 / 5} seed={62} tape="yellow" />
+              <SitePhotoSlot group="landing" index={1} placeholderLabel={t.meet.photo} ratio={4 / 5} seed={62} sizes="300px" tape="yellow" />
             </div>
             <div>
               <h2 id="landing-meet" className={cn(styles.meetTitle, "chalk")}>{t.meet.title}</h2>
