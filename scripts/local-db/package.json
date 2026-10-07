@@ -1,0 +1,8 @@
+{
+  "name": "tiny-humans-local-db",
+  "private": true,
+  "description": "Local Postgres + Neon-HTTP shim for development without network access to Neon. Not installed by Vercel.",
+  "type": "module",
+  "scripts": { "start": "node start.mjs" },
+  "dependencies": { "embedded-postgres": "18.4.0-beta.17", "pg": "^8.16.3" }
+}
