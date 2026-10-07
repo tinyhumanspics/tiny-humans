@@ -166,6 +166,9 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   const provider = getBookingClient();
   // one id per submission: retries of the same booking can never double-book
   const requestIdRef = useRef<string | null>(null);
+  // spam signals: when the booking box opened, and a hidden field only bots fill in
+  const openedAt = useRef(Date.now());
+  const [hp, setHp] = useState("");
   const selection = useBookingSelection();
   const [state, dispatch] = useReducer(reducer, { ...initialState, bundleId });
   const router = useRouter();
@@ -301,6 +304,8 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         },
         address: { street: c.street.trim(), city: c.city.trim(), zip: c.zip.trim() },
         requestId: (requestIdRef.current ??= newRequestId()),
+        hp: hp || undefined,
+        elapsedMs: Date.now() - openedAt.current,
       };
       let result: BookingResult | null = null;
       for (let attempt = 0; !result; attempt++) {
@@ -424,7 +429,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                   )}
 
                   {state.step === STEP.details && (
-                    <DetailsForm contact={state.contact} errors={state.fieldErrors} onChange={(field, value) => dispatch({ type: "contact", field, value })} />
+                    <DetailsForm contact={state.contact} errors={state.fieldErrors} onChange={(field, value) => dispatch({ type: "contact", field, value })} hp={hp} onHp={setHp} />
                   )}
 
                   {state.step === STEP.review && bundle && state.date && state.slot && (
@@ -510,10 +515,14 @@ function DetailsForm({
   contact,
   errors,
   onChange,
+  hp,
+  onHp,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
   onChange: (field: keyof ContactDraft, value: string) => void;
+  hp: string;
+  onHp: (v: string) => void;
 }) {
   const field = (
     name: keyof ContactDraft,
@@ -550,6 +559,11 @@ function DetailsForm({
 
   return (
     <div className={styles.form}>
+      {/* Honeypot: hidden from people and screen readers; automated form-fillers tend to fill it. */}
+      <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+        <label htmlFor="th-leave-empty">Leave this empty</label>
+        <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
+      </div>
       {field("parentName", "Parent / guardian name", { autoComplete: "name" })}
       {field("email", "Email", { type: "email", autoComplete: "email", inputMode: "email" })}
       {field("phone", "Phone", { type: "tel", autoComplete: "tel", inputMode: "tel" })}

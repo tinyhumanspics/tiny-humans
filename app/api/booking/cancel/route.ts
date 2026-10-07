@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError } from "@/lib/booking/errors";
 import { log } from "@/lib/log";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { allow, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,7 @@ function fail(err: unknown) {
 
 /** GET /api/booking/cancel?token=… : what the cancel page shows (no contact details). */
 export async function GET(req: Request) {
-  if (!rateLimit(`cancel-get:${clientIp(req)}`, 30, 10 * 60_000)) return tooMany();
+  if (!(await allow("cancelGet", clientIp(req)))) return tooMany();
   const token = new URL(req.url).searchParams.get("token");
   if (!tokenOk(token)) return invalid();
   try {
@@ -37,7 +37,7 @@ const bodySchema = z.object({
 
 /** POST /api/booking/cancel {token, reason}: cancels after the customer confirms on the page. */
 export async function POST(req: Request) {
-  if (!rateLimit(`cancel-post:${clientIp(req)}`, 10, 10 * 60_000)) return tooMany();
+  if (!(await allow("cancelPost", clientIp(req)))) return tooMany();
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Please tell us why you need to cancel.", code: "invalid_request" }, { status: 400, headers: NO_STORE });
   if (!tokenOk(parsed.data.token)) return invalid();

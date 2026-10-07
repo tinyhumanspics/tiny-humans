@@ -31,6 +31,9 @@ export const bookingRequestSchema = z.object({
   requestId: z.string().trim().min(8).max(100).optional(),
   // Only the code text is accepted; prices and discounts are always calculated on the server.
   discountCode: z.string().trim().max(40).optional().transform((v) => v || undefined),
+  // Spam signals (never stored): a hidden field people never see, and how long the form was open.
+  hp: z.string().max(200).optional(),
+  elapsedMs: z.number().int().nonnegative().optional(),
 });
 
 export type ValidBookingRequest = z.infer<typeof bookingRequestSchema>;

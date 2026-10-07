@@ -93,7 +93,12 @@ http
       return send(400, { message: "bad json" });
     }
     if (process.env.LOCAL_DB_DOWN === "1" || fs.existsSync(path.join(here, ".down"))) return send(503, { message: "simulated outage" });
-    const client = await pool.connect();
+    let client;
+    try {
+      client = await pool.connect();
+    } catch (e) {
+      return send(503, { message: `local database unavailable: ${e.message}` });
+    }
     try {
       if (Array.isArray(payload.queries)) {
         const iso = req.headers["neon-batch-isolation-level"];

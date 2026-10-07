@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError } from "@/lib/booking/errors";
 import { log } from "@/lib/log";
-import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { allow, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 // The browser sends only a bundle id, an optional code and the email. The price is calculated here.
@@ -11,7 +11,7 @@ const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.stri
 
 /** POST /api/booking/quote: server-calculated price (regular, special offer, or one discount code). */
 export async function POST(req: Request) {
-  if (!rateLimit(`quote:${clientIp(req)}`, 30, 10 * 60_000)) return NextResponse.json({ error: "Too many tries. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
+  if (!(await allow("quote", clientIp(req)))) return NextResponse.json({ error: "Too many tries. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
   const p = body.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ error: "Please check the code and try again.", code: "invalid_request" }, { status: 400 });
   try {

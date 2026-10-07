@@ -64,6 +64,9 @@ export interface BookingRequest {
   requestId?: string;
   /** Optional discount code (validated + priced on the server). */
   discountCode?: string;
+  /** Spam signals (never stored): hidden honeypot field + how long the booking form was open. */
+  hp?: string;
+  elapsedMs?: number;
 }
 
 export interface BookingResult {

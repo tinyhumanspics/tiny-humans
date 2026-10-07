@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { allow, clientIp } from "@/lib/rate-limit";
 import { checkPassword, createSessionToken, isAuthConfigured, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
@@ -6,6 +7,9 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!isAuthConfigured()) {
     return NextResponse.json({ error: "The owner password isn't set up yet. Add ADMIN_PASSWORD and ADMIN_SESSION_SECRET in Vercel." }, { status: 503 });
+  }
+  if (!(await allow("adminLogin", clientIp(req))) || !(await allow("adminLoginGlobal", "all"))) {
+    return NextResponse.json({ error: "Too many sign-in attempts. Please wait 15 minutes and try again." }, { status: 429 });
   }
   const body = (await req.json().catch(() => ({}))) as { password?: unknown };
   const password = typeof body.password === "string" ? body.password : "";

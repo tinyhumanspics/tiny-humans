@@ -25,9 +25,14 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [x] 1a BUG-1 `in_progress` code: browser waits + retries with the same requestId (never "pick another time")
 - [x] 1a BUG-4 "Miami time" on time step, review, confirmation, reschedule; calendar "today" = Miami date
 - [x] Local test DB: `scripts/local-db` (embedded Postgres + Neon-HTTP shim, separate package; `.down` file simulates outage)
-- [ ] 1b Durable rate limiting (Upstash, `@upstash/ratelimit`) on create/quote/availability/cancel/manage/reschedule + strict admin login
-- [ ] 1b Bot protection (Vercel BotID basic — decision pending research) on booking create
-- [ ] 1b Baseline security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors/XFO)
+- [x] 1b Durable rate limiting (Upstash via Vercel Marketplace, `lib/rate-limit.ts`, fails open) on create/quote/
+      availability/cancel/manage/reschedule + admin login (5/15 min per IP, 60/h overall). Owner connected Upstash ✅
+- [x] 1b Spam protection on booking create: hidden honeypot field + "finished in < 4 s" check (near-zero false positives)
+- [~] 1b Invisible bot check: **Vercel BotID tried and removed** — its client wraps `fetch` and, when its challenge script
+      is blocked (content blockers; the script path is a public constant UUID), the booking request errors and every retry
+      hangs forever. Revisit in Phase 6 (Turnstile, or BotID behind a timeout + fallback), monitor-mode first.
+- [x] 1b Baseline security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, X-Frame-Options SAMEORIGIN,
+      CSP `frame-ancestors 'self'` only)
 - [ ] 1c First-touch source cookie (utm_*, fbclid, landing path, referrer, 90 days) → booking request
 - [ ] 1c Additive migration: nullable source columns on `bookings` (apply in Neon BEFORE deploying the code)
 - [ ] 1c Show source in /admin leads
@@ -124,20 +129,20 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
-- **BUG-1 (high)** `outlook-provider.createBooking`: a retry while the first request is still saving hits the unique
+- **BUG-1 (high, fixed 1a)** `outlook-provider.createBooking`: a retry while the first request is still saving hits the unique
   `request_id` → returns code `slot_unavailable` ("already being saved"). `Booking.tsx` treats `slot_unavailable` as
   "time taken": drops the slot, clears the requestId and sends the parent back to pick another time — while the first
   request may still succeed → a second booking with a new requestId. Fix: distinct `in_progress` code; client waits and
   retries with the same requestId.
-- **BUG-2 (high)** Stale-price fallback: `getPublicCatalog()`/`getCatalog()` return hardcoded `config/bundles.ts`
+- **BUG-2 (high, fixed 1a)** Stale-price fallback: `getPublicCatalog()`/`getCatalog()` return hardcoded `config/bundles.ts`
   ($99/$199/$249) on DB errors / empty table. Ad visitors could see prices the server won't honor.
-- **BUG-3 (high)** Rate limiting: in-memory only (useless across serverless instances); none on `POST /api/booking/create`,
+- **BUG-3 (high, fixed 1b)** Rate limiting: in-memory only (useless across serverless instances); none on `POST /api/booking/create`,
   `GET /api/booking/availability`, `POST /api/admin/login` (only a 700 ms delay → brute-forceable).
-- **BUG-4 (medium)** Times aren't labeled as Miami time anywhere (calendar, time step, review, confirmation); the calendar's
+- **BUG-4 (medium, fixed 1a)** Times aren't labeled as Miami time anywhere (calendar, time step, review, confirmation); the calendar's
   "today" and month math use the visitor's local zone. Relatives booking from other states see unlabeled ET times.
 - **BUG-5 (medium)** Overlap race: DB only blocks two active bookings with the *same start*; overlapping sessions
   submitted at the same moment can both succeed. Fix: exclusion constraint on a stored blocked range (start → end+buffer).
-- **BUG-6 (medium)** No security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors).
+- **BUG-6 (medium, fixed 1b)** No security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors).
 - **BUG-7 (low)** Address form has no unit/apartment, gate, parking or concierge fields (Miami condos).
 - **BUG-8 (low)** Confirmation step is in-memory: browser Back/refresh shows an empty form (no double booking — OK), but
   the parent loses the reference on screen. Consider sessionStorage restore on the confirmation.
@@ -150,6 +155,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 (one line per new dependency: why · bundle impact · maintenance)
 - `scripts/local-db` (own package.json, NOT an app dependency, never installed by Vercel): `embedded-postgres`
   18.4.0-beta.17 + `pg` 8 — local Postgres for tests because the AI workspace can't reach Neon. 0 KB to the site.
+- `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
+  SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
 
 ## Research notes
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
@@ -158,13 +165,18 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **Vercel BotID** (`botid` 1.5.11): `withBotId()` in next.config, `initBotId({ protect: [{ path, method }] })` in
   `instrumentation-client.ts` (Next 15.3+), `checkBotId()` in the route. Basic = free on all plans; Deep Analysis (Kasada)
   Pro/Enterprise and billed. Invisible. https://vercel.com/docs/botid · https://vercel.com/kb/guide/vercel-botid-vs-cloudflare-turnstile
-- **Upstash:** `@upstash/ratelimit` 2.2.0, `@upstash/redis` 1.39.0 (both updated 2026-10).
+- **Upstash:** `@upstash/ratelimit` 2.2.0, `@upstash/redis` 1.39.0 (both updated 2026-10). Marketplace store injects
+  `KV_REST_API_URL`, `KV_REST_API_TOKEN` (+ read-only token, `KV_URL`, `REDIS_URL`); `Redis.fromEnv()` reads
+  `UPSTASH_REDIS_REST_*` then `KV_REST_API_*`. We read those plus `STORAGE_REST_API_*` (custom prefix).
+- **BotID internals (1.5.11):** client patches `window.fetch`/XHR for protected paths and awaits a challenge from
+  `/149e9513-…/a-4-a/c.js`; if that script fails to load, the first call rejects and later calls await forever.
+  Server `checkBotId()` needs `VERCEL_OIDC_TOKEN`; returns HUMAN when NODE_ENV ≠ production.
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
 
 ## Local test database
-`cd scripts/local-db && npm install && node start.mjs` (add `--reset` to start over; as root set `LOCAL_DB_DIR=/tmp/...`).
+`cd scripts/local-db && npm install && node start.mjs` (add `--reset` to start over; as root set `LOCAL_DB_DIR=/var/tmp/th-pg/data` — a dir the `postgres` user owns, NOT the scratchpad).
 Applies every `drizzle/*.sql` in journal order, seeds a mirror of production's bundles, and serves a Neon-HTTP-compatible
 endpoint. `.env.local`: `DATABASE_URL=postgres://tiny:tiny@localhost:5433/tinyhumans`,
 `NEON_LOCAL_FETCH_ENDPOINT=http://localhost:4444/sql` (ignored on Vercel). `touch scripts/local-db/.down` = simulated outage.

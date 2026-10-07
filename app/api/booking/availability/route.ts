@@ -3,11 +3,13 @@ import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError } from "@/lib/booking/errors";
 import { availabilityQuerySchema } from "@/lib/booking/validation";
 import { log } from "@/lib/log";
+import { allow, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 /** GET /api/booking/availability?bundle=<id>&from=YYYY-MM-DD&to=YYYY-MM-DD */
 export async function GET(req: Request) {
+  if (!(await allow("availability", clientIp(req)))) return NextResponse.json({ error: "Too many requests. Please wait a few minutes and try again.", code: "rate_limited" }, { status: 429, headers: { "cache-control": "no-store" } });
   const url = new URL(req.url);
   const parsed = availabilityQuerySchema.safeParse({
     bundleId: url.searchParams.get("bundle"),
