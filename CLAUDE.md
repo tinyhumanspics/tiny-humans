@@ -15,7 +15,8 @@ No online payment: "$0 today, pay after your session" (Stripe deposits may come 
   `tsc` = TS 7), npm, ESLint 10 flat config. Root layout is an async server component.
 - Neon Postgres + Drizzle ORM (`drizzle-orm/neon-http`, `lib/db`), migrations in `drizzle/`.
 - Booking providers: `BOOKING_PROVIDER=mock|outlook` (Outlook = Microsoft Graph calendar only).
-- Email: Resend (`lib/email`). Storage: Vercel Blob (theme + photos, `lib/settings`). Validation: Zod 4.
+- Email: React Email templates (`emails/`) rendered + sent with Resend (`lib/email`). Storage: Vercel Blob (theme +
+  photos, `lib/settings`). Validation: Zod 4.
 - Styling: CSS Modules + `styles/globals.css`; theme colors are CSS variables from `config/themes.ts`.
 
 ## Commands
@@ -116,6 +117,8 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Tracking: `lib/tracking/` (attribution cookie via `proxy.ts`, Pixel client, CAPI server). Never send baby data.
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
+- Emails: React adds `<!-- -->` between adjacent text pieces in JSX (`{a} {b}`) — build one string per text run.
+  Check email changes with screenshots of the rendered HTML (old vs new) before sending anything real.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.
   Browser-side date helpers in `lib/booking/dates.ts` use the visitor's local zone — show and label times as Miami time.
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.

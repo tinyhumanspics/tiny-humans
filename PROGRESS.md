@@ -11,7 +11,7 @@ State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 1
    `Schedule`). Check first that `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` are set in Vercel.
 2. Vercel Web Analytics + Speed Insights are live (both `/_vercel/*/script.js` return 200 in production, Oct 7). Data
    appears in the Vercel dashboard → Analytics / Speed Insights after a few visits.
-3. **Phase 2 (show rate)** before the first booked sessions: React Email, confirmation upgrade, 72 h/24 h reminders,
+3. **Phase 2 (show rate)** before the first booked sessions: ~~React Email~~ (2a done Oct 7), confirmation upgrade, 72 h/24 h reminders,
    after-session emails, SMS + photo-use checkboxes. Until then the owner delivers the prep guide + backdrop options by
    hand after each booking (the landing page promises them "after you book"); draft the prep guide for his approval.
 4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page), DST check (Nov 1), BUG-5 overlap constraint.
@@ -71,7 +71,7 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1. 1a–1f live (landing copy approved by the owner Oct 7); 1g (production verification) to do.
+- **Now:** Phase 1g (production verification) waits on the owner; Phase 2 started (2a React Email live Oct 7).
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -129,7 +129,16 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
 - [ ] 1g Production verification with owner (test event code → one real booking → verify → cancel → remove code)
 
 ## Phase 2 — Show rate (next 24–48h)
-- [ ] 2a React Email + Resend; recreate every template with identical branding (+ plain text); `locale` param
+- [x] 2a React Email + Resend (Oct 7): `react-email` 6.11 templates in `emails/` (`components/ChalkLayout`, `blocks`,
+      `InternalLayout`; `BookingConfirmation`, `BookingCancellation`, `BookingRescheduled`, `Internal`), rendered by
+      `lib/email/render.ts` (adds the Outlook font fix React can't write), same CID logo/strip attachments, hand-written
+      plain text kept (React Email's auto text merged the detail tables into one line). Customer copy in
+      `messages/en.json` → `emails.*` with `{name}` placeholders (`lib/email/messages.ts`); every customer template takes
+      `locale` (English only until Phase 3). Internal emails stay English in code (they go to the owner). Parity: 16
+      emails × 4 themes/pricing variants × phone + desktop screenshots **pixel-identical** to the old string templates;
+      plain text, subjects and attachments byte-identical. Real send path checked locally (Outlook mode + fake Graph +
+      fake Resend via `RESEND_BASE_URL`): book → reschedule → cancel sent all 6 emails with the right idempotency keys.
+      Mock-mode "Preview the confirmation email" now renders in the browser (new e2e test, passes on WebKit too).
 - [ ] 2b Confirmation email upgrade (photographers intro, prep guide, sneak peek, pay after, manage links, backdrop question)
 - [ ] 2c Reminders 72h (prep + reschedule) and 24h (logistics); idempotent; reschedule/cancel aware; backfill; failures in /admin
 - [ ] 2c Optional /admin "Today" view with tap-to-text
@@ -215,6 +224,8 @@ Watch out: other tools edit this folder too (stage exact paths); gh is at /opt/h
 19. Spanish: "same time, no rush" → Phase 3 after Phase 2. Adrian/Alondra review the Spanish copy.
 
 ## Open owner questions
+- Vercel plan: Hobby or Pro? (Decides how reminders run: Hobby cron = once a day, e.g. "your session is tomorrow"
+  at ~10 am; Pro = exactly 72 h / 24 h before.)
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 
@@ -264,6 +275,9 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   the browser. Both widely used and maintained.
 - `@vercel/analytics` 2 + `@vercel/speed-insights` 2 — owner request (Oct 7). Tiny client scripts served from
   `/_vercel/*`, loaded only on Vercel. Official Vercel packages.
+- `react-email` 6.11 — email templates as React components (brief Phase 2a). Server-side when sending; in the browser
+  only in the lazy mock-mode email preview chunk (no page preloads it). It also installs its preview CLI's toolchain
+  (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
@@ -290,6 +304,14 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   `beforeSend` to redact (returns null to skip). Analytics must be enabled in the dashboard (adds `/_vercel/insights/*`
   on the next deploy). https://vercel.com/docs/analytics/quickstart · https://vercel.com/docs/analytics/redacting-sensitive-data ·
   https://vercel.com/docs/analytics/limits-and-pricing · https://vercel.com/docs/speed-insights/limits-and-pricing
+- **React Email 6** (checked Oct 7; latest 6.11.1, 2026-10-06): one package `react-email` (components + `render`);
+  `@react-email/components` is deprecated. `render()` is async; `toPlainText()` exists but flattens layout tables.
+  Resend's `react:` param renders for you; we render ourselves to keep CID images + hand-written text.
+  https://react.email/docs/getting-started/updating-react-email · https://react.email/docs/utilities/render ·
+  https://resend.com/docs/send-with-nextjs
+- **Vercel Cron** (checked Oct 7): Hobby = once per day per job, fires anytime within the scheduled hour; Pro = per
+  minute, on time. Cron runs a normal function (same pricing). Schedules are UTC.
+  https://vercel.com/docs/cron-jobs/usage-and-pricing
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
