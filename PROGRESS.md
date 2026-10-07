@@ -3,25 +3,23 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff to the VS Code session, Oct 7 ~00:00 ET)
-1. **Owner ran migration `0006_booking_source.sql` in Neon (confirmed Oct 7: 9 columns).** Local `main` (1c–1e, tests,
-   docs) is verified and ready; the AI terminal has no GitHub login, so the owner pushes from VS Code (Source Control →
-   Sync). Then check the Vercel deploy (GitHub commit status API) and smoke-test production (pages load, no console
-   errors, /api/booking/availability 200, /privacy shows the Meta section).
-   Branches waiting to merge after that, in order: `wip/next-16` (Next 16.4 upgrade) → `wip/routes` (/bundles + /book).
-2. **Landing page** is on branch `wip/landing-page` (`/home-sweet-home`, "The Stay-Home Session"). Before merging:
-   show the owner phone + desktop screenshots and get a yes on the copy (bio "Meet Adrian & Alondra", FAQ — esp. the
-   pets answer, bonuses incl. "3 sneak peeks in 24 hours", baby-led promise "within 14 days") and on the intro
-   (default = skipped on this page; preview `?intro=short` / `?intro=full`). Phone cloud-over-note overlap fixed
-   (Oct 7). Photo placeholders added: "Meet" (Adrian & Alondra) + "How it works" (set-up in a living room).
-   Then merge into main and push.
-3. **1g production verification** with the owner (section 4 of the brief), then send him the ads message (landing URL
-   `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`, page must be live first).
-4. Owner must deliver the **prep guide + backdrop options manually** after each booking until Phase 2 emails ship
-   (the landing page promises them "after you book"). Prep guide text: draft it for his approval (Phase 2b).
-5. New owner request: **`/portfolio` page** like `/book` (see "Owner requests").
-6. Baseline screenshots in `.screenshots/baseline/` were captured mid-animation (intro/Reveal fades) → recapture at
-   commit `cd667b1` with `reducedMotion: "reduce"` before Phase 9 uses them.
+## ▶ NEXT STEPS (handoff, Oct 7)
+State: everything below is on `main` (pushed in slices Oct 7: 1c–1e → Next 16 → routes → cn/landing/about/handle/analytics).
+1. **1g production verification** with the owner (brief section 4: test event code → one real booking from
+   `/home-sweet-home` → check Events Manager, booking row source, emails, Outlook → cancel → remove the code), then send
+   him the ads message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for
+   `Schedule`). Check first that `NEXT_PUBLIC_META_PIXEL_ID` + `META_CAPI_ACCESS_TOKEN` are set in Vercel.
+2. **Vercel dashboard (owner):** Analytics → Enable (Web Analytics needs it; Speed Insights routes come with each
+   deployment), then redeploy. Until enabled, `/_vercel/insights/script.js` 404s → a console error on every page.
+3. **Phase 2 (show rate)** before the first booked sessions: React Email, confirmation upgrade, 72 h/24 h reminders,
+   after-session emails, SMS + photo-use checkboxes. Until then the owner delivers the prep guide + backdrop options by
+   hand after each booking (the landing page promises them "after you book"); draft the prep guide for his approval.
+4. **Time-sensitive:** Halloween (cutoff Oct 28: theme + seasonal page), DST check (Nov 1), BUG-5 overlap constraint.
+5. Ask the owner: privacy policy line for Vercel Web Analytics/Speed Insights (cookieless; the hosting-provider sentence
+   partly covers it) — legal wording needs his OK. `/portfolio` page (see "Owner requests").
+6. Photos for the 6 placeholders (About ×4, landing ×2) → swap `PhotoPlaceholder` for `PinnedPhoto`.
+7. Visual baselines in `.screenshots/parity/` were re-captured after the owner approved the new footer/About (Oct 7).
+   The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9 uses it.
 
 ## Owner requests (outside the original brief)
 - [x] **Routes** (Oct 7, branch `wip/routes`): bundles page `/book` → **`/bundles`**, calendar `/book/schedule?bundle=` →
@@ -31,18 +29,24 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
       `event_source_url` fallback uses `scheduleHref()` too. ⚠ The Meta ads must point at `/home-sweet-home` (landing)
       or `/bundles`, never the old paths.
 - [x] **404 page** (`app/not-found.tsx`, chalkboard style, copy in `messages/en.json` → `errors.notFound`).
-- [~] **`/about`** (Oct 7, branch `wip/about`): "Our story" page from the owner's answers (decisions 10, 11 + the landing
+- [x] **`/about`** (Oct 7, live): "Our story" page from the owner's answers (decisions 10, 11 + the landing
       bio), linked only in the footer (new "About us" column: 4 columns ≥1024 px, 2 at ≥720 px; every page's footer is
       117 px taller on phones; visual diff = footer only). Copy in `messages/en.json` → `about.*`. 4 photo placeholders
-      (`components/PhotoPlaceholder`, same frame as PinnedPhoto). [?] owner approval of copy + footer from screenshots.
+      (`components/PhotoPlaceholder`, same frame as PinnedPhoto). Owner approved publishing the copy (Oct 7).
       Later: editable in /admin with the "Meet the photographers" work (decision 18).
+- [x] **Instagram handle** → `@tinyhumans.photography` (owner, Oct 7): footer, legal contact line, CLAUDE.md.
+- [x] **Vercel Web Analytics + Speed Insights** (owner, Oct 7): `components/layout/VercelInsights.tsx`, rendered only when
+      `VERCEL=1`; `beforeSend` → `lib/tracking/safe-url.ts` keeps only `utm_*`, `bundle`, `inspiration` (strips the
+      cancel/reschedule `?t=` token) and drops `/admin`. Cost: Hobby free (Analytics 50k events/mo then paused; Speed
+      Insights 10k events/30 days then paused); Pro: Analytics $0.03 per 1k events, basic Speed Insights free.
+- [x] **`cn()` helper** (`lib/cn.ts`, clsx + tailwind-merge) across components (owner's refactor, committed Oct 7;
+      visual diff vs baseline = none besides the footer/handle).
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1 (launch blockers for the Meta ads). 1a, 1b live; 1c–1e committed, waiting on the migration;
-  1f on a branch for approval; 1g to do.
+- **Now:** Phase 1. 1a–1f live (landing copy approved by the owner Oct 7); 1g (production verification) to do.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -77,7 +81,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [x] 1c First-touch source: `middleware.ts` sets httpOnly first-party cookie `th_src` (utm_*, fbclid, landing path,
       referring-site ORIGIN only, 90 days; a "direct" first touch is upgraded by a later campaign touch) + `th_fbc`
       (latest Meta click id, `_fbc` format). The create route reads the cookie (never the request body).
-- [~] 1c Migration `drizzle/0006_booking_source.sql` (ADD COLUMN IF NOT EXISTS ×9) — [?] owner runs it in Neon BEFORE push
+- [x] 1c Migration `drizzle/0006_booking_source.sql` (ADD COLUMN IF NOT EXISTS ×9) — owner ran it in Neon (Oct 7)
 - [x] 1c Source in /admin leads (card line + details: label, campaign/ad set/ad, medium, first page, referring site)
 - [x] Local fake Microsoft Graph (`scripts/local-db/fake-graph.mjs`) → the real `outlook` booking path runs end to end locally
 - [x] 1d `lib/tracking/client.ts` (provider-neutral functions, Meta adapter) + `components/layout/MetaPixel.tsx`: site pages
@@ -91,7 +95,7 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 - [x] 1d Domain verification: owner already verified by DNS TXT record → no meta tag needed
 - [x] 1e Privacy policy + terms updated (Meta Pixel/CAPI section, cookies list, Upstash, source tracking, baby data never
       shared; terms: approved 48 h reschedule/cancel + no-show wording). Owner told to have it reviewed by someone qualified.
-- [~] 1f Landing page `/home-sweet-home` ("The Stay-Home Session", owner-approved name + URL) built on branch
+- [x] 1f Landing page `/home-sweet-home` ("The Stay-Home Session", owner-approved name + URL) built on branch
       `wip/landing-page`: blueprint order, copy in `messages/en.json` (`landing.*`), CTAs → calendar with the "most
       loved" bundle preselected + ViewContent, phone bundle order (Family Story first, Our Little Story highlighted),
       real next open dates, reviews hidden. [?] owner approval of copy from screenshots
@@ -231,6 +235,10 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
   SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
 - `eslint` 10 + `eslint-config-next` 16.4 (dev only) — replaces the removed `next lint`. 0 KB to the site. Official.
+- `clsx` 2 + `tailwind-merge` 3 — `cn()` class joining (owner's choice, ahead of Tailwind in Phase 9). ~1 KB + ~7 KB gz in
+  the browser. Both widely used and maintained.
+- `@vercel/analytics` 2 + `@vercel/speed-insights` 2 — owner request (Oct 7). Tiny client scripts served from
+  `/_vercel/*`, loaded only on Vercel. Official Vercel packages.
 
 ## Research notes
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
@@ -252,6 +260,11 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **BotID internals (1.5.11):** client patches `window.fetch`/XHR for protected paths and awaits a challenge from
   `/149e9513-…/a-4-a/c.js`; if that script fails to load, the first call rejects and later calls await forever.
   Server `checkBotId()` needs `VERCEL_OIDC_TOKEN`; returns HUMAN when NODE_ENV ≠ production.
+- **Vercel Web Analytics / Speed Insights** (checked Oct 7): `<Analytics />` from `@vercel/analytics/next`,
+  `<SpeedInsights />` from `@vercel/speed-insights/next` in the root layout; both send full URLs incl. query →
+  `beforeSend` to redact (returns null to skip). Analytics must be enabled in the dashboard (adds `/_vercel/insights/*`
+  on the next deploy). https://vercel.com/docs/analytics/quickstart · https://vercel.com/docs/analytics/redacting-sensitive-data ·
+  https://vercel.com/docs/analytics/limits-and-pricing · https://vercel.com/docs/speed-insights/limits-and-pricing
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain

@@ -86,12 +86,19 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - **Earlier cloud sessions (Oct 6–7)** couldn't reach Vercel/Neon/Meta, so they built `scripts/local-db` (embedded
   Postgres + Neon-HTTP shim + fake Microsoft Graph) and pushed through the owner's folder. Those tools still work.
 - Vercel deploy status: Vercel dashboard, or the GitHub commit status (`context: "Vercel"`) for the pushed SHA.
-- Commit as the owner (his git config), conventional commit messages.
+- Commit as `tinyhumanspics <hello@tinyhumans.photography>`. Conventional Commits (`feat:`, `fix:`, `docs:`,
+  `refactor:`, `chore:`, `test:` …, optional scope), one type per commit, **no AI co-author/session trailers**.
+- **Stage exact paths, never `git add -A`:** other tools may be editing this folder at the same time. `next-env.d.ts`
+  flips between `.next/types` and `.next/dev/types` when the dev server runs; don't commit that change.
+- GitHub CLI: `/opt/homebrew/bin/gh` (signed in as tinyhumanspics; not on the AI shell's PATH); `git push` works.
 
 ## Tests
-- `npm run test:e2e` (Playwright; first time `npx playwright install`): starts its own dev server on :3100 in **mock**
-  mode with tracking off, then books a session on iPhone Safari, Android Chrome, desktop Chrome and an Instagram
-  in-app user agent. The booking API refuses forms finished in < 4 s (spam check), so tests wait on the review step.
+- `npm run test:e2e` (Playwright; first time `npx playwright install chromium webkit`): builds and starts a production
+  server on :3100 in **mock** mode with tracking off (Next 16 allows one `next dev` per project), then books a session
+  on iPhone Safari, Android Chrome, desktop Chrome and an Instagram in-app user agent, and checks /book fallbacks + 404.
+  The booking API refuses forms finished in < 4 s (spam check), so tests wait on the review step.
+- Visual parity: `npm run build && npx playwright test -c playwright.visual.config.ts` (8 pages × iPhone 14/1440 vs
+  `.screenshots/parity/`, gitignored; `--update-snapshots` only after the owner approves a visual change).
 
 ## Gotchas
 - Chalk grain is a texture mask (`.chalk-grain` in `styles/globals.css`), NOT a live SVG `feTurbulence` filter — keep it
@@ -108,3 +115,5 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   Browser-side date helpers in `lib/booking/dates.ts` use the visitor's local zone — show and label times as Miami time.
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.
 - Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`).
+- Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
+  pass through `lib/tracking/safe-url.ts` first. Next 16: `proxy.ts` (not middleware), `revalidateTag(tag, { expire: 0 })`.
