@@ -52,6 +52,8 @@ export interface Lead {
   reminders?: { kind: "72h" | "24h"; status: "sending" | "sent" | "failed"; at: string | null; error: string | null }[];
   /** After-session emails, payment and review (server mode only). */
   after?: AfterSessionStatus;
+  /** Optional permissions from the booking form, with when each was given (server mode only). */
+  consents?: { sms: boolean; smsAt: string | null; photos: boolean; photosAt: string | null };
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;

@@ -1,6 +1,6 @@
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, pricingRows, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
+import { consentRows, formatAddress, pricingRows, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
 import { renderHtml } from "@/lib/email/render";
 import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
@@ -31,6 +31,7 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ["Session address", formatAddress(d.address)],
     ["Customer notes", d.contact.notes || "None"],
     ["Inspiration photo", d.inspirationTitle || "None"],
+    ...consentRows(d.consents),
     ["Booked at", eastern(createdAt)],
   ];
   const html = await renderHtml(

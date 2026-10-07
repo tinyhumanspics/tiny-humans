@@ -22,6 +22,15 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 const emailLine = (e: EmailStatus) => (e.sent ? `Sent ${when(e.at)}` : e.error ? `Not sent (${e.error})` : "Not sent");
+/** Optional permissions from the booking form (server mode only). */
+const consentRows = (lead: Lead): [string, string][] => {
+  const c = lead.consents;
+  if (!c) return [];
+  return [
+    ["Texts", c.sms ? `OK to text${c.smsAt ? ` (since ${when(c.smsAt)})` : ""}` : c.smsAt ? `Don't text (changed ${when(c.smsAt)})` : "Not OK to text"],
+    ["Photo use", c.photos ? `OK to feature on the website + social media${c.photosAt ? ` (since ${when(c.photosAt)})` : ""}` : c.photosAt ? `Keep private (changed ${when(c.photosAt)})` : "Keep private"],
+  ];
+};
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
 /** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
 const reminderRows = (lead: Lead): [string, string][] => {
@@ -158,6 +167,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Full address", lead.address],
     ["Notes", lead.notes || "None"],
     ["Inspiration", inspiration || "None"],
+    ...consentRows(lead),
     ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : "Not on the calendar"],
     ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
@@ -235,6 +245,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
             </div>
           )}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
+          {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.status !== "cancelled" && moving && (
             <div className={styles.adminReschedule}>
               <p className={cn(styles.h3, "chalk-soft")}>Reschedule Booking</p>
@@ -390,6 +401,35 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
           )}
         </div>
       )}
+      {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+    </div>
+  );
+}
+
+/** Record a family's change of mind (e.g. they replied STOP). */
+function ConsentButtons({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
+  const c = lead.consents!;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const change = async (next: { sms?: boolean; photos?: boolean }) => {
+    setBusy(true);
+    setErr(null);
+    try {
+      onUpdated(await api.setConsent(lead.reference, next));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't save. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className={styles.photoBarRight}>
+      <button type="button" className={styles.smallButton} disabled={busy} onClick={() => change({ sms: !c.sms })}>
+        {c.sms ? "They replied STOP: don't text" : "They said OK to texts"}
+      </button>
+      <button type="button" className={styles.smallButton} disabled={busy} onClick={() => change({ photos: !c.photos })}>
+        {c.photos ? "Keep their photos private" : "They said OK to feature photos"}
+      </button>
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
     </div>
   );

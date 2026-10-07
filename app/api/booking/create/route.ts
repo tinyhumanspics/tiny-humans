@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       inspirationPhotoId: r.inspirationPhotoId,
       requestId: r.requestId,
       discountCode: r.discountCode,
+      consents: r.consents,
       // where this family came from (first-party cookie set by proxy.ts; never taken from the request body)
       attribution: decodeAttribution(jar.get(SOURCE_COOKIE)?.value) ?? undefined,
     });

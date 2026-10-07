@@ -21,6 +21,7 @@ import {
   BookingApiError,
   startOfDay,
   toDateKey,
+  type BookingConsents,
   type BookingResult,
   type DateKey,
   type TimeSlot,
@@ -67,6 +68,8 @@ interface State {
   date: DateKey | null;
   slot: TimeSlot | null;
   contact: ContactDraft;
+  /** Optional permissions (unticked = no). */
+  consents: BookingConsents;
   stepError: string | null;
   fieldErrors: ContactErrors;
   status: "editing" | "submitting" | "done";
@@ -82,6 +85,7 @@ const initialState: State = {
   date: null,
   slot: null,
   contact: emptyContact,
+  consents: { sms: false, photos: false },
   stepError: null,
   fieldErrors: {},
   status: "editing",
@@ -92,6 +96,7 @@ type Action =
   | { type: "date"; date: DateKey }
   | { type: "slot"; slot: TimeSlot }
   | { type: "contact"; field: keyof ContactDraft; value: string }
+  | { type: "consent"; field: keyof BookingConsents; value: boolean }
   | { type: "go"; step: number }
   | { type: "next" }
   | { type: "back" }
@@ -113,6 +118,8 @@ function reducer(state: State, action: Action): State {
       delete fieldErrors[action.field];
       return { ...state, contact: { ...state.contact, [action.field]: action.value }, fieldErrors };
     }
+    case "consent":
+      return { ...state, consents: { ...state.consents, [action.field]: action.value } };
     case "go":
       return action.step <= state.maxStep ? { ...state, step: action.step, stepError: null } : state;
     case "next": {
@@ -311,6 +318,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
           notes: c.notes.trim() || undefined,
         },
         address: { street: c.street.trim(), city: c.city.trim(), zip: c.zip.trim() },
+        consents: state.consents,
         requestId: (requestIdRef.current ??= newRequestId()),
         hp: hp || undefined,
         elapsedMs: Date.now() - openedAt.current,
@@ -447,7 +455,15 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                   )}
 
                   {state.step === STEP.details && (
-                    <DetailsForm contact={state.contact} errors={state.fieldErrors} onChange={(field, value) => dispatch({ type: "contact", field, value })} hp={hp} onHp={setHp} />
+                    <DetailsForm
+                      contact={state.contact}
+                      errors={state.fieldErrors}
+                      onChange={(field, value) => dispatch({ type: "contact", field, value })}
+                      consents={state.consents}
+                      onConsent={(field, value) => dispatch({ type: "consent", field, value })}
+                      hp={hp}
+                      onHp={setHp}
+                    />
                   )}
 
                   {state.step === STEP.review && bundle && state.date && state.slot && (
@@ -469,6 +485,8 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                           step: STEP.details,
                         },
                         ...(state.contact.notes.trim() ? [{ label: "Notes", value: state.contact.notes.trim(), step: STEP.details }] : []),
+                        { label: en.booking.consents.reviewSms, value: state.consents.sms ? en.booking.consents.reviewSmsYes : en.booking.consents.reviewSmsNo, step: STEP.details },
+                        { label: en.booking.consents.reviewPhotos, value: state.consents.photos ? en.booking.consents.reviewPhotosYes : en.booking.consents.reviewPhotosNo, step: STEP.details },
                       ]}
                       onEdit={(s) => dispatch({ type: "go", step: s })}
                     />
@@ -533,12 +551,16 @@ function DetailsForm({
   contact,
   errors,
   onChange,
+  consents,
+  onConsent,
   hp,
   onHp,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
   onChange: (field: keyof ContactDraft, value: string) => void;
+  consents: BookingConsents;
+  onConsent: (field: keyof BookingConsents, value: boolean) => void;
   hp: string;
   onHp: (v: string) => void;
 }) {
@@ -632,6 +654,19 @@ function DetailsForm({
           placeholder="Siblings joining, favorite colors, a family heirloom to include…"
         />
       </div>
+      <fieldset className={cn(styles.fieldset, styles.field, styles.fieldWide)} aria-describedby="consents-hint">
+        <legend className={cn(styles.label, "chalk-soft")}>
+          {en.booking.consents.title}
+          <span className={styles.optional}>{en.booking.consents.optional}</span>
+        </legend>
+        {(["sms", "photos"] as const).map((key) => (
+          <label key={key} className={cn(styles.consent, "chalk-soft")}>
+            <input id={`field-consent-${key}`} type="checkbox" checked={consents[key]} onChange={(e) => onConsent(key, e.target.checked)} />
+            <span>{en.booking.consents[key]}</span>
+          </label>
+        ))}
+        <p id="consents-hint" className={cn(styles.optional, "chalk-soft")}>{en.booking.consents.hint}</p>
+      </fieldset>
     </div>
   );
 }

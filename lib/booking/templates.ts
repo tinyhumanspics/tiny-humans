@@ -2,7 +2,7 @@ import { site } from "@/config/site";
 import type { Bundle } from "@/config/bundles";
 import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
-import type { BookingContact, SessionAddress } from "./types";
+import type { BookingConsents, BookingContact, SessionAddress } from "./types";
 
 /** Data used by the calendar event and the confirmation email. */
 export interface BookingDetails {
@@ -16,6 +16,16 @@ export interface BookingDetails {
   inspirationTitle?: string;
   /** Price actually booked. */
   pricing: PriceQuote;
+  /** Optional permissions given at booking. */
+  consents?: BookingConsents;
+}
+
+/** "Yes" / "No" lines for the permissions (studio's calendar + emails). */
+export function consentRows(c: BookingConsents | undefined): [string, string][] {
+  return [
+    ["OK to text", c?.sms ? "Yes" : "No"],
+    ["OK to feature photos", c?.photos ? "Yes (website + social media)" : "No"],
+  ];
 }
 
 /** Price lines for emails/calendar: regular, offer or code, then the total. */
@@ -114,6 +124,7 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Address", formatAddress(d.address)],
     ["Inspiration photo", d.inspirationTitle],
     ["Notes", d.contact.notes],
+    ...consentRows(d.consents),
   ];
   return `<table cellpadding="4" style="font-family:Arial,sans-serif;font-size:14px">${rows
     .filter(([, v]) => v)

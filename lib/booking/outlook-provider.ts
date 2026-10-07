@@ -8,7 +8,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import type { SiteSettings } from "@/lib/settings/types";
 import { allMediaPhotos } from "@/lib/settings/defaults";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
-import { bookings, type Booking } from "@/lib/db/schema";
+import { bookingConsents, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { GraphAuthError } from "@/lib/microsoft/auth";
 import { GraphError } from "@/lib/microsoft/graph";
@@ -214,6 +214,7 @@ export class OutlookBookingProvider implements BookingProvider {
       contact: request.contact,
       address: request.address,
       inspirationTitle: request.inspirationPhotoId ? await this.photoTitle(request.inspirationPhotoId) : undefined,
+      consents: request.consents,
     };
 
     // 4. Create the Outlook event. If this fails, remove the pending row so nothing looks confirmed.
@@ -243,6 +244,16 @@ export class OutlookBookingProvider implements BookingProvider {
       await db.delete(bookings).where(eq(bookings.id, row.id)).catch(() => undefined);
       await releaseUsage();
       throw new BookingError("server_error", friendly.server);
+    }
+
+    // Optional permissions (best effort: the booking is already confirmed; they're also in the event + studio email).
+    if (request.consents) {
+      const at = request.consents.sms || request.consents.photos ? new Date() : null;
+      await db
+        .insert(bookingConsents)
+        .values({ bookingId: row.id, sms: request.consents.sms, smsAt: request.consents.sms ? at : null, photos: request.consents.photos, photosAt: request.consents.photos ? at : null })
+        .onConflictDoNothing()
+        .catch((err) => log.error("booking.db", "Permissions not saved", { reference: row.bookingReference, error: err as Error }));
     }
 
     // 6 + 7. Emails via Resend: the customer confirmation and the internal "new booking"

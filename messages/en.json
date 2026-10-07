@@ -10,7 +10,20 @@
       "short": "Miami time",
       "note": "All times are Miami time (Eastern)."
     },
-    "inProgress": "Still saving your booking… please keep this page open."
+    "inProgress": "Still saving your booking… please keep this page open.",
+    "consents": {
+      "title": "Two quick permissions",
+      "optional": " (optional)",
+      "sms": "OK to text me about my session (reminders, arrival updates). Reply STOP anytime.",
+      "photos": "OK to feature our photos on the Tiny Humans website and social media.",
+      "hint": "You can change your mind any time. Just let us know.",
+      "reviewSms": "Texts",
+      "reviewSmsYes": "OK to text you",
+      "reviewSmsNo": "No texts",
+      "reviewPhotos": "Your photos",
+      "reviewPhotosYes": "OK to feature them",
+      "reviewPhotosNo": "Kept private"
+    }
   },
   "errors": {
     "global": {

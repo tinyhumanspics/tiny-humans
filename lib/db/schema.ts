@@ -257,6 +257,22 @@ export const bookingPayments = pgTable(
 
 export type BookingPayment = typeof bookingPayments.$inferSelect;
 
+/**
+ * Optional permissions from the booking form (texts about the session; featuring the photos on the website and social
+ * media), with when each was given or changed. A separate table so a missing migration can never break bookings.
+ */
+export const bookingConsents = pgTable("booking_consents", {
+  bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+  sms: boolean("sms").notNull().default(false),
+  smsAt: timestamp("sms_at", { withTimezone: true }),
+  photos: boolean("photos").notNull().default(false),
+  photosAt: timestamp("photos_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type BookingConsent = typeof bookingConsents.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

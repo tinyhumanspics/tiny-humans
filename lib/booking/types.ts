@@ -47,6 +47,14 @@ export interface BookingContact {
   notes?: string;
 }
 
+/** Optional permissions given at booking (never sent to Meta or analytics). */
+export interface BookingConsents {
+  /** "OK to text me about my session (reminders, arrival updates). Reply STOP anytime." */
+  sms: boolean;
+  /** "OK to feature our photos on the Tiny Humans website and social media." */
+  photos: boolean;
+}
+
 /** Where the studio comes to (every session is at the family's home). */
 export interface SessionAddress {
   street: string;
@@ -65,6 +73,8 @@ export interface BookingRequest {
   requestId?: string;
   /** Optional discount code (validated + priced on the server). */
   discountCode?: string;
+  /** Optional permissions (unticked = no). */
+  consents?: BookingConsents;
   /** Spam signals (never stored): hidden honeypot field + how long the booking form was open. */
   hp?: string;
   elapsedMs?: number;
