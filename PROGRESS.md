@@ -173,6 +173,10 @@ them. Email changes: compare old vs new renders with screenshots before sending 
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
       `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
+- [x] Theme photos fall back to the Original theme (owner request, Oct 7): in Thanksgiving / Christmas / New Year,
+      an empty photo slot (title, landing, About, "Little moments" + prompts, extras) shows the Original (default)
+      theme's picture, then the built-in picture / "photo coming soon". `resolveMedia(media, fallbackMediaFor(...))`
+      in `config/media.ts`; /admin → Photos labels such slots "Same as the Original theme".
 - [x] Payment link before (or after) the session (owner request, Oct 7): `/pay?b=<reference>&s=<signature>`
       (`lib/payments/link.ts`, HMAC with `ADMIN_SESSION_SECRET`, purpose "pay-link:v1"), never expires, same link every
       time, survives reschedules, invalid once cancelled, "already paid" once paid. /admin → Leads → details →

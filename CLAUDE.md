@@ -136,6 +136,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   Check email changes with screenshots of the rendered HTML (old vs new) before sending anything real.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.
   Browser-side date helpers in `lib/booking/dates.ts` use the visitor's local zone — show and label times as Miami time.
+- Theme changes in /admin reach the site and every customer email at once (settings cache tag expired on save; emails
+  read the active theme when sent). Photos are per theme; empty slots in non-default themes show the default
+  ("Original") theme's picture (`config/media.ts` → `resolveMedia`).
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.
 - Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`).
 - Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
