@@ -9,10 +9,10 @@ State: everything below is on `main` and live (last deploy `e0c285a` + this hand
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet. His test booking is also the first real send of the new confirmation email.
-2. **Check with the owner that migration 0010 (`booking_terms`) ran in Neon** (he approved the change; SQL is in
-   `drizzle/0010_booking_terms.sql`). Code is safe without it (falls back to the current notice setting).
-3. **Phase 2 extras (the "rest" the owner wants finished before the deposit):** address unit/gate/parking/concierge
-   fields → Outlook event + 24 h reminder (BUG-7); out-of-area flag (Phase 4 travel fee still undecided);
+2. ~~Check that migration 0010 (`booking_terms`) ran~~ — owner confirmed (Oct 7) and re-ran it to be sure (safe:
+   `CREATE TABLE IF NOT EXISTS` + backfill `ON CONFLICT DO NOTHING`). Migration 0011 (`booking_access`) ran Oct 7.
+3. **Phase 2 extras (the "rest" the owner wants finished before the deposit):** ~~address unit/gate/parking/concierge
+   fields~~ (live Oct 7, see Phase 2 "Edge"); out-of-area flag (Phase 4 travel fee still undecided);
    Resend webhooks → bounced/complained emails flagged in /admin (+ SPF/DKIM/DMARC check); "block a day" in /admin +
    notify/reschedule every affected family; duplicate-booking flag (same email/phone); optional /admin "Today" view
    with tap-to-text (uses the SMS permission). Then BUG-5 overlap constraint (exclusion constraint, migration) and
@@ -83,8 +83,8 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + owner requests live (Oct 7); Phase 2 extras next, then
-  the queued $50 deposit.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + owner requests live (Oct 7); Phase 2 extras in
+  progress (unit/gate/parking fields live Oct 7; out-of-area flag next), then the queued $50 deposit.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -214,7 +214,18 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       Stored in table `booking_consents` (migration 0009) with a timestamp per answer — a separate table and a
       best-effort insert, so bookings keep working even before the migration runs. Screenshots:
       `Claude outputs/permissions/`.
-- [ ] Edge: unit/gate/parking/concierge fields → Outlook event + 24h reminder
+- [x] Edge: unit/gate/parking/concierge fields (BUG-7; live Oct 7 `0329225`, owner approved the wording from
+      `Claude outputs/address-fields/` and ran migration `drizzle/0011_booking_access.sql`). Booking form: "Apt /
+      unit (optional)" next to the street (`address-line1` / `address-line2` autofill; stacked on phones) + "Gate code,
+      parking or concierge (optional)" box under City/ZIP (max 40 / 300 characters, also checked on the server). The
+      unit becomes part of the address line (`formatAddress`: "1204" → "Unit 1204", "Apt 4B" stays as typed), so it
+      shows everywhere the address does with no new bookings column. The notes go in table `booking_access`
+      (best effort, like `booking_consents`: bookings, /admin and reminders keep working before the migration runs)
+      and show in: review step ("Getting in"), Outlook event + studio email ("Gate / parking / concierge"), /admin lead
+      details, and the **24 h reminder only** ("Getting in"; not the confirmation or 72 h emails, not on the
+      cancel/reschedule pages). Never sent to Meta (only city/ZIP are). Without a unit or notes everything is
+      pixel-identical to before. Tested: 18 e2e, 16 visual parity, 29 local Outlook-mode checks (fake Graph/Resend,
+      incl. the table missing).
 - [ ] Edge: flag addresses ≥2h drive (travel fee, editable in /admin)
 - [ ] Edge: Resend webhooks → flag bounces/complaints in /admin; SPF/DKIM/DMARC check
 - [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
@@ -338,7 +349,12 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **BUG-5 (medium)** Overlap race: DB only blocks two active bookings with the *same start*; overlapping sessions
   submitted at the same moment can both succeed. Fix: exclusion constraint on a stored blocked range (start → end+buffer).
 - **BUG-6 (medium, fixed 1b)** No security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors).
-- **BUG-7 (low)** Address form has no unit/apartment, gate, parking or concierge fields (Miami condos).
+- **BUG-7 (low, fixed Oct 7)** Address form has no unit/apartment, gate, parking or concierge
+  fields (Miami condos).
+- **Phase 6 note (found Oct 7):** a failed Drizzle query's error message repeats the query's values, so the existing
+  `log.error(..., { error })` calls after failed inserts (e.g. "Insert failed" in `outlook-provider.ts`) would write
+  the family's name, email, phone, address and baby name into the Vercel logs. `lib/booking/access.ts` logs only the
+  database's own reason (`err.cause.message`); do the same everywhere in the Phase 6 audit.
 - **BUG-8 (low)** Confirmation step is in-memory: browser Back/refresh shows an empty form (no double booking — OK), but
   the parent loses the reference on screen. Consider sessionStorage restore on the confirmation.
 - **BUG-9 (low)** Console warning on `/`: a CSS chunk is preloaded but not used within a few seconds.
@@ -407,6 +423,10 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   `checkout.session.completed` (+ `checkout.session.async_payment_succeeded`). Restricted keys `rk_live_…` are
   recommended over secret keys. https://docs.stripe.com/api/checkout/sessions/create ·
   https://docs.stripe.com/webhooks#verify-manually · https://docs.stripe.com/keys#limit-access
+- **Address autofill** (checked Oct 7): with a separate apartment/unit field use `address-line1` (street) +
+  `address-line2` (unit); `street-address` is meant for one multi-line box and the two styles shouldn't be mixed.
+  https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#autofill ·
+  https://web.dev/articles/payment-and-address-form-best-practices
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
