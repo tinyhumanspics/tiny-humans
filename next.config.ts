@@ -1,4 +1,7 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 /**
  * Standard Next.js App Router configuration (what Vercel builds with
@@ -29,4 +32,4 @@ const nextConfig: NextConfig = {
   ...(isStatic ? { output: "export", trailingSlash: true } : { headers: async () => [{ source: "/:path*", headers: securityHeaders }] }),
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

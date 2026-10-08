@@ -385,6 +385,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       [next-intl routing](https://next-intl.dev/docs/routing),
       [Google multilingual sites](https://developers.google.com/search/docs/advanced/crawling/managing-multi-regional-sites),
       [Google localized versions / hreflang](https://developers.google.com/search/docs/specialty/international/localized-versions).
+      New dependency: `next-intl` 4.14.9 for typed messages, ICU plurals/date/number formatting and locale-aware links;
+      installed footprint is ~2.3 MB across `next-intl`, `use-intl` and FormatJS (npm package itself ~400 KB unpacked),
+      current Next 16/React 19 peers, maintained Oct 2, and `npm audit --omit=dev` reports 0 vulnerabilities. Only the
+      messages needed by a client subtree will be provided, so the entire catalog is not shipped to every browser.
+      Dormant foundation: shared `AppLocale`, the future `as-needed` URL policy (English unprefixed, Spanish `/es`,
+      detection off), request config and Next plugin. It does not publish `/es` or change today's English site. Strict
+      tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 parity tests passed.
 - [~] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails. Migration
       `drizzle/0018_booking_locale.sql` is additive/idempotent, keeps existing bookings in English, and must run in Neon
       before app code reads the column. Local Postgres: ran the migration twice; 9 existing bookings remained `en`, the
