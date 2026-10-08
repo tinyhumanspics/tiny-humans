@@ -66,6 +66,26 @@ test("booking works in the Instagram in-app browser", async ({ browser }) => {
   await ctx.close();
 });
 
+test("a ZIP code outside Florida can't be booked", async ({ page }) => {
+  await page.goto("/book?bundle=little-moments");
+  const day = page.locator('button[aria-label*="times available"]').first();
+  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
+  await page.locator('button[aria-label*="times available"]').first().click();
+  await page.getByRole("button", { name: /Next: Time/ }).click();
+  await page.locator('label[for^="time-"]').first().click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await page.fill("#field-parentName", "Ana Test");
+  await page.fill("#field-email", "ana.test@example.com");
+  await page.fill("#field-phone", "(305) 555-0142");
+  await page.fill("#field-street", "100 Peachtree St");
+  await page.fill("#field-city", "Atlanta");
+  await page.fill("#field-zip", "30303");
+  await page.selectOption("#field-babyAge", { index: 1 });
+  await page.getByRole("button", { name: /Next: Review/ }).click();
+  await expect(page.getByText("We only come to homes in Florida. Please check the ZIP code.")).toBeVisible();
+  await expect(page.getByText("Check everything")).toHaveCount(0);
+});
+
 test("the landing page and legal pages load", async ({ page }) => {
   for (const path of ["/", "/bundles", "/about", "/privacy", "/terms"]) {
     const res = await page.goto(path);
