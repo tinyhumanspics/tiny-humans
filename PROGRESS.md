@@ -3,11 +3,15 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 8: Phase 4 seasonal landing slice next; order = owner's choice below)
-State: `main` = `dea7272`, live and smoke-tested. Extra babies are live: Step 3 offers twins/triplets, each extra baby
+## ▶ NEXT STEPS (Oct 8: Phase 4 seasonal landing slice approved for deployment; order = owner's choice below)
+State: `main` = `48a2088`, live and smoke-tested. Extra babies are live: Step 3 offers twins/triplets, each extra baby
 adds $75 +30 min +5 photos, and offers/codes reduce only the bundle. Migration 0017 returned 3 bundle rows; Vercel
 succeeded, `/` + `/book` returned 200, and the live read-only twins availability check returned 90-minute slots.
 Migrations 0010–0017 ran in Neon.
+The seasonal landing slice is locally complete and verified: `/admin/seasonal` edits three offers + cutoffs in existing
+Vercel Blob settings, matching themes show them through the inclusive cutoff, old settings stay hidden until explicitly
+enabled, and no SQL is needed. The owner approved the phone/desktop admin and landing screenshots plus final Christmas
+cards wording on Oct 8; commit/push and production verification are next.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
    Neon without errors; the final check returned all three names. Resend webhook + secret were already verified.
@@ -24,7 +28,7 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) **Phase 4**: extra babies are live; next, seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
+   (a) **Phase 4**: extra babies are live; ship the approved seasonal landing variants (Thanksgiving: last
    sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween). Extra babies: $75, +30 min, +5
    photos per baby after the first, twins/triplets only, max 3 babies total, all bundles; offers/codes reduce the bundle
    only, never the add-on (owner confirmed Oct 8). (b) Phase 5
@@ -46,15 +50,20 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): main = dea7272, live and smoke-tested. Phase 2 finished and migrations 0014–0017 ran without errors
+State (Oct 8): main = 48a2088, live and smoke-tested. Phase 2 finished and migrations 0014–0017 ran without errors
 (0017 check returned 3 bundle rows). Extra babies are live: Step 3 initially asks Baby name (optional) + Age (required),
 then "Shooting twins or triplets?" reveals choices and Baby 2/3 fields. Each extra baby = $75 +30 min +5 photos; max
 triplets, all bundles, and offers/codes reduce only the bundle. If the longer session no longer fits, details are saved
 and the family returns only to Time. Final strict tsc, lint (0 errors/26 known warnings), build, 27 e2e and 16 visual
 tests passed; Vercel succeeded, / + /book returned 200, and live twins availability returned 90-minute slots.
+Seasonal landing work is locally complete, uncommitted, verified and owner-approved: /admin/seasonal edits Thanksgiving, Christmas
+cards and First Christmas copy/on-off/cutoffs in existing Vercel Blob settings; only matching themes show enabled,
+unexpired offers, and old settings keep all offers hidden. No SQL is needed. The owner approved all screenshots and the
+final Christmas cards wording Oct 8.
 
-Next: build seasonal landing variants editable in /admin with real cutoffs: Thanksgiving Nov 23, Christmas cards Dec 5,
-First Christmas Dec 21; no Halloween. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
+Next: commit/push the approved seasonal slice, verify Vercel + production read-only, and have the owner enable the
+wanted offers in /admin/seasonal. After that start
+Phase 5 SEO. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: Stripe "Refunds: Write" +
 checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
@@ -393,7 +402,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       request returned 90-minute Little Moments slots. No production booking was created.
 - ~~Halloween theme~~ — **dropped by the owner (Oct 7): no Halloween anything; keep only the existing themes**
   (default, Thanksgiving, Christmas, New Year).
-- [ ] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in /admin
+- [~] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in
+      `/admin/seasonal`. Locally complete, uncommitted: title + description + on/off + cutoff live in the existing Vercel
+      Blob settings (no migration); old settings parse with all offers off so production never silently publishes code
+      defaults. An enabled offer appears only with its matching live theme and through its inclusive cutoff. Christmas
+      cards disappear after Dec 5 while First Christmas can remain through Dec 21. The hard-coded final-card cutoff line
+      is replaced by the active saved offers. Admin includes a client-side landing preview. Strict tsc/build/lint (0
+      errors/26 known warnings), 36 e2e (seasonal logic + backward compatibility + admin editor on 3 devices), and all
+      16 default-state visual parity checks passed. Approval screenshots: `Claude outputs/seasonal/phone-{admin,landing}.png`
+      and matching desktop files. Owner approved the visuals and final Christmas-card wording Oct 8; ready to commit/push.
 
 ## Phase 5 — SEO basics
 - [ ] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable
@@ -544,6 +561,12 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 4 seasonal landing settings** (official docs checked Oct 8): keep the new copy/dates in the existing immutable,
+  timestamped Vercel Blob settings files instead of adding another store or dependency; Vercel recommends immutable blob
+  pathnames to avoid stale CDN/browser copies, matching the project's current timestamped files. Saving already calls
+  Next's supported Route Handler `revalidateTag(tag, { expire: 0 })`, so the next visitor receives the newly saved offers
+  immediately. https://vercel.com/docs/vercel-blob · https://vercel.com/docs/vercel-blob/using-blob-sdk ·
+  https://nextjs.org/docs/app/api-reference/functions/revalidateTag
 - **Phase 4 extra-baby add-on** (official docs checked Oct 8): Stripe Checkout accepts multiple `line_items` with
   inline `price_data` (up to 100 in payment mode), so the balance page can keep discounted bundle, full-price add-on
   and travel as separate lines; metadata is for internal identifiers, not sensitive data. Drizzle Kit `generate`
