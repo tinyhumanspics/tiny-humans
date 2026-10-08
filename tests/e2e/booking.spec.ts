@@ -34,10 +34,14 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await expect(page.locator("#field-consent-sms")).not.toBeChecked();
   await expect(page.locator("#field-consent-photos")).not.toBeChecked();
   await page.locator("#field-consent-sms").check();
+  // optional backdrop (Little Moments: 1 setup)
+  await page.getByRole("button", { name: "Burgundy", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Burgundy", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect(page.getByText("Check everything")).toBeVisible();
   await expect(page.getByText("1500 Bay Rd, Unit 1204, Miami Beach 33139")).toBeVisible();
   await expect(page.getByText("Gate code 4821, guest parking on level 2")).toBeVisible();
+  await expect(page.locator("dl").getByText("Burgundy", { exact: true })).toBeVisible();
   await expect(page.getByText("OK to text you")).toBeVisible();
   await expect(page.getByText("Kept private")).toBeVisible();
   // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
