@@ -3,7 +3,7 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 8 early: switching to Codex for a while; order = owner's choice below)
+## ▶ NEXT STEPS (handoff, Oct 8: Phase 2 complete; order = owner's choice below)
 State: everything is on `main` and live (latest code slice `fd98d3e`, Vercel + production smoke-tested). Migrations 0010–0016 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
@@ -21,13 +21,13 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) Phase 2 optional /admin "Today" view with tap-to-text (block-a-day + affected-family notifications and the
-   duplicate-booking flag are done Oct 8); (b) **Phase 4**:
+   (a) **Phase 4**:
    seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
    sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween) + the extra-babies add-on (decision
    15: $75, +30 min, +5 photos per extra baby, twins/triplets only, max 3 babies total, all bundles; ask the owner
-   whether codes apply to add-ons); (c) Phase 5
-   SEO; (d) Phase 3 Spanish; (e) Phase 6 security/accessibility/tests/CI; (f) rest of Phase 7, then 8, 9, 10.
+   whether codes apply to add-ons); (b) Phase 5
+   SEO; (c) Phase 3 Spanish; (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
+   Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
 5. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
 6. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
@@ -44,22 +44,19 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): fd98d3e live and smoke-tested: block a day + one-step affected-family schedule-change emails; duplicate-booking flag on /admin lead cards; DST Nov 1 check
-(nothing to change), BUG-5 overlap rule
-(code + database rule live), landing refresh (About photos fill empty landing slots, theme hero
-doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (webhook + secret + database table
-verified), SPF/DKIM/DMARC checked. Migrations
-0014/0015/0016 ran without errors Oct 8. AGENTS.md mirrors CLAUDE.md (owner switches tools). Not on main: nothing.
+State (Oct 8): main = 8ef9098, live and smoke-tested. Phase 2 finished: block a day + one-step affected-family
+schedule-change emails, duplicate-booking alerts, reminders/after-session, DST check, BUG-5 database rule and Resend
+delivery alerts. Migrations 0014/0015/0016 ran without errors. Not on main yet: nothing.
 
-Next: finish the brief, time-sensitive first (owner's order, PROGRESS → NEXT STEPS 4): optional Phase 2 Today view → Phase 4
-seasonal landing variants editable in /admin + extra-babies add-on → Phase 5 SEO → Phase 3 Spanish → Phase 6 →
-Phases 7–10. Research current official docs before each phase (links in PROGRESS.md). Small verified slices to main.
+Next: Phase 4 — Add-ons + seasonal. Start with the extra-baby booking option after the owner answers whether discount
+codes apply to its charge; then seasonal landing variants editable in /admin. Research current official docs first and
+record links in PROGRESS.md. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: whether discount codes apply to the $75 extra-baby charge; Stripe "Refunds: Write" +
 checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
 line; /portfolio; Terms review; About photo alt text ("IMG 6087").
-Watch out: `npm run typecheck` can miss errors (use `npx tsc --noEmit -p . --incremental false`); bookings.blocked_until
-+ bookings_no_overlap live only in the database (never drizzle-kit push); iCloud can resurrect deleted files.
+Watch out: closed-day `day_closed` tokens are reschedule-only and pending deposits must be expired when closing a day;
+`bookings.blocked_until` + `bookings_no_overlap` live only in Neon (never drizzle-kit push); use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
@@ -163,7 +160,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + extras are live except the optional Today view. Deposit
+- **Now:** Phase 1g waits on the owner; **Phase 2 is complete** (the optional Today view stays in the backlog). Deposit
   code is live but switched off (migration ran; remaining Stripe/amount/switch steps wait on owner). BUG-5 database
   rule and email bounce table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
