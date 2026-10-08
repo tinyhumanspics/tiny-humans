@@ -4,25 +4,15 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff, Oct 8 early: switching to Codex for a while; order = owner's choice below)
-State: everything is on `main` and live (last code deploy `79ab33e`, smoke-tested). Migrations 0010–0013 ran in Neon.
+State: everything is on `main` (latest code slice `fd98d3e`; production verification next). Migrations 0010–0016 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
-0. **Owner: run `drizzle/0015_booking_no_overlap.sql` in Neon** (BUG-5; safe twice; any order with the code, which is
-   already live). Until it runs, only the old "same start time" rule protects against a double booking. If its last
-   statement fails with "conflicting key value violates exclusion constraint", run the query in the file's header and
-   send the result (two active bookings already overlap).
-0b. **Owner: email bounce alerts** (code live `3876f16`; steps 2–3 DONE Oct 8: webhook added in Resend, secret set in
-   Vercel, verified: unsigned POST → 400 "Invalid signature"; step 1 = migration 0016, sent Oct 8): (1) run `drizzle/0016_email_events.sql` in Neon (new table,
-   safe twice); (2) Resend → Webhooks → Add endpoint `https://www.tinyhumans.photography/api/resend/webhook`, events
-   **email.bounced, email.complained, email.suppressed, email.failed**; (3) copy its Signing secret (`whsec_…`) → Vercel →
-   Settings → Environment Variables → `RESEND_WEBHOOK_SECRET` (Production) → Redeploy; (4) in Resend, "Send test" or
-   just wait: until then the endpoint answers 503 (not configured), which is harmless.
+0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
+   Neon without errors; the final check returned all three names. Resend webhook + secret were already verified.
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
 2. **Deposit go-live** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7). Left, in order:
-   (a) **owner runs `drizzle/0014_booking_deposits.sql` in Neon** (new tables only, safe twice; sent Oct 7). Until it
-   runs, deposits stay off quietly, but /admin → Leads logs "Could not load deposits" and the Dashboard money totals
-   are hidden (their query joins `booking_deposits`); (b) **owner, in Stripe:** restricted key → **Refunds: Write**;
+   (a) **DONE Oct 8:** owner ran `drizzle/0014_booking_deposits.sql` in Neon; (b) **owner, in Stripe:** restricted key → **Refunds: Write**;
    webhook endpoint → add **`checkout.session.expired`**; (c) owner sets the amounts + switches on in /admin → **Pricing
    & Promotions → Deposits**; (d) one real booking with the owner (pay the deposit → event/emails/admin → cancel online
    → refund in Stripe), then check /home-sweet-home, /about and /terms show the deposit wording.
@@ -31,12 +21,12 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) Phase 2 leftovers: "block a day" in /admin + notify/reschedule every affected family in one step (brief §5
-   Scheduling; /admin → Availability already has closed days and time blocks, but nothing tells the families booked
-   that day), optional /admin "Today" view with tap-to-text. Duplicate-booking flag is done (Oct 8); (b) **Phase 4**:
+   (a) Phase 2 optional /admin "Today" view with tap-to-text (block-a-day + affected-family notifications and the
+   duplicate-booking flag are done Oct 8); (b) **Phase 4**:
    seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
    sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween) + the extra-babies add-on (decision
-   15: $75, +30 min, +5 photos, max 3, editable per bundle; ask the owner whether codes apply to add-ons); (c) Phase 5
+   15: $75, +30 min, +5 photos per extra baby, twins/triplets only, max 3 babies total, all bundles; ask the owner
+   whether codes apply to add-ons); (c) Phase 5
    SEO; (d) Phase 3 Spanish; (e) Phase 6 security/accessibility/tests/CI; (f) rest of Phase 7, then 8, 9, 10.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
 5. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
@@ -54,19 +44,18 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): main = 79ab33e, live and smoke-tested: duplicate-booking flag on /admin lead cards, DST Nov 1 check
+State (Oct 8): latest code slice = fd98d3e: block a day + one-step affected-family schedule-change emails; duplicate-booking flag on /admin lead cards; DST Nov 1 check
 (nothing to change), BUG-5 overlap rule
-(code live; database rule needs migration 0015), landing refresh (About photos fill empty landing slots, theme hero
-doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (webhook + secret verified; needs
-migration 0016), SPF/DKIM/DMARC checked. AGENTS.md now mirrors CLAUDE.md (owner switches tools).
-Not on main yet: nothing.
+(code + database rule live), landing refresh (About photos fill empty landing slots, theme hero
+doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (webhook + secret + database table
+verified), SPF/DKIM/DMARC checked. Migrations
+0014/0015/0016 ran without errors Oct 8. AGENTS.md mirrors CLAUDE.md (owner switches tools). Not on main: nothing.
 
-Next: finish the brief, time-sensitive first (owner's order, PROGRESS → NEXT STEPS 4): Phase 2 leftovers ("block a
-day" + notify/reschedule every affected family in one step, optional Today view) → Phase 4
+Next: finish the brief, time-sensitive first (owner's order, PROGRESS → NEXT STEPS 4): optional Phase 2 Today view → Phase 4
 seasonal landing variants editable in /admin + extra-babies add-on → Phase 5 SEO → Phase 3 Spanish → Phase 6 →
 Phases 7–10. Research current official docs before each phase (links in PROGRESS.md). Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: confirm migrations 0014/0015/0016 ran in Neon (sent Oct 8); Stripe "Refunds: Write" +
+Waiting on the owner: whether discount codes apply to the $75 extra-baby charge; Stripe "Refunds: Write" +
 checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
 line; /portfolio; Terms review; About photo alt text ("IMG 6087").
 Watch out: `npm run typecheck` can miss errors (use `npx tsc --noEmit -p . --incremental false`); bookings.blocked_until
@@ -91,8 +80,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       (/home-sweet-home)" slots are now named like the page's cards: "Our set-up in a family's living room" (How it
       works) and "Adrian & Alondra" (Meet Adrian & Alondra). Same slots as before (saved photos unaffected).
 - [x] **Halloween dates removed** from the landing page's final section (owner, Oct 7, `02ebc43`).
-- [~] **Deposit while booking** (owner, Oct 7; wording approved; live `020eb27`…`543def3`, **switched off** until the
-      owner runs migration 0014 + the Stripe steps; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
+- [~] **Deposit while booking** (owner, Oct 7; wording approved; live `020eb27`…`543def3`; migration 0014 ran Oct 8,
+      **switched off** until the remaining Stripe steps; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
       bundle (`bundle_deposits`; a bundle without a row = $50; `deposit_settings` = the switch; off = today's flow).
       Booking form review step: "Deposit today $50 (holds your date)" + "Rest after the photoshoot", button "Pay $50
       deposit", note (30-min hold, refund rule). Create → booking saved **pending** (blocks the time like any booking) +
@@ -174,10 +163,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras live except "block a day" and the
-  optional Today view; deposit live but switched off (waiting for migration 0014 + Stripe steps); BUG-5 and
-  email bounce alerts live in code, waiting for migrations 0015/0016 (Resend webhook + secret verified). Next:
-  NEXT STEPS 4.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + extras are live except the optional Today view. Deposit
+  code is live but switched off (migration ran; remaining Stripe/amount/switch steps wait on owner). BUG-5 database
+  rule and email bounce table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -340,7 +328,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       (`bookings.travel_fee_cents/travel_miles`); amount due / payment link / Dashboard / Meta value = bundle + fee; the
       Stripe page shows a second line "Travel fee (about N miles)". FAQ (`aFee`) + Terms paragraph (`travelFeeTerms`)
       use the saved numbers; saving revalidates both. 26 local checks + a non-Florida e2e.
-- [x] Edge: Resend webhooks → flag bounces/complaints in /admin (Oct 7 night, live `3876f16`; waiting for owner step 0b).
+- [x] Edge: Resend webhooks → flag bounces/complaints in /admin (Oct 7 night, live `3876f16`; migration 0016 + Resend
+      webhook/secret completed and verified Oct 8).
       `POST /api/resend/webhook` (Svix signature with `RESEND_WEBHOOK_SECRET`, 5-min tolerance, `lib/email/delivery.ts`)
       saves email.bounced / complained / suppressed / failed in `email_events` (migration 0016; id = webhook message id +
       recipient, so retries/replays add nothing). Every email now carries Resend tags `category` (send scope) and
@@ -363,7 +352,18 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       booking again after cancelling is not flagged. No migration. Local Outlook-mode check: two active matches were
       both flagged; after cancelling one, both warnings cleared. 21 e2e passed; phone + desktop screenshots in
       `.screenshots/duplicate-booking/`.
-- [ ] Edge: block a day in /admin + notify/reschedule every affected family
+- [x] Edge: block a day in /admin + notify/reschedule every affected family (Oct 8, `fd98d3e`, owner approved phone +
+      desktop UI/email): /admin → Availability checks future confirmed/rescheduled/pending sessions before a whole-day
+      closure. One action closes the date first, then sends every active family a branded schedule-change email with a
+      private **reschedule-only** token (`booking_emails.kind = day_closed`, no migration); it bypasses the booking's
+      normal notice cutoff, expires automatically when the session moves, and cannot open cancel/backdrop pages.
+      Pending-deposit families have the open Stripe page expired and time released before receiving a fresh booking
+      link; "Close without emailing" still closes those pages so a blocked date cannot confirm later. Sends are
+      idempotent, failed emails can retry three times, partial failure never reopens the day, and /admin keeps email/
+      phone links for manual contact. Family self-reschedule uses the existing Outlook PATCH → atomic Neon save/history
+      → Outlook rollback-on-DB-failure path. Local Outlook/Neon/Resend/Stripe test: two families, partial failure + safe
+      retry/no duplicate, 9999-hour cutoff bypass, other-purpose token rejection, event/row aligned after move, pending
+      deposit email and no-email paths; 21 e2e passed. Screenshots: `.screenshots/close-day/`.
 
 ## Phase 3 — Spanish (owner: "same time, no rush" → after Phase 2)
 - [ ] Research i18n (next-intl vs alternatives), URLs (/es), detection rules, switcher, hreflang
@@ -371,7 +371,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
-- [ ] Extra babies add-on ($75 each, editable per bundle in /admin; extra minutes/photos/max TBD) end to end
+- [ ] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
+      30 minutes and 5 edited photos** (owner confirmed Oct 8; editable per bundle in /admin). [?] Do discount codes
+      reduce only the base bundle or the add-on too?
 - ~~Halloween theme~~ — **dropped by the owner (Oct 7): no Halloween anything; keep only the existing themes**
   (default, Thanksgiving, Christmas, New Year).
 - [ ] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in /admin
@@ -482,7 +484,7 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   `GET /api/booking/availability`, `POST /api/admin/login` (only a 700 ms delay → brute-forceable).
 - **BUG-4 (medium, fixed 1a)** Times aren't labeled as Miami time anywhere (calendar, time step, review, confirmation); the calendar's
   "today" and month math use the visitor's local zone. Relatives booking from other states see unlabeled ET times.
-- **BUG-5 (medium, fixed Oct 7 night; code live `6c61017`, database rule once the owner runs migration 0015)** Overlap
+- **BUG-5 (medium, fixed Oct 7 night; code live `6c61017`, database rule migration 0015 ran Oct 8)** Overlap
   race: DB only blocked two active bookings with the *same start*; overlapping sessions submitted at the same moment
   could both succeed. Fix: `bookings.blocked_until` (trigger: session end + the buffer in force when saved/moved; not in
   the Drizzle schema) + exclusion constraint `bookings_no_overlap` on `[session_start, blocked_until)` for active rows;
@@ -593,6 +595,13 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   letters, numbers, "_" or "-", ≤ 256 chars. https://resend.com/docs/webhooks/event-types ·
   https://resend.com/docs/webhooks/verify-webhooks-requests · https://docs.svix.com/receiving/verifying-payloads/how-manual ·
   https://resend.com/docs/webhooks/retries-and-replays · https://resend.com/docs/api-reference/emails/send-email
+- **Microsoft Graph calendar changes** (checked Oct 8): update one event with `PATCH /events/{id}` (send only changed
+  fields; success returns 200), and delete with `DELETE /events/{id}` (204). JSON batches allow at most 20 requests,
+  each can still be throttled; Outlook service limits batch concurrency to four. The closed-day workflow deliberately
+  reuses the existing one-booking-at-a-time self-reschedule path instead of batching calendar writes, preserving its
+  Outlook/Neon rollback guarantees. https://learn.microsoft.com/en-us/graph/api/event-update?view=graph-rest-1.0 ·
+  https://learn.microsoft.com/en-us/graph/api/event-delete?view=graph-rest-1.0 ·
+  https://learn.microsoft.com/en-us/graph/json-batching?tabs=http · https://learn.microsoft.com/en-us/graph/throttling-limits
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
