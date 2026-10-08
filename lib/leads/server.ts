@@ -18,6 +18,7 @@ import { sourceLabel } from "@/lib/tracking/attribution";
 import { log } from "@/lib/log";
 import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
+import { duplicateBookingsFor } from "./duplicates";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
@@ -114,7 +115,7 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
   };
 }
 
-export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EXTRAS): Lead {
+export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EXTRAS, duplicate?: Lead["duplicate"]): Lead {
   const emails = x.emails;
   return {
     reference: r.bookingReference,
@@ -122,6 +123,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     parentName: r.parentName,
     email: r.email,
     phone: r.phone,
+    duplicate,
     babyName: r.babyName,
     babyAge: r.babyAge,
     bundleId: r.packageId,
@@ -195,8 +197,14 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     if (g.status !== "cancelled") counts.all += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
-  const [history, extras, money] = await Promise.all([historyFor(ids), extrasFor(rows), filter === "all" ? moneyTotals() : undefined]);
-  return { leads: rows.map((r) => toLead(r, history, extras)), counts, total: filter === "all" ? counts.all : counts[filter], money };
+  const [history, extras, money, activeContacts] = await Promise.all([
+    historyFor(ids),
+    extrasFor(rows),
+    filter === "all" ? moneyTotals() : undefined,
+    db.select({ reference: bookings.bookingReference, status: bookings.status, email: bookings.email, phone: bookings.phone }).from(bookings).where(ne(bookings.status, "cancelled")),
+  ]);
+  const duplicates = duplicateBookingsFor(rows.map((r) => ({ reference: r.bookingReference, status: r.status as LeadStatus, email: r.email, phone: r.phone })), activeContacts as Parameters<typeof duplicateBookingsFor>[1]);
+  return { leads: rows.map((r) => toLead(r, history, extras, duplicates.get(r.bookingReference))), counts, total: filter === "all" ? counts.all : counts[filter], money };
 }
 
 /** Dashboard: card payments (+ deposits kept) received this month (Miami time) and finished sessions still unpaid. */
@@ -239,7 +247,17 @@ async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
 
 export async function getLead(reference: string): Promise<Lead | null> {
   const row = await getLeadRow(reference);
-  return row ? toLead(row, await historyFor([row.id]), await extrasFor([row])) : null;
+  if (!row) return null;
+  const [history, extras, activeContacts] = await Promise.all([
+    historyFor([row.id]),
+    extrasFor([row]),
+    getDb().select({ reference: bookings.bookingReference, status: bookings.status, email: bookings.email, phone: bookings.phone }).from(bookings).where(ne(bookings.status, "cancelled")),
+  ]);
+  const duplicates = duplicateBookingsFor(
+    [{ reference: row.bookingReference, status: row.status as LeadStatus, email: row.email, phone: row.phone }],
+    activeContacts as Parameters<typeof duplicateBookingsFor>[1],
+  );
+  return toLead(row, history, extras, duplicates.get(row.bookingReference));
 }
 
 export async function getLeadRow(reference: string): Promise<Booking | null> {

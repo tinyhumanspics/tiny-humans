@@ -231,7 +231,9 @@
 .leadPills { display: inline-flex; flex-wrap: wrap; gap: 8px; }
 .paidPill { color: var(--chalkboard-dark); background: var(--sun-yellow); border-color: var(--sun-yellow); }
 .unpaidPill { color: var(--chalk-error); border-style: dashed; }
+.duplicatePill { color: var(--sun-yellow); border-style: dashed; }
 .status_cancelled { color: var(--chalk-error); }
+.duplicateNote { margin: 2px 0; color: var(--sun-yellow); font-size: 1.02rem; }
 .leadDetails { margin-top: 8px; padding-top: 10px; border-top: 1px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); display: grid; gap: 12px; justify-items: start; }
 .leadDetails dl { margin: 0; width: 100%; display: grid; }
 .leadDetails dl > div { display: grid; grid-template-columns: 180px 1fr; gap: 4px 12px; padding: 5px 0; }

@@ -77,6 +77,20 @@ function problemLine(p: EmailProblem): string {
   }
 }
 const problemRows = (lead: Lead): [string, string][] => (lead.emailProblems ?? []).slice(0, 3).map((p, i) => [i ? `Email problem ${i + 1}` : "Email problem", problemLine(p)]);
+const duplicateLine = (lead: Lead) => {
+  const duplicate = lead.duplicate;
+  if (!duplicate) return null;
+  const sameBoth = duplicate.emailReferences.filter((reference) => duplicate.phoneReferences.includes(reference));
+  const emailOnly = duplicate.emailReferences.filter((reference) => !sameBoth.includes(reference));
+  const phoneOnly = duplicate.phoneReferences.filter((reference) => !sameBoth.includes(reference));
+  return [
+    sameBoth.length ? `same email and phone as ${sameBoth.join(", ")}` : "",
+    emailOnly.length ? `same email as ${emailOnly.join(", ")}` : "",
+    phoneOnly.length ? `same phone as ${phoneOnly.join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("; ");
+};
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
 /** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
 const reminderRows = (lead: Lead): [string, string][] => {
@@ -187,6 +201,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
   const [err, setErr] = useState<string | null>(null);
   const inspiration = findPhoto(photos, lead.inspirationPhotoId)?.title ?? (lead.inspirationPhotoId ? "Photo no longer in the portfolio" : null);
   const city = lead.address.split(",").slice(-2, -1)[0]?.trim() ?? lead.address;
+  const duplicate = duplicateLine(lead);
 
   const cancel = async (e: FormEvent) => {
     e.preventDefault();
@@ -229,6 +244,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Internal notification", emailLine(lead.internalNotification)],
     ...reminderRows(lead),
     ...problemRows(lead),
+    ...(duplicate ? [["Possible duplicate", duplicate] as [string, string]] : []),
     ...(lead.source
       ? ([
           ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],
@@ -256,6 +272,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         <span className={styles.leadPills}>
           <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{statusLabel(lead)}</span>
           <PaidTag lead={lead} />
+          {duplicate && <span className={cn(styles.statusPill, styles.duplicatePill)}>Possible duplicate</span>}
           {lead.emailProblems?.[0] && <span className={cn(styles.statusPill, styles.unpaidPill)}>{PROBLEM_TAG[lead.emailProblems[0].kind]}</span>}
         </span>
       </div>
@@ -267,6 +284,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         {lead.email} · {lead.phone}
         {lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
       </p>
+      {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? "Not tracked"}</b>
         {lead.source?.campaign ? ` · ${lead.source.campaign}` : ""}

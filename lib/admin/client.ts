@@ -232,12 +232,15 @@ const prototypeApi: AdminApi = {
   },
   listLeads: async (filter) => {
     const all = new MockBookingProvider().listLeads();
+    const { duplicateBookingsFor } = await import("@/lib/leads/duplicates");
+    const duplicates = duplicateBookingsFor(all, all);
+    const flagged = all.map((lead) => ({ ...lead, duplicate: duplicates.get(lead.reference) }));
     const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as LeadList["counts"];
-    all.forEach((l) => {
+    flagged.forEach((l) => {
       counts[l.status] += 1;
       if (l.status !== "cancelled") counts.all += 1;
     });
-    const leads = filter === "all" ? all.filter((l) => l.status !== "cancelled") : all.filter((l) => l.status === filter);
+    const leads = filter === "all" ? flagged.filter((l) => l.status !== "cancelled") : flagged.filter((l) => l.status === filter);
     return { leads, counts, total: leads.length };
   },
   leadAvailability: async (reference, from, to) => {

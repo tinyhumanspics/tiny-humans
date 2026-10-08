@@ -62,6 +62,8 @@ export interface Lead {
   parentName: string;
   email: string;
   phone: string;
+  /** Other active bookings with the same normalized parent contact details. */
+  duplicate?: { emailReferences: string[]; phoneReferences: string[] };
   babyName: string | null;
   babyAge: string;
   bundleId: string;
