@@ -3,8 +3,10 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 8: Phase 2 complete; order = owner's choice below)
-State: everything is on `main` and live (latest code slice `fd98d3e`, Vercel + production smoke-tested). Migrations 0010–0016 ran in Neon.
+## ▶ NEXT STEPS (Oct 8: Phase 4 extra-baby slice in progress; order = owner's choice below)
+State: the latest live app is `faad919`; migration 0017 is prepared on `main` in `be06303` but has **not** been run in
+Neon yet. The extra-baby app code is finished and verified locally but deliberately remains uncommitted until migration
+0017 is in Neon and the owner approves the phone/desktop booking screenshots. Migrations 0010–0016 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
    Neon without errors; the final check returned all three names. Resend webhook + secret were already verified.
@@ -21,11 +23,11 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) **Phase 4**:
-   seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
-   sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween) + the extra-babies add-on (decision
-   15: $75, +30 min, +5 photos per extra baby, twins/triplets only, max 3 babies total, all bundles; ask the owner
-   whether codes apply to add-ons); (b) Phase 5
+   (a) **Phase 4**: finish the extra-babies rollout (owner runs migration 0017 + approves screenshots → commit/push the
+   verified app slice), then seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
+   sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween). Extra babies: $75, +30 min, +5
+   photos per baby after the first, twins/triplets only, max 3 babies total, all bundles; offers/codes reduce the bundle
+   only, never the add-on (owner confirmed Oct 8). (b) Phase 5
    SEO; (c) Phase 3 Spanish; (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
@@ -44,15 +46,17 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): main = 8ef9098, live and smoke-tested. Phase 2 finished: block a day + one-step affected-family
-schedule-change emails, duplicate-booking alerts, reminders/after-session, DST check, BUG-5 database rule and Resend
-delivery alerts. Migrations 0014/0015/0016 ran without errors. Not on main yet: nothing.
+State (Oct 8): latest live app = faad919. Phase 2 finished and migrations 0014/0015/0016 ran without errors. Phase 4
+extra-baby migration 0017 is on main in be06303 but has not run in Neon. The app code is finished and verified locally,
+not committed yet: twins/triplets on all bundles, max 3; each extra baby = $75 +30 min +5 photos; offers/discount codes
+reduce only the bundle. It waits on migration 0017 + owner screenshot approval before the app push.
 
-Next: Phase 4 — Add-ons + seasonal. Start with the extra-baby booking option after the owner answers whether discount
-codes apply to its charge; then seasonal landing variants editable in /admin. Research current official docs first and
-record links in PROGRESS.md. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
+Next: ask the owner to run drizzle/0017_extra_babies.sql and confirm the check query returns 3 bundle rows, plus approve
+the phone/desktop screenshots in Claude outputs/extra-babies/. Then commit/push the already-verified app slice, verify
+Vercel + production (read-only smoke; never book), update parity baselines after approval, and continue with seasonal
+landing variants editable in /admin. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: whether discount codes apply to the $75 extra-baby charge; Stripe "Refunds: Write" +
+Waiting on the owner: migration 0017 + extra-baby screenshot approval; Stripe "Refunds: Write" +
 checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
 line; /portfolio; Terms review; About photo alt text ("IMG 6087").
 Watch out: closed-day `day_closed` tokens are reschedule-only and pending deposits must be expired when closing a day;
@@ -160,7 +164,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; **Phase 2 is complete** (the optional Today view stays in the backlog). Deposit
+- **Now:** Phase 1g waits on the owner; **Phase 2 is complete** (the optional Today view stays in the backlog). Phase 4's
+  extra-baby implementation is locally complete/verified; migration 0017 + visual approval gate the app push. Deposit
   code is live but switched off (migration ran; remaining Stripe/amount/switch steps wait on owner). BUG-5 database
   rule and email bounce table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
@@ -369,9 +374,17 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
-- [ ] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
-      30 minutes and 5 edited photos** (owner confirmed Oct 8; editable per bundle in /admin). [?] Do discount codes
-      reduce only the base bundle or the add-on too?
+- [~] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
+      30 minutes and 5 edited photos** (owner confirmed Oct 8; editable per bundle in /admin). Offers/discount codes
+      reduce **only the bundle**; the add-on stays full price (owner confirmed Oct 8). Migration 0017 is on main in
+      `be06303`, waiting for the owner to run it before the app code deploys. App work is locally complete: baby count
+      before availability (longer slots), one optional name + required age per baby, separate price line through review,
+      deposits/balance/Stripe, Meta value, admin leads, Outlook events and customer/studio emails; booked values are
+      snapshotted. Local isolated Outlook/Neon/Resend test booked twins for 2.5 h with a 20% bundle code: bundle $199.20
+      + unchanged $75 add-on = $274.20; DB/event/email matched and the email offered 25 favorites. Migration ran twice
+      safely and seeded 3 rows. Strict tsc/build/lint (0 errors/26 known warnings), 24 e2e (new twins test on 3 devices)
+      and visual parity: 14 unchanged; only the intentionally changed /book page differs. Review screenshots:
+      `Claude outputs/extra-babies/` (phone + desktop booking/count/details/review/admin).
 - ~~Halloween theme~~ — **dropped by the owner (Oct 7): no Halloween anything; keep only the existing themes**
   (default, Thanksgiving, Christmas, New Year).
 - [ ] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in /admin
@@ -433,8 +446,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
     Texting number: **(786) 222-7194**.
 14. Landing URL: owner wants it short, universal (newborns up to 5 years, statewide) and memorable/punny → proposed
     `/home-sweet-home` [?] owner pick.
-15. Extra baby: **$75, +30 min, +5 photos, max 3 per booking** — all editable in /admin. [?] do discount codes apply to add-ons
-    (default: codes apply to the bundle price only).
+15. Extra baby: **$75, +30 min, +5 photos, max 3 per booking** — all editable in /admin. Offers and discount codes
+    apply to the **bundle only**; the extra-baby charge stays full price (owner confirmed Oct 8).
 16. Payment after session: ~~Zelle, card link or cash~~ → **card only, Stripe** (owner, Oct 7; see below).
 17. Cancellation/no-show wording approved: "Free to reschedule or cancel online up to 48 hours before. Inside 48 hours,
     just text us. If you miss a session without telling us, we may ask for a deposit to rebook."
@@ -458,7 +471,7 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 
 ## Open owner questions
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
-- Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
+- Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
 
 ## Placeholders (must be approved before showing)
 - Photo placeholders (`PhotoPlaceholder`, "photo coming soon"): /about → "Adrian & Alondra", "Behind the scenes at a
@@ -525,6 +538,17 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 4 extra-baby add-on** (official docs checked Oct 8): Stripe Checkout accepts multiple `line_items` with
+  inline `price_data` (up to 100 in payment mode), so the balance page can keep discounted bundle, full-price add-on
+  and travel as separate lines; metadata is for internal identifiers, not sensitive data. Drizzle Kit `generate`
+  compares the TypeScript schema with the prior snapshot and writes SQL + a new snapshot; SQL migrations remain the
+  deploy artifact, so 0017 was reviewed, made idempotent and tested twice before the schema-reading app code. Zod 4
+  schemas validate the 1–3 baby boundary and every baby's age at the API boundary. Next App Router route handlers use
+  the Web `Request`/`Response` APIs, matching the existing JSON endpoints; the booking remains a client form with
+  server-side validation/repricing. https://docs.stripe.com/api/checkout/sessions/create ·
+  https://docs.stripe.com/api/metadata · https://orm.drizzle.team/docs/drizzle-kit-generate ·
+  https://orm.drizzle.team/docs/migrations · https://zod.dev/ ·
+  https://nextjs.org/docs/app/getting-started/route-handlers · https://nextjs.org/docs/app/guides/forms
 - **Next.js:** latest stable 16.4.0 (2026-10); 15.5.27 is the "backport" tag. Next 16 deprecates/renames `middleware` →
   `proxy` and removes `next lint`. Route groups with separate root layouts → full page load between them.
 - **Next 16 upgrade guide** (https://nextjs.org/docs/app/guides/upgrading/version-16, checked Oct 7): Turbopack default
