@@ -1,4 +1,75 @@
 {
+  "about": {
+    "meta": {
+      "title": "Nuestra historia",
+      "description": "Conoce a Adrian y Alondra, los padres detrás de Tiny Humans: fotos de recién nacidos y bebés en casa, desde Miami hasta Orlando."
+    },
+    "hero": {
+      "eyebrow": "Nuestra historia",
+      "title": "Hola, somos Adrian y Alondra",
+      "intro": "Somos el matrimonio detrás de Tiny Humans y también somos padres. Llevamos el estudio a tu hogar para que tu bebé pueda estar calientito, alimentado y cómodo mientras capturamos estas primeras semanas.",
+      "photo": "Adrian y Alondra"
+    },
+    "story": {
+      "title": "Cómo comenzó Tiny Humans",
+      "paragraphs": [
+        "Todo comenzó con nuestro propio recién nacido. Queríamos esas primeras fotos acurrucadas y dormiditas, pero no queríamos preparar a un bebé recién nacido y cruzar la ciudad para ir a un estudio. Buscamos a un fotógrafo que viniera a nuestra casa y no encontramos ninguno.",
+        "Así que nos convertimos en esos fotógrafos.",
+        "Adrian llevaba unos dos años detrás de la cámara, fotografiando todo tipo de cosas. Cuando llegó nuestro bebé, fotografiar a recién nacidos y pequeños se convirtió en lo que más queríamos hacer."
+      ],
+      "photo": "Detrás de cámaras en una sesión en casa"
+    },
+    "why": {
+      "title": "¿Por qué en casa?",
+      "items": [
+        {
+          "title": "Tu bebé está cómodo",
+          "text": "El hogar es donde los bebés se sienten más tranquilos: olores y sonidos conocidos, su propia habitación y sin tener que usar la silla del auto."
+        },
+        {
+          "title": "Y tú también",
+          "text": "Alimenta a tu bebé cuando lo necesite, cámbialo en su propio cuarto y olvídate de empacar media casa. No tienes que ir a ningún lado."
+        },
+        {
+          "title": "Todo gira alrededor de tu familia",
+          "text": "Cada sesión sigue el ritmo de tu bebé, con pausas para alimentarlo y abrazarlo. Nosotros llevamos las luces, los fondos y los accesorios."
+        }
+      ]
+    },
+    "team": {
+      "title": "Quién hace qué",
+      "people": [
+        {
+          "name": "Adrian",
+          "role": "Fotografía y edición",
+          "text": "Adrian fotografía cada sesión y edita cada foto de tu galería.",
+          "photo": "Adrian trabajando"
+        },
+        {
+          "name": "Alondra",
+          "role": "Montajes, estilo y detalles",
+          "text": "Alondra diseña cada montaje: los fondos, las mantas, el estilo y todos los pequeños detalles.",
+          "photo": "Alondra preparando un montaje"
+        }
+      ]
+    },
+    "safety": {
+      "title": "La seguridad de tu bebé es lo primero",
+      "items": [
+        "Mantenemos la habitación cálida y acogedora.",
+        "Nos lavamos y desinfectamos las manos antes de cargar a tu bebé.",
+        "Nunca usamos poses sin apoyo: cualquier pose compleja es una composición segura de dos fotos.",
+        "Uno de los padres permanece al alcance de la mano en todo momento.",
+        "No usamos fragancias."
+      ]
+    },
+    "cta": {
+      "title": "Nos encantaría conocer a tu pequeño",
+      "text": "Elige un paquete y un horario que te convenga. $0 hoy: pagas después de tu sesión.",
+      "button": "Ver los paquetes",
+      "spanish": "Hablamos español."
+    }
+  },
   "emails": {
     "layout": {
       "logoAlt": "Tiny Humans",

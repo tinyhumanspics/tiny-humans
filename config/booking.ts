@@ -1,3 +1,6 @@
+import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
+
 /**
  * Booking settings. Tiny Humans brings the studio to every family's home,
  * so there is no location choice: the family's address is collected in
@@ -76,13 +79,14 @@ export type BookingStepId = (typeof bookingSteps)[number]["id"];
 export const STEP = { date: 0, time: 1, details: 2, review: 3 } as const;
 
 /** Link to the booking calendar for a bundle (keeps the inspiration photo). */
-export function scheduleHref(bundleId: string, inspirationId?: string | null): string {
+export function scheduleHref(bundleId: string, inspirationId?: string | null, locale: AppLocale = "en"): string {
   const q = new URLSearchParams({ bundle: bundleId });
   if (inspirationId) q.set("inspiration", inspirationId);
-  return `/book?${q.toString()}`;
+  return `${localePath("/book", locale)}?${q.toString()}`;
 }
 
 /** Link back to the bundles page (keeps the inspiration photo). */
-export function bundlesHref(inspirationId?: string | null): string {
-  return inspirationId ? `/bundles?inspiration=${encodeURIComponent(inspirationId)}` : "/bundles";
+export function bundlesHref(inspirationId?: string | null, locale: AppLocale = "en"): string {
+  const path = localePath("/bundles", locale);
+  return inspirationId ? `${path}?inspiration=${encodeURIComponent(inspirationId)}` : path;
 }

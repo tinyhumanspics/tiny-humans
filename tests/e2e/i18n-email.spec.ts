@@ -5,6 +5,8 @@ import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { bookingRequestSchema } from "@/lib/booking/validation";
+import { bundlesHref, scheduleHref } from "@/config/booking";
+import { localePath } from "@/i18n/path";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -29,6 +31,20 @@ function compareCatalogShape(left: unknown, right: unknown, path = "emails"): vo
 test("Spanish customer-email messages match the English schema and placeholders", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.emails, es.emails);
+});
+
+test("Spanish About messages match the English schema", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
+  compareCatalogShape(en.about, es.about, "about");
+});
+
+test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Path validation only needs one Node project");
+  expect(localePath("/about", "en")).toBe("/about");
+  expect(localePath("/about", "es")).toBe("/es/about");
+  expect(localePath("/", "es")).toBe("/es");
+  expect(bundlesHref("photo-1", "es")).toBe("/es/bundles?inspiration=photo-1");
+  expect(scheduleHref("little-moments", "photo-1", "es")).toBe("/es/book?bundle=little-moments&inspiration=photo-1");
 });
 
 test("booking requests accept only supported customer languages", async ({}, testInfo) => {
