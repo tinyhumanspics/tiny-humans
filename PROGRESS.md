@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff, Oct 8 early: switching to Codex for a while; order = owner's choice below)
-State: everything is on `main` (latest code slice `fd98d3e`; production verification next). Migrations 0010–0016 ran in Neon.
+State: everything is on `main` and live (latest code slice `fd98d3e`, Vercel + production smoke-tested). Migrations 0010–0016 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
    Neon without errors; the final check returned all three names. Resend webhook + secret were already verified.
@@ -44,7 +44,7 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): latest code slice = fd98d3e: block a day + one-step affected-family schedule-change emails; duplicate-booking flag on /admin lead cards; DST Nov 1 check
+State (Oct 8): fd98d3e live and smoke-tested: block a day + one-step affected-family schedule-change emails; duplicate-booking flag on /admin lead cards; DST Nov 1 check
 (nothing to change), BUG-5 overlap rule
 (code + database rule live), landing refresh (About photos fill empty landing slots, theme hero
 doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (webhook + secret + database table
@@ -352,7 +352,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       booking again after cancelling is not flagged. No migration. Local Outlook-mode check: two active matches were
       both flagged; after cancelling one, both warnings cleared. 21 e2e passed; phone + desktop screenshots in
       `.screenshots/duplicate-booking/`.
-- [x] Edge: block a day in /admin + notify/reschedule every affected family (Oct 8, `fd98d3e`, owner approved phone +
+- [x] Edge: block a day in /admin + notify/reschedule every affected family (Oct 8, live `fd98d3e`, Vercel + production
+      smoke-tested; owner approved phone +
       desktop UI/email): /admin → Availability checks future confirmed/rescheduled/pending sessions before a whole-day
       closure. One action closes the date first, then sends every active family a branded schedule-change email with a
       private **reschedule-only** token (`booking_emails.kind = day_closed`, no migration); it bypasses the booking's
