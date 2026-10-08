@@ -3,23 +3,19 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7 night, after building the deposit)
-State: `main` = live (last code deploy `8d0dd1c`; docs since). Migrations 0010–0013 ran in Neon (owner, Oct 7).
-The deposit is **built and tested but not on `main`**: local branch `wip/deposit` (code + fake Stripe + CLAUDE.md
-notes, on top of `main`; never pushed, so no Vercel preview). Deposits ship **off**: until the owner switches them on,
-families see exactly today's flow and wording (checked: e2e 21/21, visual parity 16/16, landing/About/Terms text).
+## ▶ NEXT STEPS (handoff, Oct 7 night, deposit shipped switched off)
+State: everything is on `main` and live (last code deploy `543def3`, smoke-tested). Migrations 0010–0013 ran in Neon.
+The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
-2. **Ship the deposit** (owner decisions Oct 7, incl. the later "amount per bundle + on/off switch"; see "Owner
-   requests" → Deposit for how it works). Order: (a) **owner approves the wording** in `Claude outputs/deposit/`
-   (or asks for changes); (b) **owner runs `drizzle/0014_booking_deposits.sql` in Neon** (new tables only, safe twice);
-   (c) merge `wip/deposit` into `main`, typecheck (`--incremental false`), lint, build, e2e, push, confirm Vercel, smoke
-   test (deposits off = nothing changes); (d) **owner, in Stripe:** restricted key → **Refunds: Write**; webhook endpoint →
-   add event **`checkout.session.expired`**; (e) owner sets amounts + switches on in /admin → **Pricing & Promotions →
-   Deposits**; (f) one real booking with the owner (pay the deposit, check event/emails/admin, cancel online → refund
-   shows in Stripe). Until (d) is done, unpaid holds are still released by the sweep (availability checks + daily cron),
-   just a few minutes later, and refunds fail (flagged in /admin, "Refund the deposit" button).
+2. **Deposit go-live** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7). Left, in order:
+   (a) **owner runs `drizzle/0014_booking_deposits.sql` in Neon** (new tables only, safe twice; sent Oct 7). Until it
+   runs, deposits stay off quietly, but /admin → Leads logs "Could not load deposits" and the Dashboard money totals
+   are hidden (their query joins `booking_deposits`); (b) **owner, in Stripe:** restricted key → **Refunds: Write**;
+   webhook endpoint → add **`checkout.session.expired`**; (c) owner sets the amounts + switches on in /admin → **Pricing
+   & Promotions → Deposits**; (d) one real booking with the owner (pay the deposit → event/emails/admin → cancel online
+   → refund in Stripe), then check /home-sweet-home, /about and /terms show the deposit wording.
 3. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
@@ -44,27 +40,29 @@ families see exactly today's flow and wording (checked: e2e 21/21, visual parity
 ```
 Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7, night): main = live, last code deploy 8d0dd1c (docs since). Migrations 0010–0013 ran in Neon.
-Not on main yet: the deposit (local branch wip/deposit, never pushed): per-bundle amounts + on/off switch in /admin →
-Pricing & Promotions → Deposits, Stripe Checkout as the last booking step, 30-min hold, refunds, abandoned email.
-Ships OFF (today's flow/wording until switched on). 97 local checks + e2e 21/21 + parity 16/16 passed.
+State (Oct 7, night): main = 543def3 (+ docs), live and smoke-tested: the deposit (per-bundle amounts + on/off in
+/admin → Pricing & Promotions → Deposits; Stripe Checkout as the last booking step, 30-min hold, refunds, "not
+confirmed yet" email), shipped SWITCHED OFF; landing photo slots renamed in /admin → Photos; Halloween dates removed.
+Not on main yet: nothing (wip/deposit is merged).
 
-Next: ship the deposit (PROGRESS → NEXT STEPS 2, in order): wording OK from the owner (Claude outputs/deposit/),
-owner runs drizzle/0014_booking_deposits.sql in Neon, then merge wip/deposit → main (rebase if main moved), checks,
-push, confirm Vercel, smoke test. Then owner Stripe steps (Refunds: Write; webhook event checkout.session.expired),
-switch on, one real booking + online cancel with the owner. Then the rest of the Phase 2 extras (NEXT STEPS 4).
+Next: help the owner switch deposits on (PROGRESS → NEXT STEPS 2: migration 0014 in Neon, Stripe "Refunds: Write" +
+webhook event checkout.session.expired, amounts + switch, one real booking + online cancel together). Then the rest
+of the Phase 2 extras (NEXT STEPS 4): Resend bounce webhooks, block a day, duplicate-booking flag, Today view.
 Time-sensitive: DST Nov 1 calendar check, BUG-5 overlap constraint, seasonal cutoffs (Thanksgiving Nov 23,
 Christmas cards Dec 5, First Christmas Dec 21).
-Waiting on the owner: deposit wording OK; migration 0014; Stripe key + webhook event; travel fee settings; 1g Meta
-test; Vercel Analytics privacy line; /portfolio; Terms review; landing "Halloween" line; deleting the iCloud " 2"
-copies of migration 0014 (old version: never run them).
+Waiting on the owner: migration 0014 + Stripe steps (deposit); travel fee settings; 1g Meta test; Vercel Analytics
+privacy line; /portfolio; Terms review; landing photos (/admin → Photos → Stay-Home Session Page).
 Watch out: `npm run typecheck` can miss errors (TS 7 incremental cache): use `npx tsc --noEmit -p . --incremental
-false`. The owner edits PROGRESS.md decisions between sessions: `git log` first. .agents/ + AGENTS.md: leave them.
+false`. iCloud can resurrect files git removes (branch switches): compare before deleting. .agents/ + AGENTS.md: leave.
 ```
 
 ## Owner requests (outside the original brief)
-- [~] **Deposit while booking** (owner, Oct 7; built Oct 7 night on branch `wip/deposit`, waiting for wording OK + migration
-      0014; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
+- [x] **Landing photos in /admin** (owner, Oct 7, live `543def3`): /admin → Photos → "Stay-Home Session Page
+      (/home-sweet-home)" slots are now named like the page's cards: "Our set-up in a family's living room" (How it
+      works) and "Adrian & Alondra" (Meet Adrian & Alondra). Same slots as before (saved photos unaffected).
+- [x] **Halloween dates removed** from the landing page's final section (owner, Oct 7, `02ebc43`).
+- [~] **Deposit while booking** (owner, Oct 7; wording approved; live `020eb27`…`543def3`, **switched off** until the
+      owner runs migration 0014 + the Stripe steps; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
       bundle (`bundle_deposits`; a bundle without a row = $50; `deposit_settings` = the switch; off = today's flow).
       Booking form review step: "Deposit today $50 (holds your date)" + "Rest after the photoshoot", button "Pay $50
       deposit", note (30-min hold, refund rule). Create → booking saved **pending** (blocks the time like any booking) +
@@ -147,8 +145,8 @@ false`. The owner edits PROGRESS.md decisions between sessions: `git log` first.
 
 ## Status
 - **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras part 1 live (Oct 7: unit/gate
-  fields, travel fee, backdrops, payment visibility); the deposit is built on `wip/deposit` (Oct 7), waiting for the
-  owner's wording OK + migration 0014; then the rest of the Phase 2 extras.
+  fields, travel fee, backdrops, payment visibility); the deposit is live but switched off (Oct 7), waiting for
+  migration 0014 + the owner's Stripe steps; next: the rest of the Phase 2 extras.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -398,12 +396,6 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
-- Deposit wording (Oct 7, screenshots in `Claude outputs/deposit/`): approve or change. Also: the refund line in the
-  cancellation email when the owner keeps a deposit ("…isn't refunded for late cancellations or missed sessions").
-- Landing page "final" section still says "Halloween sessions through Oct 28" (`landing.final.seasonal`), but the owner
-  dropped Halloween (Oct 7): remove it? (copy change → needs a yes)
-- iCloud made `drizzle/0014_booking_deposits 2.sql` + `drizzle/meta/0014_snapshot 2.json` (old single-amount version of
-  migration 0014, untracked): OK to delete? Never run the " 2" file in Neon.
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 

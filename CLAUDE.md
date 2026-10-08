@@ -119,7 +119,8 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
 - The project lives on the iCloud-synced Desktop: Finder/iCloud " 2"/" 3" duplicates appear (seen Oct 7 in
-  `.next/types/*.d 3.ts`). `tsconfig.json` excludes `.next/**/* ?.ts` so they no longer break `npm run typecheck`;
+  `.next/types/*.d 3.ts`, and as old copies of a regenerated migration). iCloud can also bring back files git just
+  removed (after `git switch`): compare them with git before deleting. `tsconfig.json` excludes `.next/**/* ?.ts` so they no longer break `npm run typecheck`;
   duplicates inside `.next/` are safe to delete; ask before touching any elsewhere.
 - Links in customer emails carry a 256-bit token; only its hash is stored (`bookings.cancel_token_hash` for the booking's
   own manage link, `booking_emails.link_token_hash` per reminder/after-session email). Which pages accept which kind
