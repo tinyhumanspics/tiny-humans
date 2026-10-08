@@ -143,5 +143,15 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   ("Original") theme's picture (`config/media.ts` → `resolveMedia`).
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.
 - Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`).
+- The owner often has `npm run dev` running on :3000. Stop only your own servers, by port → PID
+  (`lsof -nP -t -iTCP:<port> -sTCP:LISTEN`), never `pkill` by name (every Next server is called `next-server`).
+  Test servers: :3100 (e2e) and :3200 (visual parity, local Outlook mode with `scripts/local-db`).
+- A local `next build` can reuse the previous build's prerendered ISR pages (with the database data of that time):
+  re-save the setting in /admin (it revalidates) or `rm -rf .next` before judging a page. Playwright WebKit drops the
+  Secure admin cookie on http://localhost → use Chromium for /admin screenshots.
+- Never log a failed Drizzle query's error object: its message repeats the query's values (customer data). Log
+  `err.cause.message` (see `lib/booking/access.ts`). New per-booking extras go in their own table with a best-effort
+  insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`) so a missing migration never
+  breaks bookings; anything that changes money (e.g. `travel_fee_cents`) stays on `bookings`, migration-first.
 - Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
   pass through `lib/tracking/safe-url.ts` first. Next 16: `proxy.ts` (not middleware), `revalidateTag(tag, { expire: 0 })`.

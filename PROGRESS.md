@@ -3,57 +3,65 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7 evening, after Phase 2 + owner requests)
-State: everything below is on `main` and live (last deploy `e0c285a` + this handoff's docs commit).
-1. **1g production verification** with the owner (brief section 4: test event code → one real booking from
+## ▶ NEXT STEPS (handoff, Oct 7 late evening, after Phase 2 extras part 1 + owner requests)
+State: everything below is on `main` and live (last code deploy `8d0dd1c` + this handoff's docs commit). Migrations
+0010–0013 ran in Neon (owner, Oct 7).
+1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
+   mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
+   /terms ("Packages and prices") show the numbers: saving revalidates both.
+2. **Build the $50 deposit next** (owner, Oct 7: right after the backdrops). Decided: paid **while booking** (Stripe
+   Checkout as the last step; the date is confirmed only once paid), **required for every booking**
+   (min($50, bundle + travel); $0 bookings skip it), **refunded automatically** when the family cancels online before
+   the notice window (and when the owner cancels); kept inside the window / no-show; carries over on reschedule; **one
+   deposit amount editable in /admin** (new bookings only); the payment link then charges the rest (total − deposit).
+   Slot **held 30 min** while they're on Stripe, released if unpaid; **Stripe down → book without the deposit**
+   (confirmed, flagged "Deposit not paid" in /admin, owner sends the link); **abandoned payment → one email** ("Your date
+   isn't confirmed yet" + a link to pick a time again). Open details to settle while building: how the hold is stored
+   (pending row that blocks availability + expiry/cleanup), when the Outlook event + confirmation email go out (after
+   payment), Meta `Schedule` fires after the deposit, refund mechanics (Stripe Refunds API). **Owner steps before it
+   goes live:** Stripe restricted key → "Refunds: Write"; webhook endpoint → add `checkout.session.expired`. Replaces
+   "$0 today, pay after your session" everywhere (landing, booking form, emails, Terms, FAQ) → **new wording needs the
+   owner's OK** (screenshots first).
+3. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
-   Checklist sent Oct 7; no results yet. His test booking is also the first real send of the new confirmation email.
-2. ~~Check that migration 0010 (`booking_terms`) ran~~ — owner confirmed (Oct 7) and re-ran it to be sure (safe:
-   `CREATE TABLE IF NOT EXISTS` + backfill `ON CONFLICT DO NOTHING`). Migration 0011 (`booking_access`) ran Oct 7.
-3. **Phase 2 extras (the "rest" the owner wants finished before the deposit):** ~~address unit/gate/parking/concierge
-   fields~~ (live Oct 7, see Phase 2 "Edge"); out-of-area flag (Phase 4 travel fee still undecided);
-   Resend webhooks → bounced/complained emails flagged in /admin (+ SPF/DKIM/DMARC check); "block a day" in /admin +
-   notify/reschedule every affected family; duplicate-booking flag (same email/phone); optional /admin "Today" view
-   with tap-to-text (uses the SMS permission). Then BUG-5 overlap constraint (exclusion constraint, migration) and
-   the DST Nov 1 calendar-UI check.
-4. **Queued (owner, Oct 7) — $50 deposit**, build only after item 3: paid **while booking** (Stripe Checkout as the
-   last step; the date is confirmed only once paid), **required for every booking** (min($50, total); $0 bookings
-   skip it), **refunded automatically** when the family cancels online before the notice window; kept inside the
-   window / no-show; carries over on reschedule; **one deposit amount editable in /admin** (new bookings only). The
-   booking's payment link then charges the rest (total − deposit) automatically. Replaces "$0 today, pay after your
-   session" everywhere (landing, booking form, emails, Terms, Meta event timing) → new wording needs the owner's OK.
-   Open details to settle when building: how long a slot is held while Stripe is open; Meta `Schedule` fires after
-   the deposit; refund mechanics (Stripe Refunds API, key needs "Refunds: Write").
-5. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
-   Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". First real "Send sneak peek" = first live Stripe
-   page from an email; confirm /admin shows "Paid" after payment (else Stripe Workbench → Webhooks → Event deliveries).
-6. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner requests").
-7. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7 after the owner approved ages, step
-   tracker and "Live now"). ⚠ The parity check allows 0.2% of a full page to differ, which missed the step tracker
-   move (3 small circles): add element-level screenshots for key components in Phase 6. The old `.screenshots/baseline/`
-   set was captured mid-animation → recapture before Phase 9 uses it.
+   Checklist sent Oct 7; no results yet.
+4. **Rest of Phase 2 extras:** Resend webhooks → bounced/complained emails flagged in /admin (+ SPF/DKIM/DMARC check);
+   "block a day" in /admin + notify/reschedule every affected family; duplicate-booking flag (same email/phone);
+   optional /admin "Today" view with tap-to-text. Then **BUG-5 overlap constraint** and the **DST Nov 1** calendar
+   check (both time-sensitive).
+5. **Phase 4 seasonal** is time-sensitive: last Thanksgiving sessions Nov 23, Christmas cards Dec 5, First Christmas
+   Dec 21 (decision 7).
+6. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
+   Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". If a payment ever shows "Not paid" after the family
+   paid: lead → Payment → **Check with Stripe** (else Stripe Workbench → Webhooks → Event deliveries).
+7. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner
+   requests"); have the new Terms travel paragraph reviewed with the rest of the Terms.
+8. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7). ⚠ The parity check allows 0.2% of a
+   full page to differ, which missed the step tracker move (3 small circles): add element-level screenshots for key
+   components in Phase 6. The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9.
 
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
 Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7): main = e0c285a (+ handoff docs commit), live and smoke-tested: Phase 2 complete — React Email
-templates, upgraded confirmation, daily reminders, after-session flow ("Send sneak peek" with Pixieset + choose N
-favorites, "Gallery delivered" + review form, reviews in /admin), Stripe card payments (never-expiring payment link per
-booking: text/copy/email from /admin; paid status via webhook), optional SMS/photo permissions, one cancel & reschedule
-notice kept per booking and shown everywhere (booking_terms), email photo slot, theme photo fallback to Original.
+State (Oct 7, late): main = 8d0dd1c (+ handoff docs commit), live and smoke-tested: unit/gate/concierge fields,
+ages up to 2, step tracker + "Live now" fixes, sneak peek/gallery before the session (with a confirm), Paid tags +
+Dashboard totals + "Check with Stripe", travel fee ($0.75/mile over 30 free, max 250, Florida ZIPs only; OFF until
+the owner saves /admin → Availability → Travel fee), backdrops (6 incl. Beige + Wooden, one per setup, picked on the
+booking form or /backdrop?t=). Migrations 0010–0013 ran in Neon.
 Not on main yet: nothing.
 
-Next: confirm with the owner that migration 0010 ran; then Phase 2 extras in PROGRESS → NEXT STEPS 3 (address
-unit/gate/parking fields first). Research current official docs first (note links in PROGRESS.md).
-Queued after that: the $50 deposit (decisions recorded in NEXT STEPS 4; wording needs owner approval).
-Time-sensitive: BUG-5 overlap constraint, DST Nov 1 calendar check. (No Halloween: dropped by the owner.)
-Waiting on the owner: 1g Meta test results, migration 0010 confirmation, privacy line for Vercel Analytics, /portfolio.
-Watch out: iCloud Desktop folder (" 2"/" 3" duplicates; tsconfig ignores them in .next); .agents/ + AGENTS.md are
-another tool's untracked files — leave them. Local testing: scripts/local-db + fake Graph/Resend/Stripe (see PROGRESS
-→ Local test database). Never hard-code the 48-hour notice; never add bookings columns without migration-first.
+Next: the $50 deposit (PROGRESS → NEXT STEPS 2: decisions + open details). Research current Stripe docs first
+(Checkout expiry, Refunds API, checkout.session.expired; note links in PROGRESS.md). Show the new "deposit today"
+wording to the owner (screenshots) before shipping. Then the rest of the Phase 2 extras (NEXT STEPS 4).
+Time-sensitive: DST Nov 1 calendar check, BUG-5 overlap constraint, seasonal cutoffs (Thanksgiving Nov 23, Christmas
+cards Dec 5, First Christmas Dec 21).
+Waiting on the owner: saving the travel fee settings; Stripe key "Refunds: Write" + webhook event
+checkout.session.expired (for the deposit); 1g Meta test; Vercel Analytics privacy line; /portfolio; Terms review.
+Watch out: the owner runs `npm run dev` on :3000 (stop only your own servers, by port/PID). A local build can reuse
+the previous build's prerendered pages. .agents/ + AGENTS.md are another tool's files: leave them.
 ```
 
 ## Owner requests (outside the original brief)
@@ -98,13 +106,23 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       Checkout page, then `GET /v1/checkout/sessions?customer_details[email]=…&status=complete` matched by
       `metadata.booking_id` (same key permission as today). Note: emails are keyed by session time, so a sneak peek sent
       before a reschedule shows "Not sent yet" again after it. 17 local checks (fake Stripe: `?nohook=1` = missed webhook).
+- [x] **Backdrops: Beige + Wooden, picked on the site** (owner, Oct 7; live `686dd5e`, owner OK'd
+      `Claude outputs/backdrops/` and ran migration `drizzle/0013_booking_backdrops.sql`, a separate best-effort table). 6 backdrops (`config/backdrops.ts`; Beige color + a
+      drawn wood-grain texture `public/backdrops/wooden.jpg`, also attached to emails as CID). **One per setup**
+      (`setupsOf`: "N setups" in the bundle's details → Little Moments 1, Our Little Story 2, Our Family Story 3).
+      Optional on the booking form (details step, after Notes); review + confirmation page show them. Confirmation
+      email: picked → "Your backdrop(s): …" + **Change backdrop**; not picked → all swatches (2 rows of 3) + **Choose
+      your backdrop**. 72 h reminder: same (its own link). **/backdrop?t=** (manage token, like /reschedule; no intro):
+      pick/change until the day before the session (Miami date), then "text us". A change → studio "Backdrop update"
+      email + the Outlook event's description rebuilt from the booking (`updateCalendarEventBody`). /admin lead:
+      "Backdrop: … (changed by the family <date>)". Studio email + Outlook event: "Backdrop" line. 28 local checks.
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) + owner requests live (Oct 7); Phase 2 extras in
-  progress (unit/gate/parking fields live Oct 7; out-of-area flag next), then the queued $50 deposit.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras part 1 live (Oct 7: unit/gate
+  fields, travel fee, backdrops, payment visibility); next: the $50 deposit, then the rest of the Phase 2 extras.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -246,17 +264,19 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       cancel/reschedule pages). Never sent to Meta (only city/ZIP are). Without a unit or notes everything is
       pixel-identical to before. Tested: 18 e2e, 16 visual parity, 29 local Outlook-mode checks (fake Graph/Resend,
       incl. the table missing).
-- [~] Edge: out-of-area flag (owner, Oct 7: flag bookings over **30 road miles** from the home-base ZIP; both editable in
-      /admin → Availability → Travel; the ZIP is entered there by the owner and never written in the repo). Distance =
-      straight line between Florida ZIP centers (Census 2026 ZCTA gazetteer, `scripts/fl-zip-centroids.mjs` →
-      `lib/travel/fl-zips.ts`, 1013 ZIPs, 32 KB server-only) × 1.2 road factor (rough Florida highway trips from Miami
-      Beach run ~1.15–1.2×; an estimate, labeled as such). Flag only: shown to the owner in /admin, the studio email and
-      the Outlook event; families see nothing (FAQ already says a fee is confirmed before the session). In progress,
-      uncommitted. **Owner (Oct 7): charge it at booking** — $0.75 per road mile beyond 30 free miles, online booking
-      up to 250 miles (farther → "text us"), non-Florida ZIPs stopped, codes/offers lower the bundle only (fee always in
-      full), fee shown under the ZIP box as soon as it's typed (+ its own line on the review step and in the total).
-      Numbers editable in /admin; wording (form, FAQ, Terms, emails) needs the owner's OK; migration-first (bookings
-      columns).
+- [x] Edge: out-of-area → **travel fee** (owner, Oct 7, live `772e01f`; migration 0012 ran). Owner's terms: **$0.75 per
+      road mile beyond 30 free miles**, online booking **up to 250 miles** (farther → "text us"), **non-Florida ZIPs
+      stopped** (always, even with fees off), codes/offers lower the bundle only (fee always in full). All four numbers
+      live in /admin → Availability → **Travel fee** (`travel_settings`; the home-base ZIP is typed there by the owner and
+      never written in the repo); **fees are off until the owner saves them**. Distance = straight line between Florida
+      ZIP centers (Census 2026 ZCTA gazetteer, `scripts/fl-zip-centroids.mjs` → `lib/travel/fl-zips.ts`, 1013 ZIPs,
+      32 KB server-only) × 1.15; fee = floor((miles − free) × $/mile), whole dollars. Shown under the ZIP box as soon as
+      it's typed (`GET /api/booking/travel?zip=`, rate limit "travel" 60/10 min), on the review step + confirmation page
+      ("Travel fee $29 (about 69 miles)", "Total"), in the confirmation email, studio email, Outlook event and /admin.
+      The server recomputes it at booking (never trusts the browser) and snapshots it on the booking
+      (`bookings.travel_fee_cents/travel_miles`); amount due / payment link / Dashboard / Meta value = bundle + fee; the
+      Stripe page shows a second line "Travel fee (about N miles)". FAQ (`aFee`) + Terms paragraph (`travelFeeTerms`)
+      use the saved numbers; saving revalidates both. 26 local checks + a non-Florida e2e.
 - [ ] Edge: Resend webhooks → flag bounces/complaints in /admin; SPF/DKIM/DMARC check
 - [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
 
@@ -407,6 +427,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - `@vercel/analytics` 2 + `@vercel/speed-insights` 2 — owner request (Oct 7). Tiny client scripts served from
   `/_vercel/*`, loaded only on Vercel. Official Vercel packages.
 - Stripe: no SDK (two REST calls + webhook signature check with `fetch`/`crypto`, `lib/payments/stripe.ts`). 0 KB.
+- Florida ZIP centers (data, not a package): US Census 2026 ZCTA gazetteer, public domain → `lib/travel/fl-zips.ts`
+  (1013 ZIPs, 32 KB, server-only, 0 KB to the browser). Regenerate yearly with `scripts/fl-zip-centroids.mjs`.
 - `react-email` 6.11 — email templates as React components (brief Phase 2a). Server-side when sending; in the browser
   only in the lazy mock-mode email preview chunk (no page preloads it). It also installs its preview CLI's toolchain
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
