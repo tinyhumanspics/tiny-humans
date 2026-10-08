@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `43e10dc` is live and smoke-tested; Vercel succeeded and production home, booking, About and read-only
-availability checks returned 200. Phase 4 is complete: extra babies are live,
+State: app commit `0173690` is live and smoke-tested; Vercel succeeded and production home, booking and About pages
+returned 200. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
@@ -440,7 +440,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       prices, minutes and photo counts stay language-neutral. No copy was invented or published, and missing Spanish
       rows will not silently fall back to English. The isolated migration ran twice, accepted Spanish rows and rejected
       unsupported locales/invalid inclusion positions. Strict tsc/build/lint passed (0 errors/26 known warnings), 62
-      e2e passed (10 expected cross-browser skips), and all 16 visual-parity pages passed. [?] Owner: run
+      e2e passed (10 expected cross-browser skips), and all 16 visual-parity pages passed. Vercel succeeded; production
+      home, About and booking returned 200. [?] Owner: run
       `drizzle/0019_catalog_translations.sql` in Neon before the next schema-reading admin slice.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
