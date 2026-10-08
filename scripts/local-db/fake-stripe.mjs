@@ -1,7 +1,8 @@
 // Fake Stripe API (Checkout Sessions only) for local development. Never used on Vercel.
 // .env.local: STRIPE_SECRET_KEY=rk_test_local STRIPE_API_BASE=http://localhost:4747 STRIPE_WEBHOOK_SECRET=whsec_local
 // POST /_pay/<session id> marks a session paid and sends a signed checkout.session.completed webhook to
-// FAKE_STRIPE_WEBHOOK_URL (default http://localhost:3000/api/stripe/webhook). GET /_sessions lists sessions.
+// FAKE_STRIPE_WEBHOOK_URL (default http://localhost:3000/api/stripe/webhook); add ?nohook=1 to skip the webhook (a
+// missed delivery). GET /_sessions lists sessions. GET /v1/checkout/sessions lists them (customer_details[email], status).
 import http from "node:http";
 import { createHmac } from "node:crypto";
 
@@ -51,11 +52,18 @@ http
         if (key) byKey.set(key, id);
         return send(res, 200, s);
       }
+      if (req.method === "GET" && url.pathname === "/v1/checkout/sessions") {
+        const email = url.searchParams.get("customer_details[email]");
+        const status = url.searchParams.get("status");
+        const data = [...sessions.values()].reverse().filter((x) => (!email || x.customer_details?.email === email) && (!status || x.status === status));
+        return send(res, 200, { object: "list", data: data.slice(0, Number(url.searchParams.get("limit") ?? 10)), has_more: false });
+      }
       const get = url.pathname.match(/^\/v1\/checkout\/sessions\/([^/]+)$/);
       if (req.method === "GET" && get) return sessions.has(get[1]) ? send(res, 200, sessions.get(get[1])) : send(res, 404, { error: { code: "resource_missing", message: "No such session" } });
       const pay = url.pathname.match(/^\/_pay\/([^/]+)$/);
       if (req.method === "POST" && pay && sessions.has(pay[1])) {
-        const s = Object.assign(sessions.get(pay[1]), { status: "complete", payment_status: "paid", payment_intent: `pi_test_${pay[1]}` });
+        const s = Object.assign(sessions.get(pay[1]), { status: "complete", payment_status: "paid", payment_intent: `pi_test_${pay[1]}`, customer_details: { email: sessions.get(pay[1]).customer_email } });
+        if (url.searchParams.get("nohook")) return send(res, 200, { session: s, webhookStatus: "skipped" });
         const payload = JSON.stringify({ id: `evt_${Date.now()}`, type: "checkout.session.completed", data: { object: s } });
         const t = Math.floor(Date.now() / 1000);
         const sig = createHmac("sha256", SECRET).update(`${t}.${payload}`).digest("hex");
