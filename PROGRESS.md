@@ -4,11 +4,13 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: `main` = `c9764a7`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
+State: app commit `7489399` is verified locally and ready to deploy. Phase 4 is complete: extra babies are live,
+migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
-needed. Migrations 0010–0017 ran in Neon.
+needed. Migrations 0010–0018 ran in Neon; the owner confirmed migration 0018 succeeded Oct 8 (the final language count
+was empty because there are no production bookings yet).
 Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robots, service-area business JSON-LD, and
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
@@ -183,8 +185,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 
 ## Status
 - **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
-  the backlog). Phase 3 is underway: routing foundation + bilingual customer-email catalog are on main, but no Spanish
-  route/email is live yet; migration 0018 confirmation gates the booking-locale wiring. Deposit code is live but switched
+  the backlog). Phase 3 is underway: routing foundation + bilingual customer-email catalog are on main, and the saved
+  booking language now drives every later customer email. The public booking journey is still English-only, so no
+  production booking selects Spanish yet. Deposit code is live but switched
   off (remaining Stripe/amount/switch steps wait on owner). BUG-5 database rule and email bounce table are live; Resend
   webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
@@ -414,8 +417,14 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       catalogs aligned; the booking test renders Spanish in Chromium, Android and iPhone/WebKit. The first full run
       caught WebKit's mixed Spanish/US date order, so Spanish long dates are now deterministic. Phone + desktop email
       renders were inspected; 53 e2e passed (4 expected Node-only skips), all 16 visual-parity pages passed, strict tsc/
-      build/lint passed (0 errors/26 known warnings). This is dormant: production bookings/emails remain English until
-      migration 0018 is confirmed and locale capture is wired.
+      build/lint passed (0 errors/26 known warnings). **Oct 8 locale wiring (`7489399`):** the owner ran migration 0018
+      successfully; its final count returned no rows because production has no bookings yet. New bookings save validated
+      `en`/`es` (English by default), and that snapshot now selects the language for confirmation, reminders,
+      cancellation, rescheduling, closed-day, deposit-abandoned, payment-link, sneak-peek and gallery emails. Internal
+      studio emails remain English. An isolated local Outlook/Neon/Resend booking stored `es`, created its event and sent
+      the customer a Spanish confirmation while the studio notification stayed English. Strict tsc/build/lint passed (0
+      errors/26 known warnings), 60 e2e passed (6 expected cross-browser skips) and all 16 visual-parity pages passed.
+      This remains dormant in production until the Spanish public route/booking form sends `es`.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
