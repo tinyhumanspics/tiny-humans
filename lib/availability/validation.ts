@@ -29,3 +29,10 @@ export const overrideSchema = z
 export const blockSchema = z
   .object({ date: dateKey, start: hhmm, end: hhmm, reason: z.string().trim().max(120).optional() })
   .refine((b) => b.end > b.start, "The end time must be after the start time.");
+
+/** One-step whole-day closure. The optional note is included in every affected family's email. */
+export const closeDaySchema = z.object({
+  date: dateKey,
+  note: z.string().trim().max(500, "Keep the family note under 500 characters.").optional(),
+  notify: z.boolean().default(true),
+});

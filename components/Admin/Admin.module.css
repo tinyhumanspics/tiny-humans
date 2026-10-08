@@ -211,7 +211,37 @@
 .overrideList { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 8px; }
 .overrideRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 12px; border: 2px dashed color-mix(in srgb, var(--cloud-blue) 40%, transparent); border-radius: 10px; color: var(--chalk-white); font-size: 1.1rem; }
 .overrideRow b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
+.overrideActions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
 .blockReason { color: var(--chalk-muted); }
+
+.closeDayReview {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 2px dashed var(--sun-yellow);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sun-yellow) 5%, transparent);
+}
+.closeDayTitle { margin: 0; color: var(--sun-yellow); font-family: var(--font-chalk); font-size: 1.35rem; font-weight: 400; }
+.closeDayList { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.closeDayFamily { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px 14px; align-items: center; padding: 10px 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 10px; color: var(--chalk-white); }
+.closeDayFamily b { display: block; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.18rem; font-weight: 400; }
+.closeDayMeta { display: block; color: var(--chalk-muted); font-size: 0.98rem; }
+.closeDayContact { display: grid; gap: 2px; min-width: 0; }
+.closeDayContact a { color: var(--cloud-blue); overflow-wrap: anywhere; text-underline-offset: 3px; }
+.closeDayStatus { color: var(--chalk-muted); font-size: 0.98rem; text-align: right; }
+.closeDaySent { color: var(--sun-yellow); }
+.closeDayFailed, .closeDayFailure { color: var(--chalk-error); }
+.closeDayFailure { margin: 0; }
+.closeDayNote { min-height: 84px; resize: vertical; }
+.closeDayActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+@media (max-width: 760px) {
+  .overrideRow { align-items: flex-start; flex-direction: column; }
+  .overrideActions { justify-content: flex-start; }
+  .closeDayFamily { grid-template-columns: 1fr; }
+  .closeDayStatus { text-align: left; }
+}
 
 /* ---------- leads ---------- */
 .leadsTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }

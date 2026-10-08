@@ -378,6 +378,23 @@
       "rescheduleText": "Reschedule: {url}",
       "cancelText": "Cancel: {url}"
     },
+    "dayClosed": {
+      "subject": "We need to move your Tiny Humans session — {reference}",
+      "preheader": "Your {date} session needs a new date and time.",
+      "eyebrow": "A quick schedule change",
+      "title": "Let's find a new time, {name}",
+      "message": "We're so sorry, but Tiny Humans needs to close {date}, so we can't keep your session at {time} that day.",
+      "activeNext": "Your booking, package price and any paid deposit stay the same. Please choose any open date and time below.",
+      "pendingNext": "Your date was still waiting for its deposit, so we closed that payment page and released the time. Choose a new date below whenever you're ready.",
+      "noteTitle": "A note from Tiny Humans",
+      "originalDate": "Original date",
+      "originalTime": "Original time",
+      "reschedule": "Choose another time",
+      "book": "Pick a new date",
+      "help": "Questions? Reply to this email or text us at {phone}.",
+      "rescheduleText": "Choose another time: {url}",
+      "bookText": "Pick a new date: {url}"
+    },
     "prepGuide": {
       "title": "Your Home Session Prep Guide",
       "items": [

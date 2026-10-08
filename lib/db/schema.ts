@@ -218,7 +218,7 @@ export const bookingEmails = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
-    /** "reminder_72h" | "reminder_24h" | "after_session" | "gallery_delivered" */
+    /** "reminder_72h" | "reminder_24h" | "day_closed" | "after_session" | "gallery_delivered" | … */
     kind: text("kind").notNull(),
     /** The session time this email was about. */
     sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),

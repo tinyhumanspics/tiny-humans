@@ -33,6 +33,7 @@ const EMAIL_NAMES: Record<string, string> = {
   resend_gallery_delivered: "gallery email",
   resend_payment_link: "payment link email",
   resend_deposit_abandoned: "“not confirmed yet” email",
+  resend_day_closed: "schedule-change email",
 };
 export const emailNameOf = (category: string | null) => (category && EMAIL_NAMES[category]) || "email";
 

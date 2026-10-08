@@ -34,28 +34,37 @@ export function summaryOf(row: Booking, noticeHours: number, now = new Date()): 
   };
 }
 
-/**
- * Booking behind a customer management token (null if the token is unknown): the booking's own token, or the link in
- * a reminder email, which stays valid only while the booking keeps the session time that email was about. (Links in
- * after-session emails open /pay and /review only.)
- */
-export async function findByCancelToken(token: string): Promise<Booking | null> {
+export interface ManageTokenBooking {
+  booking: Booking;
+  /** A day-closure link lets the family move even inside the normal notice window. */
+  rescheduleNoticeOverride: boolean;
+}
+
+/** Booking + purpose behind a management token. Email tokens expire automatically when the session time changes. */
+export async function findManageToken(token: string): Promise<ManageTokenBooking | null> {
   if (!looksLikeCancelToken(token)) return null;
   const hash = hashCancelToken(token);
   const db = getDb();
   const [row] = await db.select().from(bookings).where(eq(bookings.cancelTokenHash, hash)).limit(1);
-  if (row) return row;
+  if (row) return { booking: row, rescheduleNoticeOverride: false };
   const [viaEmail] = await db
-    .select({ booking: bookings })
+    .select({ booking: bookings, kind: bookingEmails.kind })
     .from(bookingEmails)
     .innerJoin(bookings, and(eq(bookings.id, bookingEmails.bookingId), eq(bookings.sessionStart, bookingEmails.sessionStart)))
-    .where(and(eq(bookingEmails.linkTokenHash, hash), inArray(bookingEmails.kind, ["reminder_72h", "reminder_24h"])))
+    .where(and(eq(bookingEmails.linkTokenHash, hash), inArray(bookingEmails.kind, ["reminder_72h", "reminder_24h", "day_closed"])))
     .limit(1)
-    .catch((err) => {
-      log.error("booking.token", "Reminder link lookup failed", { error: err as Error });
+    .catch(() => {
+      // A Drizzle error message repeats query values, including the token hash. Keep it out of logs.
+      log.error("booking.token", "Email manage-link lookup failed");
       return [];
     });
-  return viaEmail?.booking ?? null;
+  return viaEmail ? { booking: viaEmail.booking, rescheduleNoticeOverride: viaEmail.kind === "day_closed" } : null;
+}
+
+/** The booking behind any valid cancel/manage token (used by cancellation and backdrop pages). */
+export async function findByCancelToken(token: string): Promise<Booking | null> {
+  const found = await findManageToken(token);
+  return found && !found.rescheduleNoticeOverride ? found.booking : null;
 }
 
 /** Theme the website is using right now (emails follow it). */

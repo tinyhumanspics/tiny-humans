@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { bookingRules } from "@/config/booking";
 import type { AdminApi } from "@/lib/admin/client";
-import type { AvailabilityRules, BookingLimits, WeeklyDay } from "@/lib/availability/types";
+import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayImpact, WeeklyDay } from "@/lib/availability/types";
 import { WEEKDAY_NAMES } from "@/lib/availability/types";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { formatMoney } from "@/lib/pricing/engine";
@@ -236,15 +236,50 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
   const [end, setEnd] = useState("17:00");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
+  const [impact, setImpact] = useState<ClosedDayImpact | null>(null);
+  const [familyNote, setFamilyNote] = useState("");
+  const [closeResult, setCloseResult] = useState<CloseDayResult | null>(null);
+
+  const clearReview = () => {
+    setImpact(null);
+    setFamilyNote("");
+    setCloseResult(null);
+  };
+
+  const reviewClosedDay = async (picked: string) => {
+    setBusy(true);
+    setNote(null);
+    setCloseResult(null);
+    try {
+      const next = await api.closedDayImpact(picked);
+      if (!next.bookings.length) {
+        onSaved(await api.saveOverride({ date: picked, isClosed: true }));
+        setNote({ kind: "ok", text: `${formatLongDate(picked)} is closed. There were no sessions to move.` });
+        setDate("");
+        clearReview();
+      } else {
+        setImpact(next);
+      }
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't check that date.") });
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const add = async (e: FormEvent) => {
     e.preventDefault();
     if (!date) return setNote({ kind: "error", text: "Pick a date." });
     if (!closed && end <= start) return setNote({ kind: "error", text: "Closing time must be after opening time." });
+    if (closed) {
+      await reviewClosedDay(date);
+      return;
+    }
     setBusy(true);
     setNote(null);
+    clearReview();
     try {
-      onSaved(await api.saveOverride(closed ? { date, isClosed: true } : { date, isClosed: false, start, end }));
+      onSaved(await api.saveOverride({ date, isClosed: false, start, end }));
       setNote({ kind: "ok", text: `${formatLongDate(date)} saved.` });
       setDate("");
     } catch (err) {
@@ -254,10 +289,58 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
     }
   };
 
+  const closeAndNotify = async () => {
+    if (!impact) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const result = await api.closeDayAndNotify(impact.date, familyNote.trim() || undefined);
+      onSaved(result.rules);
+      setImpact(result.impact.bookings.length ? result.impact : null);
+      setCloseResult(result);
+      setDate("");
+      const sent = result.sent.length;
+      const already = result.alreadySent.length;
+      const failed = result.failed.length;
+      setNote(
+        failed
+          ? { kind: "error", text: `${formatLongDate(impact.date)} is closed. ${sent + already} ${sent + already === 1 ? "family was" : "families were"} emailed; ${failed} still ${failed === 1 ? "needs" : "need"} a text or another try.` }
+          : { kind: "ok", text: `${formatLongDate(impact.date)} is closed. ${sent ? `${sent} ${sent === 1 ? "family" : "families"} emailed.` : "Everyone was already emailed."}` },
+      );
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't close and notify. Refresh to check whether the date was saved.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const closeWithoutEmail = async () => {
+    if (!impact) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const result = await api.closeDayWithoutEmail(impact.date);
+      onSaved(result.rules);
+      setImpact(result.impact.bookings.length ? result.impact : null);
+      setCloseResult(result);
+      setNote(
+        result.failed.length
+          ? { kind: "error", text: `${formatLongDate(impact.date)} is closed, but ${result.failed.length} open deposit ${result.failed.length === 1 ? "page" : "pages"} could not be closed. Try again before contacting the family.` }
+          : { kind: "ok", text: `${formatLongDate(impact.date)} is closed. The listed families were not emailed; any open deposit pages were closed.` },
+      );
+      setDate("");
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't close that date.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const remove = async (d: string) => {
     setBusy(true);
     try {
       onSaved(await api.deleteOverride(d));
+      if (impact?.date === d) clearReview();
       setNote({ kind: "ok", text: `${formatLongDate(d)} is back to the weekly schedule.` });
     } catch (err) {
       setNote({ kind: "error", text: errText(err, "Couldn't delete that date.") });
@@ -275,10 +358,10 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
       <form onSubmit={add} className={styles.availForm} noValidate>
         <div className={styles.ruleField}>
           <label className={cn(styles.label, "chalk-soft")} htmlFor="sd-date">Date</label>
-          <input id="sd-date" type="date" min={today} className={cn(styles.input, styles.timeInput)} value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="sd-date" type="date" min={today} className={cn(styles.input, styles.timeInput)} value={date} onChange={(e) => { setDate(e.target.value); clearReview(); setNote(null); }} />
         </div>
         <label className={cn(styles.toggle, styles.formToggle)}>
-          <input type="checkbox" checked={closed} onChange={(e) => setClosed(e.target.checked)} />
+          <input type="checkbox" checked={closed} onChange={(e) => { setClosed(e.target.checked); clearReview(); setNote(null); }} />
           <span className="chalk-soft">Closed all day</span>
         </label>
         <div className={styles.ruleField}>
@@ -296,6 +379,18 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
           {note.text}
         </p>
       )}
+      {impact && (
+        <ClosedDayReview
+          impact={impact}
+          familyNote={familyNote}
+          result={closeResult}
+          busy={busy}
+          onNote={setFamilyNote}
+          onNotify={closeAndNotify}
+          onCloseOnly={closeWithoutEmail}
+          onDismiss={clearReview}
+        />
+      )}
       {upcoming.length > 0 ? (
         <ul className={styles.overrideList} aria-label="Upcoming special dates">
           {upcoming.map((o) => (
@@ -303,9 +398,16 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
               <span className="chalk-soft">
                 <b>{formatLongDate(o.date)}</b> — {o.isClosed ? "Closed" : `${formatTimeLabel(o.start!)} – ${formatTimeLabel(o.end!)}`}
               </span>
-              <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => remove(o.date)} disabled={busy} aria-label={`Delete special date ${formatLongDate(o.date)}`}>
-                Delete
-              </button>
+              <span className={styles.overrideActions}>
+                {o.isClosed && (
+                  <button type="button" className={styles.smallButton} onClick={() => reviewClosedDay(o.date)} disabled={busy}>
+                    Check sessions
+                  </button>
+                )}
+                <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => remove(o.date)} disabled={busy} aria-label={`Delete special date ${formatLongDate(o.date)}`}>
+                  Delete
+                </button>
+              </span>
             </li>
           ))}
         </ul>
@@ -313,6 +415,96 @@ function SpecialDates({ rules, api, onSaved }: { rules: AvailabilityRules; api: 
         <p className={cn(styles.hintSmall, "chalk-soft")}>No special dates yet.</p>
       )}
     </div>
+  );
+}
+
+function ClosedDayReview({
+  impact,
+  familyNote,
+  result,
+  busy,
+  onNote,
+  onNotify,
+  onCloseOnly,
+  onDismiss,
+}: {
+  impact: ClosedDayImpact;
+  familyNote: string;
+  result: CloseDayResult | null;
+  busy: boolean;
+  onNote: (value: string) => void;
+  onNotify: () => void;
+  onCloseOnly: () => void;
+  onDismiss: () => void;
+}) {
+  const needsEmailCount = impact.bookings.filter((booking) => booking.notification?.status !== "sent").length;
+  const needsEmail = needsEmailCount > 0;
+  return (
+    <section className={styles.closeDayReview} aria-labelledby="close-day-review-title">
+      <div>
+        <h4 id="close-day-review-title" className={cn(styles.closeDayTitle, "chalk-soft")}>
+          {impact.bookings.length} {impact.bookings.length === 1 ? "family" : "families"} affected on {formatLongDate(impact.date)}
+        </h4>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>
+          Closing the day stops new bookings. Emailing sends each family a private link to choose another open time, even inside the usual notice window.
+        </p>
+      </div>
+      <ul className={styles.closeDayList}>
+        {impact.bookings.map((booking) => (
+          <li key={booking.reference} className={styles.closeDayFamily}>
+            <span>
+              <b>{booking.parentName}</b>
+              <span className={styles.closeDayMeta}>{formatTimeLabel(booking.start)} – {formatTimeLabel(booking.end)} · {booking.reference}</span>
+            </span>
+            <span className={styles.closeDayContact}>
+              <a href={`mailto:${booking.email}`}>{booking.email}</a>
+              <a href={`sms:${booking.phone}`}>{booking.phone}</a>
+            </span>
+            <span className={cn(styles.closeDayStatus, booking.notification?.status === "sent" ? styles.closeDaySent : booking.notification?.status === "failed" ? styles.closeDayFailed : "")}>
+              {booking.notification?.status === "sent"
+                ? "Email sent — waiting for a new time"
+                : booking.notification?.status === "failed"
+                  ? "Email failed — retry or text"
+                  : booking.status === "pending"
+                    ? "Deposit page still open"
+                    : booking.status === "cancelled"
+                      ? "Payment page closed — needs email"
+                    : "Needs schedule-change email"}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {result?.failed.length ? (
+        <p className={cn(styles.closeDayFailure, "chalk-soft")} role="alert">
+          Couldn&apos;t email: {result.failed.map((item) => item.reference).join(", ")}. The day is closed; retry or use the contact links above.
+        </p>
+      ) : null}
+      {needsEmail && (
+        <label className={styles.ruleField}>
+          <span className={cn(styles.label, "chalk-soft")}>Note for every family <span className={styles.optional}>(optional)</span></span>
+          <textarea
+            className={cn(styles.input, styles.closeDayNote)}
+            maxLength={500}
+            value={familyNote}
+            onChange={(e) => onNote(e.target.value)}
+            placeholder="A short personal explanation, if you want to add one"
+          />
+        </label>
+      )}
+      <div className={styles.closeDayActions}>
+        {needsEmail && (
+          <ChalkButton variant="solid" onClick={onNotify} disabled={busy} seed={883}>
+            {busy ? "Closing…" : `Close day + email ${needsEmailCount} ${needsEmailCount === 1 ? "family" : "families"}`}
+          </ChalkButton>
+        )}
+        {needsEmail && (
+          <button type="button" className={styles.smallButton} onClick={onCloseOnly} disabled={busy}>
+            Close without emailing
+          </button>
+        )}
+        <button type="button" className={styles.linkButton} onClick={onDismiss} disabled={busy}>Dismiss</button>
+      </div>
+    </section>
   );
 }
 

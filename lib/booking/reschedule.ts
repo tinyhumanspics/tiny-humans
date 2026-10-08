@@ -34,7 +34,7 @@ export function manageUrls(token: string) {
 }
 
 /** `noticeHours`: the booking's own notice (booking_terms); defaults to today's setting. */
-export function managedOf(row: Booking, rules: AvailabilityRules, now = new Date(), noticeHours = rules.limits.rescheduleNoticeHours): ManagedBooking {
+export function managedOf(row: Booking, rules: AvailabilityRules, now = new Date(), noticeHours = rules.limits.rescheduleNoticeHours, rescheduleNoticeOverride = false): ManagedBooking {
   const past = row.sessionStart.getTime() <= now.getTime();
   const status = row.status === "cancelled" ? "cancelled" : past ? "past" : "active";
   const hoursLeft = (row.sessionStart.getTime() - now.getTime()) / 3_600_000;
@@ -48,7 +48,7 @@ export function managedOf(row: Booking, rules: AvailabilityRules, now = new Date
     location: row.locationAddress,
     parentFirstName: row.parentName.split(" ")[0],
     status,
-    canReschedule: status === "active" && hoursLeft >= noticeHours,
+    canReschedule: status === "active" && (rescheduleNoticeOverride || hoursLeft >= noticeHours),
     rescheduleNoticeHours: noticeHours,
   };
 }
@@ -94,14 +94,14 @@ export async function rescheduleAvailability(own: Booking, from: string, to: str
  * 4. Emails (customer + internal); failures are logged, never undo the change.
  * The management token rotates; the customer email carries the new links.
  */
-export async function rescheduleBookingRow(row: Booking, slot: { date: string; start: string }, by: "customer" | "admin"): Promise<Booking> {
+export async function rescheduleBookingRow(row: Booking, slot: { date: string; start: string }, by: "customer" | "admin", rescheduleNoticeOverride = false): Promise<Booking> {
   if (row.status === "cancelled") throw new BookingError("invalid_request", "This booking has already been cancelled.");
   const rules = await getAvailabilityRules().catch(() => {
     throw new BookingError("server_error", friendly.server);
   });
   const current = managedOf(row, rules, new Date(), await noticeHoursFor(row, rules.limits.rescheduleNoticeHours));
   if (current.status === "past") throw new BookingError("invalid_request", "This session has already started, so it can't be moved online.");
-  if (by === "customer" && !current.canReschedule) {
+  if (by === "customer" && !rescheduleNoticeOverride && !current.canReschedule) {
     throw new BookingError("reschedule_closed", rescheduleClosedText(current.rescheduleNoticeHours));
   }
   const tz = row.timezone || bookingRules.timeZone;

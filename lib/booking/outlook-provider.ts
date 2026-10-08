@@ -17,7 +17,7 @@ import { addMinutes, formatTimeLabel } from "./dates";
 import { generateBookingReference } from "./reference";
 import { formatAddress, type BookingDetails } from "./templates";
 import { createCancelToken, manageTokenFor } from "./cancel-token";
-import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
+import { cancelBookingRow, findByCancelToken, findManageToken, summaryOf } from "./cancellation";
 import { cancelClosedText } from "./reschedule-policy";
 import { noticeHoursFor, saveBookingTerms } from "./terms";
 import { saveAccessNotes } from "./access";
@@ -310,9 +310,9 @@ export class OutlookBookingProvider implements BookingProvider {
 
   private async rowForToken(token: string) {
     this.ensureConfigured();
-    const row = await findByCancelToken(token);
-    if (!row) throw new BookingError("not_found", "This link isn't valid anymore. Please use the link in your most recent Tiny Humans email, or reply to it and we'll help.");
-    return row;
+    const found = await findManageToken(token);
+    if (!found) throw new BookingError("not_found", "This link isn't valid anymore. Please use the link in your most recent Tiny Humans email, or reply to it and we'll help.");
+    return found;
   }
 
   /** The booking's own online cancel/reschedule notice (booking_terms), else today's setting. */
@@ -322,21 +322,21 @@ export class OutlookBookingProvider implements BookingProvider {
   }
 
   async getManagedBooking(token: string): Promise<ManagedBooking> {
-    const row = await this.rowForToken(token);
+    const { booking: row, rescheduleNoticeOverride } = await this.rowForToken(token);
     const { rules, hours } = await this.notice(row);
-    return managedOf(row, rules, new Date(), hours);
+    return managedOf(row, rules, new Date(), hours, rescheduleNoticeOverride);
   }
 
   async getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
-    const row = await this.rowForToken(token);
+    const { booking: row, rescheduleNoticeOverride } = await this.rowForToken(token);
     const { rules, hours } = await this.notice(row);
-    if (!managedOf(row, rules, new Date(), hours).canReschedule) return [];
+    if (!managedOf(row, rules, new Date(), hours, rescheduleNoticeOverride).canReschedule) return [];
     return rescheduleAvailability(row, from, to);
   }
 
   async rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
-    const row = await this.rowForToken(token);
-    const updated = await rescheduleBookingRow(row, slot, "customer");
+    const { booking: row, rescheduleNoticeOverride } = await this.rowForToken(token);
+    const updated = await rescheduleBookingRow(row, slot, "customer", rescheduleNoticeOverride);
     const { rules, hours } = await this.notice(updated);
     return managedOf(updated, rules, new Date(), hours);
   }

@@ -295,7 +295,7 @@ async function sendAbandonedEmail(row: Booking): Promise<void> {
 }
 
 /** Settles one waiting deposit with Stripe: paid → confirm; page closed → release; still open → leave it. */
-async function settleWithStripe(row: Booking, d: BookingDeposit, opts: { email: boolean; closeOpen: boolean; client?: ClientContext }): Promise<"paid" | "released" | "open" | "unknown"> {
+async function settleWithStripe(row: Booking, d: BookingDeposit, opts: { email: boolean; closeOpen: boolean; client?: ClientContext; why?: string }): Promise<"paid" | "released" | "open" | "unknown"> {
   let session = d.stripeSessionId ? await getCheckoutSession(d.stripeSessionId) : null;
   if (session?.payment_status === "paid") {
     await depositPaid(row.id, session, opts.client);
@@ -317,7 +317,7 @@ async function settleWithStripe(row: Booking, d: BookingDeposit, opts: { email: 
   }
   // expired page, or none was ever saved (its page, if any, expired at hold_until too)
   if (!session && !opts.closeOpen && d.holdUntil && d.holdUntil.getTime() + GRACE_MS > Date.now()) return "open";
-  return (await releaseHold(row, { email: opts.email, why: opts.email ? EXPIRED_REASON : "Deposit not paid (the family picked another time)" })) ? "released" : "unknown";
+  return (await releaseHold(row, { email: opts.email, why: opts.why ?? (opts.email ? EXPIRED_REASON : "Deposit not paid (the family picked another time)") })) ? "released" : "unknown";
 }
 
 /**
@@ -408,10 +408,10 @@ export async function releaseByFamily(reference: string): Promise<DepositReturnS
 }
 
 /** Before deleting a lead that's still on its deposit page: closes the page and releases the time. False if Stripe couldn't. */
-export async function closeDepositPage(row: Booking): Promise<boolean> {
+export async function closeDepositPage(row: Booking, why?: string): Promise<boolean> {
   const d = await depositOf(row.id);
   if (d?.status !== "pending") return true;
-  const r = await settleWithStripe(row, d, { email: false, closeOpen: true }).catch(() => "unknown" as const);
+  const r = await settleWithStripe(row, d, { email: false, closeOpen: true, why }).catch(() => "unknown" as const);
   return r !== "unknown" && r !== "open";
 }
 

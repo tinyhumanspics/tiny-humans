@@ -2,8 +2,8 @@
 
 import { defaultSettings, parseSettings } from "@/lib/settings/defaults";
 import type { SiteSettings } from "@/lib/settings/types";
-import type { AvailabilityRules, BookingLimits, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
-import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
+import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayBooking, ClosedDayImpact, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
+import { blockSchema, closeDaySchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
@@ -29,6 +29,9 @@ export interface AdminApi {
   saveWeekly(weekly: WeeklyDay[], limits: BookingLimits): Promise<AvailabilityRules>;
   saveOverride(o: DateOverride): Promise<AvailabilityRules>;
   deleteOverride(date: string): Promise<AvailabilityRules>;
+  closedDayImpact(date: string): Promise<ClosedDayImpact>;
+  closeDayAndNotify(date: string, note?: string): Promise<CloseDayResult>;
+  closeDayWithoutEmail(date: string): Promise<CloseDayResult>;
   addBlock(b: Omit<TimeBlock, "id">): Promise<AvailabilityRules>;
   deleteBlock(id: string): Promise<AvailabilityRules>;
   /** Travel fee settings (null = not saved yet, fees off) + example fees. */
@@ -97,6 +100,12 @@ const httpApi: AdminApi = {
   saveOverride: async (o) =>
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/overrides", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(o) }))).rules,
   deleteOverride: async (date) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/overrides?date=${date}`, { method: "DELETE" }))).rules,
+  closedDayImpact: async (date) =>
+    (await json<{ impact: ClosedDayImpact }>(await fetch(`/api/admin/availability/close-day?${new URLSearchParams({ date })}`, { cache: "no-store" }))).impact,
+  closeDayAndNotify: async (date, note) =>
+    json(await fetch("/api/admin/availability/close-day", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ date, note, notify: true }) })),
+  closeDayWithoutEmail: async (date) =>
+    json(await fetch("/api/admin/availability/close-day", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ date, notify: false }) })),
   addBlock: async (b) =>
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
@@ -212,6 +221,23 @@ const prototypeApi: AdminApi = {
     return protoSave((r) => ({ ...r, overrides: [...r.overrides.filter((x) => x.date !== o.date), clean] }));
   },
   deleteOverride: async (date) => protoSave((r) => ({ ...r, overrides: r.overrides.filter((x) => x.date !== date) })),
+  closedDayImpact: async (date) => {
+    const bookings = new MockBookingProvider()
+      .listLeads()
+      .filter((lead) => lead.sessionDate === date && lead.status !== "cancelled")
+      .map((lead) => ({ reference: lead.reference, parentName: lead.parentName, email: lead.email, phone: lead.phone, start: lead.start, end: lead.end, status: lead.status as ClosedDayBooking["status"], notification: null }));
+    return { date, bookings };
+  },
+  closeDayAndNotify: async (date, note) => {
+    firstIssue(closeDaySchema.safeParse({ date, note }));
+    const rules = protoSave((r) => ({ ...r, overrides: [...r.overrides.filter((x) => x.date !== date), { date, isClosed: true }] }));
+    const impact = await prototypeApi.closedDayImpact(date);
+    return { rules, impact, sent: impact.bookings.map((booking) => booking.reference), alreadySent: [], failed: [] };
+  },
+  closeDayWithoutEmail: async (date) => {
+    const rules = protoSave((r) => ({ ...r, overrides: [...r.overrides.filter((x) => x.date !== date), { date, isClosed: true }] }));
+    return { rules, impact: await prototypeApi.closedDayImpact(date), sent: [], alreadySent: [], failed: [] };
+  },
   addBlock: async (b) => {
     firstIssue(blockSchema.safeParse(b));
     return protoSave((r) => ({ ...r, blocks: [...r.blocks, { ...b, id: `blk-${Math.random().toString(36).slice(2, 10)}` }] }));

@@ -43,4 +43,30 @@ export interface AvailabilityRules {
   blocks: TimeBlock[];
 }
 
+/** An active booking already on a date the owner wants to close. */
+export interface ClosedDayBooking {
+  reference: string;
+  parentName: string;
+  email: string;
+  phone: string;
+  start: string;
+  end: string;
+  /** Cancelled appears only when a closed deposit page still needs its schedule-change email retried. */
+  status: "pending" | "confirmed" | "rescheduled" | "cancelled";
+  notification: { status: "sending" | "sent" | "failed"; error: string | null } | null;
+}
+
+export interface ClosedDayImpact {
+  date: string;
+  bookings: ClosedDayBooking[];
+}
+
+export interface CloseDayResult {
+  rules: AvailabilityRules;
+  impact: ClosedDayImpact;
+  sent: string[];
+  alreadySent: string[];
+  failed: { reference: string; error: string }[];
+}
+
 export const WEEKDAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
