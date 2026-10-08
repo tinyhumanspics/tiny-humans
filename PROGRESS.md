@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `7489399` is live and smoke-tested; Vercel succeeded and production home, booking and read-only
+State: app commit `94eb193` is live and smoke-tested; Vercel succeeded and production home, booking and read-only
 availability checks returned 200. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -425,7 +425,11 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       studio emails remain English. An isolated local Outlook/Neon/Resend booking stored `es`, created its event and sent
       the customer a Spanish confirmation while the studio notification stayed English. Strict tsc/build/lint passed (0
       errors/26 known warnings), 60 e2e passed (6 expected cross-browser skips) and all 16 visual-parity pages passed.
-      This remains dormant in production until the Spanish public route/booking form sends `es`.
+      **Oct 8 page capture (`94eb193`):** the reusable booking page now carries its `AppLocale` into the real browser
+      request (the live English route explicitly sends `en`; a regression test inspects the submitted request). Vercel
+      succeeded and production `/book?bundle=little-moments` returned 200. Strict tsc/build/lint passed (0 errors/26
+      known warnings), 60 e2e passed (6 expected cross-browser skips) and all 16 visual-parity pages passed. Spanish
+      remains dormant until the fully translated public route calls this component with `es`.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
