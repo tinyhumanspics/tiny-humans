@@ -4,8 +4,12 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff, Oct 7 night, deposit shipped switched off)
-State: everything is on `main` and live (last code deploy `543def3`, smoke-tested). Migrations 0010–0013 ran in Neon.
+State: everything is on `main` and live (last code deploy `42d1229`, smoke-tested). Migrations 0010–0013 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
+0. **Owner: run `drizzle/0015_booking_no_overlap.sql` in Neon** (BUG-5; safe twice; any order with the code, which is
+   already live). Until it runs, only the old "same start time" rule protects against a double booking. If its last
+   statement fails with "conflicting key value violates exclusion constraint", run the query in the file's header and
+   send the result (two active bookings already overlap).
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
@@ -57,6 +61,18 @@ false`. iCloud can resurrect files git removes (branch switches): compare before
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Landing page refresh** (owner, Oct 7 night: "make sure the landing page is updated according to our main page and
+      all the recent updates"; owner OK'd all 3 from `Claude outputs/landing-refresh/`, live `42d1229`). (1) Empty landing
+      photo slots show the matching About Us photo (`LANDING_FROM_ABOUT` in `config/media.ts`: "Our set-up…" ← "Behind
+      the scenes", "Adrian & Alondra" ← "Adrian & Alondra"; same frame shapes) until the owner uploads landing photos;
+      /admin → Photos says "Using the About Us photo". Production had both landing slots empty and all 4 About photos
+      filled. (2) Bonus box: backdrops are picked while booking or later from the confirmation email (was "we'll send
+      you the options"); "Your prep guide arrives in your confirmation email, right after you book." (3) The theme's two
+      hero doodles by the photos, as on the home page (seasonal themes now decorate both). Checked unchanged and current:
+      ages (up to 2), sneak-peek promise (24 h / 72 h), notice hours, travel-fee FAQ, deposit wording (off), prices and
+      bundle cards (same component), no Halloween, "up to 10 sessions a week", seasonal cutoffs, footer/header.
+      ⚠ The About "Adrian & Alondra" photo's screen-reader description is "IMG 6087" (from the file name): owner can fix
+      it in /admin → Photos → About Us Page → Details.
 - [x] **Landing photos in /admin** (owner, Oct 7, live `543def3`): /admin → Photos → "Stay-Home Session Page
       (/home-sweet-home)" slots are now named like the page's cards: "Our set-up in a family's living room" (How it
       works) and "Adrian & Alondra" (Meet Adrian & Alondra). Same slots as before (saved photos unaffected).
@@ -231,6 +247,11 @@ false`. iCloud can resurrect files git removes (branch switches): compare before
       per email (HMAC of the row id with `CRON_SECRET`, only the hash stored), valid while the booking keeps that session
       time; confirmation links keep working. Tested locally end to end (21 scenarios incl. DST night Nov 1).
 - [ ] 2c Optional /admin "Today" view with tap-to-text
+- [x] **DST check for Nov 1** (Oct 7 night): `zonedTimeToUtc`, `todayInZone` around midnight, slots on Oct 31 / Nov 1 /
+      Nov 2 with Outlook events (UTC from Graph) and manual blocks, March 2027 too: all correct. Outlook events are written
+      as Miami wall time + "Eastern Standard Time" (the Windows zone that follows DST); all formatting uses Intl with
+      the studio zone; production availability shows 9:00–17:00 starts on both sides of Nov 1. Reminders were already
+      tested across the DST night (2c). Nothing to change.
 - [x] 2d After-session (Oct 7, live; owner did migration 0008 + Stripe key + webhook). Fix (Oct 7, owner report): the
       chalk logo intro covered /review and /pay/status on a fresh visit (3–4 s green screen) → both are now in
       `NO_INTRO_PATHS` (`app/layout.tsx`) and show at once; owner approved the same for /cancel + /reschedule.
@@ -421,8 +442,14 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   `GET /api/booking/availability`, `POST /api/admin/login` (only a 700 ms delay → brute-forceable).
 - **BUG-4 (medium, fixed 1a)** Times aren't labeled as Miami time anywhere (calendar, time step, review, confirmation); the calendar's
   "today" and month math use the visitor's local zone. Relatives booking from other states see unlabeled ET times.
-- **BUG-5 (medium)** Overlap race: DB only blocks two active bookings with the *same start*; overlapping sessions
-  submitted at the same moment can both succeed. Fix: exclusion constraint on a stored blocked range (start → end+buffer).
+- **BUG-5 (medium, fixed Oct 7 night; code live `6c61017`, database rule once the owner runs migration 0015)** Overlap
+  race: DB only blocked two active bookings with the *same start*; overlapping sessions submitted at the same moment
+  could both succeed. Fix: `bookings.blocked_until` (trigger: session end + the buffer in force when saved/moved; not in
+  the Drizzle schema) + exclusion constraint `bookings_no_overlap` on `[session_start, blocked_until)` for active rows;
+  lowering the buffer in /admin shrinks upcoming ranges (trigger on `booking_settings`), so the DB is never stricter than
+  the app. Existing rows got `blocked_until = session_end`. App maps 23P01 → "slot taken" (booking + reschedule).
+  Checked locally: 12 SQL scenarios (incl. two simultaneous transactions), the file run twice, the error through
+  neon-http.
 - **BUG-6 (medium, fixed 1b)** No security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors).
 - **BUG-7 (low, fixed Oct 7)** Address form has no unit/apartment, gate, parking or concierge
   fields (Miami condos).

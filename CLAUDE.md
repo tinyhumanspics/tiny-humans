@@ -118,6 +118,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Tracking: `lib/tracking/` (attribution cookie via `proxy.ts`, Pixel client, CAPI server). Never send baby data.
 - Ad landing page path lives in `config/landing.ts` (changing it sends live ads back to Meta review).
 - `db.batch()` is a neon-http feature (atomic). Keep it for multi-statement writes.
+- `bookings.blocked_until` + the exclusion constraint `bookings_no_overlap` live only in the database (migration 0015,
+  triggers fill the column; it's deliberately not in `lib/db/schema.ts`). Overlapping active bookings fail with 23P01
+  (`isOverlapViolation`). Never `drizzle-kit push` (it would drop the column).
 - The project lives on the iCloud-synced Desktop: Finder/iCloud " 2"/" 3" duplicates appear (seen Oct 7 in
   `.next/types/*.d 3.ts`, and as old copies of a regenerated migration). iCloud can also bring back files git just
   removed (after `git switch`): compare them with git before deleting. `tsconfig.json` excludes `.next/**/* ?.ts` so they no longer break `npm run typecheck`;
