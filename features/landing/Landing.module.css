@@ -38,6 +38,9 @@
 .snapA, .snapB { position: absolute; }
 .snapA { left: 2%; top: 4%; width: 44%; rotate: -5deg; }
 .snapB { right: 2%; top: 14%; width: 54%; rotate: 4deg; }
+/* the theme's two doodles by the photos, placed as on the home page */
+.heroDoodleA { position: absolute; left: 42%; bottom: 0; rotate: -10deg; }
+.heroDoodleB { position: absolute; right: 6%; top: 0; }
 
 /* 2. trust strip */
 .trust {

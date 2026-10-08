@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
-import { BUILT_IN, emptyThemeMedia, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
+import { BUILT_IN, emptyThemeMedia, LANDING_FROM_ABOUT, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import { preparePhoto } from "@/lib/admin/client";
@@ -18,6 +18,7 @@ type SlotPath = ["title" | "landing" | "about" | "email", number] | ["group", nu
 const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
 const titleFromFile = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
 const clone = (m: ThemeMedia): ThemeMedia => JSON.parse(JSON.stringify(m));
+const ABOUT_NOTE = "Using the About Us photo";
 
 /**
  * Photos / Media: every editable picture, grouped by WHERE it appears on the
@@ -33,6 +34,10 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   const baseLabel = themes.default.label;
   const back = (where: string, inherited: PortfolioPhoto | null | undefined, otherwise: string) => `${where} ${inherited ? `now shows the ${baseLabel} theme's picture.` : otherwise}`;
   const live = themeId === settings.themeId;
+  // empty landing slots: the Original theme's landing photo, else the matching About Us photo (as on the website)
+  const landingFromAbout = LANDING_FROM_ABOUT.map((a) => media.about?.[a] ?? base?.about?.[a] ?? null);
+  const landingInherited = MEDIA_GROUPS.landing.slots.map((_, i) => base?.landing?.[i] ?? landingFromAbout[i]);
+  const landingNotes = MEDIA_GROUPS.landing.slots.map((_, i) => (!base?.landing?.[i] && landingFromAbout[i] ? ABOUT_NOTE : undefined));
   const label = themes[themeId].label;
 
   const saveMedia = async (next: ThemeMedia, key: string, okText: string) => {
@@ -108,7 +113,8 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         definition={MEDIA_GROUPS.landing}
         kind="landing"
         photos={media.landing}
-        inherited={base?.landing}
+        inherited={landingInherited}
+        inheritedNotes={landingNotes}
         inheritedLabel={baseLabel}
         themeId={themeId}
         busy={busy}
@@ -136,7 +142,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
           const inherited = fromBase ?? fromAbout;
           return (
             <Slot key={`email-${i}-${themeId}-${own?.id ?? "empty"}`} name={name} groupLabel={MEDIA_GROUPS.email.label} custom={own} inherited={inherited}
-              inheritedNote={fromBase ? `Same as the ${baseLabel} theme` : "Using the About Us photo"} round builtIn={null} busy={busy === `email-${i}`}
+              inheritedNote={fromBase ? `Same as the ${baseLabel} theme` : ABOUT_NOTE} round builtIn={null} busy={busy === `email-${i}`}
               onReplace={(e) => replace(["email", i], own, `${MEDIA_GROUPS.email.label} · ${name}`, e)}
               onReset={() => setSlot(["email", i], null, `${MEDIA_GROUPS.email.label} · ${name} removed. ${inherited ? (fromBase ? `The email uses the ${baseLabel} theme's photo again.` : "The email uses the About Us photo again.") : "The email shows no photo."}`)}
               onDetails={(ph) => setSlot(["email", i], ph, "Photo details saved.")}
@@ -192,12 +198,14 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   );
 }
 
-function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedLabel, themeId, busy, replace, setSlot }: {
+function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedNotes, inheritedLabel, themeId, busy, replace, setSlot }: {
   definition: { label: string; where: string; slots: string[] };
   kind: "landing" | "about";
   photos: (PortfolioPhoto | null)[];
   /** The Original theme's pictures (shown in empty slots of other themes). */
   inherited?: (PortfolioPhoto | null)[];
+  /** Per slot: replaces "Same as the … theme" (e.g. a landing slot showing the About Us photo). */
+  inheritedNotes?: (string | undefined)[];
   inheritedLabel: string;
   themeId: TinyHumansTheme;
   busy: string | null;
@@ -214,10 +222,11 @@ function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedL
           custom={photos[i] ?? null}
           inherited={inherited?.[i]}
           inheritedLabel={inheritedLabel}
+          inheritedNote={inheritedNotes?.[i]}
           builtIn={null}
           busy={busy === `${kind}-${i}`}
           onReplace={(e) => replace([kind, i], photos[i] ?? null, `${definition.label} · ${name}`, e)}
-          onReset={() => setSlot([kind, i], null, `${definition.label} · ${name} removed. ${inherited?.[i] ? `The ${inheritedLabel} theme's picture is showing again.` : "The placeholder is showing again."}`)}
+          onReset={() => setSlot([kind, i], null, `${definition.label} · ${name} removed. ${inheritedNotes?.[i] ? "The About Us photo is showing again." : inherited?.[i] ? `The ${inheritedLabel} theme's picture is showing again.` : "The placeholder is showing again."}`)}
           onDetails={(p) => setSlot([kind, i], p, "Photo details saved.")}
           resetLabel="Remove picture"
           captions={false}

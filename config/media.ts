@@ -14,7 +14,7 @@ export const MEDIA_GROUPS = {
   },
   landing: {
     label: "Stay-Home Session Page (/home-sweet-home)",
-    where: `The two photos on the ad landing page: “${en.landing.how.photo}” under “${en.landing.how.title}”, and “${en.landing.meet.photo}” next to “${en.landing.meet.title}”. Until you add one, visitors see the matching “photo coming soon” card.`,
+    where: `The two photos on the ad landing page: “${en.landing.how.photo}” under “${en.landing.how.title}”, and “${en.landing.meet.photo}” next to “${en.landing.meet.title}”. Until you add one, the page uses the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”), or a “photo coming soon” card if that one is empty too.`,
     // same names as the "photo coming soon" cards on the page
     slots: [en.landing.how.photo, en.landing.meet.photo],
   },
@@ -61,6 +61,12 @@ export interface ThemeMedia {
   extra: PortfolioPhoto[];
 }
 
+/**
+ * An empty landing slot shows the About Us photo of the same subject (same frame shape): “Our set-up in a family's
+ * living room” (3:2) ← “Behind the scenes” (3:2), “Adrian & Alondra” (4:5) ← “Adrian & Alondra” (4:5).
+ */
+export const LANDING_FROM_ABOUT = [1, 0] as const;
+
 /** The built-in pictures for every slot (same look as before slots existed). */
 export const BUILT_IN = {
   title: [portfolio[0], portfolio[Math.min(4, portfolio.length - 1)]],
@@ -104,10 +110,11 @@ export interface ResolvedMedia {
 export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia): ResolvedMedia {
   const media = m ?? emptyThemeMedia();
   const f = fallback;
+  const about = MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? f?.about?.[i] ?? null);
   return {
     title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => media.title[i] ?? f?.title[i] ?? BUILT_IN.title[i]) : [],
-    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? f?.landing?.[i] ?? null),
-    about: MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? f?.about?.[i] ?? null),
+    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? f?.landing?.[i] ?? about[LANDING_FROM_ABOUT[i]] ?? null),
+    about,
     groups: MEDIA_GROUPS.feed.map((def, gi) => {
       const g = media.groups[gi];
       const fg = f?.groups[gi];

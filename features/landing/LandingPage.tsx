@@ -64,7 +64,9 @@ function paymentCopy(deposit: SiteDeposit | null) {
 export default function LandingPage({ noticeHours, travel, deposit = null }: { noticeHours: number; travel: TravelSettings | null; deposit?: SiteDeposit | null }) {
   const pay = paymentCopy(deposit);
   const { bundles, today, available } = useCatalog();
-  const { media, photos } = useSiteSettings();
+  const { media, photos, theme } = useSiteSettings();
+  // the theme's two doodles by the hero photos (as on the home page)
+  const [doodleA, doodleB] = theme.decorations.hero;
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
   const ctaHref = featured ? scheduleHref(featured.id) : bundlesHref();
   const onFeaturedCta = () => {
@@ -104,6 +106,8 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
                 <div className={styles.snapB}>
                   <PinnedPhoto photo={second} seed={22} sizes="(min-width: 900px) 320px, 50vw" priority showCaption={false} tape="blue" />
                 </div>
+                <ChalkDoodle name={doodleA} size={40} color="var(--accent-2)" className={styles.heroDoodleA} />
+                <ChalkDoodle name={doodleB} size={34} color="var(--accent)" className={styles.heroDoodleB} />
               </div>
             </Reveal>
           )}
