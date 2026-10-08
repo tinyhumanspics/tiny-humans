@@ -3,27 +3,23 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7 late evening, after Phase 2 extras part 1 + owner requests)
-State: everything below is on `main` and live (last code deploy `8d0dd1c` + this handoff's docs commit). Migrations
-0010–0013 ran in Neon (owner, Oct 7).
+## ▶ NEXT STEPS (handoff, Oct 7 night, after building the deposit)
+State: `main` = live (last code deploy `8d0dd1c`; docs since). Migrations 0010–0013 ran in Neon (owner, Oct 7).
+The deposit is **built and tested but not on `main`**: local branch `wip/deposit` (code + fake Stripe + CLAUDE.md
+notes, on top of `main`; never pushed, so no Vercel preview). Deposits ship **off**: until the owner switches them on,
+families see exactly today's flow and wording (checked: e2e 21/21, visual parity 16/16, landing/About/Terms text).
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
-2. **Build the $50 deposit next** (owner, Oct 7: right after the backdrops). Decided: paid **while booking** (Stripe
-   Checkout as the last step; the date is confirmed only once paid), **required for every booking**
-   (min($50, bundle + travel); $0 bookings skip it), **refunded automatically** when the family cancels online before
-   the notice window (and when the owner cancels); kept inside the window / no-show; carries over on reschedule; the
-   payment link then charges the rest (total − deposit). **Owner (Oct 7, later): a deposit amount per bundle** (e.g.
-   $50 Little Moments, $100 Our Family Story; editable in /admin → Pricing & Promotions, starting at $50 each) **and an
-   on/off switch** for deposits (off = today's "pay after your session" flow). Changes apply to new bookings only.
-   Slot **held 30 min** while they're on Stripe, released if unpaid; **Stripe down → book without the deposit**
-   (confirmed, flagged "Deposit not paid" in /admin, owner sends the link); **abandoned payment → one email** ("Your date
-   isn't confirmed yet" + a link to pick a time again). Open details to settle while building: how the hold is stored
-   (pending row that blocks availability + expiry/cleanup), when the Outlook event + confirmation email go out (after
-   payment), Meta `Schedule` fires after the deposit, refund mechanics (Stripe Refunds API). **Owner steps before it
-   goes live:** Stripe restricted key → "Refunds: Write"; webhook endpoint → add `checkout.session.expired`. Replaces
-   "$0 today, pay after your session" everywhere (landing, booking form, emails, Terms, FAQ) → **new wording needs the
-   owner's OK** (screenshots first).
+2. **Ship the deposit** (owner decisions Oct 7, incl. the later "amount per bundle + on/off switch"; see "Owner
+   requests" → Deposit for how it works). Order: (a) **owner approves the wording** in `Claude outputs/deposit/`
+   (or asks for changes); (b) **owner runs `drizzle/0014_booking_deposits.sql` in Neon** (new tables only, safe twice);
+   (c) merge `wip/deposit` into `main`, typecheck (`--incremental false`), lint, build, e2e, push, confirm Vercel, smoke
+   test (deposits off = nothing changes); (d) **owner, in Stripe:** restricted key → **Refunds: Write**; webhook endpoint →
+   add event **`checkout.session.expired`**; (e) owner sets amounts + switches on in /admin → **Pricing & Promotions →
+   Deposits**; (f) one real booking with the owner (pay the deposit, check event/emails/admin, cancel online → refund
+   shows in Stripe). Until (d) is done, unpaid holds are still released by the sweep (availability checks + daily cron),
+   just a few minutes later, and refunds fail (flagged in /admin, "Refund the deposit" button).
 3. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
@@ -48,25 +44,52 @@ State: everything below is on `main` and live (last code deploy `8d0dd1c` + this
 ```
 Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7, late): main = 8d0dd1c (+ handoff docs commit), live and smoke-tested: unit/gate/concierge fields,
-ages up to 2, step tracker + "Live now" fixes, sneak peek/gallery before the session (with a confirm), Paid tags +
-Dashboard totals + "Check with Stripe", travel fee ($0.75/mile over 30 free, max 250, Florida ZIPs only; OFF until
-the owner saves /admin → Availability → Travel fee), backdrops (6 incl. Beige + Wooden, one per setup, picked on the
-booking form or /backdrop?t=). Migrations 0010–0013 ran in Neon.
-Not on main yet: nothing.
+State (Oct 7, night): main = live, last code deploy 8d0dd1c (docs since). Migrations 0010–0013 ran in Neon.
+Not on main yet: the deposit (local branch wip/deposit, never pushed): per-bundle amounts + on/off switch in /admin →
+Pricing & Promotions → Deposits, Stripe Checkout as the last booking step, 30-min hold, refunds, abandoned email.
+Ships OFF (today's flow/wording until switched on). 97 local checks + e2e 21/21 + parity 16/16 passed.
 
-Next: the $50 deposit (PROGRESS → NEXT STEPS 2: decisions + open details). Research current Stripe docs first
-(Checkout expiry, Refunds API, checkout.session.expired; note links in PROGRESS.md). Show the new "deposit today"
-wording to the owner (screenshots) before shipping. Then the rest of the Phase 2 extras (NEXT STEPS 4).
-Time-sensitive: DST Nov 1 calendar check, BUG-5 overlap constraint, seasonal cutoffs (Thanksgiving Nov 23, Christmas
-cards Dec 5, First Christmas Dec 21).
-Waiting on the owner: saving the travel fee settings; Stripe key "Refunds: Write" + webhook event
-checkout.session.expired (for the deposit); 1g Meta test; Vercel Analytics privacy line; /portfolio; Terms review.
-Watch out: the owner runs `npm run dev` on :3000 (stop only your own servers, by port/PID). A local build can reuse
-the previous build's prerendered pages. .agents/ + AGENTS.md are another tool's files: leave them.
+Next: ship the deposit (PROGRESS → NEXT STEPS 2, in order): wording OK from the owner (Claude outputs/deposit/),
+owner runs drizzle/0014_booking_deposits.sql in Neon, then merge wip/deposit → main (rebase if main moved), checks,
+push, confirm Vercel, smoke test. Then owner Stripe steps (Refunds: Write; webhook event checkout.session.expired),
+switch on, one real booking + online cancel with the owner. Then the rest of the Phase 2 extras (NEXT STEPS 4).
+Time-sensitive: DST Nov 1 calendar check, BUG-5 overlap constraint, seasonal cutoffs (Thanksgiving Nov 23,
+Christmas cards Dec 5, First Christmas Dec 21).
+Waiting on the owner: deposit wording OK; migration 0014; Stripe key + webhook event; travel fee settings; 1g Meta
+test; Vercel Analytics privacy line; /portfolio; Terms review; landing "Halloween" line; deleting the iCloud " 2"
+copies of migration 0014 (old version: never run them).
+Watch out: `npm run typecheck` can miss errors (TS 7 incremental cache): use `npx tsc --noEmit -p . --incremental
+false`. The owner edits PROGRESS.md decisions between sessions: `git log` first. .agents/ + AGENTS.md: leave them.
 ```
 
 ## Owner requests (outside the original brief)
+- [~] **Deposit while booking** (owner, Oct 7; built Oct 7 night on branch `wip/deposit`, waiting for wording OK + migration
+      0014; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
+      bundle (`bundle_deposits`; a bundle without a row = $50; `deposit_settings` = the switch; off = today's flow).
+      Booking form review step: "Deposit today $50 (holds your date)" + "Rest after the photoshoot", button "Pay $50
+      deposit", note (30-min hold, refund rule). Create → booking saved **pending** (blocks the time like any booking) +
+      `booking_deposits` row (pending, `hold_until` = Stripe page expiry, 31 min) → Stripe Checkout (`metadata.kind =
+      "deposit"`, `expires_at`, message above the pay button) → back to `/book?bundle=…&deposit=<ref>&k=<HMAC>` which shows
+      the confirmation / "Your date isn't confirmed yet" (+ Pay / Pick another time) / "no longer held". **Paid** (webhook
+      `checkout.session.completed`, or the return page asking Stripe, or the sweep) → `confirmBookingRow`
+      (`lib/booking/confirm.ts`: Outlook event → confirmed → emails) + Meta Schedule (CAPI after payment; fbc rebuilt from
+      the saved fbclid when the webhook confirms). One request confirms (lease `confirming_at`, 2 min); calendar down →
+      webhook 500 (Stripe retries), retried by the sweep. The manage token of such bookings is derived
+      (`manageTokenFor`, HMAC of the booking id with `ADMIN_SESSION_SECRET`) so any request writes the same links.
+      **Not paid** (webhook `checkout.session.expired`, or the sweep after `hold_until`) → booking cancelled ("Deposit not
+      paid…", cancelled_by null), deposit `expired`, discount-code use given back, one "Your date isn't confirmed yet"
+      email (skipped if they booked again). "Pick another time" → closes the page now, no email. **Sweep** =
+      `sweepDeposits()` after every availability response, before saving a booking, and in the daily cron.
+      **Refunds** (Refunds API, idempotent): automatic when the family cancels online; owner's cancel form has "Refund
+      the $X deposit" (ticked unless inside the notice window); Delete Lead refunds a paid deposit and first closes an open
+      page; failed refund → flagged on the lead + "Refund the deposit" button. **Stripe down while booking** → confirmed
+      without it (`unpaid`, "Deposit not paid" pill, email says we'll send a link); the payment link then takes the
+      deposit first (before the session), the rest after. Payment link / sneak peek / gallery charge total − paid deposit
+      (Stripe line "… (after your $50 deposit)"). Dashboard "Paid this month" includes kept deposits. Reminders skip
+      pending bookings; emails/reminders/event/studio email show "Deposit paid $50 · Rest $199". Marketing pages say "$50
+      deposit holds your date", or "a deposit from $50" when bundles differ. Terms: booking paragraph + refund rules
+      (only while on; "last updated" = when switched on). 97 local checks (`deposit-checks.mjs`, Outlook mode, fake
+      Graph/Resend/Stripe), screenshots in `Claude outputs/deposit/` (phone + desktop; `-mixed` = $50/$50/$100).
 - [x] **Routes** (Oct 7, branch `wip/routes`): bundles page `/book` → **`/bundles`**, calendar `/book/schedule?bundle=` →
       **`/book?bundle=`** (`?inspiration=` kept). Owner: no redirects for the old URLs (new project). `/book` without a
       known bundle → the bundle opened earlier in this tab's visit (sessionStorage `th_last_bundle`, bundle id only),
@@ -124,7 +147,8 @@ the previous build's prerendered pages. .agents/ + AGENTS.md are another tool's 
 
 ## Status
 - **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras part 1 live (Oct 7: unit/gate
-  fields, travel fee, backdrops, payment visibility); next: the $50 deposit, then the rest of the Phase 2 extras.
+  fields, travel fee, backdrops, payment visibility); the deposit is built on `wip/deposit` (Oct 7), waiting for the
+  owner's wording OK + migration 0014; then the rest of the Phase 2 extras.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
@@ -374,6 +398,12 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- Deposit wording (Oct 7, screenshots in `Claude outputs/deposit/`): approve or change. Also: the refund line in the
+  cancellation email when the owner keeps a deposit ("…isn't refunded for late cancellations or missed sessions").
+- Landing page "final" section still says "Halloween sessions through Oct 28" (`landing.final.seasonal`), but the owner
+  dropped Halloween (Oct 7): remove it? (copy change → needs a yes)
+- iCloud made `drizzle/0014_booking_deposits 2.sql` + `drizzle/meta/0014_snapshot 2.json` (old single-amount version of
+  migration 0014, untracked): OK to delete? Never run the " 2" file in Neon.
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers · codes on add-ons.
 
@@ -486,6 +516,15 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   delimited: GEOID, …, INTPTLAT, INTPTLONG; ZCTAs approximate USPS ZIPs; PO-box-only ZIPs have no ZCTA).
   https://www.census.gov/geographies/reference-files/time-series/geo/gazetteer-files.html ·
   https://www2.census.gov/geo/docs/maps-data/data/gazetteer/2026_Gazetteer/2026_Gaz_zcta_national.zip
+- **Stripe deposit pieces** (checked Oct 7): Checkout `expires_at` = 30 min–24 h after creation (default 24 h);
+  `POST /v1/checkout/sessions/:id/expire` closes an open page; `checkout.session.expired` fires when a page expires
+  (Stripe's "limited inventory" guide: release the reserved item on that event); `custom_text[submit][message]` shows a
+  note above the pay button. Refunds: `POST /v1/refunds` with `payment_intent` (+ optional `amount`, `reason`
+  `requested_by_customer`, metadata), Idempotency-Key supported; refund `status` pending | requires_action | succeeded |
+  failed | canceled. Restricted key needs "Refunds: Write".
+  https://docs.stripe.com/api/checkout/sessions/create · https://docs.stripe.com/payments/checkout/managing-limited-inventory ·
+  https://docs.stripe.com/api/checkout/sessions/expire · https://docs.stripe.com/api/refunds/create ·
+  https://docs.stripe.com/api/refunds/object · https://docs.stripe.com/api/events/types
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
@@ -503,5 +542,6 @@ Booking spam check refuses forms finished in < 4 s: automated tests must wait on
 Fake Resend: `node scripts/local-db/fake-resend.mjs` (port 4646; emails saved to `scripts/local-db/.emails/`;
 addresses containing `fail@` are rejected) + `RESEND_API_KEY=re_local RESEND_BASE_URL=http://localhost:4646`.
 Fake Stripe: `node scripts/local-db/fake-stripe.mjs` (port 4747; `POST /_pay/<session id>` marks it paid and sends a
-signed webhook to `FAKE_STRIPE_WEBHOOK_URL`) + `STRIPE_SECRET_KEY=rk_test_local STRIPE_API_BASE=http://localhost:4747
+signed webhook to `FAKE_STRIPE_WEBHOOK_URL`; `/_expire/<id>` = page ran out (+ `checkout.session.expired`; `?nohook=1`
+skips webhooks); `/_checkout/fail` = Stripe down for the next page; `/_refunds/fail` = next refund fails; `/_refunds`) + `STRIPE_SECRET_KEY=rk_test_local STRIPE_API_BASE=http://localhost:4747
 STRIPE_WEBHOOK_SECRET=whsec_local`. Reminder runs: `GET /api/cron/reminders?now=<ISO>` with `Bearer $CRON_SECRET`.

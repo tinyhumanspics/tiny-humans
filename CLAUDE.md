@@ -153,5 +153,9 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   `err.cause.message` (see `lib/booking/access.ts`). New per-booking extras go in their own table with a best-effort
   insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`) so a missing migration never
   breaks bookings; anything that changes money (e.g. `travel_fee_cents`) stays on `bookings`, migration-first.
+- `npm run typecheck` (TS 7, `incremental: true`) can report "clean" from a stale `tsconfig.tsbuildinfo` and miss new
+  errors (seen Oct 7): before committing run `npx tsc --noEmit -p . --incremental false` (or delete the tsbuildinfo).
+- The owner sometimes records new decisions in PROGRESS.md (own commits) while a session is working: check `git log`
+  before building on an old decision, and again before committing.
 - Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
   pass through `lib/tracking/safe-url.ts` first. Next 16: `proxy.ts` (not middleware), `revalidateTag(tag, { expire: 0 })`.
