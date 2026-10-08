@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `94eb193` is live and smoke-tested; Vercel succeeded and production home, booking and read-only
+State: app commit `43e10dc` is live and smoke-tested; Vercel succeeded and production home, booking, About and read-only
 availability checks returned 200. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -429,7 +429,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       request (the live English route explicitly sends `en`; a regression test inspects the submitted request). Vercel
       succeeded and production `/book?bundle=little-moments` returned 200. Strict tsc/build/lint passed (0 errors/26
       known warnings), 60 e2e passed (6 expected cross-browser skips) and all 16 visual-parity pages passed. Spanish
-      remains dormant until the fully translated public route calls this component with `es`.
+      remains dormant until the fully translated public route calls this component with `es`. **Oct 8 About catalog
+      (`43e10dc`):** the complete About copy now has an English/Spanish pair, the shared page accepts either catalog,
+      and centralized path helpers keep English unprefixed while preparing `/es` links. The `/es/about` route remains
+      unpublished. Catalog-shape and path tests were added; strict tsc/build/lint passed (0 errors/26 known warnings),
+      62 e2e passed (10 expected cross-browser skips), all 16 visual-parity pages passed, Vercel succeeded and
+      production `/about` returned 200.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
