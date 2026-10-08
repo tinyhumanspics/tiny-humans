@@ -1,5 +1,15 @@
 import type { TinyHumansTheme } from "@/config/themes";
 import type { ThemeMedia } from "@/config/media";
+import type { SeasonalOfferId } from "@/config/seasonal";
+
+export interface SeasonalOfferSettings {
+  /** Hidden until the owner explicitly switches this offer on. */
+  enabled: boolean;
+  title: string;
+  description: string;
+  /** Last session date, inclusive, in YYYY-MM-DD format. */
+  cutoff: string;
+}
 
 /** Everything the owner can change from /admin (stored in Vercel Blob). */
 export interface SiteSettings {
@@ -10,5 +20,7 @@ export interface SiteSettings {
    * independent: an empty slot shows the built-in picture, never another theme's.
    */
   media: Partial<Record<TinyHumansTheme, ThemeMedia>>;
+  /** Seasonal landing copy and real end dates, edited in /admin. */
+  seasonalOffers: Record<SeasonalOfferId, SeasonalOfferSettings>;
   updatedAt: string | null;
 }

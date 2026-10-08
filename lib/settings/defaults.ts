@@ -1,9 +1,22 @@
 import { emptyThemeMedia, mediaFromList, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
+import { SEASONAL_OFFER_IDS, type SeasonalOfferId } from "@/config/seasonal";
 import { DEFAULT_THEME, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
-import type { SiteSettings } from "./types";
+import en from "@/messages/en.json";
+import type { SeasonalOfferSettings, SiteSettings } from "./types";
 
-export const defaultSettings: SiteSettings = { themeId: DEFAULT_THEME, media: {}, updatedAt: null };
+const DEFAULT_SEASONAL_OFFERS: Record<SeasonalOfferId, SeasonalOfferSettings> = {
+  thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving },
+  christmasCards: { enabled: false, ...en.landing.seasonalOffers.defaults.christmasCards },
+  firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas },
+};
+
+export const defaultSettings: SiteSettings = {
+  themeId: DEFAULT_THEME,
+  media: {},
+  seasonalOffers: DEFAULT_SEASONAL_OFFERS,
+  updatedAt: null,
+};
 
 const MAX_PHOTOS = 60;
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
@@ -43,6 +56,33 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
 }
 
 const isThemeId = (v: unknown): v is TinyHumansTheme => (THEME_IDS as string[]).includes(v as string);
+const validDate = (v: unknown): v is string => {
+  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
+  const [year, month, day] = v.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
+
+function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOfferSettings> {
+  const source = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  return Object.fromEntries(
+    SEASONAL_OFFER_IDS.map((id) => {
+      const fallback = DEFAULT_SEASONAL_OFFERS[id];
+      const value = source[id] && typeof source[id] === "object" ? (source[id] as Record<string, unknown>) : null;
+      const title = value ? str(value.title, 90) : "";
+      const description = value ? str(value.description, 240) : "";
+      const cutoff = value && validDate(value.cutoff) ? value.cutoff : "";
+      // Old/corrupt settings stay hidden instead of silently publishing hard-coded business copy.
+      const complete = Boolean(title && description && cutoff);
+      return [id, {
+        enabled: value?.enabled === true && complete,
+        title: title || fallback.title,
+        description: description || fallback.description,
+        cutoff: cutoff || fallback.cutoff,
+      }];
+    }),
+  ) as Record<SeasonalOfferId, SeasonalOfferSettings>;
+}
 
 function parseSlot(v: unknown, allowDataUrls: boolean, where: string): PortfolioPhoto | null {
   if (!v) return null;
@@ -87,7 +127,12 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
     }
   }
   if (!media.default && Array.isArray(o.photos) && o.photos.length) media.default = mediaFromList(parsePhotos(o.photos, allowDataUrls, "the Original pictures"));
-  return { themeId, media, updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null };
+  return {
+    themeId,
+    media,
+    seasonalOffers: parseSeasonalOffers(o.seasonalOffers),
+    updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null,
+  };
 }
 
 /** Every custom photo in every theme. */

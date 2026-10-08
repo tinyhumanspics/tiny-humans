@@ -42,6 +42,23 @@
 .heroDoodleA { position: absolute; left: 42%; bottom: 0; rotate: -10deg; }
 .heroDoodleB { position: absolute; right: 6%; top: 0; }
 
+/* Seasonal wrapper: appears only for enabled offers in the matching live theme. */
+.seasonal { margin-top: clamp(30px, 6vw, 54px); }
+.seasonalEyebrow {
+  margin: 0 0 10px;
+  text-align: center;
+  font-family: var(--font-chalk);
+  font-size: clamp(1.2rem, 4vw, 1.45rem);
+  color: var(--cloud-blue);
+}
+.seasonalGrid { display: grid; gap: 16px; max-width: 920px; margin: 0 auto; }
+@media (min-width: 760px) { .seasonalGrid:has(> :nth-child(2)) { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.seasonalCard { position: relative; display: grid; gap: 10px; align-content: start; padding: clamp(22px, 4vw, 30px); overflow: hidden; }
+.seasonalTitle { margin: 0; max-width: 16em; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.06; color: var(--sun-yellow); }
+.seasonalDescription { margin: 0; max-width: 34em; font-size: 1.15rem; color: var(--chalk-white); }
+.seasonalCutoff { margin: 2px 0 4px; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--accent-2); }
+.seasonalDoodle { position: absolute; top: 16px; right: 18px; rotate: 9deg; }
+
 /* 2. trust strip */
 .trust {
   list-style: none;

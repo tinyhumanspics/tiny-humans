@@ -22,6 +22,8 @@ import BookingPaused from "@/features/booking/BookingPaused";
 import { activeOffer, toCents } from "@/lib/pricing/engine";
 import { requestBookingScroll } from "@/lib/scroll/booking";
 import { trackSelectBundle } from "@/lib/tracking/client";
+import { formatLongDate } from "@/lib/booking/dates";
+import { activeSeasonalOffers } from "@/lib/seasonal/offers";
 import NextOpenDates from "./NextOpenDates";
 import styles from "./Landing.module.css";
 import { cn } from "@/lib/cn";
@@ -64,7 +66,7 @@ function paymentCopy(deposit: SiteDeposit | null) {
 export default function LandingPage({ noticeHours, travel, deposit = null }: { noticeHours: number; travel: TravelSettings | null; deposit?: SiteDeposit | null }) {
   const pay = paymentCopy(deposit);
   const { bundles, today, available } = useCatalog();
-  const { media, photos, theme } = useSiteSettings();
+  const { settings, media, photos, theme } = useSiteSettings();
   // the theme's two doodles by the hero photos (as on the home page)
   const [doodleA, doodleB] = theme.decorations.hero;
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
@@ -75,6 +77,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
   };
   const [first, second] = media.title;
   const gallery = photos.filter((p) => p !== first && p !== second).slice(0, 6);
+  const seasonalOffers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today);
 
   return (
     <main id="top" className={styles.page}>
@@ -113,6 +116,26 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           )}
         </div>
       </section>
+
+      {/* Seasonal wrapper: owner-managed copy + real cutoff dates, visible only with its matching live theme. */}
+      {seasonalOffers.length > 0 && (
+        <section className={cn("container", styles.seasonal)} aria-labelledby="landing-seasonal">
+          <Reveal>
+            <p className={cn(styles.seasonalEyebrow, "chalk-soft")}>{t.seasonalOffers.eyebrow}</p>
+            <div className={styles.seasonalGrid}>
+              {seasonalOffers.map((offer, index) => (
+                <ChalkBox key={offer.id} className={styles.seasonalCard} seed={24 + index} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
+                  <ChalkDoodle name="sparkle" size={30} color="var(--accent-2)" strokeWidth={3} className={styles.seasonalDoodle} grain={false} />
+                  <h2 id={index === 0 ? "landing-seasonal" : undefined} className={cn(styles.seasonalTitle, "chalk")}>{offer.title}</h2>
+                  <p className={cn(styles.seasonalDescription, "chalk-soft")}>{offer.description}</p>
+                  <p className={cn(styles.seasonalCutoff, "chalk-soft")}>{fill(t.seasonalOffers.cutoff, { date: formatLongDate(offer.cutoff) })}</p>
+                  <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="outline" seed={26 + index}>{t.seasonalOffers.cta}</ChalkButton>
+                </ChalkBox>
+              ))}
+            </div>
+          </Reveal>
+        </section>
+      )}
 
       {/* 2. Trust strip */}
       <section className="container" aria-label="Why families choose us">
@@ -260,7 +283,11 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
             <h2 id="landing-final" className={cn(styles.finalTitle, "chalk")}>{t.final.title}</h2>
             <NextOpenDates bundleId={featured?.id} label={t.final.nextDates} loading={t.final.loading} />
             <p className="chalk-soft">{t.final.cap}</p>
-            <p className={cn(styles.small, "chalk-soft")}>{t.final.seasonal}</p>
+            {seasonalOffers.length > 0 && (
+              <p className={cn(styles.small, "chalk-soft")}>
+                {seasonalOffers.map((offer) => `${offer.title}: ${formatLongDate(offer.cutoff)}`).join(" · ")}
+              </p>
+            )}
             <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={72}>{t.final.cta}</ChalkButton>
             <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.finalCtaNote}</p>
           </ChalkBox>

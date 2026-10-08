@@ -311,6 +311,14 @@
 .connList { margin: 8px 0; padding-left: 18px; display: grid; gap: 6px; color: var(--chalk-white); font-size: 1.05rem; }
 .connList b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
 
+/* seasonal landing offers */
+.seasonalAdminGrid { display: grid; gap: 16px; margin: 20px 0; }
+@media (min-width: 980px) { .seasonalAdminGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.seasonalAdminCard { display: grid; gap: 12px; align-content: start; padding: 18px; }
+.seasonalAdminHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.seasonalTextarea { min-height: 96px; resize: vertical; }
+.dateInput { width: min(100%, 260px); color-scheme: dark; }
+
 /* photos / media */
 .editingFor { margin: 10px 0 4px; font-size: 1.15rem; color: var(--chalk-white); }
 .editingFor b { font-family: var(--font-chalk); font-weight: 400; font-size: 1.35rem; color: var(--sun-yellow); }

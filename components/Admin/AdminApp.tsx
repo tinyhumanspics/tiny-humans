@@ -15,6 +15,7 @@ import AvailabilityPanel from "./AvailabilityPanel";
 import LeadsPanel from "./LeadsPanel";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
+import SeasonalPanel from "./SeasonalPanel";
 import { ADMIN_NAV, type AdminSection } from "./nav";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
@@ -94,7 +95,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       {api.mode === "prototype" && (
         <p className={cn(styles.banner, "chalk-soft")}>Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.</p>
       )}
-      {api.mode === "live" && !storageReady && (section === "photos" || section === "theme") && (
+      {api.mode === "live" && !storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
         <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
       )}
 
@@ -102,6 +103,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       {section === "leads" && <LeadsPanel api={api} />}
       {section === "availability" && <AvailabilityPanel api={api} />}
       {section === "pricing" && <PricingPanel api={api} />}
+      {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
       {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
       {section === "theme" && <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />}
       {section === "settings" && <SettingsPanel api={api} storageReady={storageReady} onSignOut={signOut} />}
@@ -279,4 +281,3 @@ function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; o
     </section>
   );
 }
-
