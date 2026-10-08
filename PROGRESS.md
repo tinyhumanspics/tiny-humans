@@ -11,7 +11,8 @@ migration 0017 returned
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
 needed. Migrations 0010–0018 ran in Neon; the owner confirmed migration 0018 succeeded Oct 8 (the final language count
-was empty because there are no production bookings yet).
+was empty because there are no production bookings yet). Migration 0019 (Spanish bundle-copy storage) is ready and
+must be run in Neon before the bilingual `/admin/pricing` fields are deployed; it does not change today's English site.
 Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robots, service-area business JSON-LD, and
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
@@ -434,7 +435,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       and centralized path helpers keep English unprefixed while preparing `/es` links. The `/es/about` route remains
       unpublished. Catalog-shape and path tests were added; strict tsc/build/lint passed (0 errors/26 known warnings),
       62 e2e passed (10 expected cross-browser skips), all 16 visual-parity pages passed, Vercel succeeded and
-      production `/about` returned 200.
+      production `/about` returned 200. **Oct 8 catalog storage (`0173690`):** additive/idempotent migration 0019 adds
+      separate Spanish rows for owner-editable bundle names, descriptions, badges, offer labels and inclusions; shared
+      prices, minutes and photo counts stay language-neutral. No copy was invented or published, and missing Spanish
+      rows will not silently fall back to English. The isolated migration ran twice, accepted Spanish rows and rejected
+      unsupported locales/invalid inclusion positions. Strict tsc/build/lint passed (0 errors/26 known warnings), 62
+      e2e passed (10 expected cross-browser skips), and all 16 visual-parity pages passed. [?] Owner: run
+      `drizzle/0019_catalog_translations.sql` in Neon before the next schema-reading admin slice.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
