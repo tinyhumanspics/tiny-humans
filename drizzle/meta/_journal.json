@@ -127,6 +127,13 @@
       "when": 1791435625172,
       "tag": "0017_extra_babies",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791498777247,
+      "tag": "0018_booking_locale",
+      "breakpoints": true
     }
   ]
 }

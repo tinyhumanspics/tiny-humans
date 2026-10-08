@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish next; order = owner's choice below)
-State: `main` = `f864ea9`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
+State: `main` = `83896fd`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
@@ -376,8 +376,19 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       deposit email and no-email paths; 21 e2e passed. Screenshots: `.screenshots/close-day/`.
 
 ## Phase 3 — Spanish (owner: "same time, no rush" → after Phase 2)
-- [ ] Research i18n (next-intl vs alternatives), URLs (/es), detection rules, switcher, hreflang
-- [ ] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails
+- [x] Research i18n (Oct 8): use `next-intl` 4.14.9 (current App Router/server/client support, routing helpers,
+      plurals and date/number formatting; npm unpacked size ~400 KB, updated Oct 2) rather than a home-grown context.
+      Keep today's English URLs unprefixed and put Spanish under `/es`; explicit switch links, no browser-language
+      redirect (`localeDetection: false`), and reciprocal self/English/Spanish `hreflang` plus `x-default`. Do not index
+      or advertise a partly translated Spanish journey. Sources: [Next.js internationalization guide](https://nextjs.org/docs/app/guides/internationalization),
+      [next-intl App Router setup](https://next-intl.dev/docs/getting-started/app-router),
+      [next-intl routing](https://next-intl.dev/docs/routing),
+      [Google multilingual sites](https://developers.google.com/search/docs/advanced/crawling/managing-multi-regional-sites),
+      [Google localized versions / hreflang](https://developers.google.com/search/docs/specialty/international/localized-versions).
+- [~] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails. Migration
+      `drizzle/0018_booking_locale.sql` is additive/idempotent, keeps existing bookings in English, and must run in Neon
+      before app code reads the column. Local Postgres: ran the migration twice; 9 existing bookings remained `en`, the
+      non-null default was `en`, and exactly one language constraint existed.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
