@@ -4,7 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `7489399` is verified locally and ready to deploy. Phase 4 is complete: extra babies are live,
+State: app commit `7489399` is live and smoke-tested; Vercel succeeded and production home, booking and read-only
+availability checks returned 200. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
