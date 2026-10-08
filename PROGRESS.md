@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: `main` = `a8719e7`. Phase 4 is complete: extra babies are live, migration 0017 returned
+State: `main` = `c9764a7`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
@@ -13,7 +13,9 @@ Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robo
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
 succeeded; production sitemap/robots, home canonical/OG/JSON-LD and `/book` noindex/canonical were checked read-only.
-The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
+The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done. Deposits-off
+leads now explicitly show Confirmed + "Not required ($0 paid today)" and retain their automatic permanent payment link
+and existing sneak-peek/gallery email tools; an unsaved /admin switch is clearly flagged. No SQL was needed.
 0. **Seasonal landing LIVE Oct 8:** in `/admin/seasonal`, enable the wanted offer(s) and save; in `/admin/theme`, choose
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
    to its theme shows it automatically until the cutoff; changing away hides it without disabling it.
