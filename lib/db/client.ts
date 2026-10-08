@@ -35,3 +35,14 @@ export function isUniqueViolation(err: unknown, constraint?: string): boolean {
   }
   return false;
 }
+
+/** True when two active bookings would overlap (exclusion constraint `bookings_no_overlap`, code 23P01). */
+export function isOverlapViolation(err: unknown): boolean {
+  let e: unknown = err;
+  for (let i = 0; i < 4 && e; i++) {
+    const x = e as { code?: string; cause?: unknown };
+    if (x.code === "23P01") return true;
+    e = x.cause;
+  }
+  return false;
+}

@@ -5,7 +5,7 @@ import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
-import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
+import { getDb, isDatabaseConfigured, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
 import { bookingConsents, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
@@ -213,7 +213,7 @@ export class OutlookBookingProvider implements BookingProvider {
         if (isUniqueViolation(err, "booking_reference")) continue; // rare: try another reference
         await releaseUsage();
         if (isUniqueViolation(err, "request_id")) throw new BookingError("in_progress", friendly.inProgress);
-        if (isUniqueViolation(err)) throw new BookingError("slot_unavailable", friendly.slotTaken);
+        if (isUniqueViolation(err) || isOverlapViolation(err)) throw new BookingError("slot_unavailable", friendly.slotTaken);
         log.error("booking.db", "Insert failed", { error: err as Error });
         throw new BookingError("server_error", friendly.server);
       }

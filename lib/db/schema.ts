@@ -99,6 +99,9 @@ export const bookings = pgTable(
   },
   (t) => [
     // Only one active booking can start at a given moment (last line of defense against double booking).
+    // Also in the database, not modeled here (drizzle/0015_booking_no_overlap.sql): a trigger-filled
+    // `blocked_until` column (session end + buffer) and the exclusion constraint `bookings_no_overlap`, so two active
+    // bookings can't overlap even when saved at the same moment (error 23P01 → "slot taken").
     uniqueIndex("bookings_active_start_idx").on(t.sessionStart).where(sql`status <> 'cancelled'`),
     index("bookings_session_date_idx").on(t.sessionDate),
     index("bookings_status_idx").on(t.status),

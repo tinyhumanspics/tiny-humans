@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { site } from "@/config/site";
-import { getDb } from "@/lib/db/client";
+import { getDb, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
 import { bookingRescheduleHistory, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { GraphAuthError } from "@/lib/microsoft/auth";
@@ -152,7 +152,7 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
   } catch (err) {
     log.error("booking.reschedule", "Saving the new time failed; moving the Outlook event back", { error: err as Error, reference: row.bookingReference });
     if (canPatch) await moveCalendarEvent(row.outlookEventId!, graphLocalDateTime(oldDate, oldStartL), graphLocalDateTime(oldDate, oldEndL), graphTz).catch((e) => log.error("booking.reschedule", "Could not move the Outlook event back", { error: e as Error, reference: row.bookingReference }));
-    const unique = JSON.stringify(err ?? "").includes("23505") || String((err as Error)?.message).includes("duplicate");
+    const unique = isUniqueViolation(err) || isOverlapViolation(err) || JSON.stringify(err ?? "").includes("23505") || String((err as Error)?.message).includes("duplicate");
     throw new BookingError(unique ? "slot_unavailable" : "server_error", unique ? friendly.rescheduleTaken : "We couldn't save the new time. Your current booking hasn't changed. Please try again.");
   }
   log.info("booking.reschedule", "Booking rescheduled", { reference: row.bookingReference, by });
