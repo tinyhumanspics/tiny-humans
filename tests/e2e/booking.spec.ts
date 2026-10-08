@@ -52,7 +52,12 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
 }
 
 test("a family can book a session (mock provider)", async ({ page }) => {
+  let submitted: unknown;
+  page.on("request", (request) => {
+    if (request.method() === "POST" && request.url().endsWith("/api/booking/create")) submitted = request.postDataJSON();
+  });
   await bookLittleMoments(page);
+  expect(submitted).toMatchObject({ locale: "en" });
 });
 
 test("twins add full-price time and photos to any bundle", async ({ page }) => {

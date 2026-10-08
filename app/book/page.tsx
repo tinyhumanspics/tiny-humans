@@ -17,7 +17,7 @@ export default function BookPage() {
     <BookingSelectionProvider>
       <main id="top" className="book-page">
         <Suspense fallback={null}>
-          <ScheduleBooking />
+          <ScheduleBooking locale="en" />
         </Suspense>
       </main>
     </BookingSelectionProvider>

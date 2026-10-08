@@ -51,6 +51,7 @@ import { addPhotos, babiesLabel, extraBabyLine, sessionMinutes, type BookingBaby
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type { Bundle } from "@/config/bundles";
+import type { AppLocale } from "@/i18n/config";
 
 /* ---------------- state ---------------- */
 
@@ -201,7 +202,7 @@ const stepTitles = ["Pick a day", "Pick a time", "Tell us about your family", "C
 const olderNote = en.booking.age.olderNote.split("{email}");
 
 /** The booking calendar for one bundle (chosen on the bundles page). */
-export default function Booking({ bundleId }: { bundleId: string }) {
+export default function Booking({ bundleId, locale = "en" }: { bundleId: string; locale?: AppLocale }) {
   const { id, title, subtitle } = site.sections.book;
   const provider = getBookingClient();
   // one id per submission: retries of the same booking can never double-book
@@ -420,6 +421,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
       const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age }));
       const request = {
         bundleId: state.bundleId,
+        locale,
         babies,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,

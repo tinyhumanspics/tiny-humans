@@ -11,13 +11,14 @@ import { pendingDepositReturn } from "@/lib/booking/deposit-return";
 import BookingPaused from "@/features/booking/BookingPaused";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { lastBundle, rememberBundle } from "@/lib/booking/last-bundle";
+import type { AppLocale } from "@/i18n/config";
 import styles from "./Booking.module.css";
 
 /**
  * Reads ?bundle= and ?inspiration= from the link, then shows the calendar.
  * No (known) bundle in the link: back to the bundle opened earlier in this visit, otherwise to the bundles page.
  */
-export default function ScheduleBooking() {
+export default function ScheduleBooking({ locale = "en" }: { locale?: AppLocale }) {
   const params = useSearchParams();
   const router = useRouter();
   const { photos } = useSiteSettings();
@@ -74,5 +75,5 @@ export default function ScheduleBooking() {
   if (!bundle) return null;
   if (depositRef && depositSig) return <DepositReturn key={depositRef} bundleId={bundle.id} reference={depositRef} signature={depositSig} paid={params.get("paid") === "1"} />;
   // key: a different bundle starts a fresh booking
-  return <Booking key={bundle.id} bundleId={bundle.id} />;
+  return <Booking key={bundle.id} bundleId={bundle.id} locale={locale} />;
 }
