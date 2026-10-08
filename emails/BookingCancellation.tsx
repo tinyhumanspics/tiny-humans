@@ -27,8 +27,8 @@ function content(c: CancellationDetails, locale: EmailLocale) {
     m,
     deposit: depositLine(c, locale),
     first: c.parentName.split(" ")[0],
-    date: formatLongDate(c.date),
-    time: fill(m.common.timeRange, { start: formatTimeLabel(c.start), end: formatTimeLabel(c.end) }),
+    date: formatLongDate(c.date, locale),
+    time: fill(m.common.timeRange, { start: formatTimeLabel(c.start, locale), end: formatTimeLabel(c.end, locale) }),
   };
 }
 

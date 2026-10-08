@@ -15,12 +15,12 @@ type Manage = { reschedule: string; cancel: string };
 
 function content(r: RescheduleDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
-  const range = (start: string, end: string) => fill(m.common.timeRange, { start: formatTimeLabel(start), end: formatTimeLabel(end) });
+  const range = (start: string, end: string) => fill(m.common.timeRange, { start: formatTimeLabel(start, locale), end: formatTimeLabel(end, locale) });
   return {
     m,
     first: r.parentName.split(" ")[0],
-    oldDate: formatLongDate(r.oldDate),
-    newDate: formatLongDate(r.newDate),
+    oldDate: formatLongDate(r.oldDate, locale),
+    newDate: formatLongDate(r.newDate, locale),
     oldTime: range(r.oldStart, r.oldEnd),
     newTime: range(r.newStart, r.newEnd),
     total: formatMoney(r.packageTotalCents),
@@ -33,7 +33,7 @@ export function BookingRescheduled({ details: r, theme: t, images, locale, manag
   const { m, first, oldDate, newDate, oldTime, newTime, total, due } = content(r, locale);
   const x = m.rescheduled;
   return (
-    <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(x.preheader, { date: newDate, time: formatTimeLabel(r.newStart) })}>
+    <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(x.preheader, { date: newDate, time: formatTimeLabel(r.newStart, locale) })}>
       <Heading theme={t} eyebrow={x.eyebrow} title={fill(x.title, { name: first })} />
       <Paragraph theme={t} align="center">
         {x.message}

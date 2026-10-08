@@ -1,5 +1,10 @@
 .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 10px; margin-top: 8px; }
-@media (min-width: 720px) { .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.item:last-child:nth-child(3n + 1) { grid-column: 2; }
+@media (min-width: 720px) {
+  .grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .item:last-child:nth-child(3n + 1) { grid-column: auto; }
+  .item:last-child:nth-child(6n + 1) { grid-column: 3 / span 2; }
+}
 
 .item {
   display: flex;

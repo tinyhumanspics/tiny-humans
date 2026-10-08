@@ -26,7 +26,7 @@ interface Options {
 
 const lines = (d: AbandonedDetails, locale: EmailLocale) => {
   const x = emailMessages(locale).deposit.abandoned;
-  return { x, title: fill(x.title, { name: d.parentName.split(" ")[0] }), intro: fill(x.intro, { bundle: d.bundleName, date: formatLongDate(d.date), time: formatTimeLabel(d.start) }) };
+  return { x, title: fill(x.title, { name: d.parentName.split(" ")[0] }), intro: fill(x.intro, { bundle: d.bundleName, date: formatLongDate(d.date, locale), time: formatTimeLabel(d.start, locale) }) };
 };
 
 /** One email when a family left the deposit page unpaid and the time was released. */

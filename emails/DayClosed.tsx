@@ -32,15 +32,15 @@ interface Options {
 function content(d: DayClosedDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
   const x = m.dayClosed;
-  const date = formatLongDate(d.date);
-  const time = fill(m.common.timeRange, { start: formatTimeLabel(d.start), end: formatTimeLabel(d.end) });
+  const date = formatLongDate(d.date, locale);
+  const time = fill(m.common.timeRange, { start: formatTimeLabel(d.start, locale), end: formatTimeLabel(d.end, locale) });
   return {
     m,
     x,
     date,
     time,
     first: d.parentName.split(" ")[0],
-    message: fill(x.message, { date, time: formatTimeLabel(d.start) }),
+    message: fill(x.message, { date, time: formatTimeLabel(d.start, locale) }),
     help: fill(x.help, { phone: site.contact.phone }),
   };
 }

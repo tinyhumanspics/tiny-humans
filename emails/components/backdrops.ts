@@ -32,7 +32,7 @@ export function backdropSwatches(locale: EmailLocale, mode: ImageMode = "cid", o
   return { swatches, attachments };
 }
 
-/** "Blue Aura, Burgundy, Cream, White, Beige or Wooden" (plain-text versions). */
+/** A localized, human-readable list of every available backdrop (plain-text versions). */
 export function backdropList(locale: EmailLocale): string {
   const m = emailMessages(locale).backdrops;
   const names = BACKDROPS.map((b) => (m.names as Record<string, string>)[b.id] ?? b.id);

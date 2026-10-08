@@ -37,7 +37,7 @@ export function PaymentLink({ details: d, theme: t, images, locale, amountCents,
         title={m.afterSession.payTitle}
         rows={[
           [m.common.bundle, d.bundleName],
-          [x.session, formatLongDate(date)],
+          [x.session, formatLongDate(date, locale)],
           [m.afterSession.amountDue, amount],
         ]}
         note={x.payNote}
@@ -64,7 +64,7 @@ export async function paymentLinkEmail(d: AfterSessionDetails, opts: Options): P
     x.intro,
     "",
     `${m.common.bundle}: ${d.bundleName}`,
-    `${x.session}: ${formatLongDate(opts.date)}`,
+    `${x.session}: ${formatLongDate(opts.date, locale)}`,
     `${m.afterSession.amountDue}: ${amount}`,
     "",
     fill(x.payText, { amount, url: opts.payUrl }),

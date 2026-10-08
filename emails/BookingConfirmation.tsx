@@ -1,9 +1,9 @@
 import { site } from "@/config/site";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, pricingRows, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
+import { formatAddress, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
 import { paymentDue, prepGuideItems } from "@/lib/email/payment";
-import { changePolicyText } from "@/lib/booking/reschedule-policy";
+import { customerBabiesLabel, customerBabyNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
@@ -13,7 +13,7 @@ import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
 import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
 import { ChalkBox, ChalkButton, ChalkList, Details, Heading, Paragraph, PhotographersIntro } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
-import { addPhotos, babiesLabel, babyNames } from "@/lib/booking/extra-babies";
+import { addPhotos } from "@/lib/booking/extra-babies";
 
 interface Options {
   themeId: string;
@@ -38,15 +38,15 @@ const nextSteps = (d: BookingDetails, locale: EmailLocale) => {
 
 function content(d: BookingDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
-  const date = formatLongDate(d.date);
+  const date = formatLongDate(d.date, locale);
   const due = paymentDue(locale, totalDueCents(d.pricing, d.travel), d.deposit);
-  const babyLed = d.babies.length > 1 ? `${m.confirmation.babyLed.replace("your little one", "your little ones")} ${m.confirmation.promise.replace("baby just can't", "your babies just can't")}` : `${m.confirmation.babyLed} ${m.confirmation.promise}`;
+  const babyLed = d.babies.length > 1 ? `${m.confirmation.babyLedMany} ${m.confirmation.promiseMany}` : `${m.confirmation.babyLed} ${m.confirmation.promise}`;
   return {
     m,
     date,
     first: d.contact.parentName.split(" ")[0],
-    time: fill(m.common.timeRange, { start: formatTimeLabel(d.start), end: formatTimeLabel(d.end) }),
-    paymentRows: [...pricingRows(d.pricing), ...travelRows(d, locale), ...due.rows] as [string, string][],
+    time: fill(m.common.timeRange, { start: formatTimeLabel(d.start, locale), end: formatTimeLabel(d.end, locale) }),
+    paymentRows: [...customerPricingRows(d.pricing, locale), ...travelRows(d, locale), ...due.rows] as [string, string][],
     due,
     prepGuide: prepGuideItems(locale, d.deposit?.status === "paid"),
     location: d.location ?? formatAddress(d.address),
@@ -84,7 +84,7 @@ export function BookingConfirmation({
     <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(c.preheader, { date })}>
       <Heading theme={t} eyebrow={c.eyebrow} title={fill(c.title, { name: first })} />
       <Paragraph theme={t} align="center">
-        {fill(c.intro, { baby: babyNames(d.babies) || (d.babies.length > 1 ? "your little ones" : c.babyFallback) })}
+        {fill(c.intro, { baby: customerBabyNames(d.babies, locale) || (d.babies.length > 1 ? c.babyFallbackMany : c.babyFallback) })}
       </Paragraph>
       <Details
         theme={t}
@@ -94,8 +94,8 @@ export function BookingConfirmation({
           [m.common.date, date],
           [m.common.time, time],
           [m.common.location, location],
-          [d.babies.length > 1 ? m.common.babies : m.common.baby, babiesLabel(d.babies)],
-          ...pricingRows(d.pricing),
+          [d.babies.length > 1 ? m.common.babies : m.common.baby, customerBabiesLabel(d.babies, locale)],
+          ...customerPricingRows(d.pricing, locale),
           ...travelRows(d, locale),
         ]}
       />
@@ -108,7 +108,7 @@ export function BookingConfirmation({
       <Paragraph theme={t}>{c.changes}</Paragraph>
       {rescheduleUrl && rescheduleNoticeHours !== undefined && (
         <Paragraph theme={t} align="center">
-          {changePolicyText(rescheduleNoticeHours)}
+          {emailChangePolicyText(rescheduleNoticeHours, locale)}
         </Paragraph>
       )}
       {rescheduleUrl && <ChalkButton theme={t} label={c.reschedule} href={rescheduleUrl} variant="outline" />}
@@ -147,8 +147,8 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${m.common.date}: ${date}`,
     `${m.common.time}: ${time}`,
     `${m.common.location}: ${location}`,
-    `${d.babies.length > 1 ? m.common.babies : m.common.baby}: ${babiesLabel(d.babies)}`,
-    ...pricingRows(d.pricing).map(([k, v]) => `${k}: ${v}`),
+    `${d.babies.length > 1 ? m.common.babies : m.common.baby}: ${customerBabiesLabel(d.babies, locale)}`,
+    ...customerPricingRows(d.pricing, locale).map(([k, v]) => `${k}: ${v}`),
     ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
     ...due.rows.map(([k, v]) => `${k}: ${v}`),
     "",
@@ -166,12 +166,12 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     "",
     babyLed,
     c.changes,
-    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${changePolicyText(opts.rescheduleNoticeHours)}`,
+    opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${emailChangePolicyText(opts.rescheduleNoticeHours, locale)}`,
     opts.rescheduleUrl && fill(c.rescheduleText, { url: opts.rescheduleUrl }),
     opts.cancelUrl && fill(c.cancelText, { url: opts.cancelUrl }),
     "",
     fill(m.layout.signature, { email: site.contact.email ?? "" }),
   ]);
-  const subject = fill(c.subject, { reference: d.reference, date, time: formatTimeLabel(d.start) });
+  const subject = fill(c.subject, { reference: d.reference, date, time: formatTimeLabel(d.start, locale) });
   return { subject, html, text, attachments: [...images.attachments, ...backdrop.attachments] };
 }

@@ -1,4 +1,3 @@
-import { PAYMENT_NOTE } from "@/lib/booking/templates";
 import type { BookingDepositInfo } from "@/lib/deposit/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { emailMessages, fill, type EmailLocale } from "./messages";
@@ -9,7 +8,7 @@ import { emailMessages, fill, type EmailLocale } from "./messages";
  */
 export function paymentDue(locale: EmailLocale, totalCents: number, deposit?: BookingDepositInfo | null): { rows: [string, string][]; note: string } {
   const m = emailMessages(locale);
-  if (!deposit) return { rows: [[m.common.paymentDue, m.common.paymentDueValue]], note: PAYMENT_NOTE.email };
+  if (!deposit) return { rows: [[m.common.paymentDue, m.common.paymentDueValue]], note: m.common.paymentDueNote };
   const x = m.deposit;
   const amount = formatMoney(deposit.amountCents);
   const rest: [string, string] = [x.rest, formatMoney(Math.max(0, totalCents - deposit.amountCents))];

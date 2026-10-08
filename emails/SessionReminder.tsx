@@ -2,7 +2,7 @@ import { site } from "@/config/site";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { formatLongDate, formatTimeLabel, fromDateKey } from "@/lib/booking/dates";
 import type { ReminderDetails } from "@/lib/booking/templates";
-import { changePolicyText } from "@/lib/booking/reschedule-policy";
+import { emailChangePolicyText } from "@/lib/email/customer-format";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { payAfterLine, prepGuideItems } from "@/lib/email/payment";
@@ -34,16 +34,16 @@ const sms = `sms:${site.contact.sms}`;
 
 function content(r: ReminderDetails, today: string, locale: EmailLocale) {
   const m = emailMessages(locale);
-  const weekday = fromDateKey(r.date).toLocaleDateString(locale === "en" ? "en-US" : locale, { weekday: "long" });
+  const weekday = fromDateKey(r.date).toLocaleDateString(locale === "es" ? "es-US" : "en-US", { weekday: "long" });
   const day = r.date === today ? m.reminder24.today : r.date === addDaysKey(today, 1) ? m.reminder24.tomorrow : weekday;
   return {
     m,
     first: r.parentName.split(" ")[0],
     day,
     weekday,
-    date: formatLongDate(r.date),
-    start: formatTimeLabel(r.start),
-    time: fill(m.common.timeRange, { start: formatTimeLabel(r.start), end: formatTimeLabel(r.end) }),
+    date: formatLongDate(r.date, locale),
+    start: formatTimeLabel(r.start, locale),
+    time: fill(m.common.timeRange, { start: formatTimeLabel(r.start, locale), end: formatTimeLabel(r.end, locale) }),
   };
 }
 
@@ -83,7 +83,7 @@ export function SessionReminder({
         <BackdropChoice theme={t} locale={locale} picks={r.backdrops ?? []} swatches={swatches} url={backdropUrl} reminder />
         <Paragraph theme={t} align="center">
           <span style={{ display: "block", marginTop: 10, fontSize: 18, fontWeight: "bold" }}>{x.rescheduleTitle}</span>
-          {rescheduleUrl && rescheduleNoticeHours !== undefined ? changePolicyText(rescheduleNoticeHours) : x.closed}
+          {rescheduleUrl && rescheduleNoticeHours !== undefined ? emailChangePolicyText(rescheduleNoticeHours, locale) : x.closed}
         </Paragraph>
         {rescheduleUrl ? <ChalkButton theme={t} label={x.reschedule} href={rescheduleUrl} variant="solid" /> : textUs}
         <Paragraph theme={t} align="center" muted>
@@ -152,7 +152,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       "",
       backdropTextLine(locale, picks, opts.backdropUrl),
       "",
-      opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? changePolicyText(opts.rescheduleNoticeHours) : `${x.closed} ${textUs}.`,
+      opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? emailChangePolicyText(opts.rescheduleNoticeHours, locale) : `${x.closed} ${textUs}.`,
       opts.rescheduleUrl && fill(x.rescheduleText, { url: opts.rescheduleUrl }),
       "",
       signature,

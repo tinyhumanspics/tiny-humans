@@ -1,5 +1,5 @@
 /**
- * Backdrops families pick from (owner, Oct 7; Beige + Wooden added Oct 7). Shown as swatches on the booking form, the
+ * Backdrops families pick from (owner, Oct 7–8; Beige + Wooden added Oct 7, Pink added Oct 8). Shown as swatches on the booking form, the
  * backdrop page and the confirmation/reminder emails; names live in messages (emails.backdrops.names). A color swatch is
  * a soft glow from `glow` (center) to `edge` (email clients without gradients show the solid `color`); `image` is a
  * drawn texture (public/, also attached to emails).
@@ -15,6 +15,7 @@ export interface Backdrop {
 export const BACKDROPS = [
   { id: "blueAura", color: "#93b6d9", glow: "#c7dcee", edge: "#6f98c2" },
   { id: "burgundy", color: "#75293a", glow: "#8e3a4a", edge: "#5c1f2b" },
+  { id: "pink", color: "#d88fa1", glow: "#f2bcc8", edge: "#b96f82" },
   { id: "cream", color: "#efe3cc", glow: "#f7eedd", edge: "#e3d2b4" },
   { id: "white", color: "#f7f7f4", glow: "#ffffff", edge: "#e7e7e1" },
   { id: "beige", color: "#d3bc99", glow: "#e4d3b8", edge: "#bfa57f" },

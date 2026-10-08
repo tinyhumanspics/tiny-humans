@@ -35,13 +35,13 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await expect(page.locator("#field-consent-photos")).not.toBeChecked();
   await page.locator("#field-consent-sms").check();
   // optional backdrop (Little Moments: 1 setup)
-  await page.getByRole("button", { name: "Burgundy", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Burgundy", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Pink", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Pink", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect(page.getByText("Check everything")).toBeVisible();
   await expect(page.getByText("1500 Bay Rd, Unit 1204, Miami Beach 33139")).toBeVisible();
   await expect(page.getByText("Gate code 4821, guest parking on level 2")).toBeVisible();
-  await expect(page.locator("dl").getByText("Burgundy", { exact: true })).toBeVisible();
+  await expect(page.locator("dl").getByText("Pink", { exact: true })).toBeVisible();
   await expect(page.getByText("OK to text you")).toBeVisible();
   await expect(page.getByText("Kept private")).toBeVisible();
   // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
@@ -127,10 +127,17 @@ test("a longer twins or triplets session keeps details and asks for another time
 test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
   await bookLittleMoments(page);
   await page.getByRole("button", { name: "Preview the confirmation email" }).click();
-  const email = page.frameLocator('iframe[title="Confirmation email preview"]');
+  const email = page.frameLocator('iframe[title="English confirmation email preview"]');
   await expect(email.getByRole("heading", { name: /You're booked, José!/ })).toBeVisible();
   await expect(email.getByRole("link", { name: "Reschedule Booking" })).toBeVisible();
   await expect(email.getByText("1500 Bay Rd, Unit 1204, Miami Beach, FL 33139").first()).toBeVisible();
+  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Preview the Spanish email" }).click();
+  const spanish = page.frameLocator('iframe[title="Spanish confirmation email preview"]');
+  await expect(spanish.getByRole("heading", { name: /Tu sesión está reservada, José!/ })).toBeVisible();
+  await expect(spanish.getByRole("link", { name: "Cambiar la fecha o la hora" })).toBeVisible();
+  await expect(spanish.getByText("Rosa", { exact: true })).toBeVisible();
+  await expect(spanish.locator("body")).toContainText(/(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de \w+ de 2026/);
 });
 
 test("booking works in the Instagram in-app browser", async ({ browser }) => {

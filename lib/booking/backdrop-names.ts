@@ -5,7 +5,7 @@ const names: Record<string, string> = en.emails.backdrops.names;
 
 export const backdropName = (id: string) => names[id] ?? id;
 
-/** "Burgundy", "Burgundy and Wooden", "Blue Aura, Cream and Wooden" (in the backdrop list's order). */
+/** Human-readable English names in the backdrop list's display order. */
 export function backdropNames(ids: readonly string[]): string {
   const list = BACKDROPS.filter((b) => ids.includes(b.id)).map((b) => backdropName(b.id));
   return list.length <= 1 ? (list[0] ?? "") : `${list.slice(0, -1).join(", ")} and ${list[list.length - 1]}`;

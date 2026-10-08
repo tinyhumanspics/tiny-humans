@@ -22,6 +22,7 @@ import { cn } from "@/lib/cn";
 import InspirationThumb from "./InspirationThumb";
 import styles from "./Booking.module.css";
 import { babiesLabel, babyNames } from "@/lib/booking/extra-babies";
+import type { EmailLocale } from "@/lib/email";
 
 /** The booking is confirmed: details, payment, what's next (also shown after the deposit's Stripe page). */
 export default function Confirmation({
@@ -148,38 +149,39 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
   const { getBundle } = useCatalog();
   const router = useRouter();
   const { theme, photos } = useSiteSettings();
-  const [html, setHtml] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ html: string; locale: EmailLocale } | null>(null);
   const token = result.preview!.cancelToken;
   const cancelPath = `/cancel?t=${token}`;
   const reschedulePath = `/reschedule?t=${token}`;
 
-  const openEmail = async () => {
+  const openEmail = async (locale: EmailLocale) => {
     const { bookingConfirmationEmail } = await import("@/emails/BookingConfirmation");
     const r = result.request;
     const pricing = result.pricing!;
     const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
     const mail = await bookingConfirmationEmail(
       { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }], address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
-      { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline" },
+      { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline", locale },
     );
-    setHtml(mail.html);
+    setPreview({ html: mail.html, locale });
   };
 
   return (
     <div className={styles.previewBar}>
-      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={openEmail}>Preview the confirmation email</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("en")}>Preview the confirmation email</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("es")}>Preview the Spanish email</button>
       <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(reschedulePath)}>Try the Reschedule link</button>
       <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(cancelPath)}>Try the Cancel Booking link</button>
-      {html && createPortal(
+      {preview && createPortal(
         <div className={styles.previewModal} role="dialog" aria-modal="true" aria-label="Confirmation email preview">
           <div className={styles.previewTop}>
-            <p className="chalk-soft">Email preview ({theme.label} theme)</p>
-            <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setHtml(null)}>Close</button>
+            <p className="chalk-soft">{preview.locale === "es" ? "Spanish" : "English"} email preview ({theme.label} theme)</p>
+            <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setPreview(null)}>Close</button>
           </div>
           <iframe
-            title="Confirmation email preview"
+            title={`${preview.locale === "es" ? "Spanish" : "English"} confirmation email preview`}
             className={styles.previewFrame}
-            srcDoc={html}
+            srcDoc={preview.html}
             onLoad={(e) => {
               const doc = e.currentTarget.contentDocument;
               doc?.querySelectorAll("a").forEach((a) => {
@@ -187,7 +189,7 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
                 if (href.startsWith("/cancel") || href.startsWith("/reschedule")) {
                   a.addEventListener("click", (ev) => {
                     ev.preventDefault();
-                    setHtml(null);
+                    setPreview(null);
                     router.push(href);
                   });
                 } else {
