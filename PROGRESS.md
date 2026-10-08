@@ -3,16 +3,16 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 8: Phase 5 SEO core locally complete; order = owner's choice below)
-State: `main` = `1eb9992`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
+## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish next; order = owner's choice below)
+State: `main` = `f864ea9`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
 needed. Migrations 0010–0017 ran in Neon.
-Phase 5's core SEO slice is locally complete and uncommitted: unique canonicals/Open Graph metadata, sitemap, robots,
-service-area business JSON-LD, and noindex on the query-driven booking page. Photo descriptions were already editable
-in `/admin/photos`, so no migration is needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16
-visual-parity tests passed.
+Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robots, service-area business JSON-LD, and
+noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
+was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
+succeeded; production sitemap/robots, home canonical/OG/JSON-LD and `/book` noindex/canonical were checked read-only.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Seasonal landing LIVE Oct 8:** in `/admin/seasonal`, enable the wanted offer(s) and save; in `/admin/theme`, choose
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
@@ -30,18 +30,21 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core ready to ship**;
-   owner Search Console + Business Profile steps remain. (c) Phase 3
+   (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core DONE Oct 8**;
+   owner Search Console + Business Profile steps remain. (c) **Phase 3 Spanish next**
    Spanish; (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
-5. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
-6. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
+5. **Owner: finish SEO discovery setup:** verify `tinyhumans.photography` as a Domain property in Google Search Console
+   (DNS verification), submit `https://www.tinyhumans.photography/sitemap.xml`, then claim/update Google Business
+   Profile as a service-area business: hide the home address and select the real cities/ZIPs served (up to 20; no radius).
+6. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
+7. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
    Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". If a payment ever shows "Not paid" after the family
    paid: lead → Payment → **Check with Stripe** (else Stripe Workbench → Webhooks → Event deliveries).
-7. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner
+8. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner
    requests"); have the new Terms travel paragraph reviewed with the rest of the Terms.
-8. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7). ⚠ The parity check allows 0.2% of a
+9. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7). ⚠ The parity check allows 0.2% of a
    full page to differ, which missed the step tracker move (3 small circles): add element-level screenshots for key
    components in Phase 6. The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9.
 
@@ -50,18 +53,19 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): main = 1eb9992, live and smoke-tested. Phase 4 is complete: extra babies are live ($75 +30 min +5
-photos each; twins/triplets, max 3, all bundles; discounts apply only to the bundle), and /admin/seasonal edits the
-Thanksgiving, Christmas cards and First Christmas copy/on-off/cutoffs in existing Vercel Blob settings. Enabled offers
-appear only with their matching theme and through the inclusive cutoff. No seasonal SQL is needed. Migrations 0010–0017
-ran in Neon. Vercel succeeded; /home-sweet-home and /admin/seasonal returned 200. Not on main yet: nothing.
+State (Oct 8): main = f864ea9, live and smoke-tested. Phases 4 and 5 are complete. Extra babies ($75 +30 min +5
+photos each; twins/triplets, max 3, all bundles; discounts only the bundle) and editable seasonal landing offers are
+live. SEO now has per-page canonicals/OG, sitemap, robots, truthful service-area ProfessionalService JSON-LD and
+noindex on /book; photo alt text was already editable in /admin/photos. Vercel succeeded and production metadata files
+were checked read-only. Migrations 0010–0017 ran in Neon. Not on main yet: nothing.
 
-Next: Phase 5 SEO. Start with a current-state audit and research current official Next.js/Google docs; note links in
-PROGRESS.md, then ship metadata/canonicals/OG, sitemap, robots, JSON-LD and editable alt text in small verified slices.
+Next: Phase 3 Spanish. Research current official Next.js i18n guidance plus the maintained next-intl alternatives first;
+note links in PROGRESS.md, decide /es routing/detection/switcher/hreflang, then ship small verified slices. Native-speaker
+review is required before Spanish ads.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: enable seasonal offer(s) + matching theme; Stripe "Refunds: Write" + checkout.session.expired;
-deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy line; /portfolio; Terms review;
-About photo alt text ("IMG 6087").
+Waiting on the owner: enable seasonal offer(s) + matching theme; Search Console + service-area Business Profile;
+Stripe "Refunds: Write" + checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test;
+Vercel Analytics privacy line; /portfolio; Terms review; About photo alt text ("IMG 6087").
 Watch out: closed-day `day_closed` tokens are reschedule-only and pending deposits must be expired when closing a day;
 `bookings.blocked_until` + `bookings_no_overlap` live only in Neon (never drizzle-kit push); use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
@@ -408,15 +412,16 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       + `1eb9992` are live; Vercel succeeded and production `/home-sweet-home` + `/admin/seasonal` returned 200.
 
 ## Phase 5 — SEO basics
-- [~] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable.
-      Locally complete, uncommitted: six indexable public pages have their own canonical + OG URL/image; `/book` is
+- [x] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable.
+      Six indexable public pages have their own canonical + OG URL/image; `/book` is
       canonicalized and noindexed so bundle query strings do not compete in search; sitemap contains only canonical
       public content; robots points to it and excludes admin/API/pay infrastructure. The home page has escaped
       `ProfessionalService` JSON-LD with only known facts (Miami Beach base, listed Miami-to-Orlando cities, phone,
       email and Instagram; no invented reviews/hours/prices/street address). Photo screen-reader descriptions were
       already editable under `/admin/photos` → Details. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and
-      all 16 visual-parity tests passed.
-- [ ] Owner steps: Google Search Console, Google Business Profile (service-area)
+      all 16 visual-parity tests passed. Commits `f2cdb46` + `f864ea9` are live; production smoke passed.
+- [?] Owner steps: Google Search Console Domain property + submit `/sitemap.xml`; claim/update Google Business Profile
+      as a service-area business, hide the home address and enter the real cities/ZIPs served (up to 20, no radius).
 
 ## Phase 6 — Security + quality
 - [ ] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit)

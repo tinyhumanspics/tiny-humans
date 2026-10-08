@@ -177,3 +177,6 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   `nextCharge`). Local test: fake Stripe `/_pay`, `/_expire`, `/_checkout/fail`, `/_refunds/fail` + `.graph-down`.
 - Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
   pass through `lib/tracking/safe-url.ts` first. Next 16: `proxy.ts` (not middleware), `revalidateTag(tag, { expire: 0 })`.
+- SEO: every indexable page uses `pageMetadata()` from `lib/seo/metadata.ts` so its canonical and Open Graph URL stay
+  in sync; `app/sitemap.ts` lists only canonical public content. `/book` is noindex. The service-area JSON-LD must not
+  gain a street address, reviews, hours or prices unless the owner supplies/approves those facts.
