@@ -10,7 +10,8 @@ The deposit is live but **switched off** (families see today's flow and wording)
    already live). Until it runs, only the old "same start time" rule protects against a double booking. If its last
    statement fails with "conflicting key value violates exclusion constraint", run the query in the file's header and
    send the result (two active bookings already overlap).
-0b. **Owner: email bounce alerts** (code live `3876f16`): (1) run `drizzle/0016_email_events.sql` in Neon (new table,
+0b. **Owner: email bounce alerts** (code live `3876f16`; steps 2–3 DONE Oct 8: webhook added in Resend, secret set in
+   Vercel, verified: unsigned POST → 400 "Invalid signature"; step 1 = migration 0016, sent Oct 8): (1) run `drizzle/0016_email_events.sql` in Neon (new table,
    safe twice); (2) Resend → Webhooks → Add endpoint `https://www.tinyhumans.photography/api/resend/webhook`, events
    **email.bounced, email.complained, email.suppressed, email.failed**; (3) copy its Signing secret (`whsec_…`) → Vercel →
    Settings → Environment Variables → `RESEND_WEBHOOK_SECRET` (Production) → Redeploy; (4) in Resend, "Send test" or
@@ -64,8 +65,8 @@ day" + notify/reschedule every affected family in one step, duplicate-booking fl
 seasonal landing variants editable in /admin + extra-babies add-on → Phase 5 SEO → Phase 3 Spanish → Phase 6 →
 Phases 7–10. Research current official docs before each phase (links in PROGRESS.md). Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: migrations 0014/0015/0016 in Neon; Stripe "Refunds: Write" + checkout.session.expired; deposit
-amounts + switch; Resend webhook + RESEND_WEBHOOK_SECRET; travel fee settings; 1g Meta test; Vercel Analytics privacy
+Waiting on the owner: confirm migrations 0014/0015/0016 ran in Neon (sent Oct 8); Stripe "Refunds: Write" +
+checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
 line; /portfolio; Terms review; About photo alt text ("IMG 6087").
 Watch out: `npm run typecheck` can miss errors (use `npx tsc --noEmit -p . --incremental false`); bookings.blocked_until
 + bookings_no_overlap live only in the database (never drizzle-kit push); iCloud can resurrect deleted files.
