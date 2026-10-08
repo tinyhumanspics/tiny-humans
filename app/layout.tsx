@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { getTheme, themeCssVariables } from "@/config/themes";
-import { site } from "@/config/site";
 import { getSiteSettings } from "@/lib/settings/server";
 import { SiteSettingsProvider } from "@/components/SiteSettings/SiteSettingsProvider";
 import { CatalogProvider } from "@/components/Catalog/CatalogProvider";
@@ -15,49 +14,14 @@ import Footer from "@/components/Footer/Footer";
 import MetaPixel from "@/components/layout/MetaPixel";
 import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
+import { siteMetadata } from "@/lib/seo/metadata";
 import "@/styles/globals.css";
 import { cn } from "@/lib/cn";
 
 const schoolbell = localFont({ src: "./fonts/schoolbell-400.woff2", variable: "--font-schoolbell", display: "swap", weight: "400" });
 const patrick = localFont({ src: "./fonts/patrick-hand-400.woff2", variable: "--font-patrick", display: "swap", weight: "400" });
 
-/**
- * Social sharing (iMessage, WhatsApp, Facebook, X, other Open Graph crawlers).
- * Link previews need ABSOLUTE https URLs: if NEXT_PUBLIC_SITE_URL isn't an https
- * address (e.g. left as localhost), the production domain is used instead.
- */
-const SOCIAL_BASE = /^https:\/\//.test(site.url) ? site.url.replace(/\/$/, "") : "https://www.tinyhumans.photography";
-const SOCIAL_TITLE = `${site.name} | Newborn & Baby Photography`;
-const SOCIAL_DESCRIPTION = "Newborn & baby photography made with love. We bring the studio to your home, so your little one stays comfy.";
-const SOCIAL_IMAGE = {
-  url: `${SOCIAL_BASE}/og/tiny-humans-og.jpg`,
-  secureUrl: `${SOCIAL_BASE}/og/tiny-humans-og.jpg`,
-  width: 1200,
-  height: 630,
-  type: "image/jpeg",
-  alt: "Tiny Humans logo on a chalkboard: Newborn & Baby Photography",
-};
-
-export const metadata: Metadata = {
-  metadataBase: new URL(SOCIAL_BASE),
-  title: { default: SOCIAL_TITLE, template: `%s | ${site.name}` },
-  description: site.description,
-  openGraph: {
-    type: "website",
-    siteName: site.name,
-    locale: "en_US",
-    url: `${SOCIAL_BASE}/`,
-    title: SOCIAL_TITLE,
-    description: SOCIAL_DESCRIPTION,
-    images: [SOCIAL_IMAGE],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SOCIAL_TITLE,
-    description: SOCIAL_DESCRIPTION,
-    images: [{ url: SOCIAL_IMAGE.url, alt: SOCIAL_IMAGE.alt }],
-  },
-};
+export const metadata: Metadata = siteMetadata;
 
 export const viewport: Viewport = {
   width: "device-width",

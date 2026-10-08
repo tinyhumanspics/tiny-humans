@@ -9,7 +9,7 @@ import { cn } from "@/lib/cn";
 
 const t = en.errors.notFound;
 
-export const metadata: Metadata = { title: t.metaTitle };
+export const metadata: Metadata = { title: t.metaTitle, robots: { index: false, follow: false } };
 
 /** 404: any unknown address (Next adds `noindex` automatically). Rendered inside the root layout (header + footer). */
 export default function NotFound() {

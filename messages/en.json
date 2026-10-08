@@ -1,4 +1,10 @@
 {
+  "seo": {
+    "defaultDescription": "Newborn & baby photography made with love. We bring the studio to your home, so your little one stays comfy.",
+    "socialImageAlt": "Tiny Humans logo on a chalkboard: Newborn & Baby Photography",
+    "privacyDescription": "How Tiny Humans handles information when you browse the website or book a photography session.",
+    "termsDescription": "Terms for booking and using Tiny Humans newborn and baby photography services."
+  },
   "booking": {
     "paused": {
       "title": "Booking is taking a short break",

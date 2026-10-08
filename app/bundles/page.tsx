@@ -5,11 +5,13 @@ import Bundles from "@/components/Bundles/Bundles";
 import InspirationBanner from "@/components/Booking/InspirationBanner";
 import InspirationFromUrl from "@/components/Booking/InspirationFromUrl";
 import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
+import { pageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: site.bookPage.title,
   description: site.bookPage.description,
-};
+  path: "/bundles",
+});
 
 /** Booking, step one (/bundles): pick a bundle. Each bundle leads to the calendar at /book?bundle=<id>. */
 export default function BundlesPage() {

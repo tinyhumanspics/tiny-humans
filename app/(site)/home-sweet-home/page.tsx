@@ -6,18 +6,17 @@ import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { siteDeposit } from "@/lib/deposit/server";
 import { depositText } from "@/lib/deposit/copy";
 import { getTravelSettings } from "@/lib/travel/server";
+import { pageMetadata } from "@/lib/seo/metadata";
 
 /** The description mentions the deposit while there is one (saving it in /admin refreshes this page). */
 export async function generateMetadata(): Promise<Metadata> {
   const deposit = await siteDeposit();
   const description = deposit ? depositText(en.deposit.landing.metaDescription, deposit) : en.landing.meta.description;
-  return {
-    title: { absolute: `${en.landing.meta.title} | Tiny Humans` },
+  return pageMetadata({
+    title: en.landing.meta.title,
     description,
-    alternates: { canonical: LANDING_PATH },
-    openGraph: { title: en.landing.meta.title, description, url: LANDING_PATH },
-    twitter: { title: en.landing.meta.title, description },
-  };
+    path: LANDING_PATH,
+  });
 }
 
 export default async function Page() {

@@ -9,8 +9,13 @@ import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import LegalPage from "@/components/LegalPage/LegalPage";
 import en from "@/messages/en.json";
+import { pageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = { title: termsOfService.title };
+export const metadata: Metadata = pageMetadata({
+  title: termsOfService.title,
+  description: en.seo.termsDescription,
+  path: "/terms",
+});
 
 const longDate = (iso: string) => new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "long", day: "numeric", year: "numeric" }).format(new Date(iso));
 
