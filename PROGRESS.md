@@ -12,8 +12,10 @@ State: everything below is on `main` and live (last code deploy `8d0dd1c` + this
 2. **Build the $50 deposit next** (owner, Oct 7: right after the backdrops). Decided: paid **while booking** (Stripe
    Checkout as the last step; the date is confirmed only once paid), **required for every booking**
    (min($50, bundle + travel); $0 bookings skip it), **refunded automatically** when the family cancels online before
-   the notice window (and when the owner cancels); kept inside the window / no-show; carries over on reschedule; **one
-   deposit amount editable in /admin** (new bookings only); the payment link then charges the rest (total − deposit).
+   the notice window (and when the owner cancels); kept inside the window / no-show; carries over on reschedule; the
+   payment link then charges the rest (total − deposit). **Owner (Oct 7, later): a deposit amount per bundle** (e.g.
+   $50 Little Moments, $100 Our Family Story; editable in /admin → Pricing & Promotions, starting at $50 each) **and an
+   on/off switch** for deposits (off = today's "pay after your session" flow). Changes apply to new bookings only.
    Slot **held 30 min** while they're on Stripe, released if unpaid; **Stripe down → book without the deposit**
    (confirmed, flagged "Deposit not paid" in /admin, owner sends the link); **abandoned payment → one email** ("Your date
    isn't confirmed yet" + a link to pick a time again). Open details to settle while building: how the hold is stored
