@@ -12,6 +12,7 @@
 import type { PriceQuote } from "@/lib/pricing/engine";
 import type { Attribution } from "@/lib/tracking/attribution";
 import type { BookingTravel } from "@/lib/travel/types";
+import type { AppLocale } from "@/i18n/config";
 import type { BookingBaby } from "./extra-babies";
 export type { BookingBaby } from "./extra-babies";
 export type { PriceQuote };
@@ -73,6 +74,8 @@ export interface SessionAddress {
 
 export interface BookingRequest {
   bundleId: string;
+  /** Customer-facing language used for this booking and its later emails. */
+  locale?: AppLocale;
   /** Every baby in the session. Older clients omit this and use the first baby in `contact`. */
   babies?: BookingBaby[];
   address: SessionAddress;

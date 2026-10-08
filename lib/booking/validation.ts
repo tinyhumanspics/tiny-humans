@@ -20,6 +20,7 @@ export const backdropPicks = z
 
 export const bookingRequestSchema = z.object({
   bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64),
+  locale: z.enum(["en", "es"]).optional(),
   babies: z.array(z.object({ name: text(80).optional().transform((v) => v || undefined), age: z.enum(babyAgeOptions as unknown as [string, ...string[]], { message: "Choose an age for each baby." }) })).min(1).max(3).optional(),
   slot: z.object({ date: dateKey, start: hhmm }, { message: "Pick a day and time." }).passthrough(),
   contact: z.object({

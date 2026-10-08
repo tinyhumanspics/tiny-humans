@@ -128,7 +128,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
       const mail = await sessionReminderEmail(
         kind,
         { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks, depositPaid: deposits.some((d) => d.bookingId === row.id && d.status === "paid") },
-        { themeId, today, rescheduleUrl, backdropUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours },
+        { themeId, today, rescheduleUrl, backdropUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours, locale: row.locale },
       );
       const { id } = await sendEmail({
         scope: `resend.reminder-${kind}`,

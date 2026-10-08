@@ -172,7 +172,7 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
   const cfg = emailConfig();
   const [customer, internal] = await Promise.allSettled([
     (async () => {
-      const m = await bookingCancellationEmail(details, { themeId });
+      const m = await bookingCancellationEmail(details, { themeId, locale: updated.locale });
       return sendEmail({ scope: "resend.cancellation", to: updated.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments, replyTo: cfg.notify, idempotencyKey: `booking-cancellation/${updated.bookingReference}`, reference: updated.bookingReference });
     })(),
     (async () => {

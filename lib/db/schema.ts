@@ -4,6 +4,7 @@
  */
 import { sql } from "drizzle-orm";
 import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import type { AppLocale } from "@/i18n/config";
 
 export const bookingStatus = pgEnum("booking_status", ["pending", "confirmed", "rescheduled", "cancelled"]);
 
@@ -24,6 +25,8 @@ export const bookings = pgTable(
     parentName: text("parent_name").notNull(),
     email: text("email").notNull(),
     phone: text("phone").notNull(),
+    /** Language used when booking; every later customer email follows this snapshot. */
+    locale: text("locale").$type<AppLocale>().notNull().default("en"),
     babyName: text("baby_name"),
     babyAge: text("baby_age").notNull(),
 
@@ -112,6 +115,7 @@ export const bookings = pgTable(
     check("bookings_pricing_type_check", sql`${t.pricingType} is null or ${t.pricingType} in ('regular', 'offer', 'discount')`),
     check("bookings_addons_total_check", sql`${t.addonsTotalCents} is null or ${t.addonsTotalCents} >= 0`),
     check("bookings_cancelled_by_check", sql`${t.cancelledBy} is null or ${t.cancelledBy} in ('customer', 'admin')`),
+    check("bookings_locale_check", sql`${t.locale} in ('en', 'es')`),
   ],
 );
 

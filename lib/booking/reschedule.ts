@@ -182,7 +182,7 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
   const n = (await db.select({ id: bookingRescheduleHistory.id }).from(bookingRescheduleHistory).where(eq(bookingRescheduleHistory.bookingId, row.id)).catch(() => [])).length;
   await Promise.allSettled([
     (async () => {
-      const m = await bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token) });
+      const m = await bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token), locale: updated.locale });
       return sendEmail({ scope: "resend.reschedule", to: updated.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments, replyTo: cfg.notify, idempotencyKey: `booking-reschedule/${updated.bookingReference}/${n}`, reference: updated.bookingReference });
     })(),
     (async () => {

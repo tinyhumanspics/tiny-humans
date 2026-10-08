@@ -273,7 +273,7 @@ async function sendAbandonedEmail(row: Booking): Promise<void> {
       .catch(() => "default");
     const mail = await depositAbandonedEmail(
       { parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: localTime(row.sessionStart, row.timezone) },
-      { themeId, bookUrl: `${base()}${scheduleHref(row.packageId)}` },
+      { themeId, bookUrl: `${base()}${scheduleHref(row.packageId)}`, locale: row.locale },
     );
     const { id: resendId } = await sendEmail({
       scope: "resend.deposit_abandoned",

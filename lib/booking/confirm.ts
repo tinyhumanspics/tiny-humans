@@ -79,7 +79,7 @@ export async function confirmBookingRow(row: Booking, details: BookingDetails, o
   const [customer, internal] = await Promise.allSettled([
     (async () => {
       const links = manageUrls(opts.manageToken);
-      const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, backdropUrl: links.backdrop, rescheduleNoticeHours: opts.noticeHours, photographersPhoto });
+      const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, backdropUrl: links.backdrop, rescheduleNoticeHours: opts.noticeHours, photographersPhoto, locale: row.locale });
       return sendEmail({
         scope: "resend.customer",
         to: details.contact.email,

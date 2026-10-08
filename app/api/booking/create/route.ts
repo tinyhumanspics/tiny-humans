@@ -37,6 +37,7 @@ export async function POST(req: Request) {
   try {
     const booking = await getBookingProvider().createBooking({
       bundleId: r.bundleId,
+      locale: r.locale,
       babies: r.babies,
       slot: { id: `${r.slot.date}T${r.slot.start}`, date: r.slot.date, start: r.slot.start, end: "", label: formatTimeLabel(r.slot.start) },
       contact: r.contact,

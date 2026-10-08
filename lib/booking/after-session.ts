@@ -115,7 +115,7 @@ export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favor
   const amountCents = await balanceDueCents(row);
   const paid = await isPaid(row.id);
   return deliver(row, AFTER_KINDS.afterSession, (token, themeId) =>
-    sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined }),
+    sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined, locale: row.locale }),
   );
 }
 
@@ -124,7 +124,7 @@ export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
   const amountCents = await balanceDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
-    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null }),
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
   );
 }
 
@@ -146,7 +146,7 @@ export async function sendPaymentLinkEmail(row: Booking) {
     .returning({ id: bookingEmails.id, attempts: bookingEmails.attempts });
   try {
     const themeId = await getSiteSettings().then((s) => s.themeId).catch(() => "default");
-    const mail = await paymentLinkEmail(detailsOf(row), { themeId, amountCents, payUrl: link, date: row.sessionDate });
+    const mail = await paymentLinkEmail(detailsOf(row), { themeId, amountCents, payUrl: link, date: row.sessionDate, locale: row.locale });
     const { id: resendId } = await sendEmail({
       scope: "resend.payment_link",
       to: row.email,

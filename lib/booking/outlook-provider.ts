@@ -203,6 +203,7 @@ export class OutlookBookingProvider implements BookingProvider {
             parentName: request.contact.parentName,
             email: request.contact.email,
             phone: request.contact.phone,
+            locale: request.locale ?? "en",
             babyName: babies[0].name ?? null,
             babyAge: babies[0].age,
             locationType: "client_home",
@@ -384,8 +385,9 @@ export class OutlookBookingProvider implements BookingProvider {
       emailSent: row.confirmationEmailSent,
       pricing: snapshotOf(row),
       travel: { feeCents: row.travelFeeCents, miles: row.travelMiles },
-      request: request ?? {
+      request: request ? { ...request, locale: row.locale } : {
         bundleId: row.packageId,
+        locale: row.locale,
         address: { street: row.locationAddress, city: "", zip: "" },
         slot: { id: `${row.sessionDate}T${startLocal}`, date: row.sessionDate, start: startLocal, end: endLocal, label: startLocal },
         contact: { parentName: row.parentName, email: row.email, phone: row.phone, babyName: row.babyName ?? undefined, babyAge: row.babyAge, notes: row.notes ?? undefined },

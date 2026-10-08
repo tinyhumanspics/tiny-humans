@@ -155,7 +155,7 @@ async function notifyOne(original: Booking, note: string | undefined, themeId: s
         note,
         pending,
       },
-      { themeId, actionUrl },
+      { themeId, actionUrl, locale: row.locale },
     );
     const { id } = await sendEmail({
       scope: "resend.day_closed",

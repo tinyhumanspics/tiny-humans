@@ -4,6 +4,7 @@ import es from "@/messages/es.json";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import type { PriceQuote } from "@/lib/pricing/engine";
+import { bookingRequestSchema } from "@/lib/booking/validation";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -28,6 +29,20 @@ function compareCatalogShape(left: unknown, right: unknown, path = "emails"): vo
 test("Spanish customer-email messages match the English schema and placeholders", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.emails, es.emails);
+});
+
+test("booking requests accept only supported customer languages", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Schema validation only needs one Node project");
+  const base = {
+    bundleId: "little-moments",
+    slot: { date: "2026-12-05", start: "10:00" },
+    contact: { parentName: "Ada Parent", email: "ada@example.com", phone: "3055550123", babyAge: "Newborn (0–2 weeks)" },
+    address: { street: "123 Palm Ave", city: "Miami Beach", zip: "33139" },
+  };
+
+  expect(bookingRequestSchema.safeParse({ ...base, locale: "en" }).success).toBe(true);
+  expect(bookingRequestSchema.safeParse({ ...base, locale: "es" }).success).toBe(true);
+  expect(bookingRequestSchema.safeParse({ ...base, locale: "fr" }).success).toBe(false);
 });
 
 test("Spanish customer-email formatting covers dates, babies, prices, backdrops and policy", async ({}, testInfo) => {
