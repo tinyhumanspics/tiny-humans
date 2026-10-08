@@ -32,6 +32,8 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { useBookingSelection } from "./BookingSelectionContext";
 import { formatAddress, PAYMENT_NOTE, unitLine } from "@/lib/booking/templates";
+import { isFloridaZip, type BookingTravel, type TravelQuote } from "@/lib/travel/types";
+import { travelFeeValue, travelHint } from "@/lib/travel/format";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
@@ -159,6 +161,7 @@ function validateContact(c: ContactDraft): ContactErrors {
   if (c.street.trim().length < 4) e.street = "Add the street address where we'll set up.";
   if (c.city.trim().length < 2) e.city = "Add the city.";
   if (!/^\d{5}(-\d{4})?$/.test(c.zip.trim())) e.zip = "Enter a 5-digit ZIP code.";
+  else if (!isFloridaZip(c.zip)) e.zip = en.booking.travel.outsideFlorida;
   return e;
 }
 
@@ -268,6 +271,27 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   const bundle = getBundle(state.bundleId);
   // review-step price: always calculated by the server (the browser only displays it)
   const [quote, setQuote] = useState<PriceQuote | null>(null);
+  // travel fee estimate for the ZIP code (the server recalculates it when booking)
+  const [travelEst, setTravelEst] = useState<{ zip: string; quote: TravelQuote | null } | null>(null);
+  const zip = state.contact.zip.trim().slice(0, 5);
+  const zipReady = /^\d{5}$/.test(zip) && isFloridaZip(zip);
+  useEffect(() => {
+    if (!zipReady) return;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => {
+      fetch(`/api/booking/travel?zip=${zip}`, { signal: ctrl.signal, cache: "no-store" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((j: { travel?: TravelQuote } | null) => setTravelEst({ zip, quote: j?.travel ?? null }))
+        .catch(() => undefined);
+    }, 300);
+    return () => {
+      clearTimeout(t);
+      ctrl.abort();
+    };
+  }, [zip, zipReady]);
+  const travel = zipReady && travelEst?.zip === zip ? travelEst.quote : null;
+  const travelChecking = zipReady && travelEst?.zip !== zip;
+  const travelFee = travel?.status === "fee" ? travel.feeCents : 0;
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
@@ -293,6 +317,8 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         break;
       case STEP.details: {
         const errors = validateContact(state.contact);
+        const tooFar = travel?.status === "too_far" ? travelHint(travel) : null;
+        if (tooFar && !errors.zip) errors.zip = tooFar.text;
         if (Object.keys(errors).length) {
           dispatch({ type: "fieldErrors", errors });
           const first = Object.keys(errors)[0];
@@ -348,7 +374,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
           eventId: request.requestId,
           id: request.bundleId,
           name: result.pricing?.bundleName ?? bundle?.name ?? request.bundleId,
-          value: (result.pricing?.finalCents ?? 0) / 100,
+          value: ((result.pricing?.finalCents ?? 0) + (result.travel?.feeCents ?? 0)) / 100,
           contact: request.contact,
           address: request.address,
         });
@@ -410,6 +436,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
             {state.status === "done" && state.result ? (
               <Confirmation
                 result={state.result}
+                travelEstimate={travel ? { feeCents: travel.status === "fee" ? travel.feeCents : 0, miles: travel.miles } : undefined}
                 headingRef={headingRef}
                 onReset={() => router.push(bundlesHref())}
               />
@@ -469,6 +496,15 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       onConsent={(field, value) => dispatch({ type: "consent", field, value })}
                       hp={hp}
                       onHp={setHp}
+                      zipNote={
+                        /^\d{5}$/.test(zip) && !isFloridaZip(zip)
+                          ? { text: en.booking.travel.outsideFlorida, blocking: true }
+                          : travelChecking
+                            ? { text: en.booking.travel.checking, blocking: false }
+                            : travel
+                              ? travelHint(travel)
+                              : null
+                      }
                     />
                   )}
 
@@ -477,6 +513,12 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       rows={[
                         { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
                         ...(quote ? pricingRows(quote) : [["Package total", formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))] as [string, string]]).map(([label, value]) => ({ label, value, step: -1 })),
+                        ...(travelFee > 0
+                          ? [
+                              { label: en.booking.travel.label, value: travelFeeValue(travelFee, travel?.miles ?? null), step: STEP.details },
+                              { label: en.booking.travel.total, value: formatMoney((quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price)) + travelFee), step: -1 },
+                            ]
+                          : []),
                         { label: "Payment due", value: "After the photoshoot", step: -1 },
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
                         { label: "Date", value: formatLongDate(state.date), step: STEP.date },
@@ -562,6 +604,7 @@ function DetailsForm({
   onConsent,
   hp,
   onHp,
+  zipNote,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
@@ -570,6 +613,8 @@ function DetailsForm({
   onConsent: (field: keyof BookingConsents, value: boolean) => void;
   hp: string;
   onHp: (v: string) => void;
+  /** Travel fee line under the ZIP box. */
+  zipNote: { text: string; blocking: boolean } | null;
 }) {
   const field = (
     name: keyof ContactDraft,
@@ -624,7 +669,14 @@ function DetailsForm({
         {field("unit", en.booking.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
       </div>
       {field("city", "City", { autoComplete: "address-level2" })}
-      {field("zip", "ZIP code", { autoComplete: "postal-code", inputMode: "numeric" })}
+      <div className={styles.field}>
+        {field("zip", "ZIP code", { autoComplete: "postal-code", inputMode: "numeric" })}
+        {zipNote && !errors.zip && (
+          <p id="field-zip-travel" className={cn(zipNote.blocking ? styles.fieldError : styles.optional, "chalk-soft")} aria-live="polite">
+            {zipNote.text}
+          </p>
+        )}
+      </div>
       <div className={cn(styles.field, styles.fieldWide)}>
         <label htmlFor="field-access" className={cn(styles.label, "chalk-soft")}>
           {en.booking.address.access}
@@ -758,12 +810,17 @@ function Confirmation({
   result,
   headingRef,
   onReset,
+  travelEstimate,
 }: {
   result: BookingResult;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
   onReset: () => void;
+  /** The estimate shown while booking (mock mode has no server travel fee). */
+  travelEstimate?: BookingTravel;
 }) {
   const r = result.request;
+  const travel = result.travel ?? travelEstimate;
+  const travelFee = travel?.feeCents ?? 0;
   const { getBundle } = useCatalog();
   const bundle = getBundle(r.bundleId);
   const price = result.pricing;
@@ -779,6 +836,12 @@ function Confirmation({
     ...(price?.pricingType === "offer" ? [["Special offer", price.offerLabel ?? "Special offer"] as [string, string]] : []),
     ...(price?.pricingType === "discount" ? [["Discount code", `${price.discountCode} (-${formatMoney(price.discountCents)})`] as [string, string]] : []),
     ["Package total", price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""],
+    ...(travelFee > 0 && price
+      ? ([
+          [en.booking.travel.label, travelFeeValue(travelFee, travel?.miles ?? null)],
+          [en.booking.travel.total, formatMoney(price.finalCents + travelFee)],
+        ] as [string, string][])
+      : []),
   ];
   return (
     <div className={styles.confirm} role="status">
@@ -806,6 +869,18 @@ function Confirmation({
             <dt className="chalk-soft">Package total</dt>
             <dd className="chalk-soft">{price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""}</dd>
           </div>
+          {travelFee > 0 && price && (
+            <>
+              <div className={styles.confirmRow}>
+                <dt className="chalk-soft">{en.booking.travel.label}</dt>
+                <dd className="chalk-soft">{travelFeeValue(travelFee, travel?.miles ?? null)}</dd>
+              </div>
+              <div className={styles.confirmRow}>
+                <dt className="chalk-soft">{en.booking.travel.total}</dt>
+                <dd className="chalk-soft">{formatMoney(price.finalCents + travelFee)}</dd>
+              </div>
+            </>
+          )}
           <div className={styles.confirmRow}>
             <dt className="chalk-soft">Payment due</dt>
             <dd className="chalk-soft">After the photoshoot</dd>

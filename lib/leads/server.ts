@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db/client";
 import { bookingConsents, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingConsent, type BookingEmail, type BookingPayment, type BookingTerm, type Review } from "@/lib/db/schema";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
+import { amountDueCents } from "@/lib/booking/after-session";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/outlook-provider";
 import type { Lead, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
@@ -54,7 +55,7 @@ const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e
 function afterOf(r: Booking, x: Extras): Lead["after"] {
   const current = (kind: string) => x.emails.find((e) => e.bookingId === r.id && e.kind === kind && e.sessionStart.getTime() === r.sessionStart.getTime());
   const pay = x.payments.find((p) => p.bookingId === r.id);
-  const amountCents = r.finalPriceCents ?? r.packagePrice * 100;
+  const amountCents = amountDueCents(r);
   const linkEmail = x.emails.filter((e) => e.bookingId === r.id && e.kind === "payment_link").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
   const review = x.reviews.find((v) => v.bookingId === r.id);
   return {
@@ -94,6 +95,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = { ema
     locationType: r.locationType,
     address: r.locationAddress,
     access: x.access.find((a) => a.bookingId === r.id)?.notes ?? null,
+    travel: { feeCents: r.travelFeeCents, miles: r.travelMiles },
     notes: r.notes,
     inspirationPhotoId: r.inspirationPhotoId,
     calendarLinked: Boolean(r.outlookEventId) && r.status !== "cancelled",
@@ -175,7 +177,7 @@ async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
           and(
             ne(bookings.status, "cancelled"),
             lte(bookings.sessionEnd, now),
-            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) > 0`,
+            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.travelFeeCents}, 0) > 0`,
             sql`${bookingPayments.status} is distinct from 'paid'`,
           ),
         ),

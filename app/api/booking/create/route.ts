@@ -56,7 +56,7 @@ export async function POST(req: Request) {
         sendScheduleEvent({
           eventId: r.requestId ?? booking.id,
           eventSourceUrl,
-          value: (booking.pricing?.finalCents ?? 0) / 100,
+          value: ((booking.pricing?.finalCents ?? 0) + (booking.travel?.feeCents ?? 0)) / 100,
           bundleId: r.bundleId,
           bundleName: booking.pricing?.bundleName ?? r.bundleId,
           contact: { parentName: r.contact.parentName, email: r.contact.email, phone: r.contact.phone },

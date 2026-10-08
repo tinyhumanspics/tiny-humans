@@ -28,6 +28,11 @@ import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
 import { cancelClosedText } from "./reschedule-policy";
 import { noticeHoursFor, saveBookingTerms } from "./terms";
 import { saveAccessNotes } from "./access";
+import en from "@/messages/en.json";
+import { travelQuote } from "@/lib/travel/distance";
+import { getTravelSettings } from "@/lib/travel/server";
+import { bookingTravelOf } from "@/lib/travel/types";
+import { fill } from "@/lib/email/messages";
 import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
 import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./timezone";
@@ -132,6 +137,13 @@ export class OutlookBookingProvider implements BookingProvider {
       if (existing && existing.status === "pending") throw new BookingError("in_progress", friendly.inProgress);
     }
 
+    // 1b. Travel fee from the home's ZIP code (calculated here, never taken from the browser). Florida only, and not
+    // farther than the owner's limit (those families text instead).
+    const quote = travelQuote(request.address.zip, await getTravelSettings());
+    if (quote.status === "outside_florida") throw new BookingError("invalid_request", en.booking.travel.outsideFlorida);
+    if (quote.status === "too_far") throw new BookingError("invalid_request", fill(en.booking.travel.tooFar, { phone: site.contact.phone }));
+    const travel = bookingTravelOf(quote);
+
     // 2. Re-check availability against the live calendar.
     let busy: Busy[];
     let rules: Awaited<ReturnType<typeof getAvailabilityRules>>;
@@ -173,6 +185,8 @@ export class OutlookBookingProvider implements BookingProvider {
             finalPriceCents: pricing.finalCents,
             pricingType: pricing.pricingType,
             packageInclusions: bundle.features,
+            travelFeeCents: travel.feeCents,
+            travelMiles: travel.miles,
             parentName: request.contact.parentName,
             email: request.contact.email,
             phone: request.contact.phone,
@@ -218,6 +232,7 @@ export class OutlookBookingProvider implements BookingProvider {
       address: request.address,
       inspirationTitle: request.inspirationPhotoId ? await this.photoTitle(request.inspirationPhotoId) : undefined,
       consents: request.consents,
+      travel,
     };
 
     // 4. Create the Outlook event. If this fails, remove the pending row so nothing looks confirmed.
@@ -318,7 +333,7 @@ export class OutlookBookingProvider implements BookingProvider {
       .catch((e) => log.error("booking.db", "Could not record email status", { error: e as Error, reference: row.bookingReference }));
 
     log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, customerEmailSent: emailSent, internalNotificationSent: internal.status === "fulfilled" });
-    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot: { ...request.slot, end, label: formatTimeLabel(start) } }, createdAt: row.createdAt.toISOString(), emailSent, pricing, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
+    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot: { ...request.slot, end, label: formatTimeLabel(start) } }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
   }
 
   /** Server-side price for a bundle (+ optional code, re-validated here). Never trusts the browser. */
@@ -422,6 +437,7 @@ export class OutlookBookingProvider implements BookingProvider {
       createdAt: row.createdAt.toISOString(),
       emailSent: row.confirmationEmailSent,
       pricing: snapshotOf(row),
+      travel: { feeCents: row.travelFeeCents, miles: row.travelMiles },
       request: request ?? {
         bundleId: row.packageId,
         address: { street: row.locationAddress, city: "", zip: "" },

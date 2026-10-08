@@ -8,6 +8,8 @@ import { AFTER_KINDS, amountDueCents, findByEmailLink } from "@/lib/booking/afte
 import { log } from "@/lib/log";
 import { verifyPayLink } from "./link";
 import { BookingError } from "@/lib/booking/errors";
+import { fill } from "@/lib/email/messages";
+import en from "@/messages/en.json";
 import { createCheckoutSession, getCheckoutSession, isStripeConfigured, listCompletedCheckoutSessions, StripeError, type CheckoutSession } from "./stripe";
 
 /**
@@ -61,8 +63,10 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
       }
       if (last.status === "open" && last.url && last.amount_total === amount && last.expires_at * 1000 > now.getTime() + WINDOW_MS) return { redirect: last.url };
     }
+    const travelCents = row.travelFeeCents ?? 0;
     const session = await createCheckoutSession({
-      amountCents: amount,
+      amountCents: amount - travelCents,
+      extraLine: travelCents > 0 ? { name: fill(en.booking.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents } : undefined,
       productName: `Tiny Humans · ${row.packageName}`,
       description: `Session ${row.bookingReference} on ${formatLongDate(row.sessionDate)}`,
       customerEmail: row.email,

@@ -6,6 +6,7 @@ import type { AvailabilityRules, BookingLimits, DateOverride, TimeBlock, WeeklyD
 import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
+import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import { MockBookingProvider } from "@/lib/booking/mock-provider";
 import type { Bundle } from "@/config/bundles";
 import type { DiscountCode } from "@/lib/pricing/types";
@@ -29,6 +30,9 @@ export interface AdminApi {
   deleteOverride(date: string): Promise<AvailabilityRules>;
   addBlock(b: Omit<TimeBlock, "id">): Promise<AvailabilityRules>;
   deleteBlock(id: string): Promise<AvailabilityRules>;
+  /** Travel fee settings (null = not saved yet, fees off) + example fees. */
+  getTravel(): Promise<{ settings: TravelSettings | null; examples: TravelExample[]; databaseConfigured: boolean }>;
+  saveTravel(s: TravelSettings): Promise<{ settings: TravelSettings | null; examples: TravelExample[] }>;
   /* leads (owner only) */
   listLeads(filter: LeadFilter, offset?: number): Promise<LeadList>;
   cancelLead(reference: string, reason: string): Promise<Lead>;
@@ -90,6 +94,8 @@ const httpApi: AdminApi = {
   addBlock: async (b) =>
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
+  getTravel: async () => json(await fetch("/api/admin/travel", { cache: "no-store" })),
+  saveTravel: async (s) => json(await fetch("/api/admin/travel", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   leadAvailability: async (reference, from, to) =>
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
   rescheduleLead: async (reference, slot) =>
@@ -201,6 +207,11 @@ const prototypeApi: AdminApi = {
     return protoSave((r) => ({ ...r, blocks: [...r.blocks, { ...b, id: `blk-${Math.random().toString(36).slice(2, 10)}` }] }));
   },
   deleteBlock: async (id) => protoSave((r) => ({ ...r, blocks: r.blocks.filter((x) => x.id !== id) })),
+  // travel fees need the live database (distances are calculated on the server)
+  getTravel: async () => ({ settings: null, examples: [], databaseConfigured: false }),
+  saveTravel: async () => {
+    throw new Error("Not available in the prototype.");
+  },
   listLeads: async (filter) => {
     const all = new MockBookingProvider().listLeads();
     const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as LeadList["counts"];

@@ -1,6 +1,6 @@
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { ACCESS_LABEL, consentRows, formatAddress, pricingRows, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
+import { ACCESS_LABEL, consentRows, formatAddress, pricingRows, totalDueCents, travelOwnerLine, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
 import { renderHtml } from "@/lib/email/render";
 import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
@@ -24,6 +24,8 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ["Pricing", d.pricing.pricingType === "offer" ? `Special offer (${d.pricing.offerLabel})` : d.pricing.pricingType === "discount" ? `Discount code ${d.pricing.discountCode}` : "Regular price"],
     ...(d.pricing.pricingType === "regular" ? [["Regular price", formatMoney(d.pricing.regularCents)] as [string, string]] : []),
     ...pricingRows(d.pricing).map(([k, v]) => [k === "Package total" ? "Final package total" : k, v] as [string, string]),
+    ["Travel", travelOwnerLine(d.travel)],
+    ...(d.travel?.feeCents ? [["Total due", formatMoney(totalDueCents(d.pricing, d.travel))] as [string, string]] : []),
     ["Payment due", "After the photoshoot"],
     ["Session date", formatLongDate(d.date)],
     ["Session time", `${formatTimeLabel(d.start)} to ${formatTimeLabel(d.end)}`],

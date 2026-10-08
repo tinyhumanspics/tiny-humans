@@ -57,6 +57,8 @@ export interface Lead {
   address: string;
   /** Gate code, parking, concierge (from the booking form). */
   access?: string | null;
+  /** Travel fee charged on top of the bundle and the estimated miles (feeCents null = fees were off). */
+  travel?: { feeCents: number | null; miles: number | null };
   notes: string | null;
   inspirationPhotoId: string | null;
   calendarLinked: boolean;

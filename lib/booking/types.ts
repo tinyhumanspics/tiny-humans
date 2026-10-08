@@ -11,6 +11,7 @@
 
 import type { PriceQuote } from "@/lib/pricing/engine";
 import type { Attribution } from "@/lib/tracking/attribution";
+import type { BookingTravel } from "@/lib/travel/types";
 export type { PriceQuote };
 
 /** Calendar date in the studio's time zone, formatted YYYY-MM-DD. */
@@ -97,6 +98,8 @@ export interface BookingResult {
   emailSent?: boolean;
   /** The price actually booked (server-calculated snapshot). */
   pricing?: PriceQuote;
+  /** Travel fee on top of the bundle (server-calculated from the ZIP code). */
+  travel?: BookingTravel;
   /** Owner's current "customer reschedule notice" (hours), for the policy line on the confirmation page. */
   rescheduleNoticeHours?: number;
   /** Prototype/mock only: lets the preview open the cancel page. Never set for real bookings. */

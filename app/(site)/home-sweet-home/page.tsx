@@ -3,6 +3,7 @@ import en from "@/messages/en.json";
 import { LANDING_PATH } from "@/config/landing";
 import LandingPage from "@/features/landing/LandingPage";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
+import { getTravelSettings } from "@/lib/travel/server";
 
 export const metadata: Metadata = {
   title: { absolute: `${en.landing.meta.title} | Tiny Humans` },
@@ -13,5 +14,6 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  return <LandingPage noticeHours={await getNoticeHoursSetting()} />;
+  const [noticeHours, travel] = await Promise.all([getNoticeHoursSetting(), getTravelSettings()]);
+  return <LandingPage noticeHours={noticeHours} travel={travel} />;
 }

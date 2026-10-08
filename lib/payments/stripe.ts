@@ -61,6 +61,8 @@ export function createCheckoutSession(input: {
   successUrl: string;
   cancelUrl: string;
   idempotencyKey: string;
+  /** A second line on the payment page (the travel fee). */
+  extraLine?: { name: string; amountCents: number };
 }): Promise<CheckoutSession> {
   return call<CheckoutSession>(
     "POST",
@@ -73,6 +75,14 @@ export function createCheckoutSession(input: {
       "line_items[0][price_data][unit_amount]": String(input.amountCents),
       "line_items[0][price_data][product_data][name]": input.productName,
       "line_items[0][price_data][product_data][description]": input.description,
+      ...(input.extraLine
+        ? {
+            "line_items[1][quantity]": "1",
+            "line_items[1][price_data][currency]": "usd",
+            "line_items[1][price_data][unit_amount]": String(input.extraLine.amountCents),
+            "line_items[1][price_data][product_data][name]": input.extraLine.name,
+          }
+        : {}),
       customer_email: input.customerEmail,
       client_reference_id: input.reference,
       "metadata[booking_id]": input.bookingId,

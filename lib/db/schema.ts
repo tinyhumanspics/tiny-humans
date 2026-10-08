@@ -78,6 +78,10 @@ export const bookings = pgTable(
     pricingType: text("pricing_type"),
     /** What the bundle included when it was booked. */
     packageInclusions: jsonb("package_inclusions").$type<string[]>(),
+    /** Travel fee charged on top of the bundle (cents; null = booked before travel fees or with them off). */
+    travelFeeCents: integer("travel_fee_cents"),
+    /** Estimated road miles from the home base when booked (null = unknown). */
+    travelMiles: integer("travel_miles"),
 
     /* booking source: first touch of the visit (utm tags, Meta click id, landing page, referring site origin) */
     utmSource: text("utm_source"),
@@ -320,6 +324,29 @@ export const reviews = pgTable(
 );
 
 export type Review = typeof reviews.$inferSelect;
+
+/**
+ * Travel fee (/admin → Availability → Travel): one row (id = 1). Distances are measured from the home-base ZIP; the
+ * first free miles cost nothing, then a price per mile; homes farther than max miles can't book online.
+ * No row = travel fees off. A separate table so a missing migration can never break the availability rules.
+ */
+export const travelSettingsTable = pgTable(
+  "travel_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    baseZip: text("base_zip").notNull(),
+    freeMiles: integer("free_miles").notNull(),
+    perMileCents: integer("per_mile_cents").notNull(),
+    maxMiles: integer("max_miles").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("travel_settings_single_row", sql`${t.id} = 1`),
+    check("travel_settings_zip_check", sql`${t.baseZip} ~ '^[0-9]{5}$'`),
+    check("travel_settings_miles_check", sql`${t.freeMiles} between 0 and 500 and ${t.maxMiles} between 1 and 1000`),
+    check("travel_settings_price_check", sql`${t.perMileCents} between 0 and 1000`),
+  ],
+);
 
 /* ---------------- pricing & promotions (/admin/pricing) ---------------- */
 

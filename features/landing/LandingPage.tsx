@@ -1,6 +1,9 @@
 "use client";
 
 import en from "@/messages/en.json";
+import type { TravelSettings } from "@/lib/travel/types";
+import { formatMoney } from "@/lib/pricing/engine";
+import { fill } from "@/lib/email/messages";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
@@ -28,8 +31,17 @@ const PHONE_ORDER = ["forever-little", "our-little-story", "little-moments"];
 const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
 
 /** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
-/** `noticeHours`: today's online cancel/reschedule notice (/admin > Availability), for the FAQ. */
-export default function LandingPage({ noticeHours }: { noticeHours: number }) {
+/** FAQ answer with today's settings ("aFee" replaces "a" once a travel fee is set up). */
+function faqAnswer(f: { a: string; aFee?: string }, noticeHours: number, travel: TravelSettings | null): string {
+  const text = travel && f.aFee ? fill(f.aFee, { max: String(travel.maxMiles), free: String(travel.freeMiles), perMile: formatMoney(travel.perMileCents) }) : f.a;
+  return text.replace("{notice}", noticeLabel(noticeHours));
+}
+
+/**
+ * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off). Both from /admin >
+ * Availability, for the FAQ.
+ */
+export default function LandingPage({ noticeHours, travel }: { noticeHours: number; travel: TravelSettings | null }) {
   const { bundles, today, available } = useCatalog();
   const { media, photos } = useSiteSettings();
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
@@ -197,7 +209,7 @@ export default function LandingPage({ noticeHours }: { noticeHours: number }) {
           {t.faq.items.map((f) => (
             <details key={f.q} className={styles.faqItem}>
               <summary className="chalk-soft">{f.q}</summary>
-              <p className="chalk-soft">{f.a.replace("{notice}", noticeLabel(noticeHours))}</p>
+              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel)}</p>
             </details>
           ))}
         </div>

@@ -1,7 +1,7 @@
 import { site } from "@/config/site";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, PAYMENT_NOTE, pricingRows, type BookingDetails } from "@/lib/booking/templates";
+import { formatAddress, PAYMENT_NOTE, pricingRows, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
@@ -34,11 +34,19 @@ function content(d: BookingDetails, locale: EmailLocale) {
     date,
     first: d.contact.parentName.split(" ")[0],
     time: fill(m.common.timeRange, { start: formatTimeLabel(d.start), end: formatTimeLabel(d.end) }),
-    paymentRows: [
-      [m.common.packageTotal, formatMoney(d.pricing.finalCents)],
-      [m.common.paymentDue, m.common.paymentDueValue],
-    ] as [string, string][],
+    paymentRows: [[m.common.packageTotal, formatMoney(d.pricing.finalCents)], ...travelRows(d, locale), [m.common.paymentDue, m.common.paymentDueValue]] as [string, string][],
   };
+}
+
+/** Travel fee + new total, only when there's a fee. */
+function travelRows(d: BookingDetails, locale: EmailLocale): [string, string][] {
+  const m = emailMessages(locale);
+  const fee = d.travel?.feeCents ?? 0;
+  if (fee <= 0) return [];
+  return [
+    [m.common.travelFee, d.travel?.miles === null || d.travel?.miles === undefined ? formatMoney(fee) : fill(m.common.travelFeeValue, { fee: formatMoney(fee), miles: String(d.travel.miles) })],
+    [m.common.total, formatMoney(totalDueCents(d.pricing, d.travel))],
+  ];
 }
 
 /** Customer booking confirmation (follows the active website theme). */
@@ -69,6 +77,7 @@ export function BookingConfirmation({
           [m.common.time, time],
           [m.common.location, formatAddress(d.address)],
           ...pricingRows(d.pricing),
+          ...travelRows(d, locale),
         ]}
       />
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={PAYMENT_NOTE.email} />
@@ -116,6 +125,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${m.common.time}: ${time}`,
     `${m.common.location}: ${formatAddress(d.address)}`,
     ...pricingRows(d.pricing).map(([k, v]) => `${k}: ${v}`),
+    ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
     `${m.common.paymentDue}: ${m.common.paymentDueValue}`,
     "",
     PAYMENT_NOTE.email,

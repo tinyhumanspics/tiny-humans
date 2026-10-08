@@ -16,6 +16,8 @@ import { log } from "@/lib/log";
 export const RULES = {
   availability: { limit: 120, windowSec: 600 },
   quote: { limit: 30, windowSec: 600 },
+  // travel fee estimate under the ZIP box
+  travel: { limit: 60, windowSec: 600 },
   // includes the browser's automatic "still saving" retries
   create: { limit: 20, windowSec: 3600 },
   cancelGet: { limit: 30, windowSec: 600 },

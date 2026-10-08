@@ -28,6 +28,10 @@ export function fillLegal(doc: LegalDocument, values: Record<string, string>): L
   return JSON.parse(JSON.stringify(doc), (_k, v) => (typeof v === "string" ? f(v) : v));
 }
 
+/** Terms → "Packages and prices", added once a travel fee is set up in /admin ({freeMiles}, {maxMiles}, {perMile}). */
+export const travelFeeTerms =
+  "Homes within {freeMiles} miles of our Miami Beach base have no travel fee. Homes farther away, up to {maxMiles} miles, pay {perMile} for each extra mile, estimated from your ZIP code and shown before you book. The travel fee is added to your total and paid with your session.";
+
 export const privacyPolicy: LegalDocument = {
   title: "Privacy Policy",
   lastUpdated: "October 7, 2026",
@@ -156,7 +160,7 @@ export const privacyPolicy: LegalDocument = {
 
 export const termsOfService: LegalDocument = {
   title: "Terms of Service",
-  lastUpdated: "October 6, 2026",
+  lastUpdated: "October 7, 2026",
   intro:
     "These terms explain how booking and sessions work with Tiny Humans, a newborn and baby photography studio in Miami, Florida. By using our website or booking a session, you agree to them. If anything is unclear, please ask before you book.",
   sections: [

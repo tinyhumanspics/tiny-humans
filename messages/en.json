@@ -32,6 +32,18 @@
     },
     "age": {
       "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages."
+    },
+    "travel": {
+      "checking": "Checking the distance…",
+      "free": "Within {free} miles of Miami Beach: no travel fee.",
+      "fee": "About {miles} miles from Miami Beach: {fee} travel fee (the first {free} miles are free).",
+      "tooFar": "That's farther than we usually travel. Text us at {phone} and we'll see what we can do.",
+      "outsideFlorida": "We only come to homes in Florida. Please check the ZIP code.",
+      "unknown": "We'll confirm any travel fee with you before your session.",
+      "label": "Travel fee",
+      "value": "{fee} (about {miles} miles)",
+      "total": "Total",
+      "stripeLine": "Travel fee (about {miles} miles)"
     }
   },
   "errors": {
@@ -233,7 +245,8 @@
         },
         {
           "q": "Which areas do you cover? Is there a travel fee?",
-          "a": "We're based in Miami Beach and travel anywhere from Miami to Orlando. Homes farther away may have a travel fee, and we'll always confirm it with you before your session."
+          "a": "We're based in Miami Beach and travel anywhere from Miami to Orlando. Homes farther away may have a travel fee, and we'll always confirm it with you before your session.",
+          "aFee": "We're based in Miami Beach and come to homes up to {max} miles away. The first {free} miles are free; after that it's {perMile} a mile, and you'll see the exact travel fee as soon as you type your ZIP code."
         },
         {
           "q": "When do we get the photos, and how do we pay?",
@@ -293,7 +306,10 @@
       "greeting": "Hi {name},",
       "textUs": "Text us at {phone}",
       "payAfter": "Nothing to pay today. You'll pay after your session by card, with a secure link we email you.",
-      "access": "Getting in"
+      "access": "Getting in",
+      "travelFee": "Travel fee",
+      "travelFeeValue": "{fee} (about {miles} miles)",
+      "total": "Total"
     },
     "confirmation": {
       "subject": "Your Tiny Humans session is booked ({reference}): {date}, {time}",

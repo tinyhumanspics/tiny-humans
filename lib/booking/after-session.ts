@@ -21,7 +21,8 @@ export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_de
 export type AfterKind = (typeof AFTER_KINDS)[keyof typeof AFTER_KINDS];
 
 /** What the family owes: the price booked (snapshot), never recalculated from today's bundles. */
-export const amountDueCents = (row: Booking) => row.finalPriceCents ?? row.packagePrice * 100;
+/** Bundle price (snapshot) + travel fee. */
+export const amountDueCents = (row: Booking) => (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0);
 
 const base = () => site.url.replace(/\/$/, "");
 /** The booking's permanent payment link; the email's own token link only if the signing secret is missing. */

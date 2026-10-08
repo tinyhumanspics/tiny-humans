@@ -6,6 +6,8 @@ import type { AdminApi } from "@/lib/admin/client";
 import type { AvailabilityRules, BookingLimits, WeeklyDay } from "@/lib/availability/types";
 import { WEEKDAY_NAMES } from "@/lib/availability/types";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
+import { formatMoney } from "@/lib/pricing/engine";
+import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import { todayInZone } from "@/lib/booking/timezone";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import styles from "./Admin.module.css";
@@ -59,6 +61,7 @@ export default function AvailabilityPanel({ api }: { api: AdminApi }) {
           <WeeklyAndRules rules={rules} api={api} onSaved={setRules} />
           <SpecialDates rules={rules} api={api} onSaved={setRules} />
           <TimeBlocks rules={rules} api={api} onSaved={setRules} />
+          <TravelFees api={api} />
         </>
       )}
     </section>
@@ -400,6 +403,105 @@ function TimeBlocks({ rules, api, onSaved }: { rules: AvailabilityRules; api: Ad
         </ul>
       ) : (
         <p className={cn(styles.hintSmall, "chalk-soft")}>No time blocks yet.</p>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- travel fee ---------------- */
+
+const exampleLine = (e: TravelExample) =>
+  e.status === "too_far" ? `about ${e.miles} miles: too far to book online` : e.status === "fee" ? `about ${e.miles} miles → ${formatMoney(e.feeCents)}` : e.miles === null ? "distance unknown" : `about ${e.miles} miles → no fee`;
+
+function TravelFees({ api }: { api: AdminApi }) {
+  const [saved, setSaved] = useState<TravelSettings | null>(null);
+  const [examples, setExamples] = useState<TravelExample[]>([]);
+  const [form, setForm] = useState({ baseZip: "", freeMiles: "", perMile: "", maxMiles: "" });
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<Note>(null);
+
+  useEffect(() => {
+    api
+      .getTravel()
+      .then((r) => {
+        setSaved(r.settings);
+        setExamples(r.examples);
+        if (r.settings) setForm({ baseZip: r.settings.baseZip, freeMiles: String(r.settings.freeMiles), perMile: (r.settings.perMileCents / 100).toFixed(2), maxMiles: String(r.settings.maxMiles) });
+      })
+      .catch((e) => setNote({ kind: "error", text: errText(e, "Couldn't load the travel settings.") }))
+      .finally(() => setLoaded(true));
+  }, [api]);
+
+  const set = (k: keyof typeof form, v: string) => {
+    setForm((f) => ({ ...f, [k]: v }));
+    setNote(null);
+  };
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    const n = { freeMiles: Number(form.freeMiles), perMileCents: Math.round(Number(form.perMile) * 100), maxMiles: Number(form.maxMiles) };
+    if (!/^\d{5}$/.test(form.baseZip.trim())) return setNote({ kind: "error", text: "Enter your home-base ZIP code (5 digits)." });
+    if ([form.freeMiles, form.perMile, form.maxMiles].some((v) => v.trim() === "") || Object.values(n).some((v) => !Number.isFinite(v) || v < 0)) {
+      return setNote({ kind: "error", text: "Fill in free miles, price per mile and the farthest distance." });
+    }
+    setBusy(true);
+    try {
+      const r = await api.saveTravel({ baseZip: form.baseZip.trim(), ...n });
+      setSaved(r.settings);
+      setExamples(r.examples);
+      setNote({ kind: "ok", text: "Travel fee saved. New bookings, the FAQ and the Terms use it right away." });
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={styles.availBlock}>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Travel fee</h3>
+      <p className={cn(styles.muted, "chalk-soft")}>
+        Families see the fee under the ZIP code box as soon as they type it, and it&apos;s added to their total (paid with the session). Distances are
+        estimated from ZIP codes (about ±10%). Homes farther than the last number can&apos;t book online: they&apos;re asked to text you.
+      </p>
+      {loaded && !saved && <p className={cn(styles.bannerError, "chalk-soft")}>Travel fees are off until you save these.</p>}
+      <form onSubmit={save} className={styles.availForm} noValidate>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-zip">Home base ZIP code</label>
+          <input id="tf-zip" className={cn(styles.input, styles.timeInput)} inputMode="numeric" maxLength={5} value={form.baseZip} onChange={(e) => set("baseZip", e.target.value)} placeholder="e.g. 33139" />
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Only you see it. Distances are measured from here.</p>
+        </div>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-free">Free miles</label>
+          <input id="tf-free" className={cn(styles.input, styles.timeInput)} type="number" min={0} max={500} value={form.freeMiles} onChange={(e) => set("freeMiles", e.target.value)} placeholder="e.g. 30" />
+        </div>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-price">Price per extra mile ($)</label>
+          <input id="tf-price" className={cn(styles.input, styles.timeInput)} type="number" min={0} max={10} step={0.05} value={form.perMile} onChange={(e) => set("perMile", e.target.value)} placeholder="e.g. 0.75" />
+        </div>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-max">Farthest for online booking (miles)</label>
+          <input id="tf-max" className={cn(styles.input, styles.timeInput)} type="number" min={1} max={1000} value={form.maxMiles} onChange={(e) => set("maxMiles", e.target.value)} placeholder="e.g. 250" />
+        </div>
+        <ChalkButton type="submit" variant="outline" disabled={busy} seed={884}>
+          {busy ? "Saving…" : "Save travel fee"}
+        </ChalkButton>
+      </form>
+      {note && (
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
+          {note.text}
+        </p>
+      )}
+      {examples.length > 0 && (
+        <ul className={styles.overrideList} aria-label="Example travel fees">
+          {examples.map((e) => (
+            <li key={e.place} className={styles.overrideRow}>
+              <span className="chalk-soft">
+                <b>{e.place}</b> — {exampleLine(e)}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </div>
   );

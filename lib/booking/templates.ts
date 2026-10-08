@@ -3,6 +3,7 @@ import type { Bundle } from "@/config/bundles";
 import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
 import type { BookingConsents, BookingContact, SessionAddress } from "./types";
+import type { BookingTravel } from "@/lib/travel/types";
 
 /** Data used by the calendar event and the confirmation email. */
 export interface BookingDetails {
@@ -18,7 +19,19 @@ export interface BookingDetails {
   pricing: PriceQuote;
   /** Optional permissions given at booking. */
   consents?: BookingConsents;
+  /** Travel fee on top of the bundle. */
+  travel?: BookingTravel;
 }
+
+/** Studio-facing travel line (calendar, studio email, /admin). */
+export function travelOwnerLine(t: BookingTravel | undefined): string {
+  if (!t || t.feeCents === null) return "Not calculated (travel fees off)";
+  if (t.miles === null) return "Distance unknown (ZIP not in the Census list): confirm a travel fee with the family";
+  return t.feeCents > 0 ? `${formatMoney(t.feeCents)} (about ${t.miles} miles)` : `No fee (about ${t.miles} miles)`;
+}
+
+/** Bundle price + travel fee. */
+export const totalDueCents = (p: PriceQuote, t?: BookingTravel) => p.finalCents + (t?.feeCents ?? 0);
 
 /** "Yes" / "No" lines for the permissions (studio's calendar + emails). */
 export function consentRows(c: BookingConsents | undefined): [string, string][] {
@@ -125,6 +138,8 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Booking reference", d.reference],
     ["Package", d.bundle.name],
     ...pricingRows(d.pricing),
+    ["Travel", travelOwnerLine(d.travel)],
+    ...(d.travel?.feeCents ? [["Total due", formatMoney(totalDueCents(d.pricing, d.travel))] as [string, string]] : []),
     ["Due at booking", "$0 (nothing collected)"],
     ["Payment due", "After the photoshoot"],
     ["Parent / guardian", d.contact.parentName],

@@ -85,6 +85,13 @@
       "when": 1791404401209,
       "tag": "0011_booking_access",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791418113502,
+      "tag": "0012_travel_fee",
+      "breakpoints": true
     }
   ]
 }

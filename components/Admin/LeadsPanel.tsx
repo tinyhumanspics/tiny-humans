@@ -6,7 +6,7 @@ import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { ACCESS_LABEL } from "@/lib/booking/templates";
+import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
@@ -165,6 +165,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ...(pr.pricingType === "offer" ? [["Offer", `${pr.offerLabel ?? "Special offer"}: ${formatMoney(pr.offerCents ?? pr.finalCents)}`] as [string, string]] : []),
     ...(pr.pricingType === "discount" ? [["Discount code", pr.discountCode ?? ""] as [string, string], ["Discount amount", formatMoney(pr.discountCents)] as [string, string]] : []),
     ["Final booked price", formatMoney(pr.finalCents)],
+    ...(lead.travel ? [["Travel", travelOwnerLine(lead.travel)] as [string, string]] : []),
+    ...(lead.travel?.feeCents ? [["Total due", formatMoney(pr.finalCents + lead.travel.feeCents)] as [string, string]] : []),
     ["Baby age", lead.babyAge],
     ["Full address", lead.address],
     [ACCESS_LABEL, lead.access || "None"],
@@ -204,7 +206,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         </span>
       </div>
       <p className={cn(styles.leadLine, "chalk-soft")}>
-        <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents)} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
+        <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents + (lead.travel?.feeCents ?? 0))}
+        {lead.travel?.feeCents ? ` (incl. ${formatMoney(lead.travel.feeCents)} travel)` : ""} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
       </p>
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
