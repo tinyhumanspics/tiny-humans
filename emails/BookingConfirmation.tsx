@@ -8,8 +8,9 @@ import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
-import { backdropList, backdropSwatches } from "./components/backdrops";
-import { ChalkBox, ChalkButton, ChalkList, Details, Heading, Paragraph, PhotographersIntro, Swatches } from "./components/blocks";
+import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
+import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
+import { ChalkBox, ChalkButton, ChalkList, Details, Heading, Paragraph, PhotographersIntro } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 interface Options {
@@ -19,6 +20,8 @@ interface Options {
   rescheduleNoticeHours?: number;
   /** "Adrian & Alondra" photo from /admin (absolute URL), if uploaded. */
   photographersPhoto?: string | null;
+  /** The backdrop page (pick or change their backdrop). */
+  backdropUrl?: string;
   images?: ImageMode;
   locale?: EmailLocale;
 }
@@ -59,7 +62,9 @@ export function BookingConfirmation({
   rescheduleUrl,
   rescheduleNoticeHours,
   photographersPhoto,
-}: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale }) {
+  backdropUrl,
+  swatches,
+}: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; swatches: EmailSwatch[] }) {
   const { m, date, first, time, paymentRows } = content(d, locale);
   const c = m.confirmation;
   return (
@@ -81,7 +86,7 @@ export function BookingConfirmation({
         ]}
       />
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={PAYMENT_NOTE.email} />
-      <Swatches theme={t} title={m.backdrops.title} text={m.backdrops.text} swatches={backdropSwatches(locale)} />
+      <BackdropChoice theme={t} locale={locale} picks={d.backdrops ?? []} swatches={swatches} url={backdropUrl} />
       <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
       <ChalkList theme={t} title={c.nextTitle} items={nextSteps(d, locale)} color={t.chalk} mark="•" />
       <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
@@ -102,6 +107,8 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
   const locale = opts.locale ?? "en";
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
+  const picks = d.backdrops ?? [];
+  const backdrop = backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined);
   const { m, date, first, time } = content(d, locale);
   const c = m.confirmation;
   const html = await renderHtml(
@@ -114,6 +121,8 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
       rescheduleUrl={opts.rescheduleUrl}
       rescheduleNoticeHours={opts.rescheduleNoticeHours}
       photographersPhoto={opts.photographersPhoto}
+      backdropUrl={opts.backdropUrl}
+      swatches={backdrop.swatches}
     />,
   );
   const text = textLines([
@@ -130,7 +139,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     "",
     PAYMENT_NOTE.email,
     "",
-    fill(m.backdrops.textLine, { list: backdropList(locale) }),
+    backdropTextLine(locale, picks, opts.backdropUrl),
     "",
     `${m.prepGuide.title}:`,
     ...m.prepGuide.items.map((i) => `- ${i}`),
@@ -149,5 +158,5 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     fill(m.layout.signature, { email: site.contact.email ?? "" }),
   ]);
   const subject = fill(c.subject, { reference: d.reference, date, time: formatTimeLabel(d.start) });
-  return { subject, html, text, attachments: images.attachments };
+  return { subject, html, text, attachments: [...images.attachments, ...backdrop.attachments] };
 }

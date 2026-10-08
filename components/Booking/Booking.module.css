@@ -282,6 +282,7 @@
 
 .field { display: flex; flex-direction: column; gap: 6px; }
 .fieldWide { grid-column: 1 / -1; }
+.flush { margin: 0; }
 /* street + apt/unit share one row on wider screens */
 .streetRow { display: grid; gap: 18px 26px; }
 @media (min-width: 720px) { .streetRow { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); } }

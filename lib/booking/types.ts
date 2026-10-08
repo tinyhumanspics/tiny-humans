@@ -80,6 +80,8 @@ export interface BookingRequest {
   discountCode?: string;
   /** Optional permissions (unticked = no). */
   consents?: BookingConsents;
+  /** Optional backdrop picks (ids from config/backdrops.ts, one per setup). */
+  backdrops?: string[];
   /** Spam signals (never stored): hidden honeypot field + how long the booking form was open. */
   hp?: string;
   elapsedMs?: number;

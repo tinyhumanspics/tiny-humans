@@ -2,6 +2,7 @@ import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { ACCESS_LABEL, consentRows, formatAddress, pricingRows, totalDueCents, travelOwnerLine, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
 import { renderHtml } from "@/lib/email/render";
+import { backdropNames } from "@/lib/booking/backdrop-names";
 import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
 
@@ -32,6 +33,7 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ["Location type", "At the family's home (we bring the studio)"],
     ["Session address", formatAddress(d.address)],
     [ACCESS_LABEL, d.address.accessNotes || "None"],
+    ["Backdrop", d.backdrops?.length ? backdropNames(d.backdrops) : "Not chosen yet"],
     ["Customer notes", d.contact.notes || "None"],
     ["Inspiration photo", d.inspirationTitle || "None"],
     ...consentRows(d.consents),
@@ -52,6 +54,35 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     />,
   );
   return { subject: `New Tiny Humans Booking — ${d.contact.parentName} — ${formatLongDate(d.date)}`, html, text: text(["NEW BOOKING"], rows), attachments: [] };
+}
+
+/** The family picked or changed their backdrop on the backdrop page. */
+export async function internalBackdropEmail(b: { reference: string; parentName: string; email: string; phone: string; bundleName: string; date: string; start: string; before: string[]; after: string[] }): Promise<RenderedEmail> {
+  const rows: [string, string][] = [
+    ["Booking reference", b.reference],
+    ["Customer name", b.parentName],
+    ["Email", b.email],
+    ["Phone", b.phone],
+    ["Bundle", b.bundleName],
+    ["Session", `${formatLongDate(b.date)} at ${formatTimeLabel(b.start)}`],
+    ["Backdrop now", b.after.length ? backdropNames(b.after) : "Not chosen yet"],
+    ["Before", b.before.length ? backdropNames(b.before) : "Not chosen yet"],
+  ];
+  const html = await renderHtml(
+    <InternalLayout
+      banner="BACKDROP UPDATE"
+      bannerBg={C.blue}
+      bannerFg="#ffffff"
+      summary={
+        <>
+          <b>{b.parentName}</b> chose <b>{b.after.length ? backdropNames(b.after) : "no backdrop yet"}</b> for their session on <b>{formatLongDate(b.date)}</b>. The Outlook event has been updated.
+        </>
+      }
+      rows={rows}
+      footer={`Reply to this email to contact ${firstName(b.parentName)} directly.`}
+    />,
+  );
+  return { subject: `Backdrop update — ${b.parentName} — ${formatLongDate(b.date)} (${b.reference})`, html, text: text(["BACKDROP UPDATE"], rows), attachments: [] };
 }
 
 /** Cancelled booking notification. */

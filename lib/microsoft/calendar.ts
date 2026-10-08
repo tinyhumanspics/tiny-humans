@@ -85,6 +85,15 @@ export async function moveCalendarEvent(eventId: string, start: string, end: str
   });
 }
 
+/** Replaces the event's description (e.g. after the family changes their backdrop). */
+export async function updateCalendarEventBody(eventId: string, bodyHtml: string): Promise<void> {
+  await graphFetch(`/users/${user()}/events/${encodeURIComponent(eventId)}`, {
+    method: "PATCH",
+    scope: "graph.calendar",
+    body: JSON.stringify({ body: { contentType: "HTML", content: bodyHtml } }),
+  });
+}
+
 /** Deletes the event (treats "already gone" as success). */
 export async function deleteCalendarEvent(eventId: string): Promise<void> {
   try {

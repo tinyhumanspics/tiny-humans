@@ -34,6 +34,9 @@ import { useBookingSelection } from "./BookingSelectionContext";
 import { formatAddress, PAYMENT_NOTE, unitLine } from "@/lib/booking/templates";
 import { isFloridaZip, type BookingTravel, type TravelQuote } from "@/lib/travel/types";
 import { travelFeeValue, travelHint } from "@/lib/travel/format";
+import { setupsOf } from "@/config/backdrops";
+import { backdropNames } from "@/lib/booking/backdrop-names";
+import BackdropPicker from "@/components/Backdrops/BackdropPicker";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
@@ -292,6 +295,9 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   const travel = zipReady && travelEst?.zip === zip ? travelEst.quote : null;
   const travelChecking = zipReady && travelEst?.zip !== zip;
   const travelFee = travel?.status === "fee" ? travel.feeCents : 0;
+  // optional backdrop picks, one per setup of the bundle
+  const [backdrops, setBackdrops] = useState<string[]>([]);
+  const setups = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
@@ -351,6 +357,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         },
         address: { street: c.street.trim(), unit: c.unit.trim() || undefined, city: c.city.trim(), zip: c.zip.trim(), accessNotes: c.access.trim() || undefined },
         consents: state.consents,
+        backdrops: backdrops.length ? backdrops.slice(0, setups) : undefined,
         requestId: (requestIdRef.current ??= newRequestId()),
         hp: hp || undefined,
         elapsedMs: Date.now() - openedAt.current,
@@ -496,6 +503,9 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       onConsent={(field, value) => dispatch({ type: "consent", field, value })}
                       hp={hp}
                       onHp={setHp}
+                      backdrops={backdrops}
+                      onBackdrops={setBackdrops}
+                      setups={setups}
                       zipNote={
                         /^\d{5}$/.test(zip) && !isFloridaZip(zip)
                           ? { text: en.booking.travel.outsideFlorida, blocking: true }
@@ -534,6 +544,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                           step: STEP.details,
                         },
                         ...(state.contact.notes.trim() ? [{ label: "Notes", value: state.contact.notes.trim(), step: STEP.details }] : []),
+                        { label: setups > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, value: backdrops.length ? backdropNames(backdrops) : en.booking.backdrops.none, step: STEP.details },
                         { label: en.booking.consents.reviewSms, value: state.consents.sms ? en.booking.consents.reviewSmsYes : en.booking.consents.reviewSmsNo, step: STEP.details },
                         { label: en.booking.consents.reviewPhotos, value: state.consents.photos ? en.booking.consents.reviewPhotosYes : en.booking.consents.reviewPhotosNo, step: STEP.details },
                       ]}
@@ -605,6 +616,9 @@ function DetailsForm({
   hp,
   onHp,
   zipNote,
+  backdrops,
+  onBackdrops,
+  setups,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
@@ -615,6 +629,10 @@ function DetailsForm({
   onHp: (v: string) => void;
   /** Travel fee line under the ZIP box. */
   zipNote: { text: string; blocking: boolean } | null;
+  backdrops: string[];
+  onBackdrops: (picks: string[]) => void;
+  /** Backdrops they can pick (one per setup). */
+  setups: number;
 }) {
   const field = (
     name: keyof ContactDraft,
@@ -741,6 +759,13 @@ function DetailsForm({
           placeholder="Siblings joining, favorite colors, a family heirloom to include…"
         />
       </div>
+      <div className={cn(styles.field, styles.fieldWide)}>
+        <p className={cn(styles.label, styles.flush, "chalk-soft")}>
+          {setups > 1 ? en.booking.backdrops.titleMany : en.booking.backdrops.title}
+        </p>
+        <p className={cn(styles.optional, styles.flush, "chalk-soft")}>{setups > 1 ? en.booking.backdrops.hintMany.replace("{n}", String(setups)) : en.booking.backdrops.hint}</p>
+        <BackdropPicker max={setups} value={backdrops} onChange={onBackdrops} label={setups > 1 ? en.booking.backdrops.titleMany : en.booking.backdrops.title} />
+      </div>
       <fieldset className={cn(styles.fieldset, styles.field, styles.fieldWide)} aria-describedby="consents-hint">
         <legend className={cn(styles.label, "chalk-soft")}>
           {en.booking.consents.title}
@@ -833,6 +858,7 @@ function Confirmation({
     ["Session date", formatLongDate(r.slot.date)],
     ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)} (${en.booking.timeZone.short})`],
     ["Location", formatAddress(r.address)],
+    ...(r.backdrops?.length ? [[r.backdrops.length > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, backdropNames(r.backdrops)] as [string, string]] : []),
     ...(price?.pricingType === "offer" ? [["Special offer", price.offerLabel ?? "Special offer"] as [string, string]] : []),
     ...(price?.pricingType === "discount" ? [["Discount code", `${price.discountCode} (-${formatMoney(price.discountCents)})`] as [string, string]] : []),
     ["Package total", price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""],

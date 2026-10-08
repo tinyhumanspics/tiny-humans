@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { babyAgeOptions } from "@/config/booking";
+import { BACKDROP_IDS } from "@/config/backdrops";
 
 /** Server-side validation of booking requests. Never trust the browser form alone. */
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date");
@@ -10,6 +11,12 @@ export const availabilityQuerySchema = z
   .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), from: dateKey, to: dateKey })
   .refine((q) => q.from <= q.to, "from must be before to")
   .refine((q) => (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 <= 62, "Range too long");
+
+/** Backdrop picks: known ids, no repeats, at most 3. */
+export const backdropPicks = z
+  .array(z.enum(BACKDROP_IDS))
+  .max(3)
+  .refine((a) => new Set(a).size === a.length, "Pick each backdrop only once.");
 
 export const bookingRequestSchema = z.object({
   bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64),
@@ -34,6 +41,8 @@ export const bookingRequestSchema = z.object({
   // Only the code text is accepted; prices and discounts are always calculated on the server.
   discountCode: z.string().trim().max(40).optional().transform((v) => v || undefined),
   consents: z.object({ sms: z.boolean(), photos: z.boolean() }).optional(),
+  // optional backdrop picks (one per setup; trimmed to the bundle's setups on the server)
+  backdrops: backdropPicks.optional(),
   // Spam signals (never stored): a hidden field people never see, and how long the form was open.
   hp: z.string().max(200).optional(),
   elapsedMs: z.number().int().nonnegative().optional(),

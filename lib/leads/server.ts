@@ -3,9 +3,10 @@ import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb } from "@/lib/db/client";
-import { bookingConsents, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingConsent, type BookingEmail, type BookingPayment, type BookingTerm, type Review } from "@/lib/db/schema";
+import { bookingConsents, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingEmail, type BookingPayment, type BookingTerm, type Review } from "@/lib/db/schema";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
+import { backdropsFor } from "@/lib/booking/backdrops";
 import { amountDueCents } from "@/lib/booking/after-session";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/outlook-provider";
@@ -28,26 +29,28 @@ interface Extras {
   consents: BookingConsent[];
   terms: BookingTerm[];
   access: BookingAccess[];
+  backdrops: BookingBackdrops[];
 }
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(bookingIds: string[]): Promise<Extras> {
-  if (!bookingIds.length) return { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [] };
+  if (!bookingIds.length) return { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [] };
   const db = getDb();
   const safe = <T,>(what: string, q: Promise<T[]>) =>
     q.catch((err) => {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
     safe("permissions", db.select().from(bookingConsents).where(inArray(bookingConsents.bookingId, bookingIds))),
     termsFor(bookingIds),
     accessFor(bookingIds),
+    backdropsFor(bookingIds),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -76,7 +79,7 @@ function afterOf(r: Booking, x: Extras): Lead["after"] {
   };
 }
 
-export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [] }): Lead {
+export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [] }): Lead {
   const emails = x.emails;
   return {
     reference: r.bookingReference,
@@ -96,6 +99,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = { ema
     address: r.locationAddress,
     access: x.access.find((a) => a.bookingId === r.id)?.notes ?? null,
     travel: { feeCents: r.travelFeeCents, miles: r.travelMiles },
+    backdrops: ((b) => (b ? { picks: b.picks, source: b.source, at: b.updatedAt.toISOString() } : null))(x.backdrops.find((b) => b.bookingId === r.id)),
     notes: r.notes,
     inspirationPhotoId: r.inspirationPhotoId,
     calendarLinked: Boolean(r.outlookEventId) && r.status !== "cancelled",

@@ -28,6 +28,8 @@ import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
 import { cancelClosedText } from "./reschedule-policy";
 import { noticeHoursFor, saveBookingTerms } from "./terms";
 import { saveAccessNotes } from "./access";
+import { saveBookingBackdrops } from "./backdrops";
+import { setupsOf } from "@/config/backdrops";
 import en from "@/messages/en.json";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
@@ -45,6 +47,17 @@ function photographersPhotoUrl(settings: SiteSettings | null, themeId: string): 
   const src = settings ? photographersEmailPhoto(settings.media, themeId)?.src : undefined;
   if (!src) return null;
   return src.startsWith("/") ? `${site.url.replace(/\/$/, "")}${src}` : src;
+}
+
+/** Title of the portfolio/site photo a family picked as inspiration. */
+export async function photoTitle(id: string): Promise<string | undefined> {
+  try {
+    const settings = await getSiteSettings();
+    const all = [...allMediaPhotos(settings), ...portfolio];
+    return all.find((p) => p?.id === id)?.title;
+  } catch {
+    return portfolio.find((p) => p.id === id)?.title;
+  }
 }
 
 /** Booking source columns (first touch of the visit). */
@@ -143,6 +156,8 @@ export class OutlookBookingProvider implements BookingProvider {
     if (quote.status === "outside_florida") throw new BookingError("invalid_request", en.booking.travel.outsideFlorida);
     if (quote.status === "too_far") throw new BookingError("invalid_request", fill(en.booking.travel.tooFar, { phone: site.contact.phone }));
     const travel = bookingTravelOf(quote);
+    // optional backdrop picks: one per setup of the bundle
+    const backdrops = request.backdrops?.slice(0, setupsOf([bundle.setups, ...bundle.features]));
 
     // 2. Re-check availability against the live calendar.
     let busy: Busy[];
@@ -233,6 +248,7 @@ export class OutlookBookingProvider implements BookingProvider {
       inspirationTitle: request.inspirationPhotoId ? await this.photoTitle(request.inspirationPhotoId) : undefined,
       consents: request.consents,
       travel,
+      backdrops,
     };
 
     // 4. Create the Outlook event. If this fails, remove the pending row so nothing looks confirmed.
@@ -267,6 +283,7 @@ export class OutlookBookingProvider implements BookingProvider {
     // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch it.
     await saveBookingTerms(row.id, rules.limits.rescheduleNoticeHours, bundle.photos, row.bookingReference);
     await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
+    await saveBookingBackdrops(row.id, backdrops, row.bookingReference);
 
     // Optional permissions (best effort: the booking is already confirmed; they're also in the event + studio email).
     if (request.consents) {
@@ -288,7 +305,7 @@ export class OutlookBookingProvider implements BookingProvider {
     const [customer, internal] = await Promise.allSettled([
       (async () => {
         const links = manageUrls(cancel.token);
-        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours, photographersPhoto });
+        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, backdropUrl: links.backdrop, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours, photographersPhoto });
         return sendEmail({
           scope: "resend.customer",
           to: request.contact.email,
@@ -418,14 +435,8 @@ export class OutlookBookingProvider implements BookingProvider {
   }
 
   /** Title of a portfolio photo from any of the owner's picture sets (or the built-in ones). */
-  private async photoTitle(id: string): Promise<string | undefined> {
-    try {
-      const settings = await getSiteSettings();
-      const all = [...allMediaPhotos(settings), ...portfolio];
-      return all.find((p) => p?.id === id)?.title;
-    } catch {
-      return portfolio.find((p) => p.id === id)?.title;
-    }
+  private photoTitle(id: string): Promise<string | undefined> {
+    return photoTitle(id);
   }
 
   private toResult(row: Booking, request?: BookingRequest): BookingResult {

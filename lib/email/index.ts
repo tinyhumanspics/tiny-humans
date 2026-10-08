@@ -5,7 +5,7 @@
 export { bookingConfirmationEmail } from "@/emails/BookingConfirmation";
 export { bookingCancellationEmail } from "@/emails/BookingCancellation";
 export { bookingRescheduledEmail } from "@/emails/BookingRescheduled";
-export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail, internalNewReviewEmail } from "@/emails/Internal";
+export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail, internalNewReviewEmail, internalBackdropEmail } from "@/emails/Internal";
 export type { RenderedEmail, EmailAttachment, ImageMode } from "./types";
 export type { EmailLocale } from "./messages";
 export { sessionReminderEmail, type ReminderKind } from "@/emails/SessionReminder";

@@ -2,7 +2,6 @@ import "server-only";
 import { createHmac } from "crypto";
 import { and, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
-import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
 import { bookingEmails, bookingRescheduleHistory, bookings, type Booking, type BookingEmail } from "@/lib/db/schema";
 import { getAvailabilityRules } from "@/lib/availability/server";
@@ -11,9 +10,11 @@ import { sessionReminderEmail, type ReminderKind } from "@/lib/email";
 import { getSiteSettings } from "@/lib/settings/server";
 import { log } from "@/lib/log";
 import { hashCancelToken } from "./cancel-token";
-import { managedOf } from "./reschedule";
+import { managedOf, manageUrls } from "./reschedule";
 import { termsFor } from "./terms";
 import { accessFor } from "./access";
+import { backdropsFor } from "./backdrops";
+import { canChangeBackdrop } from "./backdrop-page";
 import { addDaysKey, todayInZone } from "./timezone";
 
 /**
@@ -95,7 +96,8 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   }
   if (!due.length) return result;
 
-  const [rules, themeId, terms, access] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(due.map((d) => d.row.id)), accessFor(due.map((d) => d.row.id))]);
+  const dueIds = due.map((d) => d.row.id);
+  const [rules, themeId, terms, access, picks] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(dueIds), accessFor(dueIds), backdropsFor(dueIds)]);
   for (const { row, kind } of due) {
     const reference = row.bookingReference;
     const [claim] = await db
@@ -112,15 +114,19 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
     try {
       const managed = managedOf(row, rules, now, terms.find((t) => t.bookingId === row.id)?.noticeHours ?? rules.limits.rescheduleNoticeHours);
       let rescheduleUrl: string | undefined;
-      if (kind === "72h" && managed.canReschedule) {
+      let backdropUrl: string | undefined;
+      const canBackdrop = canChangeBackdrop(row, now);
+      if (kind === "72h" && (managed.canReschedule || canBackdrop)) {
         const token = linkToken(claim.id, opts.secret);
         await db.update(bookingEmails).set({ linkTokenHash: hashCancelToken(token) }).where(eq(bookingEmails.id, claim.id));
-        rescheduleUrl = `${site.url.replace(/\/$/, "")}/reschedule?t=${token}`;
+        const links = manageUrls(token);
+        if (managed.canReschedule) rescheduleUrl = links.reschedule;
+        if (canBackdrop) backdropUrl = links.backdrop;
       }
       const mail = await sessionReminderEmail(
         kind,
-        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes },
-        { themeId, today, rescheduleUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours },
+        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks },
+        { themeId, today, rescheduleUrl, backdropUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours },
       );
       const { id } = await sendEmail({
         scope: `resend.reminder-${kind}`,

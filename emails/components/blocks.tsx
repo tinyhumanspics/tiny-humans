@@ -1,6 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 import { Img } from "react-email";
 import type { EmailTheme } from "@/lib/email/theme";
+import type { EmailSwatch } from "./backdrops";
 
 /**
  * Chalkboard email blocks: each one is a full-width table row inside ChalkLayout.
@@ -151,34 +152,46 @@ export function ChalkList({ theme: t, title, items, color, mark = "✓" }: { the
   );
 }
 
-/** Color swatches with names underneath (backdrop picker). Outlook shows the solid color, others a soft glow. */
-export function Swatches({ theme: t, title, text, swatches }: { theme: EmailTheme; title: string; text: string; swatches: { name: string; color: string; glow: string; edge: string }[] }) {
-  const width = `${Math.floor(100 / swatches.length)}%`;
+/** Backdrop swatches with names underneath, 3 per row. Outlook shows the solid color, others a soft glow (or the texture). */
+export function Swatches({ theme: t, title, text, swatches }: { theme: EmailTheme; title: string; text: string; swatches: EmailSwatch[] }) {
+  // rows of 3, so 6 swatches still fit a phone screen
+  const rows: EmailSwatch[][] = [];
+  swatches.forEach((s, i) => (i % 3 ? rows[rows.length - 1].push(s) : rows.push([s])));
+  const width = `${Math.floor(100 / Math.min(3, swatches.length))}%`;
+  const box = { width: 72, height: 72, border: "2px solid rgba(244,242,234,0.7)", borderRadius: 12 };
   return (
     <tr>
       <td className="th-pad" align="center" style={{ padding: "22px 36px 0" }}>
         <p style={{ margin: "0 0 4px", fontFamily: CHALK_FONT, fontSize: 24, color: t.yellow }}>{title}</p>
         <p style={{ margin: "0 0 14px", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>{text}</p>
         <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
-          <tr>
-            {swatches.map((s) => (
-              <td key={s.name} width={width} align="center" valign="top" style={{ width, padding: "0 2px" }}>
-                <table role="presentation" cellPadding="0" cellSpacing="0" border={0} align="center">
-                  <tr>
-                    <td
-                      width="72"
-                      height="72"
-                      bgcolor={s.color}
-                      style={{ width: 72, height: 72, background: s.color, backgroundImage: `radial-gradient(circle at 50% 42%, ${s.glow} 0%, ${s.color} 55%, ${s.edge} 100%)`, border: "2px solid rgba(244,242,234,0.7)", borderRadius: 12, fontSize: 0, lineHeight: 0 }}
-                    >
-                      {" "}
-                    </td>
-                  </tr>
-                </table>
-                <p style={{ margin: "8px 0 0", fontFamily: CHALK_FONT, fontSize: 16, lineHeight: 1.2, color: t.chalk }}>{s.name}</p>
-              </td>
-            ))}
-          </tr>
+          {rows.map((row, r) => (
+            <tr key={r}>
+              {row.map((s) => (
+                <td key={s.name} width={width} align="center" valign="top" style={{ width, padding: r ? "14px 2px 0" : "0 2px" }}>
+                  <table role="presentation" cellPadding="0" cellSpacing="0" border={0} align="center">
+                    <tr>
+                      {s.image ? (
+                        <td width="76" height="76" bgcolor={s.color} style={{ fontSize: 0, lineHeight: 0, borderRadius: 12 }}>
+                          <Img src={s.image} width={72} height={72} alt="" style={box} />
+                        </td>
+                      ) : (
+                        <td
+                          width="72"
+                          height="72"
+                          bgcolor={s.color}
+                          style={{ ...box, background: s.color, backgroundImage: `radial-gradient(circle at 50% 42%, ${s.glow} 0%, ${s.color} 55%, ${s.edge} 100%)`, fontSize: 0, lineHeight: 0 }}
+                        >
+                          {" "}
+                        </td>
+                      )}
+                    </tr>
+                  </table>
+                  <p style={{ margin: "8px 0 0", fontFamily: CHALK_FONT, fontSize: 16, lineHeight: 1.2, color: t.chalk }}>{s.name}</p>
+                </td>
+              ))}
+            </tr>
+          ))}
         </table>
       </td>
     </tr>

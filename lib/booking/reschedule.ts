@@ -29,7 +29,7 @@ const localDate = (d: Date, tz: string) => new Intl.DateTimeFormat("en-CA", { ti
 /** Customer links: management URLs built from our own site address. */
 export function manageUrls(token: string) {
   const base = site.url.replace(/\/$/, "");
-  return { reschedule: `${base}/reschedule?t=${token}`, cancel: `${base}/cancel?t=${token}` };
+  return { reschedule: `${base}/reschedule?t=${token}`, cancel: `${base}/cancel?t=${token}`, backdrop: `${base}/backdrop?t=${token}` };
 }
 
 /** `noticeHours`: the booking's own notice (booking_terms); defaults to today's setting. */

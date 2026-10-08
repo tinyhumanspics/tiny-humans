@@ -303,6 +303,25 @@ export const bookingAccess = pgTable("booking_access", {
 
 export type BookingAccess = typeof bookingAccess.$inferSelect;
 
+/**
+ * The family's backdrop picks (one per setup; ids from config/backdrops.ts), from the booking form or the backdrop page.
+ * A separate table so a missing migration can never break bookings.
+ */
+export const bookingBackdrops = pgTable(
+  "booking_backdrops",
+  {
+    bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+    picks: jsonb("picks").$type<string[]>().notNull(),
+    /** "booking" (picked while booking) | "family" (changed later on the backdrop page) */
+    source: text("source").notNull().default("booking"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("booking_backdrops_source_check", sql`${t.source} in ('booking', 'family')`)],
+);
+
+export type BookingBackdrops = typeof bookingBackdrops.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

@@ -4,6 +4,7 @@ import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
 import type { BookingConsents, BookingContact, SessionAddress } from "./types";
 import type { BookingTravel } from "@/lib/travel/types";
+import { backdropNames } from "./backdrop-names";
 
 /** Data used by the calendar event and the confirmation email. */
 export interface BookingDetails {
@@ -21,6 +22,10 @@ export interface BookingDetails {
   consents?: BookingConsents;
   /** Travel fee on top of the bundle. */
   travel?: BookingTravel;
+  /** Backdrop picks (ids), if they chose already. */
+  backdrops?: string[];
+  /** The saved address line, when the details are rebuilt from a booking row (instead of `address`). */
+  location?: string;
 }
 
 /** Studio-facing travel line (calendar, studio email, /admin). */
@@ -83,6 +88,8 @@ export interface ReminderDetails {
   location: string;
   /** Gate code, parking, concierge (the family's own notes; shown in the 24-hour reminder). */
   accessNotes?: string | null;
+  /** Backdrop picks (ids), if they chose already (72-hour reminder). */
+  backdrops?: string[];
 }
 
 /** What the after-session and gallery emails need. */
@@ -147,8 +154,9 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Phone", d.contact.phone],
     ["Baby's name", d.contact.babyName],
     ["Baby's age", d.contact.babyAge],
-    ["Address", formatAddress(d.address)],
+    ["Address", d.location ?? formatAddress(d.address)],
     [ACCESS_LABEL, d.address.accessNotes],
+    ["Backdrop", d.backdrops?.length ? backdropNames(d.backdrops) : "Not chosen yet"],
     ["Inspiration photo", d.inspirationTitle],
     ["Notes", d.contact.notes],
     ...consentRows(d.consents),

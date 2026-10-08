@@ -7,6 +7,7 @@ import type { EmailStatus, Lead, LeadFilter, LeadList, SentEmail } from "@/lib/l
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
+import { backdropNames } from "@/lib/booking/backdrop-names";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
@@ -170,6 +171,9 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Baby age", lead.babyAge],
     ["Full address", lead.address],
     [ACCESS_LABEL, lead.access || "None"],
+    ...(lead.backdrops !== undefined
+      ? [["Backdrop", lead.backdrops?.picks.length ? `${backdropNames(lead.backdrops.picks)}${lead.backdrops.source === "family" ? ` (changed by the family ${when(lead.backdrops.at)})` : ""}` : "Not chosen yet"] as [string, string]]
+      : []),
     ["Notes", lead.notes || "None"],
     ["Inspiration", inspiration || "None"],
     ...consentRows(lead),

@@ -44,6 +44,15 @@
       "value": "{fee} (about {miles} miles)",
       "total": "Total",
       "stripeLine": "Travel fee (about {miles} miles)"
+    },
+    "backdrops": {
+      "title": "Pick your backdrop",
+      "titleMany": "Pick your backdrops",
+      "hint": "Optional. Not sure yet? Skip it: you can choose later from your confirmation email.",
+      "hintMany": "Optional: one for each of your {n} setups. Not sure yet? Skip it: you can choose later from your confirmation email.",
+      "review": "Backdrop",
+      "reviewMany": "Backdrops",
+      "none": "Not chosen yet (you can pick later)"
     }
   },
   "errors": {
@@ -380,17 +389,27 @@
     },
     "backdrops": {
       "title": "Pick your backdrop",
-      "text": "Reply to this email with your pick, and we'll bring it to your session.",
+      "text": "Choose yours on our website, and we'll bring it to your session.",
+      "choose": "Choose your backdrop",
+      "chosenTitle": "Your backdrop",
+      "chosenTitleMany": "Your backdrops",
+      "chosenText": "{list}. Want a different one? You can change it until the day before your session.",
+      "change": "Change backdrop",
       "reminderTitle": "Picked your backdrop?",
-      "reminderText": "If you haven't yet, just reply to this email with your pick.",
-      "textLine": "Pick your backdrop: reply with {list}.",
+      "reminderText": "If you haven't yet, choose it here so we bring the right one.",
+      "textLine": "Pick your backdrop ({list}): {url}",
+      "chosenLine": "Your backdrop: {list}. Change it until the day before your session: {url}",
       "or": "or",
       "names": {
         "blueAura": "Blue Aura",
         "burgundy": "Burgundy",
         "cream": "Cream",
-        "white": "White"
-      }
+        "white": "White",
+        "beige": "Beige",
+        "wooden": "Wooden"
+      },
+      "replyText": "Reply to this email with your pick, and we'll bring it to your session.",
+      "replyLine": "Pick your backdrop: reply with {list}."
     },
     "reminder72": {
       "subject": "Your Tiny Humans session is coming up: {date} at {time}",
@@ -543,5 +562,24 @@
     "closedReschedule": "This session is less than {notice} away, so it can't be moved online anymore. Please text us at {phone} and we'll help.",
     "closedCancelTitle": "Need to cancel?",
     "textUs": "Text us at {phone}"
+  },
+  "backdropPage": {
+    "metaTitle": "Choose your backdrop",
+    "title": "Choose your backdrop",
+    "titleMany": "Choose your backdrops",
+    "intro": "For your {bundle} session on {date}.",
+    "pickOne": "Pick one.",
+    "pickMany": "Pick up to {n}, one for each setup.",
+    "save": "Save my backdrop",
+    "saveMany": "Save my backdrops",
+    "saving": "Saving…",
+    "saved": "Saved! We'll bring {list} to your session.",
+    "current": "Right now: {list}.",
+    "notChosen": "Not chosen yet.",
+    "later": "Not sure yet? You can come back to this page any time until the day before your session.",
+    "closed": "Your session is very soon, so the backdrop can't be changed online anymore. Just text us at {phone}.",
+    "cancelled": "This booking was cancelled.",
+    "invalid": "This link isn't valid anymore. Please use the newest email from us, or text us at {phone}.",
+    "error": "Something went wrong. Please try again, or text us at {phone}."
   }
 }

@@ -57,6 +57,8 @@ export interface Lead {
   address: string;
   /** Gate code, parking, concierge (from the booking form). */
   access?: string | null;
+  /** Backdrop picks (ids) and where they came from ("booking" form or the "family" backdrop page). */
+  backdrops?: { picks: string[]; source: string; at: string } | null;
   /** Travel fee charged on top of the bundle and the estimated miles (feeCents null = fees were off). */
   travel?: { feeCents: number | null; miles: number | null };
   notes: string | null;

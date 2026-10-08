@@ -8,8 +8,9 @@ import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
-import { backdropList, backdropSwatches } from "./components/backdrops";
-import { ChalkButton, ChalkList, Details, Heading, Paragraph, Swatches } from "./components/blocks";
+import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
+import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
+import { ChalkButton, ChalkList, Details, Heading, Paragraph } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 /** "72h": prep guide + a big reschedule button (lands before the 48 h online cutoff). "24h": logistics. */
@@ -21,6 +22,8 @@ interface Options {
   today: string;
   /** Online reschedule link, only while rescheduling online is still open. */
   rescheduleUrl?: string;
+  /** Backdrop page (pick or change), while it's still more than a day away. */
+  backdropUrl?: string;
   rescheduleNoticeHours?: number;
   images?: ImageMode;
   locale?: EmailLocale;
@@ -52,7 +55,9 @@ export function SessionReminder({
   today,
   rescheduleUrl,
   rescheduleNoticeHours,
-}: { kind: ReminderKind; details: ReminderDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; today: string; rescheduleUrl?: string; rescheduleNoticeHours?: number }) {
+  backdropUrl,
+  swatches,
+}: { kind: ReminderKind; details: ReminderDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; today: string; rescheduleUrl?: string; rescheduleNoticeHours?: number; backdropUrl?: string; swatches: EmailSwatch[] }) {
   const { m, first, day, weekday, date, start, time } = content(r, today, locale);
   const rows: [string, string][] = [
     [m.common.date, date],
@@ -74,7 +79,7 @@ export function SessionReminder({
         </Paragraph>
         <Details theme={t} rows={rows} />
         <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
-        <Swatches theme={t} title={m.backdrops.reminderTitle} text={m.backdrops.reminderText} swatches={backdropSwatches(locale)} />
+        <BackdropChoice theme={t} locale={locale} picks={r.backdrops ?? []} swatches={swatches} url={backdropUrl} reminder />
         <Paragraph theme={t} align="center">
           <span style={{ display: "block", marginTop: 10, fontSize: 18, fontWeight: "bold" }}>{x.rescheduleTitle}</span>
           {rescheduleUrl && rescheduleNoticeHours !== undefined ? changePolicyText(rescheduleNoticeHours) : x.closed}
@@ -114,9 +119,12 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   const locale = opts.locale ?? "en";
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
+  const picks = r.backdrops ?? [];
+  // the swatches (and their texture attachments) only go in the 72-hour email
+  const backdrop = kind === "72h" ? backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined) : { swatches: [], attachments: [] };
   const { m, first, day, weekday, date, start, time } = content(r, opts.today, locale);
   const html = await renderHtml(
-    <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} />,
+    <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} backdropUrl={opts.backdropUrl} swatches={backdrop.swatches} />,
   );
   const details = (withAccess: boolean): (string | false)[] => [
     `${m.common.date}: ${date}`,
@@ -141,14 +149,14 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       `${m.prepGuide.title}:`,
       ...m.prepGuide.items.map((i) => `- ${i}`),
       "",
-      fill(m.backdrops.textLine, { list: backdropList(locale) }),
+      backdropTextLine(locale, picks, opts.backdropUrl),
       "",
       opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined ? changePolicyText(opts.rescheduleNoticeHours) : `${x.closed} ${textUs}.`,
       opts.rescheduleUrl && fill(x.rescheduleText, { url: opts.rescheduleUrl }),
       "",
       signature,
     ]);
-    return { subject: fill(x.subject, { date, time: start }), html, text, attachments: images.attachments };
+    return { subject: fill(x.subject, { date, time: start }), html, text, attachments: [...images.attachments, ...backdrop.attachments] };
   }
 
   const x = m.reminder24;
