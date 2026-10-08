@@ -502,6 +502,45 @@ export const bundleInclusions = pgTable(
 );
 
 /**
+ * Customer-facing bundle copy in languages other than the canonical English row above. Prices, durations, photo
+ * counts and availability remain shared facts; only owner-editable words are translated. Missing rows keep that
+ * language unpublished rather than falling back to English in production.
+ */
+export const bundleTranslations = pgTable(
+  "bundle_translations",
+  {
+    bundleId: text("bundle_id").notNull().references(() => bundlesTable.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    badge: text("badge"),
+    offerLabel: text("offer_label"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bundleId, t.locale] }),
+    check("bundle_translations_locale_check", sql`${t.locale} in ('es')`),
+  ],
+);
+
+/** Translated inclusions keep the English row's position so reordering a bundle does not expose stale copy. */
+export const bundleInclusionTranslations = pgTable(
+  "bundle_inclusion_translations",
+  {
+    bundleId: text("bundle_id").notNull().references(() => bundlesTable.id, { onDelete: "cascade" }),
+    locale: text("locale").notNull(),
+    position: integer("position").notNull(),
+    text: text("text").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bundleId, t.locale, t.position] }),
+    check("bundle_inclusion_translations_locale_check", sql`${t.locale} in ('es')`),
+    check("bundle_inclusion_translations_position_check", sql`${t.position} between 0 and 11`),
+  ],
+);
+
+/**
  * Owner-managed add-ons for each bundle. The first kind is `extra_baby`; the shape deliberately also supports later
  * per-unit seasonal add-ons without changing the bundle table.
  */
