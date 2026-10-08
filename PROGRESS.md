@@ -3,12 +3,16 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 8: Phase 5 SEO next; order = owner's choice below)
+## ▶ NEXT STEPS (Oct 8: Phase 5 SEO core locally complete; order = owner's choice below)
 State: `main` = `1eb9992`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
 needed. Migrations 0010–0017 ran in Neon.
+Phase 5's core SEO slice is locally complete and uncommitted: unique canonicals/Open Graph metadata, sitemap, robots,
+service-area business JSON-LD, and noindex on the query-driven booking page. Photo descriptions were already editable
+in `/admin/photos`, so no migration is needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16
+visual-parity tests passed.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Seasonal landing LIVE Oct 8:** in `/admin/seasonal`, enable the wanted offer(s) and save; in `/admin/theme`, choose
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
@@ -26,7 +30,8 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO next**; (c) Phase 3
+   (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core ready to ship**;
+   owner Search Console + Business Profile steps remain. (c) Phase 3
    Spanish; (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
@@ -403,7 +408,14 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       + `1eb9992` are live; Vercel succeeded and production `/home-sweet-home` + `/admin/seasonal` returned 200.
 
 ## Phase 5 — SEO basics
-- [ ] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable
+- [~] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable.
+      Locally complete, uncommitted: six indexable public pages have their own canonical + OG URL/image; `/book` is
+      canonicalized and noindexed so bundle query strings do not compete in search; sitemap contains only canonical
+      public content; robots points to it and excludes admin/API/pay infrastructure. The home page has escaped
+      `ProfessionalService` JSON-LD with only known facts (Miami Beach base, listed Miami-to-Orlando cities, phone,
+      email and Instagram; no invented reviews/hours/prices/street address). Photo screen-reader descriptions were
+      already editable under `/admin/photos` → Details. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and
+      all 16 visual-parity tests passed.
 - [ ] Owner steps: Google Search Console, Google Business Profile (service-area)
 
 ## Phase 6 — Security + quality
@@ -551,6 +563,22 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 5 SEO** (official docs checked Oct 8): Next.js recommends static `metadata` for fixed pages, a native
+  `<script type="application/ld+json">` with `<` escaped for structured data, and its root `sitemap.ts`/`robots.ts`
+  metadata conventions. Metadata objects merge shallowly, so each page must repeat the complete Open Graph group when
+  changing its URL. Google says a root sitemap should list fully-qualified canonical URLs; submitting it is a hint, and
+  `robots.txt` controls crawling rather than indexing. Google Local Business rich results require a physical address,
+  while Business Profile tells service-area businesses that visit customers to hide their street address and choose
+  specific cities/ZIPs rather than a radius. Therefore the site publishes truthful `ProfessionalService` JSON-LD with
+  city/region only and does not invent a street address or claim rich-result eligibility. Sources:
+  https://nextjs.org/docs/app/api-reference/functions/generate-metadata ·
+  https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap ·
+  https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots ·
+  https://nextjs.org/docs/app/guides/json-ld ·
+  https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap ·
+  https://developers.google.com/search/docs/crawling-indexing/robots/intro ·
+  https://developers.google.com/search/docs/appearance/structured-data/local-business ·
+  https://support.google.com/business/answer/9157481
 - **Phase 4 seasonal landing settings** (official docs checked Oct 8): keep the new copy/dates in the existing immutable,
   timestamped Vercel Blob settings files instead of adding another store or dependency; Vercel recommends immutable blob
   pathnames to avoid stale CDN/browser copies, matching the project's current timestamped files. Saving already calls
