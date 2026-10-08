@@ -367,6 +367,55 @@ export const travelSettingsTable = pgTable(
   ],
 );
 
+/**
+ * Deposits on or off (/admin → Pricing & Promotions → Deposits): one row (id = 1). On = new bookings pay their bundle's
+ * deposit (bundle_deposits) on Stripe while booking, and the date is confirmed once it's paid. No row, or enabled =
+ * false = no deposit (pay after the session). A separate table so a missing migration can never break the booking rules.
+ */
+export const depositSettingsTable = pgTable(
+  "deposit_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    enabled: boolean("enabled").notNull().default(false),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("deposit_settings_single_row", sql`${t.id} = 1`)],
+);
+
+/**
+ * Each booking's deposit (Stripe Checkout while booking). "pending": the family is on Stripe and the booking (status
+ * pending) holds its slot until hold_until; "paid"; "refunded"; "expired": never paid, the hold was released (the
+ * booking is cancelled); "unpaid": Stripe was down, so the booking was confirmed without it (the owner sends the link).
+ * A paid deposit on a cancelled booking was kept (cancelled inside the notice window, or a no-show).
+ */
+export const bookingDeposits = pgTable(
+  "booking_deposits",
+  {
+    bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    status: text("status").notNull().default("pending"),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntent: text("stripe_payment_intent"),
+    /** When the Stripe page expires and the slot is released if unpaid. */
+    holdUntil: timestamp("hold_until", { withTimezone: true }),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    refundId: text("refund_id"),
+    refundedAt: timestamp("refunded_at", { withTimezone: true }),
+    /** Short reason if an automatic refund failed (refund it in Stripe). */
+    refundError: text("refund_error"),
+    /** Set by the request that confirms the booking after payment (a lease: a crashed one is picked up again). */
+    confirmingAt: timestamp("confirming_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("booking_deposits_status_idx").on(t.status, t.holdUntil),
+    check("booking_deposits_status_check", sql`${t.status} in ('pending', 'paid', 'refunded', 'expired', 'unpaid')`),
+  ],
+);
+
+export type BookingDeposit = typeof bookingDeposits.$inferSelect;
+
 /* ---------------- pricing & promotions (/admin/pricing) ---------------- */
 
 export const bundlesTable = pgTable(
@@ -405,6 +454,20 @@ export const bundleInclusions = pgTable(
     text: text("text").notNull(),
   },
   (t) => [index("bundle_inclusions_bundle_idx").on(t.bundleId, t.position)],
+);
+
+/**
+ * Each bundle's deposit (/admin → Pricing & Promotions → Deposits). A bundle without a row uses the default ($50,
+ * DEFAULT_DEPOSIT_CENTS). New bookings only: each booking keeps the amount it paid (booking_deposits).
+ */
+export const bundleDeposits = pgTable(
+  "bundle_deposits",
+  {
+    bundleId: text("bundle_id").primaryKey().references(() => bundlesTable.id, { onDelete: "cascade" }),
+    amountCents: integer("amount_cents").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("bundle_deposits_amount_check", sql`${t.amountCents} between 100 and 100000`)],
 );
 
 export const discountCodes = pgTable(

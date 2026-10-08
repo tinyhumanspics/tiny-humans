@@ -4,6 +4,8 @@ import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
 import type { BookingConsents, BookingContact, SessionAddress } from "./types";
 import type { BookingTravel } from "@/lib/travel/types";
+import type { BookingDepositInfo } from "@/lib/deposit/types";
+import type { DepositOutcome } from "@/lib/deposit/refund";
 import { backdropNames } from "./backdrop-names";
 
 /** Data used by the calendar event and the confirmation email. */
@@ -26,6 +28,8 @@ export interface BookingDetails {
   backdrops?: string[];
   /** The saved address line, when the details are rebuilt from a booking row (instead of `address`). */
   location?: string;
+  /** The deposit paid while booking (none = booked without a deposit). */
+  deposit?: BookingDepositInfo;
 }
 
 /** Studio-facing travel line (calendar, studio email, /admin). */
@@ -33,6 +37,16 @@ export function travelOwnerLine(t: BookingTravel | undefined): string {
   if (!t || t.feeCents === null) return "Not calculated (travel fees off)";
   if (t.miles === null) return "Distance unknown (ZIP not in the Census list): confirm a travel fee with the family";
   return t.feeCents > 0 ? `${formatMoney(t.feeCents)} (about ${t.miles} miles)` : `No fee (about ${t.miles} miles)`;
+}
+
+/** Studio-facing payment lines (calendar, studio email): what was paid while booking and what's due after. */
+export function depositOwnerRows(d: Pick<BookingDetails, "deposit" | "pricing" | "travel">): [string, string][] {
+  const dep = d.deposit;
+  if (!dep) return [["Due at booking", "$0 (nothing collected)"], ["Payment due", "After the photoshoot"]];
+  const rest = formatMoney(Math.max(0, totalDueCents(d.pricing, d.travel) - dep.amountCents));
+  return dep.status === "paid"
+    ? [["Deposit", `${formatMoney(dep.amountCents)} paid on Stripe`], ["Payment due", `${rest} after the photoshoot`]]
+    : [["Deposit", `${formatMoney(dep.amountCents)} NOT PAID (Stripe was down): send them the payment link`], ["Payment due", `${rest} after the photoshoot (+ the deposit)`]];
 }
 
 /** Bundle price + travel fee. */
@@ -74,6 +88,9 @@ export interface RescheduleDetails {
   rescheduledBy: "customer" | "admin";
   rescheduledAt: Date;
   status: string;
+  /** Bundle + travel fee (cents), and the deposit paid while booking (none = booked without one). */
+  totalCents?: number;
+  deposit?: BookingDepositInfo;
 }
 
 /** What a session reminder email needs. */
@@ -90,6 +107,8 @@ export interface ReminderDetails {
   accessNotes?: string | null;
   /** Backdrop picks (ids), if they chose already (72-hour reminder). */
   backdrops?: string[];
+  /** A deposit was paid while booking (the payment lines say so). */
+  depositPaid?: boolean;
 }
 
 /** What the after-session and gallery emails need. */
@@ -113,6 +132,8 @@ export interface CancellationDetails {
   reason: string;
   cancelledAt: Date;
   cancelledBy: "customer" | "admin";
+  /** The paid deposit: refunded, kept, or a refund that failed (none = no paid deposit). */
+  deposit?: DepositOutcome | null;
 }
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -147,8 +168,7 @@ export function eventBodyHtml(d: BookingDetails): string {
     ...pricingRows(d.pricing),
     ["Travel", travelOwnerLine(d.travel)],
     ...(d.travel?.feeCents ? [["Total due", formatMoney(totalDueCents(d.pricing, d.travel))] as [string, string]] : []),
-    ["Due at booking", "$0 (nothing collected)"],
-    ["Payment due", "After the photoshoot"],
+    ...depositOwnerRows(d),
     ["Parent / guardian", d.contact.parentName],
     ["Email", d.contact.email],
     ["Phone", d.contact.phone],

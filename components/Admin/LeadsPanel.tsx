@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import type { AdminApi } from "@/lib/admin/client";
-import type { EmailStatus, Lead, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
+import type { EmailStatus, Lead, LeadDeposit, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
@@ -23,6 +23,7 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "cancelled", label: "Cancelled", alwaysShow: true },
 ];
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
+const statusLabel = (lead: Lead) => (lead.status === "pending" && lead.deposit?.status === "pending" ? "Waiting for deposit" : lead.status === "cancelled" && lead.deposit?.status === "expired" ? "Deposit not paid" : STATUS_LABEL[lead.status]);
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 const emailLine = (e: EmailStatus) => (e.sent ? `Sent ${when(e.at)}` : e.error ? `Not sent (${e.error})` : "Not sent");
 /** Optional permissions from the booking form (server mode only). */
@@ -33,6 +34,31 @@ const consentRows = (lead: Lead): [string, string][] => {
     ["Texts", c.sms ? `OK to text${c.smsAt ? ` (since ${when(c.smsAt)})` : ""}` : c.smsAt ? `Don't text (changed ${when(c.smsAt)})` : "Not OK to text"],
     ["Photo use", c.photos ? `OK to feature on the website + social media${c.photosAt ? ` (since ${when(c.photosAt)})` : ""}` : c.photosAt ? `Keep private (changed ${when(c.photosAt)})` : "Keep private"],
   ];
+};
+const clock = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/New_York" }).format(new Date(iso)) : "");
+/** The deposit, in the owner's words. */
+function depositLine(d: LeadDeposit, cancelled: boolean): string {
+  const amount = formatMoney(d.amountCents);
+  switch (d.status) {
+    case "pending":
+      return `${amount}: waiting for the family to pay on Stripe (their time is held until ${clock(d.holdUntil)})`;
+    case "paid":
+      if (d.refundError) return `${amount} paid ${when(d.paidAt)}. The automatic refund FAILED (${d.refundError}): use “Refund the deposit” below, or refund it in Stripe`;
+      return cancelled ? `${amount} kept (paid ${when(d.paidAt)}, not refunded)` : `${amount} paid ${when(d.paidAt)}`;
+    case "refunded":
+      return `${amount} refunded ${when(d.refundedAt)}`;
+    case "expired":
+      return `${amount} not paid: the payment page closed and the time was released`;
+    case "unpaid":
+      return `${amount} NOT PAID: Stripe was down when they booked. Send them the payment link (it takes the deposit first)`;
+  }
+}
+const depositRows = (lead: Lead): [string, string][] => {
+  const d = lead.deposit;
+  if (!d) return [];
+  const rows: [string, string][] = [["Deposit", depositLine(d, lead.status === "cancelled")]];
+  if (d.status === "expired") rows.push(["“Not confirmed yet” email", d.abandonedEmail ? sentLine(d.abandonedEmail) : "Not sent (they booked again, or chose another time themselves)"]);
+  return rows;
 };
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
 /** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
@@ -137,6 +163,9 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     }
   };
   const [reason, setReason] = useState("");
+  const depositPaid = lead.deposit?.status === "paid";
+  // inside the notice window a deposit is normally kept (owner's terms); the owner can still tick it
+  const [refund, setRefund] = useState(!lead.deposit?.late);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const inspiration = findPhoto(photos, lead.inspirationPhotoId)?.title ?? (lead.inspirationPhotoId ? "Photo no longer in the portfolio" : null);
@@ -148,7 +177,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     setBusy(true);
     setErr(null);
     try {
-      const updated = await api.cancelLead(lead.reference, reason.trim());
+      const updated = await api.cancelLead(lead.reference, reason.trim(), depositPaid ? refund : undefined);
       setCancelling(false);
       setReason("");
       onCancelled(updated);
@@ -168,6 +197,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Final booked price", formatMoney(pr.finalCents)],
     ...(lead.travel ? [["Travel", travelOwnerLine(lead.travel)] as [string, string]] : []),
     ...(lead.travel?.feeCents ? [["Total due", formatMoney(pr.finalCents + lead.travel.feeCents)] as [string, string]] : []),
+    ...depositRows(lead),
     ["Baby age", lead.babyAge],
     ["Full address", lead.address],
     [ACCESS_LABEL, lead.access || "None"],
@@ -177,7 +207,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Notes", lead.notes || "None"],
     ["Inspiration", inspiration || "None"],
     ...consentRows(lead),
-    ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : "Not on the calendar"],
+    ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : lead.deposit?.status === "pending" ? "Not yet (added once the deposit is paid)" : "Not on the calendar"],
     ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
     ...reminderRows(lead),
@@ -196,7 +226,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     rows.push(
       ["Cancellation reason", lead.cancellation.reason || ""],
       ["Cancelled on", `${when(lead.cancellation.at)}${lead.cancellation.by ? ` (by ${lead.cancellation.by === "admin" ? "Tiny Humans" : "the customer"})` : ""}`],
-      ["Cancellation email", emailLine(lead.cancellation.email)],
+      // a time released for an unpaid deposit was never booked: no cancellation email
+      ...(lead.deposit?.status === "expired" ? [] : ([["Cancellation email", emailLine(lead.cancellation.email)]] as [string, string][])),
     );
   }
 
@@ -205,7 +236,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
       <div className={styles.leadHead}>
         <span className={cn(styles.leadName, "chalk-soft")}>{lead.parentName}</span>
         <span className={styles.leadPills}>
-          <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{STATUS_LABEL[lead.status]}</span>
+          <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{statusLabel(lead)}</span>
           <PaidTag lead={lead} />
         </span>
       </div>
@@ -282,16 +313,27 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
               />
             </div>
           )}
-          {lead.status !== "cancelled" && !moving && !cancelling && (
+          {lead.status !== "cancelled" && lead.status !== "pending" && !moving && !cancelling && (
             <button type="button" className={styles.smallButton} onClick={() => setMoving(true)}>
               Reschedule Booking
             </button>
           )}
-          {lead.status !== "cancelled" && !moving &&
+          {lead.status !== "cancelled" && lead.status !== "pending" && !moving &&
             (cancelling ? (
               <form onSubmit={cancel} className={styles.leadCancelForm} noValidate>
                 <label htmlFor={`reason-${lead.reference}`} className={cn(styles.label, "chalk-soft")}>Reason for cancellation (sent to the customer)</label>
                 <textarea id={`reason-${lead.reference}`} className={cn(styles.input, styles.reasonInput)} rows={3} maxLength={1000} value={reason} onChange={(e) => setReason(e.target.value)} aria-invalid={Boolean(err)} />
+                {depositPaid && (
+                  <>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" checked={refund} onChange={(e) => setRefund(e.target.checked)} />
+                      <span className="chalk-soft">Refund the {formatMoney(lead.deposit!.amountCents)} deposit to their card</span>
+                    </label>
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>
+                      {lead.deposit!.late ? "The session is inside the cancel notice, so the deposit is normally kept (your Terms). Tick it to refund anyway." : "Outside the cancel notice the deposit is refunded (your Terms)."}
+                    </p>
+                  </>
+                )}
                 {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
                 <div className={styles.photoBar}>
                   <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => { setCancelling(false); setErr(null); }}>Keep booking</button>
@@ -317,6 +359,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
             <p id={`del-d-${lead.reference}`} className={cn(styles.muted, "chalk-soft")}>
               This will permanently remove the booking record and cannot be undone. ({lead.parentName}, {lead.reference})
               {lead.status !== "cancelled" ? " Its Outlook event is removed first; no emails are sent." : ""}
+              {lead.deposit?.status === "paid" ? ` Its ${formatMoney(lead.deposit.amountCents)} deposit is refunded to their card.` : ""}
+              {lead.deposit?.status === "pending" ? " Its Stripe deposit page is closed first, so it can't be paid anymore." : ""}
             </p>
             {deleteErr && <p className={cn(styles.error, "chalk-soft")} role="alert">{deleteErr}</p>}
             <div className={styles.photoBar}>
@@ -334,9 +378,14 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
 /** "Paid $149" on the lead card, or "Not paid" once the session has ended. */
 function PaidTag({ lead }: { lead: Lead }) {
   const a = lead.after;
-  if (!a || lead.status === "cancelled" || a.payment.amountCents <= 0) return null;
-  if (a.payment.status === "paid") return <span className={cn(styles.statusPill, styles.paidPill)}>Paid {formatMoney(a.payment.amountCents)}</span>;
-  return a.ended ? <span className={cn(styles.statusPill, styles.unpaidPill)}>Not paid</span> : null;
+  const d = lead.deposit;
+  if (!a || lead.status === "cancelled" || lead.status === "pending") return null;
+  const deposit = d?.status === "paid" ? d.amountCents : 0;
+  if (d?.status === "unpaid" && !a.ended) return <span className={cn(styles.statusPill, styles.unpaidPill)}>Deposit not paid</span>;
+  if (a.payment.amountCents <= 0) return deposit ? <span className={cn(styles.statusPill, styles.paidPill)}>Paid {formatMoney(deposit)}</span> : null;
+  if (a.payment.status === "paid") return <span className={cn(styles.statusPill, styles.paidPill)}>Paid {formatMoney(a.payment.amountCents + deposit)}</span>;
+  if (a.ended) return <span className={cn(styles.statusPill, styles.unpaidPill)}>Not paid</span>;
+  return deposit ? <span className={cn(styles.statusPill, styles.paidPill)}>Deposit {formatMoney(deposit)}</span> : null;
 }
 
 const sentLine = (e: SentEmail) => (e.status === "sent" ? `Sent ${when(e.at)}` : e.status === "failed" ? `Not sent (${e.error ?? "error"})` : "Sending…");
@@ -366,7 +415,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
   const canRetry = (e: SentEmail | null) => !e || e.status === "failed";
   const sendOrConfirm = (what: "done" | "gallery", fn: () => Promise<Lead>) => (a.started ? run(what, fn) : setEarly({ what, fn }));
   const id = `after-${lead.reference}`;
-  if (lead.status === "cancelled") return null;
+  if (lead.status === "cancelled" || lead.status === "pending") return null;
   return (
     <div className={styles.history}>
       <p className={cn(styles.h3, "chalk-soft")}>After the Session</p>
@@ -494,11 +543,40 @@ function smsHref(phone: string, body: string): string {
 /** Payment: status + the booking's payment link (never expires) to text, copy or email — before or after the session. */
 function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
   const p = lead.after!.payment;
-  const [busy, setBusy] = useState<"email" | "check" | null>(null);
+  const d = lead.deposit;
+  const [busy, setBusy] = useState<"email" | "check" | "refund" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  if (lead.status === "cancelled") return null;
+  const canRefund = d?.status === "paid" && (lead.status === "cancelled" || Boolean(d.refundError));
+  const refund = async () => {
+    setBusy("refund");
+    setErr(null);
+    setNote(null);
+    try {
+      onUpdated(await api.refundDeposit(lead.reference));
+      setNote("Refunded. It usually reaches their card in 5–10 business days.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't refund. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  if (lead.status === "cancelled" || lead.status === "pending") {
+    return canRefund ? (
+      <div className={styles.history}>
+        <p className={cn(styles.h3, "chalk-soft")}>Deposit</p>
+        <div className={styles.photoBarRight}>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={refund}>
+            {busy === "refund" ? "Refunding…" : `Refund the ${formatMoney(d!.amountCents)} deposit`}
+          </button>
+        </div>
+        {note && <p className={cn(styles.hintSmall, "chalk-soft")} role="status">{note}</p>}
+        {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+      </div>
+    ) : null;
+  }
   const amount = formatMoney(p.amountCents);
+  const nextAmount = formatMoney(p.next.amountCents);
   const status =
     p.amountCents <= 0
       ? "Nothing to pay"
@@ -507,7 +585,7 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
         : p.status === "open"
           ? `Not paid yet (${amount}). The family opened the payment page.`
           : `Not paid yet (${amount})`;
-  const showLink = p.link && p.status !== "paid";
+  const showLink = p.link && (p.status !== "paid" || p.next.kind === "deposit");
   const copy = async () => {
     setErr(null);
     try {
@@ -554,6 +632,12 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
           <dt className="chalk-soft">Status</dt>
           <dd className="chalk-soft">{status}</dd>
         </div>
+        {d && d.status !== "expired" && d.status !== "pending" && (
+          <div>
+            <dt className="chalk-soft">Deposit</dt>
+            <dd className="chalk-soft">{depositLine(d, false)}</dd>
+          </div>
+        )}
         {p.linkEmail && (
           <div>
             <dt className="chalk-soft">Payment link email</dt>
@@ -561,17 +645,28 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
           </div>
         )}
       </dl>
-      {p.amountCents > 0 && p.status !== "paid" && (
+      {(p.amountCents > 0 && p.status !== "paid") || d?.status === "unpaid" ? (
         <div className={styles.photoBarRight}>
           <span className={cn(styles.hintSmall, "chalk-soft")}>Paid, but it still says not paid?</span>
           <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={check}>
             {busy === "check" ? "Checking…" : "Check with Stripe"}
           </button>
         </div>
+      ) : null}
+      {canRefund && (
+        <div className={styles.photoBarRight}>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={refund}>
+            {busy === "refund" ? "Refunding…" : `Refund the ${formatMoney(d!.amountCents)} deposit`}
+          </button>
+        </div>
       )}
       {showLink && (
         <>
-          <p className={cn(styles.hintSmall, "chalk-soft")}>This link never expires and always charges {amount}. Send it any time, before or after the session.</p>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>
+            {p.next.kind === "deposit"
+              ? `This link never expires. Before the session it takes the ${nextAmount} deposit; after that it charges the rest. Send it any time.`
+              : `This link never expires and always charges ${amount}. Send it any time, before or after the session.`}
+          </p>
           <div className={styles.photoBarRight}>
             <a className={styles.smallButton} href={smsHref(lead.phone, en.emails.paymentLink.smsBody.replace("{name}", first).replace("{url}", p.link!))}>
               Text the link

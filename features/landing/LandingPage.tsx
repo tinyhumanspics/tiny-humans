@@ -4,6 +4,7 @@ import en from "@/messages/en.json";
 import type { TravelSettings } from "@/lib/travel/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { fill } from "@/lib/email/messages";
+import { depositText, type SiteDeposit } from "@/lib/deposit/copy";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
@@ -31,17 +32,37 @@ const PHONE_ORDER = ["forever-little", "our-little-story", "little-moments"];
 const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
 
 /** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
-/** FAQ answer with today's settings ("aFee" replaces "a" once a travel fee is set up). */
-function faqAnswer(f: { a: string; aFee?: string }, noticeHours: number, travel: TravelSettings | null): string {
-  const text = travel && f.aFee ? fill(f.aFee, { max: String(travel.maxMiles), free: String(travel.freeMiles), perMile: formatMoney(travel.perMileCents) }) : f.a;
-  return text.replace("{notice}", noticeLabel(noticeHours));
+/** FAQ answer with today's settings ("aFee" replaces "a" once a travel fee is set up, "aDeposit" while there's a deposit). */
+function faqAnswer(f: { a: string; aFee?: string; aDeposit?: string; aDepositFrom?: string }, noticeHours: number, travel: TravelSettings | null, deposit: SiteDeposit | null): string {
+  const text =
+    deposit && f.aDeposit
+      ? depositText({ one: f.aDeposit, from: f.aDepositFrom ?? f.aDeposit }, deposit)
+      : travel && f.aFee
+        ? fill(f.aFee, { max: String(travel.maxMiles), free: String(travel.freeMiles), perMile: formatMoney(travel.perMileCents) })
+        : f.a;
+  return text.replace(/\{notice\}/g, noticeLabel(noticeHours));
+}
+
+/** The "$0 today, pay after your session" lines, or their deposit versions while deposits are on. */
+function paymentCopy(deposit: SiteDeposit | null) {
+  if (!deposit) return { ctaNote: t.hero.ctaNote, finalCtaNote: t.final.ctaNote, after: t.how.after, trust: t.trust, steps: t.how.steps };
+  const d = en.deposit.landing;
+  return {
+    ctaNote: depositText(d.ctaNote, deposit),
+    finalCtaNote: depositText(d.finalCtaNote, deposit),
+    after: d.after,
+    // the trust strip's "$0 today, pay after" item and the "Pick a date and time" step mention paying
+    trust: t.trust.map((item) => (item.startsWith("$0") ? depositText(d.trust, deposit) : item)),
+    steps: t.how.steps.map((s) => (s.text.includes("$0 today") ? { ...s, text: depositText(d.howStep, deposit) } : s)),
+  };
 }
 
 /**
- * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off). Both from /admin >
- * Availability, for the FAQ.
+ * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off), both from /admin >
+ * Availability; `deposit`: the deposit paid while booking (null = none), from /admin > Pricing & Promotions.
  */
-export default function LandingPage({ noticeHours, travel }: { noticeHours: number; travel: TravelSettings | null }) {
+export default function LandingPage({ noticeHours, travel, deposit = null }: { noticeHours: number; travel: TravelSettings | null; deposit?: SiteDeposit | null }) {
+  const pay = paymentCopy(deposit);
   const { bundles, today, available } = useCatalog();
   const { media, photos } = useSiteSettings();
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
@@ -72,7 +93,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
               <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={12}>{t.hero.cta}</ChalkButton>
               <ChalkButton href="#bundles" variant="outline" seed={11}>{t.hero.secondary}</ChalkButton>
             </div>
-            <p className={cn(styles.ctaNote, "chalk-soft")}>{t.hero.ctaNote}</p>
+            <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.ctaNote}</p>
           </Reveal>
           {first && second && (
             <Reveal className={styles.snaps} delay={200}>
@@ -93,7 +114,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
       <section className="container" aria-label="Why families choose us">
         <Reveal>
           <ul className={styles.trust}>
-            {t.trust.map((item) => (
+            {pay.trust.map((item) => (
               <li key={item} className="chalk-soft">
                 <ChalkDoodle name="check" size={22} color="var(--sun-yellow)" strokeWidth={3.4} grain={false} />
                 {item}
@@ -125,7 +146,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
       <section className={cn("container", styles.section)} aria-labelledby="landing-how">
         <SectionHeading id="landing-how" title={t.how.title} slot="book" />
         <ol className={styles.steps}>
-          {t.how.steps.map((s, i) => (
+          {pay.steps.map((s, i) => (
             <Reveal as="li" key={s.title} delay={i * 110}>
               <ChalkBox className={styles.step} seed={40 + i} wobble={2.6} strokeWidth={2.4}>
                 <span className={cn(styles.stepNum, "chalk")} aria-hidden="true">{i + 1}</span>
@@ -140,7 +161,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
         </Reveal>
         <Reveal>
           <p className={cn(styles.after, "chalk-soft")}>
-            <ChalkDoodle name="heart" size={24} color="var(--accent-2)" strokeWidth={3} grain={false} /> {t.how.after}
+            <ChalkDoodle name="heart" size={24} color="var(--accent-2)" strokeWidth={3} grain={false} /> {pay.after}
           </p>
         </Reveal>
       </section>
@@ -159,7 +180,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
         ) : (
           <BookingPaused />
         )}
-        <p className={cn(styles.ctaNote, styles.center, "chalk-soft")}>{t.hero.ctaNote}</p>
+        <p className={cn(styles.ctaNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
         <Reveal className={styles.bonusWrap}>
           <ChalkBox className={styles.bonus} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">
             <h3 className={cn(styles.bonusTitle, "chalk")}>{t.offer.bonusTitle}</h3>
@@ -209,7 +230,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
           {t.faq.items.map((f) => (
             <details key={f.q} className={styles.faqItem}>
               <summary className="chalk-soft">{f.q}</summary>
-              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel)}</p>
+              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel, deposit)}</p>
             </details>
           ))}
         </div>
@@ -237,7 +258,7 @@ export default function LandingPage({ noticeHours, travel }: { noticeHours: numb
             <p className="chalk-soft">{t.final.cap}</p>
             <p className={cn(styles.small, "chalk-soft")}>{t.final.seasonal}</p>
             <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={72}>{t.final.cta}</ChalkButton>
-            <p className={cn(styles.ctaNote, "chalk-soft")}>{t.final.ctaNote}</p>
+            <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.finalCtaNote}</p>
           </ChalkBox>
         </Reveal>
       </section>

@@ -266,6 +266,13 @@ export async function claimCode(codeId: string, email: string): Promise<{ usageI
   }
 }
 
+/** Gives back the code use of a booking that never happened (its deposit wasn't paid). */
+export async function releaseCodeUsage(bookingId: string): Promise<void> {
+  const db = getDb();
+  const freed = await db.delete(discountCodeUsage).where(eq(discountCodeUsage.bookingId, bookingId)).returning({ codeId: discountCodeUsage.codeId });
+  for (const u of freed) await db.update(discountCodes).set({ usesCount: sql`greatest(${discountCodes.usesCount} - 1, 0)` }).where(eq(discountCodes.id, u.codeId));
+}
+
 export async function attachUsage(usageId: string, bookingId: string) {
   await getDb().update(discountCodeUsage).set({ bookingId }).where(eq(discountCodeUsage.id, usageId)).catch(() => undefined);
 }

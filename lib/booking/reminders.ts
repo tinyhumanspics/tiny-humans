@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac } from "crypto";
-import { and, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { getDb } from "@/lib/db/client";
 import { bookingEmails, bookingRescheduleHistory, bookings, type Booking, type BookingEmail } from "@/lib/db/schema";
@@ -16,6 +16,7 @@ import { accessFor } from "./access";
 import { backdropsFor } from "./backdrops";
 import { canChangeBackdrop } from "./backdrop-page";
 import { addDaysKey, todayInZone } from "./timezone";
+import { depositsFor } from "@/lib/deposit/server";
 
 /**
  * Session reminders, sent by a once-a-day cron (Vercel Hobby). Everything is decided at send time from the booking
@@ -73,7 +74,8 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   const rows = await db
     .select()
     .from(bookings)
-    .where(and(ne(bookings.status, "cancelled"), gte(bookings.sessionDate, today), lte(bookings.sessionDate, addDaysKey(today, 3))));
+    // booked ones only (not a booking still waiting on its deposit page)
+    .where(and(inArray(bookings.status, ["confirmed", "rescheduled"]), gte(bookings.sessionDate, today), lte(bookings.sessionDate, addDaysKey(today, 3))));
   if (!rows.length) return result;
   const ids = rows.map((r) => r.id);
   const [history, sentRows] = await Promise.all([
@@ -97,7 +99,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   if (!due.length) return result;
 
   const dueIds = due.map((d) => d.row.id);
-  const [rules, themeId, terms, access, picks] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(dueIds), accessFor(dueIds), backdropsFor(dueIds)]);
+  const [rules, themeId, terms, access, picks, deposits] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(dueIds), accessFor(dueIds), backdropsFor(dueIds), depositsFor(dueIds)]);
   for (const { row, kind } of due) {
     const reference = row.bookingReference;
     const [claim] = await db
@@ -125,7 +127,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
       }
       const mail = await sessionReminderEmail(
         kind,
-        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks },
+        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks, depositPaid: deposits.some((d) => d.bookingId === row.id && d.status === "paid") },
         { themeId, today, rescheduleUrl, backdropUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours },
       );
       const { id } = await sendEmail({

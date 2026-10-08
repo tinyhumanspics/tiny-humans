@@ -10,6 +10,7 @@ import { isMicrosoftConfigured } from "@/lib/microsoft/config";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { bookingCancellationEmail, internalCancellationEmail } from "@/lib/email";
 import { getSiteSettings } from "@/lib/settings/server";
+import { settleDepositOnCancel } from "@/lib/deposit/refund";
 import { BookingError, friendly } from "./errors";
 import { hashCancelToken, looksLikeCancelToken } from "./cancel-token";
 import type { CancellationDetails } from "./templates";
@@ -78,7 +79,8 @@ async function activeThemeId(): Promise<string> {
  *    (guarded so it only undoes this cancellation) and the caller gets a friendly
  *    error. If even the rollback fails, it is logged loudly for manual recovery;
  *    the Outlook event still exists, so the slot can't be double-booked.
- * 4. Emails (customer + internal). Failures are recorded, never undo the cancellation.
+ * 4. The paid deposit is refunded (opts.refundDeposit) or kept; a failed refund is flagged, never undoes anything.
+ * 5. Emails (customer + internal). Failures are recorded, never undo the cancellation.
  * The booking row is never deleted; reschedule history is untouched.
  */
 export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promise<Booking> {
@@ -137,6 +139,9 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
   let updated: Booking = claimed;
   log.info("booking.cancel", "Booking cancelled (Neon + Outlook consistent)", { reference: row.bookingReference, by: opts.by });
 
+  // 2b. The deposit: refunded (online cancellation in time, or the owner's choice) or kept. Never undoes anything.
+  const deposit = await settleDepositOnCancel(updated, Boolean(opts.refundDeposit));
+
   if (opts.silent) return updated;
 
   const s = summaryOf(updated, 0); // local start/end times only
@@ -152,6 +157,7 @@ export async function cancelBookingRow(row: Booking, opts: CancelOptions): Promi
     reason,
     cancelledAt,
     cancelledBy: opts.by,
+    deposit,
   };
   const themeId = await activeThemeId();
   const cfg = emailConfig();

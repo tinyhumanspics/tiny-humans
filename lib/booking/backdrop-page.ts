@@ -1,22 +1,17 @@
 import "server-only";
-import { eq } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { setupsOf } from "@/config/backdrops";
-import { getDb } from "@/lib/db/client";
-import { bookingConsents, type Booking } from "@/lib/db/schema";
-import type { Bundle } from "@/config/bundles";
+import type { Booking } from "@/lib/db/schema";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { internalBackdropEmail } from "@/lib/email";
 import { log } from "@/lib/log";
 import { isMicrosoftConfigured } from "@/lib/microsoft/config";
 import { updateCalendarEventBody } from "@/lib/microsoft/calendar";
-import { getCatalog } from "@/lib/pricing/server";
-import { accessFor } from "./access";
 import { backdropsFor, saveBackdrops } from "./backdrops";
 import { findByCancelToken } from "./cancellation";
 import { BookingError } from "./errors";
-import { photoTitle, snapshotOf } from "./outlook-provider";
-import { eventBodyHtml, type BookingDetails } from "./templates";
+import { detailsFromRow } from "./details";
+import { eventBodyHtml } from "./templates";
 import { addDaysKey, todayInZone } from "./timezone";
 import en from "@/messages/en.json";
 import { site } from "@/config/site";
@@ -94,28 +89,5 @@ export async function afterBackdropChange(row: Booking, before: string[], after:
 /** Rebuilds the Outlook event's description from the saved booking (same rows as when it was booked). */
 async function refreshCalendarEvent(row: Booking): Promise<void> {
   if (!row.outlookEventId || row.status === "cancelled" || !isMicrosoftConfigured()) return;
-  const [catalog, [consent], [access], [picks], inspirationTitle] = await Promise.all([
-    getCatalog().catch(() => [] as Bundle[]),
-    getDb().select().from(bookingConsents).where(eq(bookingConsents.bookingId, row.id)).limit(1).catch(() => []),
-    accessFor([row.id]),
-    backdropsFor([row.id]),
-    row.inspirationPhotoId ? photoTitle(row.inspirationPhotoId) : Promise.resolve(undefined),
-  ]);
-  const bundle = catalog.find((b) => b.id === row.packageId) ?? ({ id: row.packageId, name: row.packageName, features: [] } as unknown as Bundle);
-  const details: BookingDetails = {
-    reference: row.bookingReference,
-    bundle,
-    date: row.sessionDate,
-    start: localTime(row.sessionStart, row.timezone),
-    end: localTime(row.sessionEnd, row.timezone),
-    contact: { parentName: row.parentName, email: row.email, phone: row.phone, babyName: row.babyName ?? undefined, babyAge: row.babyAge, notes: row.notes ?? undefined },
-    address: { street: "", city: "", zip: "", accessNotes: access?.notes },
-    location: row.locationAddress,
-    inspirationTitle,
-    pricing: snapshotOf(row),
-    consents: consent ? { sms: consent.sms, photos: consent.photos } : undefined,
-    travel: { feeCents: row.travelFeeCents, miles: row.travelMiles },
-    backdrops: picks?.picks,
-  };
-  await updateCalendarEventBody(row.outlookEventId, eventBodyHtml(details));
+  await updateCalendarEventBody(row.outlookEventId, eventBodyHtml(await detailsFromRow(row)));
 }

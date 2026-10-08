@@ -1,6 +1,6 @@
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { ACCESS_LABEL, consentRows, formatAddress, pricingRows, totalDueCents, travelOwnerLine, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
+import { ACCESS_LABEL, consentRows, depositOwnerRows, formatAddress, pricingRows, totalDueCents, travelOwnerLine, type BookingDetails, type CancellationDetails, type RescheduleDetails } from "@/lib/booking/templates";
 import { renderHtml } from "@/lib/email/render";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import type { RenderedEmail } from "@/lib/email/types";
@@ -27,11 +27,11 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ...pricingRows(d.pricing).map(([k, v]) => [k === "Package total" ? "Final package total" : k, v] as [string, string]),
     ["Travel", travelOwnerLine(d.travel)],
     ...(d.travel?.feeCents ? [["Total due", formatMoney(totalDueCents(d.pricing, d.travel))] as [string, string]] : []),
-    ["Payment due", "After the photoshoot"],
+    ...depositOwnerRows(d).filter(([k]) => k !== "Due at booking"),
     ["Session date", formatLongDate(d.date)],
     ["Session time", `${formatTimeLabel(d.start)} to ${formatTimeLabel(d.end)}`],
     ["Location type", "At the family's home (we bring the studio)"],
-    ["Session address", formatAddress(d.address)],
+    ["Session address", d.location ?? formatAddress(d.address)],
     [ACCESS_LABEL, d.address.accessNotes || "None"],
     ["Backdrop", d.backdrops?.length ? backdropNames(d.backdrops) : "Not chosen yet"],
     ["Customer notes", d.contact.notes || "None"],
@@ -98,6 +98,18 @@ export async function internalCancellationEmail(c: CancellationDetails): Promise
     ["Cancellation reason", c.reason],
     ["Cancelled at", eastern(c.cancelledAt)],
     ["Cancelled by", c.cancelledBy === "admin" ? "Tiny Humans (admin)" : "The customer"],
+    ...(c.deposit
+      ? [
+          [
+            "Deposit",
+            c.deposit.result === "refunded"
+              ? `${formatMoney(c.deposit.amountCents)} refunded to their card`
+              : c.deposit.result === "kept"
+                ? `${formatMoney(c.deposit.amountCents)} kept (not refunded)`
+                : `${formatMoney(c.deposit.amountCents)} refund FAILED (${c.deposit.error ?? "error"}): refund it in Stripe`,
+          ] as [string, string],
+        ]
+      : []),
   ];
   const html = await renderHtml(
     <InternalLayout

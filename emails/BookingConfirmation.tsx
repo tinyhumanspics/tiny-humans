@@ -1,7 +1,8 @@
 import { site } from "@/config/site";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { formatAddress, PAYMENT_NOTE, pricingRows, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
+import { formatAddress, pricingRows, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
+import { paymentDue, prepGuideItems } from "@/lib/email/payment";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
@@ -26,18 +27,26 @@ interface Options {
   locale?: EmailLocale;
 }
 
-/** "What happens next", with the bundle's photo count ("choose your 20 favorites"). */
-const nextSteps = (d: BookingDetails, locale: EmailLocale) => emailMessages(locale).confirmation.next.map((i) => fill(i, { count: d.bundle.photos?.trim() ?? "" }).replace(/\s+/g, " "));
+/** "What happens next", with the bundle's photo count ("choose your 20 favorites"); its last line is about paying. */
+const nextSteps = (d: BookingDetails, locale: EmailLocale) => {
+  const m = emailMessages(locale);
+  const items = d.deposit?.status === "paid" ? [...m.confirmation.next.slice(0, -1), m.deposit.nextLast] : m.confirmation.next;
+  return items.map((i) => fill(i, { count: d.bundle.photos?.trim() ?? "" }).replace(/\s+/g, " "));
+};
 
 function content(d: BookingDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
   const date = formatLongDate(d.date);
+  const due = paymentDue(locale, totalDueCents(d.pricing, d.travel), d.deposit);
   return {
     m,
     date,
     first: d.contact.parentName.split(" ")[0],
     time: fill(m.common.timeRange, { start: formatTimeLabel(d.start), end: formatTimeLabel(d.end) }),
-    paymentRows: [[m.common.packageTotal, formatMoney(d.pricing.finalCents)], ...travelRows(d, locale), [m.common.paymentDue, m.common.paymentDueValue]] as [string, string][],
+    paymentRows: [[m.common.packageTotal, formatMoney(d.pricing.finalCents)], ...travelRows(d, locale), ...due.rows] as [string, string][],
+    due,
+    prepGuide: prepGuideItems(locale, d.deposit?.status === "paid"),
+    location: d.location ?? formatAddress(d.address),
   };
 }
 
@@ -65,7 +74,7 @@ export function BookingConfirmation({
   backdropUrl,
   swatches,
 }: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; swatches: EmailSwatch[] }) {
-  const { m, date, first, time, paymentRows } = content(d, locale);
+  const { m, date, first, time, paymentRows, due, prepGuide, location } = content(d, locale);
   const c = m.confirmation;
   return (
     <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(c.preheader, { date })}>
@@ -80,14 +89,14 @@ export function BookingConfirmation({
           [m.common.bundle, d.bundle.name],
           [m.common.date, date],
           [m.common.time, time],
-          [m.common.location, formatAddress(d.address)],
+          [m.common.location, location],
           ...pricingRows(d.pricing),
           ...travelRows(d, locale),
         ]}
       />
-      <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={PAYMENT_NOTE.email} />
+      <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={due.note} />
       <BackdropChoice theme={t} locale={locale} picks={d.backdrops ?? []} swatches={swatches} url={backdropUrl} />
-      <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
+      <ChalkList theme={t} title={m.prepGuide.title} items={prepGuide} />
       <ChalkList theme={t} title={c.nextTitle} items={nextSteps(d, locale)} color={t.chalk} mark="•" />
       <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
       <Paragraph theme={t}>{`${c.babyLed} ${c.promise}`}</Paragraph>
@@ -109,7 +118,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
   const images = emailImageSet(theme.id, opts.images ?? "cid");
   const picks = d.backdrops ?? [];
   const backdrop = backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined);
-  const { m, date, first, time } = content(d, locale);
+  const { m, date, first, time, due, prepGuide, location } = content(d, locale);
   const c = m.confirmation;
   const html = await renderHtml(
     <BookingConfirmation
@@ -132,17 +141,17 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${m.common.bundle}: ${d.bundle.name}`,
     `${m.common.date}: ${date}`,
     `${m.common.time}: ${time}`,
-    `${m.common.location}: ${formatAddress(d.address)}`,
+    `${m.common.location}: ${location}`,
     ...pricingRows(d.pricing).map(([k, v]) => `${k}: ${v}`),
     ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
-    `${m.common.paymentDue}: ${m.common.paymentDueValue}`,
+    ...due.rows.map(([k, v]) => `${k}: ${v}`),
     "",
-    PAYMENT_NOTE.email,
+    due.note,
     "",
     backdropTextLine(locale, picks, opts.backdropUrl),
     "",
     `${m.prepGuide.title}:`,
-    ...m.prepGuide.items.map((i) => `- ${i}`),
+    ...prepGuide.map((i) => `- ${i}`),
     "",
     `${c.nextTitle}:`,
     ...nextSteps(d, locale).map((i) => `- ${i}`),

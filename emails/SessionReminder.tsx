@@ -5,6 +5,7 @@ import type { ReminderDetails } from "@/lib/booking/templates";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
+import { payAfterLine, prepGuideItems } from "@/lib/email/payment";
 import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
@@ -78,7 +79,7 @@ export function SessionReminder({
           {x.intro}
         </Paragraph>
         <Details theme={t} rows={rows} />
-        <ChalkList theme={t} title={m.prepGuide.title} items={m.prepGuide.items} />
+        <ChalkList theme={t} title={m.prepGuide.title} items={prepGuideItems(locale, Boolean(r.depositPaid))} />
         <BackdropChoice theme={t} locale={locale} picks={r.backdrops ?? []} swatches={swatches} url={backdropUrl} reminder />
         <Paragraph theme={t} align="center">
           <span style={{ display: "block", marginTop: 10, fontSize: 18, fontWeight: "bold" }}>{x.rescheduleTitle}</span>
@@ -102,7 +103,7 @@ export function SessionReminder({
       <Details theme={t} rows={rows} />
       <ChalkList theme={t} title={x.checklistTitle} items={x.checklist} />
       <Paragraph theme={t} align="center">
-        {m.common.payAfter}
+        {payAfterLine(locale, Boolean(r.depositPaid))}
       </Paragraph>
       <Paragraph theme={t} align="center">
         {x.reach}
@@ -147,7 +148,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       ...details(false),
       "",
       `${m.prepGuide.title}:`,
-      ...m.prepGuide.items.map((i) => `- ${i}`),
+      ...prepGuideItems(locale, Boolean(r.depositPaid)).map((i) => `- ${i}`),
       "",
       backdropTextLine(locale, picks, opts.backdropUrl),
       "",
@@ -170,7 +171,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     `${x.checklistTitle}:`,
     ...x.checklist.map((i) => `- ${i}`),
     "",
-    m.common.payAfter,
+    payAfterLine(locale, Boolean(r.depositPaid)),
     `${x.reach} ${textUs}.`,
     "",
     signature,

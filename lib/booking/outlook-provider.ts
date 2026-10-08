@@ -1,64 +1,44 @@
 import "server-only";
+import { randomUUID } from "crypto";
+import { after } from "next/server";
 import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
-import { portfolio } from "@/config/portfolio";
-import { getSiteSettings } from "@/lib/settings/server";
-import type { SiteSettings } from "@/lib/settings/types";
-import { photographersEmailPhoto } from "@/config/media";
-import { allMediaPhotos } from "@/lib/settings/defaults";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
 import { bookingConsents, bookings, type Booking } from "@/lib/db/schema";
 import { log } from "@/lib/log";
-import { GraphAuthError } from "@/lib/microsoft/auth";
-import { GraphError } from "@/lib/microsoft/graph";
-import { createCalendarEvent, deleteCalendarEvent, getBusyIntervals, moveCalendarEvent } from "@/lib/microsoft/calendar";
-import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
+import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
 import { addMinutes, formatTimeLabel } from "./dates";
 import { generateBookingReference } from "./reference";
-import { eventBodyHtml, eventSubject, formatAddress, type BookingDetails } from "./templates";
-import { bookingConfirmationEmail, internalNewBookingEmail } from "@/lib/email";
-import { createCancelToken } from "./cancel-token";
+import { formatAddress, type BookingDetails } from "./templates";
+import { createCancelToken, manageTokenFor } from "./cancel-token";
 import { cancelBookingRow, findByCancelToken, summaryOf } from "./cancellation";
 import { cancelClosedText } from "./reschedule-policy";
 import { noticeHoursFor, saveBookingTerms } from "./terms";
 import { saveAccessNotes } from "./access";
 import { saveBookingBackdrops } from "./backdrops";
+import { asCalendarError, confirmBookingRow } from "./confirm";
+import { photoTitle, snapshotOf } from "./details";
 import { setupsOf } from "@/config/backdrops";
 import en from "@/messages/en.json";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
 import { bookingTravelOf } from "@/lib/travel/types";
 import { fill } from "@/lib/email/messages";
-import { manageUrls, managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
+import { managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
-import { addDaysKey, graphLocalDateTime, todayInZone, zonedTimeToUtc } from "./timezone";
+import { getDepositSettings } from "@/lib/deposit/server";
+import { depositCentsFor } from "@/lib/deposit/types";
+import { openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
+import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
-
-/** The "Meet your photographers" photo from /admin (Emails, else About Us) for the confirmation email, absolute URL. */
-function photographersPhotoUrl(settings: SiteSettings | null, themeId: string): string | null {
-  const src = settings ? photographersEmailPhoto(settings.media, themeId)?.src : undefined;
-  if (!src) return null;
-  return src.startsWith("/") ? `${site.url.replace(/\/$/, "")}${src}` : src;
-}
-
-/** Title of the portfolio/site photo a family picked as inspiration. */
-export async function photoTitle(id: string): Promise<string | undefined> {
-  try {
-    const settings = await getSiteSettings();
-    const all = [...allMediaPhotos(settings), ...portfolio];
-    return all.find((p) => p?.id === id)?.title;
-  } catch {
-    return portfolio.find((p) => p.id === id)?.title;
-  }
-}
 
 /** Booking source columns (first touch of the visit). */
 function sourceColumns(a: BookingRequest["attribution"]) {
@@ -73,16 +53,6 @@ function sourceColumns(a: BookingRequest["attribution"]) {
     referrer: a?.referrer ?? null,
     firstTouchAt: a?.at ? new Date(a.at) : null,
   };
-}
-
-function asCalendarError(err: unknown, action: string): never {
-  if (err instanceof BookingError) throw err;
-  if (err instanceof GraphAuthError || err instanceof GraphError) {
-    log.error("booking.outlook", `${action}: calendar error`, { error: err });
-    throw new BookingError("calendar_unavailable", friendly.calendar);
-  }
-  log.error("booking.outlook", `${action}: unexpected error`, { error: err as Error });
-  throw new BookingError("server_error", friendly.server);
 }
 
 /**
@@ -121,6 +91,12 @@ export class OutlookBookingProvider implements BookingProvider {
     this.ensureConfigured();
     const bundle = (await getCatalog()).find((b) => b.id === query.bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
+    // deposit pages that ran out free their time (after this response, so it never slows the calendar down)
+    try {
+      after(() => sweepDeposits().then(() => undefined));
+    } catch {
+      /* outside a request (scripts) */
+    }
     try {
       const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
       return availabilityForRange(query.from, query.to, bundle.durationMinutes, busy, rules);
@@ -145,9 +121,14 @@ export class OutlookBookingProvider implements BookingProvider {
     if (request.requestId) {
       const [existing] = await db.select().from(bookings).where(eq(bookings.requestId, request.requestId)).limit(1);
       if (existing && existing.status !== "cancelled" && existing.outlookEventId) return this.toResult(existing, request);
-      // The first attempt is still being saved (e.g. a retry after a slow network): tell the browser to wait and
-      // retry with the same requestId, never to pick another time (that could create a second booking).
-      if (existing && existing.status === "pending") throw new BookingError("in_progress", friendly.inProgress);
+      if (existing && existing.status === "pending") {
+        // already waiting on its deposit page: the same page again
+        const deposit = await reopenDeposit(existing);
+        if (deposit) return { ...this.toResult(existing, request), status: "pending", deposit };
+        // The first attempt is still being saved (e.g. a retry after a slow network): tell the browser to wait and
+        // retry with the same requestId, never to pick another time (that could create a second booking).
+        throw new BookingError("in_progress", friendly.inProgress);
+      }
     }
 
     // 1b. Travel fee from the home's ZIP code (calculated here, never taken from the browser). Florida only, and not
@@ -159,7 +140,8 @@ export class OutlookBookingProvider implements BookingProvider {
     // optional backdrop picks: one per setup of the bundle
     const backdrops = request.backdrops?.slice(0, setupsOf([bundle.setups, ...bundle.features]));
 
-    // 2. Re-check availability against the live calendar.
+    // 2. Re-check availability against the live calendar (first freeing times whose deposit page ran out).
+    await sweepDeposits();
     let busy: Busy[];
     let rules: Awaited<ReturnType<typeof getAvailabilityRules>>;
     try {
@@ -177,16 +159,22 @@ export class OutlookBookingProvider implements BookingProvider {
     if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
     const releaseUsage = () => usage?.release().catch(() => undefined);
 
+    // 2c. Deposit: the bundle's, paid on Stripe as the last step (confirmed once it's paid). Never more than the total.
+    const depositCents = depositCentsFor(pricing.finalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
+
     // 3. Save as pending (unique index on start time blocks a simultaneous double booking).
     const sessionStart = zonedTimeToUtc(date, start, tz);
     const sessionEnd = zonedTimeToUtc(date, end, tz);
-    const cancel = createCancelToken();
+    const id = randomUUID();
+    // a booking confirmed later (after its deposit) gets a token any request can rebuild for its emails
+    const cancel = (depositCents > 0 && manageTokenFor(id)) || createCancelToken();
     let row: Booking | undefined;
     for (let attempt = 0; attempt < 4 && !row; attempt++) {
       try {
         [row] = await db
           .insert(bookings)
           .values({
+            id,
             bookingReference: generateBookingReference(),
             requestId: request.requestId,
             packageId: bundle.id,
@@ -236,6 +224,32 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     if (usage) await attachUsage(usage.usageId, row.id);
 
+    // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch
+    // it. Saved now with the other extras (best effort), so a booking confirmed after its deposit has them too.
+    const noticeHours = rules.limits.rescheduleNoticeHours;
+    await saveBookingTerms(row.id, noticeHours, bundle.photos, row.bookingReference);
+    await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
+    await saveBookingBackdrops(row.id, backdrops, row.bookingReference);
+    // Optional permissions (best effort; they're also in the event + studio email).
+    if (request.consents) {
+      const at = request.consents.sms || request.consents.photos ? new Date() : null;
+      await db
+        .insert(bookingConsents)
+        .values({ bookingId: row.id, sms: request.consents.sms, smsAt: request.consents.sms ? at : null, photos: request.consents.photos, photosAt: request.consents.photos ? at : null })
+        .onConflictDoNothing()
+        .catch((err) => log.error("booking.db", "Permissions not saved", { reference: row.bookingReference, error: err as Error }));
+    }
+    const slot = { ...request.slot, end, label: formatTimeLabel(start) };
+
+    // 4a. Deposit: send the family to Stripe. The booking stays pending (holding its time) until it's paid; then the
+    // webhook or the page they come back to confirms it (lib/deposit/flow.ts). Stripe down → booked without it.
+    let deposit: BookingDetails["deposit"];
+    if (depositCents > 0) {
+      const opened = await openDeposit(row, depositCents, noticeHours);
+      if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
+      deposit = { amountCents: depositCents, status: "unpaid" };
+    }
+
     const details: BookingDetails = {
       pricing,
       reference: row.bookingReference,
@@ -245,112 +259,24 @@ export class OutlookBookingProvider implements BookingProvider {
       end,
       contact: request.contact,
       address: request.address,
-      inspirationTitle: request.inspirationPhotoId ? await this.photoTitle(request.inspirationPhotoId) : undefined,
+      inspirationTitle: request.inspirationPhotoId ? await photoTitle(request.inspirationPhotoId) : undefined,
       consents: request.consents,
       travel,
       backdrops,
+      deposit,
     };
 
-    // 4. Create the Outlook event. If this fails, remove the pending row so nothing looks confirmed.
-    let eventId: string;
+    // 4b–7. Outlook event → confirmed → emails. If the event can't be made, remove the pending row so nothing looks
+    // confirmed (its extras go with it).
+    let emailSent: boolean;
     try {
-      ({ id: eventId } = await createCalendarEvent({
-        subject: eventSubject(details),
-        bodyHtml: eventBodyHtml(details),
-        start: graphLocalDateTime(date, start),
-        end: graphLocalDateTime(date, end),
-        timeZone: bookingRules.graphTimeZone,
-        location: formatAddress(request.address),
-        transactionId: row.id,
-      }));
+      ({ emailSent } = await confirmBookingRow(row, details, { manageToken: cancel.token, noticeHours }));
     } catch (err) {
       await db.delete(bookings).where(eq(bookings.id, row.id)).catch((e) => log.error("booking.db", "Rollback delete failed", { error: e }));
       await releaseUsage();
-      asCalendarError(err, "createBooking.event");
+      throw err;
     }
-
-    // 5. Confirm in Neon with the event id. If that fails, remove the event again.
-    try {
-      await db.update(bookings).set({ status: "confirmed", outlookEventId: eventId, updatedAt: new Date() }).where(eq(bookings.id, row.id));
-    } catch (err) {
-      log.error("booking.db", "Confirm update failed; rolling back event", { error: err as Error, reference: row.bookingReference });
-      await deleteCalendarEvent(eventId).catch((e) => log.error("booking.outlook", "Rollback event delete failed", { error: e }));
-      await db.delete(bookings).where(eq(bookings.id, row.id)).catch(() => undefined);
-      await releaseUsage();
-      throw new BookingError("server_error", friendly.server);
-    }
-
-    // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch it.
-    await saveBookingTerms(row.id, rules.limits.rescheduleNoticeHours, bundle.photos, row.bookingReference);
-    await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
-    await saveBookingBackdrops(row.id, backdrops, row.bookingReference);
-
-    // Optional permissions (best effort: the booking is already confirmed; they're also in the event + studio email).
-    if (request.consents) {
-      const at = request.consents.sms || request.consents.photos ? new Date() : null;
-      await db
-        .insert(bookingConsents)
-        .values({ bookingId: row.id, sms: request.consents.sms, smsAt: request.consents.sms ? at : null, photos: request.consents.photos, photosAt: request.consents.photos ? at : null })
-        .onConflictDoNothing()
-        .catch((err) => log.error("booking.db", "Permissions not saved", { reference: row.bookingReference, error: err as Error }));
-    }
-
-    // 6 + 7. Emails via Resend: the customer confirmation and the internal "new booking"
-    // notification. Neither can undo the booking: failures are logged and recorded in Neon.
-    // Emails follow the website theme active right now (e.g. Christmas).
-    const settings = await getSiteSettings().catch(() => null);
-    const themeId = settings?.themeId ?? "default";
-    const photographersPhoto = photographersPhotoUrl(settings, themeId);
-    const reason = (err: unknown) => (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
-    const [customer, internal] = await Promise.allSettled([
-      (async () => {
-        const links = manageUrls(cancel.token);
-        const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, backdropUrl: links.backdrop, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours, photographersPhoto });
-        return sendEmail({
-          scope: "resend.customer",
-          to: request.contact.email,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          attachments: mail.attachments,
-          replyTo: emailConfig().notify,
-          idempotencyKey: `booking-confirmation/${row.bookingReference}`,
-          reference: row.bookingReference,
-        });
-      })(),
-      (async () => {
-        const mail = await internalNewBookingEmail(details, row.createdAt);
-        return sendEmail({
-          scope: "resend.internal",
-          from: emailConfig().internalFrom,
-          to: emailConfig().notify,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          replyTo: request.contact.email,
-          idempotencyKey: `booking-internal/${row.bookingReference}`,
-          reference: row.bookingReference,
-        });
-      })(),
-    ]);
-    const emailSent = customer.status === "fulfilled";
-    const now = new Date();
-    await db
-      .update(bookings)
-      .set({
-        confirmationEmailSent: emailSent,
-        confirmationEmailSentAt: emailSent ? now : null,
-        confirmationEmailError: emailSent ? null : reason((customer as PromiseRejectedResult).reason),
-        internalNotificationSent: internal.status === "fulfilled",
-        internalNotificationSentAt: internal.status === "fulfilled" ? now : null,
-        internalNotificationError: internal.status === "fulfilled" ? null : reason((internal as PromiseRejectedResult).reason),
-        updatedAt: now,
-      })
-      .where(eq(bookings.id, row.id))
-      .catch((e) => log.error("booking.db", "Could not record email status", { error: e as Error, reference: row.bookingReference }));
-
-    log.info("booking.outlook", "Booking confirmed", { reference: row.bookingReference, customerEmailSent: emailSent, internalNotificationSent: internal.status === "fulfilled" });
-    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot: { ...request.slot, end, label: formatTimeLabel(start) } }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: rules.limits.rescheduleNoticeHours };
+    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: noticeHours, deposit };
   }
 
   /** Server-side price for a bundle (+ optional code, re-validated here). Never trusts the browser. */
@@ -424,7 +350,8 @@ export class OutlookBookingProvider implements BookingProvider {
     if (s.status === "past") throw new BookingError("invalid_request", "This session has already started, so it can't be cancelled online. Please reply to your confirmation email.");
     if (s.status === "cancelled") return s;
     if (!s.canCancel) throw new BookingError("cancel_closed", cancelClosedText(hours));
-    return summaryOf(await cancelBookingRow(row, { reason, by: "customer" }), hours);
+    // online cancellation is only possible before the notice window: the deposit is refunded
+    return summaryOf(await cancelBookingRow(row, { reason, by: "customer", refundDeposit: true }), hours);
   }
 
   async rescheduleBooking(reference: string, slot: Pick<TimeSlot, "date" | "start">): Promise<BookingResult> {
@@ -432,11 +359,6 @@ export class OutlookBookingProvider implements BookingProvider {
     const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
     if (!row) throw new BookingError("not_found", "We couldn't find that booking.");
     return this.toResult(await rescheduleBookingRow(row, slot, "admin"));
-  }
-
-  /** Title of a portfolio photo from any of the owner's picture sets (or the built-in ones). */
-  private photoTitle(id: string): Promise<string | undefined> {
-    return photoTitle(id);
   }
 
   private toResult(row: Booking, request?: BookingRequest): BookingResult {
@@ -457,21 +379,4 @@ export class OutlookBookingProvider implements BookingProvider {
       },
     };
   }
-}
-
-/** Price snapshot stored on a booking (older bookings fall back to package_price). */
-export function snapshotOf(row: Booking): PriceQuote {
-  const legacy = row.packagePrice * 100;
-  return {
-    bundleId: row.packageId,
-    bundleName: row.packageName,
-    regularCents: row.regularPriceCents ?? legacy,
-    offerCents: row.offerPriceCents,
-    offerLabel: row.offerLabel,
-    offerEndsOn: null,
-    discountCode: row.discountCode,
-    discountCents: row.discountAmountCents ?? 0,
-    finalCents: row.finalPriceCents ?? legacy,
-    pricingType: (row.pricingType as PriceQuote["pricingType"]) ?? "regular",
-  };
 }

@@ -16,7 +16,7 @@ const whyDoodles = ["house", "heart", "sun"] as const;
  * /about: the story behind Tiny Humans (linked from the footer only). Copy from the owner's answers, in messages/en.json.
  * Photos stay as placeholders until the owner uploads replacements in /admin → Photos.
  */
-export default function AboutPage() {
+export default function AboutPage({ ctaText = t.cta.text }: { ctaText?: string }) {
   return (
     <main id="top" className={styles.page}>
       {/* Hello */}
@@ -99,7 +99,7 @@ export default function AboutPage() {
           <ChalkBox className={styles.cta} seed={551} wobble={3} strokeWidth={3} color="var(--sun-yellow)">
             <ChalkDoodle name="heart" size={40} color="var(--accent-2)" strokeWidth={3} />
             <h2 id="about-cta" className={cn(styles.heading, "chalk")}>{t.cta.title}</h2>
-            <p className={cn(styles.text, "chalk-soft")}>{t.cta.text}</p>
+            <p className={cn(styles.text, "chalk-soft")}>{ctaText}</p>
             <ChalkButton href={bundlesHref()} variant="solid" seed={552}>{t.cta.button}</ChalkButton>
             <p className={cn(styles.spanish, "chalk-soft")}>{t.cta.spanish}</p>
           </ChalkBox>

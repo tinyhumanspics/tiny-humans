@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
-import { bookingEmails, bookingPayments, bookings, type Booking } from "@/lib/db/schema";
+import { bookingEmails, bookingPayments, bookings, type Booking, type BookingDeposit } from "@/lib/db/schema";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { galleryDeliveredEmail, paymentLinkEmail, sneakPeekEmail } from "@/lib/email";
 import { bookingPayUrl } from "@/lib/payments/link";
@@ -10,6 +10,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import { log } from "@/lib/log";
 import { BookingError } from "./errors";
 import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./cancel-token";
+import { depositOf, depositPaidCents } from "@/lib/deposit/server";
 
 /**
  * Emails the owner sends from /admin after a session: "Send sneak peek" (thank-you + Pixieset gallery to choose their
@@ -20,9 +21,23 @@ import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./canc
 export const AFTER_KINDS = { afterSession: "after_session", gallery: "gallery_delivered", paymentLink: "payment_link" } as const;
 export type AfterKind = (typeof AFTER_KINDS)[keyof typeof AFTER_KINDS];
 
-/** What the family owes: the price booked (snapshot), never recalculated from today's bundles. */
-/** Bundle price (snapshot) + travel fee. */
-export const amountDueCents = (row: Booking) => (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0);
+/**
+ * What the family still owes: the price booked (snapshot, never recalculated from today's bundles) + travel fee,
+ * minus a paid deposit.
+ */
+export const amountDueCents = (row: Booking, paidDepositCents = 0) => Math.max(0, (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0) - paidDepositCents);
+
+/** Same, reading the booking's deposit. */
+export const balanceDueCents = async (row: Booking) => amountDueCents(row, depositPaidCents(await depositOf(row.id)));
+
+/**
+ * What the booking's payment link charges next: a deposit that couldn't be taken while booking (Stripe was down)
+ * while the session is still ahead, else what's still owed.
+ */
+export function nextCharge(row: Booking, deposit: Pick<BookingDeposit, "status" | "amountCents"> | null, now = new Date()): { kind: "deposit" | "balance"; amountCents: number } {
+  if (deposit?.status === "unpaid" && row.sessionStart.getTime() > now.getTime()) return { kind: "deposit", amountCents: deposit.amountCents };
+  return { kind: "balance", amountCents: amountDueCents(row, depositPaidCents(deposit)) };
+}
 
 const base = () => site.url.replace(/\/$/, "");
 /** The booking's permanent payment link; the email's own token link only if the signing secret is missing. */
@@ -97,7 +112,7 @@ const detailsOf = (row: Booking) => ({ reference: row.bookingReference, parentNa
  * the session isn't paid yet when the email is sent (e.g. no button if they already paid with the payment link).
  */
 export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favorites: string) {
-  const amountCents = amountDueCents(row);
+  const amountCents = await balanceDueCents(row);
   const paid = await isPaid(row.id);
   return deliver(row, AFTER_KINDS.afterSession, (token, themeId) =>
     sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined }),
@@ -106,7 +121,7 @@ export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favor
 
 /** "Gallery delivered": review request + referral, and a pay button while the session is still unpaid. */
 export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
-  const amountCents = amountDueCents(row);
+  const amountCents = await balanceDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
     galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null }),
@@ -116,9 +131,10 @@ export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
 /** "Email the payment link": any time (before or after the session), and as often as needed — it's always the same link. */
 export async function sendPaymentLinkEmail(row: Booking) {
   if (row.status === "cancelled") throw new BookingError("invalid_request", "This booking is cancelled.");
-  const amountCents = amountDueCents(row);
+  const next = nextCharge(row, await depositOf(row.id));
+  const amountCents = next.amountCents;
   if (amountCents <= 0) throw new BookingError("invalid_request", "There's nothing to pay for this booking.");
-  if (await isPaid(row.id)) throw new BookingError("invalid_request", "This booking is already paid.");
+  if (next.kind === "balance" && (await isPaid(row.id))) throw new BookingError("invalid_request", "This booking is already paid.");
   const link = bookingPayUrl(row.bookingReference);
   if (!link) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
   const db = getDb();

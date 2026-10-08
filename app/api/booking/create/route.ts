@@ -48,8 +48,9 @@ export async function POST(req: Request) {
       // where this family came from (first-party cookie set by proxy.ts; never taken from the request body)
       attribution: decodeAttribution(jar.get(SOURCE_COOKIE)?.value) ?? undefined,
     });
-    // Meta Conversions API: after the response is sent, so it can never slow down or fail the booking.
-    if (booking.status !== "mock") {
+    // Meta Conversions API: after the response is sent, so it can never slow down or fail the booking. A booking
+    // waiting on its deposit ("pending") sends it once the deposit is paid (lib/deposit/flow.ts).
+    if (booking.status === "confirmed") {
       const referer = req.headers.get("referer");
       const sameSite = referer && new URL(referer, site.url).host === new URL(req.url).host;
       const eventSourceUrl = sameSite ? referer! : `${site.url.replace(/\/$/, "")}${scheduleHref(r.bundleId)}`;

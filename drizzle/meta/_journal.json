@@ -99,6 +99,13 @@
       "when": 1791420020500,
       "tag": "0013_booking_backdrops",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791425871614,
+      "tag": "0014_booking_deposits",
+      "breakpoints": true
     }
   ]
 }

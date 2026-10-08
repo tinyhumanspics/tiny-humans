@@ -1,4 +1,5 @@
 import { site } from "@/config/site";
+import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import type { CancellationDetails } from "@/lib/booking/templates";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
@@ -11,10 +12,20 @@ import { ChalkLayout } from "./components/ChalkLayout";
 
 const bookUrl = () => `${site.url.replace(/\/$/, "")}/book`;
 
+/** What happened to their deposit (refunded, on its way, or kept). */
+function depositLine(c: CancellationDetails, locale: EmailLocale): string | null {
+  const x = emailMessages(locale).deposit;
+  const d = c.deposit;
+  if (!d) return null;
+  const deposit = formatMoney(d.amountCents);
+  return fill(d.result === "refunded" ? x.cancelRefunded : d.result === "refund_failed" ? x.cancelRefundSoon : x.cancelKept, { deposit });
+}
+
 function content(c: CancellationDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
   return {
     m,
+    deposit: depositLine(c, locale),
     first: c.parentName.split(" ")[0],
     date: formatLongDate(c.date),
     time: fill(m.common.timeRange, { start: formatTimeLabel(c.start), end: formatTimeLabel(c.end) }),
@@ -23,7 +34,7 @@ function content(c: CancellationDetails, locale: EmailLocale) {
 
 /** Customer cancellation confirmation (follows the active website theme). */
 export function BookingCancellation({ details: c, theme: t, images, locale }: { details: CancellationDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale }) {
-  const { m, first, date, time } = content(c, locale);
+  const { m, first, date, time, deposit } = content(c, locale);
   const x = m.cancellation;
   return (
     <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(x.preheader, { reference: c.reference })}>
@@ -45,6 +56,11 @@ export function BookingCancellation({ details: c, theme: t, images, locale }: { 
           [x.reason, c.reason],
         ]}
       />
+      {deposit && (
+        <Paragraph theme={t} align="center">
+          {deposit}
+        </Paragraph>
+      )}
       <ChalkButton theme={t} label={x.bookAgain} href={bookUrl()} variant="solid" />
       <Paragraph theme={t} align="center" muted>
         {m.common.questions}
@@ -57,7 +73,7 @@ export async function bookingCancellationEmail(c: CancellationDetails, opts: { t
   const locale = opts.locale ?? "en";
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
-  const { m, first, date, time } = content(c, locale);
+  const { m, first, date, time, deposit } = content(c, locale);
   const x = m.cancellation;
   const html = await renderHtml(<BookingCancellation details={c} theme={theme} images={images} locale={locale} />);
   const text = textLines([
@@ -70,6 +86,7 @@ export async function bookingCancellationEmail(c: CancellationDetails, opts: { t
     `${x.originalDate}: ${date}`,
     `${x.originalTime}: ${time}`,
     `${x.reason}: ${c.reason}`,
+    deposit ? `\n${deposit}` : undefined,
     "",
     fill(x.bookAgainText, { url: bookUrl() }),
     fill(m.layout.signature, { email: site.contact.email ?? "" }),

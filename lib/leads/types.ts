@@ -1,6 +1,22 @@
 /** A booking as shown in /admin > Leads (no raw technical ids). */
 export type LeadStatus = "pending" | "confirmed" | "rescheduled" | "cancelled";
 
+/** The deposit paid while booking (see lib/db/schema.ts → booking_deposits). */
+export interface LeadDeposit {
+  amountCents: number;
+  status: "pending" | "paid" | "refunded" | "expired" | "unpaid";
+  paidAt: string | null;
+  refundedAt: string | null;
+  /** An automatic refund that failed (refund it by hand). */
+  refundError: string | null;
+  /** While pending: when the Stripe page expires and the time is released. */
+  holdUntil: string | null;
+  /** Less than the booking's notice before the session (deposits are normally kept when cancelling now). */
+  late: boolean;
+  /** The "Your date isn't confirmed yet" email (expired deposits). */
+  abandonedEmail: SentEmail | null;
+}
+
 export interface EmailStatus {
   sent: boolean;
   at: string | null;
@@ -26,7 +42,10 @@ export interface AfterSessionStatus {
   favorites: string | null;
   gallery: SentEmail | null;
   payment: {
+    /** Still owed: bundle + travel fee − a paid deposit. */
     amountCents: number;
+    /** What the payment link charges next: an unpaid deposit first (before the session), then the rest. */
+    next: { kind: "deposit" | "balance"; amountCents: number };
     status: "unpaid" | "open" | "paid";
     paidAt: string | null;
     /** The booking's payment link (never expires; null if cancelled or nothing to pay). */
@@ -72,6 +91,8 @@ export interface Lead {
   reminders?: { kind: "72h" | "24h"; status: "sending" | "sent" | "failed"; at: string | null; error: string | null }[];
   /** After-session emails, payment and review (server mode only). */
   after?: AfterSessionStatus;
+  /** The deposit (null: booked without one; undefined in the prototype). */
+  deposit?: LeadDeposit | null;
   /** Optional permissions from the booking form, with when each was given (server mode only). */
   consents?: { sms: boolean; smsAt: string | null; photos: boolean; photosAt: string | null };
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;

@@ -1,7 +1,8 @@
 import { site } from "@/config/site";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { PAYMENT_NOTE, type RescheduleDetails } from "@/lib/booking/templates";
+import type { RescheduleDetails } from "@/lib/booking/templates";
+import { paymentDue } from "@/lib/email/payment";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
@@ -23,12 +24,13 @@ function content(r: RescheduleDetails, locale: EmailLocale) {
     oldTime: range(r.oldStart, r.oldEnd),
     newTime: range(r.newStart, r.newEnd),
     total: formatMoney(r.packageTotalCents),
+    due: paymentDue(locale, r.totalCents ?? r.packageTotalCents, r.deposit),
   };
 }
 
 /** Customer reschedule confirmation (active website theme, new manage links). */
 export function BookingRescheduled({ details: r, theme: t, images, locale, manage }: { details: RescheduleDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; manage?: Manage }) {
-  const { m, first, oldDate, newDate, oldTime, newTime, total } = content(r, locale);
+  const { m, first, oldDate, newDate, oldTime, newTime, total, due } = content(r, locale);
   const x = m.rescheduled;
   return (
     <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(x.preheader, { date: newDate, time: formatTimeLabel(r.newStart) })}>
@@ -51,11 +53,8 @@ export function BookingRescheduled({ details: r, theme: t, images, locale, manag
       <ChalkBox
         theme={t}
         title={m.common.payment}
-        rows={[
-          [m.common.packageTotal, total],
-          [m.common.paymentDue, m.common.paymentDueValue],
-        ]}
-        note={PAYMENT_NOTE.email}
+        rows={[[m.common.packageTotal, total], ...due.rows]}
+        note={due.note}
       />
       {manage && <ChalkButton theme={t} label={x.reschedule} href={manage.reschedule} variant="outline" />}
       {manage && <ChalkButton theme={t} label={x.cancel} href={manage.cancel} variant="outline" caption={x.linksCaption} />}
@@ -70,7 +69,7 @@ export async function bookingRescheduledEmail(r: RescheduleDetails, opts: { them
   const locale = opts.locale ?? "en";
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
-  const { m, first, oldDate, newDate, oldTime, newTime, total } = content(r, locale);
+  const { m, first, oldDate, newDate, oldTime, newTime, total, due } = content(r, locale);
   const x = m.rescheduled;
   const html = await renderHtml(<BookingRescheduled details={r} theme={theme} images={images} locale={locale} manage={opts.manage} />);
   const text = textLines([
@@ -84,7 +83,7 @@ export async function bookingRescheduledEmail(r: RescheduleDetails, opts: { them
     `${x.newText}: ${newDate}, ${newTime}`,
     `${m.common.location}: ${r.location}`,
     `${m.common.packageTotal}: ${total}`,
-    `${m.common.paymentDue}: ${m.common.paymentDueValue}`,
+    ...due.rows.map(([k, v]) => `${k}: ${v}`),
     "",
     opts.manage && fill(x.rescheduleText, { url: opts.manage.reschedule }),
     opts.manage && fill(x.cancelText, { url: opts.manage.cancel }),

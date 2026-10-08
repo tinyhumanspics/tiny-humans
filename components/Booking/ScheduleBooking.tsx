@@ -6,6 +6,8 @@ import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import { useBookingSelection } from "./BookingSelectionContext";
 import Booking from "./Booking";
+import DepositReturn from "./DepositReturn";
+import { pendingDepositReturn } from "@/lib/booking/deposit-return";
 import BookingPaused from "@/features/booking/BookingPaused";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { lastBundle, rememberBundle } from "@/lib/booking/last-bundle";
@@ -24,7 +26,24 @@ export default function ScheduleBooking() {
   const bundle = getBundle(params.get("bundle"));
   const bundleId = bundle?.id;
   const inspirationId = params.get("inspiration");
+  // back from the deposit's Stripe page (signed link to this booking's status)
+  const depositRef = params.get("deposit");
+  const depositSig = params.get("k");
   const redirected = useRef(false);
+
+  // Waiting on a deposit in this tab (Back from Stripe, or /book opened again): show that booking, not a fresh form
+  // where its own held time would look taken. Also when the browser restores the page from its back/forward cache.
+  useEffect(() => {
+    if (depositRef) return;
+    const resume = () => {
+      const path = pendingDepositReturn();
+      if (path) router.replace(path);
+    };
+    resume();
+    const onShow = (e: PageTransitionEvent) => e.persisted && resume();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [depositRef, router]);
 
   useEffect(() => {
     if (inspirationId && findPhoto(photos, inspirationId)) setInspirationId(inspirationId);
@@ -53,6 +72,7 @@ export default function ScheduleBooking() {
   }
   // on its way to the right page (see above)
   if (!bundle) return null;
+  if (depositRef && depositSig) return <DepositReturn key={depositRef} bundleId={bundle.id} reference={depositRef} signature={depositSig} paid={params.get("paid") === "1"} />;
   // key: a different bundle starts a fresh booking
   return <Booking key={bundle.id} bundleId={bundle.id} />;
 }

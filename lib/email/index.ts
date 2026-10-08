@@ -12,3 +12,4 @@ export { sessionReminderEmail, type ReminderKind } from "@/emails/SessionReminde
 export { sneakPeekEmail } from "@/emails/AfterSession";
 export { galleryDeliveredEmail } from "@/emails/GalleryDelivered";
 export { paymentLinkEmail } from "@/emails/PaymentLink";
+export { depositAbandonedEmail } from "@/emails/DepositAbandoned";

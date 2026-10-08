@@ -2,8 +2,9 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 
 /**
- * Minimal Stripe client (no SDK): Checkout Sessions + webhook signature checks.
- * Env: STRIPE_SECRET_KEY (a restricted key `rk_...` with "Checkout Sessions: Write" is enough), STRIPE_WEBHOOK_SECRET
+ * Minimal Stripe client (no SDK): Checkout Sessions, refunds + webhook signature checks.
+ * Env: STRIPE_SECRET_KEY (a restricted key `rk_...` with "Checkout Sessions: Write" and, for deposit refunds, "Refunds:
+ * Write"), STRIPE_WEBHOOK_SECRET
  * (`whsec_...`). STRIPE_API_BASE is for local tests only (a fake Stripe); never set it on Vercel.
  */
 export const isStripeConfigured = () => Boolean(process.env.STRIPE_SECRET_KEY);
@@ -26,6 +27,8 @@ export interface CheckoutSession {
   payment_intent: string | null;
   client_reference_id: string | null;
   metadata: Record<string, string>;
+  /** Hosted page only. */
+  customer_details?: { email?: string | null } | null;
 }
 
 async function call<T>(method: "GET" | "POST", path: string, form?: Record<string, string>, idempotencyKey?: string): Promise<T> {
@@ -63,13 +66,21 @@ export function createCheckoutSession(input: {
   idempotencyKey: string;
   /** A second line on the payment page (the travel fee). */
   extraLine?: { name: string; amountCents: number };
+  /** "deposit" (paid while booking) or "balance" (the payment link); the webhook tells them apart by this. */
+  kind?: "deposit" | "balance";
+  /** When the page expires (epoch seconds, 30 min to 24 h from now; Stripe's default is 24 h). */
+  expiresAt?: number;
+  /** "book" labels the button "Book"; default "pay". */
+  submitType?: "pay" | "book";
+  /** A short message shown above the pay button. */
+  submitMessage?: string;
 }): Promise<CheckoutSession> {
   return call<CheckoutSession>(
     "POST",
     "checkout/sessions",
     {
       mode: "payment",
-      submit_type: "pay",
+      submit_type: input.submitType ?? "pay",
       "line_items[0][quantity]": "1",
       "line_items[0][price_data][currency]": "usd",
       "line_items[0][price_data][unit_amount]": String(input.amountCents),
@@ -87,6 +98,9 @@ export function createCheckoutSession(input: {
       client_reference_id: input.reference,
       "metadata[booking_id]": input.bookingId,
       "metadata[booking_reference]": input.reference,
+      ...(input.kind ? { "metadata[kind]": input.kind, "payment_intent_data[metadata][kind]": input.kind } : {}),
+      ...(input.expiresAt ? { expires_at: String(input.expiresAt) } : {}),
+      ...(input.submitMessage ? { "custom_text[submit][message]": input.submitMessage } : {}),
       "payment_intent_data[description]": input.description,
       "payment_intent_data[metadata][booking_reference]": input.reference,
       success_url: input.successUrl,
@@ -97,6 +111,31 @@ export function createCheckoutSession(input: {
 }
 
 export const getCheckoutSession = (id: string) => call<CheckoutSession>("GET", `checkout/sessions/${encodeURIComponent(id)}`);
+
+/** Closes an open Checkout page now (nobody can pay on it afterwards). https://docs.stripe.com/api/checkout/sessions/expire */
+export const expireCheckoutSession = (id: string) => call<CheckoutSession>("POST", `checkout/sessions/${encodeURIComponent(id)}/expire`, {});
+
+export interface Refund {
+  id: string;
+  amount: number;
+  /** pending | requires_action | succeeded | failed | canceled */
+  status: string | null;
+  failure_reason?: string | null;
+}
+
+/** Refunds a card payment (in full unless `amountCents`). Needs "Refunds: Write". https://docs.stripe.com/api/refunds/create */
+export const createRefund = (input: { paymentIntent: string; reference: string; amountCents?: number; idempotencyKey: string }) =>
+  call<Refund>(
+    "POST",
+    "refunds",
+    {
+      payment_intent: input.paymentIntent,
+      reason: "requested_by_customer",
+      "metadata[booking_reference]": input.reference,
+      ...(input.amountCents ? { amount: String(input.amountCents) } : {}),
+    },
+    input.idempotencyKey,
+  );
 
 /** Completed Checkout pages paid with this email, newest first (up to 100). https://docs.stripe.com/api/checkout/sessions/list */
 export const listCompletedCheckoutSessions = (email: string) =>

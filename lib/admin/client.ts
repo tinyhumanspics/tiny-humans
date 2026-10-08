@@ -7,6 +7,7 @@ import { blockSchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availa
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
+import type { DepositSettings } from "@/lib/deposit/types";
 import { MockBookingProvider } from "@/lib/booking/mock-provider";
 import type { Bundle } from "@/config/bundles";
 import type { DiscountCode } from "@/lib/pricing/types";
@@ -33,9 +34,14 @@ export interface AdminApi {
   /** Travel fee settings (null = not saved yet, fees off) + example fees. */
   getTravel(): Promise<{ settings: TravelSettings | null; examples: TravelExample[]; databaseConfigured: boolean }>;
   saveTravel(s: TravelSettings): Promise<{ settings: TravelSettings | null; examples: TravelExample[] }>;
+  /** Deposits on/off + each bundle's amount (null = the database or its table isn't there). `stripeReady`: Stripe can take them. */
+  getDeposit(): Promise<{ settings: DepositSettings | null; stripeReady: boolean; databaseConfigured: boolean }>;
+  saveDeposit(s: { enabled: boolean; amounts: Record<string, number> }): Promise<{ settings: DepositSettings | null; stripeReady: boolean }>;
   /* leads (owner only) */
   listLeads(filter: LeadFilter, offset?: number): Promise<LeadList>;
-  cancelLead(reference: string, reason: string): Promise<Lead>;
+  cancelLead(reference: string, reason: string, refundDeposit?: boolean): Promise<Lead>;
+  /** Refund a paid deposit by hand (e.g. after a refund failed, or a kept deposit the owner gives back). */
+  refundDeposit(reference: string): Promise<Lead>;
   leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
   deleteLead(reference: string): Promise<void>;
@@ -96,6 +102,8 @@ const httpApi: AdminApi = {
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
   getTravel: async () => json(await fetch("/api/admin/travel", { cache: "no-store" })),
   saveTravel: async (s) => json(await fetch("/api/admin/travel", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
+  getDeposit: async () => json(await fetch("/api/admin/deposit", { cache: "no-store" })),
+  saveDeposit: async (s) => json(await fetch("/api/admin/deposit", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   leadAvailability: async (reference, from, to) =>
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
   rescheduleLead: async (reference, slot) =>
@@ -109,8 +117,10 @@ const httpApi: AdminApi = {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
   },
   listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
-  cancelLead: async (reference, reason) =>
-    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason }) }))).lead,
+  cancelLead: async (reference, reason, refundDeposit) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason, refundDeposit }) }))).lead,
+  refundDeposit: async (reference) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/deposit-refund", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
   sendSneakPeek: async (reference, galleryUrl, favorites) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, favorites }) }))).lead,
   galleryDelivered: async (reference, galleryUrl) =>
@@ -210,6 +220,14 @@ const prototypeApi: AdminApi = {
   // travel fees need the live database (distances are calculated on the server)
   getTravel: async () => ({ settings: null, examples: [], databaseConfigured: false }),
   saveTravel: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  // deposits need Stripe and the live database
+  getDeposit: async () => ({ settings: null, stripeReady: false, databaseConfigured: false }),
+  saveDeposit: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  refundDeposit: async () => {
     throw new Error("Not available in the prototype.");
   },
   listLeads: async (filter) => {

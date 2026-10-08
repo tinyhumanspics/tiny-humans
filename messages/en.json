@@ -238,7 +238,8 @@
         },
         {
           "q": "What if baby comes early or late, or is fussy or hungry?",
-          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
+          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days.",
+          "aDeposit": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before (cancel and we refund your deposit), or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
         },
         {
           "q": "How much space do we need?",
@@ -259,7 +260,9 @@
         },
         {
           "q": "When do we get the photos, and how do we pay?",
-          "a": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. Nothing is due today: you pay after your session by card, with a secure link we email you."
+          "a": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. Nothing is due today: you pay after your session by card, with a secure link we email you.",
+          "aDeposit": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. When you book, a {deposit} deposit holds your date and counts toward your total. The rest is paid after your session, by card, with a secure link we email you.",
+          "aDepositFrom": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. When you book, a deposit (from {deposit}, depending on your bundle) holds your date and counts toward your total. The rest is paid after your session, by card, with a secure link we email you."
         }
       ]
     },
@@ -490,6 +493,31 @@
       "payButton": "Pay {amount}",
       "payText": "Pay {amount} by card: {url}",
       "smsBody": "Hi {name}! Here's the payment link for your Tiny Humans session: {url}"
+    },
+    "deposit": {
+      "paid": "Deposit paid",
+      "unpaid": "Deposit",
+      "unpaidValue": "{deposit}, not paid yet",
+      "rest": "Rest after the photoshoot",
+      "notePaid": "Your {deposit} deposit is paid and counts toward your total. The rest is due once your photoshoot is completed, by card, with a secure link we email you.",
+      "noteUnpaid": "We couldn't take the {deposit} deposit when you booked, so we'll send you a secure link to pay it. The rest is due once your photoshoot is completed.",
+      "prepGuideLast": "Your deposit is paid. The rest is paid after your session, by card, with a secure link we email you.",
+      "nextLast": "We edit your favorites and deliver them within 72 hours of your pick. The rest is paid after your session, by card, with a secure link we email you.",
+      "payAfter": "Your deposit is paid. The rest is paid after your session, by card, with a secure link we email you.",
+      "cancelRefunded": "We've refunded your {deposit} deposit to your card. It usually shows up within 5–10 business days.",
+      "cancelRefundSoon": "We'll refund your {deposit} deposit to your card in the next few days.",
+      "cancelKept": "As agreed when you booked, the {deposit} deposit isn't refunded for late cancellations or missed sessions.",
+      "abandoned": {
+        "subject": "Your Tiny Humans session isn't booked yet",
+        "preheader": "The deposit wasn't paid, so we couldn't hold your time. Pick a time again in two minutes.",
+        "eyebrow": "Not booked yet",
+        "title": "Your date isn't confirmed yet, {name}",
+        "intro": "You started booking {bundle} for {date} at {time}, but the deposit wasn't paid, so we couldn't hold that time for you.",
+        "again": "Still want a session? Pick a time again: it only takes two minutes.",
+        "button": "Pick a time",
+        "buttonText": "Pick a time: {url}",
+        "help": "Something went wrong with the payment? Just reply to this email and we'll help."
+      }
     }
   },
   "review": {
@@ -552,7 +580,11 @@
       "title": "The payment page didn't open",
       "text": "Please try again in a minute from the button in your email, or reply to it and we'll help."
     },
-    "home": "Back to Tiny Humans"
+    "home": "Back to Tiny Humans",
+    "deposit": {
+      "title": "Your deposit is paid",
+      "text": "Thank you! Your session is all set, and the rest is due once your photoshoot is completed."
+    }
   },
   "policy": {
     "hour": "{n} hour",
@@ -581,5 +613,80 @@
     "cancelled": "This booking was cancelled.",
     "invalid": "This link isn't valid anymore. Please use the newest email from us, or text us at {phone}.",
     "error": "Something went wrong. Please try again, or text us at {phone}."
+  },
+  "deposit": {
+    "stripe": {
+      "product": "Deposit · {bundle}",
+      "description": "Holds your session on {date} at {time}. Counts toward your {total} total.",
+      "message": "Your session is confirmed as soon as this deposit is paid. It counts toward your total; the rest is paid after your session. Cancel online at least {notice} before your session and we refund it in full.",
+      "balanceProduct": "Tiny Humans · {bundle} (after your {deposit} deposit)",
+      "linkDescription": "Deposit for your session {reference} on {date}. Counts toward your {total} total."
+    },
+    "landing": {
+      "metaDescription": {
+        "one": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos: a {deposit} deposit holds your date, and the rest is paid after your session.",
+        "from": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos: a deposit (from {deposit}) holds your date, and the rest is paid after your session."
+      },
+      "ctaNote": {
+        "one": "2-minute booking · {deposit} deposit holds your date",
+        "from": "2-minute booking · a deposit from {deposit} holds your date"
+      },
+      "trust": {
+        "one": "{deposit} holds your date",
+        "from": "A deposit holds your date"
+      },
+      "howStep": {
+        "one": "See real open times and book in about two minutes. A {deposit} deposit holds your date.",
+        "from": "See real open times and book in about two minutes. A deposit (from {deposit}) holds your date."
+      },
+      "after": "Within 24 hours you'll see your photos and choose your favorites. Your edited favorites arrive within 72 hours of your pick. The rest is paid after your session, by card, with a secure link we email you.",
+      "finalCtaNote": {
+        "one": "{deposit} deposit holds your date · the rest after your session",
+        "from": "A deposit from {deposit} holds your date · the rest after your session"
+      }
+    },
+    "aboutCta": {
+      "one": "Pick a bundle and a time that suits you. A {deposit} deposit holds your date, and the rest is paid after your session.",
+      "from": "Pick a bundle and a time that suits you. A deposit (from {deposit}) holds your date, and the rest is paid after your session."
+    },
+    "form": {
+      "reviewDeposit": "Deposit today",
+      "reviewDepositValue": "{deposit} (holds your date)",
+      "reviewRest": "Rest after the photoshoot",
+      "button": "Pay {deposit} deposit",
+      "opening": "Opening secure payment…",
+      "note": "You'll pay the deposit on Stripe's secure page. We hold your time for 30 minutes, and your booking is confirmed as soon as it's paid. Cancel online at least {notice} before your session and we refund it in full."
+    },
+    "confirmation": {
+      "paid": "Deposit paid",
+      "unpaid": "Deposit",
+      "unpaidValue": "{deposit}, not paid yet",
+      "rest": "Rest after the photoshoot"
+    },
+    "return": {
+      "checking": "Checking your payment…",
+      "confirmingTitle": "Your deposit is paid!",
+      "confirmingText": "We're adding your session to our calendar. This only takes a few seconds.",
+      "confirmingSlow": "Your deposit is paid and your time is saved. We're finishing your booking, and your confirmation email will arrive shortly.",
+      "waitingTitle": "Your date isn't confirmed yet",
+      "waitingText": "We're holding {date} at {time} for you until {until} (Miami time). Pay the {deposit} deposit to confirm it.",
+      "waitingClosed": "We're holding {date} at {time} for you for a few more minutes. If you just paid, this page updates by itself.",
+      "pay": "Pay the {deposit} deposit",
+      "another": "Pick another time",
+      "releasing": "One moment…",
+      "expiredTitle": "This time is no longer held",
+      "expiredText": "The deposit for {date} at {time} wasn't paid, so we released the time. You're welcome to pick a time again: it only takes two minutes.",
+      "pickAgain": "Pick a time",
+      "invalidTitle": "We couldn't find this booking",
+      "invalidText": "Please pick a time again, or email us at {email} and we'll help.",
+      "error": "We couldn't check your payment just now. Please try again in a moment."
+    },
+    "terms": {
+      "booking": {
+        "one": "You can book a session through our website. A deposit of {deposit} is paid by card when you book, and your date is confirmed once it's paid. The deposit counts toward your bundle; the rest is due once your photoshoot is completed.",
+        "from": "You can book a session through our website. A deposit (from {deposit}, depending on your bundle) is paid by card when you book, and your date is confirmed once it's paid. The deposit counts toward your bundle; the rest is due once your photoshoot is completed."
+      },
+      "refunds": "If you cancel online at least {notice} before your session, we refund your deposit in full. If you reschedule, your deposit moves with your session. If you cancel less than {notice} before your session, or miss your session without telling us, the deposit isn't refunded. If we need to cancel, we refund it in full."
+    }
   }
 }

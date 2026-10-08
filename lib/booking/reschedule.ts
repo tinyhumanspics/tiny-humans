@@ -13,6 +13,7 @@ import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { bookingRescheduledEmail, internalRescheduleEmail } from "@/lib/email";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { getSiteSettings } from "@/lib/settings/server";
+import { depositInfoOf, depositOf } from "@/lib/deposit/server";
 import type { AvailabilityRules } from "@/lib/availability/types";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
 import { addMinutes } from "./dates";
@@ -173,6 +174,8 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     rescheduledBy: by,
     rescheduledAt: now,
     status: "Rescheduled",
+    totalCents: (updated.finalPriceCents ?? updated.packagePrice * 100) + (updated.travelFeeCents ?? 0),
+    deposit: depositInfoOf(await depositOf(updated.id)),
   };
   const themeId = await getSiteSettings().then((x) => x.themeId).catch(() => "default");
   const cfg = emailConfig();

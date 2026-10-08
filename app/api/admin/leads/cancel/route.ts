@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   reference: z.string().trim().min(3).max(40),
   reason: z.string().trim().min(3, "Add a cancellation reason.").max(1000),
+  /** Refund a paid deposit (the owner's choice; default yes). */
+  refundDeposit: z.boolean().optional(),
 });
 
 /** Owner only: cancel a booking on the customer's behalf (reason required). */
@@ -23,7 +25,8 @@ export async function POST(req: Request) {
   try {
     const row = await getLeadRow(parsed.data.reference);
     if (!row) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
-    await cancelBookingRow(row, { reason: parsed.data.reason, by: "admin" });
+    if (row.status === "pending") return NextResponse.json({ error: "This booking is still waiting for its deposit. Use Delete Lead instead." }, { status: 400 });
+    await cancelBookingRow(row, { reason: parsed.data.reason, by: "admin", refundDeposit: parsed.data.refundDeposit ?? true });
     log.info("admin.leads", "Admin cancelled booking", { reference: row.bookingReference });
     return NextResponse.json({ lead: await getLead(row.bookingReference) });
   } catch (err) {

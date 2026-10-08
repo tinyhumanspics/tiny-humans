@@ -11,6 +11,7 @@ import { formatLongDate } from "@/lib/booking/dates";
 import { todayInZone } from "@/lib/booking/timezone";
 import { bookingRules } from "@/config/booking";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import { DEFAULT_DEPOSIT_CENTS } from "@/lib/deposit/types";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
@@ -87,6 +88,8 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
             />
           )}
 
+          <Deposits api={api} bundles={bundles} />
+
           <h2 className={cn(styles.h2, "chalk")}>Discount Codes</h2>
           <p className={cn(styles.muted, "chalk-soft")}>Customers can enter one code on the booking review step. Only one saving ever applies: if a bundle has a special offer, the better of the two is used.</p>
           <div className={styles.tableWrap}>
@@ -148,6 +151,100 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
 }
 
 const toCodeInput = (c: DiscountCode): CodeInput => ({ id: c.id, code: c.code, type: c.type, value: c.value, bundleIds: c.bundleIds, active: c.active, expiresOn: c.expiresOn, maxUses: c.maxUses, onePerEmail: c.onePerEmail, internalNote: c.internalNote });
+
+/** Deposits on/off and each bundle's amount (new bookings only). */
+function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
+  const [enabled, setEnabled] = useState(false);
+  const [savedOn, setSavedOn] = useState<boolean | null>(null);
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [stripeReady, setStripeReady] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<Note>(null);
+  const ids = bundles.map((b) => b.id).join(",");
+
+  useEffect(() => {
+    api
+      .getDeposit()
+      .then((r) => {
+        setStripeReady(r.stripeReady);
+        setEnabled(r.settings?.enabled ?? false);
+        setSavedOn(r.settings ? r.settings.enabled : null);
+        setAmounts(Object.fromEntries(ids.split(",").filter(Boolean).map((id) => [id, String((r.settings?.amounts[id] ?? DEFAULT_DEPOSIT_CENTS) / 100)])));
+      })
+      .catch((e) => setNote({ kind: "error", text: errText(e, "Couldn't load the deposits.") }));
+  }, [api, ids]);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cents = Object.fromEntries(Object.entries(amounts).map(([id, v]) => [id, Math.round(Number(v) * 100)]));
+    const bad = bundles.find((b) => !(cents[b.id] >= 100));
+    if (bad) return setNote({ kind: "error", text: `Enter ${bad.name}'s deposit in dollars (at least $1).` });
+    setBusy(true);
+    try {
+      const r = await api.saveDeposit({ enabled, amounts: cents });
+      setSavedOn(r.settings?.enabled ?? enabled);
+      setStripeReady(r.stripeReady);
+      setNote({ kind: "ok", text: enabled ? "Deposits on: new bookings pay their bundle's deposit while booking. The landing page, About page and Terms say so now." : "Deposits off: new bookings pay nothing while booking." });
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={styles.availBlock}>
+      <h2 className={cn(styles.h2, "chalk")}>Deposits</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>
+        When deposits are on, families pay their bundle&apos;s deposit on Stripe as the last step of booking, and their date is confirmed once it&apos;s
+        paid (we hold the time for 30 minutes while they pay). It counts toward their total and is never more than the total. It&apos;s refunded
+        automatically when they cancel online in time; when you cancel, you choose. Off = &ldquo;pay after your session&rdquo;, as before. Changes
+        apply to new bookings only.
+      </p>
+      {savedOn === false && <p className={cn(styles.bannerError, "chalk-soft")}>Deposits are off: families pay nothing while booking.</p>}
+      {!stripeReady && <p className={cn(styles.bannerError, "chalk-soft")}>Stripe isn&apos;t connected (STRIPE_SECRET_KEY in Vercel), so deposits can&apos;t be turned on.</p>}
+      {savedOn !== true && (
+        <p className={cn(styles.hintSmall, "chalk-soft")}>
+          Before you turn them on, in Stripe: 1. your restricted key → Refunds: Write. 2. Webhooks → your endpoint → add the event
+          checkout.session.expired.
+        </p>
+      )}
+      <form onSubmit={save} noValidate>
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={enabled} onChange={(e) => (setEnabled(e.target.checked), setNote(null))} />
+          <span className="chalk-soft">Deposits on: families pay a deposit when they book</span>
+        </label>
+        <div className={styles.rulesGrid}>
+          {bundles.map((b) => (
+            <div key={b.id} className={styles.ruleField}>
+              <label className={cn(styles.label, "chalk-soft")} htmlFor={`dep-${b.id}`}>
+                {b.name} ($){b.active === false ? " · inactive" : ""}
+              </label>
+              <input
+                id={`dep-${b.id}`}
+                className={cn(styles.input, styles.timeInput)}
+                type="number"
+                min={1}
+                max={1000}
+                step={1}
+                value={amounts[b.id] ?? ""}
+                onChange={(e) => (setAmounts((a) => ({ ...a, [b.id]: e.target.value })), setNote(null))}
+              />
+            </div>
+          ))}
+        </div>
+        <ChalkButton type="submit" variant="outline" disabled={busy} seed={886}>
+          {busy ? "Saving…" : "Save deposits"}
+        </ChalkButton>
+      </form>
+      {note && (
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
 
 function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundle: Bundle | null; sortOrder: number; onSave: (b: BundleInput) => Promise<void>; onCancel: () => void; onDelete?: () => void }) {
   const [name, setName] = useState(bundle?.name ?? "");

@@ -28,6 +28,29 @@ export function fillLegal(doc: LegalDocument, values: Record<string, string>): L
   return JSON.parse(JSON.stringify(doc), (_k, v) => (typeof v === "string" ? f(v) : v));
 }
 
+/** Sentences of the Terms that change while there's a deposit (see depositTerms). */
+export const NO_DEPOSIT_TERMS = {
+  booking: "You can book a session through our website. You'll receive a confirmation with your booking details. Nothing is paid at booking: payment for your bundle is due once your photoshoot is completed.",
+  rebook: " If you miss a session without telling us, we may ask for a deposit to rebook.",
+};
+
+/**
+ * The Terms while there's a deposit ({deposit}, {notice}): the "Booking a session" paragraph says it's paid when
+ * booking, and "Rescheduling and cancellations" gets the refund rules (the old "may ask for a deposit to rebook" goes).
+ */
+export function depositTerms(doc: LegalDocument, text: { booking: string; refunds: string }): LegalDocument {
+  return {
+    ...doc,
+    sections: doc.sections.map((s) => {
+      if (s.heading === "Booking a session") return { ...s, body: s.body.map((b) => (b === NO_DEPOSIT_TERMS.booking ? text.booking : b)) };
+      if (s.heading !== "Rescheduling and cancellations") return s;
+      const body = s.body.map((b) => (typeof b === "string" && b.endsWith(NO_DEPOSIT_TERMS.rebook) ? b.slice(0, -NO_DEPOSIT_TERMS.rebook.length) : b));
+      const at = body.findIndex((b) => typeof b === "string" && b.startsWith("If you need to cancel or reschedule"));
+      return { ...s, body: [...body.slice(0, at + 1), text.refunds, ...body.slice(at + 1)] };
+    }),
+  };
+}
+
 /** Terms → "Packages and prices", added once a travel fee is set up in /admin ({freeMiles}, {maxMiles}, {perMile}). */
 export const travelFeeTerms =
   "Homes within {freeMiles} miles of our Miami Beach base have no travel fee. Homes farther away, up to {maxMiles} miles, pay {perMile} for each extra mile, estimated from your ZIP code and shown before you book. The travel fee is added to your total and paid with your session.";
@@ -167,7 +190,7 @@ export const termsOfService: LegalDocument = {
     {
       heading: "Booking a session",
       body: [
-        "You can book a session through our website. You'll receive a confirmation with your booking details. Nothing is paid at booking: payment for your bundle is due once your photoshoot is completed.",
+        NO_DEPOSIT_TERMS.booking,
         "The person booking must be the baby's parent or legal guardian and at least 18 years old.",
       ],
     },
@@ -188,7 +211,7 @@ export const termsOfService: LegalDocument = {
       body: [
         "Babies keep their own schedules, and we understand. If your baby or anyone in your family is unwell, please let us know and we'll find a new date.",
         "You're free to reschedule or cancel online, using the links in your confirmation email, up to {notice} before your session. Inside {notice}, just text us at {phone} and we'll help.",
-        "If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family. If you miss a session without telling us, we may ask for a deposit to rebook.",
+        `If you need to cancel or reschedule, please tell us as early as possible, so we can offer the time to another family.${NO_DEPOSIT_TERMS.rebook}`,
         "If we ever need to cancel because of illness or an emergency, we'll find a new date with you at no cost.",
       ],
     },

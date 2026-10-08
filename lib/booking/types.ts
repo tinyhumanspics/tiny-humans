@@ -106,6 +106,12 @@ export interface BookingResult {
   rescheduleNoticeHours?: number;
   /** Prototype/mock only: lets the preview open the cancel page. Never set for real bookings. */
   preview?: { cancelToken: string };
+  /**
+   * The deposit. status "pending" (with `status: "pending"` on the result): not booked yet, the family pays on `url`
+   * (Stripe) and comes back to `returnPath`; the time is held until `holdUntil`. "unpaid": Stripe was down, so it was
+   * booked without it.
+   */
+  deposit?: { amountCents: number; status: "paid" | "unpaid" | "pending"; url?: string; returnPath?: string; holdUntil?: string };
 }
 
 /** What the cancel page may show (no contact details, no address). */
@@ -145,6 +151,8 @@ export interface CancelOptions {
   by: "customer" | "admin";
   /** Skip customer/internal emails (used by admin "Delete Lead"). */
   silent?: boolean;
+  /** Refund the paid deposit (online cancellation by the family: always; the owner chooses in /admin). */
+  refundDeposit?: boolean;
 }
 
 /** Used by the booking form in the browser. */
