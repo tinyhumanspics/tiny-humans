@@ -3,8 +3,8 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish next; order = owner's choice below)
-State: `main` = `83896fd`, live and smoke-tested. Phase 4 is complete: extra babies are live, migration 0017 returned
+## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
+State: `main` = `a8719e7`. Phase 4 is complete: extra babies are live, migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
@@ -31,8 +31,8 @@ The deposit is live but **switched off** (families see today's flow and wording)
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
    (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core DONE Oct 8**;
-   owner Search Console + Business Profile steps remain. (c) **Phase 3 Spanish next**
-   Spanish; (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
+   owner Search Console + Business Profile steps remain. (c) **Phase 3 Spanish underway**;
+   (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
 5. **Owner: finish SEO discovery setup:** verify `tinyhumans.photography` as a Domain property in Google Search Console
@@ -113,8 +113,17 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       (Stripe line "… (after your $50 deposit)"). Dashboard "Paid this month" includes kept deposits. Reminders skip
       pending bookings; emails/reminders/event/studio email show "Deposit paid $50 · Rest $199". Marketing pages say "$50
       deposit holds your date", or "a deposit from $50" when bundles differ. Terms: booking paragraph + refund rules
-      (only while on; "last updated" = when switched on). 97 local checks (`deposit-checks.mjs`, Outlook mode, fake
-      Graph/Resend/Stripe), screenshots in `Claude outputs/deposit/` (phone + desktop; `-mixed` = $50/$50/$100).
+      (only while on; "last updated" = when switched on). **Oct 8 deposits-off follow-up:** owner confirmed the switch
+      applies to new bookings only. Saving it off was reproduced through the real Outlook provider against local
+      Postgres/Graph/Resend/Stripe: the new booking was immediately `confirmed`, had no `booking_deposits` row or hold,
+      and its lead had the automatic permanent signed payment link for the exact $149 total. Leads now explicitly say
+      "Deposit: Not required for this booking ($0 paid today)"; the link says it was created automatically and never
+      expires. Pricing & Promotions clearly distinguishes an unsaved toggle from "off and saved" and explains that the
+      existing sneak-peek/gallery emails keep the link while unpaid. Existing older deposit bookings keep their original
+      hold/terms. No migration and no new email. Two UI regressions pass at phone + desktop sizes; screenshots inspected.
+      Full verification: strict tsc, build, lint (0 errors/26 known warnings), 59 e2e passed (4 expected Node-only skips),
+      and all 16 visual-parity pages passed. Earlier deposit work: 97 local checks (`deposit-checks.mjs`, Outlook mode,
+      fake Graph/Resend/Stripe), screenshots in `Claude outputs/deposit/` (phone + desktop; `-mixed` = $50/$50/$100).
 - [x] **Routes** (Oct 7, branch `wip/routes`): bundles page `/book` → **`/bundles`**, calendar `/book/schedule?bundle=` →
       **`/book?bundle=`** (`?inspiration=` kept). Owner: no redirects for the old URLs (new project). `/book` without a
       known bundle → the bundle opened earlier in this tab's visit (sessionStorage `th_last_bundle`, bundle id only),
@@ -156,12 +165,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Checkout page, then `GET /v1/checkout/sessions?customer_details[email]=…&status=complete` matched by
       `metadata.booking_id` (same key permission as today). Note: emails are keyed by session time, so a sneak peek sent
       before a reschedule shows "Not sent yet" again after it. 17 local checks (fake Stripe: `?nohook=1` = missed webhook).
-- [x] **Backdrops: Beige + Wooden, picked on the site** (owner, Oct 7; live `686dd5e`, owner OK'd
-      `Claude outputs/backdrops/` and ran migration `drizzle/0013_booking_backdrops.sql`, a separate best-effort table). 6 backdrops (`config/backdrops.ts`; Beige color + a
+- [x] **Backdrops: Beige + Wooden + Pink, picked on the site** (owner, Oct 7–8; original live `686dd5e`, Pink added
+      in `a8719e7`; owner OK'd `Claude outputs/backdrops/` and ran migration `drizzle/0013_booking_backdrops.sql`, a separate best-effort table). 7 backdrops (`config/backdrops.ts`; Beige/Pink colors + a
       drawn wood-grain texture `public/backdrops/wooden.jpg`, also attached to emails as CID). **One per setup**
       (`setupsOf`: "N setups" in the bundle's details → Little Moments 1, Our Little Story 2, Our Family Story 3).
       Optional on the booking form (details step, after Notes); review + confirmation page show them. Confirmation
-      email: picked → "Your backdrop(s): …" + **Change backdrop**; not picked → all swatches (2 rows of 3) + **Choose
+      email: picked → "Your backdrop(s): …" + **Change backdrop**; not picked → all swatches (rows of 3) + **Choose
       your backdrop**. 72 h reminder: same (its own link). **/backdrop?t=** (manage token, like /reschedule; no intro):
       pick/change until the day before the session (Miami date), then "text us". A change → studio "Backdrop update"
       email + the Outlook event's description rebuilt from the booking (`updateCalendarEventBody`). /admin lead:
@@ -171,10 +180,11 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; **Phase 2 is complete** (the optional Today view stays in the backlog). Phase 4's
-  extra-baby implementation is locally complete/verified; migration 0017 + visual approval gate the app push. Deposit
-  code is live but switched off (migration ran; remaining Stripe/amount/switch steps wait on owner). BUG-5 database
-  rule and email bounce table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
+- **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
+  the backlog). Phase 3 is underway: routing foundation + bilingual customer-email catalog are on main, but no Spanish
+  route/email is live yet; migration 0018 confirmation gates the booking-locale wiring. Deposit code is live but switched
+  off (remaining Stripe/amount/switch steps wait on owner). BUG-5 database rule and email bounce table are live; Resend
+  webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -395,7 +405,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [~] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails. Migration
       `drizzle/0018_booking_locale.sql` is additive/idempotent, keeps existing bookings in English, and must run in Neon
       before app code reads the column. Local Postgres: ran the migration twice; 9 existing bookings remained `en`, the
-      non-null default was `en`, and exactly one language constraint existed.
+      non-null default was `en`, and exactly one language constraint existed. **Oct 8 email slice (`a8719e7`):** every
+      customer-email catalog entry now has an English/Spanish pair; confirmation, reschedule, cancellation, closed-day,
+      reminders, deposit-abandoned and payment-link templates localize dates, times, babies, prices, policies and
+      backdrops. The mock-only confirmation screen previews either language. A schema/placeholder test keeps both
+      catalogs aligned; the booking test renders Spanish in Chromium, Android and iPhone/WebKit. The first full run
+      caught WebKit's mixed Spanish/US date order, so Spanish long dates are now deterministic. Phone + desktop email
+      renders were inspected; 53 e2e passed (4 expected Node-only skips), all 16 visual-parity pages passed, strict tsc/
+      build/lint passed (0 errors/26 known warnings). This is dormant: production bookings/emails remain English until
+      migration 0018 is confirmed and locale capture is wired.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal

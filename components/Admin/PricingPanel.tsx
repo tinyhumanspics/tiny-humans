@@ -162,6 +162,7 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<Note>(null);
   const ids = bundles.map((b) => b.id).join(",");
+  const unsavedSwitch = savedOn !== null && enabled !== savedOn;
 
   useEffect(() => {
     api
@@ -185,7 +186,12 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
       const r = await api.saveDeposit({ enabled, amounts: cents });
       setSavedOn(r.settings?.enabled ?? enabled);
       setStripeReady(r.stripeReady);
-      setNote({ kind: "ok", text: enabled ? "Deposits on: new bookings pay their bundle's deposit while booking. The landing page, About page and Terms say so now." : "Deposits off: new bookings pay nothing while booking." });
+      setNote({
+        kind: "ok",
+        text: enabled
+          ? "Deposits on and saved: new bookings pay their bundle's deposit while booking. The landing page, About page and Terms say so now."
+          : "Deposits off and saved: new bookings are confirmed immediately with $0 paid today. Their permanent payment link and existing after-session emails remain available in Leads.",
+      });
     } catch (err) {
       setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
     } finally {
@@ -199,10 +205,20 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
       <p className={cn(styles.muted, "chalk-soft")}>
         When deposits are on, families pay their bundle&apos;s deposit on Stripe as the last step of booking, and their date is confirmed once it&apos;s
         paid (we hold the time for 30 minutes while they pay). It counts toward their total and is never more than the total. It&apos;s refunded
-        automatically when they cancel online in time; when you cancel, you choose. Off = &ldquo;pay after your session&rdquo;, as before. Changes
-        apply to new bookings only.
+        automatically when they cancel online in time; when you cancel, you choose. Off = &ldquo;pay after your session&rdquo;: new bookings are confirmed
+        immediately, and Leads still creates a permanent payment link automatically. The existing sneak-peek and gallery emails include that link while
+        the balance is unpaid. Changes apply to new bookings only.
       </p>
-      {savedOn === false && <p className={cn(styles.bannerError, "chalk-soft")}>Deposits are off: families pay nothing while booking.</p>}
+      {unsavedSwitch && (
+        <p className={cn(styles.bannerError, "chalk-soft")} role="alert">
+          This switch has not been saved yet. Click &ldquo;Save deposit settings&rdquo; below before testing a new booking.
+        </p>
+      )}
+      {!unsavedSwitch && savedOn === false && (
+        <p className={cn(styles.banner, "chalk-soft")}>
+          Deposits are off and saved: new bookings show Confirmed, pay $0 today, and still get a permanent payment link in Leads.
+        </p>
+      )}
       {!stripeReady && <p className={cn(styles.bannerError, "chalk-soft")}>Stripe isn&apos;t connected (STRIPE_SECRET_KEY in Vercel), so deposits can&apos;t be turned on.</p>}
       {savedOn !== true && (
         <p className={cn(styles.hintSmall, "chalk-soft")}>
@@ -213,7 +229,7 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
       <form onSubmit={save} noValidate>
         <label className={styles.toggle}>
           <input type="checkbox" checked={enabled} onChange={(e) => (setEnabled(e.target.checked), setNote(null))} />
-          <span className="chalk-soft">Deposits on: families pay a deposit when they book</span>
+          <span className="chalk-soft">Require a deposit for new bookings</span>
         </label>
         <div className={styles.rulesGrid}>
           {bundles.map((b) => (
@@ -235,7 +251,7 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
           ))}
         </div>
         <ChalkButton type="submit" variant="outline" disabled={busy} seed={886}>
-          {busy ? "Saving…" : "Save deposits"}
+          {busy ? "Saving…" : "Save deposit settings"}
         </ChalkButton>
       </form>
       {note && (

@@ -56,6 +56,14 @@ function depositLine(d: LeadDeposit, cancelled: boolean): string {
 }
 const depositRows = (lead: Lead): [string, string][] => {
   const d = lead.deposit;
+  // `null` is an ordinary server booking made while deposits were off. Keep
+  // `undefined` visually unchanged for the browser-only prototype, which has
+  // no deposit/payment system at all.
+  if (d === null) {
+    return lead.status === "confirmed" || lead.status === "rescheduled"
+      ? [["Deposit", "Not required for this booking ($0 paid today)"]]
+      : [];
+  }
   if (!d) return [];
   const rows: [string, string][] = [["Deposit", depositLine(d, lead.status === "cancelled")]];
   if (d.status === "expired") rows.push(["“Not confirmed yet” email", d.abandonedEmail ? sentLine(d.abandonedEmail) : "Not sent (they booked again, or chose another time themselves)"]);
@@ -704,7 +712,7 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
           <p className={cn(styles.hintSmall, "chalk-soft")}>
             {p.next.kind === "deposit"
               ? `This link never expires. Before the session it takes the ${nextAmount} deposit; after that it charges the rest. Send it any time.`
-              : `This link never expires and always charges ${amount}. Send it any time, before or after the session.`}
+              : `${d === null ? "Created automatically when the booking was confirmed. " : ""}This link never expires and always charges ${amount}. Send it any time, before or after the session.`}
           </p>
           <div className={styles.photoBarRight}>
             <a className={styles.smallButton} href={smsHref(lead.phone, en.emails.paymentLink.smsBody.replace("{name}", first).replace("{url}", p.link!))}>
