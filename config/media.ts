@@ -1,3 +1,4 @@
+import en from "@/messages/en.json";
 import { portfolio, portfolioCtas, type FeedBlock, type PortfolioPhoto } from "./portfolio";
 
 /**
@@ -12,9 +13,10 @@ export const MEDIA_GROUPS = {
     slots: 2,
   },
   landing: {
-    label: "Stay-Home Session Page",
-    where: "The two photos on the /home-sweet-home page. Until you add one, visitors see the matching “photo coming soon” card.",
-    slots: ["Behind the scenes", "Meet the photographers"],
+    label: "Stay-Home Session Page (/home-sweet-home)",
+    where: `The two photos on the ad landing page: “${en.landing.how.photo}” under “${en.landing.how.title}”, and “${en.landing.meet.photo}” next to “${en.landing.meet.title}”. Until you add one, visitors see the matching “photo coming soon” card.`,
+    // same names as the "photo coming soon" cards on the page
+    slots: [en.landing.how.photo, en.landing.meet.photo],
   },
   about: {
     label: "About Us Page",
