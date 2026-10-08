@@ -1,5 +1,7 @@
 import "server-only";
-import { count, desc, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { bookingRules } from "@/config/booking";
+import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb } from "@/lib/db/client";
 import { bookingConsents, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingConsent, type BookingEmail, type BookingPayment, type BookingTerm, type Review } from "@/lib/db/schema";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
@@ -56,7 +58,9 @@ function afterOf(r: Booking, x: Extras): Lead["after"] {
   const linkEmail = x.emails.filter((e) => e.bookingId === r.id && e.kind === "payment_link").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
   const review = x.reviews.find((v) => v.bookingId === r.id);
   return {
-    canSend: r.status !== "cancelled" && r.sessionStart.getTime() <= Date.now(),
+    canSend: r.status !== "cancelled",
+    started: r.sessionStart.getTime() <= Date.now(),
+    ended: r.sessionEnd.getTime() <= Date.now(),
     sessionDone: sent(current("after_session")),
     favorites: photosLabelOf(r, x.terms.find((t) => t.bookingId === r.id)),
     gallery: sent(current("gallery_delivered")),
@@ -148,8 +152,39 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     if (g.status !== "cancelled") counts.all += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
-  const [history, extras] = await Promise.all([historyFor(ids), extrasFor(ids)]);
-  return { leads: rows.map((r) => toLead(r, history, extras)), counts, total: filter === "all" ? counts.all : counts[filter] };
+  const [history, extras, money] = await Promise.all([historyFor(ids), extrasFor(ids), filter === "all" ? moneyTotals() : undefined]);
+  return { leads: rows.map((r) => toLead(r, history, extras)), counts, total: filter === "all" ? counts.all : counts[filter], money };
+}
+
+/** Dashboard: card payments received this month (Miami time) and finished sessions still unpaid. */
+async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
+  const tz = bookingRules.timeZone;
+  const monthStart = zonedTimeToUtc(`${todayInZone(tz, now).slice(0, 7)}-01`, "00:00", tz);
+  const db = getDb();
+  try {
+    const [[paid], [unpaid]] = await Promise.all([
+      db
+        .select({ cents: sql<number>`coalesce(sum(${bookingPayments.amountCents}), 0)`.mapWith(Number) })
+        .from(bookingPayments)
+        .where(and(eq(bookingPayments.status, "paid"), gte(bookingPayments.paidAt, monthStart))),
+      db
+        .select({ n: count() })
+        .from(bookings)
+        .leftJoin(bookingPayments, eq(bookingPayments.bookingId, bookings.id))
+        .where(
+          and(
+            ne(bookings.status, "cancelled"),
+            lte(bookings.sessionEnd, now),
+            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) > 0`,
+            sql`${bookingPayments.status} is distinct from 'paid'`,
+          ),
+        ),
+    ]);
+    return { paidThisMonthCents: paid?.cents ?? 0, unpaidCount: Number(unpaid?.n ?? 0) };
+  } catch (err) {
+    log.error("leads", "Could not load payment totals", { error: err as Error });
+    return null;
+  }
 }
 
 export async function getLead(reference: string): Promise<Lead | null> {

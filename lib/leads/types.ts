@@ -15,8 +15,11 @@ export interface SentEmail {
 
 /** After the session: what the owner has sent, what the family paid, and their review. */
 export interface AfterSessionStatus {
-  /** The session has started and isn't cancelled, so the after-session emails can be sent. */
+  /** Not cancelled, so the after-session emails can be sent (also before the session: /admin asks to confirm). */
   canSend: boolean;
+  /** The session has started / ended (now vs. the booked times). */
+  started: boolean;
+  ended: boolean;
   /** The sneak peek email (thank-you + Pixieset gallery to choose favorites). */
   sessionDone: SentEmail | null;
   /** Favorites they can choose: the bundle's edited photos when they booked (e.g. "20"). */
@@ -80,4 +83,6 @@ export interface LeadList {
   /** Counts across ALL leads (not just this page). */
   counts: Record<LeadFilter, number>;
   total: number;
+  /** Dashboard money numbers ("all" list only; null if the payments table isn't there). */
+  money?: { paidThisMonthCents: number; unpaidCount: number } | null;
 }

@@ -7,7 +7,8 @@ import { formatLongDate } from "@/lib/booking/dates";
 import { AFTER_KINDS, amountDueCents, findByEmailLink } from "@/lib/booking/after-session";
 import { log } from "@/lib/log";
 import { verifyPayLink } from "./link";
-import { createCheckoutSession, getCheckoutSession, isStripeConfigured, type CheckoutSession } from "./stripe";
+import { BookingError } from "@/lib/booking/errors";
+import { createCheckoutSession, getCheckoutSession, isStripeConfigured, listCompletedCheckoutSessions, StripeError, type CheckoutSession } from "./stripe";
 
 /**
  * Card payments, before or after the session. The booking's payment link (/pay?b=…&s=…, see ./link; older emails:
@@ -81,6 +82,31 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
   } catch (err) {
     log.error("payments", "Could not open the payment page", { reference: row.bookingReference, error: err as Error });
     return { status: "error" };
+  }
+}
+
+/**
+ * Owner's "Check with Stripe" (a backup for a missed webhook): the booking's last Checkout page, then every completed
+ * Checkout page paid with the family's email, matched by the booking id in its metadata. Records a payment it finds.
+ */
+export async function checkPaymentWithStripe(row: Booking): Promise<void> {
+  const [payment] = await getDb().select().from(bookingPayments).where(eq(bookingPayments.bookingId, row.id)).limit(1);
+  if (payment?.status === "paid") return;
+  if (!isStripeConfigured()) throw new BookingError("invalid_request", "Stripe isn't connected (STRIPE_SECRET_KEY is missing in Vercel).");
+  try {
+    // the saved page is only a shortcut: if Stripe can't return it, the email search below still runs
+    const last = payment?.stripeSessionId ? await getCheckoutSession(payment.stripeSessionId).catch(() => null) : null;
+    const paid =
+      last?.payment_status === "paid"
+        ? last
+        : (await listCompletedCheckoutSessions(row.email)).data.find((s) => s.metadata?.booking_id === row.id && s.payment_status === "paid");
+    if (paid) {
+      await markPaid(row.id, paid);
+      log.info("payments", "Payment found with Check with Stripe", { reference: row.bookingReference });
+    }
+  } catch (err) {
+    log.error("payments", "Check with Stripe failed", { reference: row.bookingReference, error: err as Error });
+    throw new BookingError("server_error", err instanceof StripeError ? `Stripe didn't answer (${err.code}). Please try again.` : "Couldn't check with Stripe. Please try again.");
   }
 }
 

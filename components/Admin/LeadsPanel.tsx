@@ -198,7 +198,10 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     <li className={cn(styles.leadCard, lead.status === "cancelled" ? styles.leadCancelled : "")}>
       <div className={styles.leadHead}>
         <span className={cn(styles.leadName, "chalk-soft")}>{lead.parentName}</span>
-        <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{STATUS_LABEL[lead.status]}</span>
+        <span className={styles.leadPills}>
+          <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{STATUS_LABEL[lead.status]}</span>
+          <PaidTag lead={lead} />
+        </span>
       </div>
       <p className={cn(styles.leadLine, "chalk-soft")}>
         <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents)} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
@@ -321,6 +324,14 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
   );
 }
 
+/** "Paid $149" on the lead card, or "Not paid" once the session has ended. */
+function PaidTag({ lead }: { lead: Lead }) {
+  const a = lead.after;
+  if (!a || lead.status === "cancelled" || a.payment.amountCents <= 0) return null;
+  if (a.payment.status === "paid") return <span className={cn(styles.statusPill, styles.paidPill)}>Paid {formatMoney(a.payment.amountCents)}</span>;
+  return a.ended ? <span className={cn(styles.statusPill, styles.unpaidPill)}>Not paid</span> : null;
+}
+
 const sentLine = (e: SentEmail) => (e.status === "sent" ? `Sent ${when(e.at)}` : e.status === "failed" ? `Not sent (${e.error ?? "error"})` : "Sending…");
 
 /** After the session: "Send sneak peek" (thank-you + Pixieset gallery to choose favorites + pay button if unpaid), "Gallery delivered" (review request), the review. */
@@ -328,6 +339,8 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
   const a = lead.after!;
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  // before the session these can still be sent, after a confirm (owner, Oct 7)
+  const [early, setEarly] = useState<{ what: "done" | "gallery"; fn: () => Promise<Lead> } | null>(null);
   const [galleryUrl, setGalleryUrl] = useState("");
   const [peekUrl, setPeekUrl] = useState("");
   const [favorites, setFavorites] = useState(a.favorites ?? "");
@@ -344,6 +357,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
   };
   const amount = formatMoney(a.payment.amountCents);
   const canRetry = (e: SentEmail | null) => !e || e.status === "failed";
+  const sendOrConfirm = (what: "done" | "gallery", fn: () => Promise<Lead>) => (a.started ? run(what, fn) : setEarly({ what, fn }));
   const id = `after-${lead.reference}`;
   if (lead.status === "cancelled") return null;
   return (
@@ -359,8 +373,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
           <dd className="chalk-soft">{a.gallery ? sentLine(a.gallery) : "Not sent yet"}</dd>
         </div>
       </dl>
-      {canRetry(a.sessionDone) &&
-        (a.canSend ? (
+      {canRetry(a.sessionDone) && a.canSend && (
           <div className={styles.adminReschedule}>
             <label htmlFor={`${id}-peek`} className={cn(styles.label, "chalk-soft")}>Pixieset sneak peek link</label>
             <input id={`${id}-peek`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={peekUrl} onChange={(e) => setPeekUrl(e.target.value)} />
@@ -370,19 +383,17 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
               Sends a thank-you with your gallery and &ldquo;choose your {favorites.trim() || "…"} favorites&rdquo;
               {a.payment.amountCents > 0 ? (a.payment.status === "paid" ? ". They've already paid, so there's no payment button." : `, plus a ${amount} payment button (not paid yet).`) : "."}
             </p>
-            <button type="button" className={styles.smallButton} disabled={busy !== null || !peekUrl.trim() || !favorites.trim()} onClick={() => run("done", () => api.sendSneakPeek(lead.reference, peekUrl.trim(), favorites.trim()))}>
+            <button type="button" className={styles.smallButton} disabled={busy !== null || !peekUrl.trim() || !favorites.trim()} onClick={() => sendOrConfirm("done", () => api.sendSneakPeek(lead.reference, peekUrl.trim(), favorites.trim()))}>
               {busy === "done" ? "Sending…" : a.sessionDone ? "Try again: send sneak peek" : "Send sneak peek"}
             </button>
           </div>
-        ) : (
-          <p className={cn(styles.hintSmall, "chalk-soft")}>The sneak peek can be sent once the session has started.</p>
-        ))}
+      )}
       {a.sessionDone?.status === "sent" && canRetry(a.gallery) && (
         <div className={styles.adminReschedule}>
           <label htmlFor={`${id}-gallery`} className={cn(styles.label, "chalk-soft")}>Final gallery link (optional)</label>
           <input id={`${id}-gallery`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
           <p className={cn(styles.hintSmall, "chalk-soft")}>Sends a thank-you with a link to leave a review{a.payment.status !== "paid" && a.payment.amountCents > 0 ? `, plus a ${amount} payment button (still unpaid)` : ""}.</p>
-          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined))}>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => sendOrConfirm("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined))}>
             {busy === "gallery" ? "Sending…" : a.gallery ? "Try again: Gallery delivered" : "Gallery delivered: send review request"}
           </button>
         </div>
@@ -406,6 +417,33 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
         </div>
       )}
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+      {early &&
+        createPortal(
+          <div className={styles.dialogBackdrop} role="presentation" onClick={() => setEarly(null)}>
+            <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-early-t`} aria-describedby={`${id}-early-d`} onClick={(e) => e.stopPropagation()}>
+              <h3 id={`${id}-early-t`} className={cn(styles.h3, "chalk")}>The session hasn&apos;t happened yet</h3>
+              <p id={`${id}-early-d`} className={cn(styles.muted, "chalk-soft")}>
+                {lead.parentName}&apos;s session is on {formatLongDate(lead.sessionDate)} at {formatTimeLabel(lead.start)}. Send the {early.what === "done" ? "sneak peek" : "gallery and review request"} anyway?
+              </p>
+              <div className={styles.photoBar}>
+                <button type="button" className={styles.smallButton} onClick={() => setEarly(null)} autoFocus>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className={styles.smallButton}
+                  onClick={() => {
+                    setEarly(null);
+                    run(early.what, early.fn);
+                  }}
+                >
+                  Send anyway
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
@@ -449,7 +487,7 @@ function smsHref(phone: string, body: string): string {
 /** Payment: status + the booking's payment link (never expires) to text, copy or email — before or after the session. */
 function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
   const p = lead.after!.payment;
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<"email" | "check" | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   if (lead.status === "cancelled") return null;
@@ -474,7 +512,7 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
     }
   };
   const email = async () => {
-    setBusy(true);
+    setBusy("email");
     setErr(null);
     setNote(null);
     try {
@@ -483,7 +521,21 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Couldn't send. Please try again.");
     } finally {
-      setBusy(false);
+      setBusy(null);
+    }
+  };
+  const check = async () => {
+    setBusy("check");
+    setErr(null);
+    setNote(null);
+    try {
+      const updated = await api.checkPayment(lead.reference);
+      onUpdated(updated);
+      setNote(updated.after?.payment.status === "paid" ? "Stripe confirms it's paid. Updated." : "Stripe has no payment for this booking yet.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't check with Stripe. Please try again.");
+    } finally {
+      setBusy(null);
     }
   };
   const first = lead.parentName.split(" ")[0];
@@ -502,6 +554,14 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
           </div>
         )}
       </dl>
+      {p.amountCents > 0 && p.status !== "paid" && (
+        <div className={styles.photoBarRight}>
+          <span className={cn(styles.hintSmall, "chalk-soft")}>Paid, but it still says not paid?</span>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={check}>
+            {busy === "check" ? "Checking…" : "Check with Stripe"}
+          </button>
+        </div>
+      )}
       {showLink && (
         <>
           <p className={cn(styles.hintSmall, "chalk-soft")}>This link never expires and always charges {amount}. Send it any time, before or after the session.</p>
@@ -512,8 +572,8 @@ function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onU
             <button type="button" className={styles.smallButton} onClick={copy}>
               Copy link
             </button>
-            <button type="button" className={styles.smallButton} disabled={busy} onClick={email}>
-              {busy ? "Sending…" : "Email the link"}
+            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={email}>
+              {busy === "email" ? "Sending…" : "Email the link"}
             </button>
           </div>
           <input className={styles.input} readOnly value={p.link!} aria-label="Payment link" onFocus={(e) => e.currentTarget.select()} />

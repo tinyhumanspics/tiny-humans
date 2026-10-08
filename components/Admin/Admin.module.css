@@ -228,6 +228,9 @@
 .status_confirmed { color: var(--sun-yellow); }
 .status_rescheduled { color: var(--cloud-blue); }
 .status_pending { color: var(--chalk-muted); }
+.leadPills { display: inline-flex; flex-wrap: wrap; gap: 8px; }
+.paidPill { color: var(--chalkboard-dark); background: var(--sun-yellow); border-color: var(--sun-yellow); }
+.unpaidPill { color: var(--chalk-error); border-style: dashed; }
 .status_cancelled { color: var(--chalk-error); }
 .leadDetails { margin-top: 8px; padding-top: 10px; border-top: 1px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); display: grid; gap: 12px; justify-items: start; }
 .leadDetails dl { margin: 0; width: 100%; display: grid; }
@@ -262,7 +265,7 @@
 
 /* dashboard */
 .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 6px 0 14px; }
-@media (min-width: 760px) { .stats { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 760px) { .stats { grid-template-columns: repeat(3, 1fr); } }
 .stat { display: grid; gap: 2px; padding: 12px 14px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 12px; color: var(--chalk-muted); }
 .statNum { font-family: var(--font-chalk); font-size: 2.2rem; line-height: 1; color: var(--sun-yellow); }
 .statTheme { font-size: 1.5rem; color: var(--cloud-blue); }

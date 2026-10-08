@@ -63,7 +63,6 @@ async function claim(row: Booking, kind: AfterKind, tokenHash: string): Promise<
 
 async function deliver(row: Booking, kind: AfterKind, build: (token: string, themeId: string) => Promise<{ subject: string; html: string; text: string; attachments: { filename: string; content: string; contentType: string; contentId: string }[] }>) {
   if (row.status === "cancelled") throw new BookingError("invalid_request", "This booking is cancelled.");
-  if (row.sessionStart.getTime() > Date.now()) throw new BookingError("invalid_request", "You can send this once the session has started.");
   const token = createCancelToken();
   const id = await claim(row, kind, token.hash);
   const db = getDb();

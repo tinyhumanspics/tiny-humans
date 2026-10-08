@@ -6,6 +6,7 @@ import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { SiteSettings } from "@/lib/settings/types";
 import { getAdminApi, PROTOTYPE_PASSWORD } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
+import { formatMoney } from "@/lib/pricing/engine";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
@@ -118,12 +119,15 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
   }, [api]);
   const theme = themes[settings.themeId];
   const stat = (n: number | undefined) => (leads ? String(n ?? 0) : leadsError ? "–" : "…");
+  const money = (show: (m: NonNullable<LeadList["money"]>) => string) => (leads ? (leads.money ? show(leads.money) : "–") : leadsError ? "–" : "…");
   return (
     <section className={styles.section} aria-label="Dashboard">
       <div className={styles.stats}>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.cancelled)}</span><span className="chalk-soft">Cancelled</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{money((m) => formatMoney(m.paidThisMonthCents))}</span><span className="chalk-soft">Paid this month</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{money((m) => String(m.unpaidCount))}</span><span className="chalk-soft">Sessions not paid yet</span></div>
         <div className={styles.stat}><span className={cn(styles.statNum, styles.statTheme, "chalk")}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
       </div>
       {leadsError && <p className={cn(styles.hintSmall, "chalk-soft")}>Lead numbers appear once the database is connected.</p>}

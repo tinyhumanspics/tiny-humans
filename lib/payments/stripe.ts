@@ -88,6 +88,10 @@ export function createCheckoutSession(input: {
 
 export const getCheckoutSession = (id: string) => call<CheckoutSession>("GET", `checkout/sessions/${encodeURIComponent(id)}`);
 
+/** Completed Checkout pages paid with this email, newest first (up to 100). https://docs.stripe.com/api/checkout/sessions/list */
+export const listCompletedCheckoutSessions = (email: string) =>
+  call<{ data: CheckoutSession[] }>("GET", `checkout/sessions?${new URLSearchParams({ "customer_details[email]": email, status: "complete", limit: "100" })}`);
+
 /**
  * Checks a webhook's Stripe-Signature header (HMAC-SHA256 of "<t>.<raw body>" with the endpoint secret, v1 scheme
  * only, 5-minute tolerance). https://docs.stripe.com/webhooks#verify-manually
