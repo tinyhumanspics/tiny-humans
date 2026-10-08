@@ -2,6 +2,9 @@ import "server-only";
 import { Resend } from "resend";
 import { log } from "@/lib/log";
 
+/** Tag values Resend accepts (ASCII letters, numbers, "_" and "-", up to 256 characters). */
+export const isTagValue = (v: string | undefined): v is string => Boolean(v && /^[A-Za-z0-9_-]{1,256}$/.test(v));
+
 /**
  * Booking emails via Resend (server only). Microsoft Graph is used for the
  * Outlook calendar only. Env: RESEND_API_KEY, BOOKING_FROM_EMAIL,
@@ -70,7 +73,8 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
         text: email.text,
         replyTo: email.replyTo,
         attachments: email.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType, contentId: a.contentId })),
-        tags: [{ name: "category", value: email.scope.replace(/[^a-zA-Z0-9_-]/g, "_") }],
+        // "booking" lets the delivery webhook (lib/email/delivery.ts) find the lead an email was about
+        tags: [{ name: "category", value: email.scope.replace(/[^a-zA-Z0-9_-]/g, "_") }, ...(isTagValue(email.reference) ? [{ name: "booking", value: email.reference }] : [])],
       },
       email.idempotencyKey ? { idempotencyKey: email.idempotencyKey } : undefined,
     );

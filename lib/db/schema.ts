@@ -325,6 +325,41 @@ export const bookingBackdrops = pgTable(
 
 export type BookingBackdrops = typeof bookingBackdrops.$inferSelect;
 
+/**
+ * Delivery problems Resend reported for our emails (webhook /api/resend/webhook): bounced, marked as spam, not sent
+ * because the address is on Resend's suppression list, or failed. One row per webhook message and recipient (retries
+ * and replays don't add rows). Shown on the family's lead in /admin. A separate table so a missing migration can never
+ * break bookings.
+ */
+export const emailEvents = pgTable(
+  "email_events",
+  {
+    /** "<webhook message id>/<recipient>" */
+    id: text("id").primaryKey(),
+    /** "bounced" | "complained" | "suppressed" | "failed" */
+    type: text("type").notNull(),
+    /** Resend's id of the email. */
+    emailId: text("email_id"),
+    /** Lowercased address the problem is about. */
+    recipient: text("recipient").notNull(),
+    /** The email's "booking" tag (null for emails sent before tagging). */
+    bookingReference: text("booking_reference"),
+    /** The email's "category" tag, e.g. "resend_customer" (the confirmation email). */
+    category: text("category"),
+    /** Short reason from Resend (bounce message, suppression type, failure reason). */
+    detail: text("detail"),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("email_events_recipient_idx").on(t.recipient),
+    index("email_events_booking_idx").on(t.bookingReference),
+    check("email_events_type_check", sql`${t.type} in ('bounced', 'complained', 'suppressed', 'failed')`),
+  ],
+);
+
+export type EmailEvent = typeof emailEvents.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

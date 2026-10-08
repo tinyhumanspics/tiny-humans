@@ -93,6 +93,8 @@ export interface Lead {
   after?: AfterSessionStatus;
   /** The deposit (null: booked without one; undefined in the prototype). */
   deposit?: LeadDeposit | null;
+  /** Emails Resend reported as not delivered (bounced, marked as spam, blocked, failed), newest first. */
+  emailProblems?: { kind: "bounced" | "complained" | "suppressed" | "failed"; at: string; email: string; detail: string | null }[];
   /** Optional permissions from the booking form, with when each was given (server mode only). */
   consents?: { sms: boolean; smsAt: string | null; photos: boolean; photosAt: string | null };
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;

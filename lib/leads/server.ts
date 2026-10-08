@@ -3,7 +3,8 @@ import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb } from "@/lib/db/client";
-import { bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type Review } from "@/lib/db/schema";
+import { bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review } from "@/lib/db/schema";
+import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
 import { backdropsFor } from "@/lib/booking/backdrops";
@@ -34,14 +35,17 @@ interface Extras {
   access: BookingAccess[];
   backdrops: BookingBackdrops[];
   deposits: BookingDeposit[];
+  /** Delivery problems Resend reported for these families' addresses. */
+  emailEvents: EmailEvent[];
   /** Today's cancel/reschedule notice (bookings without their own terms). */
   noticeHours: number;
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], noticeHours: 48 };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], noticeHours: 48 };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
-async function extrasFor(bookingIds: string[]): Promise<Extras> {
+async function extrasFor(rows: Booking[]): Promise<Extras> {
+  const bookingIds = rows.map((r) => r.id);
   if (!bookingIds.length) return NO_EXTRAS;
   const db = getDb();
   const safe = <T,>(what: string, q: Promise<T[]>) =>
@@ -49,7 +53,7 @@ async function extrasFor(bookingIds: string[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, noticeHours] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, noticeHours] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -58,9 +62,10 @@ async function extrasFor(bookingIds: string[]): Promise<Extras> {
     accessFor(bookingIds),
     backdropsFor(bookingIds),
     depositsFor(bookingIds),
+    emailEventsFor(rows),
     getNoticeHoursSetting().catch(() => 48),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, noticeHours };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, noticeHours };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -144,6 +149,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
       .sort((a, b) => (a.kind === "72h" ? -1 : 1) - (b.kind === "72h" ? -1 : 1)),
     after: afterOf(r, x),
     deposit: leadDepositOf(r, x),
+    emailProblems: problemsOf(r, x.emailEvents).map((e) => ({ kind: e.type as EmailProblem, at: e.occurredAt.toISOString(), email: emailNameOf(e.category), detail: e.detail })),
     consents: (({ sms, smsAt, photos, photosAt }) => ({ sms, smsAt: iso(smsAt), photos, photosAt: iso(photosAt) }))(x.consents.find((c) => c.bookingId === r.id) ?? { sms: false, smsAt: null, photos: false, photosAt: null }),
     cancellation:
       r.status === "cancelled"
@@ -189,7 +195,7 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     if (g.status !== "cancelled") counts.all += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
-  const [history, extras, money] = await Promise.all([historyFor(ids), extrasFor(ids), filter === "all" ? moneyTotals() : undefined]);
+  const [history, extras, money] = await Promise.all([historyFor(ids), extrasFor(rows), filter === "all" ? moneyTotals() : undefined]);
   return { leads: rows.map((r) => toLead(r, history, extras)), counts, total: filter === "all" ? counts.all : counts[filter], money };
 }
 
@@ -233,7 +239,7 @@ async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
 
 export async function getLead(reference: string): Promise<Lead | null> {
   const row = await getLeadRow(reference);
-  return row ? toLead(row, await historyFor([row.id]), await extrasFor([row.id])) : null;
+  return row ? toLead(row, await historyFor([row.id]), await extrasFor([row])) : null;
 }
 
 export async function getLeadRow(reference: string): Promise<Booking | null> {

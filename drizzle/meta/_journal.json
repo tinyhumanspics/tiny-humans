@@ -113,6 +113,13 @@
       "when": 1791428467855,
       "tag": "0015_booking_no_overlap",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791431107806,
+      "tag": "0016_email_events",
+      "breakpoints": true
     }
   ]
 }

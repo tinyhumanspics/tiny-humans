@@ -190,3 +190,32 @@ export async function internalNewReviewEmail(r: { reference: string; parentName:
   );
   return { subject: `${r.updated ? "Review updated" : "New review"} — ${r.parentName} — ${r.rating}/5`, html, text: text([banner], rows), attachments: [] };
 }
+
+const PROBLEM_BANNER = { bounced: "EMAIL BOUNCED", complained: "MARKED AS SPAM", suppressed: "EMAIL NOT SENT", failed: "EMAIL FAILED" } as const;
+const PROBLEM_SUBJECT = { bounced: "Email bounced", complained: "Marked as spam", suppressed: "Email not sent", failed: "Email failed" } as const;
+
+/** Resend reported that a family didn't get one of our emails (sent once per address; see lib/email/delivery.ts). */
+export async function internalEmailProblemEmail(p: { kind: keyof typeof PROBLEM_BANNER; emailName: string; detail: string | null; at: Date; reference: string; parentName: string; email: string; phone: string; bundleName: string; sessionStart: Date; cancelled: boolean }): Promise<RenderedEmail> {
+  const first = firstName(p.parentName);
+  const what = {
+    bounced: `The ${p.emailName} to ${p.parentName} bounced: ${p.email} doesn't accept email. Text ${first} at ${p.phone} to check their email address.`,
+    complained: `${p.parentName} marked the ${p.emailName} as spam, so Resend won't email them again. Text ${first} at ${p.phone} if you need to reach them.`,
+    suppressed: `The ${p.emailName} to ${p.parentName} wasn't sent: ${p.email} bounced or marked an earlier email as spam, so Resend blocks it. Text ${first} at ${p.phone}.`,
+    failed: `The ${p.emailName} to ${p.parentName} couldn't be sent. Text ${first} at ${p.phone}.`,
+  }[p.kind];
+  const summary = p.cancelled ? `${what} (This booking is cancelled.)` : what;
+  const rows: [string, string][] = [
+    ["Booking reference", p.reference],
+    ["Customer name", p.parentName],
+    ["Email", p.email],
+    ["Phone", p.phone],
+    ["Bundle", p.bundleName],
+    ["Session", eastern(p.sessionStart)],
+    ["Which email", p.emailName],
+    ["When", eastern(p.at)],
+    ...(p.detail ? ([["Reason", p.detail]] as [string, string][]) : []),
+  ];
+  const banner = PROBLEM_BANNER[p.kind];
+  const html = await renderHtml(<InternalLayout banner={banner} bannerBg={C.red} bannerFg="#ffffff" summary={summary} rows={rows} footer="You'll also see this on the lead in /admin → Leads. We only email you about the first problem with an address." />);
+  return { subject: `${PROBLEM_SUBJECT[p.kind]} — ${p.parentName} (${p.reference})`, html, text: text([banner, "", summary], rows), attachments: [] };
+}

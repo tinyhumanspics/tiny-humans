@@ -60,6 +60,23 @@ const depositRows = (lead: Lead): [string, string][] => {
   if (d.status === "expired") rows.push(["“Not confirmed yet” email", d.abandonedEmail ? sentLine(d.abandonedEmail) : "Not sent (they booked again, or chose another time themselves)"]);
   return rows;
 };
+type EmailProblem = NonNullable<Lead["emailProblems"]>[number];
+const PROBLEM_TAG: Record<EmailProblem["kind"], string> = { bounced: "Email bounced", complained: "Marked as spam", suppressed: "Email blocked", failed: "Email failed" };
+/** What Resend reported, in the owner's words (newest first, at most 3). */
+function problemLine(p: EmailProblem): string {
+  const why = p.detail ? ` (${p.detail})` : "";
+  switch (p.kind) {
+    case "bounced":
+      return `The ${p.email} bounced ${when(p.at)}${why}. Text the family to check their email address.`;
+    case "complained":
+      return `The ${p.email} was marked as spam ${when(p.at)}. Don't email them again: text instead.`;
+    case "suppressed":
+      return `The ${p.email} wasn't sent ${when(p.at)}: this address bounced or marked an email as spam before. Text the family.`;
+    case "failed":
+      return `The ${p.email} couldn't be sent ${when(p.at)}${why}. Text the family.`;
+  }
+}
+const problemRows = (lead: Lead): [string, string][] => (lead.emailProblems ?? []).slice(0, 3).map((p, i) => [i ? `Email problem ${i + 1}` : "Email problem", problemLine(p)]);
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
 /** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
 const reminderRows = (lead: Lead): [string, string][] => {
@@ -211,6 +228,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
     ...reminderRows(lead),
+    ...problemRows(lead),
     ...(lead.source
       ? ([
           ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],
@@ -238,6 +256,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         <span className={styles.leadPills}>
           <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{statusLabel(lead)}</span>
           <PaidTag lead={lead} />
+          {lead.emailProblems?.[0] && <span className={cn(styles.statusPill, styles.unpaidPill)}>{PROBLEM_TAG[lead.emailProblems[0].kind]}</span>}
         </span>
       </div>
       <p className={cn(styles.leadLine, "chalk-soft")}>
