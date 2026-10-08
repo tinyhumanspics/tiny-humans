@@ -90,6 +90,14 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       6-step flow → one column per step (`--steps`), dashed line from the first circle's center to the last.
       Offered, not requested: steps not reached yet are see-through (`opacity` on the button), so the line shows
       faintly inside circles 2–4.
+- [x] **Sneak peek / gallery before the session + payment visibility** (owner, Oct 7, live `29a2cb5`): "Send sneak peek"
+      and "Gallery delivered" work any time (not cancelled); before the session /admin asks "The session hasn't happened
+      yet … Send anyway?". Lead cards show **"Paid $X"** (solid yellow) or **"Not paid"** once the session has ended;
+      Dashboard: **Paid this month** (Miami month, `booking_payments.paid_at`) + **Sessions not paid yet** (ended, not
+      cancelled, amount > 0, not paid). **"Check with Stripe"** (lead → Payment) = backup for a missed webhook: the saved
+      Checkout page, then `GET /v1/checkout/sessions?customer_details[email]=…&status=complete` matched by
+      `metadata.booking_id` (same key permission as today). Note: emails are keyed by session time, so a sneak peek sent
+      before a reschedule shows "Not sent yet" again after it. 17 local checks (fake Stripe: `?nohook=1` = missed webhook).
 - **`/portfolio` page** (Oct 7): a standalone portfolio page "the same way as /book". Assumption until confirmed: the
   same photo feed as the home page's "Little moments" section (with the "Book a memory like this one" prompts and the
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
@@ -244,7 +252,11 @@ another tool's untracked files — leave them. Local testing: scripts/local-db +
       `lib/travel/fl-zips.ts`, 1013 ZIPs, 32 KB server-only) × 1.2 road factor (rough Florida highway trips from Miami
       Beach run ~1.15–1.2×; an estimate, labeled as such). Flag only: shown to the owner in /admin, the studio email and
       the Outlook event; families see nothing (FAQ already says a fee is confirmed before the session). In progress,
-      uncommitted. Owner asked (Oct 7) whether it can calculate the price automatically → answer pending.
+      uncommitted. **Owner (Oct 7): charge it at booking** — $0.75 per road mile beyond 30 free miles, online booking
+      up to 250 miles (farther → "text us"), non-Florida ZIPs stopped, codes/offers lower the bundle only (fee always in
+      full), fee shown under the ZIP box as soon as it's typed (+ its own line on the review step and in the total).
+      Numbers editable in /admin; wording (form, FAQ, Terms, emails) needs the owner's OK; migration-first (bookings
+      columns).
 - [ ] Edge: Resend webhooks → flag bounces/complaints in /admin; SPF/DKIM/DMARC check
 - [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
 
