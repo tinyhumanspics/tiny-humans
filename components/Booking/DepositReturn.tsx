@@ -81,7 +81,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
         eventId: state.requestId,
         id: b.request.bundleId,
         name: b.pricing?.bundleName ?? b.request.bundleId,
-        value: ((b.pricing?.finalCents ?? 0) + (b.travel?.feeCents ?? 0)) / 100,
+        value: ((b.pricing?.totalCents ?? b.pricing?.finalCents ?? 0) + (b.travel?.feeCents ?? 0)) / 100,
         contact: b.request.contact,
         address: b.request.address,
       });

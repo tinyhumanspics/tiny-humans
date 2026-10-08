@@ -7,7 +7,7 @@ import { allow, clientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 // The browser sends only a bundle id, an optional code and the email. The price is calculated here.
-const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.string().trim().max(40).optional(), email: z.string().trim().max(254).optional() });
+const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.string().trim().max(40).optional(), email: z.string().trim().max(254).optional(), babyCount: z.number().int().min(1).max(3).default(1) });
 
 /** POST /api/booking/quote: server-calculated price (regular, special offer, or one discount code). */
 export async function POST(req: Request) {
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   const p = body.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ error: "Please check the code and try again.", code: "invalid_request" }, { status: 400 });
   try {
-    return NextResponse.json({ quote: await getBookingProvider().quote(p.data.bundleId, p.data.code, p.data.email) }, { headers: { "cache-control": "no-store" } });
+    return NextResponse.json({ quote: await getBookingProvider().quote(p.data.bundleId, p.data.code, p.data.email, p.data.babyCount) }, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.quote", "Unexpected error", { error: err as Error });

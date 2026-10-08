@@ -174,7 +174,7 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     rescheduledBy: by,
     rescheduledAt: now,
     status: "Rescheduled",
-    totalCents: (updated.finalPriceCents ?? updated.packagePrice * 100) + (updated.travelFeeCents ?? 0),
+    totalCents: (updated.finalPriceCents ?? updated.packagePrice * 100) + (updated.addonsTotalCents ?? 0) + (updated.travelFeeCents ?? 0),
     deposit: depositInfoOf(await depositOf(updated.id)),
   };
   const themeId = await getSiteSettings().then((x) => x.themeId).catch(() => "default");

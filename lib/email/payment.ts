@@ -5,7 +5,7 @@ import { emailMessages, fill, type EmailLocale } from "./messages";
 
 /**
  * The payment box's "due" rows + its note: pay after the session (booked without a deposit), or the deposit (paid, or
- * still to pay when Stripe was down) and the rest. `totalCents`: bundle + travel fee.
+ * still to pay when Stripe was down) and the rest. `totalCents`: bundle + add-ons + travel fee.
  */
 export function paymentDue(locale: EmailLocale, totalCents: number, deposit?: BookingDepositInfo | null): { rows: [string, string][]; note: string } {
   const m = emailMessages(locale);

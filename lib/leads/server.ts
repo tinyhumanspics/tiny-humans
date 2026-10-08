@@ -19,6 +19,8 @@ import { log } from "@/lib/log";
 import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
 import { duplicateBookingsFor } from "./duplicates";
+import { addonsFor, babiesFor } from "@/lib/booking/addons";
+import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const iso = (d: Date | null) => (d ? d.toISOString() : null);
@@ -38,11 +40,13 @@ interface Extras {
   deposits: BookingDeposit[];
   /** Delivery problems Resend reported for these families' addresses. */
   emailEvents: EmailEvent[];
+  babies: Map<string, BookingBaby[]>;
+  addons: Map<string, AddonLine[]>;
   /** Today's cancel/reschedule notice (bookings without their own terms). */
   noticeHours: number;
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], noticeHours: 48 };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), addons: new Map(), noticeHours: 48 };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -54,7 +58,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, noticeHours] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, noticeHours] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -64,9 +68,11 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     backdropsFor(bookingIds),
     depositsFor(bookingIds),
     emailEventsFor(rows),
+    babiesFor(bookingIds),
+    addonsFor(bookingIds),
     getNoticeHoursSetting().catch(() => 48),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, noticeHours };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, noticeHours };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -126,9 +132,10 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     duplicate,
     babyName: r.babyName,
     babyAge: r.babyAge,
+    babies: x.babies.get(r.id) ?? [{ name: r.babyName ?? undefined, age: r.babyAge }],
     bundleId: r.packageId,
     bundleName: r.packageName,
-    pricing: (({ bundleId: _b, bundleName: _n, offerEndsOn: _e, note: _x, ...p }) => p)(snapshotOf(r)),
+    pricing: (({ bundleId: _b, bundleName: _n, offerEndsOn: _e, note: _x, ...p }) => p)(snapshotOf(r, x.addons.get(r.id))),
     sessionDate: r.sessionDate,
     start: time(r.sessionStart, r.timezone),
     end: time(r.sessionEnd, r.timezone),
@@ -233,7 +240,7 @@ async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
             inArray(bookings.status, ["confirmed", "rescheduled"]),
             lte(bookings.sessionEnd, now),
             // something still owed after a paid deposit
-            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.travelFeeCents}, 0) - coalesce(${bookingDeposits.amountCents}, 0) > 0`,
+            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0) - coalesce(${bookingDeposits.amountCents}, 0) > 0`,
             sql`${bookingPayments.status} is distinct from 'paid'`,
           ),
         ),

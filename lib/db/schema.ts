@@ -82,6 +82,8 @@ export const bookings = pgTable(
     travelFeeCents: integer("travel_fee_cents"),
     /** Estimated road miles from the home base when booked (null = unknown). */
     travelMiles: integer("travel_miles"),
+    /** Add-ons charged on top of the discounted bundle (cents; discounts never reduce this amount). */
+    addonsTotalCents: integer("addons_total_cents"),
 
     /* booking source: first touch of the visit (utm tags, Meta click id, landing page, referring site origin) */
     utmSource: text("utm_source"),
@@ -108,6 +110,7 @@ export const bookings = pgTable(
     index("bookings_email_idx").on(t.email),
     index("bookings_created_at_idx").on(t.createdAt),
     check("bookings_pricing_type_check", sql`${t.pricingType} is null or ${t.pricingType} in ('regular', 'offer', 'discount')`),
+    check("bookings_addons_total_check", sql`${t.addonsTotalCents} is null or ${t.addonsTotalCents} >= 0`),
     check("bookings_cancelled_by_check", sql`${t.cancelledBy} is null or ${t.cancelledBy} in ('customer', 'admin')`),
   ],
 );
@@ -492,6 +495,68 @@ export const bundleInclusions = pgTable(
     text: text("text").notNull(),
   },
   (t) => [index("bundle_inclusions_bundle_idx").on(t.bundleId, t.position)],
+);
+
+/**
+ * Owner-managed add-ons for each bundle. The first kind is `extra_baby`; the shape deliberately also supports later
+ * per-unit seasonal add-ons without changing the bundle table.
+ */
+export const bundleAddons = pgTable(
+  "bundle_addons",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bundleId: text("bundle_id").notNull().references(() => bundlesTable.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    name: text("name").notNull(),
+    active: boolean("active").notNull().default(false),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    extraMinutes: integer("extra_minutes").notNull().default(0),
+    extraPhotos: integer("extra_photos").notNull().default(0),
+    maxQuantity: integer("max_quantity").notNull().default(1),
+    sortOrder: integer("sort_order").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("bundle_addons_bundle_kind_idx").on(t.bundleId, t.kind),
+    check("bundle_addons_price_check", sql`${t.unitPriceCents} >= 0`),
+    check("bundle_addons_minutes_check", sql`${t.extraMinutes} between 0 and 240`),
+    check("bundle_addons_photos_check", sql`${t.extraPhotos} between 0 and 100`),
+    check("bundle_addons_quantity_check", sql`${t.maxQuantity} between 1 and 9`),
+  ],
+);
+
+/** Add-on line items exactly as booked; later /admin edits never change the booking. */
+export const bookingAddons = pgTable(
+  "booking_addons",
+  {
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(),
+    name: text("name").notNull(),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    totalPriceCents: integer("total_price_cents").notNull(),
+    extraMinutes: integer("extra_minutes").notNull().default(0),
+    extraPhotos: integer("extra_photos").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bookingId, t.kind] }),
+    check("booking_addons_quantity_check", sql`${t.quantity} > 0`),
+    check("booking_addons_price_check", sql`${t.unitPriceCents} >= 0 and ${t.totalPriceCents} >= 0`),
+  ],
+);
+
+/** Every baby in a twins/triplets booking; the first baby also stays on `bookings` for backwards compatibility. */
+export const bookingBabies = pgTable(
+  "booking_babies",
+  {
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull(),
+    name: text("name"),
+    age: text("age").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.bookingId, t.position] }), check("booking_babies_position_check", sql`${t.position} between 0 and 2`)],
 );
 
 /**

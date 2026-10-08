@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
 import { isAdmin } from "@/lib/admin/auth";
 import { isDatabaseConfigured } from "@/lib/db/client";
-import { BookingError } from "@/lib/booking/errors";
 import { log } from "@/lib/log";
 import { BundleInUseError, CATALOG_TAG, deleteBundle, getCatalog, refreshCatalogSnapshot, saveBundle } from "@/lib/pricing/server";
 import { bundleInputSchema } from "@/lib/pricing/validation";
@@ -30,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ bundles: await getCatalog() });
   } catch (err) {
     log.error("admin.pricing", "Save bundle failed", { error: err as Error });
-    return NextResponse.json({ error: "Couldn't save the bundle. Is the pricing migration (0005) run in Neon?" }, { status: 500 });
+    return NextResponse.json({ error: "Couldn't save the bundle. Are pricing migrations 0005 and 0017 run in Neon?" }, { status: 500 });
   }
 }
 

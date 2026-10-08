@@ -25,7 +25,7 @@ export type AfterKind = (typeof AFTER_KINDS)[keyof typeof AFTER_KINDS];
  * What the family still owes: the price booked (snapshot, never recalculated from today's bundles) + travel fee,
  * minus a paid deposit.
  */
-export const amountDueCents = (row: Booking, paidDepositCents = 0) => Math.max(0, (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0) - paidDepositCents);
+export const amountDueCents = (row: Booking, paidDepositCents = 0) => Math.max(0, (row.finalPriceCents ?? row.packagePrice * 100) + (row.addonsTotalCents ?? 0) + (row.travelFeeCents ?? 0) - paidDepositCents);
 
 /** Same, reading the booking's deposit. */
 export const balanceDueCents = async (row: Booking) => amountDueCents(row, depositPaidCents(await depositOf(row.id)));

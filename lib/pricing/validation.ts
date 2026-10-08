@@ -19,6 +19,13 @@ export const bundleInputSchema = z
       .object({ enabled: z.boolean(), price: money, label: z.string().trim().max(30).optional().nullable(), endsOn: dateKey.optional().nullable() })
       .nullable()
       .optional(),
+    extraBaby: z.object({
+      active: z.boolean(),
+      price: money,
+      extraMinutes: z.number().int().min(0).max(240),
+      extraPhotos: z.number().int().min(0).max(100),
+      maxBabies: z.number().int().min(2).max(3),
+    }),
   })
   .refine((b) => !b.offer?.enabled || (b.offer.price > 0 && b.offer.price < b.price), "The offer price must be lower than the regular price.")
   .refine((b) => !b.offer?.enabled || Boolean(b.offer.endsOn), "Add the date the offer ends.");

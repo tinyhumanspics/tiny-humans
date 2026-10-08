@@ -12,7 +12,7 @@ import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { formatLongDate, formatTimeLabel, type BookingResult } from "@/lib/booking";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
-import { formatAddress } from "@/lib/booking/templates";
+import { formatAddress, pricingRows } from "@/lib/booking/templates";
 import { paymentDue } from "@/lib/email/payment";
 import { formatMoney, toCents } from "@/lib/pricing/engine";
 import { travelFeeValue } from "@/lib/travel/format";
@@ -21,6 +21,7 @@ import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
 import InspirationThumb from "./InspirationThumb";
 import styles from "./Booking.module.css";
+import { babiesLabel, babyNames } from "@/lib/booking/extra-babies";
 
 /** The booking is confirmed: details, payment, what's next (also shown after the deposit's Stripe page). */
 export default function Confirmation({
@@ -41,10 +42,11 @@ export default function Confirmation({
   const { getBundle } = useCatalog();
   const bundle = getBundle(r.bundleId);
   const price = result.pricing;
+  const babies = r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }];
   const firstName = r.contact.parentName.split(" ")[0];
   // "After the photoshoot", or the deposit paid while booking and the rest
   const dep = result.deposit;
-  const due = paymentDue("en", (price?.finalCents ?? (bundle ? toCents(bundle.price) : 0)) + travelFee, dep && dep.status !== "pending" ? { amountCents: dep.amountCents, status: dep.status } : undefined);
+  const due = paymentDue("en", (price?.totalCents ?? price?.finalCents ?? (bundle ? toCents(bundle.price) : 0)) + travelFee, dep && dep.status !== "pending" ? { amountCents: dep.amountCents, status: dep.status } : undefined);
   const { photos } = useSiteSettings();
   const inspiration = findPhoto(photos, r.inspirationPhotoId);
   const details: [string, string][] = [
@@ -53,14 +55,13 @@ export default function Confirmation({
     ["Session date", formatLongDate(r.slot.date)],
     ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)} (${en.booking.timeZone.short})`],
     ["Location", formatAddress(r.address)],
+    [babies.length > 1 ? en.booking.extraBabies.review : "Baby", babiesLabel(babies)],
     ...(r.backdrops?.length ? [[r.backdrops.length > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, backdropNames(r.backdrops)] as [string, string]] : []),
-    ...(price?.pricingType === "offer" ? [["Special offer", price.offerLabel ?? "Special offer"] as [string, string]] : []),
-    ...(price?.pricingType === "discount" ? [["Discount code", `${price.discountCode} (-${formatMoney(price.discountCents)})`] as [string, string]] : []),
-    ["Package total", price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""],
+    ...(price ? pricingRows(price) : [["Bundle total", bundle ? formatMoney(toCents(bundle.price)) : ""]] as [string, string][]),
     ...(travelFee > 0 && price
       ? ([
           [en.booking.travel.label, travelFeeValue(travelFee, travel?.miles ?? null)],
-          [en.booking.travel.total, formatMoney(price.finalCents + travelFee)],
+          [en.booking.travel.total, formatMoney(price.totalCents + travelFee)],
         ] as [string, string][])
       : []),
   ];
@@ -73,7 +74,7 @@ export default function Confirmation({
       </h3>
       <p className={cn(styles.confirmText, "chalk-soft")}>
         We&apos;ll bring the whole studio to your home in {r.address.city}.
-        {r.contact.babyName ? ` We can't wait to meet ${r.contact.babyName}.` : " We can't wait to meet your little one."}
+        {babyNames(babies) ? ` We can't wait to meet ${babyNames(babies)}.` : babies.length > 1 ? " We can't wait to meet your little ones." : " We can't wait to meet your little one."}
       </p>
       <dl className={styles.confirmDetails}>
         {details.map(([k, v]) => (
@@ -86,10 +87,9 @@ export default function Confirmation({
       <ChalkBox className={styles.paymentBox} seed={93} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
         <p className={cn(styles.paymentTitle, "chalk-soft")}>Payment</p>
         <dl className={styles.paymentRows}>
-          <div className={styles.confirmRow}>
-            <dt className="chalk-soft">Package total</dt>
-            <dd className="chalk-soft">{price ? formatMoney(price.finalCents) : bundle ? formatMoney(toCents(bundle.price)) : ""}</dd>
-          </div>
+          {(price ? pricingRows(price) : [["Bundle total", bundle ? formatMoney(toCents(bundle.price)) : ""]] as [string, string][]).map(([k, v]) => (
+            <div key={k} className={styles.confirmRow}><dt className="chalk-soft">{k}</dt><dd className="chalk-soft">{v}</dd></div>
+          ))}
           {travelFee > 0 && price && (
             <>
               <div className={styles.confirmRow}>
@@ -98,7 +98,7 @@ export default function Confirmation({
               </div>
               <div className={styles.confirmRow}>
                 <dt className="chalk-soft">{en.booking.travel.total}</dt>
-                <dd className="chalk-soft">{formatMoney(price.finalCents + travelFee)}</dd>
+                <dd className="chalk-soft">{formatMoney(price.totalCents + travelFee)}</dd>
               </div>
             </>
           )}
@@ -159,7 +159,7 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
     const pricing = result.pricing!;
     const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
     const mail = await bookingConfirmationEmail(
-      { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
+      { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }], address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
       { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline" },
     );
     setHtml(mail.html);

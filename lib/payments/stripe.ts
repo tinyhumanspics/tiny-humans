@@ -64,8 +64,8 @@ export function createCheckoutSession(input: {
   successUrl: string;
   cancelUrl: string;
   idempotencyKey: string;
-  /** A second line on the payment page (the travel fee). */
-  extraLine?: { name: string; amountCents: number };
+  /** Separate full-price add-on/travel lines on the payment page. */
+  extraLines?: { name: string; amountCents: number }[];
   /** "deposit" (paid while booking) or "balance" (the payment link); the webhook tells them apart by this. */
   kind?: "deposit" | "balance";
   /** When the page expires (epoch seconds, 30 min to 24 h from now; Stripe's default is 24 h). */
@@ -75,6 +75,17 @@ export function createCheckoutSession(input: {
   /** A short message shown above the pay button. */
   submitMessage?: string;
 }): Promise<CheckoutSession> {
+  const extraLines = Object.fromEntries(
+    (input.extraLines ?? []).flatMap((line, i) => {
+      const n = i + 1;
+      return [
+        [`line_items[${n}][quantity]`, "1"],
+        [`line_items[${n}][price_data][currency]`, "usd"],
+        [`line_items[${n}][price_data][unit_amount]`, String(line.amountCents)],
+        [`line_items[${n}][price_data][product_data][name]`, line.name],
+      ];
+    }),
+  );
   return call<CheckoutSession>(
     "POST",
     "checkout/sessions",
@@ -86,14 +97,7 @@ export function createCheckoutSession(input: {
       "line_items[0][price_data][unit_amount]": String(input.amountCents),
       "line_items[0][price_data][product_data][name]": input.productName,
       "line_items[0][price_data][product_data][description]": input.description,
-      ...(input.extraLine
-        ? {
-            "line_items[1][quantity]": "1",
-            "line_items[1][price_data][currency]": "usd",
-            "line_items[1][price_data][unit_amount]": String(input.extraLine.amountCents),
-            "line_items[1][price_data][product_data][name]": input.extraLine.name,
-          }
-        : {}),
+      ...extraLines,
       customer_email: input.customerEmail,
       client_reference_id: input.reference,
       "metadata[booking_id]": input.bookingId,

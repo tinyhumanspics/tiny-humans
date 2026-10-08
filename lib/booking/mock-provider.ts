@@ -24,6 +24,7 @@ import type {
   TimeSlot,
 } from "./types";
 import { addDays, addMinutes, formatTimeLabel, fromDateKey, startOfDay, toDateKey } from "./dates";
+import { extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
 
 /** Deterministic pseudo-random number in [0,1) for a string seed. */
 function seeded(seed: string): number {
@@ -56,19 +57,24 @@ export class MockBookingProvider implements BookingProvider {
     return (await this.pricing.bundles()).find((b) => b.id === id && b.active !== false);
   }
 
-  async quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote> {
+  async quote(bundleId: string, code?: string, email?: string, babyCount = 1): Promise<PriceQuote> {
     const b = await this.bundle(bundleId);
     if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const today = todayInZone(bookingRules.timeZone);
-    if (!code?.trim()) return computeQuote(b, today);
+    if (babyCount > 1 && !extraBabyLine(b, babyCount)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
+    if (!code?.trim()) return withExtraBabies(computeQuote(b, today), b, babyCount);
     const check = await this.pricing.validateCode(code, bundleId, email);
     if (!check.ok) throw new BookingError("invalid_request", check.message);
-    return computeQuote(b, today, check.terms);
+    return withExtraBabies(computeQuote(b, today, check.terms), b, babyCount);
   }
 
   async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
     await wait(250);
-    const minutes = (await this.bundle(query.bundleId))?.durationMinutes ?? 60;
+    const bundle = await this.bundle(query.bundleId);
+    if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    const count = query.babyCount ?? 1;
+    if (count > 1 && !extraBabyLine(bundle, count)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
+    const minutes = sessionMinutes(bundle, count);
     const rules = await this.rules();
     // The owner's real rules, plus simulated existing bookings so the preview looks lived-in.
     return availabilityForRange(query.from, query.to, minutes, [], rules).map((day) =>
@@ -83,8 +89,9 @@ export class MockBookingProvider implements BookingProvider {
     await wait(700);
     const b = await this.bundle(request.bundleId);
     if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
-    const pricing = await this.quote(request.bundleId, request.discountCode, request.contact.email);
-    request = { ...request, slot: { ...request.slot, end: addMinutes(request.slot.start, b.durationMinutes), label: formatTimeLabel(request.slot.start) } };
+    const babies: BookingBaby[] = request.babies?.length ? request.babies : [{ name: request.contact.babyName, age: request.contact.babyAge }];
+    const pricing = await this.quote(request.bundleId, request.discountCode, request.contact.email, babies.length);
+    request = { ...request, babies, slot: { ...request.slot, end: addMinutes(request.slot.start, sessionMinutes(b, babies.length)), label: formatTimeLabel(request.slot.start) } };
     const token = randomToken();
     const result: BookingResult = {
       id: generateBookingReference(),
@@ -147,7 +154,7 @@ export class MockBookingProvider implements BookingProvider {
   async getRescheduleAvailability(token: string, from: string, to: string): Promise<DayAvailability[]> {
     const rec = this.recordFor(token);
     if (!mockManaged(rec, rec.result.rescheduleNoticeHours ?? (await this.rulesNow()).limits.rescheduleNoticeHours).canReschedule) return [];
-    return this.getAvailability({ bundleId: rec.result.request.bundleId, from, to });
+    return this.getAvailability({ bundleId: rec.result.request.bundleId, babyCount: rec.result.request.babies?.length ?? 1, from, to });
   }
 
   async rescheduleWithToken(token: string, slot: { date: string; start: string }): Promise<ManagedBooking> {
@@ -285,7 +292,7 @@ function mockSummary(rec: MockRecord, noticeHours: number): CancellationSummary 
 
 function mockLead(rec: MockRecord): Lead {
   const r = rec.result.request;
-  const p: PriceQuote = rec.result.pricing ?? { bundleId: r.bundleId, bundleName: r.bundleId, regularCents: 0, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: 0, pricingType: "regular" };
+  const p: PriceQuote = rec.result.pricing ?? { bundleId: r.bundleId, bundleName: r.bundleId, regularCents: 0, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: 0, addons: [], addonsCents: 0, totalCents: 0, pricingType: "regular" };
   const sent = { sent: false, at: null, error: "prototype (nothing sent)" };
   return {
     reference: rec.result.id,
@@ -295,9 +302,10 @@ function mockLead(rec: MockRecord): Lead {
     phone: r.contact.phone,
     babyName: r.contact.babyName ?? null,
     babyAge: r.contact.babyAge,
+    babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }],
     bundleId: r.bundleId,
     bundleName: p.bundleName,
-    pricing: { regularCents: p.regularCents, offerCents: p.offerCents, offerLabel: p.offerLabel, discountCode: p.discountCode, discountCents: p.discountCents, finalCents: p.finalCents, pricingType: p.pricingType },
+    pricing: { regularCents: p.regularCents, offerCents: p.offerCents, offerLabel: p.offerLabel, discountCode: p.discountCode, discountCents: p.discountCents, finalCents: p.finalCents, addons: p.addons, addonsCents: p.addonsCents, totalCents: p.totalCents, pricingType: p.pricingType },
     sessionDate: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,

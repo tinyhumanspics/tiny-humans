@@ -59,6 +59,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
                       {" · "}{b.duration}
                       {b.offer?.enabled && !offer ? " · offer ended (regular price shown)" : ""}
                     </p>
+                    {b.extraBaby?.active && <p className={cn(styles.hintSmall, "chalk-soft")}>Twins/triplets: +{formatMoney(toCents(b.extraBaby.price))}, +{b.extraBaby.extraMinutes} min and +{b.extraBaby.extraPhotos} photos per extra baby · max {b.extraBaby.maxBabies} babies</p>}
                   </div>
                   <span className={cn(styles.statusPill, b.active === false ? styles.status_pending : styles.status_confirmed)}>{b.active === false ? "Inactive" : "Active"}</span>
                   <button type="button" className={styles.smallButton} onClick={() => { setEditing(b); setNote(null); }}>Edit</button>
@@ -259,6 +260,11 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   const [offerPrice, setOfferPrice] = useState(bundle?.offer?.price ? String(bundle.offer.price) : "");
   const [offerLabel, setOfferLabel] = useState(bundle?.offer?.label ?? "");
   const [offerEnds, setOfferEnds] = useState(bundle?.offer?.endsOn ?? "");
+  const [extraBabyOn, setExtraBabyOn] = useState(bundle?.extraBaby?.active ?? true);
+  const [extraBabyPrice, setExtraBabyPrice] = useState(String(bundle?.extraBaby?.price ?? 75));
+  const [extraBabyMinutes, setExtraBabyMinutes] = useState(String(bundle?.extraBaby?.extraMinutes ?? 30));
+  const [extraBabyPhotos, setExtraBabyPhotos] = useState(String(bundle?.extraBaby?.extraPhotos ?? 5));
+  const [maxBabies, setMaxBabies] = useState(String(bundle?.extraBaby?.maxBabies ?? 3));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const move = (i: number, d: number) => setFeatures((f) => { const n = [...f]; const j = i + d; if (j < 0 || j >= n.length) return f; [n[i], n[j]] = [n[j], n[i]]; return n; });
@@ -270,6 +276,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         id: bundle?.id, name: name.trim(), price: Number(price), description: description.trim() || null, durationMinutes: Number(minutes), photos: photos.trim() || null, badge: badge.trim() || null,
         features: features.map((f) => f.trim()).filter(Boolean), active, sortOrder: bundle?.sortOrder ?? sortOrder,
         offer: offerOn || offerPrice ? { enabled: offerOn, price: Number(offerPrice) || 0, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
+        extraBaby: { active: extraBabyOn, price: Number(extraBabyPrice), extraMinutes: Number(extraBabyMinutes), extraPhotos: Number(extraBabyPhotos), maxBabies: Number(maxBabies) },
       });
     } catch (e) {
       setErr(errText(e, "Couldn't save."));
@@ -301,6 +308,18 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
       </ul>
       {features.length < 12 && <button type="button" className={styles.smallButton} onClick={() => setFeatures((x) => [...x, ""])}>+ Add inclusion</button>}
       <label className={styles.toggle}><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /><span className="chalk-soft">Active (shown on the website)</span></label>
+      <div className={styles.offerBox}>
+        <label className={styles.toggle}><input type="checkbox" checked={extraBabyOn} onChange={(e) => setExtraBabyOn(e.target.checked)} /><span className="chalk-soft">Offer twins/triplets with this bundle</span></label>
+        {extraBabyOn && (
+          <div className={styles.editorGrid}>
+            <label className={cn(styles.label, "chalk-soft")}>Per extra baby ($)<input className={styles.input} type="number" min={0} step="0.01" value={extraBabyPrice} onChange={(e) => setExtraBabyPrice(e.target.value)} /></label>
+            <label className={cn(styles.label, "chalk-soft")}>Extra minutes<input className={styles.input} type="number" min={0} max={240} step={15} value={extraBabyMinutes} onChange={(e) => setExtraBabyMinutes(e.target.value)} /></label>
+            <label className={cn(styles.label, "chalk-soft")}>Extra edited photos<input className={styles.input} type="number" min={0} max={100} step={1} value={extraBabyPhotos} onChange={(e) => setExtraBabyPhotos(e.target.value)} /></label>
+            <label className={cn(styles.label, "chalk-soft")}>Maximum babies<input className={styles.input} type="number" min={2} max={3} step={1} value={maxBabies} onChange={(e) => setMaxBabies(e.target.value)} /></label>
+          </div>
+        )}
+        <p className={cn(styles.hintSmall, "chalk-soft")}>The extra-baby charge stays full price even when the bundle has a special offer or discount code. Changes apply to new bookings only.</p>
+      </div>
       <div className={styles.offerBox}>
         <label className={styles.toggle}><input type="checkbox" checked={offerOn} onChange={(e) => setOfferOn(e.target.checked)} /><span className="chalk-soft">Enable Special Offer</span></label>
         {offerOn && (

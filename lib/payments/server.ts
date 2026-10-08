@@ -75,13 +75,19 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
       }
       if (last.status === "open" && last.url && last.amount_total === amount && last.expires_at * 1000 > now.getTime() + WINDOW_MS) return { redirect: last.url };
     }
-    // a second line for the travel fee, unless a deposit already covered part of it
+    // Full-price add-on/travel lines stay separate when the paid deposit still leaves part of the bundle to charge.
+    const addonsCents = row.addonsTotalCents ?? 0;
     const travelCents = row.travelFeeCents ?? 0;
     const paidDeposit = depositPaidCents(deposit);
-    const split = travelCents > 0 && amount - travelCents > 0;
+    const extraLines = [
+      ...(addonsCents > 0 ? [{ name: "Twins/triplets add-on", amountCents: addonsCents }] : []),
+      ...(travelCents > 0 ? [{ name: fill(en.booking.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents }] : []),
+    ];
+    const extrasCents = extraLines.reduce((sum, line) => sum + line.amountCents, 0);
+    const split = extrasCents > 0 && amount - extrasCents > 0;
     const session = await createCheckoutSession({
-      amountCents: split ? amount - travelCents : amount,
-      extraLine: split ? { name: fill(en.booking.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents } : undefined,
+      amountCents: split ? amount - extrasCents : amount,
+      extraLines: split ? extraLines : undefined,
       productName: paidDeposit ? fill(en.deposit.stripe.balanceProduct, { bundle: row.packageName, deposit: formatMoney(paidDeposit) }) : `Tiny Humans · ${row.packageName}`,
       description: `Session ${row.bookingReference} on ${formatLongDate(row.sessionDate)}`,
       customerEmail: row.email,
@@ -116,7 +122,7 @@ async function openDepositPayment(row: Booking, deposit: BookingDeposit, now: Da
       }
       if (last.status === "open" && last.url && last.expires_at * 1000 > now.getTime() + WINDOW_MS) return { redirect: last.url };
     }
-    const total = (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0);
+    const total = (row.finalPriceCents ?? row.packagePrice * 100) + (row.addonsTotalCents ?? 0) + (row.travelFeeCents ?? 0);
     const session = await createCheckoutSession({
       amountCents: deposit.amountCents,
       productName: fill(en.deposit.stripe.product, { bundle: row.packageName }),

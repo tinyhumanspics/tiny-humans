@@ -5,6 +5,7 @@ import { renderHtml } from "@/lib/email/render";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
+import { babiesLabel } from "@/lib/booking/extra-babies";
 
 /* Emails to the studio (English only: they go to the owner, not to families). */
 
@@ -19,12 +20,11 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ["Parent / guardian", d.contact.parentName],
     ["Customer email", d.contact.email],
     ["Customer phone", d.contact.phone],
-    ["Baby name", d.contact.babyName || "Not provided"],
-    ["Baby age", d.contact.babyAge],
+    [d.babies.length > 1 ? "Babies" : "Baby", babiesLabel(d.babies)],
     ["Bundle", d.bundle.name],
     ["Pricing", d.pricing.pricingType === "offer" ? `Special offer (${d.pricing.offerLabel})` : d.pricing.pricingType === "discount" ? `Discount code ${d.pricing.discountCode}` : "Regular price"],
     ...(d.pricing.pricingType === "regular" ? [["Regular price", formatMoney(d.pricing.regularCents)] as [string, string]] : []),
-    ...pricingRows(d.pricing).map(([k, v]) => [k === "Package total" ? "Final package total" : k, v] as [string, string]),
+    ...pricingRows(d.pricing).map(([k, v]) => [k === "Bundle total" ? "Final bundle total" : k, v] as [string, string]),
     ["Travel", travelOwnerLine(d.travel)],
     ...(d.travel?.feeCents ? [["Total due", formatMoney(totalDueCents(d.pricing, d.travel))] as [string, string]] : []),
     ...depositOwnerRows(d).filter(([k]) => k !== "Due at booking"),

@@ -1,3 +1,5 @@
+import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
+
 /** A booking as shown in /admin > Leads (no raw technical ids). */
 export type LeadStatus = "pending" | "confirmed" | "rescheduled" | "cancelled";
 
@@ -42,7 +44,7 @@ export interface AfterSessionStatus {
   favorites: string | null;
   gallery: SentEmail | null;
   payment: {
-    /** Still owed: bundle + travel fee − a paid deposit. */
+    /** Still owed: bundle + add-ons + travel fee − a paid deposit. */
     amountCents: number;
     /** What the payment link charges next: an unpaid deposit first (before the session), then the rest. */
     next: { kind: "deposit" | "balance"; amountCents: number };
@@ -66,10 +68,11 @@ export interface Lead {
   duplicate?: { emailReferences: string[]; phoneReferences: string[] };
   babyName: string | null;
   babyAge: string;
+  babies?: BookingBaby[];
   bundleId: string;
   bundleName: string;
   /** Price snapshot from booking time (never recalculated). */
-  pricing: { regularCents: number; offerCents: number | null; offerLabel: string | null; discountCode: string | null; discountCents: number; finalCents: number; pricingType: "regular" | "offer" | "discount" };
+  pricing: { regularCents: number; offerCents: number | null; offerLabel: string | null; discountCode: string | null; discountCents: number; finalCents: number; addons: AddonLine[]; addonsCents: number; totalCents: number; pricingType: "regular" | "offer" | "discount" };
   sessionDate: string;
   /** "HH:MM" local */
   start: string;

@@ -12,6 +12,8 @@
 import type { PriceQuote } from "@/lib/pricing/engine";
 import type { Attribution } from "@/lib/tracking/attribution";
 import type { BookingTravel } from "@/lib/travel/types";
+import type { BookingBaby } from "./extra-babies";
+export type { BookingBaby } from "./extra-babies";
 export type { PriceQuote };
 
 /** Calendar date in the studio's time zone, formatted YYYY-MM-DD. */
@@ -34,6 +36,8 @@ export interface DayAvailability {
 
 export interface AvailabilityQuery {
   bundleId: string;
+  /** Babies in the session; changes the slot length for twins/triplets. */
+  babyCount?: number;
   /** Inclusive range. */
   from: DateKey;
   to: DateKey;
@@ -69,6 +73,8 @@ export interface SessionAddress {
 
 export interface BookingRequest {
   bundleId: string;
+  /** Every baby in the session. Older clients omit this and use the first baby in `contact`. */
+  babies?: BookingBaby[];
   address: SessionAddress;
   slot: TimeSlot;
   contact: BookingContact;
@@ -161,7 +167,7 @@ export interface BookingClient {
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
   createBooking(request: BookingRequest): Promise<BookingResult>;
   /** Price for a bundle (optionally with a code). Always calculated server-side for real bookings. */
-  quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote>;
+  quote(bundleId: string, code?: string, email?: string, babyCount?: number): Promise<PriceQuote>;
   /** Customer cancel link: look up the booking behind a token. */
   getCancellation(token: string): Promise<CancellationSummary>;
   /** Customer cancel link: cancel with a required reason. */

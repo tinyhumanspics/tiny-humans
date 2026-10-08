@@ -37,6 +37,7 @@ export async function POST(req: Request) {
   try {
     const booking = await getBookingProvider().createBooking({
       bundleId: r.bundleId,
+      babies: r.babies,
       slot: { id: `${r.slot.date}T${r.slot.start}`, date: r.slot.date, start: r.slot.start, end: "", label: formatTimeLabel(r.slot.start) },
       contact: r.contact,
       address: r.address,
@@ -58,7 +59,7 @@ export async function POST(req: Request) {
         sendScheduleEvent({
           eventId: r.requestId ?? booking.id,
           eventSourceUrl,
-          value: ((booking.pricing?.finalCents ?? 0) + (booking.travel?.feeCents ?? 0)) / 100,
+          value: ((booking.pricing?.totalCents ?? booking.pricing?.finalCents ?? 0) + (booking.travel?.feeCents ?? 0)) / 100,
           bundleId: r.bundleId,
           bundleName: booking.pricing?.bundleName ?? r.bundleId,
           contact: { parentName: r.contact.parentName, email: r.contact.email, phone: r.contact.phone },

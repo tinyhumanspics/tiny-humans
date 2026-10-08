@@ -7,6 +7,7 @@ import type { BookingTravel } from "@/lib/travel/types";
 import type { BookingDepositInfo } from "@/lib/deposit/types";
 import type { DepositOutcome } from "@/lib/deposit/refund";
 import { backdropNames } from "./backdrop-names";
+import { babiesLabel, type BookingBaby } from "./extra-babies";
 
 /** Data used by the calendar event and the confirmation email. */
 export interface BookingDetails {
@@ -16,6 +17,8 @@ export interface BookingDetails {
   start: string;
   end: string;
   contact: BookingContact;
+  /** Every baby in the session (one to three). */
+  babies: BookingBaby[];
   address: SessionAddress;
   inspirationTitle?: string;
   /** Price actually booked. */
@@ -49,8 +52,8 @@ export function depositOwnerRows(d: Pick<BookingDetails, "deposit" | "pricing" |
     : [["Deposit", `${formatMoney(dep.amountCents)} NOT PAID (Stripe was down): send them the payment link`], ["Payment due", `${rest} after the photoshoot (+ the deposit)`]];
 }
 
-/** Bundle price + travel fee. */
-export const totalDueCents = (p: PriceQuote, t?: BookingTravel) => p.finalCents + (t?.feeCents ?? 0);
+/** Discounted bundle + full-price add-ons + travel fee. */
+export const totalDueCents = (p: PriceQuote, t?: BookingTravel) => p.totalCents + (t?.feeCents ?? 0);
 
 /** "Yes" / "No" lines for the permissions (studio's calendar + emails). */
 export function consentRows(c: BookingConsents | undefined): [string, string][] {
@@ -65,7 +68,9 @@ export function pricingRows(p: PriceQuote): [string, string][] {
   const rows: [string, string][] = [];
   if (p.pricingType === "offer") rows.push(["Regular price", formatMoney(p.regularCents)], [p.offerLabel || "Special offer", formatMoney(p.offerCents ?? p.finalCents)]);
   if (p.pricingType === "discount") rows.push(["Regular price", formatMoney(p.regularCents)], ["Discount code", p.discountCode ?? ""], ["Discount", `-${formatMoney(p.discountCents)}`]);
-  rows.push(["Package total", formatMoney(p.finalCents)]);
+  rows.push(["Bundle total", formatMoney(p.finalCents)]);
+  p.addons.forEach((a) => rows.push([a.name, `${a.quantity} × ${formatMoney(a.unitPriceCents)} = ${formatMoney(a.totalCents)}`]));
+  if (p.addonsCents > 0) rows.push(["Session total before travel", formatMoney(p.totalCents)]);
   return rows;
 }
 
@@ -172,8 +177,7 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Parent / guardian", d.contact.parentName],
     ["Email", d.contact.email],
     ["Phone", d.contact.phone],
-    ["Baby's name", d.contact.babyName],
-    ["Baby's age", d.contact.babyAge],
+    [d.babies.length > 1 ? "Babies" : "Baby", babiesLabel(d.babies)],
     ["Address", d.location ?? formatAddress(d.address)],
     [ACCESS_LABEL, d.address.accessNotes],
     ["Backdrop", d.backdrops?.length ? backdropNames(d.backdrops) : "Not chosen yet"],

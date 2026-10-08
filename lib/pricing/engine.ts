@@ -1,4 +1,5 @@
 import type { Bundle } from "@/config/bundles";
+import type { AddonLine } from "@/lib/booking/extra-babies";
 
 /**
  * Central pricing logic, shared by the public cards, the booking review and the
@@ -19,7 +20,13 @@ export interface PriceQuote {
   /** Set when a discount code is the price used. */
   discountCode: string | null;
   discountCents: number;
+  /** Discounted bundle subtotal. Add-ons and travel are never included here. */
   finalCents: number;
+  /** Add-ons are separate so offers/codes can never reduce them. */
+  addons: AddonLine[];
+  addonsCents: number;
+  /** Discounted bundle + add-ons, before travel. */
+  totalCents: number;
   pricingType: PricingType;
   /** Friendly note, e.g. when a code wasn't needed because the offer is better. */
   note?: string | null;
@@ -56,11 +63,11 @@ export function codeDiscountCents(regularCents: number, c: CodeTerms): number {
 export function computeQuote(b: Bundle, today: string, code?: CodeTerms | null): PriceQuote {
   const regularCents = toCents(b.price);
   const offer = activeOffer(b, today);
-  const base: PriceQuote = { bundleId: b.id, bundleName: b.name, regularCents, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: regularCents, pricingType: "regular", note: null };
-  const offerQuote: PriceQuote | null = offer ? { ...base, offerCents: offer.cents, offerLabel: offer.label, offerEndsOn: offer.endsOn, discountCents: regularCents - offer.cents, finalCents: offer.cents, pricingType: "offer" } : null;
+  const base: PriceQuote = { bundleId: b.id, bundleName: b.name, regularCents, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: regularCents, addons: [], addonsCents: 0, totalCents: regularCents, pricingType: "regular", note: null };
+  const offerQuote: PriceQuote | null = offer ? { ...base, offerCents: offer.cents, offerLabel: offer.label, offerEndsOn: offer.endsOn, discountCents: regularCents - offer.cents, finalCents: offer.cents, totalCents: offer.cents, pricingType: "offer" } : null;
   if (!code) return offerQuote ?? base;
   const disc = codeDiscountCents(regularCents, code);
-  const codeQuote: PriceQuote = { ...base, discountCode: code.code, discountCents: disc, finalCents: regularCents - disc, pricingType: "discount" };
+  const codeQuote: PriceQuote = { ...base, discountCode: code.code, discountCents: disc, finalCents: regularCents - disc, totalCents: regularCents - disc, pricingType: "discount" };
   if (offerQuote && offerQuote.finalCents <= codeQuote.finalCents) {
     return { ...offerQuote, note: `Your ${offer!.label} already gives you the best price, so the code wasn't added. Only one saving can be used per booking.` };
   }

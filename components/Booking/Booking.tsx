@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { site } from "@/config/site";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
-import { activeOffer, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
+import { activeOffer, durationLabel, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
 import { pricingRows } from "@/lib/booking/templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -47,8 +47,10 @@ import Reveal, { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import en from "@/messages/en.json";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
+import { addPhotos, babiesLabel, extraBabyLine, sessionMinutes, type BookingBaby } from "@/lib/booking/extra-babies";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
+import type { Bundle } from "@/config/bundles";
 
 /* ---------------- state ---------------- */
 
@@ -56,8 +58,6 @@ interface ContactDraft {
   parentName: string;
   email: string;
   phone: string;
-  babyName: string;
-  babyAge: string;
   notes: string;
   /** We bring the studio to the family's home. */
   street: string;
@@ -69,11 +69,13 @@ interface ContactDraft {
 }
 
 type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
+type BabyDraft = { name: string; age: string };
 
 interface State {
   step: number;
   maxStep: number;
   bundleId: string | null;
+  babies: BabyDraft[];
   date: DateKey | null;
   slot: TimeSlot | null;
   contact: ContactDraft;
@@ -81,22 +83,25 @@ interface State {
   consents: BookingConsents;
   stepError: string | null;
   fieldErrors: ContactErrors;
+  babyErrors: string[];
   status: "editing" | "submitting" | "done";
   result: BookingResult | null;
 }
 
-const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", babyName: "", babyAge: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
+const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
 
 const initialState: State = {
   step: STEP.date,
   maxStep: STEP.date,
   bundleId: null,
+  babies: [{ name: "", age: "" }],
   date: null,
   slot: null,
   contact: emptyContact,
   consents: { sms: false, photos: false },
   stepError: null,
   fieldErrors: {},
+  babyErrors: [],
   status: "editing",
   result: null,
 };
@@ -105,12 +110,14 @@ type Action =
   | { type: "date"; date: DateKey }
   | { type: "slot"; slot: TimeSlot }
   | { type: "contact"; field: keyof ContactDraft; value: string }
+  | { type: "babyCount"; count: number; slot?: TimeSlot | null }
+  | { type: "baby"; index: number; field: keyof BabyDraft; value: string }
   | { type: "consent"; field: keyof BookingConsents; value: boolean }
   | { type: "go"; step: number }
   | { type: "next" }
   | { type: "back" }
   | { type: "stepError"; message: string }
-  | { type: "fieldErrors"; errors: ContactErrors }
+  | { type: "fieldErrors"; errors: ContactErrors; babyErrors?: string[] }
   | { type: "submitting" }
   | { type: "done"; result: BookingResult }
   | { type: "submitFailed"; message: string }
@@ -127,20 +134,32 @@ function reducer(state: State, action: Action): State {
       delete fieldErrors[action.field];
       return { ...state, contact: { ...state.contact, [action.field]: action.value }, fieldErrors };
     }
+    case "babyCount": {
+      const count = Math.max(1, Math.min(3, action.count));
+      const babies = Array.from({ length: count }, (_, i) => state.babies[i] ?? { name: "", age: "" });
+      const slot = action.slot === undefined ? state.slot : action.slot;
+      return { ...state, babies, slot, maxStep: slot === null ? Math.min(state.maxStep, STEP.time) : state.maxStep, stepError: null, babyErrors: [] };
+    }
+    case "baby": {
+      const babies = state.babies.map((baby, i) => (i === action.index ? { ...baby, [action.field]: action.value } : baby));
+      const babyErrors = [...state.babyErrors];
+      babyErrors[action.index] = "";
+      return { ...state, babies, babyErrors };
+    }
     case "consent":
       return { ...state, consents: { ...state.consents, [action.field]: action.value } };
     case "go":
       return action.step <= state.maxStep ? { ...state, step: action.step, stepError: null } : state;
     case "next": {
       const step = Math.min(state.step + 1, bookingSteps.length - 1);
-      return { ...state, step, maxStep: Math.max(state.maxStep, step), stepError: null, fieldErrors: {} };
+      return { ...state, step, maxStep: Math.max(state.maxStep, step), stepError: null, fieldErrors: {}, babyErrors: [] };
     }
     case "back":
       return { ...state, step: Math.max(0, state.step - 1), stepError: null };
     case "stepError":
       return { ...state, stepError: action.message };
     case "fieldErrors":
-      return { ...state, fieldErrors: action.errors };
+      return { ...state, fieldErrors: action.errors, babyErrors: action.babyErrors ?? [] };
     case "submitting":
       return { ...state, status: "submitting", stepError: null };
     case "done":
@@ -161,7 +180,6 @@ function validateContact(c: ContactDraft): ContactErrors {
   if (c.parentName.trim().length < 2) e.parentName = "Add the parent or guardian's name.";
   if (!EMAIL_RE.test(c.email.trim())) e.email = "Enter an email like name@example.com.";
   if (c.phone.replace(/\D/g, "").length < 10) e.phone = "Enter a phone number with at least 10 digits.";
-  if (!c.babyAge) e.babyAge = "Choose your baby's age.";
   if (c.street.trim().length < 4) e.street = "Add the street address where we'll set up.";
   if (c.city.trim().length < 2) e.city = "Add the city.";
   if (!/^\d{5}(-\d{4})?$/.test(c.zip.trim())) e.zip = "Enter a 5-digit ZIP code.";
@@ -223,15 +241,15 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   // reset cached availability whenever its inputs change
   useEffect(() => {
     setDays({});
-  }, [state.bundleId]);
+  }, [state.bundleId, state.babies.length]);
 
   const loadMonth = useCallback(
-    async (m: Date, bundleId: string) => {
+    async (m: Date, bundleId: string, babyCount: number) => {
       setLoadingDays(true);
       try {
         const from = toDateKey(new Date(m.getFullYear(), m.getMonth(), 1));
         const to = toDateKey(new Date(m.getFullYear(), m.getMonth() + 1, 0));
-        const result = await provider.getAvailability({ bundleId, from, to });
+        const result = await provider.getAvailability({ bundleId, babyCount, from, to });
         setDays((prev) => {
           const next = { ...prev };
           result.forEach((d) => (next[d.date] = d.slots));
@@ -251,9 +269,9 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
   useEffect(() => {
     if (state.step >= STEP.date && state.bundleId) {
-      void loadMonth(month, state.bundleId);
+      void loadMonth(month, state.bundleId, state.babies.length);
     }
-  }, [state.step, state.bundleId, month, loadMonth]);
+  }, [state.step, state.bundleId, state.babies.length, month, loadMonth]);
 
   // move focus to the step heading on step changes (not on first load)
   useEffect(() => {
@@ -273,6 +291,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   const inspiration = findPhoto(photos, selection.inspirationId);
   const { getBundle, today } = useCatalog();
   const bundle = getBundle(state.bundleId);
+  const addon = bundle ? extraBabyLine(bundle, state.babies.length) : null;
   // review-step price: always calculated by the server (the browser only displays it)
   const [quote, setQuote] = useState<PriceQuote | null>(null);
   // travel fee estimate for the ZIP code (the server recalculates it when booking)
@@ -300,6 +319,45 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   const [backdrops, setBackdrops] = useState<string[]>([]);
   const setups = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [checkingBabyCount, setCheckingBabyCount] = useState(false);
+  const goTo = (step: number) => {
+    if (state.step === STEP.review && step !== STEP.review) {
+      setAppliedCode(null);
+      setQuote(null);
+    }
+    dispatch({ type: "go", step });
+  };
+  const goBack = () => {
+    if (state.step === STEP.review) {
+      setAppliedCode(null);
+      setQuote(null);
+    }
+    dispatch({ type: "back" });
+  };
+  const changeBabyCount = async (count: number) => {
+    const nextCount = Math.max(1, Math.min(3, count));
+    if (nextCount === state.babies.length || !state.bundleId) return;
+    setCheckingBabyCount(true);
+    try {
+      let nextSlot = state.slot;
+      if (state.date && state.slot) {
+        const [day] = await provider.getAvailability({ bundleId: state.bundleId, babyCount: nextCount, from: state.date, to: state.date });
+        nextSlot = day?.slots.find((slot) => slot.start === state.slot?.start) ?? null;
+      }
+      setQuote(null);
+      setAppliedCode(null);
+      setDays({});
+      dispatch({ type: "babyCount", count: nextCount, slot: nextSlot });
+      if (state.slot && !nextSlot) {
+        dispatch({ type: "go", step: STEP.time });
+        dispatch({ type: "stepError", message: en.booking.extraBabies.timeUnavailable });
+      }
+    } catch (err) {
+      dispatch({ type: "stepError", message: err instanceof BookingApiError ? err.message : en.booking.extraBabies.checkFailed });
+    } finally {
+      setCheckingBabyCount(false);
+    }
+  };
   // this bundle's deposit today (paid on Stripe as the last step); null = none
   const [depositOffer, setDepositOffer] = useState<DepositOffer | null>(null);
   const [redirecting, setRedirecting] = useState(false);
@@ -311,16 +369,16 @@ export default function Booking({ bundleId }: { bundleId: string }) {
       .then((o: DepositOffer | null) => setDepositOffer(o))
       .catch(() => undefined);
   }, [bundleId]);
-  const totalCents = bundle ? (quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price)) + travelFee : 0;
+  const bundleCents = bundle ? quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price) : 0;
+  const beforeTravelCents = quote?.totalCents ?? bundleCents + (addon?.totalCents ?? 0);
+  const totalCents = beforeTravelCents + travelFee;
   const depositCents = depositOffer?.amountCents ? Math.min(depositOffer.amountCents, totalCents) : 0;
   const deposit = formatMoney(depositCents);
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
-    if (quote && quote.bundleId === state.bundleId) return;
-    setAppliedCode(null);
-    provider.quote(state.bundleId).then(setQuote).catch(() => setQuote(null));
+    provider.quote(state.bundleId, undefined, undefined, state.babies.length).then(setQuote).catch(() => setQuote(null));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.step, state.bundleId]);
+  }, [state.step, state.bundleId, state.babies.length]);
 
   // conversion tracking: the visitor started booking this bundle
   useEffect(() => {
@@ -338,12 +396,14 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         break;
       case STEP.details: {
         const errors = validateContact(state.contact);
+        const babyErrors = state.babies.map((baby) => (baby.age ? "" : en.booking.extraBabies.ageError));
         const tooFar = travel?.status === "too_far" ? travelHint(travel) : null;
         if (tooFar && !errors.zip) errors.zip = tooFar.text;
-        if (Object.keys(errors).length) {
-          dispatch({ type: "fieldErrors", errors });
+        if (Object.keys(errors).length || babyErrors.some(Boolean)) {
+          dispatch({ type: "fieldErrors", errors, babyErrors });
           const first = Object.keys(errors)[0];
-          requestAnimationFrame(() => document.getElementById(`field-${first}`)?.focus());
+          const firstBaby = babyErrors.findIndex(Boolean);
+          requestAnimationFrame(() => (first ? document.getElementById(`field-${first}`) : document.getElementById(firstBaby === 0 ? "field-babyAge" : `field-baby-${firstBaby}-age`))?.focus());
           return;
         }
         break;
@@ -357,8 +417,10 @@ export default function Booking({ bundleId }: { bundleId: string }) {
     dispatch({ type: "submitting" });
     try {
       const c = state.contact;
+      const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age }));
       const request = {
         bundleId: state.bundleId,
+        babies,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,
         discountCode: appliedCode ?? undefined,
@@ -366,8 +428,8 @@ export default function Booking({ bundleId }: { bundleId: string }) {
           parentName: c.parentName.trim(),
           email: c.email.trim(),
           phone: c.phone.trim(),
-          babyName: c.babyName.trim() || undefined,
-          babyAge: c.babyAge,
+          babyName: babies[0].name,
+          babyAge: babies[0].age,
           notes: c.notes.trim() || undefined,
         },
         address: { street: c.street.trim(), unit: c.unit.trim() || undefined, city: c.city.trim(), zip: c.zip.trim(), accessNotes: c.access.trim() || undefined },
@@ -403,7 +465,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
           eventId: request.requestId,
           id: request.bundleId,
           name: result.pricing?.bundleName ?? bundle?.name ?? request.bundleId,
-          value: ((result.pricing?.finalCents ?? 0) + (result.travel?.feeCents ?? 0)) / 100,
+          value: ((result.pricing?.totalCents ?? result.pricing?.finalCents ?? 0) + (result.travel?.feeCents ?? 0)) / 100,
           contact: request.contact,
           address: request.address,
         });
@@ -415,7 +477,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
         const taken = state.slot;
         requestIdRef.current = null;
         setDays((prev) => ({ ...prev, [taken.date]: (prev[taken.date] ?? []).filter((x) => x.id !== taken.id) }));
-        dispatch({ type: "go", step: STEP.time });
+        goTo(STEP.time);
         dispatch({ type: "stepError", message: err.message });
         return;
       }
@@ -442,6 +504,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                 <span className={styles.bundleMeta}>
                   {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${bundle.photos} edited photos` : ""}
                 </span>
+                {addon && <span className={styles.bundleMeta}>{addon.name}: +{formatMoney(addon.totalCents)} · {durationLabel(sessionMinutes(bundle, state.babies.length))} total · {addPhotos(bundle.photos, addon.extraPhotos)} edited photos</span>}
               </p>
               {inspiration && (
                 <p className={cn(styles.summaryPhoto, "chalk-soft")}>
@@ -457,7 +520,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
             </Link>
           </div>
         )}
-        <BabyLedNote />
+        <BabyLedNote multiple={state.babies.length > 1} />
 
         <Reveal>
         <div ref={panelRef} className={styles.panelAnchor} data-booking-panel>
@@ -471,7 +534,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
               />
             ) : (
               <>
-                <StepTracker current={state.step} maxReached={state.maxStep} onGo={(s) => dispatch({ type: "go", step: s })} />
+                <StepTracker current={state.step} maxReached={state.maxStep} onGo={goTo} />
 
                 <div className={styles.stepBody}>
                   <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
@@ -480,14 +543,14 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
                   {state.step === STEP.date && (
                     <Calendar
-                      todayKey={studioToday}
-                      month={month}
-                      onMonthChange={setMonth}
-                      days={days}
-                      loading={loadingDays}
-                      selected={state.date}
-                      onSelect={(d) => dispatch({ type: "date", date: d })}
-                    />
+                        todayKey={studioToday}
+                        month={month}
+                        onMonthChange={setMonth}
+                        days={days}
+                        loading={loadingDays}
+                        selected={state.date}
+                        onSelect={(d) => dispatch({ type: "date", date: d })}
+                      />
                   )}
 
                   {state.step === STEP.time && state.date && (
@@ -521,6 +584,12 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       contact={state.contact}
                       errors={state.fieldErrors}
                       onChange={(field, value) => dispatch({ type: "contact", field, value })}
+                      babies={state.babies}
+                      babyErrors={state.babyErrors}
+                      onBabyChange={(index, field, value) => dispatch({ type: "baby", index, field, value })}
+                      bundle={bundle!}
+                      checkingBabyCount={checkingBabyCount}
+                      onBabyCountChange={changeBabyCount}
                       consents={state.consents}
                       onConsent={(field, value) => dispatch({ type: "consent", field, value })}
                       hp={hp}
@@ -544,11 +613,18 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                     <Review
                       rows={[
                         { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
-                        ...(quote ? pricingRows(quote) : [["Package total", formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))] as [string, string]]).map(([label, value]) => ({ label, value, step: -1 })),
+                        ...(quote
+                          ? pricingRows(quote)
+                          : ([
+                              ["Bundle total", formatMoney(bundleCents)],
+                              ...(addon ? [[addon.name, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]] : []),
+                              ...(addon ? [["Session total before travel", formatMoney(beforeTravelCents)]] : []),
+                            ] as [string, string][])
+                        ).map(([label, value]) => ({ label, value, step: -1 })),
                         ...(travelFee > 0
                           ? [
                               { label: en.booking.travel.label, value: travelFeeValue(travelFee, travel?.miles ?? null), step: STEP.details },
-                              { label: en.booking.travel.total, value: formatMoney((quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price)) + travelFee), step: -1 },
+                              { label: en.booking.travel.total, value: formatMoney(beforeTravelCents + travelFee), step: -1 },
                             ]
                           : []),
                         ...(depositCents > 0
@@ -565,17 +641,13 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                         { label: "Parent / guardian", value: state.contact.parentName, step: STEP.details },
                         { label: "Email", value: state.contact.email, step: STEP.details },
                         { label: "Phone", value: state.contact.phone, step: STEP.details },
-                        {
-                          label: "Baby",
-                          value: [state.contact.babyName.trim(), state.contact.babyAge].filter(Boolean).join(", "),
-                          step: STEP.details,
-                        },
+                        { label: state.babies.length > 1 ? en.booking.extraBabies.review : "Baby", value: babiesLabel(state.babies), step: STEP.details },
                         ...(state.contact.notes.trim() ? [{ label: "Notes", value: state.contact.notes.trim(), step: STEP.details }] : []),
                         { label: setups > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, value: backdrops.length ? backdropNames(backdrops) : en.booking.backdrops.none, step: STEP.details },
                         { label: en.booking.consents.reviewSms, value: state.consents.sms ? en.booking.consents.reviewSmsYes : en.booking.consents.reviewSmsNo, step: STEP.details },
                         { label: en.booking.consents.reviewPhotos, value: state.consents.photos ? en.booking.consents.reviewPhotosYes : en.booking.consents.reviewPhotosNo, step: STEP.details },
                       ]}
-                      onEdit={(s) => dispatch({ type: "go", step: s })}
+                      onEdit={goTo}
                     />
                   )}
 
@@ -584,18 +656,18 @@ export default function Booking({ bundleId }: { bundleId: string }) {
                       key={bundle.id}
                       applied={appliedCode}
                       onApply={async (code) => {
-                        const q = await provider.quote(bundle.id, code, state.contact.email.trim());
+                        const q = await provider.quote(bundle.id, code, state.contact.email.trim(), state.babies.length);
                         setQuote(q);
                         setAppliedCode(q.pricingType === "discount" ? q.discountCode : null);
                         return q;
                       }}
                       onRemove={async () => {
                         setAppliedCode(null);
-                        setQuote(await provider.quote(bundle.id).catch(() => null));
+                        setQuote(await provider.quote(bundle.id, undefined, undefined, state.babies.length).catch(() => null));
                       }}
                     />
                   )}
-                  {state.step === STEP.review && <BabyLedNote compact />}
+                  {state.step === STEP.review && <BabyLedNote compact multiple={state.babies.length > 1} />}
                   {state.step === STEP.review && depositCents > 0 && depositOffer && (
                     <p className={cn(styles.depositNote, "chalk-soft")}>{fill(en.deposit.form.note, { notice: noticeLabel(depositOffer.noticeHours) })}</p>
                   )}
@@ -609,7 +681,7 @@ export default function Booking({ bundleId }: { bundleId: string }) {
 
                 <div className={styles.actions}>
                   {state.step > 0 ? (
-                    <ChalkButton variant="outline" onClick={() => dispatch({ type: "back" })} seed={81}>
+                    <ChalkButton variant="outline" onClick={goBack} seed={81}>
                       Back
                     </ChalkButton>
                   ) : (
@@ -635,12 +707,65 @@ export default function Booking({ bundleId }: { bundleId: string }) {
   );
 }
 
+/* ---------------- twins / triplets choice (after Baby 1 on the details step) ---------------- */
+
+function ExtraBabiesPicker({ bundle, count, checking, onChange }: { bundle: Bundle; count: number; checking: boolean; onChange: (count: number) => void }) {
+  const addon = bundle.extraBaby;
+  const [expanded, setExpanded] = useState(count > 1);
+  if (!addon?.active) return null;
+  const max = Math.min(3, addon.maxBabies);
+  const choices = [
+    { count: 2, label: en.booking.extraBabies.two, price: addon.price, minutes: addon.extraMinutes, photos: addon.extraPhotos },
+    { count: 3, label: en.booking.extraBabies.three, price: addon.price * 2, minutes: addon.extraMinutes * 2, photos: addon.extraPhotos * 2 },
+  ].filter((choice) => choice.count <= max);
+  return (
+    <div className={styles.extraBabiesPrompt}>
+      <p className={cn(styles.extraBabiesIncluded, "chalk-soft")}>{en.booking.extraBabies.included}</p>
+      <button type="button" className={cn(styles.extraBabiesToggle, "chalk-soft")} aria-expanded={expanded} onClick={() => setExpanded((open) => !open)}>
+        {en.booking.extraBabies.question}
+      </button>
+      <p className={cn(styles.extraBabiesHint, "chalk-soft")}>
+        {fill(en.booking.extraBabies.details, { price: formatMoney(toCents(addon.price)), minutes: String(addon.extraMinutes), photos: String(addon.extraPhotos) })} {en.booking.extraBabies.fullPrice}
+      </p>
+      {expanded && (
+        <div className={styles.extraBabiesChoices} role="group" aria-label={en.booking.extraBabies.choose}>
+          {choices.map((choice) => (
+            <button
+              key={choice.count}
+              type="button"
+              className={cn(styles.extraBabyChoice, count === choice.count ? styles.extraBabyChoiceSelected : "", "chalk-soft")}
+              aria-pressed={count === choice.count}
+              disabled={checking}
+              onClick={() => onChange(choice.count)}
+            >
+              <strong>{choice.label}</strong>
+              <span>+{formatMoney(toCents(choice.price))} · +{choice.minutes} min · +{choice.photos} photos</span>
+            </button>
+          ))}
+          {count > 1 && (
+            <button type="button" className={cn(styles.oneBabyButton, "chalk-soft")} disabled={checking} onClick={() => onChange(1)}>
+              {en.booking.extraBabies.one}
+            </button>
+          )}
+        </div>
+      )}
+      {checking && <p className={cn(styles.extraBabiesChecking, "chalk-soft")} role="status">{en.booking.extraBabies.checking}</p>}
+    </div>
+  );
+}
+
 /* ---------------- details form ---------------- */
 
 function DetailsForm({
   contact,
   errors,
   onChange,
+  babies,
+  babyErrors,
+  onBabyChange,
+  bundle,
+  checkingBabyCount,
+  onBabyCountChange,
   consents,
   onConsent,
   hp,
@@ -653,6 +778,12 @@ function DetailsForm({
   contact: ContactDraft;
   errors: ContactErrors;
   onChange: (field: keyof ContactDraft, value: string) => void;
+  babies: BabyDraft[];
+  babyErrors: string[];
+  onBabyChange: (index: number, field: keyof BabyDraft, value: string) => void;
+  bundle: Bundle;
+  checkingBabyCount: boolean;
+  onBabyCountChange: (count: number) => void;
   consents: BookingConsents;
   onConsent: (field: keyof BookingConsents, value: boolean) => void;
   hp: string;
@@ -694,6 +825,25 @@ function DetailsForm({
             {errors[name]}
           </p>
         )}
+      </div>
+    );
+  };
+
+  const babyCard = (baby: BabyDraft, index: number) => {
+    const nameId = index === 0 ? "field-babyName" : `field-baby-${index}-name`;
+    const ageId = index === 0 ? "field-babyAge" : `field-baby-${index}-age`;
+    const errorId = `${ageId}-error`;
+    return (
+      <div key={index} className={styles.babyCard}>
+        {babies.length > 1 && <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(en.booking.extraBabies.babyNumber, { number: String(index + 1) })}</p>}
+        <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{en.booking.extraBabies.name}<span className={styles.optional}>{en.booking.extraBabies.nameOptional}</span></label>
+        <input id={nameId} className={styles.input} value={baby.name} maxLength={80} autoComplete="off" onChange={(e) => onBabyChange(index, "name", e.target.value)} />
+        <label htmlFor={ageId} className={cn(styles.label, "chalk-soft")}>{en.booking.extraBabies.ageRequired}</label>
+        <select id={ageId} className={styles.input} value={baby.age} onChange={(e) => onBabyChange(index, "age", e.target.value)} aria-invalid={Boolean(babyErrors[index])} aria-describedby={[babyErrors[index] && errorId, site.contact.email && "field-babyAge-hint"].filter(Boolean).join(" ") || undefined} required>
+          <option value="">Choose an age</option>
+          {babyAgeOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+        </select>
+        {babyErrors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{babyErrors[index]}</p>}
       </div>
     );
   };
@@ -740,42 +890,19 @@ function DetailsForm({
           placeholder={en.booking.address.accessPlaceholder}
         />
       </div>
-      {field("babyName", "Baby's name", { optional: true, autoComplete: "off" })}
-      <div className={styles.field}>
-        <label htmlFor="field-babyAge" className={cn(styles.label, "chalk-soft")}>
-          Baby&apos;s age
-        </label>
-        <select
-          id="field-babyAge"
-          className={styles.input}
-          value={contact.babyAge}
-          onChange={(e) => onChange("babyAge", e.target.value)}
-          aria-invalid={Boolean(errors.babyAge)}
-          aria-describedby={[errors.babyAge && "field-babyAge-error", site.contact.email && "field-babyAge-hint"].filter(Boolean).join(" ") || undefined}
-          required
-        >
-          <option value="">Choose an age</option>
-          {babyAgeOptions.map((a) => (
-            <option key={a} value={a}>
-              {a}
-            </option>
-          ))}
-        </select>
-        {errors.babyAge && (
-          <p id="field-babyAge-error" className={cn(styles.fieldError, "chalk-soft")}>
-            {errors.babyAge}
-          </p>
-        )}
+      <fieldset className={cn(styles.fieldset, styles.fieldWide, styles.babiesForm)}>
+        <legend className={cn(styles.label, "chalk-soft")}>{babies.length > 1 ? en.booking.extraBabies.review : "Your baby"}</legend>
+        <div className={styles.babiesGrid}>
+          {babyCard(babies[0], 0)}
+          <ExtraBabiesPicker bundle={bundle} count={babies.length} checking={checkingBabyCount} onChange={onBabyCountChange} />
+          {babies.length > 1 && <div className={styles.extraBabiesGrid}>{babies.slice(1).map((baby, index) => babyCard(baby, index + 1))}</div>}
+        </div>
         {site.contact.email && (
           <p id="field-babyAge-hint" className={cn(styles.optional, "chalk-soft")}>
-            {olderNote[0]}
-            <a href={`mailto:${site.contact.email}`} className={styles.inlineLink}>
-              {site.contact.email}
-            </a>
-            {olderNote[1]}
+            {olderNote[0]}<a href={`mailto:${site.contact.email}`} className={styles.inlineLink}>{site.contact.email}</a>{olderNote[1]}
           </p>
         )}
-      </div>
+      </fieldset>
       <div className={cn(styles.field, styles.fieldWide)}>
         <label htmlFor="field-notes" className={cn(styles.label, "chalk-soft")}>
           Notes or special requests<span className={styles.optional}> (optional)</span>

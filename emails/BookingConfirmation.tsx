@@ -13,6 +13,7 @@ import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
 import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
 import { ChalkBox, ChalkButton, ChalkList, Details, Heading, Paragraph, PhotographersIntro } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
+import { addPhotos, babiesLabel, babyNames } from "@/lib/booking/extra-babies";
 
 interface Options {
   themeId: string;
@@ -31,22 +32,25 @@ interface Options {
 const nextSteps = (d: BookingDetails, locale: EmailLocale) => {
   const m = emailMessages(locale);
   const items = d.deposit?.status === "paid" ? [...m.confirmation.next.slice(0, -1), m.deposit.nextLast] : m.confirmation.next;
-  return items.map((i) => fill(i, { count: d.bundle.photos?.trim() ?? "" }).replace(/\s+/g, " "));
+  const extraPhotos = d.pricing.addons.reduce((sum, addon) => sum + addon.extraPhotos, 0);
+  return items.map((i) => fill(i, { count: addPhotos(d.bundle.photos, extraPhotos) }).replace(/\s+/g, " "));
 };
 
 function content(d: BookingDetails, locale: EmailLocale) {
   const m = emailMessages(locale);
   const date = formatLongDate(d.date);
   const due = paymentDue(locale, totalDueCents(d.pricing, d.travel), d.deposit);
+  const babyLed = d.babies.length > 1 ? `${m.confirmation.babyLed.replace("your little one", "your little ones")} ${m.confirmation.promise.replace("baby just can't", "your babies just can't")}` : `${m.confirmation.babyLed} ${m.confirmation.promise}`;
   return {
     m,
     date,
     first: d.contact.parentName.split(" ")[0],
     time: fill(m.common.timeRange, { start: formatTimeLabel(d.start), end: formatTimeLabel(d.end) }),
-    paymentRows: [[m.common.packageTotal, formatMoney(d.pricing.finalCents)], ...travelRows(d, locale), ...due.rows] as [string, string][],
+    paymentRows: [...pricingRows(d.pricing), ...travelRows(d, locale), ...due.rows] as [string, string][],
     due,
     prepGuide: prepGuideItems(locale, d.deposit?.status === "paid"),
     location: d.location ?? formatAddress(d.address),
+    babyLed,
   };
 }
 
@@ -74,13 +78,13 @@ export function BookingConfirmation({
   backdropUrl,
   swatches,
 }: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; swatches: EmailSwatch[] }) {
-  const { m, date, first, time, paymentRows, due, prepGuide, location } = content(d, locale);
+  const { m, date, first, time, paymentRows, due, prepGuide, location, babyLed } = content(d, locale);
   const c = m.confirmation;
   return (
     <ChalkLayout theme={t} images={images} locale={locale} preheader={fill(c.preheader, { date })}>
       <Heading theme={t} eyebrow={c.eyebrow} title={fill(c.title, { name: first })} />
       <Paragraph theme={t} align="center">
-        {fill(c.intro, { baby: d.contact.babyName || c.babyFallback })}
+        {fill(c.intro, { baby: babyNames(d.babies) || (d.babies.length > 1 ? "your little ones" : c.babyFallback) })}
       </Paragraph>
       <Details
         theme={t}
@@ -90,6 +94,7 @@ export function BookingConfirmation({
           [m.common.date, date],
           [m.common.time, time],
           [m.common.location, location],
+          [d.babies.length > 1 ? m.common.babies : m.common.baby, babiesLabel(d.babies)],
           ...pricingRows(d.pricing),
           ...travelRows(d, locale),
         ]}
@@ -99,7 +104,7 @@ export function BookingConfirmation({
       <ChalkList theme={t} title={m.prepGuide.title} items={prepGuide} />
       <ChalkList theme={t} title={c.nextTitle} items={nextSteps(d, locale)} color={t.chalk} mark="•" />
       <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
-      <Paragraph theme={t}>{`${c.babyLed} ${c.promise}`}</Paragraph>
+      <Paragraph theme={t}>{babyLed}</Paragraph>
       <Paragraph theme={t}>{c.changes}</Paragraph>
       {rescheduleUrl && rescheduleNoticeHours !== undefined && (
         <Paragraph theme={t} align="center">
@@ -118,7 +123,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
   const images = emailImageSet(theme.id, opts.images ?? "cid");
   const picks = d.backdrops ?? [];
   const backdrop = backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined);
-  const { m, date, first, time, due, prepGuide, location } = content(d, locale);
+  const { m, date, first, time, due, prepGuide, location, babyLed } = content(d, locale);
   const c = m.confirmation;
   const html = await renderHtml(
     <BookingConfirmation
@@ -142,6 +147,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${m.common.date}: ${date}`,
     `${m.common.time}: ${time}`,
     `${m.common.location}: ${location}`,
+    `${d.babies.length > 1 ? m.common.babies : m.common.baby}: ${babiesLabel(d.babies)}`,
     ...pricingRows(d.pricing).map(([k, v]) => `${k}: ${v}`),
     ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
     ...due.rows.map(([k, v]) => `${k}: ${v}`),
@@ -158,7 +164,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     "",
     `${c.meetTitle}: ${c.meet} ${c.spanish}`,
     "",
-    `${c.babyLed} ${c.promise}`,
+    babyLed,
     c.changes,
     opts.rescheduleUrl && opts.rescheduleNoticeHours !== undefined && `\n${changePolicyText(opts.rescheduleNoticeHours)}`,
     opts.rescheduleUrl && fill(c.rescheduleText, { url: opts.rescheduleUrl }),

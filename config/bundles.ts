@@ -22,6 +22,18 @@ export interface Bundle {
   sortOrder?: number;
   /** Special offer (owner-editable). Active only while enabled and today <= endsOn. */
   offer?: BundleOffer | null;
+  /** Twins/triplets option, owner-editable per bundle. One unit = one baby after the first. */
+  extraBaby?: ExtraBabyAddon | null;
+}
+
+export interface ExtraBabyAddon {
+  active: boolean;
+  /** Dollars per baby after the first; never reduced by a bundle offer or discount code. */
+  price: number;
+  extraMinutes: number;
+  extraPhotos: number;
+  /** Maximum babies in one session (1 + the stored add-on quantity). */
+  maxBabies: number;
 }
 
 export interface BundleOffer {
@@ -51,6 +63,7 @@ export const bundles: Bundle[] = [
     features: ["Up to 1 hour", "Baby only", "1 setup", "8 edited digital photos"],
     locationNote: "We bring the studio to your home",
     cta: "Choose Little Moments",
+    extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
   },
   {
     id: "our-little-story",
@@ -65,6 +78,7 @@ export const bundles: Bundle[] = [
     locationNote: "We bring the studio to your home",
     cta: "Choose Our Little Story",
     badge: "Most loved",
+    extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
   },
   {
     id: "forever-little",
@@ -78,6 +92,7 @@ export const bundles: Bundle[] = [
     features: ["Up to 3 hours", "Baby + parents + siblings", "3 setups", "35 edited digital photos"],
     locationNote: "We bring the studio to your home",
     cta: "Choose Our Family Story",
+    extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
   },
 ];
 

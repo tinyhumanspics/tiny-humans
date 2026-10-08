@@ -291,7 +291,7 @@ const prototypeApi: AdminApi = {
     const b = r.data;
     const p = readPrototypePricing();
     const id = b.id || `${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Math.random().toString(36).slice(2, 6)}`;
-    const next: Bundle = { id, name: b.name, price: b.price, description: b.description || undefined, duration: durationLabel(b.durationMinutes), durationMinutes: b.durationMinutes, people: "", setups: "", photos: b.photos || "", features: b.features, locationNote: "We bring the studio to your home", cta: `Choose ${b.name}`, badge: b.badge || undefined, active: b.active, sortOrder: b.sortOrder ?? p.bundles.length, offer: b.offer ?? null };
+    const next: Bundle = { id, name: b.name, price: b.price, description: b.description || undefined, duration: durationLabel(b.durationMinutes), durationMinutes: b.durationMinutes, people: "", setups: "", photos: b.photos || "", features: b.features, locationNote: "We bring the studio to your home", cta: `Choose ${b.name}`, badge: b.badge || undefined, active: b.active, sortOrder: b.sortOrder ?? p.bundles.length, offer: b.offer ?? null, extraBaby: b.extraBaby };
     const bundles = p.bundles.some((x) => x.id === id) ? p.bundles.map((x) => (x.id === id ? next : x)) : [...p.bundles, next];
     writePrototypePricing({ ...p, bundles });
     return bundles;

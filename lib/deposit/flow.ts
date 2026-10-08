@@ -7,7 +7,7 @@ import { getAvailabilityRules } from "@/lib/availability/server";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { addressOf, detailsFromRow, snapshotOf } from "@/lib/booking/details";
+import { addressOf, detailsFromRow } from "@/lib/booking/details";
 import { BookingError } from "@/lib/booking/errors";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { noticeHoursFor } from "@/lib/booking/terms";
@@ -48,7 +48,7 @@ const LEASE_MS = 2 * 60_000;
 const GRACE_MS = 60_000;
 const EXPIRED_REASON = "Deposit not paid (the payment page expired, so the time was released)";
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
-const totalCents = (row: Booking) => (row.finalPriceCents ?? row.packagePrice * 100) + (row.travelFeeCents ?? 0);
+const totalCents = (row: Booking) => (row.finalPriceCents ?? row.packagePrice * 100) + (row.addonsTotalCents ?? 0) + (row.travelFeeCents ?? 0);
 const stripeCode = (err: unknown) => (err instanceof StripeError ? err.code : err instanceof BookingError ? err.code : undefined);
 
 /** The family's browser (for Meta's Conversions API) when they come back from Stripe themselves. */
@@ -423,12 +423,13 @@ async function resultOf(row: Booking): Promise<BookingResult> {
     status: "confirmed",
     createdAt: row.createdAt.toISOString(),
     emailSent: row.confirmationEmailSent,
-    pricing: snapshotOf(row),
+    pricing: details.pricing,
     travel: { feeCents: row.travelFeeCents, miles: row.travelMiles },
     rescheduleNoticeHours: await noticeHoursFor(row, rules.limits.rescheduleNoticeHours),
     deposit: details.deposit,
     request: {
       bundleId: row.packageId,
+      babies: details.babies,
       slot: { id: `${details.date}T${details.start}`, date: details.date, start: details.start, end: details.end, label: formatTimeLabel(details.start) },
       contact: details.contact,
       address: details.address,

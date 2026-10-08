@@ -13,12 +13,15 @@ import { accessFor } from "./access";
 import { backdropsFor } from "./backdrops";
 import type { BookingDetails } from "./templates";
 import type { SessionAddress } from "./types";
+import { addonsFor, babiesFor } from "./addons";
+import type { AddonLine, BookingBaby } from "./extra-babies";
 
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 
 /** Price snapshot stored on a booking (older bookings fall back to package_price). */
-export function snapshotOf(row: Booking): PriceQuote {
+export function snapshotOf(row: Booking, addons: AddonLine[] = []): PriceQuote {
   const legacy = row.packagePrice * 100;
+  const addonsCents = row.addonsTotalCents ?? addons.reduce((sum, a) => sum + a.totalCents, 0);
   return {
     bundleId: row.packageId,
     bundleName: row.packageName,
@@ -29,6 +32,9 @@ export function snapshotOf(row: Booking): PriceQuote {
     discountCode: row.discountCode,
     discountCents: row.discountAmountCents ?? 0,
     finalCents: row.finalPriceCents ?? legacy,
+    addons,
+    addonsCents,
+    totalCents: (row.finalPriceCents ?? legacy) + addonsCents,
     pricingType: (row.pricingType as PriceQuote["pricingType"]) ?? "regular",
   };
 }
@@ -55,14 +61,18 @@ export function addressOf(line: string, accessNotes?: string): SessionAddress {
  * gate notes, backdrops, deposit): the same rows as when it was booked.
  */
 export async function detailsFromRow(row: Booking): Promise<BookingDetails> {
-  const [catalog, [consent], [access], [picks], deposit, inspirationTitle] = await Promise.all([
+  const [catalog, [consent], [access], [picks], deposit, inspirationTitle, babiesByBooking, addonsByBooking] = await Promise.all([
     getCatalog().catch(() => [] as Bundle[]),
     getDb().select().from(bookingConsents).where(eq(bookingConsents.bookingId, row.id)).limit(1).catch(() => []),
     accessFor([row.id]),
     backdropsFor([row.id]),
     depositOf(row.id),
     row.inspirationPhotoId ? photoTitle(row.inspirationPhotoId) : Promise.resolve(undefined),
+    babiesFor([row.id]),
+    addonsFor([row.id]),
   ]);
+  const babies: BookingBaby[] = babiesByBooking.get(row.id) ?? [{ name: row.babyName ?? undefined, age: row.babyAge }];
+  const addons = addonsByBooking.get(row.id) ?? [];
   const bundle = catalog.find((b) => b.id === row.packageId) ?? ({ id: row.packageId, name: row.packageName, features: row.packageInclusions ?? [] } as unknown as Bundle);
   return {
     reference: row.bookingReference,
@@ -71,10 +81,11 @@ export async function detailsFromRow(row: Booking): Promise<BookingDetails> {
     start: localTime(row.sessionStart, row.timezone),
     end: localTime(row.sessionEnd, row.timezone),
     contact: { parentName: row.parentName, email: row.email, phone: row.phone, babyName: row.babyName ?? undefined, babyAge: row.babyAge, notes: row.notes ?? undefined },
+    babies,
     address: addressOf(row.locationAddress, access?.notes),
     location: row.locationAddress,
     inspirationTitle,
-    pricing: snapshotOf(row),
+    pricing: snapshotOf(row, addons),
     consents: consent ? { sms: consent.sms, photos: consent.photos } : undefined,
     travel: { feeCents: row.travelFeeCents, miles: row.travelMiles },
     backdrops: picks?.picks,

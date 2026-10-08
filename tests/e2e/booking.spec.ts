@@ -55,6 +55,75 @@ test("a family can book a session (mock provider)", async ({ page }) => {
   await bookLittleMoments(page);
 });
 
+test("twins add full-price time and photos to any bundle", async ({ page }) => {
+  await page.goto("/book?bundle=little-moments");
+  const day = page.locator('button[aria-label*="times available"]').first();
+  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
+  await page.locator('button[aria-label*="times available"]').first().click();
+  await page.getByRole("button", { name: /Next: Time/ }).click();
+  const time = page.locator('label[for^="time-"]').first();
+  await expect(time.getByText(/until/)).toBeVisible();
+  await time.click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+
+  await expect(page.locator("#field-baby-1-name")).toHaveCount(0);
+  await expect(page.getByText("Your bundle includes one baby.")).toBeVisible();
+  await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
+  await expect(page.getByRole("button", { name: /Twins.*\+\$75.*\+30 min.*\+5 photos/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Triplets.*\+\$150.*\+60 min.*\+10 photos/ })).toBeVisible();
+  await page.getByRole("button", { name: /Twins.*\+\$75/ }).click();
+  await expect(page.locator("#field-baby-1-name")).toBeVisible();
+  await expect(page.getByText(/Each extra baby adds \$75, 30 minutes and 5 edited photos/)).toBeVisible();
+  await expect(page.getByText(/Up to 90 minutes total · 13 edited photos/)).toBeVisible();
+
+  await page.fill("#field-parentName", "Twins Test");
+  await page.fill("#field-email", "twins.test@example.com");
+  await page.fill("#field-phone", "3055550142");
+  await page.fill("#field-street", "1500 Bay Rd");
+  await page.fill("#field-city", "Miami Beach");
+  await page.fill("#field-zip", "33139");
+  await page.fill("#field-babyName", "Luna");
+  await page.selectOption("#field-babyAge", { index: 1 });
+  await page.fill("#field-baby-1-name", "Mia");
+  await page.selectOption("#field-baby-1-age", { index: 1 });
+  await page.getByRole("button", { name: /Next: Review/ }).click();
+
+  await expect(page.getByText("1 × $75 = $75", { exact: true })).toBeVisible();
+  await expect(page.getByText("$224", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Luna \(Newborn \(0–2 weeks\)\), Mia \(Newborn \(0–2 weeks\)\)/)).toBeVisible();
+});
+
+test("a longer twins or triplets session keeps details and asks for another time only when needed", async ({ page }) => {
+  await page.route("**/api/booking/availability?*", async (route) => {
+    const url = new URL(route.request().url());
+    const date = url.searchParams.get("from")!;
+    const multiple = url.searchParams.get("babies") !== "1";
+    const slot = multiple
+      ? { id: `${date}T14:00`, date, start: "14:00", end: "16:00", label: "2:00 pm" }
+      : { id: `${date}T16:00`, date, start: "16:00", end: "17:00", label: "4:00 pm" };
+    await route.fulfill({ json: { days: [{ date, slots: [slot] }] } });
+  });
+
+  await page.goto("/book?bundle=little-moments");
+  await page.locator('button[aria-label*="times available"]').first().click();
+  await page.getByRole("button", { name: /Next: Time/ }).click();
+  await page.locator('label[for^="time-"]').click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await page.fill("#field-parentName", "Saved Parent");
+  await page.fill("#field-babyName", "Luna");
+  await page.selectOption("#field-babyAge", { index: 1 });
+  await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
+  await page.getByRole("button", { name: /Triplets.*\+\$150/ }).click();
+
+  await expect(page.getByText(/previous time doesn't have enough room/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Pick a time" })).toBeVisible();
+  await page.locator('label[for^="time-"]').click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
+  await expect(page.locator("#field-babyName")).toHaveValue("Luna");
+  await expect(page.getByText("Baby 3", { exact: true })).toBeVisible();
+});
+
 test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
   await bookLittleMoments(page);
   await page.getByRole("button", { name: "Preview the confirmation email" }).click();

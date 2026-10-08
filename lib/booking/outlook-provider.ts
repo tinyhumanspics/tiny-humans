@@ -36,6 +36,8 @@ import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
 import { openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
+import { addPhotos, extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
+import { saveBookingAddons } from "./addons";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
@@ -91,6 +93,9 @@ export class OutlookBookingProvider implements BookingProvider {
     this.ensureConfigured();
     const bundle = (await getCatalog()).find((b) => b.id === query.bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
+    const count = query.babyCount ?? 1;
+    if (count > 1 && !extraBabyLine(bundle, count)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
+    const minutes = sessionMinutes(bundle, count);
     // deposit pages that ran out free their time (after this response, so it never slows the calendar down)
     try {
       after(() => sweepDeposits().then(() => undefined));
@@ -99,7 +104,7 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     try {
       const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
-      return availabilityForRange(query.from, query.to, bundle.durationMinutes, busy, rules);
+      return availabilityForRange(query.from, query.to, minutes, busy, rules);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }
@@ -111,11 +116,15 @@ export class OutlookBookingProvider implements BookingProvider {
     // Price + bundle always come from the central catalog on the server (never from the browser).
     const bundle = (await getCatalog()).find((b) => b.id === request.bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    const babies: BookingBaby[] = request.babies?.length ? request.babies : [{ name: request.contact.babyName, age: request.contact.babyAge }];
+    const addon = extraBabyLine(bundle, babies.length);
+    if (babies.length > 1 && !addon) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count anymore. Please choose again.");
+    const durationMinutes = sessionMinutes(bundle, babies.length);
     const tz = bookingRules.timeZone;
     const { calendarUser } = microsoftConfig();
     const date = request.slot.date;
     const start = request.slot.start;
-    const end = addMinutes(start, bundle.durationMinutes);
+    const end = addMinutes(start, durationMinutes);
 
     // 1. Same submission retried (double-click, flaky network): return the original booking.
     if (request.requestId) {
@@ -149,18 +158,18 @@ export class OutlookBookingProvider implements BookingProvider {
     } catch (err) {
       asCalendarError(err, "createBooking.recheck");
     }
-    if (!slotsForDay(date, bundle.durationMinutes, busy, rules).some((s) => s.start === start)) {
+    if (!slotsForDay(date, durationMinutes, busy, rules).some((s) => s.start === start)) {
       throw new BookingError("slot_unavailable", friendly.slotTaken);
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
-    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email);
+    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length);
     let usage: { usageId: string; release: () => Promise<void> } | null = null;
     if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
     const releaseUsage = () => usage?.release().catch(() => undefined);
 
     // 2c. Deposit: the bundle's, paid on Stripe as the last step (confirmed once it's paid). Never more than the total.
-    const depositCents = depositCentsFor(pricing.finalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
+    const depositCents = depositCentsFor(pricing.totalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
 
     // 3. Save as pending (unique index on start time blocks a simultaneous double booking).
     const sessionStart = zonedTimeToUtc(date, start, tz);
@@ -190,11 +199,12 @@ export class OutlookBookingProvider implements BookingProvider {
             packageInclusions: bundle.features,
             travelFeeCents: travel.feeCents,
             travelMiles: travel.miles,
+            addonsTotalCents: pricing.addonsCents,
             parentName: request.contact.parentName,
             email: request.contact.email,
             phone: request.contact.phone,
-            babyName: request.contact.babyName ?? null,
-            babyAge: request.contact.babyAge,
+            babyName: babies[0].name ?? null,
+            babyAge: babies[0].age,
             locationType: "client_home",
             locationAddress: formatAddress(request.address),
             sessionDate: date,
@@ -227,9 +237,10 @@ export class OutlookBookingProvider implements BookingProvider {
     // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch
     // it. Saved now with the other extras (best effort), so a booking confirmed after its deposit has them too.
     const noticeHours = rules.limits.rescheduleNoticeHours;
-    await saveBookingTerms(row.id, noticeHours, bundle.photos, row.bookingReference);
+    await saveBookingTerms(row.id, noticeHours, addPhotos(bundle.photos, addon?.extraPhotos ?? 0), row.bookingReference);
     await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
     await saveBookingBackdrops(row.id, backdrops, row.bookingReference);
+    await saveBookingAddons(row.id, babies, addon, row.bookingReference);
     // Optional permissions (best effort; they're also in the event + studio email).
     if (request.consents) {
       const at = request.consents.sms || request.consents.photos ? new Date() : null;
@@ -258,6 +269,7 @@ export class OutlookBookingProvider implements BookingProvider {
       start,
       end,
       contact: request.contact,
+      babies,
       address: request.address,
       inspirationTitle: request.inspirationPhotoId ? await photoTitle(request.inspirationPhotoId) : undefined,
       consents: request.consents,
@@ -280,18 +292,19 @@ export class OutlookBookingProvider implements BookingProvider {
   }
 
   /** Server-side price for a bundle (+ optional code, re-validated here). Never trusts the browser. */
-  private async priceFor(bundleId: string, code: string | undefined, email: string | undefined): Promise<{ quote: PriceQuote; codeId: string | null }> {
+  private async priceFor(bundleId: string, code: string | undefined, email: string | undefined, babyCount = 1): Promise<{ quote: PriceQuote; codeId: string | null }> {
     const bundle = (await getCatalog()).find((b) => b.id === bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const today = todayInZone(bookingRules.timeZone);
-    if (!code?.trim()) return { quote: computeQuote(bundle, today), codeId: null };
+    if (babyCount > 1 && !extraBabyLine(bundle, babyCount)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
+    if (!code?.trim()) return { quote: withExtraBabies(computeQuote(bundle, today), bundle, babyCount), codeId: null };
     const check = await validateCode(code, bundleId, email);
     if (!check.ok) throw new BookingError("invalid_request", check.message);
-    return { quote: computeQuote(bundle, today, check.terms), codeId: check.codeId };
+    return { quote: withExtraBabies(computeQuote(bundle, today, check.terms), bundle, babyCount), codeId: check.codeId };
   }
 
-  async quote(bundleId: string, code?: string, email?: string): Promise<PriceQuote> {
-    return (await this.priceFor(bundleId, code, email)).quote;
+  async quote(bundleId: string, code?: string, email?: string, babyCount = 1): Promise<PriceQuote> {
+    return (await this.priceFor(bundleId, code, email, babyCount)).quote;
   }
 
   async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {

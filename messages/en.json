@@ -33,6 +33,28 @@
     "age": {
       "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages."
     },
+    "extraBabies": {
+      "one": "1 baby",
+      "two": "Twins",
+      "three": "Triplets",
+      "included": "Your bundle includes one baby.",
+      "question": "Shooting twins or triplets?",
+      "choose": "Choose twins or triplets",
+      "details": "Each extra baby adds {price}, {minutes} minutes and {photos} edited photos.",
+      "fullPrice": "Special offers and discount codes apply to the bundle only.",
+      "checking": "Checking that your selected time still fits…",
+      "checkFailed": "We couldn't check that time. Please try your twins or triplets choice again.",
+      "timeUnavailable": "Your previous time doesn't have enough room for a twins or triplets session. Your information is saved—please choose another time.",
+      "babyNumber": "Baby {number}",
+      "name": "Baby name",
+      "nameOptional": " (optional)",
+      "ageRequired": "Age (required)",
+      "ageError": "Choose an age for each baby.",
+      "review": "Babies",
+      "addon": "Extra baby add-on",
+      "photos": "{count} edited photos",
+      "minutes": "{count} minutes"
+    },
     "travel": {
       "checking": "Checking the distance…",
       "free": "Within {free} miles of Miami Beach: no travel fee.",
@@ -310,6 +332,8 @@
       "date": "Date",
       "time": "Time",
       "location": "Location",
+      "baby": "Baby",
+      "babies": "Babies",
       "packageTotal": "Package total",
       "payment": "Payment",
       "paymentDue": "Payment due",

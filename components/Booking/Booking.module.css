@@ -329,6 +329,28 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
   font-size: 1.05rem;
   color: var(--chalk-error);
 }
+.babiesForm { display: grid; gap: 8px; }
+.babiesGrid { display: grid; gap: 14px; }
+.babyCard { display: grid; gap: 6px; padding: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 9px; }
+.babyTitle { margin: 0; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
+.extraBabiesPrompt { display: grid; gap: 8px; padding: 14px; border: 2px dashed color-mix(in srgb, var(--sun-yellow) 58%, transparent); border-radius: 10px; }
+.extraBabiesIncluded, .extraBabiesHint, .extraBabiesChecking { margin: 0; line-height: 1.4; }
+.extraBabiesIncluded { color: var(--chalk-white); }
+.extraBabiesHint { color: var(--chalk-muted); }
+.extraBabiesToggle { width: fit-content; min-height: 44px; padding: 2px 4px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.3rem; text-decoration: underline wavy; text-underline-offset: 5px; cursor: pointer; }
+.extraBabiesToggle:hover, .extraBabiesToggle:focus-visible { color: var(--sun-yellow); }
+.extraBabiesChoices { display: grid; gap: 10px; margin-top: 4px; }
+@media (min-width: 640px) { .extraBabiesChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.extraBabyChoice { display: grid; gap: 3px; min-height: 72px; padding: 10px 12px; border: 2px solid color-mix(in srgb, var(--chalk-white) 45%, transparent); border-radius: 9px; background: transparent; color: var(--chalk-white); text-align: left; cursor: pointer; }
+.extraBabyChoice strong { color: var(--sun-yellow); font-size: 1.25rem; font-weight: 400; }
+.extraBabyChoice span { color: var(--chalk-muted); font-size: 1rem; }
+.extraBabyChoice:hover:not(:disabled), .extraBabyChoice:focus-visible, .extraBabyChoiceSelected { border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 7%, transparent); }
+.extraBabyChoice:disabled, .oneBabyButton:disabled { opacity: 0.55; cursor: wait; }
+.oneBabyButton { min-height: 44px; padding: 4px 8px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.05rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; }
+@media (min-width: 640px) { .oneBabyButton { grid-column: 1 / -1; justify-self: center; } }
+.extraBabiesChecking { color: var(--sun-yellow); }
+.extraBabiesGrid { display: grid; gap: 14px; }
+@media (min-width: 720px) { .extraBabiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .error { margin-top: 18px; font-family: var(--font-chalk); font-size: 1.15rem; }
 
 /* ---------- review ---------- */

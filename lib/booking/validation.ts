@@ -8,7 +8,7 @@ const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time");
 const text = (max: number) => z.string().trim().max(max);
 
 export const availabilityQuerySchema = z
-  .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), from: dateKey, to: dateKey })
+  .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), babyCount: z.coerce.number().int().min(1).max(3).default(1), from: dateKey, to: dateKey })
   .refine((q) => q.from <= q.to, "from must be before to")
   .refine((q) => (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 <= 62, "Range too long");
 
@@ -20,6 +20,7 @@ export const backdropPicks = z
 
 export const bookingRequestSchema = z.object({
   bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64),
+  babies: z.array(z.object({ name: text(80).optional().transform((v) => v || undefined), age: z.enum(babyAgeOptions as unknown as [string, ...string[]], { message: "Choose an age for each baby." }) })).min(1).max(3).optional(),
   slot: z.object({ date: dateKey, start: hhmm }, { message: "Pick a day and time." }).passthrough(),
   contact: z.object({
     parentName: text(120).min(2, "Add the parent or guardian's name."),

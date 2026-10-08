@@ -5,7 +5,7 @@ import { builtInCatalog } from "./catalog";
 export { builtInCatalog };
 import { bookingRules } from "@/config/booking";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
-import { bookings, bundleInclusions, bundlesTable, discountCodeBundles, discountCodes, discountCodeUsage } from "@/lib/db/schema";
+import { bookings, bundleAddons, bundleInclusions, bundlesTable, discountCodeBundles, discountCodes, discountCodeUsage } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
@@ -32,14 +32,16 @@ export async function getCatalog(): Promise<Bundle[]> {
   if (!isDatabaseConfigured()) return builtInCatalog();
   let rows: (typeof bundlesTable.$inferSelect)[];
   let inc: (typeof bundleInclusions.$inferSelect)[];
+  let addons: (typeof bundleAddons.$inferSelect)[];
   try {
     const db = getDb();
-    [rows, inc] = await Promise.all([
+    [rows, inc, addons] = await Promise.all([
       db.select().from(bundlesTable).orderBy(asc(bundlesTable.sortOrder), asc(bundlesTable.createdAt)),
       db.select().from(bundleInclusions).orderBy(asc(bundleInclusions.position)),
+      db.select().from(bundleAddons).orderBy(asc(bundleAddons.sortOrder)),
     ]);
   } catch (err) {
-    if (missingTable(err)) log.error("pricing.db", "Pricing tables not found. Run drizzle/0005_pricing_and_promotions.sql in Neon.");
+    if (missingTable(err)) log.error("pricing.db", "Pricing/add-on tables not found. Run migrations 0005 and 0017 in Neon.");
     else log.error("pricing.db", "Could not load bundles", { error: err as Error });
     throw new CatalogUnavailableError("Bundles could not be loaded");
   }
@@ -47,7 +49,9 @@ export async function getCatalog(): Promise<Bundle[]> {
     log.error("pricing.db", "The bundles table is empty");
     throw new CatalogUnavailableError("No bundles in the database");
   }
-  return rows.map((r) => ({
+  return rows.map((r) => {
+    const extra = addons.find((a) => a.bundleId === r.id && a.kind === "extra_baby");
+    return ({
     id: r.id,
     name: r.name,
     price: r.regularPriceCents / 100,
@@ -64,7 +68,9 @@ export async function getCatalog(): Promise<Bundle[]> {
     active: r.active,
     sortOrder: r.sortOrder,
     offer: r.offerEnabled || r.offerPriceCents != null ? { enabled: r.offerEnabled, price: (r.offerPriceCents ?? 0) / 100, label: r.offerLabel, endsOn: r.offerEndsOn } : null,
-  }));
+    extraBaby: extra ? { active: extra.active, price: extra.unitPriceCents / 100, extraMinutes: extra.extraMinutes, extraPhotos: extra.extraPhotos, maxBabies: extra.maxQuantity + 1 } : null,
+  });
+  });
 }
 
 /**
@@ -94,7 +100,7 @@ export async function getPublicCatalog(): Promise<PublicCatalog> {
         await rememberCatalog(list);
         return list;
       },
-      ["public-catalog-v2"],
+      ["public-catalog-v3"],
       { tags: [CATALOG_TAG], revalidate: 300 },
     )();
     return { bundles, status: "live" };
@@ -143,10 +149,15 @@ export async function saveBundle(input: BundleInput): Promise<string> {
     updatedAt: new Date(),
   };
   const { id: _omit, ...update } = values;
+  const extraBaby = input.extraBaby;
   await db.batch([
     db.insert(bundlesTable).values(values).onConflictDoUpdate({ target: bundlesTable.id, set: update }),
     db.delete(bundleInclusions).where(eq(bundleInclusions.bundleId, id)),
     ...(input.features.length ? [db.insert(bundleInclusions).values(input.features.map((text, position) => ({ bundleId: id, position, text })))] : []),
+    db
+      .insert(bundleAddons)
+      .values({ bundleId: id, kind: "extra_baby", name: "Extra baby", active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() } }),
   ] as never);
   return id;
 }

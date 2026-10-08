@@ -14,6 +14,7 @@ import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
+import { babiesLabel } from "@/lib/booking/extra-babies";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
@@ -226,11 +227,12 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Regular price", formatMoney(pr.regularCents)],
     ...(pr.pricingType === "offer" ? [["Offer", `${pr.offerLabel ?? "Special offer"}: ${formatMoney(pr.offerCents ?? pr.finalCents)}`] as [string, string]] : []),
     ...(pr.pricingType === "discount" ? [["Discount code", pr.discountCode ?? ""] as [string, string], ["Discount amount", formatMoney(pr.discountCents)] as [string, string]] : []),
-    ["Final booked price", formatMoney(pr.finalCents)],
+    ["Final bundle price", formatMoney(pr.finalCents)],
+    ...pr.addons.map((a) => [a.name, `${a.quantity} × ${formatMoney(a.unitPriceCents)} = ${formatMoney(a.totalCents)}`] as [string, string]),
     ...(lead.travel ? [["Travel", travelOwnerLine(lead.travel)] as [string, string]] : []),
-    ...(lead.travel?.feeCents ? [["Total due", formatMoney(pr.finalCents + lead.travel.feeCents)] as [string, string]] : []),
+    ...((pr.addonsCents > 0 || lead.travel?.feeCents) ? [["Total due", formatMoney(pr.totalCents + (lead.travel?.feeCents ?? 0))] as [string, string]] : []),
     ...depositRows(lead),
-    ["Baby age", lead.babyAge],
+    [lead.babies && lead.babies.length > 1 ? "Babies" : "Baby", babiesLabel(lead.babies ?? [{ name: lead.babyName ?? undefined, age: lead.babyAge }])],
     ["Full address", lead.address],
     [ACCESS_LABEL, lead.access || "None"],
     ...(lead.backdrops !== undefined
@@ -277,12 +279,12 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         </span>
       </div>
       <p className={cn(styles.leadLine, "chalk-soft")}>
-        <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.finalCents + (lead.travel?.feeCents ?? 0))}
+        <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.totalCents + (lead.travel?.feeCents ?? 0))}
         {lead.travel?.feeCents ? ` (incl. ${formatMoney(lead.travel.feeCents)} travel)` : ""} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}
       </p>
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
-        {lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
+        {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
       </p>
       {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
