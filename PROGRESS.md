@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff, Oct 8 early: switching to Codex for a while; order = owner's choice below)
-State: everything is on `main` and live (last code deploy `b7d43f5`, smoke-tested). Migrations 0010–0013 ran in Neon.
+State: everything is on `main` and live (last code deploy `79ab33e`, smoke-tested). Migrations 0010–0013 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Owner: run `drizzle/0015_booking_no_overlap.sql` in Neon** (BUG-5; safe twice; any order with the code, which is
    already live). Until it runs, only the old "same start time" rule protects against a double booking. If its last
@@ -33,8 +33,8 @@ The deposit is live but **switched off** (families see today's flow and wording)
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
    (a) Phase 2 leftovers: "block a day" in /admin + notify/reschedule every affected family in one step (brief §5
    Scheduling; /admin → Availability already has closed days and time blocks, but nothing tells the families booked
-   that day), duplicate-booking flag (same email or phone) on lead cards, optional /admin "Today" view with
-   tap-to-text; (b) **Phase 4**: seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
+   that day), optional /admin "Today" view with tap-to-text. Duplicate-booking flag is done (Oct 8); (b) **Phase 4**:
+   seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
    sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween) + the extra-babies add-on (decision
    15: $75, +30 min, +5 photos, max 3, editable per bundle; ask the owner whether codes apply to add-ons); (c) Phase 5
    SEO; (d) Phase 3 Spanish; (e) Phase 6 security/accessibility/tests/CI; (f) rest of Phase 7, then 8, 9, 10.
@@ -54,14 +54,15 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8, early): main = b7d43f5 (+ docs), live and smoke-tested: DST Nov 1 check (nothing to change), BUG-5 overlap rule
+State (Oct 8): main = 79ab33e, live and smoke-tested: duplicate-booking flag on /admin lead cards, DST Nov 1 check
+(nothing to change), BUG-5 overlap rule
 (code live; database rule needs migration 0015), landing refresh (About photos fill empty landing slots, theme hero
-doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (needs migration 0016 + webhook +
-RESEND_WEBHOOK_SECRET), SPF/DKIM/DMARC checked. AGENTS.md now mirrors CLAUDE.md (owner switches tools).
+doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (webhook + secret verified; needs
+migration 0016), SPF/DKIM/DMARC checked. AGENTS.md now mirrors CLAUDE.md (owner switches tools).
 Not on main yet: nothing.
 
 Next: finish the brief, time-sensitive first (owner's order, PROGRESS → NEXT STEPS 4): Phase 2 leftovers ("block a
-day" + notify/reschedule every affected family in one step, duplicate-booking flag, optional Today view) → Phase 4
+day" + notify/reschedule every affected family in one step, optional Today view) → Phase 4
 seasonal landing variants editable in /admin + extra-babies add-on → Phase 5 SEO → Phase 3 Spanish → Phase 6 →
 Phases 7–10. Research current official docs before each phase (links in PROGRESS.md). Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
@@ -173,15 +174,16 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras live except "block a day",
-  duplicate flag and Today view; deposit live but switched off (waiting for migration 0014 + Stripe steps); BUG-5 and
-  email bounce alerts live in code, waiting for migrations 0015/0016 + the Resend webhook. Next: NEXT STEPS 4.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras live except "block a day" and the
+  optional Today view; deposit live but switched off (waiting for migration 0014 + Stripe steps); BUG-5 and
+  email bounce alerts live in code, waiting for migrations 0015/0016 (Resend webhook + secret verified). Next:
+  NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
-- Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).
+- Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 27 warnings: unused imports + React Compiler advice).
 - Oct 7: owner approved deleting the empty Finder/iCloud duplicate folders (`lib copy`, `components/* 2`, `lib/* 2`, …).
   All were empty (only `.DS_Store`), never in git. Removed with `rmdir` (refuses non-empty folders).
 
@@ -355,7 +357,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       improvements: add `rua=mailto:…` to DMARC for reports, later `p=quarantine`; switch on Microsoft 365 DKIM
       (selector1/selector2 CNAMEs are missing, so emails sent from Outlook pass DMARC only through SPF). Replies to
       website emails go to `BOOKING_NOTIFICATION_EMAIL` (replyTo).
-- [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
+- [x] Edge: duplicate-booking flag (Oct 8, live `79ab33e`): active bookings with the same normalized email or phone
+      show a yellow **Possible duplicate** pill + the other booking reference(s) on /admin lead cards. Email matching
+      ignores case; US phone matching treats `+1 (305)…` and `(305)…` alike. Cancelled history is ignored, so a family
+      booking again after cancelling is not flagged. No migration. Local Outlook-mode check: two active matches were
+      both flagged; after cancelling one, both warnings cleared. 21 e2e passed; phone + desktop screenshots in
+      `.screenshots/duplicate-booking/`.
+- [ ] Edge: block a day in /admin + notify/reschedule every affected family
 
 ## Phase 3 — Spanish (owner: "same time, no rush" → after Phase 2)
 - [ ] Research i18n (next-intl vs alternatives), URLs (/es), detection rules, switcher, hreflang
