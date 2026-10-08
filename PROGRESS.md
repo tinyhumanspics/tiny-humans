@@ -4,10 +4,10 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 4 extra-baby slice in progress; order = owner's choice below)
-State: local `main` = `d9eb50d` (not pushed); remote/live `main` = `3b35fb9`, whose latest app code is `faad919`.
-The owner approved the extra-baby phone/desktop screenshots Oct 8 and the verified app slice is committed locally, but
-it must not be pushed until the owner confirms migration 0017 ran in Neon and its check returned 3 rows. Migrations
-0010–0016 ran in Neon.
+State: local `main` = `030ba0c` (not pushed); remote/live `main` = `3b35fb9`, whose latest app code is `faad919`.
+The owner approved the extra-baby phone/desktop screenshots and ran migration 0017 in Neon Oct 8; its check returned
+3 bundle rows. The app slice is committed locally and its final strict tsc, lint, build, 27 e2e and 16 visual checks
+passed; it is ready to push. Migrations 0010–0017 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Migrations DONE Oct 8:** owner ran 0014 (deposits), 0015 (no-overlap rule) and 0016 (email delivery events) in
    Neon without errors; the final check returned all three names. Resend webhook + secret were already verified.
@@ -24,8 +24,8 @@ The deposit is live but **switched off** (families see today's flow and wording)
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
-   (a) **Phase 4**: finish the extra-babies rollout (screenshots approved; owner runs migration 0017 → push the locally
-   committed, verified app slice), then seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
+   (a) **Phase 4**: finish the extra-babies rollout (migration + screenshots done → push the locally committed, verified
+   app slice), then seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
    sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween). Extra babies: $75, +30 min, +5
    photos per baby after the first, twins/triplets only, max 3 babies total, all bundles; offers/codes reduce the bundle
    only, never the add-on (owner confirmed Oct 8). (b) Phase 5
@@ -47,20 +47,19 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): local main = d9eb50d (not pushed); remote/live main = 3b35fb9, latest live app code = faad919. Phase 2
-finished and migrations 0014/0015/0016 ran without errors. Phase 4 extra-baby migration 0017 is on remote main in
-be06303; the owner is running it in Neon. The app code is finished, verified and locally committed in d9eb50d: Step 3
+State (Oct 8): local main = 030ba0c (not pushed); remote/live main = 3b35fb9, latest live app code = faad919. Phase 2
+finished and migrations 0014–0017 ran without errors (0017 check returned 3 bundle rows). The extra-baby app code is
+finished, verified and locally committed in d9eb50d: Step 3
 initially asks only Baby name (optional) + Age (required),
 then "Shooting twins or triplets?" reveals the choices and extra-baby fields. Each extra baby = $75 +30 min +5 photos;
 max triplets, all bundles, and offers/codes reduce only the bundle. If the longer session no longer fits, the form keeps
-the family's details and returns only to Time. The owner approved the screenshots Oct 8. Do not push until migration
-0017 is confirmed with 3 check-query rows.
+the family's details and returns only to Time. The owner approved the screenshots Oct 8. Final strict tsc, lint (0
+errors/26 known warnings), build, 27 e2e and 16 visual tests passed; ready to push.
 
-Next: ask the owner to confirm drizzle/0017_extra_babies.sql completed and the check query returned 3 bundle rows. Then
-push the already-verified d9eb50d app slice, verify Vercel + production (read-only smoke; never book), and continue with seasonal
+Next: push the already-verified d9eb50d app slice, verify Vercel + production (read-only smoke; never book), and continue with seasonal
 landing variants editable in /admin. Keep the optional Phase 2 Today view in the backlog. Small verified slices to main.
 Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: migration 0017 confirmation; Stripe "Refunds: Write" +
+Waiting on the owner: Stripe "Refunds: Write" +
 checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test; Vercel Analytics privacy
 line; /portfolio; Terms review; About photo alt text ("IMG 6087").
 Watch out: closed-day `day_closed` tokens are reschedule-only and pending deposits must be expired when closing a day;
@@ -381,8 +380,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [~] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
       30 minutes and 5 edited photos** (owner confirmed Oct 8; editable per bundle in /admin). Offers/discount codes
       reduce **only the bundle**; the add-on stays full price (owner confirmed Oct 8). Migration 0017 is on main in
-      `be06303`; the owner is running it in Neon, and the app commit `d9eb50d` stays local until the 3-row check is
-      confirmed. The owner approved the revised screenshots Oct 8. App work is locally complete: Step 3 first
+      `be06303`; the owner ran it in Neon Oct 8 without errors and its check returned 3 bundle rows. The owner approved
+      the revised screenshots Oct 8. App commit `d9eb50d` is locally complete: Step 3 first
       shows only Baby name (optional) + Age (required); the prompt below Baby 1 reveals Twins/Triplets choices and only
       then shows Baby 2/3 fields. The calendar remains unchanged. Selecting a longer session rechecks the chosen time;
       if it no longer fits, all entered details and the date are preserved and the family returns only to Time. Separate
