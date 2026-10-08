@@ -157,5 +157,11 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   errors (seen Oct 7): before committing run `npx tsc --noEmit -p . --incremental false` (or delete the tsbuildinfo).
 - The owner sometimes records new decisions in PROGRESS.md (own commits) while a session is working: check `git log`
   before building on an old decision, and again before committing.
+- **Deposits** (`lib/deposit/`): a `pending` booking = waiting on its deposit's Stripe page (it blocks its time; no
+  Outlook event, no emails, no reminders, no /admin cancel/reschedule yet). It's confirmed by `confirmBookingRow`
+  (`lib/booking/confirm.ts`) from the webhook, the return page or `sweepDeposits()`, never twice (lease on
+  `booking_deposits.confirming_at`). Deposit Checkout pages carry `metadata.kind = "deposit"`: never record them as the
+  session's payment (`booking_payments`). Amounts due = total − paid deposit (`amountDueCents(row, paid)`,
+  `nextCharge`). Local test: fake Stripe `/_pay`, `/_expire`, `/_checkout/fail`, `/_refunds/fail` + `.graph-down`.
 - Vercel Analytics + Speed Insights render only when `VERCEL=1` (their `/_vercel/*` scripts don't exist locally); URLs
   pass through `lib/tracking/safe-url.ts` first. Next 16: `proxy.ts` (not middleware), `revalidateTag(tag, { expire: 0 })`.
