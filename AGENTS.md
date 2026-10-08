@@ -1,9 +1,9 @@
-# CLAUDE.md — Tiny Humans
+# AGENTS.md — Tiny Humans
 
-Working notes for AI coding sessions. **Start every session with: "Read CLAUDE.md and PROGRESS.md and continue."**
+Working notes for AI coding sessions. **Start every session with: "Read AGENTS.md and PROGRESS.md and continue."**
 PROGRESS.md holds the phase plan, status, decisions, open owner questions, research notes and the bug log. Its
 "▶ Next session prompt" section always has the latest copy-paste prompt (written by `/handoff`).
-**The owner switches between Claude Code (reads this file) and Codex (reads `AGENTS.md`).** Both files hold the same
+**The owner switches between Codex (reads this file) and Claude Code (reads `CLAUDE.md`).** Both files hold the same
 rules: whenever you change one, make the same change in the other (only the tool names and skill paths differ).
 
 ## What this is
@@ -52,8 +52,8 @@ npm run test:e2e     # Playwright booking-funnel tests (mock provider, productio
   line in PROGRESS.md (why, bundle impact, maintenance).
 - The owner is not deeply technical: explain decisions in 1–2 plain sentences; give numbered one-line steps for anything
   he must do; after each phase send a 3–5 line summary.
-- **End of every phase** (also when the chat is getting long, or the owner asks, e.g. "hand off to Codex"): run the
-  `/handoff` skill (`.claude/skills/handoff/SKILL.md`). It updates PROGRESS.md, saves a copy-paste prompt for the next
+- **End of every phase** (also when the chat is getting long, or the owner asks, e.g. "hand off to Claude"): follow the
+  handoff steps in `.agents/skills/handoff/SKILL.md`. It updates PROGRESS.md, saves a copy-paste prompt for the next
   session in PROGRESS.md → "▶ Next session prompt" (it works in Claude Code and in Codex), and ends the reply with the
   summary + that prompt.
 

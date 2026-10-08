@@ -3,7 +3,7 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (handoff, Oct 7 night, deposit shipped switched off)
+## ▶ NEXT STEPS (handoff, Oct 8 early: switching to Codex for a while; order = owner's choice below)
 State: everything is on `main` and live (last code deploy `b7d43f5`, smoke-tested). Migrations 0010–0013 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Owner: run `drizzle/0015_booking_no_overlap.sql` in Neon** (BUG-5; safe twice; any order with the code, which is
@@ -29,12 +29,16 @@ The deposit is live but **switched off** (families see today's flow and wording)
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
    Checklist sent Oct 7; no results yet.
-4. **Rest of Phase 2 extras:** Resend webhooks → bounced/complained emails flagged in /admin (+ SPF/DKIM/DMARC check);
-   "block a day" in /admin + notify/reschedule every affected family; duplicate-booking flag (same email/phone);
-   optional /admin "Today" view with tap-to-text. Then **BUG-5 overlap constraint** and the **DST Nov 1** calendar
-   check (both time-sensitive).
-5. **Phase 4 seasonal** is time-sensitive: last Thanksgiving sessions Nov 23, Christmas cards Dec 5, First Christmas
-   Dec 21 (decision 7).
+4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
+   (a) Phase 2 leftovers: "block a day" in /admin + notify/reschedule every affected family in one step (brief §5
+   Scheduling; /admin → Availability already has closed days and time blocks, but nothing tells the families booked
+   that day), duplicate-booking flag (same email or phone) on lead cards, optional /admin "Today" view with
+   tap-to-text; (b) **Phase 4**: seasonal landing variants with real cutoffs editable in /admin (Thanksgiving: last
+   sessions Nov 23; Christmas cards Dec 5; First Christmas Dec 21; no Halloween) + the extra-babies add-on (decision
+   15: $75, +30 min, +5 photos, max 3, editable per bundle; ask the owner whether codes apply to add-ons); (c) Phase 5
+   SEO; (d) Phase 3 Spanish; (e) Phase 6 security/accessibility/tests/CI; (f) rest of Phase 7, then 8, 9, 10.
+   Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
+5. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
 6. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
    Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". If a payment ever shows "Not paid" after the family
    paid: lead → Payment → **Check with Stripe** (else Stripe Workbench → Webhooks → Event deliveries).
@@ -47,22 +51,25 @@ The deposit is live but **switched off** (families see today's flow and wording)
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
-Read CLAUDE.md and PROGRESS.md and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
+Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 7, night): main = 543def3 (+ docs), live and smoke-tested: the deposit (per-bundle amounts + on/off in
-/admin → Pricing & Promotions → Deposits; Stripe Checkout as the last booking step, 30-min hold, refunds, "not
-confirmed yet" email), shipped SWITCHED OFF; landing photo slots renamed in /admin → Photos; Halloween dates removed.
-Not on main yet: nothing (wip/deposit is merged).
+State (Oct 8, early): main = b7d43f5 (+ docs), live and smoke-tested: DST Nov 1 check (nothing to change), BUG-5 overlap rule
+(code live; database rule needs migration 0015), landing refresh (About photos fill empty landing slots, theme hero
+doodles, current backdrop wording), Resend bounce/spam alerts on /admin leads (needs migration 0016 + webhook +
+RESEND_WEBHOOK_SECRET), SPF/DKIM/DMARC checked. AGENTS.md now mirrors CLAUDE.md (owner switches tools).
+Not on main yet: nothing.
 
-Next: help the owner switch deposits on (PROGRESS → NEXT STEPS 2: migration 0014 in Neon, Stripe "Refunds: Write" +
-webhook event checkout.session.expired, amounts + switch, one real booking + online cancel together). Then the rest
-of the Phase 2 extras (NEXT STEPS 4): Resend bounce webhooks, block a day, duplicate-booking flag, Today view.
-Time-sensitive: DST Nov 1 calendar check, BUG-5 overlap constraint, seasonal cutoffs (Thanksgiving Nov 23,
-Christmas cards Dec 5, First Christmas Dec 21).
-Waiting on the owner: migration 0014 + Stripe steps (deposit); travel fee settings; 1g Meta test; Vercel Analytics
-privacy line; /portfolio; Terms review; landing photos (/admin → Photos → Stay-Home Session Page).
-Watch out: `npm run typecheck` can miss errors (TS 7 incremental cache): use `npx tsc --noEmit -p . --incremental
-false`. iCloud can resurrect files git removes (branch switches): compare before deleting. .agents/ + AGENTS.md: leave.
+Next: finish the brief, time-sensitive first (owner's order, PROGRESS → NEXT STEPS 4): Phase 2 leftovers ("block a
+day" + notify/reschedule every affected family in one step, duplicate-booking flag, optional Today view) → Phase 4
+seasonal landing variants editable in /admin + extra-babies add-on → Phase 5 SEO → Phase 3 Spanish → Phase 6 →
+Phases 7–10. Research current official docs before each phase (links in PROGRESS.md). Small verified slices to main.
+Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
+Waiting on the owner: migrations 0014/0015/0016 in Neon; Stripe "Refunds: Write" + checkout.session.expired; deposit
+amounts + switch; Resend webhook + RESEND_WEBHOOK_SECRET; travel fee settings; 1g Meta test; Vercel Analytics privacy
+line; /portfolio; Terms review; About photo alt text ("IMG 6087").
+Watch out: `npm run typecheck` can miss errors (use `npx tsc --noEmit -p . --incremental false`); bookings.blocked_until
++ bookings_no_overlap live only in the database (never drizzle-kit push); iCloud can resurrect deleted files.
+When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
 ## Owner requests (outside the original brief)
@@ -165,9 +172,12 @@ false`. iCloud can resurrect files git removes (branch switches): compare before
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras part 1 live (Oct 7: unit/gate
-  fields, travel fee, backdrops, payment visibility); the deposit is live but switched off (Oct 7), waiting for
-  migration 0014 + the owner's Stripe steps; next: the rest of the Phase 2 extras.
+- **Now:** Phase 1g waits on the owner; Phase 2 core (2a–2e) live; Phase 2 extras live except "block a day",
+  duplicate flag and Today view; deposit live but switched off (waiting for migration 0014 + Stripe steps); BUG-5 and
+  email bounce alerts live in code, waiting for migrations 0015/0016 + the Resend webhook. Next: NEXT STEPS 4.
+- **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
+  come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
+  prompt that works in either tool. Keep the two rule files in sync.
 - Baseline at `cd667b1`: `npm run typecheck` ✅, `npm run build` ✅, `npm run lint` ⚠️ (`next lint` deprecated + unconfigured,
   prompts interactively; fix in Phase 7 with ESLint flat config).
 - Since `wip/next-16`: `npm run lint` = ESLint 10 flat config (0 errors, 28 warnings: unused imports + React Compiler advice).

@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: End-of-phase (or end-of-session) handoff for Tiny Humans. Updates PROGRESS.md, saves a copy-paste prompt for the next session in PROGRESS.md under "▶ Next session prompt" (works in Claude Code and Codex), and ends with a short owner summary plus that prompt. Use when a phase is finished, when the conversation is getting long, when the owner types /handoff, or asks to hand off to Codex or Claude.
+description: End-of-phase (or end-of-session) handoff for Tiny Humans. Updates PROGRESS.md, saves a copy-paste prompt for the next session in PROGRESS.md under "▶ Next session prompt" (works in Claude Code and Codex), and ends with a short owner summary plus that prompt. Use when a phase is finished, when the conversation is getting long, when the owner says "handoff", or asks to hand off to Claude or Codex.
 ---
 
 # Handoff to the next session
