@@ -4,12 +4,17 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (handoff, Oct 7 night, deposit shipped switched off)
-State: everything is on `main` and live (last code deploy `42d1229`, smoke-tested). Migrations 0010–0013 ran in Neon.
+State: everything is on `main` and live (last code deploy `b7d43f5`, smoke-tested). Migrations 0010–0013 ran in Neon.
 The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done.
 0. **Owner: run `drizzle/0015_booking_no_overlap.sql` in Neon** (BUG-5; safe twice; any order with the code, which is
    already live). Until it runs, only the old "same start time" rule protects against a double booking. If its last
    statement fails with "conflicting key value violates exclusion constraint", run the query in the file's header and
    send the result (two active bookings already overlap).
+0b. **Owner: email bounce alerts** (code live `3876f16`): (1) run `drizzle/0016_email_events.sql` in Neon (new table,
+   safe twice); (2) Resend → Webhooks → Add endpoint `https://www.tinyhumans.photography/api/resend/webhook`, events
+   **email.bounced, email.complained, email.suppressed, email.failed**; (3) copy its Signing secret (`whsec_…`) → Vercel →
+   Settings → Environment Variables → `RESEND_WEBHOOK_SECRET` (Production) → Redeploy; (4) in Resend, "Send test" or
+   just wait: until then the endpoint answers 503 (not configured), which is harmless.
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
@@ -322,7 +327,23 @@ false`. iCloud can resurrect files git removes (branch switches): compare before
       (`bookings.travel_fee_cents/travel_miles`); amount due / payment link / Dashboard / Meta value = bundle + fee; the
       Stripe page shows a second line "Travel fee (about N miles)". FAQ (`aFee`) + Terms paragraph (`travelFeeTerms`)
       use the saved numbers; saving revalidates both. 26 local checks + a non-Florida e2e.
-- [ ] Edge: Resend webhooks → flag bounces/complaints in /admin; SPF/DKIM/DMARC check
+- [x] Edge: Resend webhooks → flag bounces/complaints in /admin (Oct 7 night, live `3876f16`; waiting for owner step 0b).
+      `POST /api/resend/webhook` (Svix signature with `RESEND_WEBHOOK_SECRET`, 5-min tolerance, `lib/email/delivery.ts`)
+      saves email.bounced / complained / suppressed / failed in `email_events` (migration 0016; id = webhook message id +
+      recipient, so retries/replays add nothing). Every email now carries Resend tags `category` (send scope) and
+      `booking` (reference). A problem shows on the lead when the recipient is the booking's own address and the tag is
+      its reference (untagged older emails: by address, after the booking was made). /admin → Leads: red pill "Email
+      bounced" / "Marked as spam" / "Email blocked" / "Email failed" + "Email problem" lines ("The confirmation email
+      bounced … Text the family to check their email address."). Studio alert email ("EMAIL BOUNCED", red) the first time
+      an address has a problem, never for the studio's own address. Table missing → leads load as before, webhook 500
+      (Resend retries ~1 day). 26 local checks (Outlook mode, fake Resend sends signed webhooks for `bounce@`, `spam@`,
+      `blocked@` addresses); screenshots `Claude outputs/email-bounces/`.
+- [x] SPF/DKIM/DMARC check (Oct 7 night, public DNS): Resend DKIM `resend._domainkey` ✓, return-path `send.` subdomain
+      SPF + MX ✓, root SPF `include:spf.protection.outlook.com -all` ✓ (Microsoft 365), DMARC `v=DMARC1; p=none;` ✓
+      (monitoring only; Gmail/Yahoo accept it at our volume). Website emails pass DMARC through DKIM. Optional owner
+      improvements: add `rua=mailto:…` to DMARC for reports, later `p=quarantine`; switch on Microsoft 365 DKIM
+      (selector1/selector2 CNAMEs are missing, so emails sent from Outlook pass DMARC only through SPF). Replies to
+      website emails go to `BOOKING_NOTIFICATION_EMAIL` (replyTo).
 - [ ] Edge: block a day in /admin + notify/reschedule every affected family; duplicate-booking flag
 
 ## Phase 3 — Spanish (owner: "same time, no rush" → after Phase 2)
@@ -544,6 +565,15 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   https://docs.stripe.com/api/checkout/sessions/create · https://docs.stripe.com/payments/checkout/managing-limited-inventory ·
   https://docs.stripe.com/api/checkout/sessions/expire · https://docs.stripe.com/api/refunds/create ·
   https://docs.stripe.com/api/refunds/object · https://docs.stripe.com/api/events/types
+- **Resend webhooks** (checked Oct 7): events `email.bounced` (permanent rejection; `data.bounce.{type,subType,message}`),
+  `email.complained`, `email.suppressed` (`data.suppressed.{type,message}`), `email.failed` (`data.failed.reason`),
+  `email.delivery_delayed`, …; every payload has `type`, `created_at`, `data.{email_id,to[],from,subject,tags{}}` (tags as
+  an object). Signed by Svix: headers `svix-id`, `svix-timestamp`, `svix-signature` ("v1,<base64>" list, space
+  separated); HMAC-SHA256 over "id.timestamp.rawBody" with the base64 part of `whsec_…`. Retries: immediately, 5 s, 5 min,
+  30 min, 2 h, 5 h, 10 h, 10 h; failing endpoints get disabled (owner emailed). Send-time tags: name/value of ASCII
+  letters, numbers, "_" or "-", ≤ 256 chars. https://resend.com/docs/webhooks/event-types ·
+  https://resend.com/docs/webhooks/verify-webhooks-requests · https://docs.svix.com/receiving/verifying-payloads/how-manual ·
+  https://resend.com/docs/webhooks/retries-and-replays · https://resend.com/docs/api-reference/emails/send-email
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain

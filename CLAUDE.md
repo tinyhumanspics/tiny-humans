@@ -138,6 +138,8 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - Reminders: `vercel.json` cron (daily, Hobby) → `/api/cron/reminders` → `lib/booking/reminders.ts`; table
   `booking_emails` claims each email. Manage links are found by token hash on `bookings` OR `booking_emails`
   (`findByCancelToken`). Never send reminders from a test against production; test locally with `?now=` + fake Resend.
+- Email delivery problems: `/api/resend/webhook` → `email_events` (`lib/email/delivery.ts`). `sendEmail` tags every
+  email with `category` (scope) + `booking` (reference): always pass `reference` so a bounce lands on the right lead.
 - Emails: React adds `<!-- -->` between adjacent text pieces in JSX (`{a} {b}`) — build one string per text run.
   Check email changes with screenshots of the rendered HTML (old vs new) before sending anything real.
 - Studio time zone is `America/New_York` (`config/booking.ts`); server math uses `lib/booking/timezone.ts`.
