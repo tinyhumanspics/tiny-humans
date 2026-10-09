@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `558f860` is live and smoke-tested; Vercel succeeded and production Privacy and Terms returned 200
-with their expected current English content; unfinished `/es/privacy` and `/es/terms` remained intentional 404s.
+State: app commit `c8fb6ec` is live and smoke-tested; Vercel succeeded and production home returned 200 with the
+expected English hero/portfolio copy; unfinished `/es` remained an intentional 404.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -534,7 +534,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       skips), and all 16 visual-parity pages passed; Terms and Privacy were inspected at iPhone and 1440px. Vercel
       succeeded; production Privacy and Terms returned 200, while `/es/privacy` and `/es/terms` remained intentional
       404s. The read-only Terms check also revealed that production deposits are currently enabled at $50; see NEXT
-      STEPS 2.
+      STEPS 2. **Oct 9 home shell (`c8fb6ec`):** the hero, portfolio heading, default prompt text, CTA, photo-button
+      labels and lightbox controls now use paired English/Spanish catalogs and locale-aware links. The live home route
+      explicitly passes English; a future Spanish page uses the Spanish default prompts rather than leaking an owner-
+      customized English prompt. The new gallery regression found that the fixed header intercepted the lightbox close
+      button on iPhone; rendering the overlay through `document.body` keeps it above the header, and the close/next/
+      previous controls now pass in iPhone WebKit, Android and desktop. Strict tsc/build/lint passed (0 errors/25 known
+      warnings), 77 e2e passed (22 expected cross-browser skips), all 16 visual-parity pages passed, and the open
+      lightbox was captured and inspected at iPhone and 1440px (`.screenshots/home-i18n/`). Vercel succeeded;
+      production home returned 200 with expected English copy, while `/es` remained an intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
@@ -701,6 +709,9 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   the parent loses the reference on screen. Consider sessionStorage restore on the confirmation.
 - **BUG-9 (low)** Console warning on `/`: a CSS chunk is preloaded but not used within a few seconds.
 - **BUG-10 (low, data)** Live bundle features: "Baby Only" vs "Baby only" capitalization (owner data in /admin).
+- **BUG-11 (medium, fixed Oct 9, `c8fb6ec`)** The home portfolio lightbox lived inside `main`'s stacking context, so the
+  fixed header sat above it on iPhone and intercepted taps on the close button. The lightbox now portals to
+  `document.body`; a three-browser regression opens it, advances a photo and closes it.
 - Checked OK: booking funnel completes on iPhone 14, desktop, Instagram + Facebook in-app user agents (mock); no
   hydration warnings; no horizontal overflow; user input is HTML-escaped in emails + Outlook body.
 
