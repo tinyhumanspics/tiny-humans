@@ -241,6 +241,12 @@ test("the home portfolio viewer keeps its localized controls", async ({ page }) 
   await expect(viewer).toHaveCount(0);
 });
 
+test("the About photo placeholder has customer-facing accessible copy", async ({ page }) => {
+  await page.goto("/about");
+  await expect(page.getByRole("img", { name: "Photo coming soon: Adrian & Alondra" })).toBeVisible();
+  await expect(page.getByText("photo coming soon").first()).toBeVisible();
+});
+
 test("/book without a bundle: the bundle picked earlier this visit, otherwise the bundles page", async ({ page }) => {
   await page.goto("/book");
   await expect(page).toHaveURL(/\/bundles$/);

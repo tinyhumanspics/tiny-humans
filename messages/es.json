@@ -32,6 +32,10 @@
       }
     }
   },
+  "photoPlaceholder": {
+    "aria": "Próximamente: foto de {label}",
+    "soon": "foto próximamente"
+  },
   "catalog": {
     "locationNote": "Llevamos el estudio a tu hogar",
     "choose": "Elegir {name}",

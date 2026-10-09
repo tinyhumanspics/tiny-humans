@@ -32,6 +32,10 @@
       }
     }
   },
+  "photoPlaceholder": {
+    "aria": "Photo coming soon: {label}",
+    "soon": "photo coming soon"
+  },
   "catalog": {
     "locationNote": "We bring the studio to your home",
     "choose": "Choose {name}",

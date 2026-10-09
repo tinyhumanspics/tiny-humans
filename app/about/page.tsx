@@ -14,5 +14,5 @@ export const metadata: Metadata = pageMetadata({
 /** The closing call to action mentions the deposit while there is one (saving it in /admin refreshes this page). */
 export default async function Page() {
   const deposit = await siteDeposit();
-  return <AboutPage messages={en.about} locale="en" ctaText={deposit ? depositText(en.deposit.aboutCta, deposit) : en.about.cta.text} />;
+  return <AboutPage messages={en.about} photoMessages={en.photoPlaceholder} locale="en" ctaText={deposit ? depositText(en.deposit.aboutCta, deposit) : en.about.cta.text} />;
 }
