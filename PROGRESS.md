@@ -456,6 +456,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       (15 expected cross-browser skips), all 16 visual-parity pages passed, and phone/desktop admin captures were
       inspected. Vercel succeeded; production home, bundles, booking, About and the protected admin-pricing page returned
       200, its API correctly returned 401 without an owner session, and the live English navigation remained intact.
+      **Oct 8 localized catalog loader (`5265439`):** the public catalog can now be requested explicitly in Spanish;
+      it combines the owner-saved migration-0019 rows with shared prices, timing and add-on facts, and localizes fixed
+      duration/location/button/offer wording from the message catalog. Missing fields, missing inclusions or noncontiguous
+      inclusion positions fail the Spanish publication gate instead of leaking English. English and Spanish last-good
+      snapshots use separate Blob prefixes and memory slots, so an outage cannot mix languages. No live caller requests
+      Spanish yet. Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser
+      skips), and all 16 visual-parity pages passed.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
