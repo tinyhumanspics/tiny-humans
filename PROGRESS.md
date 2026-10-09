@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `bb28a8a` is live and smoke-tested; Vercel succeeded and production `/about` returned 200 with the
-expected English copy; unfinished `/es/about` remained an intentional 404.
+State: app commit `c31917c` is live and smoke-tested; Vercel succeeded and production `/home-sweet-home` returned 200
+with the expected English copy; unfinished `/es/home-sweet-home` remained an intentional 404.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -549,6 +549,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       80 e2e passed (22 expected cross-browser skips), all 16 visual-parity pages passed, and the complete About page was
       captured and inspected at iPhone and 1440px (`.screenshots/photo-placeholder-i18n/`). Vercel succeeded;
       production `/about` returned 200 with expected English copy, while `/es/about` remained an intentional 404.
+      **Oct 9 Stay-Home landing (`c31917c`):** the full static landing shell and deposit-on/off variants now have a
+      structurally matched Spanish draft; links, bundle/error components, photo placeholders, policy units, long dates
+      and the real next-open-date labels all accept a locale. Spanish compact dates are deterministic across Chromium
+      and WebKit. The live page passes English explicitly. Owner-editable seasonal titles/descriptions remain English-
+      only, so a future Spanish caller hides those offer cards instead of leaking English until separate Spanish fields
+      are added. Strict tsc/build/lint passed (0 errors/25 known warnings), 80 e2e passed (22 expected cross-browser
+      skips), all 16 visual-parity pages passed, and the complete landing page was captured and inspected at iPhone and
+      1440px (`.screenshots/landing-i18n/`). Vercel succeeded; production `/home-sweet-home` returned 200 with expected
+      English copy, while `/es/home-sweet-home` remained an intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
