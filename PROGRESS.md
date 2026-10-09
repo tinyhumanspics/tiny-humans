@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `23724fd` is live and smoke-tested; Vercel succeeded and production home, bundles, booking, About and
-the protected admin-pricing page returned 200; its API correctly returned 401 without an owner session. Phase 4 is complete: extra babies are live,
+State: app commit `c23fe08` is live and smoke-tested; Vercel succeeded and production booking, bundles and ad landing
+returned 200 with the expected English content; unfinished `/es/book` remained an intentional 404. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
@@ -478,7 +478,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       booking page explicitly passes English; Spanish details/review/deposit completion still need their own slices, so
       no `/es/book` route is published. The calendar now says the grammatically correct singular “1 time available.”
       Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), and
-      all 16 visual-parity pages passed with the live English booking appearance unchanged.
+      all 16 visual-parity pages passed with the live English booking appearance unchanged. Vercel succeeded;
+      production booking, bundles and ad landing returned 200 with the expected English content, while `/es/book`
+      remained an intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
