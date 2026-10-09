@@ -472,7 +472,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), and all 16 visual-
       parity pages passed with the English bundle page and landing pixel-identical. Vercel succeeded; production
       bundles, ad landing and booking returned 200, `/es/bundles` remained an intentional 404, and the expected English
-      bundle/offer/seasonal text was present.
+      bundle/offer/seasonal text was present. **Oct 8 booking date/time shell (`c23fe08`):** booking metadata and heading,
+      the four-step tracker, calendar month/day/availability labels, date and time formatting, navigation actions,
+      availability/submission fallbacks and the baby-led note now accept paired English/Spanish catalogs. The live
+      booking page explicitly passes English; Spanish details/review/deposit completion still need their own slices, so
+      no `/es/book` route is published. The calendar now says the grammatically correct singular “1 time available.”
+      Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), and
+      all 16 visual-parity pages passed with the live English booking appearance unchanged.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
