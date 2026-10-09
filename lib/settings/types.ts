@@ -7,6 +7,8 @@ export interface SeasonalOfferSettings {
   enabled: boolean;
   title: string;
   description: string;
+  /** Optional matched copy for the Spanish landing page; null keeps this offer hidden there. */
+  spanish: { title: string; description: string } | null;
   /** Last session date, inclusive, in YYYY-MM-DD format. */
   cutoff: string;
 }

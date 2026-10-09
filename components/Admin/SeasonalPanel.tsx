@@ -22,6 +22,14 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
     setNote(null);
   };
 
+  const updateSpanish = (id: SeasonalOfferId, field: "title" | "description", value: string) => {
+    setDraft((current) => {
+      const next = { title: current[id].spanish?.title ?? "", description: current[id].spanish?.description ?? "", [field]: value };
+      return { ...current, [id]: { ...current[id], spanish: next.title || next.description ? next : null } };
+    });
+    setNote(null);
+  };
+
   const save = async () => {
     const incomplete = SEASONAL_OFFER_DEFINITIONS.find(({ id }) => {
       const offer = draft[id];
@@ -29,6 +37,14 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
     });
     if (incomplete) {
       setNote({ kind: "error", text: `Complete the title, description and cutoff for ${incomplete.adminLabel}.` });
+      return;
+    }
+    const incompleteSpanish = SEASONAL_OFFER_DEFINITIONS.find(({ id }) => {
+      const spanish = draft[id].spanish;
+      return spanish && (!spanish.title.trim() || !spanish.description.trim());
+    });
+    if (incompleteSpanish) {
+      setNote({ kind: "error", text: `Complete both Spanish fields for ${incompleteSpanish.adminLabel}, or leave both blank.` });
       return;
     }
     setBusy(true);
@@ -75,6 +91,15 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
               <label className={styles.ruleField}>
                 <span className={styles.label}>Short description</span>
                 <textarea className={cn(styles.input, styles.seasonalTextarea)} value={offer.description} maxLength={240} onChange={(event) => update(definition.id, "description", event.target.value)} />
+              </label>
+              <p className={cn(styles.label, "chalk-soft")}>Spanish (optional until the Spanish site is published)</p>
+              <label className={styles.ruleField}>
+                <span className={styles.label}>Spanish offer title</span>
+                <input className={styles.input} value={offer.spanish?.title ?? ""} maxLength={90} onChange={(event) => updateSpanish(definition.id, "title", event.target.value)} />
+              </label>
+              <label className={styles.ruleField}>
+                <span className={styles.label}>Spanish short description</span>
+                <textarea className={cn(styles.input, styles.seasonalTextarea)} value={offer.spanish?.description ?? ""} maxLength={240} onChange={(event) => updateSpanish(definition.id, "description", event.target.value)} />
               </label>
               <label className={styles.ruleField}>
                 <span className={styles.label}>Last session date</span>

@@ -97,8 +97,7 @@ export default function LandingPage({
   };
   const [first, second] = media.title;
   const gallery = photos.filter((p) => p !== first && p !== second).slice(0, 6);
-  // Owner-editable seasonal titles/descriptions are English-only for now. Hide them in Spanish instead of leaking copy.
-  const seasonalOffers = locale === "en" ? activeSeasonalOffers(settings.seasonalOffers, theme.id, today) : [];
+  const seasonalOffers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today, locale);
 
   return (
     <main id="top" className={styles.page}>

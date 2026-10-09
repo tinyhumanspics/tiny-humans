@@ -6,9 +6,9 @@ import en from "@/messages/en.json";
 import type { SeasonalOfferSettings, SiteSettings } from "./types";
 
 const DEFAULT_SEASONAL_OFFERS: Record<SeasonalOfferId, SeasonalOfferSettings> = {
-  thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving },
-  christmasCards: { enabled: false, ...en.landing.seasonalOffers.defaults.christmasCards },
-  firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas },
+  thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving, spanish: null },
+  christmasCards: { enabled: false, ...en.landing.seasonalOffers.defaults.christmasCards, spanish: null },
+  firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas, spanish: null },
 };
 
 export const defaultSettings: SiteSettings = {
@@ -72,6 +72,9 @@ function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOffe
       const title = value ? str(value.title, 90) : "";
       const description = value ? str(value.description, 240) : "";
       const cutoff = value && validDate(value.cutoff) ? value.cutoff : "";
+      const rawSpanish = value?.spanish && typeof value.spanish === "object" ? (value.spanish as Record<string, unknown>) : null;
+      const spanishTitle = rawSpanish ? str(rawSpanish.title, 90) : "";
+      const spanishDescription = rawSpanish ? str(rawSpanish.description, 240) : "";
       // Old/corrupt settings stay hidden instead of silently publishing hard-coded business copy.
       const complete = Boolean(title && description && cutoff);
       return [id, {
@@ -79,6 +82,7 @@ function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOffe
         title: title || fallback.title,
         description: description || fallback.description,
         cutoff: cutoff || fallback.cutoff,
+        spanish: spanishTitle && spanishDescription ? { title: spanishTitle, description: spanishDescription } : null,
       }];
     }),
   ) as Record<SeasonalOfferId, SeasonalOfferSettings>;
