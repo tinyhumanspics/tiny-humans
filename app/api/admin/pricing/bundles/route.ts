@@ -3,7 +3,7 @@ import { revalidateTag } from "next/cache";
 import { isAdmin } from "@/lib/admin/auth";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { log } from "@/lib/log";
-import { BundleInUseError, CATALOG_TAG, deleteBundle, getCatalog, refreshCatalogSnapshot, saveBundle } from "@/lib/pricing/server";
+import { BundleInUseError, CATALOG_TAG, deleteBundle, getAdminCatalog, refreshCatalogSnapshot, saveBundle } from "@/lib/pricing/server";
 import { bundleInputSchema } from "@/lib/pricing/validation";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +26,10 @@ export async function POST(req: Request) {
   try {
     await saveBundle(p.data);
     await refresh();
-    return NextResponse.json({ bundles: await getCatalog() });
+    return NextResponse.json({ bundles: await getAdminCatalog() });
   } catch (err) {
     log.error("admin.pricing", "Save bundle failed", { error: err as Error });
-    return NextResponse.json({ error: "Couldn't save the bundle. Are pricing migrations 0005 and 0017 run in Neon?" }, { status: 500 });
+    return NextResponse.json({ error: "Couldn't save the bundle. Are pricing migrations 0005, 0017 and 0019 run in Neon?" }, { status: 500 });
   }
 }
 
@@ -41,7 +41,7 @@ export async function DELETE(req: Request) {
   try {
     await deleteBundle(id);
     await refresh();
-    return NextResponse.json({ bundles: await getCatalog() });
+    return NextResponse.json({ bundles: await getAdminCatalog() });
   } catch (err) {
     if (err instanceof BundleInUseError) return NextResponse.json({ error: err.message }, { status: 409 });
     log.error("admin.pricing", "Delete bundle failed", { error: err as Error });

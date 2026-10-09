@@ -5,6 +5,7 @@ import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { bookingRequestSchema } from "@/lib/booking/validation";
+import { bundleInputSchema } from "@/lib/pricing/validation";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { localePath } from "@/i18n/path";
 
@@ -66,6 +67,28 @@ test("booking requests accept only supported customer languages", async ({}, tes
   expect(bookingRequestSchema.safeParse({ ...base, locale: "en" }).success).toBe(true);
   expect(bookingRequestSchema.safeParse({ ...base, locale: "es" }).success).toBe(true);
   expect(bookingRequestSchema.safeParse({ ...base, locale: "fr" }).success).toBe(false);
+});
+
+test("Spanish bundle drafts are either absent or complete", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Schema validation only needs one Node project");
+  const bundle = {
+    id: "little-moments",
+    name: "Little Moments",
+    price: 149,
+    description: "A simple first session",
+    durationMinutes: 60,
+    photos: "8",
+    badge: "Most loved",
+    features: ["Up to 1 hour", "8 edited digital photos"],
+    active: true,
+    sortOrder: 0,
+    offer: null,
+    spanish: null,
+    extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
+  };
+  expect(bundleInputSchema.safeParse(bundle).success).toBe(true);
+  expect(bundleInputSchema.safeParse({ ...bundle, spanish: { name: "Pequeños Momentos", description: "", badge: "", offerLabel: "", features: ["Hasta 1 hora", ""] } }).success).toBe(false);
+  expect(bundleInputSchema.safeParse({ ...bundle, spanish: { name: "Pequeños Momentos", description: "Una primera sesión sencilla", badge: "El favorito", offerLabel: "", features: ["Hasta 1 hora", "8 fotos digitales editadas"] } }).success).toBe(true);
 });
 
 test("Spanish customer-email formatting covers dates, babies, prices, backdrops and policy", async ({}, testInfo) => {

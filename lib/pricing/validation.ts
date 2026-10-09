@@ -2,6 +2,13 @@ import { z } from "zod";
 
 const money = z.number().finite().min(0).max(100000);
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const translatedBundleSchema = z.object({
+  name: z.string().trim().max(60),
+  description: z.string().trim().max(200).optional().nullable(),
+  badge: z.string().trim().max(24).optional().nullable(),
+  offerLabel: z.string().trim().max(30).optional().nullable(),
+  features: z.array(z.string().trim().max(80)).max(12),
+});
 
 export const bundleInputSchema = z
   .object({
@@ -19,6 +26,8 @@ export const bundleInputSchema = z
       .object({ enabled: z.boolean(), price: money, label: z.string().trim().max(30).optional().nullable(), endsOn: dateKey.optional().nullable() })
       .nullable()
       .optional(),
+    /** null = no Spanish draft yet; once started, every live English text field needs its Spanish pair. */
+    spanish: translatedBundleSchema.nullable().optional(),
     extraBaby: z.object({
       active: z.boolean(),
       price: money,
@@ -28,7 +37,21 @@ export const bundleInputSchema = z
     }),
   })
   .refine((b) => !b.offer?.enabled || (b.offer.price > 0 && b.offer.price < b.price), "The offer price must be lower than the regular price.")
-  .refine((b) => !b.offer?.enabled || Boolean(b.offer.endsOn), "Add the date the offer ends.");
+  .refine((b) => !b.offer?.enabled || Boolean(b.offer.endsOn), "Add the date the offer ends.")
+  .superRefine((b, ctx) => {
+    const s = b.spanish;
+    if (!s) return;
+    if (s.name.length < 2) ctx.addIssue({ code: "custom", path: ["spanish", "name"], message: "Add the Spanish bundle name, or clear the Spanish section." });
+    if (s.features.length !== b.features.length || s.features.some((item) => !item)) {
+      ctx.addIssue({ code: "custom", path: ["spanish", "features"], message: "Translate every included item into Spanish." });
+    }
+    if (b.description && !s.description) ctx.addIssue({ code: "custom", path: ["spanish", "description"], message: "Translate the bundle description into Spanish." });
+    if (!b.description && s.description) ctx.addIssue({ code: "custom", path: ["spanish", "description"], message: "Clear the Spanish description, or add the English description too." });
+    if (b.badge && !s.badge) ctx.addIssue({ code: "custom", path: ["spanish", "badge"], message: "Translate the small label into Spanish." });
+    if (!b.badge && s.badge) ctx.addIssue({ code: "custom", path: ["spanish", "badge"], message: "Clear the Spanish small label, or add the English label too." });
+    if (b.offer?.label && !s.offerLabel) ctx.addIssue({ code: "custom", path: ["spanish", "offerLabel"], message: "Translate the offer label into Spanish." });
+    if (!b.offer?.label && s.offerLabel) ctx.addIssue({ code: "custom", path: ["spanish", "offerLabel"], message: "Clear the Spanish offer label, or add the English label too." });
+  });
 
 export const codeInputSchema = z
   .object({

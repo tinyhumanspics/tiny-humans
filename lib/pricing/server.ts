@@ -1,11 +1,21 @@
 import "server-only";
 import { and, asc, count, eq, isNull, lt, or, sql } from "drizzle-orm";
-import type { Bundle } from "@/config/bundles";
+import type { AdminBundle, Bundle } from "@/config/bundles";
 import { builtInCatalog } from "./catalog";
 export { builtInCatalog };
 import { bookingRules } from "@/config/booking";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
-import { bookings, bundleAddons, bundleInclusions, bundlesTable, discountCodeBundles, discountCodes, discountCodeUsage } from "@/lib/db/schema";
+import {
+  bookings,
+  bundleAddons,
+  bundleInclusionTranslations,
+  bundleInclusions,
+  bundleTranslations,
+  bundlesTable,
+  discountCodeBundles,
+  discountCodes,
+  discountCodeUsage,
+} from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
@@ -71,6 +81,41 @@ export async function getCatalog(): Promise<Bundle[]> {
     extraBaby: extra ? { active: extra.active, price: extra.unitPriceCents / 100, extraMinutes: extra.extraMinutes, extraPhotos: extra.extraPhotos, maxBabies: extra.maxQuantity + 1 } : null,
   });
   });
+}
+
+/** Owner-only catalog: the live English bundle plus its editable Spanish draft, if one has been saved. */
+export async function getAdminCatalog(): Promise<AdminBundle[]> {
+  const catalog = await getCatalog();
+  if (!isDatabaseConfigured()) return catalog.map((bundle) => ({ ...bundle, spanish: null }));
+  try {
+    const db = getDb();
+    const [translations, inclusions] = await Promise.all([
+      db.select().from(bundleTranslations).where(eq(bundleTranslations.locale, "es")),
+      db
+        .select()
+        .from(bundleInclusionTranslations)
+        .where(eq(bundleInclusionTranslations.locale, "es"))
+        .orderBy(asc(bundleInclusionTranslations.position)),
+    ]);
+    return catalog.map((bundle) => {
+      const translated = translations.find((row) => row.bundleId === bundle.id);
+      if (!translated) return { ...bundle, spanish: null };
+      return {
+        ...bundle,
+        spanish: {
+          name: translated.name,
+          description: translated.description ?? undefined,
+          badge: translated.badge ?? undefined,
+          offerLabel: translated.offerLabel ?? undefined,
+          features: inclusions.filter((row) => row.bundleId === bundle.id).map((row) => row.text),
+        },
+      };
+    });
+  } catch (err) {
+    if (missingTable(err)) log.error("pricing.db", "Bundle translation tables not found. Run migration 0019 in Neon.");
+    else log.error("pricing.db", "Could not load bundle translations", { error: err as Error });
+    throw new CatalogUnavailableError("Bundle translations could not be loaded");
+  }
 }
 
 /**
@@ -149,7 +194,9 @@ export async function saveBundle(input: BundleInput): Promise<string> {
     updatedAt: new Date(),
   };
   const { id: _omit, ...update } = values;
+  void _omit;
   const extraBaby = input.extraBaby;
+  const spanish = input.spanish;
   await db.batch([
     db.insert(bundlesTable).values(values).onConflictDoUpdate({ target: bundlesTable.id, set: update }),
     db.delete(bundleInclusions).where(eq(bundleInclusions.bundleId, id)),
@@ -158,6 +205,41 @@ export async function saveBundle(input: BundleInput): Promise<string> {
       .insert(bundleAddons)
       .values({ bundleId: id, kind: "extra_baby", name: "Extra baby", active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() })
       .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() } }),
+    db
+      .delete(bundleInclusionTranslations)
+      .where(and(eq(bundleInclusionTranslations.bundleId, id), eq(bundleInclusionTranslations.locale, "es"))),
+    ...(spanish
+      ? [
+          db
+            .insert(bundleTranslations)
+            .values({
+              bundleId: id,
+              locale: "es",
+              name: spanish.name,
+              description: spanish.description || null,
+              badge: spanish.badge || null,
+              offerLabel: spanish.offerLabel || null,
+              updatedAt: new Date(),
+            })
+            .onConflictDoUpdate({
+              target: [bundleTranslations.bundleId, bundleTranslations.locale],
+              set: {
+                name: spanish.name,
+                description: spanish.description || null,
+                badge: spanish.badge || null,
+                offerLabel: spanish.offerLabel || null,
+                updatedAt: new Date(),
+              },
+            }),
+          ...(spanish.features.length
+            ? [
+                db.insert(bundleInclusionTranslations).values(
+                  spanish.features.map((text, position) => ({ bundleId: id, locale: "es", position, text, updatedAt: new Date() })),
+                ),
+              ]
+            : []),
+        ]
+      : [db.delete(bundleTranslations).where(and(eq(bundleTranslations.bundleId, id), eq(bundleTranslations.locale, "es")))]),
   ] as never);
   return id;
 }

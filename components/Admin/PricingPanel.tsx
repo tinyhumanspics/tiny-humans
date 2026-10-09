@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { Bundle } from "@/config/bundles";
+import type { AdminBundle, Bundle } from "@/config/bundles";
 import type { AdminApi } from "@/lib/admin/client";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
 import type { DiscountCode } from "@/lib/pricing/types";
@@ -21,11 +21,11 @@ const shortDate = (d: string) => formatLongDate(d).replace(/^\w+, /, "");
 
 /** Owner area: bundles (names, prices, inclusions, offers) and discount codes. */
 export default function PricingPanel({ api }: { api: AdminApi }) {
-  const [bundles, setBundles] = useState<Bundle[] | null>(null);
+  const [bundles, setBundles] = useState<AdminBundle[] | null>(null);
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [dbReady, setDbReady] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<Bundle | "new" | null>(null);
+  const [editing, setEditing] = useState<AdminBundle | "new" | null>(null);
   const [editingCode, setEditingCode] = useState<DiscountCode | "new" | null>(null);
   const [note, setNote] = useState<Note>(null);
   const [confirm, setConfirm] = useState<{ title: string; text: string; action: () => Promise<void> } | null>(null);
@@ -60,6 +60,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
                       {b.offer?.enabled && !offer ? " · offer ended (regular price shown)" : ""}
                     </p>
                     {b.extraBaby?.active && <p className={cn(styles.hintSmall, "chalk-soft")}>Twins/triplets: +{formatMoney(toCents(b.extraBaby.price))}, +{b.extraBaby.extraMinutes} min and +{b.extraBaby.extraPhotos} photos per extra baby · max {b.extraBaby.maxBabies} babies</p>}
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>Spanish website copy: {b.spanish ? "ready for review" : "not added yet"}</p>
                   </div>
                   <span className={cn(styles.statusPill, b.active === false ? styles.status_pending : styles.status_confirmed)}>{b.active === false ? "Inactive" : "Active"}</span>
                   <button type="button" className={styles.smallButton} onClick={() => { setEditing(b); setNote(null); }}>Edit</button>
@@ -263,7 +264,7 @@ function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
   );
 }
 
-function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundle: Bundle | null; sortOrder: number; onSave: (b: BundleInput) => Promise<void>; onCancel: () => void; onDelete?: () => void }) {
+function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundle: AdminBundle | null; sortOrder: number; onSave: (b: BundleInput) => Promise<void>; onCancel: () => void; onDelete?: () => void }) {
   const [name, setName] = useState(bundle?.name ?? "");
   const [price, setPrice] = useState(bundle ? String(bundle.price) : "");
   const [description, setDescription] = useState(bundle?.description ?? "");
@@ -271,6 +272,13 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   const [photos, setPhotos] = useState(bundle?.photos ?? "");
   const [badge, setBadge] = useState(bundle?.badge ?? "");
   const [features, setFeatures] = useState<string[]>(bundle?.features ?? []);
+  const [spanishName, setSpanishName] = useState(bundle?.spanish?.name ?? "");
+  const [spanishDescription, setSpanishDescription] = useState(bundle?.spanish?.description ?? "");
+  const [spanishBadge, setSpanishBadge] = useState(bundle?.spanish?.badge ?? "");
+  const [spanishOfferLabel, setSpanishOfferLabel] = useState(bundle?.spanish?.offerLabel ?? "");
+  const [spanishFeatures, setSpanishFeatures] = useState<string[]>(
+    (bundle?.features ?? []).map((_, index) => bundle?.spanish?.features[index] ?? ""),
+  );
   const [active, setActive] = useState(bundle?.active !== false);
   const [offerOn, setOfferOn] = useState(Boolean(bundle?.offer?.enabled));
   const [offerPrice, setOfferPrice] = useState(bundle?.offer?.price ? String(bundle.offer.price) : "");
@@ -283,15 +291,28 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   const [maxBabies, setMaxBabies] = useState(String(bundle?.extraBaby?.maxBabies ?? 3));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const move = (i: number, d: number) => setFeatures((f) => { const n = [...f]; const j = i + d; if (j < 0 || j >= n.length) return f; [n[i], n[j]] = [n[j], n[i]]; return n; });
+  const move = (i: number, d: number) => {
+    const swap = (items: string[]) => { const n = [...items]; const j = i + d; if (j < 0 || j >= n.length) return items; [n[i], n[j]] = [n[j], n[i]]; return n; };
+    setFeatures(swap);
+    setSpanishFeatures(swap);
+  };
   const save = async () => {
     setBusy(true);
     setErr(null);
     try {
+      const spanish = {
+        name: spanishName.trim(),
+        description: spanishDescription.trim() || null,
+        badge: spanishBadge.trim() || null,
+        offerLabel: spanishOfferLabel.trim() || null,
+        features: spanishFeatures.map((f) => f.trim()),
+      };
+      const spanishStarted = [spanish.name, spanish.description, spanish.badge, spanish.offerLabel, ...spanish.features].some(Boolean);
       await onSave({
         id: bundle?.id, name: name.trim(), price: Number(price), description: description.trim() || null, durationMinutes: Number(minutes), photos: photos.trim() || null, badge: badge.trim() || null,
         features: features.map((f) => f.trim()).filter(Boolean), active, sortOrder: bundle?.sortOrder ?? sortOrder,
         offer: offerOn || offerPrice ? { enabled: offerOn, price: Number(offerPrice) || 0, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
+        spanish: spanishStarted ? spanish : null,
         extraBaby: { active: extraBabyOn, price: Number(extraBabyPrice), extraMinutes: Number(extraBabyMinutes), extraPhotos: Number(extraBabyPhotos), maxBabies: Number(maxBabies) },
       });
     } catch (e) {
@@ -318,11 +339,32 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
             <input className={styles.input} value={f} maxLength={80} onChange={(e) => setFeatures((x) => x.map((v, k) => (k === i ? e.target.value : v)))} aria-label={`Included item ${i + 1}`} />
             <button type="button" className={styles.smallButton} onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move item ${i + 1} up`}>↑</button>
             <button type="button" className={styles.smallButton} onClick={() => move(i, 1)} disabled={i === features.length - 1} aria-label={`Move item ${i + 1} down`}>↓</button>
-            <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => setFeatures((x) => x.filter((_, k) => k !== i))} aria-label={`Delete item ${i + 1}`}>✕</button>
+            <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={() => { setFeatures((x) => x.filter((_, k) => k !== i)); setSpanishFeatures((x) => x.filter((_, k) => k !== i)); }} aria-label={`Delete item ${i + 1}`}>✕</button>
           </li>
         ))}
       </ul>
-      {features.length < 12 && <button type="button" className={styles.smallButton} onClick={() => setFeatures((x) => [...x, ""])}>+ Add inclusion</button>}
+      {features.length < 12 && <button type="button" className={styles.smallButton} onClick={() => { setFeatures((x) => [...x, ""]); setSpanishFeatures((x) => [...x, ""]); }}>+ Add inclusion</button>}
+      <div className={styles.offerBox}>
+        <h4 className={cn(styles.h3, "chalk")}>Spanish website copy</h4>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>This stays hidden until the complete Spanish site is approved. Once you start it, translate every matching English field and included item before saving. Leave every Spanish field blank to keep the draft off.</p>
+        <div className={styles.editorGrid}>
+          <label className={cn(styles.label, "chalk-soft")}>Bundle name (Spanish)<input className={styles.input} value={spanishName} maxLength={60} onChange={(e) => setSpanishName(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Small label (Spanish){badge ? ` · English: ${badge}` : " · optional"}<input className={styles.input} value={spanishBadge} maxLength={24} onChange={(e) => setSpanishBadge(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Description (Spanish){description ? "" : " · optional"}<input className={styles.input} value={spanishDescription} maxLength={200} onChange={(e) => setSpanishDescription(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Offer label (Spanish){offerLabel ? ` · English: ${offerLabel}` : " · optional"}<input className={styles.input} value={spanishOfferLabel} maxLength={30} onChange={(e) => setSpanishOfferLabel(e.target.value)} /></label>
+        </div>
+        {features.length > 0 && (
+          <div className={styles.editorGrid}>
+            {features.map((feature, index) => (
+              <label key={index} className={cn(styles.label, "chalk-soft")}>
+                Included item {index + 1} (Spanish)
+                <span className={styles.translationSource}>English: {feature || "Add the English item first"}</span>
+                <input className={styles.input} value={spanishFeatures[index] ?? ""} maxLength={80} onChange={(e) => setSpanishFeatures((items) => items.map((value, itemIndex) => (itemIndex === index ? e.target.value : value)))} />
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
       <label className={styles.toggle}><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /><span className="chalk-soft">Active (shown on the website)</span></label>
       <div className={styles.offerBox}>
         <label className={styles.toggle}><input type="checkbox" checked={extraBabyOn} onChange={(e) => setExtraBabyOn(e.target.checked)} /><span className="chalk-soft">Offer twins/triplets with this bundle</span></label>

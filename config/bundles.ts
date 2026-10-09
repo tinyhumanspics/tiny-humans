@@ -26,6 +26,20 @@ export interface Bundle {
   extraBaby?: ExtraBabyAddon | null;
 }
 
+/** Owner-editable customer copy for one translated bundle. Prices and other booking facts stay on Bundle. */
+export interface BundleTranslation {
+  name: string;
+  description?: string;
+  badge?: string;
+  offerLabel?: string;
+  features: string[];
+}
+
+/** The owner API includes translation drafts; public catalog responses do not. */
+export interface AdminBundle extends Bundle {
+  spanish: BundleTranslation | null;
+}
+
 export interface ExtraBabyAddon {
   active: boolean;
   /** Dollars per baby after the first; never reduced by a bundle offer or discount code. */

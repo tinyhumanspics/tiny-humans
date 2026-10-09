@@ -9,7 +9,7 @@ import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import type { DepositSettings } from "@/lib/deposit/types";
 import { MockBookingProvider } from "@/lib/booking/mock-provider";
-import type { Bundle } from "@/config/bundles";
+import type { AdminBundle, Bundle } from "@/config/bundles";
 import type { DiscountCode } from "@/lib/pricing/types";
 import { bundleInputSchema, codeInputSchema, type BundleInput, type CodeInput } from "@/lib/pricing/validation";
 import { prototypeUsageCount, readPrototypePricing, writePrototypePricing } from "@/lib/pricing/prototype";
@@ -57,9 +57,9 @@ export interface AdminApi {
   /** "Check with Stripe": asks Stripe whether this booking was paid (backup for a missed webhook). */
   checkPayment(reference: string): Promise<Lead>;
   /* pricing & promotions (owner only) */
-  getPricing(): Promise<{ bundles: Bundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
-  saveBundle(b: BundleInput): Promise<Bundle[]>;
-  deleteBundle(id: string): Promise<Bundle[]>;
+  getPricing(): Promise<{ bundles: AdminBundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
+  saveBundle(b: BundleInput): Promise<AdminBundle[]>;
+  deleteBundle(id: string): Promise<AdminBundle[]>;
   saveCode(c: CodeInput): Promise<DiscountCode[]>;
   deleteCode(id: string): Promise<DiscountCode[]>;
 }
@@ -118,8 +118,8 @@ const httpApi: AdminApi = {
   rescheduleLead: async (reference, slot) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/reschedule", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...slot }) }))).lead,
   getPricing: async () => json(await fetch("/api/admin/pricing", { cache: "no-store" })),
-  saveBundle: async (b) => (await json<{ bundles: Bundle[] }>(await fetch("/api/admin/pricing/bundles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).bundles,
-  deleteBundle: async (id) => (await json<{ bundles: Bundle[] }>(await fetch(`/api/admin/pricing/bundles?id=${encodeURIComponent(id)}`, { method: "DELETE" }))).bundles,
+  saveBundle: async (b) => (await json<{ bundles: AdminBundle[] }>(await fetch("/api/admin/pricing/bundles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).bundles,
+  deleteBundle: async (id) => (await json<{ bundles: AdminBundle[] }>(await fetch(`/api/admin/pricing/bundles?id=${encodeURIComponent(id)}`, { method: "DELETE" }))).bundles,
   saveCode: async (c) => (await json<{ codes: DiscountCode[] }>(await fetch("/api/admin/pricing/codes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(c) }))).codes,
   deleteCode: async (id) => (await json<{ codes: DiscountCode[] }>(await fetch(`/api/admin/pricing/codes?id=${id}`, { method: "DELETE" }))).codes,
   deleteLead: async (reference) => {
@@ -155,6 +155,9 @@ function protoSave(update: (r: AvailabilityRules) => AvailabilityRules): Availab
 const firstIssue = (r: { success: boolean; error?: { issues: { message: string }[] } }) => {
   if (!r.success) throw new Error(r.error?.issues[0]?.message ?? "Check the details and try again.");
 };
+
+const adminBundles = (bundles: Bundle[]): AdminBundle[] =>
+  bundles.map((bundle) => ({ ...bundle, spanish: (bundle as Partial<AdminBundle>).spanish ?? null }));
 
 export function readPrototypeSettings(): SiteSettings | null {
   try {
@@ -283,7 +286,7 @@ const prototypeApi: AdminApi = {
   },
   getPricing: async () => {
     const p = readPrototypePricing();
-    return { bundles: p.bundles, codes: p.codes.map((c) => ({ ...c, usesCount: prototypeUsageCount(c.code) })), databaseConfigured: true };
+    return { bundles: adminBundles(p.bundles), codes: p.codes.map((c) => ({ ...c, usesCount: prototypeUsageCount(c.code) })), databaseConfigured: true };
   },
   saveBundle: async (input) => {
     const r = bundleInputSchema.safeParse(input);
@@ -291,10 +294,10 @@ const prototypeApi: AdminApi = {
     const b = r.data;
     const p = readPrototypePricing();
     const id = b.id || `${b.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}-${Math.random().toString(36).slice(2, 6)}`;
-    const next: Bundle = { id, name: b.name, price: b.price, description: b.description || undefined, duration: durationLabel(b.durationMinutes), durationMinutes: b.durationMinutes, people: "", setups: "", photos: b.photos || "", features: b.features, locationNote: "We bring the studio to your home", cta: `Choose ${b.name}`, badge: b.badge || undefined, active: b.active, sortOrder: b.sortOrder ?? p.bundles.length, offer: b.offer ?? null, extraBaby: b.extraBaby };
+    const next: AdminBundle = { id, name: b.name, price: b.price, description: b.description || undefined, duration: durationLabel(b.durationMinutes), durationMinutes: b.durationMinutes, people: "", setups: "", photos: b.photos || "", features: b.features, locationNote: "We bring the studio to your home", cta: `Choose ${b.name}`, badge: b.badge || undefined, active: b.active, sortOrder: b.sortOrder ?? p.bundles.length, offer: b.offer ?? null, extraBaby: b.extraBaby, spanish: b.spanish ? { name: b.spanish.name, description: b.spanish.description || undefined, badge: b.spanish.badge || undefined, offerLabel: b.spanish.offerLabel || undefined, features: b.spanish.features } : null };
     const bundles = p.bundles.some((x) => x.id === id) ? p.bundles.map((x) => (x.id === id ? next : x)) : [...p.bundles, next];
     writePrototypePricing({ ...p, bundles });
-    return bundles;
+    return adminBundles(bundles);
   },
   deleteBundle: async (id) => {
     const used = new MockBookingProvider().listLeads().filter((l) => l.bundleId === id).length;
@@ -302,7 +305,7 @@ const prototypeApi: AdminApi = {
     const p = readPrototypePricing();
     const bundles = p.bundles.filter((b) => b.id !== id);
     writePrototypePricing({ bundles, codes: p.codes.map((c) => ({ ...c, bundleIds: c.bundleIds.filter((x) => x !== id) })) });
-    return bundles;
+    return adminBundles(bundles);
   },
   saveCode: async (input) => {
     const r = codeInputSchema.safeParse(input);
