@@ -6,6 +6,8 @@ import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailC
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { bookingRequestSchema } from "@/lib/booking/validation";
 import { bundleInputSchema } from "@/lib/pricing/validation";
+import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
+import type { Bundle } from "@/config/bundles";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { localePath } from "@/i18n/path";
 
@@ -43,6 +45,11 @@ test("Spanish public shell messages match the English schema", async ({}, testIn
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.header, es.header, "header");
   compareCatalogShape(en.footer, es.footer, "footer");
+});
+
+test("Spanish catalog messages match the English schema", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
+  compareCatalogShape(en.catalog, es.catalog, "catalog");
 });
 
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {
@@ -89,6 +96,59 @@ test("Spanish bundle drafts are either absent or complete", async ({}, testInfo)
   expect(bundleInputSchema.safeParse(bundle).success).toBe(true);
   expect(bundleInputSchema.safeParse({ ...bundle, spanish: { name: "Pequeños Momentos", description: "", badge: "", offerLabel: "", features: ["Hasta 1 hora", ""] } }).success).toBe(false);
   expect(bundleInputSchema.safeParse({ ...bundle, spanish: { name: "Pequeños Momentos", description: "Una primera sesión sencilla", badge: "El favorito", offerLabel: "", features: ["Hasta 1 hora", "8 fotos digitales editadas"] } }).success).toBe(true);
+});
+
+test("the Spanish public catalog never falls back to partial English bundle copy", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog localization only needs one Node project");
+  const bundle: Bundle = {
+    id: "little-moments",
+    name: "Little Moments",
+    price: 149,
+    description: "A simple first session",
+    duration: "Up to 1 hour",
+    durationMinutes: 60,
+    people: "",
+    setups: "",
+    photos: "8",
+    features: ["Up to 1 hour", "8 edited digital photos"],
+    locationNote: "We bring the studio to your home",
+    cta: "Choose Little Moments",
+    badge: "Most loved",
+    active: true,
+    offer: { enabled: true, price: 129, label: null, endsOn: "2026-12-05" },
+  };
+  const translated = localizeCatalog([bundle], "es", [{
+    bundleId: bundle.id,
+    name: "Pequeños Momentos",
+    description: "Una primera sesión sencilla",
+    badge: "El favorito",
+    features: [{ position: 0, text: "Hasta 1 hora" }, { position: 1, text: "8 fotos digitales editadas" }],
+  }])[0];
+  expect(translated).toMatchObject({
+    name: "Pequeños Momentos",
+    description: "Una primera sesión sencilla",
+    badge: "El favorito",
+    duration: "Hasta 1 hora",
+    features: ["Hasta 1 hora", "8 fotos digitales editadas"],
+    locationNote: "Llevamos el estudio a tu hogar",
+    cta: "Elegir Pequeños Momentos",
+    offer: { label: "Oferta especial" },
+  });
+  expect(() => localizeCatalog([bundle], "es", [])).toThrow(IncompleteCatalogTranslationError);
+  expect(() => localizeCatalog([bundle], "es", [{
+    bundleId: bundle.id,
+    name: "Pequeños Momentos",
+    description: "",
+    badge: "El favorito",
+    features: [{ position: 0, text: "Hasta 1 hora" }, { position: 1, text: "8 fotos digitales editadas" }],
+  }])).toThrow(IncompleteCatalogTranslationError);
+  expect(() => localizeCatalog([bundle], "es", [{
+    bundleId: bundle.id,
+    name: "Pequeños Momentos",
+    description: "Una primera sesión sencilla",
+    badge: "El favorito",
+    features: [{ position: 0, text: "Hasta 1 hora" }, { position: 2, text: "8 fotos digitales editadas" }],
+  }])).toThrow(IncompleteCatalogTranslationError);
 });
 
 test("Spanish customer-email formatting covers dates, babies, prices, backdrops and policy", async ({}, testInfo) => {

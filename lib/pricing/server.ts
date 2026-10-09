@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, count, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { AdminBundle, Bundle } from "@/config/bundles";
+import { defaultLocale, type AppLocale } from "@/i18n/config";
 import { builtInCatalog } from "./catalog";
 export { builtInCatalog };
 import { bookingRules } from "@/config/booking";
@@ -20,6 +21,7 @@ import { log } from "@/lib/log";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
 import { durationLabel, toCents } from "./engine";
+import { IncompleteCatalogTranslationError, localizeCatalog } from "./localization";
 import { lastGoodCatalog, rememberCatalog } from "./snapshot";
 import { CODE_MESSAGES, type CodeCheck, type DiscountCode, type PricingAdapter } from "./types";
 import type { BundleInput, CodeInput } from "./validation";
@@ -118,6 +120,42 @@ export async function getAdminCatalog(): Promise<AdminBundle[]> {
   }
 }
 
+async function translateCatalog(catalog: Bundle[], locale: AppLocale): Promise<Bundle[]> {
+  if (locale === defaultLocale) return catalog;
+  if (!isDatabaseConfigured()) throw new IncompleteCatalogTranslationError("catalog");
+  try {
+    const db = getDb();
+    const [translations, inclusions] = await Promise.all([
+      db.select().from(bundleTranslations).where(eq(bundleTranslations.locale, locale)),
+      db
+        .select()
+        .from(bundleInclusionTranslations)
+        .where(eq(bundleInclusionTranslations.locale, locale))
+        .orderBy(asc(bundleInclusionTranslations.position)),
+    ]);
+    return localizeCatalog(
+      catalog,
+      locale,
+      translations.map((translation) => {
+        const translatedInclusions = inclusions.filter((row) => row.bundleId === translation.bundleId);
+        return {
+          bundleId: translation.bundleId,
+          name: translation.name,
+          description: translation.description ?? undefined,
+          badge: translation.badge ?? undefined,
+          offerLabel: translation.offerLabel ?? undefined,
+          features: translatedInclusions.map((row) => ({ position: row.position, text: row.text })),
+        };
+      }),
+    );
+  } catch (err) {
+    if (err instanceof IncompleteCatalogTranslationError) throw err;
+    if (missingTable(err)) log.error("pricing.db", "Bundle translation tables not found. Run migration 0019 in Neon.");
+    else log.error("pricing.db", "Could not load the localized bundle catalog", { error: err as Error });
+    throw new CatalogUnavailableError("Localized bundles could not be loaded");
+  }
+}
+
 /**
  * What the public site shows.
  * - live: from Neon (cached; refreshed when the owner saves, and every 5 minutes)
@@ -135,22 +173,27 @@ export interface PublicCatalog {
 
 const activeOnly = (list: Bundle[]) => list.filter((b) => b.active !== false);
 
-export async function getPublicCatalog(): Promise<PublicCatalog> {
-  if (!isDatabaseConfigured()) return { bundles: activeOnly(builtInCatalog()), status: "builtin" };
+export async function getPublicCatalog(locale: AppLocale = defaultLocale): Promise<PublicCatalog> {
+  if (!isDatabaseConfigured()) {
+    if (locale !== defaultLocale) throw new IncompleteCatalogTranslationError("catalog");
+    return { bundles: activeOnly(builtInCatalog()), status: "builtin" };
+  }
   try {
     const { unstable_cache } = await import("next/cache");
     const bundles = await unstable_cache(
       async () => {
-        const list = activeOnly(await getCatalog());
-        await rememberCatalog(list);
+        const list = await translateCatalog(activeOnly(await getCatalog()), locale);
+        await rememberCatalog(list, locale);
         return list;
       },
-      ["public-catalog-v3"],
+      locale === defaultLocale ? ["public-catalog-v3"] : ["public-catalog-v3", locale],
       { tags: [CATALOG_TAG], revalidate: 300 },
     )();
     return { bundles, status: "live" };
   } catch (err) {
-    const copy = await lastGoodCatalog();
+    // Complete Spanish copy is a publication gate, not an outage: do not hide a missing draft behind an old snapshot.
+    if (err instanceof IncompleteCatalogTranslationError) throw err;
+    const copy = await lastGoodCatalog(locale);
     if (copy) {
       log.error("pricing.catalog", "Live bundles unavailable: showing the last good copy", { error: err as Error });
       return { bundles: copy, status: "snapshot" };

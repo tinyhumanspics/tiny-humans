@@ -5,6 +5,14 @@
     "privacyDescription": "How Tiny Humans handles information when you browse the website or book a photography session.",
     "termsDescription": "Terms for booking and using Tiny Humans newborn and baby photography services."
   },
+  "catalog": {
+    "locationNote": "We bring the studio to your home",
+    "choose": "Choose {name}",
+    "specialOffer": "Special offer",
+    "durationMinutes": "Up to {minutes} minutes",
+    "durationHour": "Up to 1 hour",
+    "durationHours": "Up to {hours} hours"
+  },
   "booking": {
     "paused": {
       "title": "Booking is taking a short break",

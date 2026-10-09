@@ -1,4 +1,12 @@
 {
+  "catalog": {
+    "locationNote": "Llevamos el estudio a tu hogar",
+    "choose": "Elegir {name}",
+    "specialOffer": "Oferta especial",
+    "durationMinutes": "Hasta {minutes} minutos",
+    "durationHour": "Hasta 1 hora",
+    "durationHours": "Hasta {hours} horas"
+  },
   "about": {
     "meta": {
       "title": "Nuestra historia",
