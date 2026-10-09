@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `c8fb6ec` is live and smoke-tested; Vercel succeeded and production home returned 200 with the
-expected English hero/portfolio copy; unfinished `/es` remained an intentional 404.
+State: app commit `bb28a8a` is live and smoke-tested; Vercel succeeded and production `/about` returned 200 with the
+expected English copy; unfinished `/es/about` remained an intentional 404.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -542,7 +542,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       previous controls now pass in iPhone WebKit, Android and desktop. Strict tsc/build/lint passed (0 errors/25 known
       warnings), 77 e2e passed (22 expected cross-browser skips), all 16 visual-parity pages passed, and the open
       lightbox was captured and inspected at iPhone and 1440px (`.screenshots/home-i18n/`). Vercel succeeded;
-      production home returned 200 with expected English copy, while `/es` remained an intentional 404.
+      production home returned 200 with expected English copy, while `/es` remained an intentional 404. **Oct 9 photo
+      placeholders (`bb28a8a`):** the shared empty-photo state now accepts paired English/Spanish screen-reader and
+      visible copy, and About passes the matched catalog to all four owner-managed photo slots. Existing English callers
+      keep English by default; no Spanish route is public yet. Strict tsc/build/lint passed (0 errors/25 known warnings),
+      80 e2e passed (22 expected cross-browser skips), all 16 visual-parity pages passed, and the complete About page was
+      captured and inspected at iPhone and 1440px (`.screenshots/photo-placeholder-i18n/`). Vercel succeeded;
+      production `/about` returned 200 with expected English copy, while `/es/about` remained an intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
