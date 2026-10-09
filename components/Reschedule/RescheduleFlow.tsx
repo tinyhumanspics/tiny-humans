@@ -10,6 +10,8 @@ import en from "@/messages/en.json";
 import bstyles from "@/components/Booking/Booking.module.css";
 import styles from "./Reschedule.module.css";
 import { cn } from "@/lib/cn";
+import { fill } from "@/lib/email/messages";
+import type { AppLocale } from "@/i18n/config";
 
 export interface CurrentSession {
   date: DateKey;
@@ -26,12 +28,17 @@ interface Props {
   onKeep: () => void;
   keepLabel?: string;
   idPrefix?: string;
+  locale?: AppLocale;
+  messages?: typeof en.reschedulePage;
+  bookingMessages?: typeof en.bookingFlow;
 }
 
 type Step = "date" | "time" | "review";
 
 /** Choose new date -> time -> review -> confirm. Shared by the customer page and /admin Leads. */
-export default function RescheduleFlow({ current, loadDays, submit, onKeep, keepLabel = "Keep My Current Booking", idPrefix = "rs" }: Props) {
+export default function RescheduleFlow({ current, loadDays, submit, onKeep, keepLabel, idPrefix = "rs", locale = "en", messages = en.reschedulePage, bookingMessages = en.bookingFlow }: Props) {
+  const t = messages.flow;
+  const keep = keepLabel ?? t.keep;
   const { today: studioToday } = useCatalog();
   const today = startOfDay(fromDateKey(studioToday));
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
@@ -56,12 +63,12 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
           return next;
         });
       } catch (e) {
-        setError(e instanceof Error ? e.message : "We couldn't load open times. Please try again.");
+        setError(e instanceof Error && "code" in e && e.code === "rate_limited" ? messages.errors.rateLimited : e instanceof Error && "code" in e && e.code === "network" ? messages.errors.network : messages.errors.availability);
       } finally {
         setLoading(false);
       }
     },
-    [loadDays],
+    [loadDays, messages.errors.availability, messages.errors.network, messages.errors.rateLimited],
   );
 
   useEffect(() => {
@@ -75,7 +82,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
     try {
       await submit({ date: slot.date, start: slot.start });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "We couldn't reschedule just now. Please try again.";
+      const msg = (e as { code?: string }).code === "slot_unavailable" ? messages.errors.taken : (e as { code?: string }).code === "rate_limited" ? messages.errors.rateLimited : (e as { code?: string }).code === "network" ? messages.errors.network : messages.errors.submit;
       if ((e as { code?: string }).code === "slot_unavailable") {
         // that time is gone: reload live availability and go back to picking a time
         setDays({});
@@ -93,10 +100,10 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
 
   return (
     <div className={styles.flow}>
-      <ol className={styles.steps} aria-label="Reschedule steps">
+      <ol className={styles.steps} aria-label={t.stepsAria}>
         {(["date", "time", "review"] as Step[]).map((s, i) => (
           <li key={s} className={step === s ? styles.stepOn : ""} aria-current={step === s ? "step" : undefined}>
-            <span className="chalk-soft">{i + 1}. {s === "date" ? "New date" : s === "time" ? "New time" : "Review"}</span>
+            <span className="chalk-soft">{i + 1}. {s === "date" ? t.newDate : s === "time" ? t.newTime : t.review}</span>
           </li>
         ))}
       </ol>
@@ -108,57 +115,57 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
 
       {step === "date" && (
         <>
-          <h3 className={cn(bstyles.stepTitle, "chalk")}>Choose a new day</h3>
-          <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} messages={en.bookingFlow.calendar} locale="en" />
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>{t.chooseDay}</h3>
+          <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} messages={bookingMessages.calendar} locale={locale} />
           <div className={styles.actions}>
-            <ChalkButton variant="outline" onClick={onKeep} seed={421}>{keepLabel}</ChalkButton>
-            <ChalkButton variant="solid" disabled={!date} onClick={() => date && setStep("time")} seed={422}>Next: Time</ChalkButton>
+            <ChalkButton variant="outline" onClick={onKeep} seed={421}>{keep}</ChalkButton>
+            <ChalkButton variant="solid" disabled={!date} onClick={() => date && setStep("time")} seed={422}>{t.nextTime}</ChalkButton>
           </div>
         </>
       )}
 
       {step === "time" && date && (
         <>
-          <h3 className={cn(bstyles.stepTitle, "chalk")}>Pick a time on {formatLongDate(date)}</h3>
-          <p className={cn(styles.muted, "chalk-soft")}>{en.booking.timeZone.note}</p>
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>{fill(t.pickTime, { date: formatLongDate(date, locale) })}</h3>
+          <p className={cn(styles.muted, "chalk-soft")}>{t.zoneNote}</p>
           {slotsForDate.length === 0 ? (
-            <p className={cn(styles.muted, "chalk-soft")}>{loading ? "Checking the calendar…" : "No open times left on this day. Please choose another day."}</p>
+            <p className={cn(styles.muted, "chalk-soft")}>{loading ? t.checking : t.noTimes}</p>
           ) : (
             <div className={bstyles.slots}>
               {slotsForDate.map((s, i) => (
-                <ChoiceCard key={s.id} name={`${idPrefix}-time`} value={s.id} checked={slot?.id === s.id} onSelect={() => { setSlot(s); setError(null); }} title={s.label} detail={`until ${formatTimeLabel(s.end)}`} seed={500 + i} />
+                <ChoiceCard key={s.id} name={`${idPrefix}-time`} value={s.id} checked={slot?.id === s.id} onSelect={() => { setSlot(s); setError(null); }} title={formatTimeLabel(s.start, locale)} detail={fill(bookingMessages.time.until, { time: formatTimeLabel(s.end, locale) })} seed={500 + i} />
               ))}
             </div>
           )}
           <div className={styles.actions}>
-            <ChalkButton variant="outline" onClick={() => setStep("date")} seed={423}>Back</ChalkButton>
-            <ChalkButton variant="solid" disabled={!slot} onClick={() => slot && setStep("review")} seed={424}>Next: Review</ChalkButton>
+            <ChalkButton variant="outline" onClick={() => setStep("date")} seed={423}>{t.back}</ChalkButton>
+            <ChalkButton variant="solid" disabled={!slot} onClick={() => slot && setStep("review")} seed={424}>{t.nextReview}</ChalkButton>
           </div>
         </>
       )}
 
       {step === "review" && slot && (
         <>
-          <h3 className={cn(bstyles.stepTitle, "chalk")}>Check the change</h3>
-          <p className={cn(styles.muted, "chalk-soft")}>{en.booking.timeZone.note}</p>
+          <h3 className={cn(bstyles.stepTitle, "chalk")}>{t.check}</h3>
+          <p className={cn(styles.muted, "chalk-soft")}>{t.zoneNote}</p>
           <div className={styles.compare}>
             <div className={styles.compareCol}>
-              <p className={cn(styles.compareLabel, "chalk-soft")}>Current session</p>
-              <p className={cn(styles.compareDate, styles.strike, "chalk-soft")}>{formatLongDate(current.date)}</p>
-              <p className={cn(styles.compareTime, styles.strike, "chalk-soft")}>{formatTimeLabel(current.start)} – {formatTimeLabel(current.end)}</p>
+              <p className={cn(styles.compareLabel, "chalk-soft")}>{t.current}</p>
+              <p className={cn(styles.compareDate, styles.strike, "chalk-soft")}>{formatLongDate(current.date, locale)}</p>
+              <p className={cn(styles.compareTime, styles.strike, "chalk-soft")}>{formatTimeLabel(current.start, locale)} – {formatTimeLabel(current.end, locale)}</p>
             </div>
             <span className={cn(styles.arrow, "chalk-soft")} aria-hidden="true">→</span>
             <div className={cn(styles.compareCol, styles.compareNew)}>
-              <p className={cn(styles.compareLabel, "chalk-soft")}>New session</p>
-              <p className={cn(styles.compareDate, "chalk-soft")}>{formatLongDate(slot.date)}</p>
-              <p className={cn(styles.compareTime, "chalk-soft")}>{formatTimeLabel(slot.start)} – {formatTimeLabel(slot.end)}</p>
+              <p className={cn(styles.compareLabel, "chalk-soft")}>{t.new}</p>
+              <p className={cn(styles.compareDate, "chalk-soft")}>{formatLongDate(slot.date, locale)}</p>
+              <p className={cn(styles.compareTime, "chalk-soft")}>{formatTimeLabel(slot.start, locale)} – {formatTimeLabel(slot.end, locale)}</p>
             </div>
           </div>
           <div className={styles.actions}>
-            <ChalkButton variant="outline" onClick={onKeep} seed={425}>{keepLabel}</ChalkButton>
-            <ChalkButton variant="solid" disabled={busy} onClick={confirm} seed={426}>{busy ? "Rescheduling…" : "Confirm Reschedule"}</ChalkButton>
+            <ChalkButton variant="outline" onClick={onKeep} seed={425}>{keep}</ChalkButton>
+            <ChalkButton variant="solid" disabled={busy} onClick={confirm} seed={426}>{busy ? t.rescheduling : t.confirm}</ChalkButton>
           </div>
-          <button type="button" className={cn(styles.textLink, "chalk-soft")} onClick={() => setStep("time")}>Choose a different time</button>
+          <button type="button" className={cn(styles.textLink, "chalk-soft")} onClick={() => setStep("time")}>{t.different}</button>
         </>
       )}
     </div>

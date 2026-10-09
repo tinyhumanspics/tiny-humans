@@ -157,6 +157,28 @@ test("mock mode previews the confirmation email (React Email rendered in the bro
   await expect(spanish.locator("body")).toContainText(/(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de \w+ de 2026/);
 });
 
+test("mock management links show the booking and allow cancellation", async ({ page }, testInfo) => {
+  await bookLittleMoments(page);
+  await page.getByRole("button", { name: "Try the Reschedule link" }).click();
+  await expect(page.getByRole("heading", { name: "Reschedule your session" })).toBeVisible();
+  await expect(page.getByText("Your Current Session")).toBeVisible();
+  await expect(page.getByText("Little Moments", { exact: true })).toBeVisible();
+  if (process.env.CAPTURE_MANAGE_PAGES === "1") {
+    await page.screenshot({ path: `.screenshots/manage-pages-i18n/reschedule-${testInfo.project.name}.png`, fullPage: true });
+  }
+
+  const token = new URL(page.url()).searchParams.get("t");
+  expect(token).toBeTruthy();
+  await page.goto(`/cancel?t=${encodeURIComponent(token!)}`);
+  await expect(page.getByRole("heading", { name: "Cancel your session?" })).toBeVisible();
+  if (process.env.CAPTURE_MANAGE_PAGES === "1") {
+    await page.screenshot({ path: `.screenshots/manage-pages-i18n/cancel-${testInfo.project.name}.png`, fullPage: true });
+  }
+  await page.fill("#cancel-reason", "Our plans changed");
+  await page.getByRole("button", { name: "Confirm Cancellation" }).click();
+  await expect(page.getByRole("heading", { name: "Your session has been cancelled" })).toBeVisible();
+});
+
 test("booking works in the Instagram in-app browser", async ({ browser }) => {
   const ctx = await browser.newContext({ userAgent: INSTAGRAM_UA, viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true });
   await bookLittleMoments(await ctx.newPage());

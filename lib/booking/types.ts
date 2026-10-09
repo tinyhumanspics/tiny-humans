@@ -126,6 +126,7 @@ export interface BookingResult {
 /** What the cancel page may show (no contact details, no address). */
 export interface CancellationSummary {
   reference: string;
+  bundleId: string;
   bundleName: string;
   date: DateKey;
   start: string;

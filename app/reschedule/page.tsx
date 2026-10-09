@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import ReschedulePage from "@/components/Reschedule/ReschedulePage";
+import en from "@/messages/en.json";
 
 export const metadata: Metadata = {
-  title: "Reschedule your session",
+  title: en.reschedulePage.metaTitle,
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };
@@ -13,7 +14,7 @@ export default function Page() {
   return (
     <main id="top">
       <Suspense fallback={null}>
-        <ReschedulePage />
+        <ReschedulePage locale="en" messages={en.reschedulePage} bookingMessages={en.bookingFlow} policyMessages={en.policy} />
       </Suspense>
     </main>
   );

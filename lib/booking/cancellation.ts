@@ -23,6 +23,7 @@ export function summaryOf(row: Booking, noticeHours: number, now = new Date()): 
   const status = row.status === "cancelled" ? "cancelled" : row.sessionStart.getTime() <= now.getTime() ? "past" : "active";
   return {
     reference: row.bookingReference,
+    bundleId: row.packageId,
     bundleName: row.packageName,
     date: row.sessionDate,
     start: localTime(row.sessionStart, row.timezone),

@@ -279,6 +279,7 @@ function mockSummary(rec: MockRecord, noticeHours: number): CancellationSummary 
   const status = rec.status === "cancelled" ? "cancelled" : past ? "past" : "active";
   return {
     reference: rec.result.id,
+    bundleId: r.bundleId,
     bundleName: rec.result.pricing?.bundleName ?? r.bundleId,
     date: r.slot.date,
     start: r.slot.start,

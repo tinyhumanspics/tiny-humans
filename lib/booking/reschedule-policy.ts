@@ -15,5 +15,5 @@ export const noticeLabel = (hours: number, messages: Pick<typeof m, "hour" | "ho
 export const changePolicyText = (hours: number, messages: Pick<typeof m, "hour" | "hours" | "online"> = m) => fill(messages.online, { notice: noticeLabel(hours, messages), phone: site.contact.phone });
 
 /** Shown on the cancel / reschedule pages once online changes are closed. */
-export const cancelClosedText = (hours: number) => fill(m.closedCancel, { notice: noticeLabel(hours), phone: site.contact.phone });
-export const rescheduleClosedText = (hours: number) => fill(m.closedReschedule, { notice: noticeLabel(hours), phone: site.contact.phone });
+export const cancelClosedText = (hours: number, messages: Pick<typeof m, "hour" | "hours" | "closedCancel"> = m) => fill(messages.closedCancel, { notice: noticeLabel(hours, messages), phone: site.contact.phone });
+export const rescheduleClosedText = (hours: number, messages: Pick<typeof m, "hour" | "hours" | "closedReschedule"> = m) => fill(messages.closedReschedule, { notice: noticeLabel(hours, messages), phone: site.contact.phone });

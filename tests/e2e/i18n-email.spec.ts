@@ -14,7 +14,7 @@ import { localePath } from "@/i18n/path";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
 import { babyNames } from "@/lib/booking/extra-babies";
-import { changePolicyText, noticeLabel } from "@/lib/booking/reschedule-policy";
+import { cancelClosedText, changePolicyText, noticeLabel, rescheduleClosedText } from "@/lib/booking/reschedule-policy";
 import { formatAddress, unitLine } from "@/lib/booking/templates";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
@@ -58,6 +58,9 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.catalog, es.catalog, "catalog");
   compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
+  compareCatalogShape(en.cancelPage, es.cancelPage, "cancelPage");
+  compareCatalogShape(en.reschedulePage, es.reschedulePage, "reschedulePage");
+  compareCatalogShape(en.policy, es.policy, "policy");
   expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(es.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(en.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
@@ -181,6 +184,8 @@ test("Spanish customer-email formatting covers dates, babies, prices, backdrops 
   expect(babyNames([{ name: "Luna", age: "Newborn (0–2 weeks)" }, { name: "Mia", age: "Newborn (0–2 weeks)" }], es.bookingFlow.review.and)).toBe("Luna y Mia");
   expect(bookingBabiesLabel([{ name: "Luna", age: "Newborn (0–2 weeks)" }, { age: "Not born yet" }], es.bookingFlow.details)).toBe("Luna (Recién nacido (0–2 semanas)), Bebé 2 (Aún no ha nacido)");
   expect(changePolicyText(48, es.bookingFlow.confirmation.policy)).toContain("48 horas");
+  expect(cancelClosedText(48, es.policy)).toContain("ya no se puede cancelar en línea");
+  expect(rescheduleClosedText(48, es.policy)).toContain("ya no se puede cambiar en línea");
 
   const quote: PriceQuote = {
     bundleId: "little-moments",

@@ -6,19 +6,34 @@ import { formatLongDate, formatTimeLabel, getBookingClient, BookingApiError, typ
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import RescheduleFlow from "./RescheduleFlow";
 import styles from "./Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import { rescheduleClosedText } from "@/lib/booking/reschedule-policy";
+import { fill } from "@/lib/email/messages";
+import { localePath } from "@/i18n/path";
+import type { AppLocale } from "@/i18n/config";
 import { site } from "@/config/site";
 import en from "@/messages/en.json";
 
 type View = "loading" | "invalid" | "ready" | "done";
 
 /** Customer reschedule page (/reschedule?t=<management token>). Only date + time can change. */
-export default function ReschedulePage() {
+export default function ReschedulePage({
+  locale = "en",
+  messages = en.reschedulePage,
+  bookingMessages = en.bookingFlow,
+  policyMessages = en.policy,
+}: {
+  locale?: AppLocale;
+  messages?: typeof en.reschedulePage;
+  bookingMessages?: typeof en.bookingFlow;
+  policyMessages?: typeof en.policy;
+}) {
   const token = useSearchParams().get("t") ?? "";
   const router = useRouter();
+  const { getBundle } = useCatalog();
   const [view, setView] = useState<View>("loading");
   const [booking, setBooking] = useState<ManagedBooking | null>(null);
   const [previous, setPrevious] = useState<ManagedBooking | null>(null);
@@ -34,10 +49,10 @@ export default function ReschedulePage() {
         setView("ready");
       })
       .catch((e) => {
-        setMessage(e instanceof Error ? e.message : "This link isn't valid anymore.");
+        setMessage(e instanceof BookingApiError && e.code === "network" ? messages.errors.network : e instanceof BookingApiError && e.code === "rate_limited" ? messages.errors.rateLimited : messages.errors.invalid);
         setView("invalid");
       });
-  }, [token, client]);
+  }, [token, client, messages]);
 
   const loadDays = useCallback((from: string, to: string) => client.getRescheduleAvailability(token, from, to), [client, token]);
   const submit = useCallback(
@@ -49,25 +64,27 @@ export default function ReschedulePage() {
         setView("done");
         window.scrollTo({ top: 0, behavior: "smooth" });
       } catch (e) {
-        if (e instanceof BookingApiError && e.code === "slot_unavailable") throw Object.assign(new Error(e.message), { code: "slot_unavailable" });
+        if (e instanceof BookingApiError && e.code === "slot_unavailable") throw Object.assign(new Error(messages.errors.taken), { code: "slot_unavailable" });
         if (e instanceof BookingApiError && e.code === "reschedule_closed") {
           setBooking((b) => (b ? { ...b, canReschedule: false } : b));
         }
-        throw e;
+        const code = e instanceof BookingApiError ? e.code : "server_error";
+        const text = code === "network" ? messages.errors.network : code === "rate_limited" ? messages.errors.rateLimited : messages.errors.submit;
+        throw Object.assign(new Error(text), { code });
       }
     },
-    [client, token, booking],
+    [client, token, booking, messages],
   );
 
   const session = (b: ManagedBooking, title: string) => (
     <div className={styles.current}>
       <p className={cn(styles.currentTitle, "chalk-soft")}>{title}</p>
       <dl className={styles.details}>
-        <div><dt className="chalk-soft">Booking reference</dt><dd className="chalk-soft">{b.reference}</dd></div>
-        <div><dt className="chalk-soft">Bundle</dt><dd className="chalk-soft">{b.bundleName}</dd></div>
-        <div><dt className="chalk-soft">Date</dt><dd className="chalk-soft">{formatLongDate(b.date)}</dd></div>
-        <div><dt className="chalk-soft">Time</dt><dd className="chalk-soft">{formatTimeLabel(b.start)} – {formatTimeLabel(b.end)}</dd></div>
-        <div><dt className="chalk-soft">Location</dt><dd className="chalk-soft">{b.location}</dd></div>
+        <div><dt className="chalk-soft">{messages.labels.reference}</dt><dd className="chalk-soft">{b.reference}</dd></div>
+        <div><dt className="chalk-soft">{messages.labels.bundle}</dt><dd className="chalk-soft">{getBundle(b.bundleId)?.name ?? b.bundleName}</dd></div>
+        <div><dt className="chalk-soft">{messages.labels.date}</dt><dd className="chalk-soft">{formatLongDate(b.date, locale)}</dd></div>
+        <div><dt className="chalk-soft">{messages.labels.time}</dt><dd className="chalk-soft">{fill(messages.timeRange, { start: formatTimeLabel(b.start, locale), end: formatTimeLabel(b.end, locale) })}</dd></div>
+        <div><dt className="chalk-soft">{messages.labels.location}</dt><dd className="chalk-soft">{locale === "es" ? b.location.replace(/,\s*Unit\s+/i, ", Unidad ") : b.location}</dd></div>
       </dl>
     </div>
   );
@@ -75,40 +92,40 @@ export default function ReschedulePage() {
   return (
     <section className={cn("container", styles.page)} aria-labelledby="rs-title">
       <ChalkBox className={styles.panel} seed={411} wobble={3.4} strokeWidth={2.8}>
-        {view === "loading" && <p className={cn(styles.muted, "chalk-soft")}>Finding your booking…</p>}
+        {view === "loading" && <p className={cn(styles.muted, "chalk-soft")}>{messages.loading}</p>}
 
         {view === "invalid" && (
           <>
-            <h1 id="rs-title" className={cn(styles.title, "chalk")}>We couldn&apos;t open this link</h1>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>{messages.invalidTitle}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{message}</p>
-            <ChalkButton href="/" variant="outline" seed={412}>Back to Tiny Humans</ChalkButton>
+            <ChalkButton href={localePath("/", locale)} variant="outline" seed={412}>{messages.home}</ChalkButton>
           </>
         )}
 
         {view === "ready" && booking && (
           <>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>Hi {booking.parentFirstName}</p>
-            <h1 id="rs-title" className={cn(styles.title, "chalk")}>Reschedule your session</h1>
-            {session(booking, "Your Current Session")}
+            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(messages.greeting, { name: booking.parentFirstName })}</p>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>{messages.title}</h1>
+            {session(booking, messages.currentTitle)}
             {booking.status === "cancelled" ? (
-              <p className={cn(styles.notice, "chalk-soft")}>This booking has already been cancelled.</p>
+              <p className={cn(styles.notice, "chalk-soft")}>{messages.cancelled}</p>
             ) : booking.status === "past" ? (
-              <p className={cn(styles.notice, "chalk-soft")}>This session has already taken place.</p>
+              <p className={cn(styles.notice, "chalk-soft")}>{messages.past}</p>
             ) : !booking.canReschedule ? (
               <>
-                <p className={cn(styles.notice, "chalk-soft")}>{rescheduleClosedText(booking.rescheduleNoticeHours)}</p>
-                <ChalkButton href={`sms:${site.contact.sms}`} variant="solid" seed={318}>{en.policy.textUs.replace("{phone}", site.contact.phone)}</ChalkButton>
+                <p className={cn(styles.notice, "chalk-soft")}>{rescheduleClosedText(booking.rescheduleNoticeHours, policyMessages)}</p>
+                <ChalkButton href={`sms:${site.contact.sms}`} variant="solid" seed={318}>{fill(policyMessages.textUs, { phone: site.contact.phone })}</ChalkButton>
               </>
             ) : (
               <>
-                <p className={cn(styles.text, "chalk-soft")}>You can change the day and time. Everything else stays the same.</p>
-                <RescheduleFlow current={booking} loadDays={loadDays} submit={submit} onKeep={() => router.push("/")} />
+                <p className={cn(styles.text, "chalk-soft")}>{messages.intro}</p>
+                <RescheduleFlow current={booking} loadDays={loadDays} submit={submit} onKeep={() => router.push(localePath("/", locale))} locale={locale} messages={messages} bookingMessages={bookingMessages} />
               </>
             )}
             {(booking.status !== "active" || !booking.canReschedule) && (
               <div className={styles.actions}>
-                <ChalkButton href="/" variant="outline" seed={413}>Back to Tiny Humans</ChalkButton>
-                <a className={cn(styles.textLink, "chalk-soft")} href="mailto:hello@tinyhumans.photography">hello@tinyhumans.photography</a>
+                <ChalkButton href={localePath("/", locale)} variant="outline" seed={413}>{messages.home}</ChalkButton>
+                <a className={cn(styles.textLink, "chalk-soft")} href={`mailto:${site.contact.email}`}>{site.contact.email}</a>
               </div>
             )}
           </>
@@ -117,15 +134,13 @@ export default function ReschedulePage() {
         {view === "done" && booking && (
           <div role="status">
             <ChalkDoodle name="star" size={60} color="var(--sun-yellow)" strokeWidth={3} />
-            <p className={cn(styles.eyebrow, "chalk-soft")}>Booking rescheduled</p>
-            <h1 id="rs-title" className={cn(styles.title, "chalk")}>You&apos;re all set!</h1>
-            <p className={cn(styles.text, "chalk-soft")}>
-              Your Tiny Humans session has been successfully rescheduled. We&apos;ve updated your appointment and can&apos;t wait to capture these little moments with you.
-            </p>
-            {previous && <p className={cn(styles.muted, "chalk-soft")}>Previously: {formatLongDate(previous.date)}, {formatTimeLabel(previous.start)}</p>}
-            {session(booking, "Your New Session")}
-            <p className={cn(styles.text, "chalk-soft")}>A confirmation with new links to manage your booking is on its way to your inbox.</p>
-            <ChalkButton href="/" variant="outline" seed={414}>Back to Tiny Humans</ChalkButton>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>{messages.doneEyebrow}</p>
+            <h1 id="rs-title" className={cn(styles.title, "chalk")}>{messages.doneTitle}</h1>
+            <p className={cn(styles.text, "chalk-soft")}>{messages.doneText}</p>
+            {previous && <p className={cn(styles.muted, "chalk-soft")}>{fill(messages.previous, { date: formatLongDate(previous.date, locale), time: formatTimeLabel(previous.start, locale) })}</p>}
+            {session(booking, messages.newTitle)}
+            <p className={cn(styles.text, "chalk-soft")}>{messages.doneLinks}</p>
+            <ChalkButton href={localePath("/", locale)} variant="outline" seed={414}>{messages.home}</ChalkButton>
           </div>
         )}
       </ChalkBox>

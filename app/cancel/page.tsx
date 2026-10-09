@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import CancelBooking from "@/components/Cancel/CancelBooking";
+import en from "@/messages/en.json";
 
 export const metadata: Metadata = {
-  title: "Cancel your session",
+  title: en.cancelPage.metaTitle,
   robots: { index: false, follow: false },
   referrer: "no-referrer",
 };
@@ -13,7 +14,7 @@ export default function CancelPage() {
   return (
     <main id="top">
       <Suspense fallback={null}>
-        <CancelBooking />
+        <CancelBooking locale="en" messages={en.cancelPage} policyMessages={en.policy} />
       </Suspense>
     </main>
   );
