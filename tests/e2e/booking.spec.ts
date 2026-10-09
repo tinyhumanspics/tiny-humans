@@ -98,6 +98,9 @@ test("twins add full-price time and photos to any bundle", async ({ page }, test
   await page.fill("#field-baby-1-name", "Mia");
   await page.selectOption("#field-baby-1-age", { index: 1 });
   await page.getByRole("button", { name: /Next: Review/ }).click();
+  if (process.env.CAPTURE_BOOKING_REVIEW === "1") {
+    await page.screenshot({ path: `.screenshots/booking-review-i18n/${testInfo.project.name}.png`, fullPage: true });
+  }
 
   await expect(page.getByText("1 × $75 = $75", { exact: true })).toBeVisible();
   await expect(page.getByText("$224", { exact: true })).toBeVisible();

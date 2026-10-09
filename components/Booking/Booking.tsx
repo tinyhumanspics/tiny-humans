@@ -4,7 +4,6 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { site } from "@/config/site";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { activeOffer, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
-import { pricingRows } from "@/lib/booking/templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
@@ -47,7 +46,8 @@ import Reveal, { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import en from "@/messages/en.json";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
-import { addPhotos, babiesLabel, extraBabyLine, sessionMinutes, type BookingBaby } from "@/lib/booking/extra-babies";
+import { addPhotos, extraBabyLine, sessionMinutes, type BookingBaby } from "@/lib/booking/extra-babies";
+import { CODE_MESSAGES } from "@/lib/pricing/types";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type { Bundle } from "@/config/bundles";
@@ -200,6 +200,38 @@ function flowDurationLabel(minutes: number, messages: typeof en.bookingFlow.summ
   if (minutes < 120 || minutes % 30 !== 0) return fill(messages.durationMinutes, { minutes: String(minutes) });
   const hours = minutes / 60;
   return hours === 1 ? messages.durationHour : fill(messages.durationHours, { hours: String(hours) });
+}
+
+function flowBabiesLabel(babies: BookingBaby[], messages: typeof en.bookingFlow.details): string {
+  return babies
+    .map((baby, index) => {
+      const ageIndex = babyAgeOptions.indexOf(baby.age as (typeof babyAgeOptions)[number]);
+      const age = ageIndex >= 0 ? messages.baby.ageOptions[ageIndex] : baby.age;
+      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })} (${age})`;
+    })
+    .join(", ");
+}
+
+function flowPricingRows(p: PriceQuote, bundle: Bundle, messages: typeof en.bookingFlow.review): [string, string][] {
+  const labels = messages.labels;
+  const rows: [string, string][] = [];
+  if (p.pricingType === "offer") {
+    rows.push(
+      [labels.regularPrice, formatMoney(p.regularCents)],
+      [bundle.offer?.label?.trim() || p.offerLabel || labels.specialOffer, formatMoney(p.offerCents ?? p.finalCents)],
+    );
+  }
+  if (p.pricingType === "discount") {
+    rows.push(
+      [labels.regularPrice, formatMoney(p.regularCents)],
+      [labels.discountCode, p.discountCode ?? ""],
+      [labels.discount, `-${formatMoney(p.discountCents)}`],
+    );
+  }
+  rows.push([labels.bundleTotal, formatMoney(p.finalCents)]);
+  p.addons.forEach((addon) => rows.push([addon.quantity === 1 ? labels.extraBaby : labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]));
+  if (p.addonsCents > 0) rows.push([labels.sessionTotalBeforeTravel, formatMoney(p.totalCents)]);
+  return rows;
 }
 
 /** The booking calendar for one bundle (chosen on the bundles page). */
@@ -617,41 +649,42 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
 
                   {state.step === STEP.review && bundle && state.date && state.slot && (
                     <Review
+                      messages={messages.review}
                       rows={[
-                        { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId, locale) },
+                        { label: messages.review.labels.package, value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId, locale) },
                         ...(quote
-                          ? pricingRows(quote)
+                          ? flowPricingRows(quote, bundle, messages.review)
                           : ([
-                              ["Bundle total", formatMoney(bundleCents)],
-                              ...(addon ? [[addon.name, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]] : []),
-                              ...(addon ? [["Session total before travel", formatMoney(beforeTravelCents)]] : []),
+                              [messages.review.labels.bundleTotal, formatMoney(bundleCents)],
+                              ...(addon ? [[addon.quantity === 1 ? messages.review.labels.extraBaby : messages.review.labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]] : []),
+                              ...(addon ? [[messages.review.labels.sessionTotalBeforeTravel, formatMoney(beforeTravelCents)]] : []),
                             ] as [string, string][])
                         ).map(([label, value]) => ({ label, value, step: -1 })),
                         ...(travelFee > 0
                           ? [
-                              { label: en.booking.travel.label, value: travelFeeValue(travelFee, travel?.miles ?? null), step: STEP.details },
-                              { label: en.booking.travel.total, value: formatMoney(beforeTravelCents + travelFee), step: -1 },
+                              { label: messages.review.labels.travelFee, value: travelFeeValue(travelFee, travel?.miles ?? null, messages.details.travel), step: STEP.details },
+                              { label: messages.review.labels.total, value: formatMoney(beforeTravelCents + travelFee), step: -1 },
                             ]
                           : []),
                         ...(depositCents > 0
                           ? [
-                              { label: en.deposit.form.reviewDeposit, value: fill(en.deposit.form.reviewDepositValue, { deposit }), step: -1 },
-                              { label: en.deposit.form.reviewRest, value: formatMoney(totalCents - depositCents), step: -1 },
+                              { label: messages.review.deposit.today, value: fill(messages.review.deposit.value, { deposit }), step: -1 },
+                              { label: messages.review.deposit.rest, value: formatMoney(totalCents - depositCents), step: -1 },
                             ]
-                          : [{ label: "Payment due", value: "After the photoshoot", step: -1 }]),
-                        ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
-                        { label: "Date", value: formatLongDate(state.date, locale), step: STEP.date },
-                        { label: "Time", value: `${formatTimeLabel(state.slot.start, locale)} to ${formatTimeLabel(state.slot.end, locale)} (${messages.time.zone})`, step: STEP.time },
-                        { label: "We'll come to", value: `${[state.contact.street.trim(), unitLine(state.contact.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.details },
-                        ...(state.contact.access.trim() ? [{ label: en.booking.address.reviewAccess, value: state.contact.access.trim(), step: STEP.details }] : []),
-                        { label: "Parent / guardian", value: state.contact.parentName, step: STEP.details },
-                        { label: "Email", value: state.contact.email, step: STEP.details },
-                        { label: "Phone", value: state.contact.phone, step: STEP.details },
-                        { label: state.babies.length > 1 ? en.booking.extraBabies.review : "Baby", value: babiesLabel(state.babies), step: STEP.details },
-                        ...(state.contact.notes.trim() ? [{ label: "Notes", value: state.contact.notes.trim(), step: STEP.details }] : []),
-                        { label: setups > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, value: backdrops.length ? backdropNames(backdrops) : en.booking.backdrops.none, step: STEP.details },
-                        { label: en.booking.consents.reviewSms, value: state.consents.sms ? en.booking.consents.reviewSmsYes : en.booking.consents.reviewSmsNo, step: STEP.details },
-                        { label: en.booking.consents.reviewPhotos, value: state.consents.photos ? en.booking.consents.reviewPhotosYes : en.booking.consents.reviewPhotosNo, step: STEP.details },
+                          : [{ label: messages.review.labels.paymentDue, value: messages.review.labels.afterPhotoshoot, step: -1 }]),
+                        ...(inspiration ? [{ label: messages.review.labels.inspiration, value: inspiration.title, step: -1, photo: inspiration }] : []),
+                        { label: messages.review.labels.date, value: formatLongDate(state.date, locale), step: STEP.date },
+                        { label: messages.review.labels.time, value: fill(messages.review.timeRange, { start: formatTimeLabel(state.slot.start, locale), end: formatTimeLabel(state.slot.end, locale), zone: messages.time.zone }), step: STEP.time },
+                        { label: messages.review.labels.location, value: `${[state.contact.street.trim(), unitLine(state.contact.unit, messages.review.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.details },
+                        ...(state.contact.access.trim() ? [{ label: messages.review.labels.access, value: state.contact.access.trim(), step: STEP.details }] : []),
+                        { label: messages.review.labels.parent, value: state.contact.parentName, step: STEP.details },
+                        { label: messages.review.labels.email, value: state.contact.email, step: STEP.details },
+                        { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.details },
+                        { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: flowBabiesLabel(state.babies, messages.details), step: STEP.details },
+                        ...(state.contact.notes.trim() ? [{ label: messages.review.labels.notes, value: state.contact.notes.trim(), step: STEP.details }] : []),
+                        { label: setups > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, value: backdrops.length ? backdropNames(backdrops, messages.details.backdrops.names, messages.review.and) : messages.review.labels.backdropNone, step: STEP.details },
+                        { label: messages.review.labels.texts, value: state.consents.sms ? messages.review.labels.textsYes : messages.review.labels.textsNo, step: STEP.details },
+                        { label: messages.review.labels.photos, value: state.consents.photos ? messages.review.labels.photosYes : messages.review.labels.photosNo, step: STEP.details },
                       ]}
                       onEdit={goTo}
                     />
@@ -661,6 +694,8 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                     <DiscountField
                       key={bundle.id}
                       applied={appliedCode}
+                      messages={messages.review.discount}
+                      offerLabel={bundle.offer?.label?.trim() || messages.review.labels.specialOffer}
                       onApply={async (code) => {
                         const q = await provider.quote(bundle.id, code, state.contact.email.trim(), state.babies.length);
                         setQuote(q);
@@ -675,7 +710,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                   )}
                   {state.step === STEP.review && <BabyLedNote messages={messages.babyLed} compact multiple={state.babies.length > 1} />}
                   {state.step === STEP.review && depositCents > 0 && depositOffer && (
-                    <p className={cn(styles.depositNote, "chalk-soft")}>{fill(en.deposit.form.note, { notice: noticeLabel(depositOffer.noticeHours) })}</p>
+                    <p className={cn(styles.depositNote, "chalk-soft")}>{fill(messages.review.deposit.note, { notice: noticeLabel(depositOffer.noticeHours, messages.review.deposit.notice) })}</p>
                   )}
 
                   {state.stepError && (
@@ -699,7 +734,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                     </ChalkButton>
                   ) : (
                     <ChalkButton variant="solid" onClick={submit} disabled={state.status === "submitting"} seed={83}>
-                      {redirecting ? en.deposit.form.opening : state.status === "submitting" ? messages.actions.booking : depositCents > 0 ? fill(en.deposit.form.button, { deposit }) : messages.actions.book}
+                      {redirecting ? messages.review.deposit.opening : state.status === "submitting" ? messages.actions.booking : depositCents > 0 ? fill(messages.review.deposit.button, { deposit }) : messages.actions.book}
                     </ChalkButton>
                   )}
                 </div>
@@ -962,7 +997,7 @@ interface ReviewRow {
   href?: string;
 }
 
-function Review({ rows, onEdit }: { rows: ReviewRow[]; onEdit: (step: number) => void }) {
+function Review({ rows, onEdit, messages }: { rows: ReviewRow[]; onEdit: (step: number) => void; messages: typeof en.bookingFlow.review }) {
   return (
     <dl className={styles.review}>
       {rows.map((r) => (
@@ -980,13 +1015,13 @@ function Review({ rows, onEdit }: { rows: ReviewRow[]; onEdit: (step: number) =>
           </dd>
           <dd className={styles.reviewEdit}>
             {r.href && (
-              <Link href={r.href} className={cn(styles.linkButton, "chalk-soft")} aria-label={`Change ${r.label.toLowerCase()}`}>
-                Change
+              <Link href={r.href} className={cn(styles.linkButton, "chalk-soft")} aria-label={fill(messages.changeAria, { label: r.label.toLocaleLowerCase() })}>
+                {messages.change}
               </Link>
             )}
             {r.step >= 0 && (
-              <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => onEdit(r.step)} aria-label={`Edit ${r.label.toLowerCase()}`}>
-                Edit
+              <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => onEdit(r.step)} aria-label={fill(messages.editAria, { label: r.label.toLocaleLowerCase() })}>
+                {messages.edit}
               </button>
             )}
           </dd>
@@ -998,35 +1033,52 @@ function Review({ rows, onEdit }: { rows: ReviewRow[]; onEdit: (step: number) =>
 
 /* ---------------- optional discount code (review step) ---------------- */
 
-function DiscountField({ applied, onApply, onRemove }: { applied: string | null; onApply: (code: string) => Promise<PriceQuote>; onRemove: () => Promise<void> }) {
+function DiscountField({ applied, onApply, onRemove, messages, offerLabel }: { applied: string | null; onApply: (code: string) => Promise<PriceQuote>; onRemove: () => Promise<void>; messages: typeof en.bookingFlow.review.discount; offerLabel: string }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: "ok" | "info" | "error"; text: string } | null>(null);
   const apply = async () => {
-    if (!code.trim()) return setNote({ kind: "error", text: "Enter a code, or skip this. It's optional." });
+    if (!code.trim()) return setNote({ kind: "error", text: messages.empty });
     setBusy(true);
     setNote(null);
     try {
       const q = await onApply(code.trim());
-      setNote(q.pricingType === "discount" ? { kind: "ok", text: `Code ${q.discountCode} applied: -${formatMoney(q.discountCents)}.${q.note ? " " + q.note : ""}` } : { kind: "info", text: q.note ?? "Your price is already the best available." });
+      const pricingNote = q.note
+        ? fill(q.pricingType === "discount" ? messages.codeBetter : messages.offerBest, { offer: offerLabel })
+        : "";
+      setNote(
+        q.pricingType === "discount"
+          ? { kind: "ok", text: fill(messages.applied, { code: q.discountCode ?? "", amount: formatMoney(q.discountCents), note: pricingNote }) }
+          : { kind: "info", text: pricingNote || messages.best },
+      );
     } catch (e) {
-      setNote({ kind: "error", text: e instanceof Error ? e.message : "We couldn't check that code. Please try again." });
+      const known = e instanceof Error
+        ? (Object.entries(CODE_MESSAGES) as [keyof typeof CODE_MESSAGES, string][]).find(([, text]) => text === e.message)?.[0]
+        : undefined;
+      const text = known
+        ? messages.errors[known]
+        : e instanceof BookingApiError && e.code === "network"
+          ? messages.network
+          : e instanceof BookingApiError && e.code === "rate_limited"
+            ? messages.rateLimited
+            : messages.failed;
+      setNote({ kind: "error", text });
     } finally {
       setBusy(false);
     }
   };
   return (
     <div className={styles.discount}>
-      <label htmlFor="discount-code" className={cn(styles.discountLabel, "chalk-soft")}>Have a discount code? <span className={styles.optional}>(optional)</span></label>
+      <label htmlFor="discount-code" className={cn(styles.discountLabel, "chalk-soft")}>{messages.label} <span className={styles.optional}>{messages.optional}</span></label>
       {applied ? (
         <p className={cn(styles.discountApplied, "chalk-soft")}>
-          Code <b>{applied}</b> applied.{" "}
-          <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={async () => { setCode(""); setNote(null); await onRemove(); }}>Remove</button>
+          {messages.appliedBefore}<b>{applied}</b>{messages.appliedAfter}{" "}
+          <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={async () => { setCode(""); setNote(null); await onRemove(); }}>{messages.remove}</button>
         </p>
       ) : (
         <div className={styles.discountRow}>
-          <input id="discount-code" className={styles.input} value={code} maxLength={24} autoCapitalize="characters" autoComplete="off" placeholder="Enter code" onChange={(e) => { setCode(e.target.value); setNote(null); }} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), void apply())} />
-          <button type="button" className={styles.discountApply} onClick={apply} disabled={busy}>{busy ? "Checking…" : "Apply"}</button>
+          <input id="discount-code" className={styles.input} value={code} maxLength={24} autoCapitalize="characters" autoComplete="off" placeholder={messages.placeholder} onChange={(e) => { setCode(e.target.value); setNote(null); }} onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), void apply())} />
+          <button type="button" className={styles.discountApply} onClick={apply} disabled={busy}>{busy ? messages.checking : messages.apply}</button>
         </div>
       )}
       {note && <p className={cn(note.kind === "error" ? styles.error : styles.discountNote, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}

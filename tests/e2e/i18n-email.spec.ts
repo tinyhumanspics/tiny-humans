@@ -11,6 +11,9 @@ import type { Bundle } from "@/config/bundles";
 import { babyAgeOptions, bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { localePath } from "@/i18n/path";
+import { backdropNames } from "@/lib/booking/backdrop-names";
+import { noticeLabel } from "@/lib/booking/reschedule-policy";
+import { unitLine } from "@/lib/booking/templates";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -169,6 +172,9 @@ test("Spanish customer-email formatting covers dates, babies, prices, backdrops 
   expect(customerBackdropNames(["burgundy", "wooden"], "es")).toBe("Borgoña y Madera");
   expect(customerBackdropNames(["pink"], "en")).toBe("Pink");
   expect(customerBackdropNames(["pink"], "es")).toBe("Rosa");
+  expect(backdropNames(["burgundy", "wooden"], es.bookingFlow.details.backdrops.names, es.bookingFlow.review.and)).toBe("Borgoña y Madera");
+  expect(noticeLabel(48, es.bookingFlow.review.deposit.notice)).toBe("48 horas");
+  expect(unitLine("1204", es.bookingFlow.review.unit)).toBe("Unidad 1204");
 
   const quote: PriceQuote = {
     bundleId: "little-moments",

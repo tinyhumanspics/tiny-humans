@@ -150,9 +150,9 @@ export const PAYMENT_NOTE = {
 };
 
 /** "1204" → "Unit 1204"; "Apt 4B", "#4B" or "PH 2" stay as typed. */
-export const unitLine = (unit?: string) => {
+export const unitLine = (unit?: string, unitLabel = "Unit") => {
   const u = unit?.trim();
-  return !u ? "" : /^\d/.test(u) ? `Unit ${u}` : u;
+  return !u ? "" : /^\d/.test(u) ? `${unitLabel} ${u}` : u;
 };
 
 export const formatAddress = (a: SessionAddress) => [a.street, unitLine(a.unit), a.city].filter(Boolean).join(", ") + `, FL ${a.zip}`;

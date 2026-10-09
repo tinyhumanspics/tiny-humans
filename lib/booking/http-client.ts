@@ -1,10 +1,12 @@
 import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, CancellationSummary, DayAvailability, ManagedBooking, PriceQuote } from "./types";
 import type { BookingErrorCode } from "./errors";
 
+type BookingApiErrorCode = BookingErrorCode | "network" | "rate_limited";
+
 /** Error from the booking API; `message` is already friendly and safe to show. */
 export class BookingApiError extends Error {
-  readonly code: BookingErrorCode | "network";
-  constructor(code: BookingErrorCode | "network", message: string) {
+  readonly code: BookingApiErrorCode;
+  constructor(code: BookingApiErrorCode, message: string) {
     super(message);
     this.name = "BookingApiError";
     this.code = code;
@@ -20,7 +22,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const e = data as { error?: string; code?: BookingErrorCode };
+    const e = data as { error?: string; code?: BookingApiErrorCode };
     throw new BookingApiError(e.code ?? "server_error", e.error ?? "Something went wrong. Please try again.");
   }
   return data as T;
