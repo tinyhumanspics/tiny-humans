@@ -56,8 +56,8 @@ export const site = {
 } as const;
 
 export const navigation = [
-  { label: "Portfolio", href: "/#portfolio" },
+  { message: "portfolio", href: "/#portfolio" },
   // Both lead to the bundles page: families pick a bundle, then the calendar.
-  { label: "Bundles", href: "/bundles" },
-  { label: "Book", href: "/bundles", emphasis: true },
+  { message: "bundles", href: "/bundles" },
+  { message: "book", href: "/bundles", emphasis: true },
 ] as const;

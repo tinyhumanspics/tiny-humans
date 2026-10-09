@@ -38,11 +38,18 @@ test("Spanish About messages match the English schema", async ({}, testInfo) => 
   compareCatalogShape(en.about, es.about, "about");
 });
 
+test("Spanish public shell messages match the English schema", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
+  compareCatalogShape(en.header, es.header, "header");
+  compareCatalogShape(en.footer, es.footer, "footer");
+});
+
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Path validation only needs one Node project");
   expect(localePath("/about", "en")).toBe("/about");
   expect(localePath("/about", "es")).toBe("/es/about");
   expect(localePath("/", "es")).toBe("/es");
+  expect(localePath("/#portfolio", "es")).toBe("/es/#portfolio");
   expect(bundlesHref("photo-1", "es")).toBe("/es/bundles?inspiration=photo-1");
   expect(scheduleHref("little-moments", "photo-1", "es")).toBe("/es/book?bundle=little-moments&inspiration=photo-1");
 });

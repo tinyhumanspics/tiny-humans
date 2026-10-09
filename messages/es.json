@@ -70,6 +70,34 @@
       "spanish": "Hablamos español."
     }
   },
+  "header": {
+    "logoHome": "{brand}, inicio",
+    "navigationLabel": "Principal",
+    "portfolio": "Portafolio",
+    "bundles": "Paquetes",
+    "book": "Reservar"
+  },
+  "footer": {
+    "about": {
+      "heading": "Conócenos",
+      "story": "Nuestra historia"
+    },
+    "legal": {
+      "heading": "Información legal",
+      "privacy": "Política de privacidad",
+      "terms": "Términos del servicio"
+    },
+    "social": {
+      "heading": "Síguenos",
+      "newTab": "se abre en una pestaña nueva"
+    },
+    "contact": {
+      "heading": "Contáctanos",
+      "emailMissing": "Nuestro correo estará disponible pronto. Mientras tanto, escríbenos por Instagram."
+    },
+    "copyright": "© {year} {brand}, fotografía de recién nacidos y bebés en {location}.",
+    "owner": "Área del propietario (solo prototipo)"
+  },
   "emails": {
     "layout": {
       "logoAlt": "Tiny Humans",

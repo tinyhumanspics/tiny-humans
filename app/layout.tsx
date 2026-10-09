@@ -15,6 +15,7 @@ import MetaPixel from "@/components/layout/MetaPixel";
 import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
 import { siteMetadata } from "@/lib/seo/metadata";
+import en from "@/messages/en.json";
 import "@/styles/globals.css";
 import { cn } from "@/lib/cn";
 
@@ -67,9 +68,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)}>
           <SeasonalDecor />
           {/* Header lives in the layout so the logo intro never replays between pages. */}
-          <Header />
+          <Header messages={en.header} locale="en" />
           {children}
-          <Footer />
+          <Footer messages={en.footer} locale="en" />
           <MetaPixel />
         </CatalogProvider>
         </SiteSettingsProvider>

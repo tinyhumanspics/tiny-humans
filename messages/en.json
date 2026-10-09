@@ -168,11 +168,33 @@
       "spanish": "Hablamos español."
     }
   },
+  "header": {
+    "logoHome": "{brand}, home",
+    "navigationLabel": "Main",
+    "portfolio": "Portfolio",
+    "bundles": "Bundles",
+    "book": "Book"
+  },
   "footer": {
     "about": {
       "heading": "About us",
       "story": "Our story"
-    }
+    },
+    "legal": {
+      "heading": "The fine print",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "social": {
+      "heading": "Follow us",
+      "newTab": "opens in a new tab"
+    },
+    "contact": {
+      "heading": "Contact us",
+      "emailMissing": "Email coming soon. Message us on Instagram in the meantime."
+    },
+    "copyright": "© {year} {brand}, newborn & baby photography in {location}.",
+    "owner": "Owner area (prototype only)"
   },
   "landing": {
     "meta": {
