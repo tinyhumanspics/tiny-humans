@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
 import { addDaysKey } from "@/lib/booking/timezone";
-import { fromDateKey } from "@/lib/booking/dates";
+import { formatShortDate } from "@/lib/booking/dates";
+import type { AppLocale } from "@/i18n/config";
 import styles from "./Landing.module.css";
 import { cn } from "@/lib/cn";
 
 /** The real next open days (from the live calendar): honest urgency, no countdown timers. */
-export default function NextOpenDates({ bundleId, label, loading }: { bundleId?: string; label: string; loading: string }) {
+export default function NextOpenDates({ bundleId, label, loading, locale = "en" }: { bundleId?: string; label: string; loading: string; locale?: AppLocale }) {
   const { today } = useCatalog();
   const [days, setDays] = useState<string[] | null>(null);
 
@@ -29,7 +30,7 @@ export default function NextOpenDates({ bundleId, label, loading }: { bundleId?:
       <span className={styles.nextLabel}>{label}:</span>{" "}
       {days === null
         ? loading
-        : days.map((d) => fromDateKey(d).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })).join(" · ")}
+        : days.map((d) => formatShortDate(d, locale)).join(" · ")}
     </p>
   );
 }

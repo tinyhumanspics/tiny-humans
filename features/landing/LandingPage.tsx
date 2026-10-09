@@ -27,35 +27,34 @@ import { activeSeasonalOffers } from "@/lib/seasonal/offers";
 import NextOpenDates from "./NextOpenDates";
 import styles from "./Landing.module.css";
 import { cn } from "@/lib/cn";
+import type { AppLocale } from "@/i18n/config";
 
-const t = en.landing;
 /** Phone order: the family bundle first (price anchor), the "most loved" one highlighted. Desktop keeps the owner's order. */
 const PHONE_ORDER = ["forever-little", "our-little-story", "little-moments"];
 const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
 
 /** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
 /** FAQ answer with today's settings ("aFee" replaces "a" once a travel fee is set up, "aDeposit" while there's a deposit). */
-function faqAnswer(f: { a: string; aFee?: string; aDeposit?: string; aDepositFrom?: string }, noticeHours: number, travel: TravelSettings | null, deposit: SiteDeposit | null): string {
+function faqAnswer(f: { a: string; aFee?: string; aDeposit?: string; aDepositFrom?: string }, noticeHours: number, travel: TravelSettings | null, deposit: SiteDeposit | null, noticeMessages: Pick<typeof en.policy, "hour" | "hours">): string {
   const text =
     deposit && f.aDeposit
       ? depositText({ one: f.aDeposit, from: f.aDepositFrom ?? f.aDeposit }, deposit)
       : travel && f.aFee
         ? fill(f.aFee, { max: String(travel.maxMiles), free: String(travel.freeMiles), perMile: formatMoney(travel.perMileCents) })
         : f.a;
-  return text.replace(/\{notice\}/g, noticeLabel(noticeHours));
+  return text.replace(/\{notice\}/g, noticeLabel(noticeHours, noticeMessages));
 }
 
 /** The "$0 today, pay after your session" lines, or their deposit versions while deposits are on. */
-function paymentCopy(deposit: SiteDeposit | null) {
+function paymentCopy(deposit: SiteDeposit | null, t: typeof en.landing, d: typeof en.deposit.landing) {
   if (!deposit) return { ctaNote: t.hero.ctaNote, finalCtaNote: t.final.ctaNote, after: t.how.after, trust: t.trust, steps: t.how.steps };
-  const d = en.deposit.landing;
   return {
     ctaNote: depositText(d.ctaNote, deposit),
     finalCtaNote: depositText(d.finalCtaNote, deposit),
     after: d.after,
     // the trust strip's "$0 today, pay after" item and the "Pick a date and time" step mention paying
-    trust: t.trust.map((item) => (item.startsWith("$0") ? depositText(d.trust, deposit) : item)),
-    steps: t.how.steps.map((s) => (s.text.includes("$0 today") ? { ...s, text: depositText(d.howStep, deposit) } : s)),
+    trust: t.trust.map((item, index) => (index === 2 ? depositText(d.trust, deposit) : item)),
+    steps: t.how.steps.map((step, index) => (index === 1 ? { ...step, text: depositText(d.howStep, deposit) } : step)),
   };
 }
 
@@ -63,21 +62,43 @@ function paymentCopy(deposit: SiteDeposit | null) {
  * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off), both from /admin >
  * Availability; `deposit`: the deposit paid while booking (null = none), from /admin > Pricing & Promotions.
  */
-export default function LandingPage({ noticeHours, travel, deposit = null }: { noticeHours: number; travel: TravelSettings | null; deposit?: SiteDeposit | null }) {
-  const pay = paymentCopy(deposit);
+export default function LandingPage({
+  noticeHours,
+  travel,
+  deposit = null,
+  messages = en.landing,
+  bundleMessages = en.bundlesPage,
+  photoMessages = en.photoPlaceholder,
+  depositMessages = en.deposit.landing,
+  noticeMessages = en.policy,
+  locale = "en",
+}: {
+  noticeHours: number;
+  travel: TravelSettings | null;
+  deposit?: SiteDeposit | null;
+  messages?: typeof en.landing;
+  bundleMessages?: typeof en.bundlesPage;
+  photoMessages?: typeof en.photoPlaceholder;
+  depositMessages?: typeof en.deposit.landing;
+  noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
+  locale?: AppLocale;
+}) {
+  const t = messages;
+  const pay = paymentCopy(deposit, t, depositMessages);
   const { bundles, today, available } = useCatalog();
   const { settings, media, photos, theme } = useSiteSettings();
   // the theme's two doodles by the hero photos (as on the home page)
   const [doodleA, doodleB] = theme.decorations.hero;
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
-  const ctaHref = featured ? scheduleHref(featured.id) : bundlesHref();
+  const ctaHref = featured ? scheduleHref(featured.id, null, locale) : bundlesHref(null, locale);
   const onFeaturedCta = () => {
     if (featured) trackSelectBundle({ id: featured.id, name: featured.name, value: (activeOffer(featured, today)?.cents ?? toCents(featured.price)) / 100 });
     requestBookingScroll();
   };
   const [first, second] = media.title;
   const gallery = photos.filter((p) => p !== first && p !== second).slice(0, 6);
-  const seasonalOffers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today);
+  // Owner-editable seasonal titles/descriptions are English-only for now. Hide them in Spanish instead of leaking copy.
+  const seasonalOffers = locale === "en" ? activeSeasonalOffers(settings.seasonalOffers, theme.id, today) : [];
 
   return (
     <main id="top" className={styles.page}>
@@ -128,7 +149,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
                   <ChalkDoodle name="sparkle" size={30} color="var(--accent-2)" strokeWidth={3} className={styles.seasonalDoodle} grain={false} />
                   <h2 id={index === 0 ? "landing-seasonal" : undefined} className={cn(styles.seasonalTitle, "chalk")}>{offer.title}</h2>
                   <p className={cn(styles.seasonalDescription, "chalk-soft")}>{offer.description}</p>
-                  <p className={cn(styles.seasonalCutoff, "chalk-soft")}>{fill(t.seasonalOffers.cutoff, { date: formatLongDate(offer.cutoff) })}</p>
+                  <p className={cn(styles.seasonalCutoff, "chalk-soft")}>{fill(t.seasonalOffers.cutoff, { date: formatLongDate(offer.cutoff, locale) })}</p>
                   <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="outline" seed={26 + index}>{t.seasonalOffers.cta}</ChalkButton>
                 </ChalkBox>
               ))}
@@ -138,7 +159,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
       )}
 
       {/* 2. Trust strip */}
-      <section className="container" aria-label="Why families choose us">
+      <section className="container" aria-label={t.trustLabel}>
         <Reveal>
           <ul className={styles.trust}>
             {pay.trust.map((item) => (
@@ -184,7 +205,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           ))}
         </ol>
         <Reveal className={styles.howPhoto}>
-          <SitePhotoSlot group="landing" index={0} placeholderLabel={t.how.photo} ratio={3 / 2} seed={45} sizes="(min-width: 600px) 560px, 100vw" tape="white" />
+          <SitePhotoSlot group="landing" index={0} placeholderLabel={t.how.photo} placeholderMessages={photoMessages} ratio={3 / 2} seed={45} sizes="(min-width: 600px) 560px, 100vw" tape="white" />
         </Reveal>
         <Reveal>
           <p className={cn(styles.after, "chalk-soft")}>
@@ -200,12 +221,12 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           <div className={styles.bundles}>
             {bundles.map((b, i) => (
               <div key={b.id} className={styles.bundleCell} style={{ "--phone-order": PHONE_ORDER.indexOf(b.id) === -1 ? 9 : PHONE_ORDER.indexOf(b.id) } as React.CSSProperties}>
-                <BundleCard bundle={b} index={i} messages={en.bundlesPage.card} locale="en" href={scheduleHref(b.id)} />
+                <BundleCard bundle={b} index={i} messages={bundleMessages.card} locale={locale} href={scheduleHref(b.id, null, locale)} />
               </div>
             ))}
           </div>
         ) : (
-          <BookingPaused />
+          <BookingPaused messages={bundleMessages.paused} />
         )}
         <p className={cn(styles.ctaNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
         <Reveal className={styles.bonusWrap}>
@@ -235,7 +256,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           <ChalkBox className={styles.meet} seed={61} wobble={2.6} strokeWidth={2.4}>
             <ChalkDoodle name="heart" size={44} color="var(--accent-2)" strokeWidth={3} className={styles.meetDoodle} />
             <div className={styles.meetPhoto}>
-              <SitePhotoSlot group="landing" index={1} placeholderLabel={t.meet.photo} ratio={4 / 5} seed={62} sizes="300px" tape="yellow" />
+              <SitePhotoSlot group="landing" index={1} placeholderLabel={t.meet.photo} placeholderMessages={photoMessages} ratio={4 / 5} seed={62} sizes="300px" tape="yellow" />
             </div>
             <div>
               <h2 id="landing-meet" className={cn(styles.meetTitle, "chalk")}>{t.meet.title}</h2>
@@ -257,7 +278,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           {t.faq.items.map((f) => (
             <details key={f.q} className={styles.faqItem}>
               <summary className="chalk-soft">{f.q}</summary>
-              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel, deposit)}</p>
+              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel, deposit, noticeMessages)}</p>
             </details>
           ))}
         </div>
@@ -281,11 +302,11 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
         <Reveal>
           <ChalkBox className={styles.final} seed={71} wobble={3} strokeWidth={3} color="var(--sun-yellow)">
             <h2 id="landing-final" className={cn(styles.finalTitle, "chalk")}>{t.final.title}</h2>
-            <NextOpenDates bundleId={featured?.id} label={t.final.nextDates} loading={t.final.loading} />
+            <NextOpenDates bundleId={featured?.id} label={t.final.nextDates} loading={t.final.loading} locale={locale} />
             <p className="chalk-soft">{t.final.cap}</p>
             {seasonalOffers.length > 0 && (
               <p className={cn(styles.small, "chalk-soft")}>
-                {seasonalOffers.map((offer) => `${offer.title}: ${formatLongDate(offer.cutoff)}`).join(" · ")}
+                {seasonalOffers.map((offer) => `${offer.title}: ${formatLongDate(offer.cutoff, locale)}`).join(" · ")}
               </p>
             )}
             <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={72}>{t.final.cta}</ChalkButton>

@@ -40,6 +40,17 @@ export function formatLongDate(key: DateKey, locale: AppLocale = "en"): string {
   });
 }
 
+/** Compact landing-page date. Spanish is explicit so Chromium and WebKit keep the same order. */
+export function formatShortDate(key: DateKey, locale: AppLocale = "en"): string {
+  const date = fromDateKey(key);
+  if (locale === "es") {
+    const weekdays = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"] as const;
+    const months = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sept", "oct", "nov", "dic"] as const;
+    return `${weekdays[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+  }
+  return date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+}
+
 export function formatTimeLabel(hhmm: string, locale: AppLocale = "en"): string {
   const [h, m] = hhmm.split(":").map(Number);
   const suffix = locale === "es" ? (h >= 12 ? "p. m." : "a. m.") : h >= 12 ? "pm" : "am";

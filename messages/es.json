@@ -32,6 +32,180 @@
       }
     }
   },
+  "landing": {
+    "meta": {
+      "title": "La sesión en casa: fotos de recién nacidos y bebés en tu hogar",
+      "description": "Llevamos el estudio a tu hogar, desde Miami hasta Orlando. Fotos de recién nacidos y bebés guiadas por su ritmo; $0 hoy y pagas después de tu sesión."
+    },
+    "hero": {
+      "eyebrow": "La sesión en casa",
+      "title": [
+        "Fotos de recién nacidos y bebés,",
+        "en tu hogar."
+      ],
+      "sub": "Llevamos el estudio a tu sala, desde Miami hasta Orlando. Seguimos el ritmo de tu bebé, con pausas para alimentarlo.",
+      "cta": "Ver fechas disponibles",
+      "ctaNote": "Reserva en 2 minutos · $0 hoy · paga después de tu sesión",
+      "secondary": "Ver los paquetes"
+    },
+    "trust": [
+      "En tu hogar",
+      "Al ritmo de tu bebé",
+      "$0 hoy, paga después",
+      "De Miami a Orlando"
+    ],
+    "trustLabel": "Por qué las familias nos eligen",
+    "spanish": "Hablamos español",
+    "portfolio": {
+      "title": "Hogares reales, pequeños protagonistas",
+      "sub": "Cada una de estas fotos se tomó en el hogar de una familia.",
+      "cta": "Quiero fotos como estas"
+    },
+    "how": {
+      "title": "Cómo funciona",
+      "steps": [
+        {
+          "title": "Elige tu paquete",
+          "text": "Una, dos o tres horas; solo el bebé o toda la familia."
+        },
+        {
+          "title": "Elige una fecha y hora",
+          "text": "Consulta horarios realmente disponibles y reserva en unos dos minutos. $0 hoy."
+        },
+        {
+          "title": "Llevamos el estudio",
+          "text": "Luces, fondos, accesorios y ropa para el bebé. Tú solo ponte cómodo."
+        }
+      ],
+      "after": "En un plazo de 24 horas verás tus fotos y elegirás tus favoritas. Recibirás tus favoritas editadas dentro de las 72 horas de elegirlas. Pagas después de tu sesión con tarjeta, mediante un enlace seguro que te enviamos por correo.",
+      "photo": "Nuestro montaje en la sala de una familia"
+    },
+    "offer": {
+      "title": "Elige tu paquete",
+      "sub": "Cada paquete es una sesión en casa: vamos hasta ti, dondequiera que estés en Florida.",
+      "bonusTitle": "Cada sesión también incluye",
+      "bonuses": [
+        {
+          "title": "Guía para preparar tu sesión en casa",
+          "text": "Una guía de una página para preparar tu hogar y a tu bebé (temperatura, luz, alimentación y ropa)."
+        },
+        {
+          "title": "Tus fotos en 24 horas",
+          "text": "Mira tu sesión completa al día siguiente y elige tus favoritas. Las editamos y entregamos dentro de 72 horas."
+        },
+        {
+          "title": "Elige tu fondo",
+          "text": "Elígelo al reservar o más tarde desde tu correo de confirmación, y lo llevaremos a tu sesión."
+        }
+      ],
+      "promiseTitle": "Nuestra promesa de seguir el ritmo de tu bebé",
+      "promise": "Si tu bebé simplemente no logra calmarse, volveremos una vez sin costo dentro de los siguientes 14 días.",
+      "deliverNote": "Tu guía de preparación llega en el correo de confirmación, justo después de reservar."
+    },
+    "meet": {
+      "title": "Conoce a Adrian y Alondra",
+      "paragraphs": [
+        "Tiny Humans comenzó con nuestro propio recién nacido. Queríamos fotos en casa y no encontramos a nadie que fuera hasta nosotros. Así que nos convertimos en esos fotógrafos.",
+        "El hogar es donde los bebés y sus padres están más cómodos: sin silla para el auto, sin empacar todo el cuarto del bebé y con libertad para alimentarlo cuando quiera.",
+        "Adrian fotografía y edita cada sesión. Alondra diseña los montajes, el estilo y los pequeños detalles. También somos padres y sabemos lo rápido que pasan estas primeras semanas."
+      ],
+      "spanish": "Hablamos español.",
+      "photo": "Adrian y Alondra"
+    },
+    "faq": {
+      "title": "Preguntas de otros padres",
+      "items": [
+        {
+          "q": "¿Es seguro para un recién nacido?",
+          "a": "Sí, la seguridad siempre es lo primero. Mantenemos la habitación cálida, nos lavamos y desinfectamos las manos, y nunca usamos poses sin apoyo: cualquier pose complicada se crea de forma segura combinando dos fotos. Uno de los padres permanece al alcance de la mano y no usamos fragancias."
+        },
+        {
+          "q": "¿Cuánto tiempo después del nacimiento debemos reservar?",
+          "a": "Cuando mejor te convenga. Las primeras semanas son ideales para fotos de recién nacidos dormidos y acurrucados, y fotografiamos a pequeños de hasta 2 años. ¿Todavía estás esperando? Reserva con tu fecha prevista de parto y ajustaremos el día cuando nazca tu bebé."
+        },
+        {
+          "q": "¿Qué pasa si el bebé nace antes o después, está inquieto o tiene hambre?",
+          "a": "Cada sesión sigue el ritmo de tu bebé, con pausas para alimentarlo y abrazarlo. Puedes cambiar o cancelar tu sesión en línea hasta {notice} antes, o simplemente escríbenos. Y si tu bebé no logra calmarse, volveremos una vez sin costo dentro de los siguientes 14 días.",
+          "aDeposit": "Cada sesión sigue el ritmo de tu bebé, con pausas para alimentarlo y abrazarlo. Puedes cambiar o cancelar tu sesión en línea hasta {notice} antes (si cancelas, reembolsamos tu depósito), o simplemente escríbenos. Y si tu bebé no logra calmarse, volveremos una vez sin costo dentro de los siguientes 14 días."
+        },
+        {
+          "q": "¿Cuánto espacio necesitamos?",
+          "a": "Solo un poco de espacio, idealmente cerca de una ventana. Llevamos las luces, los fondos, los accesorios y la ropa para el bebé."
+        },
+        {
+          "q": "¿Qué debemos ponernos?",
+          "a": "Llevamos ropa y mantas para el bebé. Para las fotos familiares, los colores sólidos y suaves se ven hermosos: crema, beige, verde salvia o azul claro. Evita los logotipos grandes y los estampados muy llamativos."
+        },
+        {
+          "q": "¿Pueden salir hermanos y mascotas en las fotos?",
+          "a": "Los hermanos y los padres participan con Our Family Story. Little Moments y Our Little Story son solo para el bebé. ¿Quieres incluir una mascota? Cuéntanos en las notas de tu reserva y lo planificaremos."
+        },
+        {
+          "q": "¿Qué áreas cubren? ¿Hay un cargo de viaje?",
+          "a": "Estamos en Miami Beach y viajamos a cualquier lugar desde Miami hasta Orlando. Los hogares más lejanos pueden tener un cargo de viaje, y siempre te lo confirmaremos antes de tu sesión.",
+          "aFee": "Estamos en Miami Beach y vamos a hogares ubicados a un máximo de {max} millas. Las primeras {free} millas son gratis; después cobramos {perMile} por milla, y verás el cargo exacto en cuanto ingreses tu código postal."
+        },
+        {
+          "q": "¿Cuándo recibimos las fotos y cómo pagamos?",
+          "a": "Dentro de las 24 horas posteriores a tu sesión, recibirás una galería privada para elegir tus favoritas (tantas como incluya tu paquete). Editamos las que elijas y las entregamos dentro de 72 horas. No pagas nada hoy: pagas después de tu sesión con tarjeta, mediante un enlace seguro que te enviamos por correo.",
+          "aDeposit": "Dentro de las 24 horas posteriores a tu sesión, recibirás una galería privada para elegir tus favoritas (tantas como incluya tu paquete). Editamos las que elijas y las entregamos dentro de 72 horas. Al reservar, un depósito de {deposit} guarda tu fecha y se descuenta del total. Pagas el resto después de tu sesión con tarjeta, mediante un enlace seguro que te enviamos por correo.",
+          "aDepositFrom": "Dentro de las 24 horas posteriores a tu sesión, recibirás una galería privada para elegir tus favoritas (tantas como incluya tu paquete). Editamos las que elijas y las entregamos dentro de 72 horas. Al reservar, un depósito (desde {deposit}, según tu paquete) guarda tu fecha y se descuenta del total. Pagas el resto después de tu sesión con tarjeta, mediante un enlace seguro que te enviamos por correo."
+        }
+      ]
+    },
+    "area": {
+      "title": "Hasta dónde vamos",
+      "sub": "Estamos en Miami Beach. Vamos hasta ti, en cualquier lugar desde Miami hasta Orlando.",
+      "cities": [
+        "Miami",
+        "Miami Beach",
+        "Aventura",
+        "North Miami",
+        "Coral Gables",
+        "Doral",
+        "Kendall",
+        "Hialeah",
+        "Hollywood",
+        "Fort Lauderdale",
+        "Boca Raton",
+        "West Palm Beach",
+        "Port St. Lucie",
+        "Orlando"
+      ],
+      "more": "…y todos los lugares intermedios."
+    },
+    "final": {
+      "title": "Tu pequeño no será tan pequeño por mucho tiempo",
+      "nextDates": "Próximas fechas disponibles",
+      "loading": "Consultando el calendario…",
+      "cap": "Realizamos hasta 10 sesiones en casa por semana.",
+      "seasonal": "Fotos de temporada: Acción de Gracias hasta el 23 de noviembre · tarjetas navideñas fotografiadas antes del 5 de diciembre.",
+      "cta": "Reserva tu sesión en casa",
+      "ctaNote": "$0 hoy · paga después de tu sesión"
+    },
+    "seasonalOffers": {
+      "eyebrow": "Sesiones de temporada en casa",
+      "cutoff": "Últimas sesiones: {date}",
+      "cta": "Ver fechas disponibles",
+      "defaults": {
+        "thanksgiving": {
+          "title": "El primer Día de Acción de Gracias de tu bebé en casa",
+          "description": "Una acogedora sesión en casa para bebés que celebran su primer Día de Acción de Gracias.",
+          "cutoff": "2026-11-23"
+        },
+        "christmasCards": {
+          "title": "Tarjetas navideñas en casa",
+          "description": "Fotos navideñas de tu bebé o de toda la familia, perfectas para tarjetas, regalos y recuerdos.",
+          "cutoff": "2026-12-05"
+        },
+        "firstChristmas": {
+          "title": "La primera Navidad de tu bebé en casa",
+          "description": "Una acogedora sesión de recuerdo para la primera Navidad de tu bebé.",
+          "cutoff": "2026-12-21"
+        }
+      }
+    }
+  },
   "photoPlaceholder": {
     "aria": "Próximamente: foto de {label}",
     "soon": "foto próximamente"
@@ -909,6 +1083,29 @@
     "error": "Algo salió mal. Inténtalo de nuevo o escríbenos al {phone}."
   },
   "deposit": {
+    "landing": {
+      "metaDescription": {
+        "one": "Llevamos el estudio a tu hogar, desde Miami hasta Orlando. Fotos de recién nacidos y bebés guiadas por su ritmo: un depósito de {deposit} guarda tu fecha y pagas el resto después de tu sesión.",
+        "from": "Llevamos el estudio a tu hogar, desde Miami hasta Orlando. Fotos de recién nacidos y bebés guiadas por su ritmo: un depósito desde {deposit} guarda tu fecha y pagas el resto después de tu sesión."
+      },
+      "ctaNote": {
+        "one": "Reserva en 2 minutos · un depósito de {deposit} guarda tu fecha",
+        "from": "Reserva en 2 minutos · un depósito desde {deposit} guarda tu fecha"
+      },
+      "trust": {
+        "one": "{deposit} guarda tu fecha",
+        "from": "Un depósito guarda tu fecha"
+      },
+      "howStep": {
+        "one": "Consulta horarios realmente disponibles y reserva en unos dos minutos. Un depósito de {deposit} guarda tu fecha.",
+        "from": "Consulta horarios realmente disponibles y reserva en unos dos minutos. Un depósito desde {deposit} guarda tu fecha."
+      },
+      "after": "En un plazo de 24 horas verás tus fotos y elegirás tus favoritas. Recibirás tus favoritas editadas dentro de las 72 horas de elegirlas. Pagas el resto después de tu sesión con tarjeta, mediante un enlace seguro que te enviamos por correo.",
+      "finalCtaNote": {
+        "one": "Un depósito de {deposit} guarda tu fecha · el resto después de tu sesión",
+        "from": "Un depósito desde {deposit} guarda tu fecha · el resto después de tu sesión"
+      }
+    },
     "terms": {
       "booking": {
         "one": "Puedes reservar una sesión en nuestro sitio web. Al reservar, pagas con tarjeta un depósito de {deposit}, y tu fecha queda confirmada en cuanto se recibe el pago. El depósito se descuenta del total de tu paquete; el resto vence cuando termine tu sesión de fotos.",

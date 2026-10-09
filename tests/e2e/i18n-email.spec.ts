@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
-import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
+import { formatLongDate, formatShortDate, formatTimeLabel } from "@/lib/booking/dates";
 import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { bookingRequestSchema } from "@/lib/booking/validation";
@@ -59,6 +59,7 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.seo, es.seo, "seo");
   compareCatalogShape(en.home, es.home, "home");
   compareCatalogShape(en.photoPlaceholder, es.photoPlaceholder, "photoPlaceholder");
+  compareCatalogShape(en.landing, es.landing, "landing");
   compareCatalogShape(en.catalog, es.catalog, "catalog");
   compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
@@ -70,6 +71,7 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.policy, es.policy, "policy");
   compareCatalogShape(en.legal, es.legal, "legal");
   compareCatalogShape(en.deposit.terms, es.deposit.terms, "deposit.terms");
+  compareCatalogShape(en.deposit.landing, es.deposit.landing, "deposit.landing");
   expect(es.legal.privacy.sections.map((section) => section.id)).toEqual(en.legal.privacy.sections.map((section) => section.id));
   expect(es.legal.terms.sections.map((section) => section.id)).toEqual(en.legal.terms.sections.map((section) => section.id));
   expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
@@ -78,6 +80,7 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   expect(es.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
   expect(Object.keys(en.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
   expect(Object.keys(es.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
+  expect(formatShortDate("2026-12-05", "es")).toBe("sáb, 5 dic");
 });
 
 test("legal settings update the matching section in both languages", async ({}, testInfo) => {

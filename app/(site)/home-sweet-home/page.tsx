@@ -21,5 +21,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Page() {
   const [noticeHours, travel, deposit] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit()]);
-  return <LandingPage noticeHours={noticeHours} travel={travel} deposit={deposit} />;
+  return (
+    <LandingPage
+      noticeHours={noticeHours}
+      travel={travel}
+      deposit={deposit}
+      messages={en.landing}
+      bundleMessages={en.bundlesPage}
+      photoMessages={en.photoPlaceholder}
+      depositMessages={en.deposit.landing}
+      noticeMessages={en.policy}
+      locale="en"
+    />
+  );
 }

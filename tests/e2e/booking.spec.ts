@@ -223,7 +223,7 @@ test("a ZIP code outside Florida can't be booked", async ({ page }) => {
 });
 
 test("the landing page and legal pages load", async ({ page }) => {
-  for (const path of ["/", "/bundles", "/about", "/privacy", "/terms"]) {
+  for (const path of ["/", "/home-sweet-home", "/bundles", "/about", "/privacy", "/terms"]) {
     const res = await page.goto(path);
     expect(res?.status(), path).toBe(200);
   }
