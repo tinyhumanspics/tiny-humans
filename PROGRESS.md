@@ -4,8 +4,9 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `6ca069f` is live and smoke-tested; Vercel succeeded and production cancel/reschedule pages returned
-200 with their expected English content; unfinished `/es/cancel` and `/es/reschedule` remained intentional 404s.
+State: app commit `974cb10` is live and smoke-tested; Vercel succeeded and production backdrop, review and payment-
+status pages returned 200 with their expected English content; their unfinished `/es` counterparts remained intentional
+404s.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -513,7 +514,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       cancellation in all three browsers. Strict tsc/build/lint passed (0 errors/25 known warnings), 70 e2e passed (20
       expected cross-browser skips), all 16 visual-parity pages passed, and both manage pages were captured and
       inspected at iPhone and 1440px. Vercel succeeded; production cancel/reschedule returned 200 with expected English
-      content, while `/es/cancel` and `/es/reschedule` remained intentional 404s.
+      content, while `/es/cancel` and `/es/reschedule` remained intentional 404s. **Oct 9 customer email tools
+      (`974cb10`):** the backdrop picker, review form and payment-status page now accept matched English/Spanish
+      catalogs and locale-aware home/date/time links. Saved backdrop and bundle names use the localized public catalog,
+      while raw API errors are replaced with safe family-facing copy. The live English routes still pass English
+      explicitly, and no Spanish route is published yet. Strict tsc/build/lint passed (0 errors/25 known warnings), 73
+      e2e passed (20 expected cross-browser skips), all 16 visual-parity pages passed, and all three states were captured
+      and inspected at iPhone and 1440px. Vercel succeeded; production backdrop, review and paid-status pages returned
+      200 with expected English content, while `/es/backdrop`, `/es/review` and `/es/pay/status` remained intentional
+      404s.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
