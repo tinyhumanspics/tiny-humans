@@ -1,16 +1,6 @@
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
 
-/**
- * Booking settings. Tiny Humans brings the studio to every family's home,
- * so there is no location choice: the family's address is collected in
- * the details step.
- */
-export const homeSession = {
-  /** Shown above the address fields in the booking form. */
-  addressHelp: "We bring the lights, backdrops and props to you, so your little one can stay comfy at home. Just leave us a little space near a window if you can.",
-};
-
 export const babyAgeOptions = [
   "Newborn (0–2 weeks)",
   "2–6 weeks",

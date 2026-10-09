@@ -90,6 +90,106 @@
       "one": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
       "many": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little ones whenever needed."
     },
+    "summary": {
+      "yourBundle": "Your bundle",
+      "inspiredBy": "Inspired by",
+      "removeInspiration": "Remove inspiration photo",
+      "remove": "Remove",
+      "changeBundle": "Change bundle",
+      "editedPhotos": "{count} edited photos",
+      "extraBaby": "Extra baby",
+      "extraBabies": "Extra babies",
+      "durationMinutes": "Up to {minutes} minutes",
+      "durationHour": "Up to 1 hour",
+      "durationHours": "Up to {hours} hours",
+      "totalDuration": "{duration} total"
+    },
+    "details": {
+      "optional": " (optional)",
+      "honeypot": "Leave this empty",
+      "parentName": "Parent / guardian name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": {
+        "title": "Where should we bring the studio?",
+        "help": "We bring the lights, backdrops and props to you, so your little one can stay comfy at home. Just leave us a little space near a window if you can.",
+        "street": "Street address",
+        "unit": "Apt / unit",
+        "city": "City",
+        "zip": "ZIP code",
+        "access": "Gate code, parking or concierge",
+        "accessPlaceholder": "Gate code, where to park, check in at the front desk…"
+      },
+      "baby": {
+        "one": "Your baby",
+        "many": "Babies",
+        "number": "Baby {number}",
+        "name": "Baby name",
+        "age": "Age (required)",
+        "chooseAge": "Choose an age",
+        "ageError": "Choose an age for each baby.",
+        "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages.",
+        "ageOptions": ["Newborn (0–2 weeks)", "2–6 weeks", "6 weeks – 3 months", "3–6 months", "6–12 months", "1–2 years", "Not born yet"]
+      },
+      "extraBabies": {
+        "one": "1 baby",
+        "two": "Twins",
+        "three": "Triplets",
+        "included": "Your bundle includes one baby.",
+        "question": "Shooting twins or triplets?",
+        "choose": "Choose twins or triplets",
+        "details": "Each extra baby adds {price}, {minutes} minutes and {photos} edited photos.",
+        "fullPrice": "Special offers and discount codes apply to the bundle only.",
+        "choice": "+{price} · +{minutes} min · +{photos} photos",
+        "checking": "Checking that your selected time still fits…",
+        "checkFailed": "We couldn't check that time. Please try your twins or triplets choice again.",
+        "timeUnavailable": "Your previous time doesn't have enough room for a twins or triplets session. Your information is saved—please choose another time."
+      },
+      "notes": {
+        "label": "Notes or special requests",
+        "placeholder": "Siblings joining, favorite colors, a family heirloom to include…"
+      },
+      "backdrops": {
+        "title": "Pick your backdrop",
+        "titleMany": "Pick your backdrops",
+        "hint": "Optional. Not sure yet? Skip it: you can choose later from your confirmation email.",
+        "hintMany": "Optional: one for each of your {n} setups. Not sure yet? Skip it: you can choose later from your confirmation email.",
+        "names": {
+          "blueAura": "Blue Aura",
+          "burgundy": "Burgundy",
+          "pink": "Pink",
+          "cream": "Cream",
+          "white": "White",
+          "beige": "Beige",
+          "wooden": "Wooden"
+        }
+      },
+      "consents": {
+        "title": "Two quick permissions",
+        "sms": "OK to text me about my session (reminders, arrival updates). Reply STOP anytime.",
+        "photos": "OK to feature our photos on the Tiny Humans website and social media.",
+        "hint": "You can change your mind any time. Just let us know."
+      },
+      "travel": {
+        "checking": "Checking the distance…",
+        "free": "Within {free} miles of Miami Beach: no travel fee.",
+        "fee": "About {miles} miles from Miami Beach: {fee} travel fee (the first {free} miles are free).",
+        "tooFar": "That's farther than we usually travel. Text us at {phone} and we'll see what we can do.",
+        "outsideFlorida": "We only come to homes in Florida. Please check the ZIP code.",
+        "unknown": "We'll confirm any travel fee with you before your session.",
+        "label": "Travel fee",
+        "value": "{fee} (about {miles} miles)",
+        "total": "Total"
+      },
+      "validation": {
+        "parentName": "Add the parent or guardian's name.",
+        "email": "Enter an email like name@example.com.",
+        "phone": "Enter a phone number with at least 10 digits.",
+        "street": "Add the street address where we'll set up.",
+        "city": "Add the city.",
+        "zip": "Enter a 5-digit ZIP code."
+      }
+    },
     "errors": {
       "availability": "We couldn't load open times. Please try again.",
       "date": "Pick a day on the calendar.",

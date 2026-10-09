@@ -84,6 +84,106 @@
       "one": "Nuestras sesiones siguen el ritmo de tu bebé. Hay tiempo para alimentarlo, cambiarlo y consolarlo cuando lo necesite.",
       "many": "Nuestras sesiones siguen el ritmo de tus bebés. Hay tiempo para alimentarlos, cambiarlos y consolarlos cuando lo necesiten."
     },
+    "summary": {
+      "yourBundle": "Tu paquete",
+      "inspiredBy": "Inspirado en",
+      "removeInspiration": "Quitar la foto de inspiración",
+      "remove": "Quitar",
+      "changeBundle": "Cambiar paquete",
+      "editedPhotos": "{count} fotos editadas",
+      "extraBaby": "Bebé adicional",
+      "extraBabies": "Bebés adicionales",
+      "durationMinutes": "Hasta {minutes} minutos",
+      "durationHour": "Hasta 1 hora",
+      "durationHours": "Hasta {hours} horas",
+      "totalDuration": "{duration} en total"
+    },
+    "details": {
+      "optional": " (opcional)",
+      "honeypot": "Deja este campo vacío",
+      "parentName": "Nombre del padre, madre o tutor",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "address": {
+        "title": "¿Dónde debemos llevar el estudio?",
+        "help": "Llevamos las luces, los fondos y los accesorios hasta ti para que tu bebé pueda estar cómodo en casa. Si puedes, solo déjanos un poco de espacio cerca de una ventana.",
+        "street": "Dirección",
+        "unit": "Apartamento / unidad",
+        "city": "Ciudad",
+        "zip": "Código postal",
+        "access": "Código de entrada, estacionamiento o recepción",
+        "accessPlaceholder": "Código de entrada, dónde estacionar, registrarnos en la recepción…"
+      },
+      "baby": {
+        "one": "Tu bebé",
+        "many": "Bebés",
+        "number": "Bebé {number}",
+        "name": "Nombre del bebé",
+        "age": "Edad (obligatoria)",
+        "chooseAge": "Elige una edad",
+        "ageError": "Elige una edad para cada bebé.",
+        "olderNote": "¿Tu pequeño tiene más de 2 años? Escríbenos a {email} y te avisaremos cuando aceptemos más edades.",
+        "ageOptions": ["Recién nacido (0–2 semanas)", "2–6 semanas", "6 semanas–3 meses", "3–6 meses", "6–12 meses", "1–2 años", "Aún no ha nacido"]
+      },
+      "extraBabies": {
+        "one": "1 bebé",
+        "two": "Gemelos",
+        "three": "Trillizos",
+        "included": "Tu paquete incluye un bebé.",
+        "question": "¿La sesión es para gemelos o trillizos?",
+        "choose": "Elige gemelos o trillizos",
+        "details": "Cada bebé adicional agrega {price}, {minutes} minutos y {photos} fotos editadas.",
+        "fullPrice": "Las ofertas especiales y los códigos de descuento se aplican solo al paquete.",
+        "choice": "+{price} · +{minutes} min · +{photos} fotos",
+        "checking": "Comprobando que el horario elegido todavía tenga suficiente tiempo…",
+        "checkFailed": "No pudimos comprobar ese horario. Vuelve a elegir la opción de gemelos o trillizos.",
+        "timeUnavailable": "El horario anterior no tiene suficiente tiempo para una sesión de gemelos o trillizos. Guardamos tu información; elige otro horario."
+      },
+      "notes": {
+        "label": "Notas o solicitudes especiales",
+        "placeholder": "Hermanos que participarán, colores favoritos, algún recuerdo familiar que quieras incluir…"
+      },
+      "backdrops": {
+        "title": "Elige tu fondo",
+        "titleMany": "Elige tus fondos",
+        "hint": "Opcional. ¿Todavía no sabes cuál? Puedes omitirlo y elegirlo después desde tu correo de confirmación.",
+        "hintMany": "Opcional: uno para cada uno de tus {n} montajes. ¿Todavía no sabes cuáles? Puedes omitirlos y elegirlos después desde tu correo de confirmación.",
+        "names": {
+          "blueAura": "Azul Aura",
+          "burgundy": "Borgoña",
+          "pink": "Rosa",
+          "cream": "Crema",
+          "white": "Blanco",
+          "beige": "Beige",
+          "wooden": "Madera"
+        }
+      },
+      "consents": {
+        "title": "Dos permisos rápidos",
+        "sms": "Acepto recibir mensajes de texto sobre mi sesión (recordatorios y avisos de llegada). Responde STOP en cualquier momento.",
+        "photos": "Acepto que nuestras fotos aparezcan en el sitio web y las redes sociales de Tiny Humans.",
+        "hint": "Puedes cambiar de opinión en cualquier momento. Solo avísanos."
+      },
+      "travel": {
+        "checking": "Calculando la distancia…",
+        "free": "Dentro de {free} millas de Miami Beach: sin cargo de viaje.",
+        "fee": "A unas {miles} millas de Miami Beach: cargo de viaje de {fee} (las primeras {free} millas son gratis).",
+        "tooFar": "Eso queda más lejos de lo que solemos viajar. Escríbenos al {phone} y veremos qué podemos hacer.",
+        "outsideFlorida": "Solo vamos a hogares en Florida. Revisa el código postal.",
+        "unknown": "Confirmaremos contigo cualquier cargo de viaje antes de tu sesión.",
+        "label": "Cargo de viaje",
+        "value": "{fee} (aprox. {miles} millas)",
+        "total": "Total"
+      },
+      "validation": {
+        "parentName": "Agrega el nombre del padre, madre o tutor.",
+        "email": "Ingresa un correo como nombre@ejemplo.com.",
+        "phone": "Ingresa un número de teléfono de al menos 10 dígitos.",
+        "street": "Agrega la dirección donde instalaremos el estudio.",
+        "city": "Agrega la ciudad.",
+        "zip": "Ingresa un código postal de 5 dígitos."
+      }
+    },
     "errors": {
       "availability": "No pudimos cargar los horarios disponibles. Inténtalo de nuevo.",
       "date": "Elige un día en el calendario.",

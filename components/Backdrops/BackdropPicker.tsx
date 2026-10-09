@@ -16,7 +16,7 @@ const swatchStyle = (b: Backdrop): CSSProperties =>
  * Backdrop swatches to tap. One per setup: with room left a tap adds, when full it swaps out the oldest pick
  * (one setup: a tap replaces). Tapping a picked one removes it.
  */
-export default function BackdropPicker({ max, value, onChange, label }: { max: number; value: string[]; onChange: (picks: string[]) => void; label: string }) {
+export default function BackdropPicker({ max, value, onChange, label, names }: { max: number; value: string[]; onChange: (picks: string[]) => void; label: string; names?: Record<string, string> }) {
   const toggle = (id: string) => {
     if (value.includes(id)) return onChange(value.filter((x) => x !== id));
     onChange(value.length >= max ? [...value.slice(value.length - max + 1), id] : [...value, id]);
@@ -30,7 +30,7 @@ export default function BackdropPicker({ max, value, onChange, label }: { max: n
             <span className={styles.swatch} style={swatchStyle(b)} aria-hidden="true">
               {on && <ChalkDoodle name="check" size={30} color="var(--sun-yellow)" strokeWidth={4} className={styles.check} />}
             </span>
-            <span className={cn(styles.name, "chalk-soft")}>{backdropName(b.id)}</span>
+            <span className={cn(styles.name, "chalk-soft")}>{names?.[b.id] ?? backdropName(b.id)}</span>
           </button>
         );
       })}

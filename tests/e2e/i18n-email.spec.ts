@@ -8,7 +8,8 @@ import { bookingRequestSchema } from "@/lib/booking/validation";
 import { bundleInputSchema } from "@/lib/pricing/validation";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
 import type { Bundle } from "@/config/bundles";
-import { bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
+import { babyAgeOptions, bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
+import { BACKDROP_IDS } from "@/config/backdrops";
 import { localePath } from "@/i18n/path";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
@@ -54,6 +55,10 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
   expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(es.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
+  expect(en.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
+  expect(es.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
+  expect(Object.keys(en.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
+  expect(Object.keys(es.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
 });
 
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {

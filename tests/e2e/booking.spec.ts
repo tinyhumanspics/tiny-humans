@@ -63,7 +63,7 @@ test("a family can book a session (mock provider)", async ({ page }) => {
   expect(submitted).toMatchObject({ locale: "en" });
 });
 
-test("twins add full-price time and photos to any bundle", async ({ page }) => {
+test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
   await page.goto("/book?bundle=little-moments");
   const day = availableDay(page);
   if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
@@ -73,6 +73,9 @@ test("twins add full-price time and photos to any bundle", async ({ page }) => {
   await expect(time.getByText(/until/)).toBeVisible();
   await time.click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
+  if (process.env.CAPTURE_BOOKING_DETAILS === "1") {
+    await page.screenshot({ path: `.screenshots/booking-details-i18n/${testInfo.project.name}.png`, fullPage: true });
+  }
 
   await expect(page.locator("#field-baby-1-name")).toHaveCount(0);
   await expect(page.getByText("Your bundle includes one baby.")).toBeVisible();

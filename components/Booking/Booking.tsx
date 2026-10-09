@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { site } from "@/config/site";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
-import { activeOffer, durationLabel, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
+import { activeOffer, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
 import { pricingRows } from "@/lib/booking/templates";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import BabyLedNote from "./BabyLedNote";
-import { babyAgeOptions, bookingSettings, bookingSteps, bundlesHref, homeSession, STEP } from "@/config/booking";
+import { babyAgeOptions, bookingSettings, bookingSteps, bundlesHref, STEP } from "@/config/booking";
 import {
   addDays,
   fromDateKey,
@@ -176,15 +176,15 @@ function reducer(state: State, action: Action): State {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-function validateContact(c: ContactDraft): ContactErrors {
+function validateContact(c: ContactDraft, messages: typeof en.bookingFlow.details): ContactErrors {
   const e: ContactErrors = {};
-  if (c.parentName.trim().length < 2) e.parentName = "Add the parent or guardian's name.";
-  if (!EMAIL_RE.test(c.email.trim())) e.email = "Enter an email like name@example.com.";
-  if (c.phone.replace(/\D/g, "").length < 10) e.phone = "Enter a phone number with at least 10 digits.";
-  if (c.street.trim().length < 4) e.street = "Add the street address where we'll set up.";
-  if (c.city.trim().length < 2) e.city = "Add the city.";
-  if (!/^\d{5}(-\d{4})?$/.test(c.zip.trim())) e.zip = "Enter a 5-digit ZIP code.";
-  else if (!isFloridaZip(c.zip)) e.zip = en.booking.travel.outsideFlorida;
+  if (c.parentName.trim().length < 2) e.parentName = messages.validation.parentName;
+  if (!EMAIL_RE.test(c.email.trim())) e.email = messages.validation.email;
+  if (c.phone.replace(/\D/g, "").length < 10) e.phone = messages.validation.phone;
+  if (c.street.trim().length < 4) e.street = messages.validation.street;
+  if (c.city.trim().length < 2) e.city = messages.validation.city;
+  if (!/^\d{5}(-\d{4})?$/.test(c.zip.trim())) e.zip = messages.validation.zip;
+  else if (!isFloridaZip(c.zip)) e.zip = messages.travel.outsideFlorida;
   return e;
 }
 
@@ -196,8 +196,11 @@ function newRequestId(): string {
     : `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-/** Newborns up to 2 years for now: the note under the age box, split around the email link. */
-const olderNote = en.booking.age.olderNote.split("{email}");
+function flowDurationLabel(minutes: number, messages: typeof en.bookingFlow.summary): string {
+  if (minutes < 120 || minutes % 30 !== 0) return fill(messages.durationMinutes, { minutes: String(minutes) });
+  const hours = minutes / 60;
+  return hours === 1 ? messages.durationHour : fill(messages.durationHours, { hours: String(hours) });
+}
 
 /** The booking calendar for one bundle (chosen on the bundles page). */
 export default function Booking({ bundleId, locale = "en", messages }: { bundleId: string; locale?: AppLocale; messages: typeof en.bookingFlow }) {
@@ -349,10 +352,10 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
       dispatch({ type: "babyCount", count: nextCount, slot: nextSlot });
       if (state.slot && !nextSlot) {
         dispatch({ type: "go", step: STEP.time });
-        dispatch({ type: "stepError", message: en.booking.extraBabies.timeUnavailable });
+        dispatch({ type: "stepError", message: messages.details.extraBabies.timeUnavailable });
       }
     } catch (err) {
-      dispatch({ type: "stepError", message: err instanceof BookingApiError ? err.message : en.booking.extraBabies.checkFailed });
+      dispatch({ type: "stepError", message: err instanceof BookingApiError ? err.message : messages.details.extraBabies.checkFailed });
     } finally {
       setCheckingBabyCount(false);
     }
@@ -394,9 +397,9 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
         if (!state.slot) return dispatch({ type: "stepError", message: messages.errors.time });
         break;
       case STEP.details: {
-        const errors = validateContact(state.contact);
-        const babyErrors = state.babies.map((baby) => (baby.age ? "" : en.booking.extraBabies.ageError));
-        const tooFar = travel?.status === "too_far" ? travelHint(travel) : null;
+        const errors = validateContact(state.contact, messages.details);
+        const babyErrors = state.babies.map((baby) => (baby.age ? "" : messages.details.baby.ageError));
+        const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
         if (tooFar && !errors.zip) errors.zip = tooFar.text;
         if (Object.keys(errors).length || babyErrors.some(Boolean)) {
           dispatch({ type: "fieldErrors", errors, babyErrors });
@@ -499,24 +502,24 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
             {inspiration && <InspirationThumb photo={inspiration} size={44} />}
             <div className={styles.summaryText}>
               <p className="chalk-soft">
-                <span className={styles.chipLabel}>Your bundle</span>{" "}
+                <span className={styles.chipLabel}>{messages.summary.yourBundle}</span>{" "}
                 <span className={styles.bundleName}>{bundle.name}</span>
                 <span className={styles.bundleMeta}>
-                  {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${bundle.photos} edited photos` : ""}
+                  {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${fill(messages.summary.editedPhotos, { count: bundle.photos })}` : ""}
                 </span>
-                {addon && <span className={styles.bundleMeta}>{addon.name}: +{formatMoney(addon.totalCents)} · {durationLabel(sessionMinutes(bundle, state.babies.length))} total · {addPhotos(bundle.photos, addon.extraPhotos)} edited photos</span>}
+                {addon && <span className={styles.bundleMeta}>{addon.quantity === 1 ? messages.summary.extraBaby : messages.summary.extraBabies}: +{formatMoney(addon.totalCents)} · {fill(messages.summary.totalDuration, { duration: flowDurationLabel(sessionMinutes(bundle, state.babies.length), messages.summary) })} · {fill(messages.summary.editedPhotos, { count: addPhotos(bundle.photos, addon.extraPhotos) })}</span>}
               </p>
               {inspiration && (
                 <p className={cn(styles.summaryPhoto, "chalk-soft")}>
-                  <span className={styles.chipLabel}>Inspired by</span> {inspiration.title}{" "}
-                  <button type="button" className={cn(styles.inlineLink, "chalk-soft")} onClick={() => selection.setInspirationId(null)} aria-label="Remove inspiration photo">
-                    Remove
+                  <span className={styles.chipLabel}>{messages.summary.inspiredBy}</span> {inspiration.title}{" "}
+                  <button type="button" className={cn(styles.inlineLink, "chalk-soft")} onClick={() => selection.setInspirationId(null)} aria-label={messages.summary.removeInspiration}>
+                    {messages.summary.remove}
                   </button>
                 </p>
               )}
             </div>
             <Link href={bundlesHref(selection.inspirationId, locale)} className={cn(styles.linkButton, "chalk-soft")}>
-              Change bundle
+              {messages.summary.changeBundle}
             </Link>
           </div>
         )}
@@ -599,13 +602,14 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                       backdrops={backdrops}
                       onBackdrops={setBackdrops}
                       setups={setups}
+                      messages={messages.details}
                       zipNote={
                         /^\d{5}$/.test(zip) && !isFloridaZip(zip)
-                          ? { text: en.booking.travel.outsideFlorida, blocking: true }
+                          ? { text: messages.details.travel.outsideFlorida, blocking: true }
                           : travelChecking
-                            ? { text: en.booking.travel.checking, blocking: false }
+                            ? { text: messages.details.travel.checking, blocking: false }
                             : travel
-                              ? travelHint(travel)
+                              ? travelHint(travel, messages.details.travel)
                               : null
                       }
                     />
@@ -711,26 +715,26 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
 
 /* ---------------- twins / triplets choice (after Baby 1 on the details step) ---------------- */
 
-function ExtraBabiesPicker({ bundle, count, checking, onChange }: { bundle: Bundle; count: number; checking: boolean; onChange: (count: number) => void }) {
+function ExtraBabiesPicker({ bundle, count, checking, onChange, messages }: { bundle: Bundle; count: number; checking: boolean; onChange: (count: number) => void; messages: typeof en.bookingFlow.details.extraBabies }) {
   const addon = bundle.extraBaby;
   const [expanded, setExpanded] = useState(count > 1);
   if (!addon?.active) return null;
   const max = Math.min(3, addon.maxBabies);
   const choices = [
-    { count: 2, label: en.booking.extraBabies.two, price: addon.price, minutes: addon.extraMinutes, photos: addon.extraPhotos },
-    { count: 3, label: en.booking.extraBabies.three, price: addon.price * 2, minutes: addon.extraMinutes * 2, photos: addon.extraPhotos * 2 },
+    { count: 2, label: messages.two, price: addon.price, minutes: addon.extraMinutes, photos: addon.extraPhotos },
+    { count: 3, label: messages.three, price: addon.price * 2, minutes: addon.extraMinutes * 2, photos: addon.extraPhotos * 2 },
   ].filter((choice) => choice.count <= max);
   return (
     <div className={styles.extraBabiesPrompt}>
-      <p className={cn(styles.extraBabiesIncluded, "chalk-soft")}>{en.booking.extraBabies.included}</p>
+      <p className={cn(styles.extraBabiesIncluded, "chalk-soft")}>{messages.included}</p>
       <button type="button" className={cn(styles.extraBabiesToggle, "chalk-soft")} aria-expanded={expanded} onClick={() => setExpanded((open) => !open)}>
-        {en.booking.extraBabies.question}
+        {messages.question}
       </button>
       <p className={cn(styles.extraBabiesHint, "chalk-soft")}>
-        {fill(en.booking.extraBabies.details, { price: formatMoney(toCents(addon.price)), minutes: String(addon.extraMinutes), photos: String(addon.extraPhotos) })} {en.booking.extraBabies.fullPrice}
+        {fill(messages.details, { price: formatMoney(toCents(addon.price)), minutes: String(addon.extraMinutes), photos: String(addon.extraPhotos) })} {messages.fullPrice}
       </p>
       {expanded && (
-        <div className={styles.extraBabiesChoices} role="group" aria-label={en.booking.extraBabies.choose}>
+        <div className={styles.extraBabiesChoices} role="group" aria-label={messages.choose}>
           {choices.map((choice) => (
             <button
               key={choice.count}
@@ -741,17 +745,17 @@ function ExtraBabiesPicker({ bundle, count, checking, onChange }: { bundle: Bund
               onClick={() => onChange(choice.count)}
             >
               <strong>{choice.label}</strong>
-              <span>+{formatMoney(toCents(choice.price))} · +{choice.minutes} min · +{choice.photos} photos</span>
+              <span>{fill(messages.choice, { price: formatMoney(toCents(choice.price)), minutes: String(choice.minutes), photos: String(choice.photos) })}</span>
             </button>
           ))}
           {count > 1 && (
             <button type="button" className={cn(styles.oneBabyButton, "chalk-soft")} disabled={checking} onClick={() => onChange(1)}>
-              {en.booking.extraBabies.one}
+              {messages.one}
             </button>
           )}
         </div>
       )}
-      {checking && <p className={cn(styles.extraBabiesChecking, "chalk-soft")} role="status">{en.booking.extraBabies.checking}</p>}
+      {checking && <p className={cn(styles.extraBabiesChecking, "chalk-soft")} role="status">{messages.checking}</p>}
     </div>
   );
 }
@@ -776,6 +780,7 @@ function DetailsForm({
   backdrops,
   onBackdrops,
   setups,
+  messages,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
@@ -796,7 +801,10 @@ function DetailsForm({
   onBackdrops: (picks: string[]) => void;
   /** Backdrops they can pick (one per setup). */
   setups: number;
+  messages: typeof en.bookingFlow.details;
 }) {
+  /** Newborns up to 2 years for now: the note under the age box, split around the email link. */
+  const olderNote = messages.baby.olderNote.split("{email}");
   const field = (
     name: keyof ContactDraft,
     label: string,
@@ -807,7 +815,7 @@ function DetailsForm({
       <div className={styles.field}>
         <label htmlFor={`field-${name}`} className={cn(styles.label, "chalk-soft")}>
           {label}
-          {opts.optional && <span className={styles.optional}> (optional)</span>}
+          {opts.optional && <span className={styles.optional}>{messages.optional}</span>}
         </label>
         <input
           id={`field-${name}`}
@@ -837,13 +845,13 @@ function DetailsForm({
     const errorId = `${ageId}-error`;
     return (
       <div key={index} className={styles.babyCard}>
-        {babies.length > 1 && <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(en.booking.extraBabies.babyNumber, { number: String(index + 1) })}</p>}
-        <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{en.booking.extraBabies.name}<span className={styles.optional}>{en.booking.extraBabies.nameOptional}</span></label>
+        {babies.length > 1 && <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(messages.baby.number, { number: String(index + 1) })}</p>}
+        <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{messages.baby.name}<span className={styles.optional}>{messages.optional}</span></label>
         <input id={nameId} className={styles.input} value={baby.name} maxLength={80} autoComplete="off" onChange={(e) => onBabyChange(index, "name", e.target.value)} />
-        <label htmlFor={ageId} className={cn(styles.label, "chalk-soft")}>{en.booking.extraBabies.ageRequired}</label>
+        <label htmlFor={ageId} className={cn(styles.label, "chalk-soft")}>{messages.baby.age}</label>
         <select id={ageId} className={styles.input} value={baby.age} onChange={(e) => onBabyChange(index, "age", e.target.value)} aria-invalid={Boolean(babyErrors[index])} aria-describedby={[babyErrors[index] && errorId, site.contact.email && "field-babyAge-hint"].filter(Boolean).join(" ") || undefined} required>
-          <option value="">Choose an age</option>
-          {babyAgeOptions.map((a) => <option key={a} value={a}>{a}</option>)}
+          <option value="">{messages.baby.chooseAge}</option>
+          {babyAgeOptions.map((a, optionIndex) => <option key={a} value={a}>{messages.baby.ageOptions[optionIndex]}</option>)}
         </select>
         {babyErrors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{babyErrors[index]}</p>}
       </div>
@@ -854,23 +862,23 @@ function DetailsForm({
     <div className={styles.form}>
       {/* Honeypot: hidden from people and screen readers; automated form-fillers tend to fill it. */}
       <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
-        <label htmlFor="th-leave-empty">Leave this empty</label>
+        <label htmlFor="th-leave-empty">{messages.honeypot}</label>
         <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
       </div>
-      {field("parentName", "Parent / guardian name", { autoComplete: "name" })}
-      {field("email", "Email", { type: "email", autoComplete: "email", inputMode: "email" })}
-      {field("phone", "Phone", { type: "tel", autoComplete: "tel", inputMode: "tel" })}
+      {field("parentName", messages.parentName, { autoComplete: "name" })}
+      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email" })}
+      {field("phone", messages.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
       <div className={cn(styles.fieldWide, styles.homeBlock)}>
-        <p className={cn(styles.homeTitle, "chalk-soft")}>Where should we bring the studio?</p>
-        <p className={cn(styles.homeText, "chalk-soft")}>{homeSession.addressHelp}</p>
+        <p className={cn(styles.homeTitle, "chalk-soft")}>{messages.address.title}</p>
+        <p className={cn(styles.homeText, "chalk-soft")}>{messages.address.help}</p>
       </div>
       <div className={cn(styles.fieldWide, styles.streetRow)}>
-        {field("street", "Street address", { autoComplete: "address-line1" })}
-        {field("unit", en.booking.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
+        {field("street", messages.address.street, { autoComplete: "address-line1" })}
+        {field("unit", messages.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
       </div>
-      {field("city", "City", { autoComplete: "address-level2" })}
+      {field("city", messages.address.city, { autoComplete: "address-level2" })}
       <div className={styles.field}>
-        {field("zip", "ZIP code", { autoComplete: "postal-code", inputMode: "numeric" })}
+        {field("zip", messages.address.zip, { autoComplete: "postal-code", inputMode: "numeric" })}
         {zipNote && !errors.zip && (
           <p id="field-zip-travel" className={cn(zipNote.blocking ? styles.fieldError : styles.optional, "chalk-soft")} aria-live="polite">
             {zipNote.text}
@@ -879,8 +887,8 @@ function DetailsForm({
       </div>
       <div className={cn(styles.field, styles.fieldWide)}>
         <label htmlFor="field-access" className={cn(styles.label, "chalk-soft")}>
-          {en.booking.address.access}
-          <span className={styles.optional}> (optional)</span>
+          {messages.address.access}
+          <span className={styles.optional}>{messages.optional}</span>
         </label>
         <textarea
           id="field-access"
@@ -889,14 +897,14 @@ function DetailsForm({
           maxLength={300}
           value={contact.access}
           onChange={(e) => onChange("access", e.target.value)}
-          placeholder={en.booking.address.accessPlaceholder}
+          placeholder={messages.address.accessPlaceholder}
         />
       </div>
       <fieldset className={cn(styles.fieldset, styles.fieldWide, styles.babiesForm)}>
-        <legend className={cn(styles.label, "chalk-soft")}>{babies.length > 1 ? en.booking.extraBabies.review : "Your baby"}</legend>
+        <legend className={cn(styles.label, "chalk-soft")}>{babies.length > 1 ? messages.baby.many : messages.baby.one}</legend>
         <div className={styles.babiesGrid}>
           {babyCard(babies[0], 0)}
-          <ExtraBabiesPicker bundle={bundle} count={babies.length} checking={checkingBabyCount} onChange={onBabyCountChange} />
+          <ExtraBabiesPicker bundle={bundle} count={babies.length} checking={checkingBabyCount} onChange={onBabyCountChange} messages={messages.extraBabies} />
           {babies.length > 1 && <div className={styles.extraBabiesGrid}>{babies.slice(1).map((baby, index) => babyCard(baby, index + 1))}</div>}
         </div>
         {site.contact.email && (
@@ -907,7 +915,7 @@ function DetailsForm({
       </fieldset>
       <div className={cn(styles.field, styles.fieldWide)}>
         <label htmlFor="field-notes" className={cn(styles.label, "chalk-soft")}>
-          Notes or special requests<span className={styles.optional}> (optional)</span>
+          {messages.notes.label}<span className={styles.optional}>{messages.optional}</span>
         </label>
         <textarea
           id="field-notes"
@@ -915,28 +923,28 @@ function DetailsForm({
           rows={3}
           value={contact.notes}
           onChange={(e) => onChange("notes", e.target.value)}
-          placeholder="Siblings joining, favorite colors, a family heirloom to include…"
+          placeholder={messages.notes.placeholder}
         />
       </div>
       <div className={cn(styles.field, styles.fieldWide)}>
         <p className={cn(styles.label, styles.flush, "chalk-soft")}>
-          {setups > 1 ? en.booking.backdrops.titleMany : en.booking.backdrops.title}
+          {setups > 1 ? messages.backdrops.titleMany : messages.backdrops.title}
         </p>
-        <p className={cn(styles.optional, styles.flush, "chalk-soft")}>{setups > 1 ? en.booking.backdrops.hintMany.replace("{n}", String(setups)) : en.booking.backdrops.hint}</p>
-        <BackdropPicker max={setups} value={backdrops} onChange={onBackdrops} label={setups > 1 ? en.booking.backdrops.titleMany : en.booking.backdrops.title} />
+        <p className={cn(styles.optional, styles.flush, "chalk-soft")}>{setups > 1 ? fill(messages.backdrops.hintMany, { n: String(setups) }) : messages.backdrops.hint}</p>
+        <BackdropPicker max={setups} value={backdrops} onChange={onBackdrops} label={setups > 1 ? messages.backdrops.titleMany : messages.backdrops.title} names={messages.backdrops.names} />
       </div>
       <fieldset className={cn(styles.fieldset, styles.field, styles.fieldWide)} aria-describedby="consents-hint">
         <legend className={cn(styles.label, "chalk-soft")}>
-          {en.booking.consents.title}
-          <span className={styles.optional}>{en.booking.consents.optional}</span>
+          {messages.consents.title}
+          <span className={styles.optional}>{messages.optional}</span>
         </legend>
         {(["sms", "photos"] as const).map((key) => (
           <label key={key} className={cn(styles.consent, "chalk-soft")}>
             <input id={`field-consent-${key}`} type="checkbox" checked={consents[key]} onChange={(e) => onConsent(key, e.target.checked)} />
-            <span>{en.booking.consents[key]}</span>
+            <span>{messages.consents[key]}</span>
           </label>
         ))}
-        <p id="consents-hint" className={cn(styles.optional, "chalk-soft")}>{en.booking.consents.hint}</p>
+        <p id="consents-hint" className={cn(styles.optional, "chalk-soft")}>{messages.consents.hint}</p>
       </fieldset>
     </div>
   );
