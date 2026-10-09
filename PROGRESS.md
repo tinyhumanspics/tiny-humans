@@ -4,7 +4,7 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `0173690` is live and smoke-tested; Vercel succeeded and production home, booking and About pages
+State: app commit `ee78e80` is live and smoke-tested; Vercel succeeded and production home, bundles, booking and About pages
 returned 200. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -447,7 +447,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       locale-specific catalog. English is still passed explicitly by the live root layout, while the complete Spanish
       pair and `/es` links stay dormant for the future Spanish layout. Only the small header/footer catalogs cross the
       server-to-client boundary. Catalog-shape/path tests passed; strict tsc/build/lint passed (0 errors/26 known
-      warnings), 63 e2e passed (12 expected cross-browser skips), and all 16 visual-parity pages passed.
+      warnings), 63 e2e passed (12 expected cross-browser skips), and all 16 visual-parity pages passed. Vercel
+      succeeded; the live English shell text was present and home, bundles, About and booking returned 200.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
