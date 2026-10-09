@@ -61,9 +61,9 @@ export function babiesLabel(babies: BookingBaby[]): string {
     .join(", ");
 }
 
-export function babyNames(babies: BookingBaby[]): string | null {
+export function babyNames(babies: BookingBaby[], conjunction = "and"): string | null {
   const names = babies.map((b) => b.name?.trim()).filter((n): n is string => Boolean(n));
   if (!names.length) return null;
   if (names.length === 1) return names[0];
-  return `${names.slice(0, -1).join(", ")} and ${names.at(-1)}`;
+  return `${names.slice(0, -1).join(", ")} ${conjunction} ${names.at(-1)}`;
 }

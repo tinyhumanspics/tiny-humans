@@ -11,18 +11,21 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { formatLongDate, formatTimeLabel, type BookingResult } from "@/lib/booking";
 import { backdropNames } from "@/lib/booking/backdrop-names";
+import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
 import { changePolicyText } from "@/lib/booking/reschedule-policy";
-import { formatAddress, pricingRows } from "@/lib/booking/templates";
+import { formatAddress } from "@/lib/booking/templates";
+import { fill } from "@/lib/email/messages";
 import { paymentDue } from "@/lib/email/payment";
 import { formatMoney, toCents } from "@/lib/pricing/engine";
 import { travelFeeValue } from "@/lib/travel/format";
 import type { BookingTravel } from "@/lib/travel/types";
-import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
 import InspirationThumb from "./InspirationThumb";
 import styles from "./Booking.module.css";
-import { babiesLabel, babyNames } from "@/lib/booking/extra-babies";
+import { babyNames } from "@/lib/booking/extra-babies";
 import type { EmailLocale } from "@/lib/email";
+import type { AppLocale } from "@/i18n/config";
+import type en from "@/messages/en.json";
 
 /** The booking is confirmed: details, payment, what's next (also shown after the deposit's Stripe page). */
 export default function Confirmation({
@@ -30,12 +33,16 @@ export default function Confirmation({
   headingRef,
   onReset,
   travelEstimate,
+  locale,
+  messages,
 }: {
   result: BookingResult;
   headingRef: React.RefObject<HTMLHeadingElement | null>;
   onReset: () => void;
   /** The estimate shown while booking (mock mode has no server travel fee). */
   travelEstimate?: BookingTravel;
+  locale: AppLocale;
+  messages: typeof en.bookingFlow;
 }) {
   const r = result.request;
   const travel = result.travel ?? travelEstimate;
@@ -47,35 +54,39 @@ export default function Confirmation({
   const firstName = r.contact.parentName.split(" ")[0];
   // "After the photoshoot", or the deposit paid while booking and the rest
   const dep = result.deposit;
-  const due = paymentDue("en", (price?.totalCents ?? price?.finalCents ?? (bundle ? toCents(bundle.price) : 0)) + travelFee, dep && dep.status !== "pending" ? { amountCents: dep.amountCents, status: dep.status } : undefined);
+  const due = paymentDue(locale, (price?.totalCents ?? price?.finalCents ?? (bundle ? toCents(bundle.price) : 0)) + travelFee, dep && dep.status !== "pending" ? { amountCents: dep.amountCents, status: dep.status } : undefined);
   const { photos } = useSiteSettings();
   const inspiration = findPhoto(photos, r.inspirationPhotoId);
+  const priceRows = price
+    ? bookingPricingRows(price, bundle ?? { offer: null }, messages.review)
+    : ([[messages.review.labels.bundleTotal, bundle ? formatMoney(toCents(bundle.price)) : ""]] as [string, string][]);
+  const names = babyNames(babies, messages.review.and);
   const details: [string, string][] = [
-    ["Booking reference", result.id],
-    ["Bundle", price?.bundleName ?? bundle?.name ?? ""],
-    ["Session date", formatLongDate(r.slot.date)],
-    ["Session time", `${r.slot.label} to ${formatTimeLabel(r.slot.end)} (${en.booking.timeZone.short})`],
-    ["Location", formatAddress(r.address)],
-    [babies.length > 1 ? en.booking.extraBabies.review : "Baby", babiesLabel(babies)],
-    ...(r.backdrops?.length ? [[r.backdrops.length > 1 ? en.booking.backdrops.reviewMany : en.booking.backdrops.review, backdropNames(r.backdrops)] as [string, string]] : []),
-    ...(price ? pricingRows(price) : [["Bundle total", bundle ? formatMoney(toCents(bundle.price)) : ""]] as [string, string][]),
+    [messages.confirmation.labels.reference, result.id],
+    [messages.confirmation.labels.bundle, bundle?.name ?? price?.bundleName ?? ""],
+    [messages.confirmation.labels.date, formatLongDate(r.slot.date, locale)],
+    [messages.confirmation.labels.time, fill(messages.review.timeRange, { start: formatTimeLabel(r.slot.start, locale), end: formatTimeLabel(r.slot.end, locale), zone: messages.time.zone })],
+    [messages.confirmation.labels.location, formatAddress(r.address, messages.review.unit)],
+    [babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, bookingBabiesLabel(babies, messages.details)],
+    ...(r.backdrops?.length ? [[r.backdrops.length > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, backdropNames(r.backdrops, messages.details.backdrops.names, messages.review.and)] as [string, string]] : []),
+    ...priceRows,
     ...(travelFee > 0 && price
       ? ([
-          [en.booking.travel.label, travelFeeValue(travelFee, travel?.miles ?? null)],
-          [en.booking.travel.total, formatMoney(price.totalCents + travelFee)],
+          [messages.details.travel.label, travelFeeValue(travelFee, travel?.miles ?? null, messages.details.travel)],
+          [messages.details.travel.total, formatMoney(price.totalCents + travelFee)],
         ] as [string, string][])
       : []),
   ];
   return (
     <div className={styles.confirm} role="status">
       <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
-      <p className={cn(styles.confirmEyebrow, "chalk-soft")}>Booking confirmed</p>
+      <p className={cn(styles.confirmEyebrow, "chalk-soft")}>{messages.confirmation.eyebrow}</p>
       <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>
-        See you soon, {firstName}!
+        {fill(messages.confirmation.title, { name: firstName })}
       </h3>
       <p className={cn(styles.confirmText, "chalk-soft")}>
-        We&apos;ll bring the whole studio to your home in {r.address.city}.
-        {babyNames(babies) ? ` We can't wait to meet ${babyNames(babies)}.` : babies.length > 1 ? " We can't wait to meet your little ones." : " We can't wait to meet your little one."}
+        {fill(messages.confirmation.home, { city: r.address.city })}
+        {names ? fill(messages.confirmation.namedBabies, { names }) : babies.length > 1 ? messages.confirmation.manyBabies : messages.confirmation.oneBaby}
       </p>
       <dl className={styles.confirmDetails}>
         {details.map(([k, v]) => (
@@ -86,19 +97,19 @@ export default function Confirmation({
         ))}
       </dl>
       <ChalkBox className={styles.paymentBox} seed={93} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
-        <p className={cn(styles.paymentTitle, "chalk-soft")}>Payment</p>
+        <p className={cn(styles.paymentTitle, "chalk-soft")}>{messages.confirmation.labels.payment}</p>
         <dl className={styles.paymentRows}>
-          {(price ? pricingRows(price) : [["Bundle total", bundle ? formatMoney(toCents(bundle.price)) : ""]] as [string, string][]).map(([k, v]) => (
+          {priceRows.map(([k, v]) => (
             <div key={k} className={styles.confirmRow}><dt className="chalk-soft">{k}</dt><dd className="chalk-soft">{v}</dd></div>
           ))}
           {travelFee > 0 && price && (
             <>
               <div className={styles.confirmRow}>
-                <dt className="chalk-soft">{en.booking.travel.label}</dt>
-                <dd className="chalk-soft">{travelFeeValue(travelFee, travel?.miles ?? null)}</dd>
+                <dt className="chalk-soft">{messages.details.travel.label}</dt>
+                <dd className="chalk-soft">{travelFeeValue(travelFee, travel?.miles ?? null, messages.details.travel)}</dd>
               </div>
               <div className={styles.confirmRow}>
-                <dt className="chalk-soft">{en.booking.travel.total}</dt>
+                <dt className="chalk-soft">{messages.details.travel.total}</dt>
                 <dd className="chalk-soft">{formatMoney(price.totalCents + travelFee)}</dd>
               </div>
             </>
@@ -116,27 +127,27 @@ export default function Confirmation({
         <div className={styles.chip}>
           <InspirationThumb photo={inspiration} size={52} />
           <p className="chalk-soft">
-            <span className={styles.chipLabel}>Inspiration saved:</span> {inspiration.title}
+            <span className={styles.chipLabel}>{messages.confirmation.inspiration}</span> {inspiration.title}
           </p>
         </div>
       )}
       {result.rescheduleNoticeHours !== undefined && (
         <p className={cn(styles.rescheduleNote, "chalk-soft")}>
-          {changePolicyText(result.rescheduleNoticeHours)} The links are in your confirmation email.
+          {changePolicyText(result.rescheduleNoticeHours, messages.confirmation.policy)} {messages.confirmation.policyLinks}
         </p>
       )}
       {result.preview && <PrototypePreviews result={result} />}
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
           {result.status === "mock"
-            ? `Prototype preview: no calendar event was created and no email was sent.`
+            ? messages.confirmation.prototype
             : result.emailSent
-              ? `A confirmation email is on its way to ${r.contact.email}.`
-              : `We'll email your confirmation to ${r.contact.email} shortly.`}
+              ? fill(messages.confirmation.emailSent, { email: r.contact.email })
+              : fill(messages.confirmation.emailSoon, { email: r.contact.email })}
         </p>
       </ChalkBox>
       <ChalkButton variant="outline" onClick={onReset} seed={92}>
-        Book another session
+        {messages.confirmation.bookAnother}
       </ChalkButton>
     </div>
   );

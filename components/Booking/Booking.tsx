@@ -48,6 +48,7 @@ import en from "@/messages/en.json";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
 import { addPhotos, extraBabyLine, sessionMinutes, type BookingBaby } from "@/lib/booking/extra-babies";
 import { CODE_MESSAGES } from "@/lib/pricing/types";
+import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type { Bundle } from "@/config/bundles";
@@ -200,38 +201,6 @@ function flowDurationLabel(minutes: number, messages: typeof en.bookingFlow.summ
   if (minutes < 120 || minutes % 30 !== 0) return fill(messages.durationMinutes, { minutes: String(minutes) });
   const hours = minutes / 60;
   return hours === 1 ? messages.durationHour : fill(messages.durationHours, { hours: String(hours) });
-}
-
-function flowBabiesLabel(babies: BookingBaby[], messages: typeof en.bookingFlow.details): string {
-  return babies
-    .map((baby, index) => {
-      const ageIndex = babyAgeOptions.indexOf(baby.age as (typeof babyAgeOptions)[number]);
-      const age = ageIndex >= 0 ? messages.baby.ageOptions[ageIndex] : baby.age;
-      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })} (${age})`;
-    })
-    .join(", ");
-}
-
-function flowPricingRows(p: PriceQuote, bundle: Bundle, messages: typeof en.bookingFlow.review): [string, string][] {
-  const labels = messages.labels;
-  const rows: [string, string][] = [];
-  if (p.pricingType === "offer") {
-    rows.push(
-      [labels.regularPrice, formatMoney(p.regularCents)],
-      [bundle.offer?.label?.trim() || p.offerLabel || labels.specialOffer, formatMoney(p.offerCents ?? p.finalCents)],
-    );
-  }
-  if (p.pricingType === "discount") {
-    rows.push(
-      [labels.regularPrice, formatMoney(p.regularCents)],
-      [labels.discountCode, p.discountCode ?? ""],
-      [labels.discount, `-${formatMoney(p.discountCents)}`],
-    );
-  }
-  rows.push([labels.bundleTotal, formatMoney(p.finalCents)]);
-  p.addons.forEach((addon) => rows.push([addon.quantity === 1 ? labels.extraBaby : labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]));
-  if (p.addonsCents > 0) rows.push([labels.sessionTotalBeforeTravel, formatMoney(p.totalCents)]);
-  return rows;
 }
 
 /** The booking calendar for one bundle (chosen on the bundles page). */
@@ -566,6 +535,8 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 travelEstimate={travel ? { feeCents: travel.status === "fee" ? travel.feeCents : 0, miles: travel.miles } : undefined}
                 headingRef={headingRef}
                 onReset={() => router.push(bundlesHref(undefined, locale))}
+                locale={locale}
+                messages={messages}
               />
             ) : (
               <>
@@ -653,7 +624,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                       rows={[
                         { label: messages.review.labels.package, value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId, locale) },
                         ...(quote
-                          ? flowPricingRows(quote, bundle, messages.review)
+                          ? bookingPricingRows(quote, bundle, messages.review)
                           : ([
                               [messages.review.labels.bundleTotal, formatMoney(bundleCents)],
                               ...(addon ? [[addon.quantity === 1 ? messages.review.labels.extraBaby : messages.review.labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]] : []),
@@ -680,7 +651,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                         { label: messages.review.labels.parent, value: state.contact.parentName, step: STEP.details },
                         { label: messages.review.labels.email, value: state.contact.email, step: STEP.details },
                         { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.details },
-                        { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: flowBabiesLabel(state.babies, messages.details), step: STEP.details },
+                        { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: bookingBabiesLabel(state.babies, messages.details), step: STEP.details },
                         ...(state.contact.notes.trim() ? [{ label: messages.review.labels.notes, value: state.contact.notes.trim(), step: STEP.details }] : []),
                         { label: setups > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, value: backdrops.length ? backdropNames(backdrops, messages.details.backdrops.names, messages.review.and) : messages.review.labels.backdropNone, step: STEP.details },
                         { label: messages.review.labels.texts, value: state.consents.sms ? messages.review.labels.textsYes : messages.review.labels.textsNo, step: STEP.details },

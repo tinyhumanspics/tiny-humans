@@ -54,12 +54,15 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   expect(errors).toEqual([]);
 }
 
-test("a family can book a session (mock provider)", async ({ page }) => {
+test("a family can book a session (mock provider)", async ({ page }, testInfo) => {
   let submitted: unknown;
   page.on("request", (request) => {
     if (request.method() === "POST" && request.url().endsWith("/api/booking/create")) submitted = request.postDataJSON();
   });
   await bookLittleMoments(page);
+  if (process.env.CAPTURE_BOOKING_CONFIRMATION === "1") {
+    await page.screenshot({ path: `.screenshots/booking-confirmation-i18n/${testInfo.project.name}.png`, fullPage: true });
+  }
   expect(submitted).toMatchObject({ locale: "en" });
 });
 

@@ -155,7 +155,7 @@ export const unitLine = (unit?: string, unitLabel = "Unit") => {
   return !u ? "" : /^\d/.test(u) ? `${unitLabel} ${u}` : u;
 };
 
-export const formatAddress = (a: SessionAddress) => [a.street, unitLine(a.unit), a.city].filter(Boolean).join(", ") + `, FL ${a.zip}`;
+export const formatAddress = (a: SessionAddress, unitLabel = "Unit") => [a.street, unitLine(a.unit, unitLabel), a.city].filter(Boolean).join(", ") + `, FL ${a.zip}`;
 
 /** Studio-facing label for the gate / parking / concierge notes (calendar, studio email, /admin). */
 export const ACCESS_LABEL = "Gate / parking / concierge";

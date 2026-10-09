@@ -14,27 +14,28 @@ import type { DepositReturnState } from "@/lib/deposit/types";
 import { fill } from "@/lib/email/messages";
 import { formatMoney } from "@/lib/pricing/engine";
 import { trackBooked } from "@/lib/tracking/client";
-import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
+import type { AppLocale } from "@/i18n/config";
+import type en from "@/messages/en.json";
 import Confirmation from "./Confirmation";
 import styles from "./Booking.module.css";
 
-const t = en.deposit.return;
 const POLL_MS = 2500;
 /** About a minute of "confirming…" before the calmer "your email will arrive shortly" text. */
 const SLOW_AFTER = 24;
 /** Back from Stripe's success page before Stripe's answer reached us: ask again a few times. */
 const PAID_RETRIES = 6;
 
-const miamiClock = (iso: string) => new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(iso)).toLowerCase();
+const miamiClock = (iso: string, locale: AppLocale) => new Intl.DateTimeFormat(locale === "es" ? "es-US" : "en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(iso)).toLowerCase();
 
 /**
  * The booking page after the deposit's Stripe page (/book?bundle=…&deposit=<reference>&k=<signature>[&paid=1]):
  * the confirmation once it's paid, "your date isn't confirmed yet" while the time is still held, or "this time is no
  * longer held" after it was released.
  */
-export default function DepositReturn({ bundleId, reference, signature, paid }: { bundleId: string; reference: string; signature: string; paid: boolean }) {
-  const { id, title, subtitle } = site.sections.book;
+export default function DepositReturn({ bundleId, reference, signature, paid, locale, messages }: { bundleId: string; reference: string; signature: string; paid: boolean; locale: AppLocale; messages: typeof en.bookingFlow }) {
+  const id = "book";
+  const t = messages.depositReturn;
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [state, setState] = useState<DepositReturnState | null>(null);
@@ -46,14 +47,14 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
   const load = useCallback(async () => {
     try {
       const res = await fetch(`/api/booking/deposit/status?${new URLSearchParams({ b: reference, k: signature })}`, { cache: "no-store" });
-      const data = (await res.json().catch(() => null)) as (DepositReturnState & { error?: string }) | null;
-      if (!res.ok || !data?.state) throw new Error(data?.error ?? t.error);
+      const data = (await res.json().catch(() => null)) as DepositReturnState | null;
+      if (!res.ok || !data?.state) throw new Error(t.error);
       setError(null);
       setState(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t.error);
+    } catch {
+      setError(t.error);
     }
-  }, [reference, signature]);
+  }, [reference, signature, t.error]);
 
   useEffect(() => {
     void load();
@@ -92,25 +93,25 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
     setBusy(true);
     try {
       const res = await fetch("/api/booking/deposit/release", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ b: reference, k: signature }) });
-      const data = (await res.json().catch(() => null)) as (DepositReturnState & { error?: string }) | null;
-      if (!res.ok || !data?.state) throw new Error(data?.error ?? t.error);
+      const data = (await res.json().catch(() => null)) as DepositReturnState | null;
+      if (!res.ok || !data?.state) throw new Error(t.error);
       if (data.state === "confirmed" || data.state === "confirming") return setState(data);
       startOver();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : t.error);
+    } catch {
+      setError(t.error);
       setBusy(false);
     }
   };
   const startOver = () => {
     forgetDepositReturn();
-    router.replace(scheduleHref(bundleId));
+    router.replace(scheduleHref(bundleId, undefined, locale));
   };
 
   const body = () => {
     if (!state) return <p className={cn(styles.confirmText, "chalk-soft")}>{error ?? t.checking}</p>;
     switch (state.state) {
       case "confirmed":
-        return <Confirmation result={state.booking} headingRef={headingRef} onReset={() => router.push(bundlesHref())} />;
+        return <Confirmation result={state.booking} headingRef={headingRef} onReset={() => router.push(bundlesHref(undefined, locale))} locale={locale} messages={messages} />;
       case "confirming":
         return (
           <div className={styles.confirm} role="status">
@@ -120,13 +121,13 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
           </div>
         );
       case "waiting": {
-        const when = { date: formatLongDate(state.date), time: formatTimeLabel(state.start) };
+        const when = { date: formatLongDate(state.date, locale), time: formatTimeLabel(state.start, locale) };
         const deposit = formatMoney(state.amountCents);
         return (
           <div className={styles.confirm}>
             <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.waitingTitle}</h3>
             <p className={cn(styles.confirmText, "chalk-soft")}>
-              {state.payUrl && state.holdUntil ? fill(t.waitingText, { ...when, until: miamiClock(state.holdUntil), deposit }) : fill(t.waitingClosed, when)}
+              {state.payUrl && state.holdUntil ? fill(t.waitingText, { ...when, until: miamiClock(state.holdUntil, locale), deposit }) : fill(t.waitingClosed, when)}
             </p>
             <div className={styles.depositActions}>
               {state.payUrl && (
@@ -146,7 +147,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
         return (
           <div className={styles.confirm}>
             <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.expiredTitle}</h3>
-            <p className={cn(styles.confirmText, "chalk-soft")}>{fill(t.expiredText, { date: formatLongDate(state.date), time: formatTimeLabel(state.start) })}</p>
+            <p className={cn(styles.confirmText, "chalk-soft")}>{fill(t.expiredText, { date: formatLongDate(state.date, locale), time: formatTimeLabel(state.start, locale) })}</p>
             <ChalkButton variant="solid" onClick={startOver} seed={97}>{t.pickAgain}</ChalkButton>
           </div>
         );
@@ -164,7 +165,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid }: 
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={title} subtitle={subtitle} slot="book" />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" />
         <div className={styles.panelAnchor} data-booking-panel>
           <ChalkBox className={styles.panel} seed={7} wobble={4} strokeWidth={3}>
             <div aria-live="polite">{body()}</div>

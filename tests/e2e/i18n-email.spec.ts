@@ -12,8 +12,10 @@ import { babyAgeOptions, bookingSteps, bundlesHref, scheduleHref } from "@/confi
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { localePath } from "@/i18n/path";
 import { backdropNames } from "@/lib/booking/backdrop-names";
-import { noticeLabel } from "@/lib/booking/reschedule-policy";
-import { unitLine } from "@/lib/booking/templates";
+import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
+import { babyNames } from "@/lib/booking/extra-babies";
+import { changePolicyText, noticeLabel } from "@/lib/booking/reschedule-policy";
+import { formatAddress, unitLine } from "@/lib/booking/templates";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -175,6 +177,10 @@ test("Spanish customer-email formatting covers dates, babies, prices, backdrops 
   expect(backdropNames(["burgundy", "wooden"], es.bookingFlow.details.backdrops.names, es.bookingFlow.review.and)).toBe("Borgoña y Madera");
   expect(noticeLabel(48, es.bookingFlow.review.deposit.notice)).toBe("48 horas");
   expect(unitLine("1204", es.bookingFlow.review.unit)).toBe("Unidad 1204");
+  expect(formatAddress({ street: "1500 Bay Rd", unit: "1204", city: "Miami Beach", zip: "33139" }, es.bookingFlow.review.unit)).toBe("1500 Bay Rd, Unidad 1204, Miami Beach, FL 33139");
+  expect(babyNames([{ name: "Luna", age: "Newborn (0–2 weeks)" }, { name: "Mia", age: "Newborn (0–2 weeks)" }], es.bookingFlow.review.and)).toBe("Luna y Mia");
+  expect(bookingBabiesLabel([{ name: "Luna", age: "Newborn (0–2 weeks)" }, { age: "Not born yet" }], es.bookingFlow.details)).toBe("Luna (Recién nacido (0–2 semanas)), Bebé 2 (Aún no ha nacido)");
+  expect(changePolicyText(48, es.bookingFlow.confirmation.policy)).toContain("48 horas");
 
   const quote: PriceQuote = {
     bundleId: "little-moments",
@@ -200,6 +206,14 @@ test("Spanish customer-email formatting covers dates, babies, prices, backdrops 
     ["Total de la sesión antes del viaje", "$194.20"],
   ]);
   expect(customerPricingRows(quote, "en").at(-2)?.[0]).toBe("Extra baby");
+  expect(bookingPricingRows(quote, { offer: null }, es.bookingFlow.review)).toEqual([
+    ["Precio regular", "$149"],
+    ["Código de descuento", "BABY20"],
+    ["Descuento", "-$29.80"],
+    ["Total del paquete", "$119.20"],
+    ["Bebé adicional", "1 × $75 = $75"],
+    ["Total de la sesión antes del viaje", "$194.20"],
+  ]);
   expect(emailChangePolicyText(48, "es")).toContain("48 horas");
   expect(emailChangePolicyText(48, "es")).toContain("(786) 222-7194");
 });

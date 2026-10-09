@@ -266,6 +266,51 @@
         }
       }
     },
+    "confirmation": {
+      "eyebrow": "Reserva confirmada",
+      "title": "¡Nos vemos pronto, {name}!",
+      "home": "Llevaremos todo el estudio a tu hogar en {city}.",
+      "namedBabies": " Tenemos muchas ganas de conocer a {names}.",
+      "oneBaby": " Tenemos muchas ganas de conocer a tu pequeño.",
+      "manyBabies": " Tenemos muchas ganas de conocer a tus pequeños.",
+      "labels": {
+        "reference": "Referencia de la reserva",
+        "bundle": "Paquete",
+        "date": "Fecha de la sesión",
+        "time": "Hora de la sesión",
+        "location": "Domicilio",
+        "payment": "Pago"
+      },
+      "inspiration": "Inspiración guardada:",
+      "policyLinks": "Los enlaces están en tu correo de confirmación.",
+      "prototype": "Vista previa del prototipo: no se creó ningún evento en el calendario ni se envió ningún correo.",
+      "emailSent": "Tu correo de confirmación va en camino a {email}.",
+      "emailSoon": "Enviaremos tu confirmación a {email} dentro de poco.",
+      "bookAnother": "Reservar otra sesión",
+      "policy": {
+        "hour": "{n} hora",
+        "hours": "{n} horas",
+        "online": "Puedes reprogramar o cancelar en línea hasta {notice} antes de tu sesión. Después de ese plazo, escríbenos al {phone}."
+      }
+    },
+    "depositReturn": {
+      "checking": "Comprobando tu pago…",
+      "confirmingTitle": "¡Tu depósito está pagado!",
+      "confirmingText": "Estamos agregando tu sesión a nuestro calendario. Solo tomará unos segundos.",
+      "confirmingSlow": "Tu depósito está pagado y tu horario está guardado. Estamos terminando tu reserva y tu correo de confirmación llegará dentro de poco.",
+      "waitingTitle": "Tu fecha todavía no está confirmada",
+      "waitingText": "Guardamos el {date} a las {time} para ti hasta las {until} (hora de Miami). Paga el depósito de {deposit} para confirmarlo.",
+      "waitingClosed": "Guardamos el {date} a las {time} para ti durante unos minutos más. Si acabas de pagar, esta página se actualizará sola.",
+      "pay": "Pagar el depósito de {deposit}",
+      "another": "Elegir otro horario",
+      "releasing": "Un momento…",
+      "expiredTitle": "Este horario ya no está reservado",
+      "expiredText": "El depósito para el {date} a las {time} no fue pagado, así que liberamos el horario. Puedes elegir otro; solo toma dos minutos.",
+      "pickAgain": "Elegir un horario",
+      "invalidTitle": "No pudimos encontrar esta reserva",
+      "invalidText": "Elige un horario de nuevo o escríbenos a {email} y te ayudaremos.",
+      "error": "No pudimos comprobar tu pago en este momento. Inténtalo de nuevo en un momento."
+    },
     "errors": {
       "availability": "No pudimos cargar los horarios disponibles. Inténtalo de nuevo.",
       "date": "Elige un día en el calendario.",

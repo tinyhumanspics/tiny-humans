@@ -272,6 +272,51 @@
         }
       }
     },
+    "confirmation": {
+      "eyebrow": "Booking confirmed",
+      "title": "See you soon, {name}!",
+      "home": "We'll bring the whole studio to your home in {city}.",
+      "namedBabies": " We can't wait to meet {names}.",
+      "oneBaby": " We can't wait to meet your little one.",
+      "manyBabies": " We can't wait to meet your little ones.",
+      "labels": {
+        "reference": "Booking reference",
+        "bundle": "Bundle",
+        "date": "Session date",
+        "time": "Session time",
+        "location": "Location",
+        "payment": "Payment"
+      },
+      "inspiration": "Inspiration saved:",
+      "policyLinks": "The links are in your confirmation email.",
+      "prototype": "Prototype preview: no calendar event was created and no email was sent.",
+      "emailSent": "A confirmation email is on its way to {email}.",
+      "emailSoon": "We'll email your confirmation to {email} shortly.",
+      "bookAnother": "Book another session",
+      "policy": {
+        "hour": "{n} hour",
+        "hours": "{n} hours",
+        "online": "You can reschedule or cancel online up to {notice} before your session. After that, just text us at {phone}."
+      }
+    },
+    "depositReturn": {
+      "checking": "Checking your payment…",
+      "confirmingTitle": "Your deposit is paid!",
+      "confirmingText": "We're adding your session to our calendar. This only takes a few seconds.",
+      "confirmingSlow": "Your deposit is paid and your time is saved. We're finishing your booking, and your confirmation email will arrive shortly.",
+      "waitingTitle": "Your date isn't confirmed yet",
+      "waitingText": "We're holding {date} at {time} for you until {until} (Miami time). Pay the {deposit} deposit to confirm it.",
+      "waitingClosed": "We're holding {date} at {time} for you for a few more minutes. If you just paid, this page updates by itself.",
+      "pay": "Pay the {deposit} deposit",
+      "another": "Pick another time",
+      "releasing": "One moment…",
+      "expiredTitle": "This time is no longer held",
+      "expiredText": "The deposit for {date} at {time} wasn't paid, so we released the time. You're welcome to pick a time again: it only takes two minutes.",
+      "pickAgain": "Pick a time",
+      "invalidTitle": "We couldn't find this booking",
+      "invalidText": "Please pick a time again, or email us at {email} and we'll help.",
+      "error": "We couldn't check your payment just now. Please try again in a moment."
+    },
     "errors": {
       "availability": "We couldn't load open times. Please try again.",
       "date": "Pick a day on the calendar.",

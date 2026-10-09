@@ -74,7 +74,7 @@ export default function ScheduleBooking({ locale = "en", messages, pausedMessage
   }
   // on its way to the right page (see above)
   if (!bundle) return null;
-  if (depositRef && depositSig) return <DepositReturn key={depositRef} bundleId={bundle.id} reference={depositRef} signature={depositSig} paid={params.get("paid") === "1"} />;
+  if (depositRef && depositSig) return <DepositReturn key={depositRef} bundleId={bundle.id} reference={depositRef} signature={depositSig} paid={params.get("paid") === "1"} locale={locale} messages={messages} />;
   // key: a different bundle starts a fresh booking
   return <Booking key={bundle.id} bundleId={bundle.id} locale={locale} messages={messages} />;
 }
