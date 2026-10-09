@@ -3,9 +3,10 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `0a1f90c` is live and smoke-tested; Vercel succeeded and production booking returned 200 with the
-expected English review/payment/discount content; unfinished `/es/book` remained an intentional 404. Phase 4 is complete: extra babies are live,
+## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
+State: app commit `4685217` is live and smoke-tested; Vercel succeeded and production booking/bundles returned 200
+with the expected English confirmation and deposit-return content; unfinished `/es/book` remained an intentional 404.
+Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
@@ -495,7 +496,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       booking APIs. Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser
       skips), all 16 visual-parity pages passed, and the Review step was captured and inspected at iPhone and 1440px.
       Vercel succeeded; production booking returned 200 with the expected English review/payment/discount content,
-      while `/es/book` remained an intentional 404.
+      while `/es/book` remained an intentional 404. **Oct 9 booking confirmation + deposit return (`4685217`):** the
+      final booking screen now localizes its reference/bundle/date/time/address, baby ages and names, backdrops,
+      pricing/add-ons/travel, payment balance, change policy and email status. Every state after the optional Stripe
+      deposit page (checking, confirming, waiting, expired and invalid) uses the selected language and keeps retry/
+      restart links on that language's path; raw API errors are replaced with safe localized family copy. Shared page
+      formatters keep Review and Confirmation aligned. Strict tsc/build/lint passed (0 errors/25 known warnings), 67
+      e2e passed (20 expected cross-browser skips), all 16 visual-parity pages passed, and Confirmation was captured
+      and inspected at iPhone and 1440px. Vercel succeeded; production booking and bundles returned 200 with the
+      expected English completion catalogs, while `/es/book` remained an intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
