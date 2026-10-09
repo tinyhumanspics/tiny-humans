@@ -487,7 +487,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), all 16
       visual-parity pages passed, and the Details step was captured and inspected at iPhone and 1440px desktop widths.
       Vercel succeeded; production booking and bundles returned 200 with the expected English details-form content,
-      while `/es/book` remained an intentional 404.
+      while `/es/book` remained an intentional 404. **Oct 9 booking Review step (`0a1f90c`):** localized rows now cover
+      bundle/offer/code pricing, full-price extra babies, travel, deposit or pay-after wording, inspiration, date/time,
+      address, babies and ages, backdrops and permissions; Change/Edit controls and every discount-code outcome are
+      paired too. Public formatting helpers now accept translated unit/backdrop/notice labels while defaulting to
+      English for existing callers. The browser error contract now declares the `rate_limited` code already returned by
+      booking APIs. Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser
+      skips), all 16 visual-parity pages passed, and the Review step was captured and inspected at iPhone and 1440px.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
