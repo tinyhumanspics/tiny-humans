@@ -51,10 +51,10 @@ Push to GitHub and import the repo in Vercel, then follow **Owner area → One-t
 | Bundle names, prices, features, buttons | `config/bundles.ts` |
 | Baby-led session note (booking page) | `config/site.ts` (`babyLedNote`) |
 | Instagram link, contact email (footer) | `config/site.ts` (`social`, `contact`) |
-| Privacy Policy and Terms of Service text | `config/legal.ts` |
+| Privacy Policy and Terms of Service text | `messages/en.json` + `messages/es.json` (`legal`) |
 | Portfolio photos | **/admin** (or the built-in defaults in `config/portfolio.ts`) |
-| "Book a memory like this one" prompt text | `config/portfolio.ts` (`portfolioCtas`, `portfolioCtaLabel`) |
-| Hero text, section titles, intro timing | `config/site.ts` |
+| Home hero, portfolio headings and default prompt text | `messages/en.json` + `messages/es.json` (`home`) |
+| Intro timing | `config/site.ts` |
 | Navigation | `config/site.ts` (`navigation`) |
 | Home-session note, baby ages, booking window | `config/booking.ts` |
 | Live theme | **/admin** |
@@ -66,7 +66,7 @@ Drop real images into `public/portfolio/`, then update `config/portfolio.ts` wit
 
 ## Home sessions
 
-Tiny Humans brings the studio to every family's home, so there is no location choice. Families pick a bundle on `/book`, then book on `/book/schedule` (**Date → Time → Details → Review**); the details step collects the home address (street, city, ZIP), which appears on the review step and is passed to the booking provider as `address`. The promise appears under the hero text (`site.hero.promise`) and on every bundle card. Steps are referenced by name (`STEP` in `config/booking.ts`), so the flow can change without renumbering.
+Tiny Humans brings the studio to every family's home, so there is no location choice. Families pick a bundle, then book on `/book` (**Date → Time → Details → Review**); the details step collects the home address (street, city, ZIP), which appears on the review step and is passed to the booking provider as `address`. The promise appears under the hero text (`messages/*.json` → `home.hero.promise`) and on every bundle card. Steps are referenced by name (`STEP` in `config/booking.ts`), so the flow can change without renumbering.
 
 ## Phone preview
 

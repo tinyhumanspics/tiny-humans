@@ -3,6 +3,8 @@
  * Replace the placeholder files in /public/portfolio with real images
  * (keep width/height accurate for best layout).
  */
+import en from "@/messages/en.json";
+
 export interface PortfolioPhoto {
   /** Stable id, used in booking links (/bundles?inspiration=<id>). */
   id: string;
@@ -28,13 +30,7 @@ export const portfolio: PortfolioPhoto[] = [
 ];
 
 /** Prompts placed between photo groups on the home page (used in order). */
-export const portfolioCtas = [
-  { title: "Love this one?", text: "We'll plan your session around it." },
-  { title: "Picture your family here", text: "Baby, parents and all the little details." },
-  { title: "Want a moment like this?", text: "Milestones grow fast. Let's catch this one." },
-];
-
-export const portfolioCtaLabel = "Book a memory like this one";
+export const portfolioCtas = en.home.portfolio.prompts;
 
 export type FeedBlock =
   | { type: "photos"; photos: PortfolioPhoto[] }

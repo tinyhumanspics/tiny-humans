@@ -1,6 +1,6 @@
 "use client";
 
-import { portfolioCtaLabel, type PortfolioPhoto } from "@/config/portfolio";
+import type { PortfolioPhoto } from "@/config/portfolio";
 import { bundlesHref } from "@/config/booking";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
@@ -11,17 +11,20 @@ import InspirationThumb from "@/components/Booking/InspirationThumb";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import styles from "./PortfolioCta.module.css";
 import { cn } from "@/lib/cn";
+import type { AppLocale } from "@/i18n/config";
 
 interface Props {
   photo: PortfolioPhoto;
   title: string;
   text: string;
+  label: string;
+  locale?: AppLocale;
   seed: number;
   flip?: boolean;
 }
 
 /** "Book a memory like this one" prompt between portfolio groups. */
-export default function PortfolioCta({ photo, title, text, seed, flip }: Props) {
+export default function PortfolioCta({ photo, title, text, label, locale = "en", seed, flip }: Props) {
   const { theme } = useSiteSettings();
   return (
     <Reveal className={styles.wrap}>
@@ -32,8 +35,8 @@ export default function PortfolioCta({ photo, title, text, seed, flip }: Props) 
           <p className={styles.title}>{title}</p>
           <p className={styles.sub}>{text}</p>
         </div>
-        <ChalkButton href={bundlesHref(photo.id)} variant="solid" seed={seed + 3} className={styles.button}>
-          {portfolioCtaLabel}
+        <ChalkButton href={bundlesHref(photo.id, locale)} variant="solid" seed={seed + 3} className={styles.button}>
+          {label}
         </ChalkButton>
         <ChalkDoodle name={theme.decorations.cta[flip ? 1 : 0]} size={32} color="var(--accent-2)" className={styles.doodle} />
       </ChalkBox>

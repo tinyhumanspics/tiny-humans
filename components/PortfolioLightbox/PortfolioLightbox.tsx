@@ -2,19 +2,23 @@
 
 import Image from "next/image";
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent } from "react";
+import { createPortal } from "react-dom";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import styles from "./PortfolioLightbox.module.css";
 import { cn } from "@/lib/cn";
+import { fill } from "@/lib/email/messages";
+import en from "@/messages/en.json";
 
 interface Props {
   photos: PortfolioPhoto[];
   index: number | null;
   onChange: (index: number) => void;
   onClose: () => void;
+  messages?: typeof en.home.portfolio.viewer;
 }
 
-export default function PortfolioLightbox({ photos, index, onChange, onClose }: Props) {
+export default function PortfolioLightbox({ photos, index, onChange, onClose, messages = en.home.portfolio.viewer }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const touchX = useRef<number | null>(null);
@@ -74,19 +78,19 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose }: 
     touchX.current = null;
   };
 
-  return (
+  return createPortal(
     <div
       ref={dialogRef}
       className={styles.backdrop}
       role="dialog"
       aria-modal="true"
-      aria-label="Photo viewer"
+      aria-label={messages.label}
       onKeyDown={trapFocus}
       onClick={(e) => e.target === e.currentTarget && onClose()}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
-      <button ref={closeRef} type="button" className={cn(styles.control, styles.close)} onClick={onClose} aria-label="Close photo viewer">
+      <button ref={closeRef} type="button" className={cn(styles.control, styles.close)} onClick={onClose} aria-label={messages.close}>
         <ChalkDoodle name="close" size={30} />
       </button>
 
@@ -105,17 +109,18 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose }: 
         <figcaption className={cn(styles.caption, "chalk-soft")}>
           {photo.caption && <span>{photo.caption}</span>}
           <span className={styles.count} aria-live="polite">
-            {index + 1} of {photos.length}
+            {fill(messages.count, { current: String(index + 1), total: String(photos.length) })}
           </span>
         </figcaption>
       </figure>
 
-      <button type="button" className={cn(styles.control, styles.prev)} onClick={prev} aria-label="Previous photo">
+      <button type="button" className={cn(styles.control, styles.prev)} onClick={prev} aria-label={messages.previous}>
         <ChalkDoodle name="arrowLeft" size={34} />
       </button>
-      <button type="button" className={cn(styles.control, styles.next)} onClick={next} aria-label="Next photo">
+      <button type="button" className={cn(styles.control, styles.next)} onClick={next} aria-label={messages.next}>
         <ChalkDoodle name="arrowRight" size={34} />
       </button>
-    </div>
+    </div>,
+    document.body,
   );
 }

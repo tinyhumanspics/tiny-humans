@@ -3,20 +3,22 @@
 import { useRef, useState } from "react";
 import { buildFeedFromMedia } from "@/config/media";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import { site } from "@/config/site";
 import SectionHeading from "@/components/SectionHeading/SectionHeading";
 import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
 import PortfolioLightbox from "@/components/PortfolioLightbox/PortfolioLightbox";
 import PortfolioCta from "@/components/PortfolioCta/PortfolioCta";
 import Reveal from "@/components/Reveal/Reveal";
 import BoardScene from "@/components/BoardDoodles/BoardScene";
+import { fill } from "@/lib/email/messages";
+import type { AppLocale } from "@/i18n/config";
+import en from "@/messages/en.json";
 import styles from "./Portfolio.module.css";
 
 const tapes = ["yellow", undefined, "blue", undefined, "white", "yellow", undefined, "blue", undefined] as const;
 
 /** Home page feed: photo groups with "Book a memory like this one" prompts between them. */
-export default function Portfolio() {
-  const { id, title, subtitle } = site.sections.portfolio;
+export default function Portfolio({ messages = en.home.portfolio, locale = "en" }: { messages?: typeof en.home.portfolio; locale?: AppLocale }) {
+  const id = "portfolio";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
   const { photos: portfolio, media } = useSiteSettings();
@@ -34,11 +36,12 @@ export default function Portfolio() {
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={title} subtitle={subtitle} slot="portfolio" />
+        <SectionHeading id={`${id}-title`} title={messages.title} subtitle={messages.subtitle} slot="portfolio" />
         {feed.map((block, b) => {
           if (block.type === "cta") {
             ctaCount += 1;
-            return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={block.title} text={block.text} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
+            const localized = locale === "en" ? block : (messages.prompts[ctaCount - 1] ?? block);
+            return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={localized.title} text={localized.text} label={messages.ctaLabel} locale={locale} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
           }
           const groupIndex = groupCount++;
           return (
@@ -54,7 +57,7 @@ export default function Portfolio() {
                       type="button"
                       className={styles.trigger}
                       onClick={() => setOpenIndex(i)}
-                      aria-label={`Open photo ${i + 1} of ${portfolio.length}: ${photo.alt}`}
+                      aria-label={fill(messages.openPhoto, { current: String(i + 1), total: String(portfolio.length), alt: photo.alt })}
                     >
                       <PinnedPhoto photo={photo} seed={100 + i} tape={tapes[i % tapes.length]} sizes="(min-width: 1024px) 360px, (min-width: 600px) 45vw, 92vw" />
                     </button>
@@ -69,7 +72,7 @@ export default function Portfolio() {
           );
         })}
       </div>
-      <PortfolioLightbox photos={portfolio} index={openIndex} onChange={setOpenIndex} onClose={close} />
+      <PortfolioLightbox photos={portfolio} index={openIndex} onChange={setOpenIndex} onClose={close} messages={messages.viewer} />
     </section>
   );
 }

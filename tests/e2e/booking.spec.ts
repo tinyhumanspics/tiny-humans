@@ -229,6 +229,18 @@ test("the landing page and legal pages load", async ({ page }) => {
   }
 });
 
+test("the home portfolio viewer keeps its localized controls", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: /Open photo 1 of/ }).click();
+  const viewer = page.getByRole("dialog", { name: "Photo viewer" });
+  await expect(viewer).toBeVisible();
+  await expect(viewer.getByText(/^1 of \d+$/)).toBeVisible();
+  await viewer.getByRole("button", { name: "Next photo" }).click();
+  await expect(viewer.getByText(/^2 of \d+$/)).toBeVisible();
+  await viewer.getByRole("button", { name: "Close photo viewer" }).click();
+  await expect(viewer).toHaveCount(0);
+});
+
 test("/book without a bundle: the bundle picked earlier this visit, otherwise the bundles page", async ({ page }) => {
   await page.goto("/book");
   await expect(page).toHaveURL(/\/bundles$/);

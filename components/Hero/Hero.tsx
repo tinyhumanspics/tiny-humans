@@ -1,7 +1,10 @@
 "use client";
 
-import { site } from "@/config/site";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { bundlesHref } from "@/config/booking";
+import { localePath } from "@/i18n/path";
+import type { AppLocale } from "@/i18n/config";
+import en from "@/messages/en.json";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
@@ -10,8 +13,8 @@ import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
 import styles from "./Hero.module.css";
 import { cn } from "@/lib/cn";
 
-export default function Hero() {
-  const { hero } = site;
+export default function Hero({ messages = en.home.hero, locale = "en" }: { messages?: typeof en.home.hero; locale?: AppLocale }) {
+  const hero = messages;
   const { media, theme } = useSiteSettings();
   const [first, second] = media.title;
   const [doodleA, doodleB] = theme.decorations.hero;
@@ -32,8 +35,8 @@ export default function Hero() {
             <span>{hero.promise}</span>
           </p>
           <div className={styles.actions}>
-            <ChalkButton href={hero.secondaryCta.href} variant="outline" seed={11}>{hero.secondaryCta.label}</ChalkButton>
-            <ChalkButton href={hero.primaryCta.href} variant="solid" seed={12}>{hero.primaryCta.label}</ChalkButton>
+            <ChalkButton href={localePath("/#portfolio", locale)} variant="outline" seed={11}>{hero.secondaryCta}</ChalkButton>
+            <ChalkButton href={bundlesHref(undefined, locale)} variant="solid" seed={12}>{hero.primaryCta}</ChalkButton>
           </div>
         </Reveal>
         <Reveal className={styles.snaps} delay={250}>

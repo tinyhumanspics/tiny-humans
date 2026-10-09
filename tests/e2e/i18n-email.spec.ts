@@ -57,6 +57,7 @@ test("Spanish public shell messages match the English schema", async ({}, testIn
 test("Spanish catalog messages match the English schema", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.seo, es.seo, "seo");
+  compareCatalogShape(en.home, es.home, "home");
   compareCatalogShape(en.catalog, es.catalog, "catalog");
   compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");

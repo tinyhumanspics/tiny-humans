@@ -5,6 +5,33 @@
     "privacyDescription": "How Tiny Humans handles information when you browse the website or book a photography session.",
     "termsDescription": "Terms for booking and using Tiny Humans newborn and baby photography services."
   },
+  "home": {
+    "hero": {
+      "title": ["Tiny moments.", "Big memories."],
+      "subtitle": "Newborn & baby photography made with love.",
+      "promise": "We bring the studio to your home, so your little one stays comfy.",
+      "primaryCta": "Book a session",
+      "secondaryCta": "View our work"
+    },
+    "portfolio": {
+      "title": "Little moments",
+      "subtitle": "A few favorites, all taken in families' own homes.",
+      "prompts": [
+        { "title": "Love this one?", "text": "We'll plan your session around it." },
+        { "title": "Picture your family here", "text": "Baby, parents and all the little details." },
+        { "title": "Want a moment like this?", "text": "Milestones grow fast. Let's catch this one." }
+      ],
+      "ctaLabel": "Book a memory like this one",
+      "openPhoto": "Open photo {current} of {total}: {alt}",
+      "viewer": {
+        "label": "Photo viewer",
+        "close": "Close photo viewer",
+        "previous": "Previous photo",
+        "next": "Next photo",
+        "count": "{current} of {total}"
+      }
+    }
+  },
   "catalog": {
     "locationNote": "We bring the studio to your home",
     "choose": "Choose {name}",

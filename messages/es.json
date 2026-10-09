@@ -5,6 +5,33 @@
     "privacyDescription": "Cómo Tiny Humans maneja la información cuando visitas el sitio web o reservas una sesión de fotografía.",
     "termsDescription": "Términos para reservar y usar los servicios de fotografía de recién nacidos y bebés de Tiny Humans."
   },
+  "home": {
+    "hero": {
+      "title": ["Momentos pequeñitos.", "Grandes recuerdos."],
+      "subtitle": "Fotografía de recién nacidos y bebés hecha con amor.",
+      "promise": "Llevamos el estudio a tu hogar para que tu bebé esté cómodo.",
+      "primaryCta": "Reserva una sesión",
+      "secondaryCta": "Mira nuestro trabajo"
+    },
+    "portfolio": {
+      "title": "Pequeños momentos",
+      "subtitle": "Algunos de nuestros favoritos, todos tomados en los hogares de las familias.",
+      "prompts": [
+        { "title": "¿Te encanta esta?", "text": "Planificaremos tu sesión inspirándonos en ella." },
+        { "title": "Imagina a tu familia aquí", "text": "Tu bebé, la familia y todos los pequeños detalles." },
+        { "title": "¿Quieres un momento como este?", "text": "Cada etapa pasa rápido. Guardemos este momento." }
+      ],
+      "ctaLabel": "Reserva un recuerdo como este",
+      "openPhoto": "Abrir foto {current} de {total}: {alt}",
+      "viewer": {
+        "label": "Visor de fotos",
+        "close": "Cerrar el visor de fotos",
+        "previous": "Foto anterior",
+        "next": "Foto siguiente",
+        "count": "{current} de {total}"
+      }
+    }
+  },
   "catalog": {
     "locationNote": "Llevamos el estudio a tu hogar",
     "choose": "Elegir {name}",

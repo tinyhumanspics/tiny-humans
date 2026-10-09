@@ -3,6 +3,7 @@ import Hero from "@/components/Hero/Hero";
 import Portfolio from "@/components/Portfolio/Portfolio";
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
+import en from "@/messages/en.json";
 
 export const metadata: Metadata = pageMetadata({
   title: DEFAULT_SITE_TITLE,
@@ -17,8 +18,8 @@ export default function HomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd()) }} />
       <main id="top">
-        <Hero />
-        <Portfolio />
+        <Hero messages={en.home.hero} locale="en" />
+        <Portfolio messages={en.home.portfolio} locale="en" />
       </main>
     </>
   );
