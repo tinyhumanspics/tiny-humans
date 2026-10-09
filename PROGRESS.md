@@ -4,8 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 8: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `ee78e80` is live and smoke-tested; Vercel succeeded and production home, bundles, booking and About pages
-returned 200. Phase 4 is complete: extra babies are live,
+State: app commit `c7ac181` is live and smoke-tested; Vercel succeeded and production home, bundles, booking, About and
+the protected admin-pricing page returned 200; its API correctly returned 401 without an owner session. Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
@@ -454,7 +454,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Inclusion add/delete/reorder actions keep both languages aligned. An isolated local Neon/HTTP round trip created,
       reloaded and deleted a translated bundle; strict tsc/build/lint passed (0 errors/25 known warnings), 66 e2e passed
       (15 expected cross-browser skips), all 16 visual-parity pages passed, and phone/desktop admin captures were
-      inspected.
+      inspected. Vercel succeeded; production home, bundles, booking, About and the protected admin-pricing page returned
+      200, its API correctly returned 401 without an owner session, and the live English navigation remained intact.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
