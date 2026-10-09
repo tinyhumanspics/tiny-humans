@@ -465,6 +465,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       skips), and all 16 visual-parity pages passed. Vercel succeeded; production home, bundles, booking, About and the
       protected admin-pricing page returned 200, `/es` remained an intentional 404, and live package cards kept their
       English names and calls to action.
+      **Oct 8 bundle-page shell (`23724fd`):** bundle-page metadata, heading, inspiration banner, price/accessibility
+      labels, offer cutoff, unavailable state and booking URLs now accept matched English/Spanish message catalogs and
+      a locale. The live `/bundles` page and ad landing explicitly pass English; the future Spanish page can pass `es`
+      without forking these components. Old duplicate bundle-page copy was removed from `config/site.ts`. Strict tsc/
+      build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), and all 16 visual-
+      parity pages passed with the English bundle page and landing pixel-identical.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
