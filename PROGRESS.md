@@ -480,7 +480,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), and
       all 16 visual-parity pages passed with the live English booking appearance unchanged. Vercel succeeded;
       production booking, bundles and ad landing returned 200 with the expected English content, while `/es/book`
-      remained an intentional 404.
+      remained an intentional 404. **Oct 8 booking family-details form (`14dc4cd`):** the selected-bundle summary,
+      contact/address fields and validation, stored age options, twins/triplets choices, travel hints, notes, backdrop
+      names and permissions now use paired English/Spanish catalogs. Translated age labels keep the stable English
+      values expected by server validation. English remains the only live caller and `/es/book` stays unpublished.
+      Strict tsc/build/lint passed (0 errors/25 known warnings), 67 e2e passed (20 expected cross-browser skips), all 16
+      visual-parity pages passed, and the Details step was captured and inspected at iPhone and 1440px desktop widths.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
