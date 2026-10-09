@@ -14,7 +14,7 @@ export default function ReviewPage() {
   return (
     <main id="top">
       <Suspense fallback={null}>
-        <ReviewForm />
+        <ReviewForm locale="en" messages={en.review} />
       </Suspense>
     </main>
   );

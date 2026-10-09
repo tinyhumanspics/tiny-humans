@@ -683,6 +683,72 @@
       }
     }
   },
+  "review": {
+    "metaTitle": "Comparte tu experiencia",
+    "eyebrow": "Hola, {name}",
+    "title": "¿Cómo fue tu sesión?",
+    "intro": "Gracias por permitirnos fotografiar a tu familia. Tus palabras significan muchísimo para nosotros.",
+    "loading": "Abriendo tu reseña…",
+    "ratingLabel": "Tu calificación",
+    "stars": [
+      "1 estrella",
+      "2 estrellas",
+      "3 estrellas",
+      "4 estrellas",
+      "5 estrellas"
+    ],
+    "bodyLabel": "Cuéntanos sobre tu sesión",
+    "bodyPlaceholder": "¿Qué te encantó? ¿Hay algo que podríamos mejorar?",
+    "nameLabel": "Nombre que aparecerá con tu reseña",
+    "nameHint": "Por ejemplo, tu nombre y la inicial de tu apellido.",
+    "consent": "Pueden compartir mi reseña, con este nombre, en el sitio web de Tiny Humans.",
+    "submit": "Enviar mi reseña",
+    "update": "Actualizar mi reseña",
+    "sending": "Enviando…",
+    "errors": {
+      "rating": "Elige una calificación de 1 a 5 estrellas.",
+      "body": "Escribe unas palabras sobre tu sesión.",
+      "name": "Agrega el nombre que aparecerá con tu reseña.",
+      "failed": "No pudimos guardar tu reseña en este momento. Inténtalo de nuevo."
+    },
+    "doneTitle": "¡Gracias!",
+    "doneText": "Tu reseña significa muchísimo para nosotros. Nos alegra haber podido capturar estos pequeños momentos contigo.",
+    "invalidTitle": "No pudimos abrir este enlace",
+    "invalidText": "Este enlace para dejar una reseña ya no es válido. Responde a tu correo de Tiny Humans y te ayudaremos.",
+    "home": "Volver a Tiny Humans"
+  },
+  "pay": {
+    "metaTitle": "Pago",
+    "paid": {
+      "title": "¡Gracias!",
+      "text": "Tu pago está completo. Tenemos muchas ganas de que veas tus fotos."
+    },
+    "already": {
+      "title": "Todo está pagado",
+      "text": "Esta sesión ya está pagada. ¡Gracias!"
+    },
+    "nothing": {
+      "title": "No hay nada que pagar",
+      "text": "No hay nada que pagar por esta sesión. ¡Gracias!"
+    },
+    "cancelled": {
+      "title": "No se realizó ningún pago",
+      "text": "Puedes pagar cuando quieras con el botón de tu correo de Tiny Humans."
+    },
+    "invalid": {
+      "title": "No pudimos abrir este enlace de pago",
+      "text": "Responde a tu correo de Tiny Humans y te ayudaremos."
+    },
+    "error": {
+      "title": "La página de pago no se abrió",
+      "text": "Inténtalo de nuevo en un minuto desde el botón de tu correo o responde al correo y te ayudaremos."
+    },
+    "home": "Volver a Tiny Humans",
+    "deposit": {
+      "title": "Tu depósito está pagado",
+      "text": "¡Gracias! Tu sesión está confirmada y el saldo vence cuando termine tu sesión de fotos."
+    }
+  },
   "cancelPage": {
     "metaTitle": "Cancela tu sesión",
     "loading": "Buscando tu reserva…",
@@ -785,5 +851,24 @@
     "closedReschedule": "Faltan menos de {notice} para esta sesión, así que ya no se puede cambiar en línea. Escríbenos al {phone} y te ayudaremos.",
     "closedCancelTitle": "¿Necesitas cancelar?",
     "textUs": "Escríbenos al {phone}"
+  },
+  "backdropPage": {
+    "metaTitle": "Elige tu fondo",
+    "title": "Elige tu fondo",
+    "titleMany": "Elige tus fondos",
+    "intro": "Para tu sesión {bundle} del {date}.",
+    "pickOne": "Elige uno.",
+    "pickMany": "Elige hasta {n}, uno para cada montaje.",
+    "save": "Guardar mi fondo",
+    "saveMany": "Guardar mis fondos",
+    "saving": "Guardando…",
+    "saved": "¡Guardado! Llevaremos {list} a tu sesión.",
+    "current": "En este momento: {list}.",
+    "notChosen": "Aún no has elegido.",
+    "later": "¿Todavía no estás seguro? Puedes volver a esta página en cualquier momento hasta el día antes de tu sesión.",
+    "closed": "Tu sesión es muy pronto, así que el fondo ya no se puede cambiar en línea. Escríbenos al {phone}.",
+    "cancelled": "Esta reserva fue cancelada.",
+    "invalid": "Este enlace ya no es válido. Usa nuestro correo más reciente o escríbenos al {phone}.",
+    "error": "Algo salió mal. Inténtalo de nuevo o escríbenos al {phone}."
   }
 }

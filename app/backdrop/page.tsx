@@ -14,7 +14,7 @@ export default function Page() {
   return (
     <main id="top">
       <Suspense fallback={null}>
-        <BackdropPage />
+        <BackdropPage locale="en" messages={en.backdropPage} bookingMessages={en.bookingFlow} />
       </Suspense>
     </main>
   );

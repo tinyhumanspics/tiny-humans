@@ -60,6 +60,9 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
   compareCatalogShape(en.cancelPage, es.cancelPage, "cancelPage");
   compareCatalogShape(en.reschedulePage, es.reschedulePage, "reschedulePage");
+  compareCatalogShape(en.backdropPage, es.backdropPage, "backdropPage");
+  compareCatalogShape(en.review, es.review, "review");
+  compareCatalogShape(en.pay, es.pay, "pay");
   compareCatalogShape(en.policy, es.policy, "policy");
   expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(es.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));

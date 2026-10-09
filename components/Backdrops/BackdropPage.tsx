@@ -12,8 +12,11 @@ import BackdropPicker from "./BackdropPicker";
 import styles from "@/components/Reschedule/Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
+import type { AppLocale } from "@/i18n/config";
+import { useCatalog } from "@/components/Catalog/CatalogProvider";
 
 interface BackdropView {
+  bundleId: string;
   bundleName: string;
   date: string;
   start: string;
@@ -24,11 +27,12 @@ interface BackdropView {
   status: "active" | "cancelled" | "past";
 }
 
-const t = en.backdropPage;
 const phone = { phone: site.contact.phone };
 
 /** Backdrop page (/backdrop?t=<management token>): the family picks or changes their backdrops, one per setup. */
-export default function BackdropPage() {
+export default function BackdropPage({ locale = "en", messages = en.backdropPage, bookingMessages = en.bookingFlow }: { locale?: AppLocale; messages?: typeof en.backdropPage; bookingMessages?: typeof en.bookingFlow }) {
+  const t = messages;
+  const { getBundle } = useCatalog();
   const token = useSearchParams().get("t") ?? "";
   const [view, setView] = useState<BackdropView | null>(null);
   const [picks, setPicks] = useState<string[]>([]);
@@ -39,8 +43,8 @@ export default function BackdropPage() {
     if (!token) return;
     fetch(`/api/booking/backdrop?t=${encodeURIComponent(token)}`, { cache: "no-store" })
       .then(async (res) => {
-        const j = await res.json().catch(() => null);
-        if (!res.ok || !j?.backdrop) throw new Error(j?.error ?? fill(t.invalid, phone));
+        const j = (await res.json().catch(() => null)) as { backdrop?: BackdropView; code?: string } | null;
+        if (!res.ok || !j?.backdrop) throw new Error(j?.code === "not_found" ? fill(t.invalid, phone) : fill(t.error, phone));
         setView(j.backdrop);
         setPicks(j.backdrop.picks);
         setState("ready");
@@ -49,17 +53,17 @@ export default function BackdropPage() {
         setMessage(e instanceof Error ? e.message : fill(t.invalid, phone));
         setState("invalid");
       });
-  }, [token]);
+  }, [token, t]);
 
   const save = async () => {
     setState("saving");
     setMessage("");
     try {
       const res = await fetch("/api/booking/backdrop", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, picks }) });
-      const j = await res.json().catch(() => null);
+      const j = (await res.json().catch(() => null)) as { backdrop?: BackdropView; code?: string } | null;
       if (!res.ok || !j?.backdrop) {
         if (j?.code === "reschedule_closed") setView((v) => (v ? { ...v, canChange: false } : v));
-        throw new Error(j?.error ?? fill(t.error, phone));
+        throw new Error(j?.code === "not_found" ? fill(t.invalid, phone) : fill(t.error, phone));
       }
       setView(j.backdrop);
       setState("saved");
@@ -70,6 +74,7 @@ export default function BackdropPage() {
   };
 
   const many = (view?.setups ?? 1) > 1;
+  const localizedNames = bookingMessages.details.backdrops.names;
   return (
     <section className={cn("container", styles.page)} aria-labelledby="bd-title">
       <ChalkBox className={styles.panel} seed={431} wobble={3.4} strokeWidth={2.8}>
@@ -81,23 +86,23 @@ export default function BackdropPage() {
         {view && state !== "invalid" && (
           <>
             <p className={cn(styles.text, "chalk-soft")}>
-              {fill(t.intro, { bundle: view.bundleName, date: `${formatLongDate(view.date)}, ${formatTimeLabel(view.start)}` })}
+              {fill(t.intro, { bundle: getBundle(view.bundleId)?.name ?? view.bundleName, date: `${formatLongDate(view.date, locale)}, ${formatTimeLabel(view.start, locale)}` })}
             </p>
             {view.status === "cancelled" ? (
               <p className={cn(styles.notice, "chalk-soft")}>{t.cancelled}</p>
             ) : !view.canChange ? (
               <>
-                <p className={cn(styles.text, "chalk-soft")}>{view.picks.length ? fill(t.current, { list: backdropNames(view.picks) }) : t.notChosen}</p>
+                <p className={cn(styles.text, "chalk-soft")}>{view.picks.length ? fill(t.current, { list: backdropNames(view.picks, localizedNames, bookingMessages.review.and) }) : t.notChosen}</p>
                 <p className={cn(styles.notice, "chalk-soft")}>{fill(t.closed, phone)}</p>
               </>
             ) : state === "saved" ? (
               <p className={cn(styles.notice, "chalk-soft")} role="status">
-                {view.picks.length ? fill(t.saved, { list: backdropNames(view.picks) }) : t.notChosen}
+                {view.picks.length ? fill(t.saved, { list: backdropNames(view.picks, localizedNames, bookingMessages.review.and) }) : t.notChosen}
               </p>
             ) : (
               <>
                 <p className={cn(styles.text, "chalk-soft")}>{many ? fill(t.pickMany, { n: String(view.setups) }) : t.pickOne}</p>
-                <BackdropPicker max={view.setups} value={picks} onChange={setPicks} label={many ? t.titleMany : t.title} />
+                <BackdropPicker max={view.setups} value={picks} onChange={setPicks} label={many ? t.titleMany : t.title} names={localizedNames} />
                 {message && (
                   <p className={cn(styles.error, "chalk-soft")} role="alert">
                     {message}

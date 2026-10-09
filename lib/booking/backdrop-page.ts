@@ -19,6 +19,7 @@ import { fill } from "@/lib/email/messages";
 
 /** What the backdrop page (/backdrop?t=…) shows. */
 export interface BackdropView {
+  bundleId: string;
   bundleName: string;
   date: string;
   start: string;
@@ -41,6 +42,7 @@ export function canChangeBackdrop(row: Booking, now = new Date()): boolean {
 function viewOf(row: Booking, picks: string[], now = new Date()): BackdropView {
   const status = row.status === "cancelled" ? "cancelled" : row.sessionStart.getTime() <= now.getTime() ? "past" : "active";
   return {
+    bundleId: row.packageId,
     bundleName: row.packageName,
     date: row.sessionDate,
     start: localTime(row.sessionStart, row.timezone),

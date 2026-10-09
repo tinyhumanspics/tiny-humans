@@ -7,14 +7,17 @@ import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
+import { fill } from "@/lib/email/messages";
+import { localePath } from "@/i18n/path";
+import type { AppLocale } from "@/i18n/config";
 import styles from "./AfterSession.module.css";
 
-const m = en.review;
 type View = "loading" | "invalid" | "form" | "done";
 type Field = "rating" | "body" | "name";
 
 /** /review?t=… (link in the gallery email): a short review form; saved with the booking for the owner in /admin. */
-export default function ReviewForm() {
+export default function ReviewForm({ locale = "en", messages = en.review }: { locale?: AppLocale; messages?: typeof en.review }) {
+  const m = messages;
   const token = useSearchParams().get("t") ?? "";
   const [view, setView] = useState<View>(token ? "loading" : "invalid");
   const [firstName, setFirstName] = useState("");
@@ -60,7 +63,7 @@ export default function ReviewForm() {
     try {
       const res = await fetch("/api/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, rating, body: body.trim(), displayName: displayName.trim(), consentPublic: consent }) });
       if (res.status === 404) return setView("invalid");
-      if (!res.ok) throw new Error(((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? m.errors.failed);
+      if (!res.ok) throw new Error(m.errors.failed);
       setView("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
@@ -79,13 +82,13 @@ export default function ReviewForm() {
           <>
             <h1 id="review-title" className={cn(styles.title, "chalk")}>{m.invalidTitle}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{m.invalidText}</p>
-            <ChalkButton href="/" variant="outline" seed={422}>{m.home}</ChalkButton>
+            <ChalkButton href={localePath("/", locale)} variant="outline" seed={422}>{m.home}</ChalkButton>
           </>
         )}
 
         {view === "form" && (
           <form onSubmit={submit} noValidate>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{m.eyebrow.replace("{name}", firstName)}</p>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(m.eyebrow, { name: firstName })}</p>
             <h1 id="review-title" className={cn(styles.title, "chalk")}>{m.title}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{m.intro}</p>
 
@@ -128,7 +131,7 @@ export default function ReviewForm() {
             <h1 id="review-title" className={cn(styles.title, "chalk")} tabIndex={-1}>{m.doneTitle}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{m.doneText}</p>
             <div className={styles.actions}>
-              <ChalkButton href="/" variant="outline" seed={424}>{m.home}</ChalkButton>
+              <ChalkButton href={localePath("/", locale)} variant="outline" seed={424}>{m.home}</ChalkButton>
             </div>
           </div>
         )}

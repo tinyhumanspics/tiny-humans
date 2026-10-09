@@ -14,7 +14,7 @@ export default async function PayStatusPage({ searchParams }: { searchParams: Pr
   const state: PayState = (PAY_STATES as readonly string[]).includes(s ?? "") ? (s as PayState) : "invalid";
   return (
     <main id="top">
-      <PayStatus state={state} />
+      <PayStatus state={state} locale="en" messages={en.pay} />
     </main>
   );
 }

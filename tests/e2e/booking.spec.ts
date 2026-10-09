@@ -179,6 +179,23 @@ test("mock management links show the booking and allow cancellation", async ({ p
   await expect(page.getByRole("heading", { name: "Your session has been cancelled" })).toBeVisible();
 });
 
+test("email-linked customer tool shells load safely", async ({ page }, testInfo) => {
+  await page.goto("/backdrop");
+  await expect(page.getByRole("heading", { name: "Choose your backdrop" })).toBeVisible();
+  await expect(page.getByText(/This link isn't valid anymore/)).toBeVisible();
+  if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/backdrop-${testInfo.project.name}.png`, fullPage: true });
+
+  await page.goto("/review");
+  await expect(page.getByRole("heading", { name: "We couldn't open this link" })).toBeVisible();
+  await expect(page.getByText(/review link isn't valid anymore/)).toBeVisible();
+  if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/review-${testInfo.project.name}.png`, fullPage: true });
+
+  await page.goto("/pay/status?s=paid");
+  await expect(page.getByRole("heading", { name: "Thank you!" })).toBeVisible();
+  await expect(page.getByText("Your payment is complete. We can't wait for you to see your photos.")).toBeVisible();
+  if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/pay-${testInfo.project.name}.png`, fullPage: true });
+});
+
 test("booking works in the Instagram in-app browser", async ({ browser }) => {
   const ctx = await browser.newContext({ userAgent: INSTAGRAM_UA, viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true });
   await bookLittleMoments(await ctx.newPage());
