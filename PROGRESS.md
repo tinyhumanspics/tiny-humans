@@ -442,7 +442,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       unsupported locales/invalid inclusion positions. Strict tsc/build/lint passed (0 errors/26 known warnings), 62
       e2e passed (10 expected cross-browser skips), and all 16 visual-parity pages passed. Vercel succeeded; production
       home, About and booking returned 200. [?] Owner: run
-      `drizzle/0019_catalog_translations.sql` in Neon before the next schema-reading admin slice.
+      `drizzle/0019_catalog_translations.sql` in Neon before the next schema-reading admin slice. **Oct 8 public shell
+      (`ee78e80`):** header navigation, screen-reader labels, footer links/contact/copyright and their URLs now accept a
+      locale-specific catalog. English is still passed explicitly by the live root layout, while the complete Spanish
+      pair and `/es` links stay dormant for the future Spanish layout. Only the small header/footer catalogs cross the
+      server-to-client boundary. Catalog-shape/path tests passed; strict tsc/build/lint passed (0 errors/26 known
+      warnings), 63 e2e passed (12 expected cross-browser skips), and all 16 visual-parity pages passed.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
