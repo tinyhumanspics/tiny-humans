@@ -4,6 +4,9 @@ import { expect, test } from "@playwright/test";
 const INSTAGRAM_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 389.0.0.29.87 (iPhone15,2; iOS 18_5; en_US; en; scale=3.00; 1179x2556; 739461213)";
 
+const availableDay = (page: import("@playwright/test").Page) =>
+  page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
+
 async function bookLittleMoments(page: import("@playwright/test").Page) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -13,9 +16,9 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await page.getByRole("link", { name: /Choose Little Moments/i }).click();
   await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
 
-  const day = page.locator('button[aria-label*="times available"]').first();
+  const day = availableDay(page);
   if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await page.locator('button[aria-label*="times available"]').first().click();
+  await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await expect(page.getByText(/Miami time/).first()).toBeVisible();
   await page.locator('label[for^="time-"]').first().click();
@@ -62,9 +65,9 @@ test("a family can book a session (mock provider)", async ({ page }) => {
 
 test("twins add full-price time and photos to any bundle", async ({ page }) => {
   await page.goto("/book?bundle=little-moments");
-  const day = page.locator('button[aria-label*="times available"]').first();
+  const day = availableDay(page);
   if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await page.locator('button[aria-label*="times available"]').first().click();
+  await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   const time = page.locator('label[for^="time-"]').first();
   await expect(time.getByText(/until/)).toBeVisible();
@@ -110,7 +113,7 @@ test("a longer twins or triplets session keeps details and asks for another time
   });
 
   await page.goto("/book?bundle=little-moments");
-  await page.locator('button[aria-label*="times available"]').first().click();
+  await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
@@ -153,9 +156,9 @@ test("booking works in the Instagram in-app browser", async ({ browser }) => {
 
 test("a ZIP code outside Florida can't be booked", async ({ page }) => {
   await page.goto("/book?bundle=little-moments");
-  const day = page.locator('button[aria-label*="times available"]').first();
+  const day = availableDay(page);
   if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await page.locator('button[aria-label*="times available"]').first().click();
+  await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();

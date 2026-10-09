@@ -24,8 +24,6 @@ export const site = {
       subtitle: "Pick a day and time, and we'll bring the studio to your door. It takes about two minutes.",
     },
   },
-  /** Shown in the booking section so every parent knows what to expect. */
-  babyLedNote: "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
   /** Footer: social + contact. */
   social: {
     instagram: { label: "Instagram", handle: "@tinyhumans.photography" as string | null, url: "https://www.instagram.com/tinyhumans.photography/" },

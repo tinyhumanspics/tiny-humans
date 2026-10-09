@@ -33,6 +33,64 @@
       "emailLabel": "Escríbenos"
     }
   },
+  "bookingFlow": {
+    "meta": {
+      "title": "Elige la fecha",
+      "description": "Elige un día y una hora, y llevaremos el estudio a tu hogar."
+    },
+    "section": {
+      "title": "Creemos algunos recuerdos",
+      "subtitle": "Elige un día y una hora, y llevaremos el estudio a tu puerta. Solo toma unos dos minutos."
+    },
+    "steps": [
+      { "id": "date", "label": "Fecha", "title": "Elige un día" },
+      { "id": "time", "label": "Hora", "title": "Elige una hora" },
+      { "id": "details", "label": "Detalles", "title": "Cuéntanos sobre tu familia" },
+      { "id": "review", "label": "Revisar", "title": "Revisa todos los detalles" }
+    ],
+    "tracker": {
+      "label": "Pasos de la reserva",
+      "mobile": "Paso {current} de {total}: {label}",
+      "step": "Paso {current}, {label}{done}",
+      "done": ", completado"
+    },
+    "calendar": {
+      "weekdays": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"],
+      "months": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
+      "monthTitle": "{month} de {year}",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente",
+      "availability": "Disponibilidad para {month}",
+      "oneTime": "1 horario disponible",
+      "manyTimes": "{count} horarios disponibles",
+      "unavailable": "no disponible",
+      "checking": "comprobando",
+      "loading": "Revisando el calendario…",
+      "closed": "Los días desvanecidos están reservados o cerrados."
+    },
+    "time": {
+      "zone": "hora de Miami",
+      "checking": "Buscando horarios disponibles…",
+      "filled": "Este día acaba de llenarse. Regresa y elige otro día.",
+      "until": "hasta las {time}"
+    },
+    "actions": {
+      "back": "Atrás",
+      "next": "Siguiente: {label}",
+      "booking": "Reservando…",
+      "book": "Reservar mi sesión"
+    },
+    "babyLed": {
+      "one": "Nuestras sesiones siguen el ritmo de tu bebé. Hay tiempo para alimentarlo, cambiarlo y consolarlo cuando lo necesite.",
+      "many": "Nuestras sesiones siguen el ritmo de tus bebés. Hay tiempo para alimentarlos, cambiarlos y consolarlos cuando lo necesiten."
+    },
+    "errors": {
+      "availability": "No pudimos cargar los horarios disponibles. Inténtalo de nuevo.",
+      "date": "Elige un día en el calendario.",
+      "time": "Elige una hora para continuar.",
+      "submit": "No pudimos guardar la reserva. Revisa tu conexión y presiona Reservar mi sesión de nuevo."
+    }
+  },
   "about": {
     "meta": {
       "title": "Nuestra historia",

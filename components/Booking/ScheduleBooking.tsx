@@ -12,13 +12,14 @@ import BookingPaused from "@/features/booking/BookingPaused";
 import { bundlesHref, scheduleHref } from "@/config/booking";
 import { lastBundle, rememberBundle } from "@/lib/booking/last-bundle";
 import type { AppLocale } from "@/i18n/config";
+import type en from "@/messages/en.json";
 import styles from "./Booking.module.css";
 
 /**
  * Reads ?bundle= and ?inspiration= from the link, then shows the calendar.
  * No (known) bundle in the link: back to the bundle opened earlier in this visit, otherwise to the bundles page.
  */
-export default function ScheduleBooking({ locale = "en" }: { locale?: AppLocale }) {
+export default function ScheduleBooking({ locale = "en", messages, pausedMessages }: { locale?: AppLocale; messages: typeof en.bookingFlow; pausedMessages: typeof en.bundlesPage.paused }) {
   const params = useSearchParams();
   const router = useRouter();
   const { photos } = useSiteSettings();
@@ -59,14 +60,14 @@ export default function ScheduleBooking({ locale = "en" }: { locale?: AppLocale 
     if (!available || redirected.current) return;
     redirected.current = true;
     const last = getBundle(lastBundle());
-    router.replace(last ? scheduleHref(last.id, inspirationId) : bundlesHref(inspirationId));
-  }, [bundleId, available, getBundle, inspirationId, router]);
+    router.replace(last ? scheduleHref(last.id, inspirationId, locale) : bundlesHref(inspirationId, locale));
+  }, [bundleId, available, getBundle, inspirationId, locale, router]);
 
   if (!bundle && !available) {
     return (
       <section className={styles.section}>
         <div className="container">
-          <BookingPaused />
+          <BookingPaused messages={pausedMessages} />
         </div>
       </section>
     );
@@ -75,5 +76,5 @@ export default function ScheduleBooking({ locale = "en" }: { locale?: AppLocale 
   if (!bundle) return null;
   if (depositRef && depositSig) return <DepositReturn key={depositRef} bundleId={bundle.id} reference={depositRef} signature={depositSig} paid={params.get("paid") === "1"} />;
   // key: a different bundle starts a fresh booking
-  return <Booking key={bundle.id} bundleId={bundle.id} locale={locale} />;
+  return <Booking key={bundle.id} bundleId={bundle.id} locale={locale} messages={messages} />;
 }

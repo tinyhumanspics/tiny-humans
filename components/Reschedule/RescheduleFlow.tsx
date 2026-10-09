@@ -109,7 +109,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
       {step === "date" && (
         <>
           <h3 className={cn(bstyles.stepTitle, "chalk")}>Choose a new day</h3>
-          <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} />
+          <Calendar todayKey={studioToday} month={month} onMonthChange={setMonth} days={days} loading={loading} selected={date} onSelect={(d) => { setDate(d); setSlot(null); setError(null); }} messages={en.bookingFlow.calendar} locale="en" />
           <div className={styles.actions}>
             <ChalkButton variant="outline" onClick={onKeep} seed={421}>{keepLabel}</ChalkButton>
             <ChalkButton variant="solid" disabled={!date} onClick={() => date && setStep("time")} seed={422}>Next: Time</ChalkButton>

@@ -8,7 +8,7 @@ import { bookingRequestSchema } from "@/lib/booking/validation";
 import { bundleInputSchema } from "@/lib/pricing/validation";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
 import type { Bundle } from "@/config/bundles";
-import { bundlesHref, scheduleHref } from "@/config/booking";
+import { bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
 import { localePath } from "@/i18n/path";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
@@ -51,6 +51,9 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.catalog, es.catalog, "catalog");
   compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
+  compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
+  expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
+  expect(es.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
 });
 
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {

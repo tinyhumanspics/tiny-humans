@@ -3,10 +3,11 @@ import { Suspense } from "react";
 import ScheduleBooking from "@/components/Booking/ScheduleBooking";
 import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
 import { pageMetadata } from "@/lib/seo/metadata";
+import en from "@/messages/en.json";
 
 export const metadata: Metadata = pageMetadata({
-  title: "Pick your date",
-  description: "Choose a day and time, and we'll bring the studio to your home.",
+  title: en.bookingFlow.meta.title,
+  description: en.bookingFlow.meta.description,
   path: "/book",
   index: false,
 });
@@ -17,7 +18,7 @@ export default function BookPage() {
     <BookingSelectionProvider>
       <main id="top" className="book-page">
         <Suspense fallback={null}>
-          <ScheduleBooking locale="en" />
+          <ScheduleBooking locale="en" messages={en.bookingFlow} pausedMessages={en.bundlesPage.paused} />
         </Suspense>
       </main>
     </BookingSelectionProvider>

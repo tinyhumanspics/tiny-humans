@@ -196,14 +196,12 @@ function newRequestId(): string {
     : `req-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const stepTitles = ["Pick a day", "Pick a time", "Tell us about your family", "Check everything"];
-
 /** Newborns up to 2 years for now: the note under the age box, split around the email link. */
 const olderNote = en.booking.age.olderNote.split("{email}");
 
 /** The booking calendar for one bundle (chosen on the bundles page). */
-export default function Booking({ bundleId, locale = "en" }: { bundleId: string; locale?: AppLocale }) {
-  const { id, title, subtitle } = site.sections.book;
+export default function Booking({ bundleId, locale = "en", messages }: { bundleId: string; locale?: AppLocale; messages: typeof en.bookingFlow }) {
+  const id = "book";
   const provider = getBookingClient();
   // one id per submission: retries of the same booking can never double-book
   const requestIdRef = useRef<string | null>(null);
@@ -259,13 +257,13 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
       } catch (err) {
         dispatch({
           type: "stepError",
-          message: err instanceof BookingApiError ? err.message : "We couldn't load open times. Please try again.",
+          message: err instanceof BookingApiError ? err.message : messages.errors.availability,
         });
       } finally {
         setLoadingDays(false);
       }
     },
-    [provider],
+    [messages.errors.availability, provider],
   );
 
   useEffect(() => {
@@ -390,10 +388,10 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
   const next = () => {
     switch (state.step) {
       case STEP.date:
-        if (!state.date) return dispatch({ type: "stepError", message: "Pick a day on the calendar." });
+        if (!state.date) return dispatch({ type: "stepError", message: messages.errors.date });
         break;
       case STEP.time:
-        if (!state.slot) return dispatch({ type: "stepError", message: "Pick a time to continue." });
+        if (!state.slot) return dispatch({ type: "stepError", message: messages.errors.time });
         break;
       case STEP.details: {
         const errors = validateContact(state.contact);
@@ -485,7 +483,7 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
       }
       dispatch({
         type: "submitFailed",
-        message: err instanceof BookingApiError ? err.message : "The booking couldn't be saved. Check your connection and press Book my session again.",
+        message: err instanceof BookingApiError ? err.message : messages.errors.submit,
       });
     }
   };
@@ -495,7 +493,7 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={title} subtitle={subtitle} slot="book" />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" />
         {state.status !== "done" && bundle && (
           <div className={styles.bundleSummary}>
             {inspiration && <InspirationThumb photo={inspiration} size={44} />}
@@ -517,12 +515,12 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                 </p>
               )}
             </div>
-            <Link href={bundlesHref(selection.inspirationId)} className={cn(styles.linkButton, "chalk-soft")}>
+            <Link href={bundlesHref(selection.inspirationId, locale)} className={cn(styles.linkButton, "chalk-soft")}>
               Change bundle
             </Link>
           </div>
         )}
-        <BabyLedNote multiple={state.babies.length > 1} />
+        <BabyLedNote messages={messages.babyLed} multiple={state.babies.length > 1} />
 
         <Reveal>
         <div ref={panelRef} className={styles.panelAnchor} data-booking-panel>
@@ -532,15 +530,15 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                 result={state.result}
                 travelEstimate={travel ? { feeCents: travel.status === "fee" ? travel.feeCents : 0, miles: travel.miles } : undefined}
                 headingRef={headingRef}
-                onReset={() => router.push(bundlesHref())}
+                onReset={() => router.push(bundlesHref(undefined, locale))}
               />
             ) : (
               <>
-                <StepTracker current={state.step} maxReached={state.maxStep} onGo={goTo} />
+                <StepTracker current={state.step} maxReached={state.maxStep} onGo={goTo} messages={messages} />
 
                 <div className={styles.stepBody}>
                   <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
-                    {stepTitles[state.step]}
+                    {messages.steps[state.step].title}
                   </h3>
 
                   {state.step === STEP.date && (
@@ -552,16 +550,18 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                         loading={loadingDays}
                         selected={state.date}
                         onSelect={(d) => dispatch({ type: "date", date: d })}
+                        messages={messages.calendar}
+                        locale={locale}
                       />
                   )}
 
                   {state.step === STEP.time && state.date && (
                     <fieldset className={styles.fieldset}>
-                      <legend className={cn(styles.subtle, "chalk-soft")}>{formatLongDate(state.date)} · {en.booking.timeZone.short}</legend>
+                      <legend className={cn(styles.subtle, "chalk-soft")}>{formatLongDate(state.date, locale)} · {messages.time.zone}</legend>
                       {daySlots === undefined ? (
-                        <p className={cn(styles.subtle, "chalk-soft")}>Checking open times…</p>
+                        <p className={cn(styles.subtle, "chalk-soft")}>{messages.time.checking}</p>
                       ) : daySlots.length === 0 ? (
-                        <p className={cn(styles.subtle, "chalk-soft")}>This day just filled up. Go back and pick another day.</p>
+                        <p className={cn(styles.subtle, "chalk-soft")}>{messages.time.filled}</p>
                       ) : (
                         <div className={styles.slots}>
                           {daySlots.map((slot, i) => (
@@ -572,8 +572,8 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                               seed={400 + i}
                               checked={state.slot?.id === slot.id}
                               onSelect={() => dispatch({ type: "slot", slot })}
-                              title={slot.label}
-                              detail={`until ${formatTimeLabel(slot.end)}`}
+                              title={formatTimeLabel(slot.start, locale)}
+                              detail={fill(messages.time.until, { time: formatTimeLabel(slot.end, locale) })}
                             />
                           ))}
                         </div>
@@ -614,7 +614,7 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                   {state.step === STEP.review && bundle && state.date && state.slot && (
                     <Review
                       rows={[
-                        { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId) },
+                        { label: "Package", value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId, locale) },
                         ...(quote
                           ? pricingRows(quote)
                           : ([
@@ -636,8 +636,8 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                             ]
                           : [{ label: "Payment due", value: "After the photoshoot", step: -1 }]),
                         ...(inspiration ? [{ label: "Inspiration", value: inspiration.title, step: -1, photo: inspiration }] : []),
-                        { label: "Date", value: formatLongDate(state.date), step: STEP.date },
-                        { label: "Time", value: `${state.slot.label} to ${formatTimeLabel(state.slot.end)} (${en.booking.timeZone.short})`, step: STEP.time },
+                        { label: "Date", value: formatLongDate(state.date, locale), step: STEP.date },
+                        { label: "Time", value: `${formatTimeLabel(state.slot.start, locale)} to ${formatTimeLabel(state.slot.end, locale)} (${messages.time.zone})`, step: STEP.time },
                         { label: "We'll come to", value: `${[state.contact.street.trim(), unitLine(state.contact.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.details },
                         ...(state.contact.access.trim() ? [{ label: en.booking.address.reviewAccess, value: state.contact.access.trim(), step: STEP.details }] : []),
                         { label: "Parent / guardian", value: state.contact.parentName, step: STEP.details },
@@ -669,7 +669,7 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                       }}
                     />
                   )}
-                  {state.step === STEP.review && <BabyLedNote compact multiple={state.babies.length > 1} />}
+                  {state.step === STEP.review && <BabyLedNote messages={messages.babyLed} compact multiple={state.babies.length > 1} />}
                   {state.step === STEP.review && depositCents > 0 && depositOffer && (
                     <p className={cn(styles.depositNote, "chalk-soft")}>{fill(en.deposit.form.note, { notice: noticeLabel(depositOffer.noticeHours) })}</p>
                   )}
@@ -684,18 +684,18 @@ export default function Booking({ bundleId, locale = "en" }: { bundleId: string;
                 <div className={styles.actions}>
                   {state.step > 0 ? (
                     <ChalkButton variant="outline" onClick={goBack} seed={81}>
-                      Back
+                      {messages.actions.back}
                     </ChalkButton>
                   ) : (
                     <span />
                   )}
                   {state.step < bookingSteps.length - 1 ? (
                     <ChalkButton variant="solid" onClick={next} seed={82}>
-                      Next: {bookingSteps[state.step + 1].label}
+                      {fill(messages.actions.next, { label: messages.steps[state.step + 1].label })}
                     </ChalkButton>
                   ) : (
                     <ChalkButton variant="solid" onClick={submit} disabled={state.status === "submitting"} seed={83}>
-                      {redirecting ? en.deposit.form.opening : state.status === "submitting" ? "Booking…" : depositCents > 0 ? fill(en.deposit.form.button, { deposit }) : "Book my session"}
+                      {redirecting ? en.deposit.form.opening : state.status === "submitting" ? messages.actions.booking : depositCents > 0 ? fill(en.deposit.form.button, { deposit }) : messages.actions.book}
                     </ChalkButton>
                   )}
                 </div>

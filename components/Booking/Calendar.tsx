@@ -2,12 +2,15 @@
 
 import { useMemo } from "react";
 import { bookingSettings } from "@/config/booking";
-import { addDays, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
+import { addDays, formatLongDate, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import type { AppLocale } from "@/i18n/config";
+import type en from "@/messages/en.json";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+const fill = (template: string, values: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
 interface Props {
   /** Today in the studio's time zone (YYYY-MM-DD). */
@@ -18,9 +21,11 @@ interface Props {
   loading: boolean;
   selected: DateKey | null;
   onSelect: (date: DateKey) => void;
+  messages: typeof en.bookingFlow.calendar;
+  locale: AppLocale;
 }
 
-export default function Calendar({ todayKey, month, onMonthChange, days, loading, selected, onSelect }: Props) {
+export default function Calendar({ todayKey, month, onMonthChange, days, loading, selected, onSelect, messages, locale }: Props) {
   const today = startOfDay(fromDateKey(todayKey));
   const firstMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const lastDay = addDays(today, bookingSettings.maxDaysAhead);
@@ -34,7 +39,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
     return out;
   }, [month]);
 
-  const title = month.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const title = fill(messages.monthTitle, { month: messages.months[month.getMonth()], year: String(month.getFullYear()) });
   const canPrev = month > firstMonth;
   const canNext = month < lastMonth;
 
@@ -46,7 +51,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
           className={styles.calNav}
           onClick={() => onMonthChange(new Date(month.getFullYear(), month.getMonth() - 1, 1))}
           disabled={!canPrev}
-          aria-label="Previous month"
+          aria-label={messages.previousMonth}
         >
           <ChalkDoodle name="arrowLeft" size={28} />
         </button>
@@ -56,15 +61,15 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
           className={styles.calNav}
           onClick={() => onMonthChange(new Date(month.getFullYear(), month.getMonth() + 1, 1))}
           disabled={!canNext}
-          aria-label="Next month"
+          aria-label={messages.nextMonth}
         >
           <ChalkDoodle name="arrowRight" size={28} />
         </button>
       </div>
 
-      <div className={styles.calGrid} role="grid" aria-label={`${title} availability`} aria-busy={loading}>
+      <div className={styles.calGrid} role="grid" aria-label={fill(messages.availability, { month: title })} aria-busy={loading}>
         <div role="row" className={styles.calRow}>
-          {WEEKDAYS.map((d) => (
+          {messages.weekdays.map((d) => (
             <span role="columnheader" key={d} className={cn(styles.calWeekday, "chalk-soft")}>{d}</span>
           ))}
         </div>
@@ -78,7 +83,14 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
               const available = known && slots.length > 0;
               const isSelected = selected === key;
               const isToday = toDateKey(today) === key;
-              const label = date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+              const label = formatLongDate(key, locale);
+              const availability = available
+                ? slots.length === 1
+                  ? messages.oneTime
+                  : fill(messages.manyTimes, { count: String(slots.length) })
+                : known
+                  ? messages.unavailable
+                  : messages.checking;
               return (
                 <span role="gridcell" key={key}>
                   <button
@@ -86,7 +98,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
                     className={cn(styles.calDay, available ? styles.calAvailable : "", isSelected ? styles.calSelected : "", isToday ? styles.calToday : "")}
                     disabled={!available}
                     aria-pressed={isSelected}
-                    aria-label={`${label}, ${available ? `${slots.length} times available` : known ? "unavailable" : "checking"}`}
+                    aria-label={`${label}, ${availability}`}
                     onClick={() => onSelect(key)}
                   >
                     <span className={cn(styles.calNum, "chalk-soft")}>{date.getDate()}</span>
@@ -100,7 +112,7 @@ export default function Calendar({ todayKey, month, onMonthChange, days, loading
       </div>
 
       <p className={cn(styles.calLegend, "chalk-soft")}>
-        {loading ? "Checking the calendar…" : "Faded days are booked or closed."}
+        {loading ? messages.loading : messages.closed}
       </p>
     </div>
   );

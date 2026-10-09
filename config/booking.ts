@@ -67,10 +67,10 @@ export const bookingSettings = {
 
 /** The bundle is chosen on the bundles page, so booking starts at the calendar. */
 export const bookingSteps = [
-  { id: "date", label: "Date" },
-  { id: "time", label: "Time" },
-  { id: "details", label: "Details" },
-  { id: "review", label: "Review" },
+  { id: "date" },
+  { id: "time" },
+  { id: "details" },
+  { id: "review" },
 ] as const;
 
 export type BookingStepId = (typeof bookingSteps)[number]["id"];

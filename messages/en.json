@@ -39,6 +39,64 @@
       "emailLabel": "Email us"
     }
   },
+  "bookingFlow": {
+    "meta": {
+      "title": "Pick your date",
+      "description": "Choose a day and time, and we'll bring the studio to your home."
+    },
+    "section": {
+      "title": "Let's make some memories",
+      "subtitle": "Pick a day and time, and we'll bring the studio to your door. It takes about two minutes."
+    },
+    "steps": [
+      { "id": "date", "label": "Date", "title": "Pick a day" },
+      { "id": "time", "label": "Time", "title": "Pick a time" },
+      { "id": "details", "label": "Details", "title": "Tell us about your family" },
+      { "id": "review", "label": "Review", "title": "Check everything" }
+    ],
+    "tracker": {
+      "label": "Booking steps",
+      "mobile": "Step {current} of {total}: {label}",
+      "step": "Step {current}, {label}{done}",
+      "done": ", done"
+    },
+    "calendar": {
+      "weekdays": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
+      "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+      "monthTitle": "{month} {year}",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "availability": "{month} availability",
+      "oneTime": "1 time available",
+      "manyTimes": "{count} times available",
+      "unavailable": "unavailable",
+      "checking": "checking",
+      "loading": "Checking the calendar…",
+      "closed": "Faded days are booked or closed."
+    },
+    "time": {
+      "zone": "Miami time",
+      "checking": "Checking open times…",
+      "filled": "This day just filled up. Go back and pick another day.",
+      "until": "until {time}"
+    },
+    "actions": {
+      "back": "Back",
+      "next": "Next: {label}",
+      "booking": "Booking…",
+      "book": "Book my session"
+    },
+    "babyLed": {
+      "one": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
+      "many": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little ones whenever needed."
+    },
+    "errors": {
+      "availability": "We couldn't load open times. Please try again.",
+      "date": "Pick a day on the calendar.",
+      "time": "Pick a time to continue.",
+      "submit": "The booking couldn't be saved. Check your connection and press Book my session again."
+    }
+  },
   "booking": {
     "timeZone": {
       "short": "Miami time",
