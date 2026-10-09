@@ -18,11 +18,6 @@ export const site = {
       title: "Little moments",
       subtitle: "A few favorites, all taken in families' own homes.",
     },
-    bundles: {
-      id: "bundles",
-      title: "Bundles",
-      subtitle: "Three simple packages, all at your home. We bring the studio to you.",
-    },
     book: {
       id: "book",
       title: "Let's make some memories",
@@ -40,11 +35,6 @@ export const site = {
     /** Texting number for families (owner decision 13), shown in emails. */
     phone: "(786) 222-7194",
     sms: "+17862227194",
-  },
-  /** Bundles page (/bundles), booking step one. */
-  bookPage: {
-    title: "Book a session",
-    description: "Choose a Tiny Humans bundle and book your newborn or baby session.",
   },
   /** Intro animation timing (milliseconds). */
   intro: {

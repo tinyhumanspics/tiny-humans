@@ -50,6 +50,7 @@ test("Spanish public shell messages match the English schema", async ({}, testIn
 test("Spanish catalog messages match the English schema", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
   compareCatalogShape(en.catalog, es.catalog, "catalog");
+  compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
 });
 
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {

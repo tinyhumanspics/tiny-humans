@@ -200,7 +200,7 @@ export default function LandingPage({ noticeHours, travel, deposit = null }: { n
           <div className={styles.bundles}>
             {bundles.map((b, i) => (
               <div key={b.id} className={styles.bundleCell} style={{ "--phone-order": PHONE_ORDER.indexOf(b.id) === -1 ? 9 : PHONE_ORDER.indexOf(b.id) } as React.CSSProperties}>
-                <BundleCard bundle={b} index={i} href={scheduleHref(b.id)} />
+                <BundleCard bundle={b} index={i} messages={en.bundlesPage.card} locale="en" href={scheduleHref(b.id)} />
               </div>
             ))}
           </div>

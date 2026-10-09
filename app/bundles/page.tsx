@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { site } from "@/config/site";
 import Bundles from "@/components/Bundles/Bundles";
 import InspirationBanner from "@/components/Booking/InspirationBanner";
 import InspirationFromUrl from "@/components/Booking/InspirationFromUrl";
 import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
 import { pageMetadata } from "@/lib/seo/metadata";
+import en from "@/messages/en.json";
 
 export const metadata: Metadata = pageMetadata({
-  title: site.bookPage.title,
-  description: site.bookPage.description,
+  title: en.bundlesPage.meta.title,
+  description: en.bundlesPage.meta.description,
   path: "/bundles",
 });
 
@@ -22,8 +22,8 @@ export default function BundlesPage() {
         <InspirationFromUrl />
       </Suspense>
       <main id="top" className="book-page">
-        <InspirationBanner />
-        <Bundles />
+        <InspirationBanner messages={en.bundlesPage.inspiration} />
+        <Bundles messages={en.bundlesPage} locale="en" />
       </main>
     </BookingSelectionProvider>
   );

@@ -13,13 +13,33 @@
     "durationHour": "Up to 1 hour",
     "durationHours": "Up to {hours} hours"
   },
-  "booking": {
+  "bundlesPage": {
+    "meta": {
+      "title": "Book a session",
+      "description": "Choose a Tiny Humans bundle and book your newborn or baby session."
+    },
+    "section": {
+      "title": "Bundles",
+      "subtitle": "Three simple packages, all at your home. We bring the studio to you."
+    },
+    "inspiration": {
+      "picked": "You picked “{title}”",
+      "body": "We'll plan your session around it. Choose a bundle below.",
+      "remove": "Remove"
+    },
+    "card": {
+      "offerPrice": "{offer}: was {regular}, now {price}",
+      "offerEnds": "Offer ends: {date}",
+      "regularPrice": "Price: {price}"
+    },
     "paused": {
       "title": "Booking is taking a short break",
       "body": "We can't load our bundles and prices right this minute. Please try again in a few minutes, or email us and we'll book your session for you.",
       "retry": "Try again",
       "emailLabel": "Email us"
-    },
+    }
+  },
+  "booking": {
     "timeZone": {
       "short": "Miami time",
       "note": "All times are Miami time (Eastern)."

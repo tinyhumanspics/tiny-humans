@@ -7,9 +7,13 @@ import { useBookingSelection } from "./BookingSelectionContext";
 import InspirationThumb from "./InspirationThumb";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
+import type en from "@/messages/en.json";
+
+const fill = (template: string, values: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
 /** Shown at the top of /book when the visitor came from a portfolio photo. */
-export default function InspirationBanner() {
+export default function InspirationBanner({ messages }: { messages: typeof en.bundlesPage.inspiration }) {
   const { inspirationId, setInspirationId } = useBookingSelection();
   const { photos } = useSiteSettings();
   const photo = findPhoto(photos, inspirationId);
@@ -20,11 +24,11 @@ export default function InspirationBanner() {
         <ChalkBox className={styles.banner} seed={501} wobble={2.6} strokeWidth={2.4} color="var(--cloud-blue)">
           <InspirationThumb photo={photo} size={84} />
           <div className={cn(styles.bannerText, "chalk-soft")}>
-            <p className={styles.bannerTitle}>You picked &ldquo;{photo.title}&rdquo;</p>
-            <p className={styles.bannerSub}>We&apos;ll plan your session around it. Choose a bundle below.</p>
+            <p className={styles.bannerTitle}>{fill(messages.picked, { title: photo.title })}</p>
+            <p className={styles.bannerSub}>{messages.body}</p>
           </div>
           <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setInspirationId(null)}>
-            Remove
+            {messages.remove}
           </button>
         </ChalkBox>
       </Reveal>

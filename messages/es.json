@@ -7,6 +7,32 @@
     "durationHour": "Hasta 1 hora",
     "durationHours": "Hasta {hours} horas"
   },
+  "bundlesPage": {
+    "meta": {
+      "title": "Reserva una sesión",
+      "description": "Elige un paquete de Tiny Humans y reserva tu sesión de recién nacido o bebé."
+    },
+    "section": {
+      "title": "Paquetes",
+      "subtitle": "Tres paquetes sencillos, todos en tu hogar. Nosotros llevamos el estudio."
+    },
+    "inspiration": {
+      "picked": "Elegiste “{title}”",
+      "body": "Planificaremos tu sesión inspirándonos en esta foto. Elige un paquete abajo.",
+      "remove": "Quitar"
+    },
+    "card": {
+      "offerPrice": "{offer}: antes {regular}, ahora {price}",
+      "offerEnds": "La oferta termina: {date}",
+      "regularPrice": "Precio: {price}"
+    },
+    "paused": {
+      "title": "Las reservas están tomando una breve pausa",
+      "body": "No podemos cargar nuestros paquetes y precios en este momento. Inténtalo de nuevo en unos minutos o escríbenos por correo y reservaremos tu sesión contigo.",
+      "retry": "Intentar de nuevo",
+      "emailLabel": "Escríbenos"
+    }
+  },
   "about": {
     "meta": {
       "title": "Nuestra historia",

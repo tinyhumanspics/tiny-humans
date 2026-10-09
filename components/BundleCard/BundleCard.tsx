@@ -1,6 +1,8 @@
 "use client";
 
 import type { Bundle } from "@/config/bundles";
+import type { AppLocale } from "@/i18n/config";
+import type en from "@/messages/en.json";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
 import { formatLongDate } from "@/lib/booking/dates";
 import { useCatalog } from "@/components/Catalog/CatalogProvider";
@@ -18,12 +20,17 @@ import { cn } from "@/lib/cn";
 interface Props {
   bundle: Bundle;
   index: number;
+  messages: typeof en.bundlesPage.card;
+  locale: AppLocale;
   /** Where "Choose …" goes: the booking calendar for this bundle. */
   href: string;
 }
 
+const fill = (template: string, values: Record<string, string>) =>
+  template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
+
 /** A package box drawn on the board. Every word inside is chalk. */
-export default function BundleCard({ bundle, index, href }: Props) {
+export default function BundleCard({ bundle, index, messages, locale, href }: Props) {
   const { theme } = useSiteSettings();
   const { today } = useCatalog();
   // date-based only: the offer shows while enabled and today is on/before its end date
@@ -54,16 +61,16 @@ export default function BundleCard({ bundle, index, href }: Props) {
           {offer ? (
             <>
               <p className={styles.price}>
-                <span className="visually-hidden">{offer.label}: was {formatMoney(toCents(bundle.price))}, now </span>
+                <span className="visually-hidden">{fill(messages.offerPrice, { offer: offer.label, regular: formatMoney(toCents(bundle.price)), price: formatMoney(offer.cents) })}</span>
                 <s className={styles.wasPrice} aria-hidden="true">{formatMoney(toCents(bundle.price))}</s>{" "}
-                <span className={styles.offerPrice}>{formatMoney(offer.cents)}</span>
+                <span className={styles.offerPrice} aria-hidden="true">{formatMoney(offer.cents)}</span>
               </p>
-              {offer.endsOn && <p className={styles.offerEnds}>Offer ends: {formatLongDate(offer.endsOn).replace(/^\w+, /, "")}</p>}
+              {offer.endsOn && <p className={styles.offerEnds}>{fill(messages.offerEnds, { date: formatLongDate(offer.endsOn, locale).replace(/^[^,]+, /, "") })}</p>}
             </>
           ) : (
             <p className={styles.price}>
-              <span className="visually-hidden">Price: </span>
-              {formatMoney(toCents(bundle.price))}
+              <span className="visually-hidden">{fill(messages.regularPrice, { price: formatMoney(toCents(bundle.price)) })}</span>
+              <span aria-hidden="true">{formatMoney(toCents(bundle.price))}</span>
             </p>
           )}
           <ChalkDoodle grain={false} name="underline" size={120} color="var(--sun-yellow)" strokeWidth={3} className={styles.priceLine} />

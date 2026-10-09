@@ -9,8 +9,8 @@ import styles from "./BookingPaused.module.css";
 import { cn } from "@/lib/cn";
 
 /** Shown instead of bundles/booking when prices can't be loaded (never shows stale hardcoded prices). */
-export default function BookingPaused() {
-  const t = en.booking.paused;
+export default function BookingPaused({ messages = en.bundlesPage.paused }: { messages?: typeof en.bundlesPage.paused }) {
+  const t = messages;
   const email = site.contact.email;
   return (
     <div className={styles.wrap} role="status">
