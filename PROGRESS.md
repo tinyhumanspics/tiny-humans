@@ -10,9 +10,9 @@ migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
-needed. Migrations 0010–0018 ran in Neon; the owner confirmed migration 0018 succeeded Oct 8 (the final language count
-was empty because there are no production bookings yet). Migration 0019 (Spanish bundle-copy storage) is ready and
-must be run in Neon before the bilingual `/admin/pricing` fields are deployed; it does not change today's English site.
+needed. Migrations 0010–0019 ran in Neon; the owner confirmed migration 0018 succeeded Oct 8 (the final language count
+was empty because there are no production bookings yet) and migration 0019 succeeded Oct 8. Spanish bundle-copy
+storage does not change today's English site.
 Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robots, service-area business JSON-LD, and
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
@@ -441,14 +441,20 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       rows will not silently fall back to English. The isolated migration ran twice, accepted Spanish rows and rejected
       unsupported locales/invalid inclusion positions. Strict tsc/build/lint passed (0 errors/26 known warnings), 62
       e2e passed (10 expected cross-browser skips), and all 16 visual-parity pages passed. Vercel succeeded; production
-      home, About and booking returned 200. [?] Owner: run
-      `drizzle/0019_catalog_translations.sql` in Neon before the next schema-reading admin slice. **Oct 8 public shell
+      home, About and booking returned 200. The owner ran migration 0019 successfully Oct 8. **Oct 8 public shell
       (`ee78e80`):** header navigation, screen-reader labels, footer links/contact/copyright and their URLs now accept a
       locale-specific catalog. English is still passed explicitly by the live root layout, while the complete Spanish
       pair and `/es` links stay dormant for the future Spanish layout. Only the small header/footer catalogs cross the
       server-to-client boundary. Catalog-shape/path tests passed; strict tsc/build/lint passed (0 errors/26 known
       warnings), 63 e2e passed (12 expected cross-browser skips), and all 16 visual-parity pages passed. Vercel
-      succeeded; the live English shell text was present and home, bundles, About and booking returned 200.
+      succeeded; the live English shell text was present and home, bundles, About and booking returned 200. **Oct 8
+      admin bundle editor (`c7ac181`):** `/admin/pricing` now loads and saves each bundle's Spanish name, description,
+      badge, offer label and matching inclusions in the migration-0019 tables. A started draft must translate every
+      matching English field; leaving every Spanish field blank keeps it off, and none of this copy is public yet.
+      Inclusion add/delete/reorder actions keep both languages aligned. An isolated local Neon/HTTP round trip created,
+      reloaded and deleted a translated bundle; strict tsc/build/lint passed (0 errors/25 known warnings), 66 e2e passed
+      (15 expected cross-browser skips), all 16 visual-parity pages passed, and phone/desktop admin captures were
+      inspected.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
