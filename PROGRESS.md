@@ -4,9 +4,8 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `974cb10` is live and smoke-tested; Vercel succeeded and production backdrop, review and payment-
-status pages returned 200 with their expected English content; their unfinished `/es` counterparts remained intentional
-404s.
+State: app commit `558f860` is live and smoke-tested; Vercel succeeded and production Privacy and Terms returned 200
+with their expected current English content; unfinished `/es/privacy` and `/es/terms` remained intentional 404s.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
@@ -19,20 +18,23 @@ Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robo
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
 succeeded; production sitemap/robots, home canonical/OG/JSON-LD and `/book` noindex/canonical were checked read-only.
-The deposit is live but **switched off** (families see today's flow and wording) until steps 2b–2d are done. Deposits-off
-leads now explicitly show Confirmed + "Not required ($0 paid today)" and retain their automatic permanent payment link
-and existing sneak-peek/gallery email tools; an unsaved /admin switch is clearly flagged. No SQL was needed.
+**Deposit setting needs owner confirmation:** an Oct 9 read-only production check found deposits enabled at **$50**;
+Terms, About and Home Sweet Home all show the matching deposit copy. The remaining Stripe permissions/webhook and real
+refund test have not been confirmed in this chat. If the switch-on was not intentional, turn it off and save it in
+`/admin/pricing`. Deposits-off leads still support the automatic permanent payment link and existing sneak-peek/gallery
+email tools; no SQL was needed for that behavior.
 0. **Seasonal landing LIVE Oct 8:** in `/admin/seasonal`, enable the wanted offer(s) and save; in `/admin/theme`, choose
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
    to its theme shows it automatically until the cutoff; changing away hides it without disabling it.
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
-2. **Deposit go-live** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7). Left, in order:
+2. **Deposit go-live / confirm current switch** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7).
+   Production currently shows a $50 deposit (observed read-only Oct 9); owner must confirm that was intentional. Left:
    (a) **DONE Oct 8:** owner ran `drizzle/0014_booking_deposits.sql` in Neon; (b) **owner, in Stripe:** restricted key → **Refunds: Write**;
-   webhook endpoint → add **`checkout.session.expired`**; (c) owner sets the amounts + switches on in /admin → **Pricing
-   & Promotions → Deposits**; (d) one real booking with the owner (pay the deposit → event/emails/admin → cancel online
-   → refund in Stripe), then check /home-sweet-home, /about and /terms show the deposit wording.
+   webhook endpoint → add **`checkout.session.expired`**; (c) owner confirms the $50 amount/switch in /admin → **Pricing
+   & Promotions → Deposits** (or turns it back off); (d) one real booking with the owner (pay the deposit → event/emails/
+   admin → cancel online → refund in Stripe), then check /home-sweet-home, /about and /terms show the deposit wording.
 3. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
@@ -97,7 +99,8 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       works) and "Adrian & Alondra" (Meet Adrian & Alondra). Same slots as before (saved photos unaffected).
 - [x] **Halloween dates removed** from the landing page's final section (owner, Oct 7, `02ebc43`).
 - [~] **Deposit while booking** (owner, Oct 7; wording approved; live `020eb27`…`543def3`; migration 0014 ran Oct 8,
-      **switched off** until the remaining Stripe steps; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
+      switched off during the Oct 8 verification; an Oct 9 production check found it **enabled at $50**, awaiting owner
+      confirmation and the remaining Stripe steps; see NEXT STEPS 2). **How it works:** /admin → Pricing & Promotions → **Deposits**: on/off + one amount per
       bundle (`bundle_deposits`; a bundle without a row = $50; `deposit_settings` = the switch; off = today's flow).
       Booking form review step: "Deposit today $50 (holds your date)" + "Rest after the photoshoot", button "Pay $50
       deposit", note (30-min hold, refund rule). Create → booking saved **pending** (blocks the time like any booking) +
@@ -191,9 +194,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
   the backlog). Phase 3 is underway: routing foundation + bilingual customer-email catalog are on main, and the saved
   booking language now drives every later customer email. The public booking journey is still English-only, so no
-  production booking selects Spanish yet. Deposit code is live but switched
-  off (remaining Stripe/amount/switch steps wait on owner). BUG-5 database rule and email bounce table are live; Resend
-  webhook + secret verified. Next: NEXT STEPS 4.
+  production booking selects Spanish yet. Deposit code is live; production currently shows it enabled at $50, awaiting
+  owner confirmation plus the remaining Stripe permission/webhook/refund test. BUG-5 database rule and email bounce
+  table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -522,7 +525,16 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       e2e passed (20 expected cross-browser skips), all 16 visual-parity pages passed, and all three states were captured
       and inspected at iPhone and 1440px. Vercel succeeded; production backdrop, review and paid-status pages returned
       200 with expected English content, while `/es/backdrop`, `/es/review` and `/es/pay/status` remained intentional
-      404s.
+      404s. **Oct 9 legal pages (`558f860`):** Privacy and Terms now read their unchanged English text from the message
+      catalog and have a structurally matched Spanish draft, including the legal-page shell, metadata descriptions and
+      deposit terms. Stable language-neutral section ids apply the live notice, travel fee and deposit wording without
+      depending on translated headings. A regression validates both languages' structures, placeholders and dynamic
+      substitutions; an exact migration check confirmed every live English legal sentence stayed byte-for-byte
+      unchanged. Strict tsc/build/lint passed (0 errors/25 known warnings), 74 e2e passed (22 expected cross-browser
+      skips), and all 16 visual-parity pages passed; Terms and Privacy were inspected at iPhone and 1440px. Vercel
+      succeeded; production Privacy and Terms returned 200, while `/es/privacy` and `/es/terms` remained intentional
+      404s. The read-only Terms check also revealed that production deposits are currently enabled at $50; see NEXT
+      STEPS 2.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
