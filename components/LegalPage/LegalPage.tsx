@@ -3,6 +3,7 @@ import type { LegalDocument } from "@/config/legal";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import { site } from "@/config/site";
 import type { ReactNode } from "react";
+import en from "@/messages/en.json";
 import styles from "./LegalPage.module.css";
 import { cn } from "@/lib/cn";
 
@@ -21,13 +22,14 @@ function linkify(text: string): ReactNode[] {
 }
 
 /** Readable page for the Privacy Policy and Terms of Service. */
-export default function LegalPage({ doc, other }: { doc: LegalDocument; other: { href: string; label: string } }) {
+export default function LegalPage({ doc, other, messages = en.legal.shell }: { doc: LegalDocument; other: { href: string; label: string }; messages?: typeof en.legal.shell }) {
+  const [seeBefore, seeAfter = ""] = messages.seeAlso.split("{document}");
   return (
     <main id="top" className={cn("container", styles.page)}>
       <article className={styles.article}>
         <h1 className={cn(styles.title, "chalk")}>{doc.title}</h1>
         <ChalkDoodle name="underline" size={200} color="var(--accent)" strokeWidth={3} className={styles.underline} />
-        <p className={cn(styles.updated, "chalk-soft")}>Last updated {doc.lastUpdated}</p>
+        <p className={cn(styles.updated, "chalk-soft")}>{messages.lastUpdated.replace("{date}", doc.lastUpdated)}</p>
         <p className={styles.intro}>{doc.intro}</p>
         {doc.sections.map((section) => (
           <section key={section.heading} className={styles.section}>
@@ -46,7 +48,7 @@ export default function LegalPage({ doc, other }: { doc: LegalDocument; other: {
           </section>
         ))}
         <p className={cn(styles.other, "chalk-soft")}>
-          See also our <Link href={other.href}>{other.label}</Link>.
+          {seeBefore}<Link href={other.href}>{other.label}</Link>{seeAfter}
         </p>
       </article>
     </main>

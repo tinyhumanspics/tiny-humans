@@ -1,4 +1,10 @@
 {
+  "seo": {
+    "defaultDescription": "Fotografía de recién nacidos y bebés hecha con amor. Llevamos el estudio a tu hogar para que tu bebé esté cómodo.",
+    "socialImageAlt": "Logotipo de Tiny Humans en una pizarra: fotografía de recién nacidos y bebés",
+    "privacyDescription": "Cómo Tiny Humans maneja la información cuando visitas el sitio web o reservas una sesión de fotografía.",
+    "termsDescription": "Términos para reservar y usar los servicios de fotografía de recién nacidos y bebés de Tiny Humans."
+  },
   "catalog": {
     "locationNote": "Llevamos el estudio a tu hogar",
     "choose": "Elegir {name}",
@@ -870,5 +876,190 @@
     "cancelled": "Esta reserva fue cancelada.",
     "invalid": "Este enlace ya no es válido. Usa nuestro correo más reciente o escríbenos al {phone}.",
     "error": "Algo salió mal. Inténtalo de nuevo o escríbenos al {phone}."
+  },
+  "deposit": {
+    "terms": {
+      "booking": {
+        "one": "Puedes reservar una sesión en nuestro sitio web. Al reservar, pagas con tarjeta un depósito de {deposit}, y tu fecha queda confirmada en cuanto se recibe el pago. El depósito se descuenta del total de tu paquete; el resto vence cuando termine tu sesión de fotos.",
+        "from": "Puedes reservar una sesión en nuestro sitio web. Al reservar, pagas con tarjeta un depósito (desde {deposit}, según tu paquete), y tu fecha queda confirmada en cuanto se recibe el pago. El depósito se descuenta del total de tu paquete; el resto vence cuando termine tu sesión de fotos."
+      },
+      "refunds": "Si cancelas en línea al menos {notice} antes de tu sesión, reembolsamos el depósito completo. Si reprogramas, el depósito se transfiere a tu nueva fecha. Si cancelas cuando faltan menos de {notice}, o no asistes sin avisarnos, el depósito no es reembolsable. Si nosotros tenemos que cancelar, lo reembolsamos completo."
+    }
+  },
+  "legal": {
+    "shell": {
+      "lastUpdated": "Última actualización: {date}",
+      "seeAlso": "Consulta también nuestra {document}.",
+      "privacy": "Política de privacidad",
+      "terms": "Términos del servicio"
+    },
+    "dynamic": {
+      "noDepositBooking": "Puedes reservar una sesión en nuestro sitio web. Recibirás una confirmación con los detalles de tu reserva. No pagas nada al reservar: el pago de tu paquete vence cuando termine tu sesión de fotos.",
+      "noDepositRebook": " Si no asistes a una sesión sin avisarnos, podríamos pedirte un depósito para volver a reservar.",
+      "travelFee": "Los hogares ubicados a un máximo de {freeMiles} millas de nuestra base en Miami Beach no pagan cargo por viaje. Los hogares más lejanos, hasta {maxMiles} millas, pagan {perMile} por cada milla adicional; la distancia se calcula según tu código postal y se muestra antes de reservar. El cargo por viaje se suma al total y se paga junto con tu sesión."
+    },
+    "privacy": {
+      "title": "Política de privacidad",
+      "lastUpdated": "7 de octubre de 2026",
+      "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
+      "sections": [
+        {
+          "id": "information",
+          "heading": "Información que recopilamos",
+          "body": [
+            "Cuando reservas una sesión, nos das:",
+            { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
+            "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
+            "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia.",
+            "Como la mayoría de los sitios web, nuestro proveedor de alojamiento registra automáticamente información técnica básica cuando nos visitas, como el tipo de navegador, las páginas que ves y tu dirección IP. También usamos herramientas de medición publicitaria de Meta (consulta la sección «Publicidad y medición» más abajo)."
+          ]
+        },
+        {
+          "id": "use",
+          "heading": "Cómo usamos tu información",
+          "body": [
+            { "list": ["Para programar y preparar tu sesión en casa, y trasladarnos hasta allí", "Para comunicarnos contigo sobre tu reserva, incluidos recordatorios y cualquier cambio", "Para editar y entregar tus fotos mediante tu galería en línea", "Para mantener los registros comerciales que debemos conservar", "Para mantener nuestro sitio web en funcionamiento y protegido, incluido limitar solicitudes repetidas desde la misma conexión", "Para entender qué anuncios y enlaces atraen familias a nuestro sitio, y medir y mejorar nuestros anuncios en Facebook e Instagram"] },
+            "Nunca vendemos ni alquilamos tu información."
+          ]
+        },
+        {
+          "id": "photos",
+          "heading": "Fotos de tu familia",
+          "body": ["Tus fotos pertenecen primero a los recuerdos de tu familia. Solo mostraremos fotos de tu sesión en nuestro portafolio, en este sitio web o en redes sociales (como Instagram) si nos das permiso. Puedes cambiar de opinión en cualquier momento y dejaremos de usarlas para cualquier publicación nueva."]
+        },
+        {
+          "id": "advertising",
+          "heading": "Publicidad y medición (Meta)",
+          "body": [
+            "Nos anunciamos en Facebook e Instagram. Para medir el funcionamiento de nuestros anuncios, usamos el píxel de Meta en nuestro sitio web y la API de conversiones de Meta desde nuestro servidor, ambos proporcionados por Meta Platforms, Inc.",
+            { "list": ["Cuando visitas nuestro sitio web, el píxel de Meta puede recopilar las páginas que ves, acciones como elegir un paquete o iniciar y completar una reserva, e información técnica como tu dirección IP y navegador. Utiliza cookies (consulta más abajo).", "Cuando completas una reserva, enviamos a Meta un evento de reserva con el paquete y el precio, junto con tu correo electrónico, número de teléfono, nombre, ciudad, estado y código postal en formato cifrado (hash), además de tu dirección IP y los datos de tu navegador. Esto permite que Meta relacione la reserva con un anuncio y muestre nuestros anuncios a personas con más probabilidades de estar interesadas.", "Nunca enviamos a Meta ni a ningún otro servicio publicitario el nombre, la edad, las notas o las fotos de tu bebé."] },
+            "Meta utiliza esta información como se describe en su Política de privacidad (facebook.com/privacy/policy). Puedes controlar los anuncios que ves en la configuración de anuncios de Facebook e Instagram (facebook.com/adpreferences), y puedes bloquear o eliminar las cookies desde la configuración de tu navegador."
+          ]
+        },
+        {
+          "id": "sharing",
+          "heading": "Con quién compartimos información",
+          "body": [
+            "Solo compartimos información con servicios de confianza que nos ayudan a operar Tiny Humans, y únicamente lo que necesitan para hacer su trabajo:",
+            { "list": ["Alojamiento y almacenamiento del sitio web (Vercel)", "Nuestra base de datos de reservas (Neon)", "Nuestro calendario (Microsoft 365 / Outlook)", "Nuestro servicio de entrega de correos electrónicos (Resend)", "Nuestro procesador de pagos (Stripe), que recibe el pago de tu tarjeta en su propia página segura. Compartimos con Stripe tu correo electrónico, paquete, monto pendiente y referencia de reserva; nunca vemos ni almacenamos el número de tu tarjeta", "Un servicio de seguridad que limita las solicitudes repetidas a nuestro sitio web (Upstash), el cual procesa brevemente direcciones IP", "Meta Platforms, para la medición publicitaria descrita anteriormente", "El servicio de galería en línea que usamos para entregar tus fotos"] },
+            "También podemos compartir información si la ley lo exige o para proteger la seguridad de nuestros clientes, nuestro equipo u otras personas."
+          ]
+        },
+        {
+          "id": "cookies",
+          "heading": "Cookies y almacenamiento del navegador",
+          "body": [
+            "Nuestro sitio web utiliza estas cookies:",
+            { "list": ["Cookies publicitarias de Meta (_fbp y _fbc), instaladas por el píxel de Meta para medir nuestros anuncios y conservadas hasta 90 días", "Nuestras propias cookies (th_src y th_fbc), que recuerdan cómo encontraste nuestro sitio web y se conservan durante 90 días", "Una cookie de inicio de sesión, utilizada únicamente para el área privada de propietarios del sitio"] },
+            "Nuestro sitio web también puede guardar pequeños ajustes en tu navegador para que las páginas funcionen correctamente. Puedes bloquear o eliminar las cookies desde la configuración de tu navegador; el sitio web y el proceso de reserva seguirán funcionando."
+          ]
+        },
+        {
+          "id": "children",
+          "heading": "Privacidad de los menores",
+          "body": ["Nuestro sitio web está dirigido a padres, madres y tutores mayores de 18 años. Solo recopilamos información sobre bebés y niños de parte de su padre, madre o tutor, y únicamente para brindar la sesión de fotografía que reservaron. Nunca compartimos información sobre tu bebé o hijo con servicios de publicidad o análisis."]
+        },
+        {
+          "id": "retention",
+          "heading": "Cuánto tiempo conservamos la información",
+          "body": ["Conservamos la información de la reserva durante el tiempo necesario para brindar tu sesión y cumplir con nuestras obligaciones legales y contables. Conservamos las fotos de tu sesión durante un tiempo limitado después de entregarlas, para poder ayudarte si pierdes acceso a tu galería. Puedes pedirnos en cualquier momento que eliminemos antes tus fotos o tu información."]
+        },
+        {
+          "id": "security",
+          "heading": "Cómo protegemos tu información",
+          "body": ["Usamos medidas de seguridad razonables para proteger tu información, incluidas conexiones seguras en nuestro sitio web. Ningún método de almacenamiento o envío de información por internet es completamente seguro, pero nos esforzamos por proteger la tuya."]
+        },
+        {
+          "id": "choices",
+          "heading": "Tus opciones",
+          "body": ["Puedes pedirnos que te mostremos la información que tenemos sobre ti, que la corrijamos o que la eliminemos. También puedes pedirnos que dejemos de enviarte mensajes que no estén relacionados con una sesión próxima. Solo tienes que contactarnos y nos encargaremos."]
+        },
+        {
+          "id": "changes",
+          "heading": "Cambios a esta política",
+          "body": ["Si actualizamos esta política, publicaremos aquí la nueva versión y cambiaremos la fecha que aparece arriba."]
+        },
+        {
+          "id": "contact",
+          "heading": "Contáctanos",
+          "body": ["¿Tienes preguntas? Escríbenos a hello@tinyhumans.photography o envíanos un mensaje por Instagram a @tinyhumans.photography."]
+        }
+      ]
+    },
+    "terms": {
+      "title": "Términos del servicio",
+      "lastUpdated": "7 de octubre de 2026",
+      "lastUpdatedIso": "2026-10-07",
+      "intro": "Estos términos explican cómo funcionan las reservas y las sesiones con Tiny Humans, un estudio de fotografía de recién nacidos y bebés en Miami, Florida. Al usar nuestro sitio web o reservar una sesión, aceptas estos términos. Si algo no está claro, pregúntanos antes de reservar.",
+      "sections": [
+        {
+          "id": "booking",
+          "heading": "Reservar una sesión",
+          "body": ["Puedes reservar una sesión en nuestro sitio web. Recibirás una confirmación con los detalles de tu reserva. No pagas nada al reservar: el pago de tu paquete vence cuando termine tu sesión de fotos.", "La persona que reserva debe ser el padre, la madre o el tutor legal del bebé y tener al menos 18 años."]
+        },
+        {
+          "id": "packages",
+          "heading": "Paquetes y precios",
+          "body": ["Los paquetes y precios aparecen en nuestro sitio web. Una vez confirmada tu reserva, tu precio no cambiará, aunque nuestros precios cambien más adelante. Cada paquete incluye la duración de la sesión, los montajes y la cantidad de fotos digitales editadas descritos al momento de reservar."]
+        },
+        {
+          "id": "babyLed",
+          "heading": "Sesiones guiadas por el bebé",
+          "body": ["Nuestras sesiones siguen el ritmo del bebé. Reservamos tiempo para alimentarlo, cambiarlo y consolarlo cuando sea necesario. La seguridad y comodidad de tu bebé siempre son lo primero: nunca forzamos una pose, y un padre, madre o tutor debe estar presente durante toda la sesión."]
+        },
+        {
+          "id": "rescheduling",
+          "heading": "Reprogramaciones y cancelaciones",
+          "body": ["Los bebés siguen sus propios horarios, y lo entendemos. Si tu bebé o alguien de tu familia está enfermo, avísanos y encontraremos una nueva fecha.", "Puedes reprogramar o cancelar en línea, usando los enlaces de tu correo de confirmación, hasta {notice} antes de tu sesión. Si faltan menos de {notice}, escríbenos al {phone} y te ayudaremos.", "Si necesitas cancelar o reprogramar, avísanos lo antes posible para que podamos ofrecer el horario a otra familia. Si no asistes a una sesión sin avisarnos, podríamos pedirte un depósito para volver a reservar.", "Si alguna vez tenemos que cancelar por enfermedad o una emergencia, encontraremos contigo una nueva fecha sin costo."]
+        },
+        {
+          "id": "home",
+          "heading": "Llevamos el estudio hasta ti",
+          "body": ["Cada sesión se realiza en tu hogar para que tu bebé pueda estar cómodo. Llevamos las luces, los fondos y los accesorios. Proporciónanos un espacio cálido y seguro con lugar para nuestro montaje, idealmente cerca de una ventana, y avísanos con anticipación sobre mascotas, estacionamiento o cualquier otra cosa que debamos saber."
+          ]
+        },
+        {
+          "id": "photos",
+          "heading": "Tus fotos",
+          "body": ["Elegimos y editamos cuidadosamente tus fotos y las entregamos mediante una galería privada en línea. La cantidad de fotos editadas depende de tu paquete. El estilo de edición forma parte de nuestro trabajo artístico, y no entregamos archivos sin editar ni archivos RAW."
+          ]
+        },
+        {
+          "id": "copyright",
+          "heading": "Derechos de autor y cómo puedes usar tus fotos",
+          "body": ["Tiny Humans conserva los derechos de autor de las fotos. Recibes una licencia personal para usarlas, lo que significa que puedes:", { "list": ["Imprimirlas para ti y tu familia", "Compartirlas con amigos y familiares, incluso en tus redes sociales personales (siempre agradecemos que nos etiquetes)"] }, "No vendas las fotos, no las uses con fines comerciales ni agregues filtros o ediciones para presentarlas como nuestro trabajo sin consultarnos primero."]
+        },
+        {
+          "id": "showing",
+          "heading": "Mostrar tus fotos",
+          "body": ["Solo mostramos fotos de tu sesión en nuestro portafolio, sitio web o redes sociales con tu permiso. Consulta nuestra Política de privacidad para obtener más información."]
+        },
+        {
+          "id": "responsibility",
+          "heading": "Nuestra responsabilidad",
+          "body": ["Cuidamos mucho cada sesión y cada archivo. En el caso poco probable de que no podamos entregar tus fotos por algo bajo nuestro control, como una falla del equipo, nuestra responsabilidad se limita a reembolsar lo que pagaste por esa sesión. No somos responsables por pérdidas indirectas."]
+        },
+        {
+          "id": "website",
+          "heading": "Uso de nuestro sitio web",
+          "body": ["Las fotos, ilustraciones y textos de este sitio web pertenecen a Tiny Humans. No los copies ni reutilices sin permiso."]
+        },
+        {
+          "id": "law",
+          "heading": "Ley aplicable",
+          "body": ["Estos términos se rigen por las leyes del estado de Florida."]
+        },
+        {
+          "id": "changes",
+          "heading": "Cambios a estos términos",
+          "body": ["Podemos actualizar estos términos ocasionalmente. La versión publicada en nuestro sitio web cuando reservas es la que se aplica a tu sesión."]
+        },
+        {
+          "id": "contact",
+          "heading": "Contáctanos",
+          "body": ["¿Tienes preguntas? Escríbenos a hello@tinyhumans.photography o envíanos un mensaje por Instagram a @tinyhumans.photography."]
+        }
+      ]
+    }
   }
 }

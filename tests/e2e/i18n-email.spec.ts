@@ -16,6 +16,7 @@ import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-p
 import { babyNames } from "@/lib/booking/extra-babies";
 import { cancelClosedText, changePolicyText, noticeLabel, rescheduleClosedText } from "@/lib/booking/reschedule-policy";
 import { formatAddress, unitLine } from "@/lib/booking/templates";
+import { depositTerms, fillLegal, travelTerms, type LegalDocument, type LegalDynamicCopy } from "@/config/legal";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -55,6 +56,7 @@ test("Spanish public shell messages match the English schema", async ({}, testIn
 
 test("Spanish catalog messages match the English schema", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
+  compareCatalogShape(en.seo, es.seo, "seo");
   compareCatalogShape(en.catalog, es.catalog, "catalog");
   compareCatalogShape(en.bundlesPage, es.bundlesPage, "bundlesPage");
   compareCatalogShape(en.bookingFlow, es.bookingFlow, "bookingFlow");
@@ -64,12 +66,37 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.review, es.review, "review");
   compareCatalogShape(en.pay, es.pay, "pay");
   compareCatalogShape(en.policy, es.policy, "policy");
+  compareCatalogShape(en.legal, es.legal, "legal");
+  compareCatalogShape(en.deposit.terms, es.deposit.terms, "deposit.terms");
+  expect(es.legal.privacy.sections.map((section) => section.id)).toEqual(en.legal.privacy.sections.map((section) => section.id));
+  expect(es.legal.terms.sections.map((section) => section.id)).toEqual(en.legal.terms.sections.map((section) => section.id));
   expect(en.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(es.bookingFlow.steps.map((step) => step.id)).toEqual(bookingSteps.map((step) => step.id));
   expect(en.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
   expect(es.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
   expect(Object.keys(en.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
   expect(Object.keys(es.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
+});
+
+test("legal settings update the matching section in both languages", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Legal catalog validation only needs one Node project");
+  for (const catalog of [en, es]) {
+    const terms = catalog.legal.terms as LegalDocument;
+    const dynamic = catalog.legal.dynamic as LegalDynamicCopy;
+    const booking = terms.sections.find((section) => section.id === "booking");
+    const rescheduling = terms.sections.find((section) => section.id === "rescheduling");
+    expect(booking?.body[0]).toBe(dynamic.noDepositBooking);
+    expect(rescheduling?.body.some((block) => typeof block === "string" && block.endsWith(dynamic.noDepositRebook))).toBe(true);
+
+    const configured = fillLegal(
+      travelTerms(depositTerms(terms, dynamic, { booking: "DEPOSIT BOOKING", refunds: "REFUND {notice}" }), dynamic.travelFee),
+      { notice: "48 hours", phone: "786", freeMiles: "30", maxMiles: "250", perMile: "$0.75" },
+    );
+    expect(configured.sections.find((section) => section.id === "booking")?.body[0]).toBe("DEPOSIT BOOKING");
+    expect(configured.sections.find((section) => section.id === "rescheduling")?.body).toContain("REFUND 48 hours");
+    expect(configured.sections.find((section) => section.id === "packages")?.body.at(-1)).not.toContain("{");
+    expect(JSON.stringify(configured)).not.toContain(dynamic.noDepositRebook);
+  }
 });
 
 test("public paths keep English unprefixed and put Spanish under /es", async ({}, testInfo) => {

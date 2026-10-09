@@ -1,15 +1,14 @@
 import type { Metadata } from "next";
-import { privacyPolicy } from "@/config/legal";
 import LegalPage from "@/components/LegalPage/LegalPage";
 import { pageMetadata } from "@/lib/seo/metadata";
 import en from "@/messages/en.json";
 
 export const metadata: Metadata = pageMetadata({
-  title: privacyPolicy.title,
+  title: en.legal.privacy.title,
   description: en.seo.privacyDescription,
   path: "/privacy",
 });
 
 export default function PrivacyPage() {
-  return <LegalPage doc={privacyPolicy} other={{ href: "/terms", label: "Terms of Service" }} />;
+  return <LegalPage doc={en.legal.privacy} messages={en.legal.shell} other={{ href: "/terms", label: en.legal.shell.terms }} />;
 }
