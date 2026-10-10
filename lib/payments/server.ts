@@ -14,6 +14,8 @@ import { verifyPayLink } from "./link";
 import { BookingError } from "@/lib/booking/errors";
 import { fill } from "@/lib/email/messages";
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
+import { localePath } from "@/i18n/path";
 import { createCheckoutSession, getCheckoutSession, isStripeConfigured, listCompletedCheckoutSessions, StripeError, type CheckoutSession } from "./stripe";
 
 const isDepositPage = (s: CheckoutSession) => s.metadata?.kind === "deposit";
@@ -28,7 +30,7 @@ export type PayOutcome = { redirect: string } | { status: "already" | "nothing" 
 // The pay link can also take a deposit that Stripe couldn't take while booking (see nextCharge): its page is a
 // "deposit" page, so the webhook records it on booking_deposits, never as the session's payment.
 
-const statusUrl = (s: string) => `${site.url.replace(/\/$/, "")}/pay/status?s=${s}`;
+const statusUrl = (s: string, locale: Booking["locale"] = "en") => `${site.url.replace(/\/$/, "")}${localePath("/pay/status", locale)}?s=${s}`;
 /** Same Checkout page for repeated clicks (or link scanners) within 10 minutes. */
 const WINDOW_MS = 10 * 60_000;
 
@@ -63,6 +65,7 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
   }
   if (next.kind === "deposit" && deposit) return openDepositPayment(row, deposit, now);
   const amount = next.amountCents;
+  const messages = row.locale === "es" ? es : en;
   const db = getDb();
   const [payment] = await db.select().from(bookingPayments).where(eq(bookingPayments.bookingId, row.id)).limit(1);
   if (payment?.status === "paid") return { status: "already" };
@@ -80,21 +83,21 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
     const travelCents = row.travelFeeCents ?? 0;
     const paidDeposit = depositPaidCents(deposit);
     const extraLines = [
-      ...(addonsCents > 0 ? [{ name: "Twins/triplets add-on", amountCents: addonsCents }] : []),
-      ...(travelCents > 0 ? [{ name: fill(en.booking.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents }] : []),
+      ...(addonsCents > 0 ? [{ name: messages.deposit.stripe.extraBabies, amountCents: addonsCents }] : []),
+      ...(travelCents > 0 ? [{ name: fill(messages.bookingFlow.details.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents }] : []),
     ];
     const extrasCents = extraLines.reduce((sum, line) => sum + line.amountCents, 0);
     const split = extrasCents > 0 && amount - extrasCents > 0;
     const session = await createCheckoutSession({
       amountCents: split ? amount - extrasCents : amount,
       extraLines: split ? extraLines : undefined,
-      productName: paidDeposit ? fill(en.deposit.stripe.balanceProduct, { bundle: row.packageName, deposit: formatMoney(paidDeposit) }) : `Tiny Humans · ${row.packageName}`,
-      description: `Session ${row.bookingReference} on ${formatLongDate(row.sessionDate)}`,
+      productName: paidDeposit ? fill(messages.deposit.stripe.balanceProduct, { bundle: row.packageName, deposit: formatMoney(paidDeposit) }) : `Tiny Humans · ${row.packageName}`,
+      description: fill(messages.deposit.stripe.balanceDescription, { reference: row.bookingReference, date: formatLongDate(row.sessionDate, row.locale) }),
       customerEmail: row.email,
       reference: row.bookingReference,
       bookingId: row.id,
-      successUrl: statusUrl("paid"),
-      cancelUrl: statusUrl("cancelled"),
+      successUrl: statusUrl("paid", row.locale),
+      cancelUrl: statusUrl("cancelled", row.locale),
       idempotencyKey: `checkout/${row.id}/${amount}/${Math.floor(now.getTime() / WINDOW_MS)}`,
       kind: "balance",
     });
@@ -113,6 +116,7 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
 
 /** The payment link of a booking whose deposit Stripe couldn't take while booking: a page for the deposit first. */
 async function openDepositPayment(row: Booking, deposit: BookingDeposit, now: Date): Promise<PayOutcome> {
+  const messages = row.locale === "es" ? es : en;
   try {
     if (deposit.stripeSessionId) {
       const last = await getCheckoutSession(deposit.stripeSessionId);
@@ -125,13 +129,13 @@ async function openDepositPayment(row: Booking, deposit: BookingDeposit, now: Da
     const total = (row.finalPriceCents ?? row.packagePrice * 100) + (row.addonsTotalCents ?? 0) + (row.travelFeeCents ?? 0);
     const session = await createCheckoutSession({
       amountCents: deposit.amountCents,
-      productName: fill(en.deposit.stripe.product, { bundle: row.packageName }),
-      description: fill(en.deposit.stripe.linkDescription, { reference: row.bookingReference, date: formatLongDate(row.sessionDate), total: formatMoney(total) }),
+      productName: fill(messages.deposit.stripe.product, { bundle: row.packageName }),
+      description: fill(messages.deposit.stripe.linkDescription, { reference: row.bookingReference, date: formatLongDate(row.sessionDate, row.locale), total: formatMoney(total) }),
       customerEmail: row.email,
       reference: row.bookingReference,
       bookingId: row.id,
-      successUrl: statusUrl("deposit"),
-      cancelUrl: statusUrl("cancelled"),
+      successUrl: statusUrl("deposit", row.locale),
+      cancelUrl: statusUrl("cancelled", row.locale),
       idempotencyKey: `deposit-link/${row.id}/${Math.floor(now.getTime() / WINDOW_MS)}`,
       kind: "deposit",
     });

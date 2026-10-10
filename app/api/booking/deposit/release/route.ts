@@ -20,6 +20,6 @@ export async function POST(req: Request) {
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.deposit", "Release failed", { reference, error: err as Error });
-    return NextResponse.json({ error: en.deposit.return.error, code: "server_error" }, { status: 500 });
+    return NextResponse.json({ error: en.bookingFlow.depositReturn.error, code: "server_error" }, { status: 500 });
   }
 }

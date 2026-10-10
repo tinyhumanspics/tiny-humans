@@ -33,6 +33,6 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 300_000,
     // mock booking provider + no tracking, whatever .env.local says
-    env: { BOOKING_PROVIDER: "mock", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
+    env: { BOOKING_PROVIDER: "mock", SPANISH_SITE_PUBLISHED: "", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
   },
 });

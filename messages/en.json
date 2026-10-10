@@ -210,7 +210,8 @@
         "unknown": "We'll confirm any travel fee with you before your session.",
         "label": "Travel fee",
         "value": "{fee} (about {miles} miles)",
-        "total": "Total"
+        "total": "Total",
+        "stripeLine": "Travel fee (about {miles} miles)"
       },
       "validation": {
         "parentName": "Add the parent or guardian's name.",
@@ -350,81 +351,24 @@
     },
     "errors": {
       "availability": "We couldn't load open times. Please try again.",
+      "network": "We couldn't connect. Check your connection and try again.",
+      "rateLimited": "Too many tries. Please wait a few minutes.",
+      "slotTaken": "That time was just booked. Please pick another time.",
+      "inProgress": "We're still saving your booking. One moment, please.",
       "date": "Pick a day on the calendar.",
       "time": "Pick a time to continue.",
       "submit": "The booking couldn't be saved. Check your connection and press Book my session again."
-    }
-  },
-  "booking": {
-    "timeZone": {
-      "short": "Miami time",
-      "note": "All times are Miami time (Eastern)."
     },
-    "inProgress": "Still saving your booking… please keep this page open.",
-    "consents": {
-      "title": "Two quick permissions",
-      "optional": " (optional)",
-      "sms": "OK to text me about my session (reminders, arrival updates). Reply STOP anytime.",
-      "photos": "OK to feature our photos on the Tiny Humans website and social media.",
-      "hint": "You can change your mind any time. Just let us know.",
-      "reviewSms": "Texts",
-      "reviewSmsYes": "OK to text you",
-      "reviewSmsNo": "No texts",
-      "reviewPhotos": "Your photos",
-      "reviewPhotosYes": "OK to feature them",
-      "reviewPhotosNo": "Kept private"
-    },
-    "address": {
-      "unit": "Apt / unit",
-      "access": "Gate code, parking or concierge",
-      "accessPlaceholder": "Gate code, where to park, check in at the front desk…",
-      "reviewAccess": "Getting in"
-    },
-    "age": {
-      "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages."
-    },
-    "extraBabies": {
-      "one": "1 baby",
-      "two": "Twins",
-      "three": "Triplets",
-      "included": "Your bundle includes one baby.",
-      "question": "Shooting twins or triplets?",
-      "choose": "Choose twins or triplets",
-      "details": "Each extra baby adds {price}, {minutes} minutes and {photos} edited photos.",
-      "fullPrice": "Special offers and discount codes apply to the bundle only.",
-      "checking": "Checking that your selected time still fits…",
-      "checkFailed": "We couldn't check that time. Please try your twins or triplets choice again.",
-      "timeUnavailable": "Your previous time doesn't have enough room for a twins or triplets session. Your information is saved—please choose another time.",
-      "babyNumber": "Baby {number}",
-      "name": "Baby name",
-      "nameOptional": " (optional)",
-      "ageRequired": "Age (required)",
-      "ageError": "Choose an age for each baby.",
-      "review": "Babies",
-      "addon": "Extra baby add-on",
-      "photos": "{count} edited photos",
-      "minutes": "{count} minutes"
-    },
-    "travel": {
-      "checking": "Checking the distance…",
-      "free": "Within {free} miles of Miami Beach: no travel fee.",
-      "fee": "About {miles} miles from Miami Beach: {fee} travel fee (the first {free} miles are free).",
-      "tooFar": "That's farther than we usually travel. Text us at {phone} and we'll see what we can do.",
-      "outsideFlorida": "We only come to homes in Florida. Please check the ZIP code.",
-      "unknown": "We'll confirm any travel fee with you before your session.",
-      "label": "Travel fee",
-      "value": "{fee} (about {miles} miles)",
-      "total": "Total",
-      "stripeLine": "Travel fee (about {miles} miles)"
-    },
-    "backdrops": {
-      "title": "Pick your backdrop",
-      "titleMany": "Pick your backdrops",
-      "hint": "Optional. Not sure yet? Skip it: you can choose later from your confirmation email.",
-      "hintMany": "Optional: one for each of your {n} setups. Not sure yet? Skip it: you can choose later from your confirmation email.",
-      "review": "Backdrop",
-      "reviewMany": "Backdrops",
-      "none": "Not chosen yet (you can pick later)"
+    "prototypeTools": {
+      "previewConfirmation": "Preview the confirmation email",
+      "previewSpanish": "Preview the Spanish email",
+      "tryReschedule": "Try the Reschedule link",
+      "tryCancel": "Try the Cancel Booking link",
+      "close": "Close",
+      "previewLanguage": "{language} email preview ({theme} theme)",
+      "previewTitle": "{language} confirmation email preview",
+      "english": "English",
+      "spanish": "Spanish"
     }
   },
   "errors": {
@@ -518,6 +462,13 @@
     "portfolio": "Portfolio",
     "bundles": "Bundles",
     "book": "Book"
+  },
+  "language": {
+    "label": "Language",
+    "english": "EN",
+    "spanish": "ES",
+    "switchToEnglish": "View this page in English",
+    "switchToSpanish": "View this page in Spanish"
   },
   "footer": {
     "about": {
@@ -1168,7 +1119,9 @@
       "description": "Holds your session on {date} at {time}. Counts toward your {total} total.",
       "message": "Your session is confirmed as soon as this deposit is paid. It counts toward your total; the rest is paid after your session. Cancel online at least {notice} before your session and we refund it in full.",
       "balanceProduct": "Tiny Humans · {bundle} (after your {deposit} deposit)",
-      "linkDescription": "Deposit for your session {reference} on {date}. Counts toward your {total} total."
+      "linkDescription": "Deposit for your session {reference} on {date}. Counts toward your {total} total.",
+      "balanceDescription": "Session {reference} on {date}.",
+      "extraBabies": "Twins/triplets add-on"
     },
     "landing": {
       "metaDescription": {
@@ -1196,38 +1149,6 @@
     "aboutCta": {
       "one": "Pick a bundle and a time that suits you. A {deposit} deposit holds your date, and the rest is paid after your session.",
       "from": "Pick a bundle and a time that suits you. A deposit (from {deposit}) holds your date, and the rest is paid after your session."
-    },
-    "form": {
-      "reviewDeposit": "Deposit today",
-      "reviewDepositValue": "{deposit} (holds your date)",
-      "reviewRest": "Rest after the photoshoot",
-      "button": "Pay {deposit} deposit",
-      "opening": "Opening secure payment…",
-      "note": "You'll pay the deposit on Stripe's secure page. We hold your time for 30 minutes, and your booking is confirmed as soon as it's paid. Cancel online at least {notice} before your session and we refund it in full."
-    },
-    "confirmation": {
-      "paid": "Deposit paid",
-      "unpaid": "Deposit",
-      "unpaidValue": "{deposit}, not paid yet",
-      "rest": "Rest after the photoshoot"
-    },
-    "return": {
-      "checking": "Checking your payment…",
-      "confirmingTitle": "Your deposit is paid!",
-      "confirmingText": "We're adding your session to our calendar. This only takes a few seconds.",
-      "confirmingSlow": "Your deposit is paid and your time is saved. We're finishing your booking, and your confirmation email will arrive shortly.",
-      "waitingTitle": "Your date isn't confirmed yet",
-      "waitingText": "We're holding {date} at {time} for you until {until} (Miami time). Pay the {deposit} deposit to confirm it.",
-      "waitingClosed": "We're holding {date} at {time} for you for a few more minutes. If you just paid, this page updates by itself.",
-      "pay": "Pay the {deposit} deposit",
-      "another": "Pick another time",
-      "releasing": "One moment…",
-      "expiredTitle": "This time is no longer held",
-      "expiredText": "The deposit for {date} at {time} wasn't paid, so we released the time. You're welcome to pick a time again: it only takes two minutes.",
-      "pickAgain": "Pick a time",
-      "invalidTitle": "We couldn't find this booking",
-      "invalidText": "Please pick a time again, or email us at {email} and we'll help.",
-      "error": "We couldn't check your payment just now. Please try again in a moment."
     },
     "terms": {
       "booking": {

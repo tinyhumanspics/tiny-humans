@@ -23,6 +23,6 @@ export async function GET(req: Request) {
     return NextResponse.json(await depositReturnState(reference, await clientContext(req)), { headers });
   } catch (err) {
     log.error("api.deposit", "Status check failed", { reference, error: err as Error });
-    return NextResponse.json({ error: en.deposit.return.error, code: "server_error" }, { status: 500, headers });
+    return NextResponse.json({ error: en.bookingFlow.depositReturn.error, code: "server_error" }, { status: 500, headers });
   }
 }

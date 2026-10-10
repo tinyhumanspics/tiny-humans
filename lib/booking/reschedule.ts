@@ -23,14 +23,20 @@ import { rescheduleClosedText } from "./reschedule-policy";
 import { noticeHoursFor } from "./terms";
 import { addDaysKey, graphLocalDateTime, zonedTimeToUtc } from "./timezone";
 import type { DayAvailability, ManagedBooking } from "./types";
+import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
 
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const localDate = (d: Date, tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
 
 /** Customer links: management URLs built from our own site address. */
-export function manageUrls(token: string) {
+export function manageUrls(token: string, locale: AppLocale = "en") {
   const base = site.url.replace(/\/$/, "");
-  return { reschedule: `${base}/reschedule?t=${token}`, cancel: `${base}/cancel?t=${token}`, backdrop: `${base}/backdrop?t=${token}` };
+  return {
+    reschedule: `${base}${localePath("/reschedule", locale)}?t=${token}`,
+    cancel: `${base}${localePath("/cancel", locale)}?t=${token}`,
+    backdrop: `${base}${localePath("/backdrop", locale)}?t=${token}`,
+  };
 }
 
 /** `noticeHours`: the booking's own notice (booking_terms); defaults to today's setting. */
@@ -182,7 +188,7 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
   const n = (await db.select({ id: bookingRescheduleHistory.id }).from(bookingRescheduleHistory).where(eq(bookingRescheduleHistory.bookingId, row.id)).catch(() => [])).length;
   await Promise.allSettled([
     (async () => {
-      const m = await bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token), locale: updated.locale });
+      const m = await bookingRescheduledEmail(details, { themeId, manage: manageUrls(token.token, updated.locale), locale: updated.locale });
       return sendEmail({ scope: "resend.reschedule", to: updated.email, subject: m.subject, html: m.html, text: m.text, attachments: m.attachments, replyTo: cfg.notify, idempotencyKey: `booking-reschedule/${updated.bookingReference}/${n}`, reference: updated.bookingReference });
     })(),
     (async () => {

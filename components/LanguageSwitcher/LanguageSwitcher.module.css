@@ -1,0 +1,36 @@
+.switcher {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-chalk);
+  font-size: 0.98rem;
+  line-height: 1;
+  color: var(--chalk-muted);
+  white-space: nowrap;
+}
+
+.current,
+.link {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 44px;
+  padding: 0 3px;
+}
+
+.current {
+  color: var(--sun-yellow);
+  text-decoration: underline;
+  text-decoration-style: wavy;
+  text-underline-offset: 4px;
+}
+
+.link {
+  color: var(--chalk-white);
+  text-decoration: none;
+}
+
+.link:hover { color: var(--sun-yellow); }
+.separator { color: color-mix(in srgb, var(--chalk-white) 40%, transparent); }
+
+.footer { font-size: 1.05rem; }

@@ -4,13 +4,17 @@ import Portfolio from "@/components/Portfolio/Portfolio";
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
 import en from "@/messages/en.json";
+import { getSpanishPublication } from "@/i18n/publication";
 
-export const metadata: Metadata = pageMetadata({
-  title: DEFAULT_SITE_TITLE,
-  description: DEFAULT_SITE_DESCRIPTION,
-  path: "/",
-  absoluteTitle: true,
-});
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: DEFAULT_SITE_TITLE,
+    description: DEFAULT_SITE_DESCRIPTION,
+    path: "/",
+    absoluteTitle: true,
+    translations: (await getSpanishPublication()).published,
+  });
+}
 
 /** Home: hero + portfolio feed. Booking lives on /book. */
 export default function HomePage() {

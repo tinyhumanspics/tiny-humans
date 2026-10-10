@@ -36,6 +36,8 @@ test("the owner can save Spanish photo details and prompt copy", async ({ page }
   await expect(page.getByRole("heading", { name: "Pictures by website section" })).toBeVisible();
 
   await page.getByRole("button", { name: "Details", exact: true }).first().click();
+  // Built-in placeholders now carry complete Spanish metadata; clear one field to exercise the partial-draft guard.
+  await page.getByLabel("Description for screen readers (Spanish)", { exact: true }).fill("");
   await page.getByLabel("Photo title (Spanish)", { exact: true }).fill("Recién nacido dormido");
   await expect(page.getByText(/Complete the Spanish title and description/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Save details" }).first()).toBeDisabled();
@@ -46,6 +48,7 @@ test("the owner can save Spanish photo details and prompt copy", async ({ page }
   expect(saved.media.default?.title[0]?.spanish).toEqual({
     title: "Recién nacido dormido",
     alt: "Recién nacido dormido envuelto suavemente",
+    caption: "Primera semana",
   });
 
   const firstPrompt = "Love This One Pictures";

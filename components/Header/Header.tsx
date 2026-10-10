@@ -10,6 +10,7 @@ import { localePath } from "@/i18n/path";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
 import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { useIntroAnimation } from "./useIntroAnimation";
 import styles from "./Header.module.css";
 import { cn } from "@/lib/cn";
@@ -21,7 +22,7 @@ function prefersReducedMotion() {
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
-export default function Header({ messages, locale }: { messages: typeof en.header; locale: AppLocale }) {
+export default function Header({ messages, languageMessages, locale, showLanguageSwitcher = false }: { messages: typeof en.header; languageMessages: typeof en.language; locale: AppLocale; showLanguageSwitcher?: boolean }) {
   const logoRef = useRef<HTMLDivElement>(null);
   const { theme, ready } = useSiteSettings();
   const logo = theme.logo;
@@ -64,6 +65,11 @@ export default function Header({ messages, locale }: { messages: typeof en.heade
                   </Link>
                 </li>
               ))}
+              {showLanguageSwitcher && !pathname.startsWith("/admin") && (
+                <li className={styles.languageItem}>
+                  <LanguageSwitcher locale={locale} messages={languageMessages} />
+                </li>
+              )}
             </ul>
           </nav>
         </div>

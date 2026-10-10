@@ -11,6 +11,8 @@ import { log } from "@/lib/log";
 import { BookingError } from "./errors";
 import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./cancel-token";
 import { depositOf, depositPaidCents } from "@/lib/deposit/server";
+import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
 
 /**
  * Emails the owner sends from /admin after a session: "Send sneak peek" (thank-you + Pixieset gallery to choose their
@@ -41,8 +43,8 @@ export function nextCharge(row: Booking, deposit: Pick<BookingDeposit, "status" 
 
 const base = () => site.url.replace(/\/$/, "");
 /** The booking's permanent payment link; the email's own token link only if the signing secret is missing. */
-export const payUrl = (row: Booking, token: string) => bookingPayUrl(row.bookingReference) ?? `${base()}/pay?t=${token}`;
-export const reviewUrl = (token: string) => `${base()}/review?t=${token}`;
+export const payUrl = (row: Booking, token: string) => bookingPayUrl(row.bookingReference, row.locale) ?? `${base()}${localePath("/pay", row.locale)}?t=${token}`;
+export const reviewUrl = (token: string, locale: AppLocale = "en") => `${base()}${localePath("/review", locale)}?t=${token}`;
 
 /** Booking behind the link in one of these emails (null if unknown). */
 export async function findByEmailLink(token: string, kinds: AfterKind[]): Promise<Booking | null> {
@@ -124,7 +126,7 @@ export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
   const amountCents = await balanceDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
-    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token, row.locale), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
   );
 }
 
@@ -135,7 +137,7 @@ export async function sendPaymentLinkEmail(row: Booking) {
   const amountCents = next.amountCents;
   if (amountCents <= 0) throw new BookingError("invalid_request", "There's nothing to pay for this booking.");
   if (next.kind === "balance" && (await isPaid(row.id))) throw new BookingError("invalid_request", "This booking is already paid.");
-  const link = bookingPayUrl(row.bookingReference);
+  const link = bookingPayUrl(row.bookingReference, row.locale);
   if (!link) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
   const db = getDb();
   const now = new Date();

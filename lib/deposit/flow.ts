@@ -25,6 +25,7 @@ import { releaseCodeUsage } from "@/lib/pricing/server";
 import { getSiteSettings } from "@/lib/settings/server";
 import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
 import { dbReason, depositOf, isMissingTable } from "./server";
 import { DEPOSIT_HOLD_MINUTES, type DepositReturnState } from "./types";
@@ -73,7 +74,7 @@ async function markUnpaid(bookingId: string, amountCents: number, reference: str
  */
 export async function openDeposit(row: Booking, amountCents: number, noticeHours: number, now = new Date()): Promise<NonNullable<BookingResult["deposit"]> | null> {
   const reference = row.bookingReference;
-  const returnPath = depositReturnPath(reference, row.packageId);
+  const returnPath = depositReturnPath(reference, row.packageId, row.locale);
   if (!returnPath || !isStripeConfigured()) {
     log.error("deposit", "Deposit is on, but STRIPE_SECRET_KEY or ADMIN_SESSION_SECRET is missing: booked without it", { reference });
     await markUnpaid(row.id, amountCents, reference);
@@ -82,6 +83,7 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
   // a minute over Stripe's 30-minute minimum, so the request's own travel time can't make it too short
   const holdUntil = new Date(now.getTime() + (DEPOSIT_HOLD_MINUTES + 1) * 60_000);
   const db = getDb();
+  const messages = row.locale === "es" ? es : en;
   try {
     await db.insert(bookingDeposits).values({ bookingId: row.id, amountCents, status: "pending", holdUntil });
   } catch (err) {
@@ -91,8 +93,8 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
   try {
     const session = await createCheckoutSession({
       amountCents,
-      productName: fill(en.deposit.stripe.product, { bundle: row.packageName }),
-      description: fill(en.deposit.stripe.description, { date: formatLongDate(row.sessionDate), time: formatTimeLabel(localTime(row.sessionStart, row.timezone)), total: formatMoney(totalCents(row)) }),
+      productName: fill(messages.deposit.stripe.product, { bundle: row.packageName }),
+      description: fill(messages.deposit.stripe.description, { date: formatLongDate(row.sessionDate, row.locale), time: formatTimeLabel(localTime(row.sessionStart, row.timezone), row.locale), total: formatMoney(totalCents(row)) }),
       customerEmail: row.email,
       reference,
       bookingId: row.id,
@@ -101,7 +103,7 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
       idempotencyKey: `deposit/${row.id}`,
       kind: "deposit",
       expiresAt: Math.floor(holdUntil.getTime() / 1000),
-      submitMessage: fill(en.deposit.stripe.message, { notice: noticeLabel(noticeHours) }),
+      submitMessage: fill(messages.deposit.stripe.message, { notice: noticeLabel(noticeHours, messages.policy) }),
     });
     if (!session.url) throw new StripeError("no_url", "Stripe returned no payment page URL");
     await db
@@ -121,7 +123,7 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
 /** A retry of a booking whose deposit page is still open: the same page again (null if there's none). */
 export async function reopenDeposit(row: Booking): Promise<NonNullable<BookingResult["deposit"]> | null> {
   const d = await depositOf(row.id);
-  const returnPath = depositReturnPath(row.bookingReference, row.packageId);
+  const returnPath = depositReturnPath(row.bookingReference, row.packageId, row.locale);
   if (d?.status !== "pending" || !d.stripeSessionId || !returnPath) return null;
   const session = await getCheckoutSession(d.stripeSessionId).catch(() => null);
   if (session?.status !== "open" || !session.url) return null;
@@ -402,7 +404,7 @@ export async function releaseByFamily(reference: string): Promise<DepositReturnS
   const d = row ? await depositOf(row.id) : null;
   if (row?.status === "pending" && d?.status === "pending") {
     const r = await settleWithStripe(row, d, { email: false, closeOpen: true }).catch(() => "unknown" as const);
-    if (r === "unknown" || r === "open") throw new BookingError("server_error", en.deposit.return.error);
+    if (r === "unknown" || r === "open") throw new BookingError("server_error", (row.locale === "es" ? es : en).bookingFlow.depositReturn.error);
   }
   return depositReturnState(reference);
 }

@@ -20,7 +20,7 @@ export function rememberDepositReturn(path: string, holdUntil?: string) {
 export function pendingDepositReturn(): string | null {
   try {
     const v = JSON.parse(sessionStorage.getItem(KEY) ?? "null") as { path?: string; until?: number } | null;
-    if (v?.path?.startsWith("/book?") && (v.until ?? 0) > Date.now()) return v.path;
+    if (v?.path && (/^\/book\?/.test(v.path) || /^\/es\/book\?/.test(v.path)) && (v.until ?? 0) > Date.now()) return v.path;
     sessionStorage.removeItem(KEY);
   } catch {
     /* ignore */

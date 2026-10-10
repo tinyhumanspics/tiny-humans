@@ -136,13 +136,13 @@ async function notifyOne(original: Booking, note: string | undefined, themeId: s
   try {
     let actionUrl: string;
     if (pending) {
-      actionUrl = `${site.url.replace(/\/$/, "")}${scheduleHref(row.packageId)}`;
+      actionUrl = `${site.url.replace(/\/$/, "")}${scheduleHref(row.packageId, null, row.locale)}`;
     } else {
       const secret = process.env.ADMIN_SESSION_SECRET;
       if (!secret) throw new EmailSendError("not_configured", "ADMIN_SESSION_SECRET is not set");
       const token = emailToken(claim.id, secret);
       await getDb().update(bookingEmails).set({ linkTokenHash: hashCancelToken(token), updatedAt: new Date() }).where(eq(bookingEmails.id, claim.id));
-      actionUrl = manageUrls(token).reschedule;
+      actionUrl = manageUrls(token, row.locale).reschedule;
     }
     const mail = await dayClosedEmail(
       {

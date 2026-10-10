@@ -78,7 +78,7 @@ export async function confirmBookingRow(row: Booking, details: BookingDetails, o
   const reason = (err: unknown) => (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
   const [customer, internal] = await Promise.allSettled([
     (async () => {
-      const links = manageUrls(opts.manageToken);
+      const links = manageUrls(opts.manageToken, row.locale);
       const mail = await bookingConfirmationEmail(details, { themeId, cancelUrl: links.cancel, rescheduleUrl: links.reschedule, backdropUrl: links.backdrop, rescheduleNoticeHours: opts.noticeHours, photographersPhoto, locale: row.locale });
       return sendEmail({
         scope: "resend.customer",

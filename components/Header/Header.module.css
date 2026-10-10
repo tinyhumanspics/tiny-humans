@@ -59,6 +59,18 @@
   list-style: none;
 }
 
+.languageItem { margin-left: 2px; }
+
+@media (max-width: 767px) {
+  .nav { position: relative; }
+  .languageItem {
+    position: absolute;
+    top: -34px;
+    right: 0;
+    margin: 0;
+  }
+}
+
 .link {
   position: relative;
   display: inline-flex;

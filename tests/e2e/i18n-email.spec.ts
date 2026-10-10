@@ -10,13 +10,17 @@ import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricin
 import type { Bundle } from "@/config/bundles";
 import { babyAgeOptions, bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
-import { localePath } from "@/i18n/path";
+import { localePath, publicPathname, switchLocalePath } from "@/i18n/path";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
 import { babyNames } from "@/lib/booking/extra-babies";
 import { cancelClosedText, changePolicyText, noticeLabel, rescheduleClosedText } from "@/lib/booking/reschedule-policy";
 import { formatAddress, unitLine } from "@/lib/booking/templates";
 import { depositTerms, fillLegal, travelTerms, type LegalDocument, type LegalDynamicCopy } from "@/config/legal";
+import { emptyThemeMedia, resolveMedia } from "@/config/media";
+import { portfolio } from "@/config/portfolio";
+import { defaultSettings } from "@/lib/settings/defaults";
+import { spanishOwnerCopyIssues } from "@/i18n/publication-audit";
 
 const placeholders = (value: string) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort();
 
@@ -38,20 +42,9 @@ function compareCatalogShape(left: unknown, right: unknown, path = "emails"): vo
   Object.entries(left as Record<string, unknown>).forEach(([key, value]) => compareCatalogShape(value, (right as Record<string, unknown>)[key], `${path}.${key}`));
 }
 
-test("Spanish customer-email messages match the English schema and placeholders", async ({}, testInfo) => {
+test("the complete Spanish message catalog matches the English schema and placeholders", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
-  compareCatalogShape(en.emails, es.emails);
-});
-
-test("Spanish About messages match the English schema", async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
-  compareCatalogShape(en.about, es.about, "about");
-});
-
-test("Spanish public shell messages match the English schema", async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chrome", "Catalog validation only needs one Node project");
-  compareCatalogShape(en.header, es.header, "header");
-  compareCatalogShape(en.footer, es.footer, "footer");
+  compareCatalogShape(en, es, "messages");
 });
 
 test("Spanish catalog messages match the English schema", async ({}, testInfo) => {
@@ -112,6 +105,29 @@ test("public paths keep English unprefixed and put Spanish under /es", async ({}
   expect(localePath("/#portfolio", "es")).toBe("/es/#portfolio");
   expect(bundlesHref("photo-1", "es")).toBe("/es/bundles?inspiration=photo-1");
   expect(scheduleHref("little-moments", "photo-1", "es")).toBe("/es/book?bundle=little-moments&inspiration=photo-1");
+  expect(publicPathname("/es/home-sweet-home")).toBe("/home-sweet-home");
+  expect(switchLocalePath("/es/book", "en")).toBe("/book");
+  expect(switchLocalePath("/book", "es")).toBe("/es/book");
+});
+
+test("Spanish publication blocks owner copy gaps instead of leaking English", async ({}, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "Publication validation only needs one Node project");
+  const media = emptyThemeMedia();
+  media.title[0] = { ...portfolio[0], spanish: null };
+  media.groups[0] = { ...media.groups[0], title: "A custom prompt", text: "Custom supporting text", spanish: null };
+  const settings = {
+    ...defaultSettings,
+    media: { default: media },
+    seasonalOffers: {
+      ...defaultSettings.seasonalOffers,
+      thanksgiving: { ...defaultSettings.seasonalOffers.thanksgiving, enabled: true, spanish: null },
+    },
+  };
+  expect(spanishOwnerCopyIssues(settings).sort()).toEqual(["enabled seasonal offers", "gallery prompts", "photo captions", "photo details"]);
+  expect(resolveMedia(media, undefined, "es").title.some((photo) => photo.id === portfolio[0].id)).toBe(false);
+
+  media.title[0] = { ...portfolio[0], spanish: { title: "Envuelto y dormidito", alt: "Bebé dormido", caption: "Primera semana" } };
+  expect(resolveMedia(media, undefined, "es").title[0]).toMatchObject({ title: "Envuelto y dormidito", alt: "Bebé dormido", caption: "Primera semana" });
 });
 
 test("booking requests accept only supported customer languages", async ({}, testInfo) => {

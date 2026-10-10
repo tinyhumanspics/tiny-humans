@@ -203,6 +203,16 @@ function flowDurationLabel(minutes: number, messages: typeof en.bookingFlow.summ
   return hours === 1 ? messages.durationHour : fill(messages.durationHours, { hours: String(hours) });
 }
 
+/** API messages are never trusted as display copy: every published locale owns its customer-facing errors. */
+function apiErrorMessage(err: unknown, messages: typeof en.bookingFlow, fallback: string): string {
+  if (!(err instanceof BookingApiError)) return fallback;
+  if (err.code === "network") return messages.errors.network;
+  if (err.code === "rate_limited") return messages.errors.rateLimited;
+  if (err.code === "slot_unavailable") return messages.errors.slotTaken;
+  if (err.code === "in_progress") return messages.errors.inProgress;
+  return fallback;
+}
+
 /** The booking calendar for one bundle (chosen on the bundles page). */
 export default function Booking({ bundleId, locale = "en", messages }: { bundleId: string; locale?: AppLocale; messages: typeof en.bookingFlow }) {
   const id = "book";
@@ -261,13 +271,13 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
       } catch (err) {
         dispatch({
           type: "stepError",
-          message: err instanceof BookingApiError ? err.message : messages.errors.availability,
+          message: apiErrorMessage(err, messages, messages.errors.availability),
         });
       } finally {
         setLoadingDays(false);
       }
     },
-    [messages.errors.availability, provider],
+    [messages, provider],
   );
 
   useEffect(() => {
@@ -356,7 +366,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
         dispatch({ type: "stepError", message: messages.details.extraBabies.timeUnavailable });
       }
     } catch (err) {
-      dispatch({ type: "stepError", message: err instanceof BookingApiError ? err.message : messages.details.extraBabies.checkFailed });
+      dispatch({ type: "stepError", message: apiErrorMessage(err, messages, messages.details.extraBabies.checkFailed) });
     } finally {
       setCheckingBabyCount(false);
     }
@@ -482,12 +492,12 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
         requestIdRef.current = null;
         setDays((prev) => ({ ...prev, [taken.date]: (prev[taken.date] ?? []).filter((x) => x.id !== taken.id) }));
         goTo(STEP.time);
-        dispatch({ type: "stepError", message: err.message });
+        dispatch({ type: "stepError", message: messages.errors.slotTaken });
         return;
       }
       dispatch({
         type: "submitFailed",
-        message: err instanceof BookingApiError ? err.message : messages.errors.submit,
+        message: apiErrorMessage(err, messages, messages.errors.submit),
       });
     }
   };

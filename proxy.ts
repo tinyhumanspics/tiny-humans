@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, SOURCE_COOKIE, attributionFromRequest, decodeAttribution, encodeAttribution, isCampaign } from "@/lib/tracking/attribution";
+import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
 
 /**
  * Booking source capture (first touch). On a page visit, store where the family came from in a first-party,
@@ -8,7 +9,10 @@ import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, SOURCE_COOKIE, attributionFromRequest,
  * campaign touch. The latest Meta click id is also kept (for the Conversions API).
  */
 export function proxy(req: NextRequest) {
-  const res = NextResponse.next();
+  const requestHeaders = new Headers(req.headers);
+  const spanish = req.nextUrl.pathname === "/es" || req.nextUrl.pathname.startsWith("/es/");
+  requestHeaders.set(PUBLIC_LOCALE_HEADER, spanish ? "es" : "en");
+  const res = NextResponse.next({ request: { headers: requestHeaders } });
   const isDocument =
     req.headers.get("sec-fetch-dest") === "document" ||
     (!req.headers.get("rsc") && !req.headers.get("next-router-prefetch") && (req.headers.get("accept") ?? "").includes("text/html"));

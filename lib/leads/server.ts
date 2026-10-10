@@ -97,7 +97,7 @@ function afterOf(r: Booking, x: Extras): Lead["after"] {
       next,
       status: pay?.status === "paid" ? "paid" : pay ? "open" : "unpaid",
       paidAt: iso(pay?.paidAt ?? null),
-      link: (r.status === "confirmed" || r.status === "rescheduled") && next.amountCents > 0 ? bookingPayUrl(r.bookingReference) : null,
+      link: (r.status === "confirmed" || r.status === "rescheduled") && next.amountCents > 0 ? bookingPayUrl(r.bookingReference, r.locale) : null,
       linkEmail: sent(linkEmail),
     },
     review: review ? { rating: review.rating, body: review.body, displayName: review.displayName, consentPublic: review.consentPublic, approved: review.approved, at: review.updatedAt.toISOString() } : null,

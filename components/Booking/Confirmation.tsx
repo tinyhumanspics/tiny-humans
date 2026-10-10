@@ -25,6 +25,7 @@ import styles from "./Booking.module.css";
 import { babyNames } from "@/lib/booking/extra-babies";
 import type { EmailLocale } from "@/lib/email";
 import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
 import type en from "@/messages/en.json";
 
 /** The booking is confirmed: details, payment, what's next (also shown after the deposit's Stripe page). */
@@ -136,7 +137,7 @@ export default function Confirmation({
           {changePolicyText(result.rescheduleNoticeHours, messages.confirmation.policy)} {messages.confirmation.policyLinks}
         </p>
       )}
-      {result.preview && <PrototypePreviews result={result} />}
+      {result.preview && <PrototypePreviews result={result} locale={locale} messages={messages.prototypeTools} />}
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
           {result.status === "mock"
@@ -156,14 +157,14 @@ export default function Confirmation({
 
 /* ---------------- prototype only: preview the email + the cancel link ---------------- */
 
-function PrototypePreviews({ result }: { result: BookingResult }) {
+function PrototypePreviews({ result, locale, messages }: { result: BookingResult; locale: AppLocale; messages: typeof en.bookingFlow.prototypeTools }) {
   const { getBundle } = useCatalog();
   const router = useRouter();
   const { theme, photos } = useSiteSettings();
   const [preview, setPreview] = useState<{ html: string; locale: EmailLocale } | null>(null);
   const token = result.preview!.cancelToken;
-  const cancelPath = `/cancel?t=${token}`;
-  const reschedulePath = `/reschedule?t=${token}`;
+  const cancelPath = `${localePath("/cancel", locale)}?t=${token}`;
+  const reschedulePath = `${localePath("/reschedule", locale)}?t=${token}`;
 
   const openEmail = async (locale: EmailLocale) => {
     const { bookingConfirmationEmail } = await import("@/emails/BookingConfirmation");
@@ -179,25 +180,25 @@ function PrototypePreviews({ result }: { result: BookingResult }) {
 
   return (
     <div className={styles.previewBar}>
-      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("en")}>Preview the confirmation email</button>
-      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("es")}>Preview the Spanish email</button>
-      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(reschedulePath)}>Try the Reschedule link</button>
-      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(cancelPath)}>Try the Cancel Booking link</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("en")}>{messages.previewConfirmation}</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => openEmail("es")}>{messages.previewSpanish}</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(reschedulePath)}>{messages.tryReschedule}</button>
+      <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => router.push(cancelPath)}>{messages.tryCancel}</button>
       {preview && createPortal(
-        <div className={styles.previewModal} role="dialog" aria-modal="true" aria-label="Confirmation email preview">
+        <div className={styles.previewModal} role="dialog" aria-modal="true" aria-label={messages.previewConfirmation}>
           <div className={styles.previewTop}>
-            <p className="chalk-soft">{preview.locale === "es" ? "Spanish" : "English"} email preview ({theme.label} theme)</p>
-            <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setPreview(null)}>Close</button>
+            <p className="chalk-soft">{fill(messages.previewLanguage, { language: preview.locale === "es" ? messages.spanish : messages.english, theme: theme.label })}</p>
+            <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setPreview(null)}>{messages.close}</button>
           </div>
           <iframe
-            title={`${preview.locale === "es" ? "Spanish" : "English"} confirmation email preview`}
+            title={fill(messages.previewTitle, { language: preview.locale === "es" ? messages.spanish : messages.english })}
             className={styles.previewFrame}
             srcDoc={preview.html}
             onLoad={(e) => {
               const doc = e.currentTarget.contentDocument;
               doc?.querySelectorAll("a").forEach((a) => {
                 const href = a.getAttribute("href") ?? "";
-                if (href.startsWith("/cancel") || href.startsWith("/reschedule")) {
+                if (href.includes("/cancel") || href.includes("/reschedule")) {
                   a.addEventListener("click", (ev) => {
                     ev.preventDefault();
                     setPreview(null);

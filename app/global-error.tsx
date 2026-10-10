@@ -1,14 +1,16 @@
 "use client";
 
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 import { site } from "@/config/site";
 
 /** Last-resort error page (replaces the root layout, so it carries its own minimal styling). */
 export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  const t = en.errors.global;
+  const locale = typeof window !== "undefined" && (window.location.pathname === "/es" || window.location.pathname.startsWith("/es/")) ? "es" : "en";
+  const t = (locale === "es" ? es : en).errors.global;
   const email = site.contact.email;
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body style={{ margin: 0, minHeight: "100vh", display: "grid", placeItems: "center", background: "#183a22", color: "#f4f2ea", fontFamily: "system-ui, sans-serif", padding: 24 }}>
         <main style={{ maxWidth: 520, border: "2px dashed rgba(244,242,234,.6)", borderRadius: 14, padding: 28 }}>
           <h1 style={{ marginTop: 0, fontSize: "1.8rem" }}>{t.title}</h1>

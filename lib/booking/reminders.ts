@@ -121,7 +121,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
       if (kind === "72h" && (managed.canReschedule || canBackdrop)) {
         const token = linkToken(claim.id, opts.secret);
         await db.update(bookingEmails).set({ linkTokenHash: hashCancelToken(token) }).where(eq(bookingEmails.id, claim.id));
-        const links = manageUrls(token);
+        const links = manageUrls(token, row.locale);
         if (managed.canReschedule) rescheduleUrl = links.reschedule;
         if (canBackdrop) backdropUrl = links.backdrop;
       }

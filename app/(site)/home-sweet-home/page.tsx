@@ -7,15 +7,17 @@ import { siteDeposit } from "@/lib/deposit/server";
 import { depositText } from "@/lib/deposit/copy";
 import { getTravelSettings } from "@/lib/travel/server";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { getSpanishPublication } from "@/i18n/publication";
 
 /** The description mentions the deposit while there is one (saving it in /admin refreshes this page). */
 export async function generateMetadata(): Promise<Metadata> {
-  const deposit = await siteDeposit();
+  const [deposit, spanish] = await Promise.all([siteDeposit(), getSpanishPublication()]);
   const description = deposit ? depositText(en.deposit.landing.metaDescription, deposit) : en.landing.meta.description;
   return pageMetadata({
     title: en.landing.meta.title,
     description,
     path: LANDING_PATH,
+    translations: spanish.published,
   });
 }
 

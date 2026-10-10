@@ -1,4 +1,6 @@
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
+import type { AppLocale } from "@/i18n/config";
 import { portfolio, portfolioCtas, type FeedBlock, type PortfolioPhoto } from "./portfolio";
 
 /**
@@ -109,24 +111,31 @@ export interface ResolvedMedia {
   extra: PortfolioPhoto[];
 }
 
-export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia): ResolvedMedia {
+function localizedPhoto(photo: PortfolioPhoto | null | undefined, locale: AppLocale): PortfolioPhoto | null {
+  if (!photo) return null;
+  if (locale === "en") return photo;
+  return photo.spanish ? { ...photo, ...photo.spanish } : null;
+}
+
+export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia, locale: AppLocale = "en"): ResolvedMedia {
   const media = m ?? emptyThemeMedia();
   const f = fallback;
   const about = MEDIA_GROUPS.about.slots.map((_, i) => media.about?.[i] ?? f?.about?.[i] ?? null);
   return {
-    title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => media.title[i] ?? f?.title[i] ?? BUILT_IN.title[i]) : [],
-    landing: MEDIA_GROUPS.landing.slots.map((_, i) => media.landing?.[i] ?? f?.landing?.[i] ?? about[LANDING_FROM_ABOUT[i]] ?? null),
-    about,
+    title: MEDIA_GROUPS.title.slots ? [0, 1].map((i) => localizedPhoto(media.title[i] ?? f?.title[i] ?? BUILT_IN.title[i], locale)).filter(Boolean) as PortfolioPhoto[] : [],
+    landing: MEDIA_GROUPS.landing.slots.map((_, i) => localizedPhoto(media.landing?.[i] ?? f?.landing?.[i] ?? about[LANDING_FROM_ABOUT[i]] ?? null, locale)),
+    about: about.map((photo) => localizedPhoto(photo, locale)),
     groups: MEDIA_GROUPS.feed.map((def, gi) => {
       const g = media.groups[gi];
       const fg = f?.groups[gi];
+      const translated = g?.spanish ?? fg?.spanish ?? es.home.portfolio.prompts[gi];
       return {
-        photos: [0, 1, 2].map((i) => g?.photos[i] ?? fg?.photos[i] ?? BUILT_IN.groups[gi][i]).filter(Boolean) as PortfolioPhoto[],
-        title: g?.title?.trim() || fg?.title?.trim() || def.defaultTitle,
-        text: g?.text?.trim() || fg?.text?.trim() || def.defaultText,
+        photos: [0, 1, 2].map((i) => localizedPhoto(g?.photos[i] ?? fg?.photos[i] ?? BUILT_IN.groups[gi][i], locale)).filter(Boolean) as PortfolioPhoto[],
+        title: locale === "es" ? translated.title : g?.title?.trim() || fg?.title?.trim() || def.defaultTitle,
+        text: locale === "es" ? translated.text : g?.text?.trim() || fg?.text?.trim() || def.defaultText,
       };
     }),
-    extra: media.extra.length ? media.extra : (f?.extra ?? []),
+    extra: (media.extra.length ? media.extra : (f?.extra ?? [])).map((photo) => localizedPhoto(photo, locale)).filter(Boolean) as PortfolioPhoto[],
   };
 }
 

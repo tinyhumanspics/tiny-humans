@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
 import { IS_PROTOTYPE } from "@/lib/admin/client";
 import type en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
@@ -13,7 +15,8 @@ import { cn } from "@/lib/cn";
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
-export default function Footer({ messages, locale }: { messages: typeof en.footer; locale: AppLocale }) {
+export default function Footer({ messages, languageMessages, locale, showLanguageSwitcher = false }: { messages: typeof en.footer; languageMessages: typeof en.language; locale: AppLocale; showLanguageSwitcher?: boolean }) {
+  const pathname = usePathname();
   const { instagram } = site.social;
   const { email } = site.contact;
   return (
@@ -68,6 +71,7 @@ export default function Footer({ messages, locale }: { messages: typeof en.foote
       <div className={cn("container", styles.bottom, "chalk-soft")}>
         <ChalkDoodle name="heart" size={20} color="var(--accent-2)" />
         <p>{fill(messages.copyright, { year: String(new Date().getFullYear()), brand: site.name, location: site.location })}</p>
+        {showLanguageSwitcher && !pathname.startsWith("/admin") && <LanguageSwitcher locale={locale} messages={languageMessages} placement="footer" />}
         {/* The real site has no public link to the owner area; it lives at /admin. */}
         {IS_PROTOTYPE && (
           <p className={styles.owner}>

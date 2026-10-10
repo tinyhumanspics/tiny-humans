@@ -4,12 +4,16 @@ import AboutPage from "@/features/about/AboutPage";
 import { siteDeposit } from "@/lib/deposit/server";
 import { depositText } from "@/lib/deposit/copy";
 import { pageMetadata } from "@/lib/seo/metadata";
+import { getSpanishPublication } from "@/i18n/publication";
 
-export const metadata: Metadata = pageMetadata({
-  title: en.about.meta.title,
-  description: en.about.meta.description,
-  path: "/about",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: en.about.meta.title,
+    description: en.about.meta.description,
+    path: "/about",
+    translations: (await getSpanishPublication()).published,
+  });
+}
 
 /** The closing call to action mentions the deposit while there is one (saving it in /admin refreshes this page). */
 export default async function Page() {

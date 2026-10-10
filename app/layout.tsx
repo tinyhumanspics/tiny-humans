@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import localFont from "next/font/local";
 import { getTheme, themeCssVariables } from "@/config/themes";
 import { getSiteSettings } from "@/lib/settings/server";
@@ -16,6 +17,9 @@ import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
 import { siteMetadata } from "@/lib/seo/metadata";
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
+import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
+import { getSpanishPublication } from "@/i18n/publication";
 import "@/styles/globals.css";
 import { cn } from "@/lib/cn";
 
@@ -40,16 +44,23 @@ const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop"
  * at once); preview the alternatives with ?intro=short (logo slides in, ~0.6 s) or ?intro=full. Without JavaScript the
  * site simply shows.
  */
-const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var n=${JSON.stringify(NO_INTRO_PATHS)};for(var k=0;k<n.length;k++){if(p===n[k]||p.indexOf(n[k]+'/')===0)return;}var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(p.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
+const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var q=p==='/es'?'/':(p.indexOf('/es/')===0?p.slice(3):p);var n=${JSON.stringify(NO_INTRO_PATHS)};for(var k=0;k<n.length;k++){if(q===n[k]||q.indexOf(n[k]+'/')===0)return;}var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(q.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // The owner's live theme + photos (falls back to the defaults).
-  const settings = await getSiteSettings();
-  const catalog = await getPublicCatalog();
+  const requestedLocale = (await headers()).get(PUBLIC_LOCALE_HEADER) === "es" ? "es" : "en";
+  // Publication is all-or-nothing: an incomplete live translation always renders the English shell instead.
+  const [settings, englishCatalog, spanishPublication] = await Promise.all([
+    getSiteSettings(),
+    getPublicCatalog(),
+    getSpanishPublication(),
+  ]);
+  const locale = requestedLocale === "es" && spanishPublication.published ? "es" : "en";
+  const messages = locale === "es" ? es : en;
+  const catalog = locale === "es" ? spanishPublication.catalog! : englishCatalog;
   const theme = getTheme(settings.themeId);
   return (
     <html
-      lang="en"
+      lang={locale}
       data-theme={theme.id}
       data-scroll-behavior="smooth"
       style={themeCssVariables(theme) as React.CSSProperties}
@@ -64,13 +75,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <ChalkFilters />
-        <SiteSettingsProvider initial={settings}>
+        <SiteSettingsProvider initial={settings} locale={locale}>
         <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)}>
           <SeasonalDecor />
           {/* Header lives in the layout so the logo intro never replays between pages. */}
-          <Header messages={en.header} locale="en" />
+          <Header messages={messages.header} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
           {children}
-          <Footer messages={en.footer} locale="en" />
+          <Footer messages={messages.footer} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
           <MetaPixel />
         </CatalogProvider>
         </SiteSettingsProvider>

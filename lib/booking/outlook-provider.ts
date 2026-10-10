@@ -26,6 +26,7 @@ import { asCalendarError, confirmBookingRow } from "./confirm";
 import { photoTitle, snapshotOf } from "./details";
 import { setupsOf } from "@/config/backdrops";
 import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
 import { bookingTravelOf } from "@/lib/travel/types";
@@ -143,8 +144,9 @@ export class OutlookBookingProvider implements BookingProvider {
     // 1b. Travel fee from the home's ZIP code (calculated here, never taken from the browser). Florida only, and not
     // farther than the owner's limit (those families text instead).
     const quote = travelQuote(request.address.zip, await getTravelSettings());
-    if (quote.status === "outside_florida") throw new BookingError("invalid_request", en.booking.travel.outsideFlorida);
-    if (quote.status === "too_far") throw new BookingError("invalid_request", fill(en.booking.travel.tooFar, { phone: site.contact.phone }));
+    const messages = request.locale === "es" ? es : en;
+    if (quote.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
+    if (quote.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
     const travel = bookingTravelOf(quote);
     // optional backdrop picks: one per setup of the bundle
     const backdrops = request.backdrops?.slice(0, setupsOf([bundle.setups, ...bundle.features]));

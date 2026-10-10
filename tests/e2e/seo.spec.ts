@@ -10,6 +10,7 @@ test("public pages publish unique canonical and social URLs", async ({ page }) =
     expect({ origin: canonical.origin, path: canonical.pathname }).toEqual({ origin: ORIGIN, path });
     expect({ origin: openGraph.origin, path: openGraph.pathname }).toEqual({ origin: ORIGIN, path });
     await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", `${ORIGIN}/og/tiny-humans-og.jpg`);
+    await expect(page.locator('link[rel="alternate"][hreflang="es"]')).toHaveCount(0);
   }
 });
 
@@ -39,6 +40,15 @@ test("sitemap includes only canonical public content pages", async ({ request })
   expect(body).not.toContain("/admin");
   expect(body).not.toContain("/api/");
   expect(body).not.toContain("/book");
+  expect(body).not.toContain("/es");
+});
+
+test("Spanish stays completely unpublished until the live readiness gate passes", async ({ page }) => {
+  const response = await page.goto("/es");
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  await page.goto("/");
+  await expect(page.getByRole("group", { name: "Language" })).toHaveCount(0);
 });
 
 test("robots points crawlers to the sitemap and keeps private infrastructure out", async ({ request }) => {

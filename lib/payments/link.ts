@@ -1,6 +1,8 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "crypto";
 import { site } from "@/config/site";
+import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
 
 /**
  * Each booking's payment link: /pay?b=<booking reference>&s=<signature>. It never expires and is the same every time,
@@ -22,17 +24,17 @@ function verify(purpose: string, reference: string, signature: string): boolean 
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
-export function bookingPayUrl(reference: string): string | null {
+export function bookingPayUrl(reference: string, locale: AppLocale = "en"): string | null {
   if (!secret()) return null;
-  return `${site.url.replace(/\/$/, "")}/pay?b=${encodeURIComponent(reference)}&s=${sign(reference)}`;
+  return `${site.url.replace(/\/$/, "")}${localePath("/pay", locale)}?b=${encodeURIComponent(reference)}&s=${sign(reference)}`;
 }
 
 export const verifyPayLink = (reference: string, signature: string) => verify("pay-link:v1", reference, signature);
 
 /** Where the family lands after the deposit page (paid or not): the booking page, showing this booking's status. */
-export function depositReturnPath(reference: string, bundleId: string): string | null {
+export function depositReturnPath(reference: string, bundleId: string, locale: AppLocale = "en"): string | null {
   if (!secret()) return null;
-  return `/book?${new URLSearchParams({ bundle: bundleId, deposit: reference, k: signFor("deposit-link:v1", reference) })}`;
+  return `${localePath("/book", locale)}?${new URLSearchParams({ bundle: bundleId, deposit: reference, k: signFor("deposit-link:v1", reference) })}`;
 }
 
 export const verifyDepositLink = (reference: string, signature: string) => verify("deposit-link:v1", reference, signature);

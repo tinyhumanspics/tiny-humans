@@ -3,8 +3,9 @@
 import { fallbackMediaFor, feedPhotos, resolveMedia, type ResolvedMedia } from "@/config/media";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme } from "@/config/themes";
-import { portfolio as builtInPhotos, type PortfolioPhoto } from "@/config/portfolio";
+import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
+import type { AppLocale } from "@/i18n/config";
 import { IS_PROTOTYPE, readPrototypeSettings } from "@/lib/admin/client";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
@@ -25,7 +26,7 @@ interface Ctx {
 
 const SiteSettingsContext = createContext<Ctx | null>(null);
 
-export function SiteSettingsProvider({ initial, children }: { initial: SiteSettings; children: ReactNode }) {
+export function SiteSettingsProvider({ initial, locale = "en", children }: { initial: SiteSettings; locale?: AppLocale; children: ReactNode }) {
   const [settings, setSettings] = useState<SiteSettings>(initial);
   const [ready, setReady] = useState(false);
 
@@ -54,12 +55,12 @@ export function SiteSettingsProvider({ initial, children }: { initial: SiteSetti
       settings,
       themeId: theme.id,
       theme,
-      media: liveMedia(settings),
-      photos: feedPhotos(liveMedia(settings)),
+      media: liveMedia(settings, locale),
+      photos: feedPhotos(liveMedia(settings, locale)),
       applySettings,
       ready,
     }),
-    [settings, theme, applySettings, ready],
+    [settings, theme, locale, applySettings, ready],
   );
 
   return <SiteSettingsContext.Provider value={value}>{children}</SiteSettingsContext.Provider>;
@@ -72,8 +73,8 @@ export function useSiteSettings(): Ctx {
 }
 
 /** Pictures for the theme visitors see (empty slots show the Default theme's picture). */
-export function liveMedia(s: SiteSettings): ResolvedMedia {
-  return resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media));
+export function liveMedia(s: SiteSettings, locale: AppLocale = "en"): ResolvedMedia {
+  return resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media), locale);
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {

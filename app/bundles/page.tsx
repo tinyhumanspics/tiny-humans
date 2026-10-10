@@ -6,12 +6,16 @@ import InspirationFromUrl from "@/components/Booking/InspirationFromUrl";
 import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
 import { pageMetadata } from "@/lib/seo/metadata";
 import en from "@/messages/en.json";
+import { getSpanishPublication } from "@/i18n/publication";
 
-export const metadata: Metadata = pageMetadata({
-  title: en.bundlesPage.meta.title,
-  description: en.bundlesPage.meta.description,
-  path: "/bundles",
-});
+export async function generateMetadata(): Promise<Metadata> {
+  return pageMetadata({
+    title: en.bundlesPage.meta.title,
+    description: en.bundlesPage.meta.description,
+    path: "/bundles",
+    translations: (await getSpanishPublication()).published,
+  });
+}
 
 /** Booking, step one (/bundles): pick a bundle. Each bundle leads to the calendar at /book?bundle=<id>. */
 export default function BundlesPage() {

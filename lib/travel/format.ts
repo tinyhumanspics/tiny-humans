@@ -4,7 +4,7 @@ import { formatMoney } from "@/lib/pricing/engine";
 import { fill } from "@/lib/email/messages";
 import type { TravelQuote } from "./types";
 
-const t = en.booking.travel;
+const t = en.bookingFlow.details.travel;
 type TravelCopy = Pick<typeof t, "free" | "fee" | "tooFar" | "outsideFlorida" | "unknown" | "value">;
 
 /** The line under the ZIP box. "blocking": the family can't book online (not Florida, or too far). */
