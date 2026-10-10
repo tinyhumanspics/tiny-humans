@@ -67,6 +67,8 @@
 
 /* ---------- book ---------- */
 .ctaSection { display: grid; justify-items: center; }
-.cta { width: min(100%, 620px); padding: clamp(24px, 5vw, 36px); display: grid; justify-items: center; gap: 10px; text-align: center; }
+/* The reveal wrapper is the centered grid item, so it carries the box's width. */
+.ctaReveal { width: min(100%, 620px); }
+.cta { width: 100%; padding: clamp(24px, 5vw, 36px); display: grid; justify-items: center; gap: 10px; text-align: center; }
 .cta .text { margin: 0 0 8px; color: var(--chalk-muted); }
 .spanish { margin: 6px 0 0; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--cloud-blue); }

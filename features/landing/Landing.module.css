@@ -121,7 +121,7 @@
 .spanishInline { font-family: var(--font-chalk); color: var(--cloud-blue); }
 
 /* 8. FAQ */
-.faq { display: grid; gap: 10px; max-width: 820px; }
+.faq { display: grid; gap: 10px; max-width: 820px; margin-inline: auto; }
 .faqItem { border-bottom: 1px dashed var(--chalk-faint); padding: 6px 0 10px; }
 .faqItem summary {
   cursor: pointer;

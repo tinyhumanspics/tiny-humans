@@ -97,7 +97,7 @@ export default function AboutPage({ messages = en.about, photoMessages = en.phot
 
       {/* Book */}
       <section className={cn("container", styles.section, styles.ctaSection)} aria-labelledby="about-cta">
-        <Reveal>
+        <Reveal className={styles.ctaReveal}>
           <ChalkBox className={styles.cta} seed={551} wobble={3} strokeWidth={3} color="var(--sun-yellow)">
             <ChalkDoodle name="heart" size={40} color="var(--accent-2)" strokeWidth={3} />
             <h2 id="about-cta" className={cn(styles.heading, "chalk")}>{t.cta.title}</h2>
