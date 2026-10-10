@@ -142,6 +142,36 @@ test("a longer twins or triplets session keeps details and asks for another time
   await expect(page.getByText("Baby 3", { exact: true })).toBeVisible();
 });
 
+test("a full language-page reload keeps the booking step, details and backdrop picks", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the session-transfer mechanism used by EN/ES.");
+  await page.goto("/book?bundle=our-little-story");
+  const day = availableDay(page);
+  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
+  await availableDay(page).click();
+  await page.getByRole("button", { name: /Next: Time/ }).click();
+  await page.locator('label[for^="time-"]').first().click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+
+  await page.fill("#field-parentName", "Saved Parent");
+  await page.fill("#field-email", "saved.parent@example.com");
+  await page.getByRole("button", { name: "Cream", exact: true }).click();
+  await page.getByRole("button", { name: "Wooden", exact: true }).click();
+  await expect(page.getByText(/one for each of your 2 setups/i)).toBeVisible();
+
+  // Spanish is intentionally gated off in the isolated test build. This dispatches the same synchronous handoff
+  // event as the real EN | ES link, then performs the same full document navigation on the matching local route.
+  await page.evaluate(() => {
+    window.dispatchEvent(new CustomEvent("tiny-humans:booking-language-switch", { detail: { targetPath: "/book" } }));
+  });
+  await page.reload();
+
+  await expect(page.getByRole("heading", { name: "Tell us about your family" })).toBeVisible();
+  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
+  await expect(page.locator("#field-email")).toHaveValue("saved.parent@example.com");
+  await expect(page.getByRole("button", { name: "Cream", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Wooden", exact: true })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
   await bookLittleMoments(page);
   await page.getByRole("button", { name: "Preview the confirmation email" }).click();

@@ -25,10 +25,10 @@ export const BACKDROPS = [
 export type BackdropId = (typeof BACKDROPS)[number]["id"];
 export const BACKDROP_IDS = BACKDROPS.map((b) => b.id) as [BackdropId, ...BackdropId[]];
 
-/** How many backdrops a bundle gets: one per setup ("2 setups" in its details), at least 1, at most 3. */
+/** How many backdrops a bundle gets: one per setup/montaje in its localized details, at least 1, at most 3. */
 export function setupsOf(texts: (string | null | undefined)[]): number {
   for (const t of texts) {
-    const n = Number(t?.match(/(\d+)\s*set-?ups?/i)?.[1]);
+    const n = Number(t?.match(/(\d+)\s*(?:set-?ups?|montajes?)/i)?.[1]);
     if (n > 0) return Math.min(n, 3);
   }
   return 1;

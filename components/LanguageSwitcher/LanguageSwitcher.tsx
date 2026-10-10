@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import type { MouseEvent } from "react";
 import type { AppLocale } from "@/i18n/config";
 import { switchLocalePath } from "@/i18n/path";
+import { BOOKING_LANGUAGE_SWITCH_EVENT } from "@/lib/booking/language-draft";
 import type en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
 import styles from "./LanguageSwitcher.module.css";
@@ -24,7 +25,9 @@ export default function LanguageSwitcher({
 
   // Locale changes intentionally make a full navigation so the root shell, catalog and <html lang> all change.
   const changeLanguage = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.currentTarget.href = `${window.location.origin}${href}${window.location.search}${window.location.hash}`;
+    const target = `${window.location.origin}${href}${window.location.search}${window.location.hash}`;
+    window.dispatchEvent(new CustomEvent(BOOKING_LANGUAGE_SWITCH_EVENT, { detail: { targetPath: new URL(target).pathname } }));
+    event.currentTarget.href = target;
   };
 
   const option = (value: AppLocale, label: string) => value === locale

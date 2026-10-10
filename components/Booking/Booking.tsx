@@ -30,7 +30,7 @@ import { useBookingSelection } from "./BookingSelectionContext";
 import { unitLine } from "@/lib/booking/templates";
 import { isFloridaZip, type TravelQuote } from "@/lib/travel/types";
 import { travelFeeValue, travelHint } from "@/lib/travel/format";
-import { setupsOf } from "@/config/backdrops";
+import { BACKDROP_IDS, setupsOf } from "@/config/backdrops";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import BackdropPicker from "@/components/Backdrops/BackdropPicker";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
@@ -53,6 +53,8 @@ import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type { Bundle } from "@/config/bundles";
 import type { AppLocale } from "@/i18n/config";
+import { BOOKING_LANGUAGE_SWITCH_EVENT, consumeBookingLanguageDraft, saveBookingLanguageDraft } from "@/lib/booking/language-draft";
+import { isDateKey } from "@/lib/validation/date-key";
 
 /* ---------------- state ---------------- */
 
@@ -90,6 +92,15 @@ interface State {
   result: BookingResult | null;
 }
 
+interface LanguageDraftPayload {
+  state: State;
+  backdrops: string[];
+  month: string;
+  appliedCode: string | null;
+  openedAt: number;
+  requestId: string | null;
+}
+
 const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
 
 const initialState: State = {
@@ -108,6 +119,59 @@ const initialState: State = {
   result: null,
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === "object";
+
+function isLanguageDraftPayload(value: unknown, bundleId: string): value is LanguageDraftPayload {
+  if (!isRecord(value) || !isRecord(value.state)) return false;
+  const state = value.state;
+  const contact = state.contact;
+  const consents = state.consents;
+  const slot = state.slot;
+  const babies = state.babies;
+  const step = Number(state.step);
+  const maxStep = Number(state.maxStep);
+  return (
+    state.bundleId === bundleId
+    && Number.isInteger(step)
+    && step >= STEP.date
+    && step < bookingSteps.length
+    && Number.isInteger(maxStep)
+    && maxStep >= step
+    && maxStep < bookingSteps.length
+    && Array.isArray(babies)
+    && babies.length >= 1
+    && babies.length <= 3
+    && babies.every((baby) => isRecord(baby) && typeof baby.name === "string" && typeof baby.age === "string")
+    && isRecord(contact)
+    && Object.keys(emptyContact).every((key) => typeof contact[key] === "string")
+    && isRecord(consents)
+    && typeof consents.sms === "boolean"
+    && typeof consents.photos === "boolean"
+    && (state.date === null || isDateKey(state.date))
+    && (
+      slot === null
+      || (
+        isRecord(slot)
+        && typeof slot.id === "string"
+        && isDateKey(slot.date)
+        && typeof slot.start === "string"
+        && /^([01]\d|2[0-3]):[0-5]\d$/.test(slot.start)
+        && typeof slot.end === "string"
+        && /^([01]\d|2[0-3]):[0-5]\d$/.test(slot.end)
+        && typeof slot.label === "string"
+      )
+    )
+    && Array.isArray(value.backdrops)
+    && value.backdrops.every((id) => typeof id === "string" && (BACKDROP_IDS as string[]).includes(id))
+    && typeof value.month === "string"
+    && /^\d{4}-\d{2}$/.test(value.month)
+    && (value.appliedCode === null || (typeof value.appliedCode === "string" && value.appliedCode.length <= 40))
+    && typeof value.openedAt === "number"
+    && Number.isFinite(value.openedAt)
+    && (value.requestId === null || (typeof value.requestId === "string" && value.requestId.length <= 100))
+  );
+}
+
 type Action =
   | { type: "date"; date: DateKey }
   | { type: "slot"; slot: TimeSlot }
@@ -123,6 +187,7 @@ type Action =
   | { type: "submitting" }
   | { type: "done"; result: BookingResult }
   | { type: "submitFailed"; message: string }
+  | { type: "restore"; state: State }
   | { type: "reset" };
 
 function reducer(state: State, action: Action): State {
@@ -168,6 +233,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, status: "done", result: action.result };
     case "submitFailed":
       return { ...state, status: "editing", stepError: action.message };
+    case "restore":
+      return action.state;
     case "reset":
       return { ...initialState, bundleId: state.bundleId };
   }
@@ -332,6 +399,64 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
   const [backdrops, setBackdrops] = useState<string[]>([]);
   const setups = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const restoredLanguageDraft = useRef(false);
+
+  useEffect(() => {
+    if (restoredLanguageDraft.current) return;
+    restoredLanguageDraft.current = true;
+    const draft = consumeBookingLanguageDraft<LanguageDraftPayload>(window.sessionStorage, window.location.pathname, bundleId);
+    if (!isLanguageDraftPayload(draft, bundleId)) return;
+
+    const restoredState: State = {
+      ...draft.state,
+      bundleId,
+      status: "editing",
+      result: null,
+      stepError: null,
+      fieldErrors: {},
+      babyErrors: [],
+    };
+    const restoredMonth = new Date(`${draft.month}-01T12:00:00`);
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      dispatch({ type: "restore", state: restoredState });
+      setBackdrops(draft.backdrops.slice(0, setups));
+      setAppliedCode(draft.appliedCode);
+      setQuote(null);
+      if (!Number.isNaN(restoredMonth.getTime())) setMonth(restoredMonth);
+      openedAt.current = draft.openedAt;
+      requestIdRef.current = draft.requestId;
+    });
+    return () => {
+      active = false;
+    };
+  }, [bundleId, setups]);
+
+  useEffect(() => {
+    const saveBeforeSwitch = (event: Event) => {
+      const targetPath = (event as CustomEvent<{ targetPath?: string }>).detail?.targetPath;
+      if (!targetPath || state.status === "done") return;
+      saveBookingLanguageDraft(window.sessionStorage, targetPath, bundleId, {
+        state: {
+          ...state,
+          status: "editing",
+          result: null,
+          stepError: null,
+          fieldErrors: {},
+          babyErrors: [],
+        },
+        backdrops,
+        month: `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`,
+        appliedCode,
+        openedAt: openedAt.current,
+        requestId: requestIdRef.current,
+      } satisfies LanguageDraftPayload);
+    };
+    window.addEventListener(BOOKING_LANGUAGE_SWITCH_EVENT, saveBeforeSwitch);
+    return () => window.removeEventListener(BOOKING_LANGUAGE_SWITCH_EVENT, saveBeforeSwitch);
+  }, [appliedCode, backdrops, bundleId, month, state]);
+
   const [checkingBabyCount, setCheckingBabyCount] = useState(false);
   const goTo = (step: number) => {
     if (state.step === STEP.review && step !== STEP.review) {
@@ -389,7 +514,13 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
   const deposit = formatMoney(depositCents);
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
-    provider.quote(state.bundleId, undefined, undefined, state.babies.length).then(setQuote).catch(() => setQuote(null));
+    provider
+      .quote(state.bundleId, appliedCode ?? undefined, appliedCode ? state.contact.email.trim() || undefined : undefined, state.babies.length)
+      .then(setQuote)
+      .catch(() => {
+        setQuote(null);
+        if (appliedCode) setAppliedCode(null);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step, state.bundleId, state.babies.length]);
 
