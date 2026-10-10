@@ -3,24 +3,29 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish owner copy/review remains)
-State: main `2b6c84a` is live and smoke-tested. The first Phase 6 security/quality slice added exact-origin checks
+## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish is published)
+State: main includes the Phase 6 CI/test and Spanish sitemap fixes through `2bd75b6`. The first Phase 6 security/quality slice added exact-origin checks
 for every admin mutation, bounded/validated login and photo uploads, PII-safe recursive logging, Vitest security units,
 WCAG 2.2 axe/manual regression checks and element-level visual baselines. A 320px header overflow found by the audit is
 fixed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings); 5 unit tests, 103 e2e tests (56 expected
 project skips) and all 24 visual checks passed. Vercel succeeded; production `/`, `/home-sweet-home`, `/admin` and the
 no-store `/api/admin/session` endpoint passed read-only smoke checks. GitHub Actions now runs the same clean-install,
 strict TypeScript, lint, unit and full Playwright gates on every main push and pull request; its first corrected Ubuntu
-run passed (`ef5a6cf` + `2b6c84a`).
+run passed (`ef5a6cf` + `2b6c84a`). A later docs-push rerun exposed that the custom Instagram-user-agent booking was
+redundantly repeated in all three browser projects; `64e5da6` keeps the three native browser journeys and runs that
+explicit Instagram context once, with a checked transition into customer details. The full local matrix passed 101
+tests with 58 expected project skips.
 The complete `/es` public/customer route tree, explicit EN | ES
 switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
 `/admin/settings` now owns the Spanish publish/hide switch, shows every readiness gap and refuses to publish an
 incomplete journey. Existing Vercel Blob saves default safely off; no environment variable, redeploy, SQL or dependency
 is needed. The runtime still rechecks the complete live Spanish bundle rows plus owner photo/prompt/enabled-seasonal
-copy, so a later content gap safely hides all Spanish routes even if the switch remains on. Production `/es` is still
-intentionally 404 until the owner completes the copy and native review. Strict nonincremental tsc/build/lint passed (0
-errors/23 known warnings), the full suite passed 88 tests (26 expected skips), all 16 English parity baselines matched,
-and the new Settings control was captured and inspected at iPhone 14 and 1440px.
+copy, so a later content gap safely hides all Spanish routes even if the switch remains on. **The owner published
+Spanish Oct 10:** production `/es` and all six checked Spanish public/customer routes return 200, the English page has
+the ES switch, and both languages emit reciprocal alternates. The first live check found the deployment-frozen sitemap
+still English-only; `2bd75b6` makes it dynamic so publication changes reach it without a redeploy. Strict nonincremental
+tsc/build/lint passed (0 errors/23 known warnings), the SEO checks passed, all 16 English parity baselines matched, and
+the Settings control was captured and inspected at iPhone 14 and 1440px.
 The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the landing contain only **Baby’s First Thanksgiving**
 (Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card data is ignored and disappears on the next seasonal
 save. Seasonal offers, photos and home-gallery prompts accept optional matched Spanish copy; incomplete drafts cannot
@@ -60,8 +65,7 @@ email tools; no SQL was needed for that behavior.
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
    (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core DONE Oct 8**;
-   owner Search Console + Business Profile steps remain. (c) **Phase 3 code complete; owner copy/native review and
-   publication remain**;
+   owner Search Console + Business Profile steps remain. (c) **Phase 3 DONE Oct 10: Spanish published**;
    (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
@@ -78,28 +82,28 @@ email tools; no SQL was needed for that behavior.
    card, booking step tracker and landing FAQ × iPhone 14/1440), all passing Oct 10. The old `.screenshots/baseline/`
    set was captured mid-animation → recapture before Phase 9.
 
-**Spanish publication (owner action; safely off):** complete/review every Spanish bundle field in `/admin/pricing`,
-Spanish photo and gallery-prompt copy in `/admin/photos`, and Spanish copy for any enabled offer in `/admin/seasonal`;
-choose Adrian or Alondra for the full native review. Only after that review, open `/admin/settings` and click **Publish
-Spanish website**. The page lists anything still missing and refuses an incomplete publication. No Vercel setting or
-redeploy is needed; the same control can hide Spanish again at any time.
+**Spanish publication LIVE Oct 10:** production `/es` passed the all-or-nothing gate and the public Spanish routes,
+EN | ES switch and reciprocal language metadata were verified. `/admin/settings` can hide it again at any time. If a
+required owner translation later becomes incomplete, the runtime gate safely hides every `/es` route.
 
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10): main 2b6c84a is live and smoke-tested. Phase 6 started: admin mutations are exact-origin checked;
+State (Oct 10): main includes CI/test and sitemap fixes through 2bd75b6. Phase 6 started: admin mutations are exact-origin checked;
 login/uploads are bounded and validated; logs strip raw errors and family/contact data; Vitest security tests and
 WCAG 2.2 axe/manual/element-visual gates are built. The audit fixed 320px header overflow. Strict tsc/build/lint passed;
-5 unit, 103 e2e and 24 visual checks passed. GitHub Actions is live and its first corrected full Ubuntu run passed.
-Vercel succeeded; `/es` remains intentionally 404. Not on main yet: nothing.
+5 unit, 101 e2e (58 expected project skips) and 24 visual checks passed. GitHub Actions is live and its first corrected
+full Ubuntu run passed; the Instagram-user-agent check now runs once instead of redundantly in all three projects.
+Spanish is published: `/es` and the checked Spanish journey return 200 with the EN | ES switch and reciprocal metadata.
+The sitemap now refreshes with the live publication switch instead of being frozen at deploy time. Not on main yet: nothing.
 
 Next: continue Phase 6 with the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login upgrade decision,
 CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: Spanish copy + Adrian/Alondra native reviewer; confirm the $50 deposit;
-Stripe Refunds: Write + checkout.session.expired + real refund test; travel; 1g Meta; Search Console/Business Profile;
+Waiting on the owner: confirm the $50 deposit; Stripe Refunds: Write + checkout.session.expired + real refund test;
+travel; 1g Meta; Search Console/Business Profile;
 Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
 Watch out: mutating `/api/admin/*` tests/curl need the exact Origin; all logs must use `lib/log.ts` (never copy an error
 message to another field). Existing Blob settings default Spanish off; only `/api/admin/spanish` may change it and every
@@ -635,9 +639,11 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       English parity screenshots matched, and 24 Spanish phone/desktop captures were inspected against an isolated
       local published state. Vercel succeeded; production English pages returned 200 while `/es` remained 404 with no
       visible switch, Spanish hreflang or sitemap entry. No SQL or new dependency was needed.
-- [?] Complete the live Spanish owner copy and native-speaker review before Spanish ads (Adrian or Alondra?).
-- [ ] After owner approval, use `/admin/settings` → **Publish Spanish website**; smoke-test both languages. The readiness
-      list must be empty. No Vercel setting or redeploy is needed.
+- [x] Owner completed the live Spanish copy/review gate and published through `/admin/settings` Oct 10. Production `/es`,
+      `/es/bundles`, `/es/home-sweet-home`, `/es/about`, `/es/privacy`, `/es/terms` and `/es/book` returned 200; the
+      English page exposed the ES switch and both homepages emitted reciprocal hreflang. The initial live check found
+      `sitemap.xml` frozen to its deploy-time English-only state; `2bd75b6` makes the metadata route dynamic so the
+      owner-controlled publication state reaches it without another settings-specific redeploy.
 
 ## Phase 4 — Add-ons + seasonal
 - [x] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
@@ -707,7 +713,10 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
       checks passed. `ef5a6cf` adds the read-only GitHub Actions workflow; its first Ubuntu run found one clean-runner
       environment assumption and one WebKit locator ambiguity, fixed in `2b6c84a`. The corrected run passed clean npm
-      install, browser install, strict tsc, lint, units and all e2e tests. Second bug hunt remains.
+      install, browser install, strict tsc, lint, units and all e2e tests. A docs-push rerun exposed a redundant/flaky
+      Instagram-user-agent check: `64e5da6` runs that custom Chromium context once, asserts the transition into the
+      customer-details step, and keeps the three native browser journeys. Strict tsc/lint (0 errors/23 known warnings),
+      5 units and the full 101-pass/58-expected-skip local matrix passed. Second bug hunt remains.
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 - [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
@@ -780,8 +789,6 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
-- Spanish publication: complete/review live owner copy and choose Adrian or Alondra for the native review; only then
-  use the publication control in `/admin/settings`.
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
 
