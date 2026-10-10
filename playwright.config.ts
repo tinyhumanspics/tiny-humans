@@ -20,10 +20,15 @@ export default defineConfig({
     // sandboxes with a preinstalled Chromium can point at it (PW_CHROMIUM_PATH); normally unset
     ...(process.env.PW_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } } : {}),
   },
+  // Each browser gets its own visitor address (documentation range), like three different families: the server's
+  // per-address rate limits (e.g. 120 calendar loads / 10 min, 20 bookings / hour) apply to each, not to the whole suite.
   projects: [
-    { name: "iphone-safari", use: { ...devices["iPhone 14"] } },
-    { name: "android-chrome", use: { ...devices["Pixel 7"] } },
-    { name: "desktop-chrome", use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 } } },
+    { name: "iphone-safari", use: { ...devices["iPhone 14"], extraHTTPHeaders: { "x-forwarded-for": "203.0.113.11" } } },
+    { name: "android-chrome", use: { ...devices["Pixel 7"], extraHTTPHeaders: { "x-forwarded-for": "203.0.113.12" } } },
+    {
+      name: "desktop-chrome",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 900 }, extraHTTPHeaders: { "x-forwarded-for": "203.0.113.13" } },
+    },
   ],
   webServer: {
     // a production build: closer to Vercel than `next dev`, no first-compile delays, and Next 16 allows only one

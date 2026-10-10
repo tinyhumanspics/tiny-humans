@@ -7,18 +7,35 @@ const INSTAGRAM_UA =
 const availableDay = (page: import("@playwright/test").Page) =>
   page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
 
-async function bookLittleMoments(page: import("@playwright/test").Page) {
+/** Runs `action` (which shows or changes the calendar month) and waits until that month's availability is shown. */
+async function loadMonth(page: import("@playwright/test").Page, action: () => Promise<unknown>) {
+  const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
+  await action();
+  await loaded;
+  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+}
+
+/** Runs `open` (which shows the calendar), waits for this month's availability, then picks the first open day
+ *  (next month when this one is full). Counting days before the calendar has loaded would skip a month too early.
+ *  `farAhead` picks next month's last open day instead: always outside the cancel/reschedule notice window. */
+async function pickFirstOpenDay(page: import("@playwright/test").Page, open: () => Promise<unknown>, { farAhead = false } = {}) {
+  await loadMonth(page, open);
+  if (farAhead || !(await availableDay(page).count())) {
+    await loadMonth(page, () => page.getByRole("button", { name: "Next month" }).click());
+  }
+  await (farAhead ? page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').last() : availableDay(page)).click();
+}
+
+async function bookLittleMoments(page: import("@playwright/test").Page, { farAhead = false } = {}) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource/.test(m.text()) && errors.push(m.text()));
 
   await page.goto("/bundles?utm_source=facebook&utm_medium=paid_social&fbclid=TEST");
-  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
-  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
-
-  const day = availableDay(page);
-  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await availableDay(page).click();
+  await pickFirstOpenDay(page, async () => {
+    await page.getByRole("link", { name: /Choose Little Moments/i }).click();
+    await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
+  }, { farAhead });
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await expect(page.getByText(/Miami time/).first()).toBeVisible();
   await page.locator('label[for^="time-"]').first().click();
@@ -68,10 +85,7 @@ test("a family can book a session (mock provider)", async ({ page }, testInfo) =
 });
 
 test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
-  await page.goto("/book?bundle=little-moments");
-  const day = availableDay(page);
-  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await availableDay(page).click();
+  await pickFirstOpenDay(page, () => page.goto("/book?bundle=little-moments"));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   const time = page.locator('label[for^="time-"]').first();
   await expect(time.getByText(/until/)).toBeVisible();
@@ -144,10 +158,7 @@ test("a longer twins or triplets session keeps details and asks for another time
 
 test("a full language-page reload keeps the booking step, details and backdrop picks", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the session-transfer mechanism used by EN/ES.");
-  await page.goto("/book?bundle=our-little-story");
-  const day = availableDay(page);
-  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await availableDay(page).click();
+  await pickFirstOpenDay(page, () => page.goto("/book?bundle=our-little-story"));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
@@ -189,7 +200,8 @@ test("mock mode previews the confirmation email (React Email rendered in the bro
 });
 
 test("mock management links show the booking and allow cancellation", async ({ page }, testInfo) => {
-  await bookLittleMoments(page);
+  // A session weeks away, so online cancellation is still open (inside the notice window it's correctly refused).
+  await bookLittleMoments(page, { farAhead: true });
   await page.getByRole("button", { name: "Try the Reschedule link" }).click();
   await expect(page.getByRole("heading", { name: "Reschedule your session" })).toBeVisible();
   await expect(page.getByText("Your Current Session")).toBeVisible();
@@ -236,10 +248,7 @@ test("booking works in the Instagram in-app browser", async ({ browser }, testIn
 });
 
 test("a ZIP code outside Florida can't be booked", async ({ page }) => {
-  await page.goto("/book?bundle=little-moments");
-  const day = availableDay(page);
-  if (!(await day.count())) await page.getByRole("button", { name: "Next month" }).click();
-  await availableDay(page).click();
+  await pickFirstOpenDay(page, () => page.goto("/book?bundle=little-moments"));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
