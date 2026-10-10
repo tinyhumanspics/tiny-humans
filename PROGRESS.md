@@ -3,15 +3,16 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 10: Phase 3 code complete; Spanish publication waits on owner)
-State: app commit `73c837a` is live and smoke-tested. The complete `/es` public/customer route tree, explicit EN | ES
+## ▶ NEXT STEPS (Oct 10: Phase 3 publication is controlled in /admin; owner copy/review remains)
+State: app commit `627e8ea` is live and smoke-tested. The complete `/es` public/customer route tree, explicit EN | ES
 switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
-They remain safely unpublished: production `/es` is 404, no switcher or Spanish hreflang/sitemap entry is exposed, and
-English home, About, booking, landing and payment status returned 200. Publication requires
-`SPANISH_SITE_PUBLISHED=1`, complete live Spanish bundle rows, complete owner photo/prompt/seasonal copy, and native
-review. No SQL or dependency was needed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings), the
-full suite passed 84 tests (24 expected skips), all 16 English parity baselines matched, and all 12 Spanish routes were
-captured and inspected at iPhone 14 and 1440px in an isolated published-state preview.
+`/admin/settings` now owns the Spanish publish/hide switch, shows every readiness gap and refuses to publish an
+incomplete journey. Existing Vercel Blob saves default safely off; no environment variable, redeploy, SQL or dependency
+is needed. The runtime still rechecks the complete live Spanish bundle rows plus owner photo/prompt/enabled-seasonal
+copy, so a later content gap safely hides all Spanish routes even if the switch remains on. Production `/es` is still
+intentionally 404 until the owner completes the copy and native review. Strict nonincremental tsc/build/lint passed (0
+errors/23 known warnings), the full suite passed 88 tests (26 expected skips), all 16 English parity baselines matched,
+and the new Settings control was captured and inspected at iPhone 14 and 1440px.
 The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the landing contain only **Baby’s First Thanksgiving**
 (Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card data is ignored and disappears on the next seasonal
 save. Seasonal offers, photos and home-gallery prompts accept optional matched Spanish copy; incomplete drafts cannot
@@ -71,33 +72,46 @@ email tools; no SQL was needed for that behavior.
 
 **Spanish publication (owner action; safely off):** complete/review every Spanish bundle field in `/admin/pricing`,
 Spanish photo and gallery-prompt copy in `/admin/photos`, and Spanish copy for any enabled offer in `/admin/seasonal`;
-choose Adrian or Alondra for the full native review. Only after that review, set `SPANISH_SITE_PUBLISHED=1` in Vercel
-Production and redeploy. The runtime gate will still refuse publication if any required live copy is incomplete.
+choose Adrian or Alondra for the full native review. Only after that review, open `/admin/settings` and click **Publish
+Spanish website**. The page lists anything still missing and refuses an incomplete publication. No Vercel setting or
+redeploy is needed; the same control can hide Spanish again at any time.
 
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10): app commit 73c837a is live and smoke-tested. Phase 3 code is complete: the gated `/es` route tree,
-EN | ES switcher, reciprocal hreflang/sitemap, and locale-aware customer links are built. Production Spanish remains
-intentionally unpublished: `/es` is 404 and English pages are unchanged. No SQL was needed; migrations 0010–0019 ran.
+State (Oct 10): app commit 627e8ea is live and smoke-tested. Phase 3 code is complete: the gated `/es` route tree,
+EN | ES switcher, reciprocal hreflang/sitemap, locale-aware customer links, and the protected publication control in
+/admin/settings are built. Production Spanish remains intentionally unpublished: `/es` is 404 and English is unchanged.
+No SQL or new dependency was needed; migrations 0010–0019 ran.
 Not on main yet: nothing.
 
 Next: finish Phase 3 with the owner: complete the live Spanish bundle/photo/prompt/seasonal copy, choose Adrian or
-Alondra for native review, then set SPANISH_SITE_PUBLISHED=1 in Vercel and redeploy. If the owner defers publication,
-start Phase 6 security/quality with current official-doc research and element-level visual checks.
+Alondra for native review, then use /admin/settings → Publish Spanish website. The readiness list blocks incomplete
+publication and no Vercel setting/redeploy is needed. If the owner defers publication, start Phase 6 security/quality
+with current official-doc research and element-level visual checks.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: fill/review Spanish owner copy and choose Adrian or Alondra for native review; confirm the current
 $50 deposit switch; Stripe Refunds: Write + checkout.session.expired + real refund test; travel settings; 1g Meta test;
 Search Console/Business Profile; Vercel Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
-Watch out: `SPANISH_SITE_PUBLISHED=1` is the native-review signoff, but the runtime also gates live bundle and owner
-copy; failed gates keep all `/es` routes 404. Retired `christmasCards` Blob data drops on the next seasonal save.
+Watch out: existing Blob settings parse the Spanish switch as off. Only /api/admin/spanish may change it; general
+settings saves preserve it, and failed live bundle/owner-copy gates keep all /es routes 404 even when it is on.
+Retired `christmasCards` Blob data drops on the next seasonal save.
 Never drizzle-kit push; use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Publish/hide Spanish from `/admin`** (owner, Oct 10; `627e8ea`): `/admin/settings` now shows whether the Spanish
+      website is Hidden, Published, or On but safely hidden, lists missing live translations, and provides one protected
+      publish/hide button. Enabling is refused until the live Spanish bundle rows and owner photo, gallery-prompt and
+      enabled-seasonal copy all pass the readiness gate; disabling is always available. The switch lives in the existing
+      Vercel Blob site settings, old saves default off, and normal theme/media/seasonal saves preserve it, so no Vercel
+      environment change, redeploy, SQL or dependency is needed. If content later becomes incomplete, the runtime still
+      fails closed and every `/es` route stays 404. Strict nonincremental tsc/build/lint passed (0 errors/23 known
+      warnings), 88 e2e tests passed (26 expected skips), all 16 visual baselines matched, and the control was inspected
+      at iPhone 14 and 1440px. Production stayed safely unpublished after deploy; `/es` remained 404.
 - [x] **Center the landing FAQ heading** (owner, Oct 9; `d7f610c`): “Questions parents ask,” its doodle and underline
       are centered at phone and desktop widths; the accordion questions stay left-aligned for readability. Strict tsc,
       production build and lint passed (0 errors/24 known warnings); all 82 e2e tests passed (26 expected skips), and
@@ -610,14 +624,15 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       cancel/reschedule/backdrop/review/payment pages and localized 404s. EN | ES links preserve query/hash state;
       indexable pages emit reciprocal English/Spanish/x-default alternates and the sitemap adds Spanish only after the
       gate passes. Booking, reminder, after-session, deposit and balance links/products follow the saved booking locale;
-      public API failures map to catalog messages instead of leaking raw English errors. Publication requires the env
+      public API failures map to catalog messages instead of leaking raw English errors. Publication requires the owner
       signoff plus complete live bundle and owner copy, so a failed gate keeps `/es` 404 and hides the switch/alternates.
       Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings), 84 e2e passed (24 expected skips), all 16
       English parity screenshots matched, and 24 Spanish phone/desktop captures were inspected against an isolated
       local published state. Vercel succeeded; production English pages returned 200 while `/es` remained 404 with no
       visible switch, Spanish hreflang or sitemap entry. No SQL or new dependency was needed.
 - [?] Complete the live Spanish owner copy and native-speaker review before Spanish ads (Adrian or Alondra?).
-- [ ] After owner approval, set `SPANISH_SITE_PUBLISHED=1` in Vercel Production and redeploy; smoke-test both languages.
+- [ ] After owner approval, use `/admin/settings` → **Publish Spanish website**; smoke-test both languages. The readiness
+      list must be empty. No Vercel setting or redeploy is needed.
 
 ## Phase 4 — Add-ons + seasonal
 - [x] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
@@ -743,7 +758,7 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 
 ## Open owner questions
 - Spanish publication: complete/review live owner copy and choose Adrian or Alondra for the native review; only then
-  approve the Vercel publication switch.
+  use the publication control in `/admin/settings`.
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
 
@@ -825,7 +840,9 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   sitemap. This preserves the live English tree and avoids advertising partial translations. Sources:
   https://nextjs.org/docs/app/guides/internationalization · https://next-intl.dev/docs/routing/setup ·
   https://next-intl.dev/docs/routing/configuration · https://next-intl.dev/docs/routing/middleware ·
-  https://next-intl.dev/docs/routing/navigation
+  https://next-intl.dev/docs/routing/navigation. **Oct 10 admin-control follow-up:** no routing-guidance change; the
+  owner switch uses the existing immutable Vercel Blob settings and supported `revalidateTag(tag, { expire: 0 })`
+  path already researched below, while the server readiness gate remains the single public source of truth.
 - **Phase 5 SEO** (official docs checked Oct 8): Next.js recommends static `metadata` for fixed pages, a native
   `<script type="application/ld+json">` with `<` escaped for structured data, and its root `sitemap.ts`/`robots.ts`
   metadata conventions. Metadata objects merge shallowly, so each page must repeat the complete Open Graph group when

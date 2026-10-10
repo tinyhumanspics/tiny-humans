@@ -155,10 +155,12 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   ("Original") theme's picture (`config/media.ts` → `resolveMedia`).
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.
 - Spanish publication is all-or-nothing: `/es`, the language switcher, reciprocal hreflang and Spanish sitemap entries
-  appear only when `SPANISH_SITE_PUBLISHED=1` **and** `getSpanishPublication()` passes the live Spanish bundle + owner-
-  copy audit. The env switch is the native-review signoff; never set it before review. `proxy.ts` supplies the trusted
-  request-locale header, and booking/email/payment/manage links follow the saved booking locale. A failed gate makes
-  every `/es` route a 404 without exposing partial English copy.
+  appear only when the switch in `/admin/settings` is on **and** `getSpanishPublication()` passes the live Spanish
+  bundle + owner-copy audit. The switch is stored in the existing Vercel Blob settings (old saves default off); it does
+  not need an environment variable or redeploy. Only `/api/admin/spanish` may change it because that endpoint validates
+  readiness; the general settings save preserves its previous value. `proxy.ts` supplies the trusted request-locale
+  header, and booking/email/payment/manage links follow the saved booking locale. A failed gate makes every `/es` route
+  a 404 without exposing partial English copy.
 - Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`).
 - The owner often has `npm run dev` running on :3000. Stop only your own servers, by port → PID
   (`lsof -nP -t -iTCP:<port> -sTCP:LISTEN`), never `pkill` by name (every Next server is called `next-server`).
