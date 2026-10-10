@@ -12,7 +12,12 @@
   font-size: clamp(2.3rem, 7vw, 3.6rem);
   line-height: 1.05;
   color: var(--chalk-white);
+  /* Wrap before the board drawings at the heading's right edge, so they never sit on its letters. */
+  max-width: calc(100% - 52px);
 }
+.center .title { max-width: calc(100% - 104px); }
+
+.tail { white-space: nowrap; }
 
 .doodle {
   display: inline-block;
@@ -21,10 +26,9 @@
   transform: translateY(-0.35em) rotate(14deg);
 }
 
-/* Desktop: long titles stay on one line, and Spanish ones wrap before the drawings at the right edge. */
+/* Desktop: long titles stay on one line. */
 @media (min-width: 900px) {
   .long .title { font-size: min(3.6rem, 4.8vw); }
-  .es .title { max-width: calc(100% - 64px); }
 }
 
 .underline { display: block; margin-top: 4px; }

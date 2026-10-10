@@ -23,12 +23,18 @@ export default function SectionHeading({ id, title, subtitle, align = "start", s
   const spanish = locale === "es";
   // Long titles (today only Spanish ones) shrink a little on mid-size screens to stay on one line.
   const long = title.length > 30;
+  // The last word and the doodle wrap together, so the doodle never ends up alone on a line.
+  const words = title.split(" ");
+  const lastWord = words.pop();
   return (
-    <Reveal className={cn(styles.wrap, align === "center" && styles.center, spanish && styles.es, long && styles.long)}>
+    <Reveal className={cn(styles.wrap, align === "center" && styles.center, long && styles.long)}>
       <BoardDoodles area="heading" desktopExtras={!spanish} />
       <h2 id={id} className={cn(styles.title, "chalk")}>
-        {title}
-        <ChalkDoodle grain={false} name={doodle} size={30} color={slot === "portfolio" ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
+        {words.length > 0 && `${words.join(" ")} `}
+        <span className={styles.tail}>
+          {lastWord}
+          <ChalkDoodle grain={false} name={doodle} size={30} color={slot === "portfolio" ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
+        </span>
       </h2>
       <ChalkDoodle name="underline" size={170} color="var(--chalk-dim)" strokeWidth={2.4} className={styles.underline} />
       {subtitle && <p className={cn(styles.subtitle, "chalk-soft")}>{subtitle}</p>}

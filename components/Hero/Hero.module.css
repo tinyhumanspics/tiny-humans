@@ -82,3 +82,7 @@
 .hero[data-locale="es"] .title {
   font-size: clamp(1.75rem, 10cqi, 3.45rem);
 }
+/* Below 1100px a little smaller still, so the star at the end of "pequeñitos." never touches it. */
+@media (max-width: 1099px) {
+  .hero[data-locale="es"] .title { font-size: clamp(1.5rem, 9cqi, 3.45rem); }
+}
