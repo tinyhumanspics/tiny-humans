@@ -161,17 +161,21 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   readiness; the general settings save preserves its previous value. `proxy.ts` supplies the trusted request-locale
   header, and booking/email/payment/manage links follow the saved booking locale. A failed gate makes every `/es` route
   a 404 without exposing partial English copy.
-- Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`).
+- Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`). `proxy.ts` rejects every mutating
+  `/api/admin/*` request unless its `Origin` exactly matches the request URL (Referer only when Origin is absent); local
+  API tests/curl must send the exact local origin.
 - The owner often has `npm run dev` running on :3000. Stop only your own servers, by port → PID
   (`lsof -nP -t -iTCP:<port> -sTCP:LISTEN`), never `pkill` by name (every Next server is called `next-server`).
   Test servers: :3100 (e2e) and :3200 (visual parity, local Outlook mode with `scripts/local-db`).
 - A local `next build` can reuse the previous build's prerendered ISR pages (with the database data of that time):
   re-save the setting in /admin (it revalidates) or `rm -rf .next` before judging a page. Playwright WebKit drops the
   Secure admin cookie on http://localhost → use Chromium for /admin screenshots.
-- Never log a failed Drizzle query's error object: its message repeats the query's values (customer data). Log
-  `err.cause.message` (see `lib/booking/access.ts`). New per-booking extras go in their own table with a best-effort
-  insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`) so a missing migration never
-  breaks bookings; anything that changes money (e.g. `travel_fee_cents`) stays on `bookings`, migration-first.
+- Failed Drizzle error messages repeat query values (customer data). All server logs must go through `lib/log.ts`, whose
+  recursive sanitizer drops raw Error messages, secrets, contact/family fields, IPs and user agents; pass the Error plus
+  safe identifiers/codes, never copy vendor/error messages into another field. New per-booking extras go in their own
+  table with a best-effort insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`) so a
+  missing migration never breaks bookings; anything that changes money (e.g. `travel_fee_cents`) stays on `bookings`,
+  migration-first.
 - `npm run typecheck` (TS 7, `incremental: true`) can report "clean" from a stale `tsconfig.tsbuildinfo` and miss new
   errors (seen Oct 7): before committing run `npx tsc --noEmit -p . --incremental false` (or delete the tsbuildinfo).
 - The owner sometimes records new decisions in PROGRESS.md (own commits) while a session is working: check `git log`

@@ -88,24 +88,23 @@ redeploy is needed; the same control can hide Spanish again at any time.
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10): app commit 627e8ea is live and smoke-tested. Phase 3 code is complete: the gated `/es` route tree,
-EN | ES switcher, reciprocal hreflang/sitemap, locale-aware customer links, and the protected publication control in
-/admin/settings are built. Production Spanish remains intentionally unpublished: `/es` is 404 and English is unchanged.
-No SQL or new dependency was needed; migrations 0010–0019 ran.
-Not on main yet: nothing.
+State (Oct 10): app commit b47c5fc is live and smoke-tested. Phase 6 started: admin mutations are exact-origin checked;
+login/uploads are bounded and validated; logs strip raw errors and family/contact data; Vitest security tests and
+WCAG 2.2 axe/manual/element-visual gates are built. The audit fixed 320px header overflow. Strict tsc/build/lint passed;
+5 unit, 103 e2e and 24 visual checks passed. Vercel/main docs through 2cc1d95 succeeded. `/es` remains intentionally 404.
+Not on main yet: `.github/workflows/ci.yml` is reviewed and local; GitHub rejected it because the current token lacks
+workflow-file permission.
 
-Next: finish Phase 3 with the owner: complete the live Spanish bundle/photo/prompt/seasonal copy, choose Adrian or
-Alondra for native review, then use /admin/settings → Publish Spanish website. The readiness list blocks incomplete
-publication and no Vercel setting/redeploy is needed. If the owner defers publication, start Phase 6 security/quality
-with current official-doc research and element-level visual checks.
+Next: continue Phase 6. First ask the owner to refresh GitHub workflow permission, then commit/push the prepared CI
+workflow and verify its first run. Continue the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login
+upgrade decision, CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: fill/review Spanish owner copy and choose Adrian or Alondra for native review; confirm the current
-$50 deposit switch; Stripe Refunds: Write + checkout.session.expired + real refund test; travel settings; 1g Meta test;
-Search Console/Business Profile; Vercel Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
-Watch out: existing Blob settings parse the Spanish switch as off. Only /api/admin/spanish may change it; general
-settings saves preserve it, and failed live bundle/owner-copy gates keep all /es routes 404 even when it is on.
-Retired `christmasCards` Blob data drops on the next seasonal save.
-Never drizzle-kit push; use full nonincremental tsc.
+Waiting on the owner: GitHub workflow permission; Spanish copy + Adrian/Alondra native reviewer; confirm the $50 deposit;
+Stripe Refunds: Write + checkout.session.expired + real refund test; travel; 1g Meta; Search Console/Business Profile;
+Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
+Watch out: mutating `/api/admin/*` tests/curl need the exact Origin; all logs must use `lib/log.ts` (never copy an error
+message to another field). Existing Blob settings default Spanish off; only `/api/admin/spanish` may change it and every
+/es route fails closed on any readiness gap. Never drizzle-kit push; use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
