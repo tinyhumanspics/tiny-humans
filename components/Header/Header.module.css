@@ -96,6 +96,13 @@
   pointer-events: none;
 }
 
+/* WCAG reflow at 320 CSS px: keep the complete hand-drawn Book circle on-screen. */
+@media (max-width: 350px) {
+  .bar { gap: 8px; }
+  .logoSlot { --logo-w: 70; }
+  .nav ul { gap: 10px; }
+}
+
 /* ---------- Intro states ---------- */
 .introOverlay { display: none; }
 
