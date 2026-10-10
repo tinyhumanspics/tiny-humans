@@ -1,7 +1,8 @@
 import { z } from "zod";
+import { isDateKey } from "@/lib/validation/date-key";
 
 const money = z.number().finite().min(0).max(100000);
-const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+const dateKey = z.string().refine(isDateKey, "Choose a real calendar date.");
 const translatedBundleSchema = z.object({
   name: z.string().trim().max(60),
   description: z.string().trim().max(200).optional().nullable(),

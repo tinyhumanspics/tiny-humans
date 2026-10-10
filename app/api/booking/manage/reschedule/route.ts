@@ -3,10 +3,11 @@ import { z } from "zod";
 import { getBookingProvider } from "@/lib/booking/server";
 import { NO_STORE, invalidLink, manageFail, tokenOk, tooMany } from "@/lib/booking/manage-api";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
 // Only date + time can change. Anything else in the body (bundle, price, address...) is ignored.
-const body = z.object({ token: z.string(), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) });
+const body = z.object({ token: z.string(), date: z.string().refine(isDateKey), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) });
 
 /** POST {token, date, start}: reschedule after the customer confirms (rechecked server-side). */
 export async function POST(req: Request) {

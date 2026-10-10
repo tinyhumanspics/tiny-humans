@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { deleteOverride, getAvailabilityRules, upsertOverride } from "@/lib/availability/server";
 import { overrideSchema } from "@/lib/availability/validation";
 import { availabilityError, guardAvailability } from "@/lib/availability/api";
+import { isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export async function DELETE(req: Request) {
   const blocked = await guardAvailability();
   if (blocked) return blocked;
   const date = new URL(req.url).searchParams.get("date") ?? "";
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return NextResponse.json({ error: "Missing date." }, { status: 400 });
+  if (!isDateKey(date)) return NextResponse.json({ error: "Missing date." }, { status: 400 });
   try {
     await deleteOverride(date);
     return NextResponse.json({ rules: await getAvailabilityRules() });

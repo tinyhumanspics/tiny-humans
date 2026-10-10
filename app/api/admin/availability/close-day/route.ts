@@ -5,11 +5,12 @@ import { guardAvailability } from "@/lib/availability/api";
 import { closeDaySchema } from "@/lib/availability/validation";
 import { todayInZone } from "@/lib/booking/timezone";
 import { log } from "@/lib/log";
+import { isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
 
 function validDate(value: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) && value >= todayInZone(bookingRules.timeZone);
+  return isDateKey(value) && value >= todayInZone(bookingRules.timeZone);
 }
 
 function failed(action: string, date: string): NextResponse {

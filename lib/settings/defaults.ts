@@ -3,6 +3,7 @@ import { SEASONAL_OFFER_IDS, type SeasonalOfferId } from "@/config/seasonal";
 import { DEFAULT_THEME, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import en from "@/messages/en.json";
+import { isDateKey } from "@/lib/validation/date-key";
 import type { SeasonalOfferSettings, SiteSettings } from "./types";
 
 const DEFAULT_SEASONAL_OFFERS: Record<SeasonalOfferId, SeasonalOfferSettings> = {
@@ -66,13 +67,6 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
 }
 
 const isThemeId = (v: unknown): v is TinyHumansTheme => (THEME_IDS as string[]).includes(v as string);
-const validDate = (v: unknown): v is string => {
-  if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return false;
-  const [year, month, day] = v.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-};
-
 function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOfferSettings> {
   const source = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
   return Object.fromEntries(
@@ -82,7 +76,7 @@ function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOffe
       const savedTitle = value ? str(value.title, 90) : "";
       const title = LEGACY_SEASONAL_TITLES[id]?.includes(savedTitle) ? fallback.title : savedTitle;
       const description = value ? str(value.description, 240) : "";
-      const cutoff = value && validDate(value.cutoff) ? value.cutoff : "";
+      const cutoff = value && isDateKey(value.cutoff) ? value.cutoff : "";
       const rawSpanish = value?.spanish && typeof value.spanish === "object" ? (value.spanish as Record<string, unknown>) : null;
       const spanishTitle = rawSpanish ? str(rawSpanish.title, 90) : "";
       const spanishDescription = rawSpanish ? str(rawSpanish.description, 240) : "";

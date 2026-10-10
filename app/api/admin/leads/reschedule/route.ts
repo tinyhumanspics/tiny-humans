@@ -6,9 +6,10 @@ import { getLead, getLeadRow } from "@/lib/leads/server";
 import { rescheduleBookingRow } from "@/lib/booking/reschedule";
 import { manageFail } from "@/lib/booking/manage-api";
 import { log } from "@/lib/log";
+import { isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
-const body = z.object({ reference: z.string().trim().min(3).max(40), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) });
+const body = z.object({ reference: z.string().trim().min(3).max(40), date: z.string().refine(isDateKey), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/) });
 
 /** Owner only: move a booking to a new date/time (same availability engine, no customer cutoff). */
 export async function POST(req: Request) {

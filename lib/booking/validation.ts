@@ -1,16 +1,17 @@
 import { z } from "zod";
 import { babyAgeOptions } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
+import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
 /** Server-side validation of booking requests. Never trust the browser form alone. */
-const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date");
+const dateKey = z.string().refine(isDateKey, "Invalid date");
 const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time");
 const text = (max: number) => z.string().trim().max(max);
 
 export const availabilityQuerySchema = z
   .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), babyCount: z.coerce.number().int().min(1).max(3).default(1), from: dateKey, to: dateKey })
   .refine((q) => q.from <= q.to, "from must be before to")
-  .refine((q) => (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 <= 62, "Range too long");
+  .refine((q) => (daysBetweenDateKeys(q.from, q.to) ?? Infinity) <= 62, "Range too long");
 
 /** Backdrop picks: known ids, no repeats, at most 3. */
 export const backdropPicks = z

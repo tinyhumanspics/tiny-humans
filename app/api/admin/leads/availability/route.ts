@@ -4,6 +4,7 @@ import { isDatabaseConfigured } from "@/lib/db/client";
 import { getLeadRow } from "@/lib/leads/server";
 import { rescheduleAvailability } from "@/lib/booking/reschedule";
 import { manageFail } from "@/lib/booking/manage-api";
+import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,10 @@ export async function GET(req: Request) {
   if (!isDatabaseConfigured()) return NextResponse.json({ error: "The database isn't connected yet." }, { status: 503 });
   const u = new URL(req.url);
   const [reference, from, to] = ["reference", "from", "to"].map((k) => u.searchParams.get(k) ?? "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to) || from > to) return NextResponse.json({ error: "Choose a valid date range." }, { status: 400 });
+  const days = daysBetweenDateKeys(from, to);
+  if (!reference || !isDateKey(from) || !isDateKey(to) || from > to || days === null || days > 62) {
+    return NextResponse.json({ error: "Choose a valid date range." }, { status: 400 });
+  }
   try {
     const row = await getLeadRow(reference);
     if (!row) return NextResponse.json({ error: "Lead not found." }, { status: 404 });

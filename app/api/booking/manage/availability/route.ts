@@ -3,9 +3,12 @@ import { z } from "zod";
 import { getBookingProvider } from "@/lib/booking/server";
 import { NO_STORE, invalidLink, manageFail, tokenOk, tooMany } from "@/lib/booking/manage-api";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
-const range = z.object({ from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).refine((q) => q.from <= q.to && (Date.parse(q.to) - Date.parse(q.from)) / 86_400_000 <= 62);
+const range = z
+  .object({ from: z.string().refine(isDateKey), to: z.string().refine(isDateKey) })
+  .refine((q) => q.from <= q.to && (daysBetweenDateKeys(q.from, q.to) ?? Infinity) <= 62);
 
 /** GET ?token=&from=&to= : open times for moving THIS booking (it never blocks itself). */
 export async function GET(req: Request) {
