@@ -291,7 +291,8 @@ test("/book without a bundle: the bundle picked earlier this visit, otherwise th
 });
 
 test("unknown pages show the chalkboard 404", async ({ page }) => {
-  const res = await page.goto("/book/schedule?bundle=little-moments");
+  // Wait for the page to settle first: an early WebKit click on CI was once lost while the page was still loading.
+  const res = await page.goto("/book/schedule?bundle=little-moments", { waitUntil: "networkidle" });
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: /This page wandered off/ })).toBeVisible();
   await page.getByRole("link", { name: "Back to the home page" }).click();
