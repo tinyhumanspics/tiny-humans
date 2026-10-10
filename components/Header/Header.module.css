@@ -129,6 +129,8 @@
   .bar { gap: 8px; }
   .logoSlot { --logo-w: 70; }
   .nav ul { gap: 10px; }
+  /* Spanish: a few px of spare room, since text renders slightly wider on some systems (e.g. Linux). */
+  .header[data-locale="es"] .link { font-size: 0.95rem; }
 }
 
 /* ---------- Intro states ---------- */
