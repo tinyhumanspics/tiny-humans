@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import es from "@/messages/es.json";
 
 const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const PAGES = ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin"];
@@ -73,6 +74,26 @@ test.describe("manual accessibility regression checks", () => {
         return { page: document.documentElement.scrollWidth, viewport, offenders };
       });
       expect(widths.page, `${path} is wider than its viewport: ${JSON.stringify(widths.offenders)}`).toBeLessThanOrEqual(widths.viewport + 1);
+    }
+  });
+
+  test("the Spanish header fits narrow phones without horizontal scrolling", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "One narrow-viewport pass is enough.");
+    // Spanish routes are gated off in the isolated test build: give the real header the Spanish labels and locale hook.
+    await page.goto("/", { waitUntil: "networkidle" });
+    await page.evaluate((labels) => {
+      const header = document.querySelector("header")!;
+      header.dataset.locale = "es";
+      header.querySelectorAll("nav li > a > span.chalk-soft").forEach((label, index) => { label.textContent = labels[index]; });
+    }, [es.header.portfolio, es.header.bundles, es.header.book]);
+    for (const width of [320, 340, 351, 360, 374, 375, 390]) {
+      await page.setViewportSize({ width, height: 800 });
+      const widths = await page.evaluate(() => {
+        const circle = document.querySelector("header nav svg")!.getBoundingClientRect();
+        return { page: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, circleRight: circle.right };
+      });
+      expect(widths.page, `Spanish header at ${width}px`).toBeLessThanOrEqual(widths.viewport + 1);
+      expect(widths.circleRight, `Spanish Book circle at ${width}px`).toBeLessThanOrEqual(widths.viewport);
     }
   });
 
