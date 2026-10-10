@@ -21,6 +21,12 @@
   transform: translateY(-0.35em) rotate(14deg);
 }
 
+/* Desktop: long titles stay on one line, and Spanish ones wrap before the drawings at the right edge. */
+@media (min-width: 900px) {
+  .long .title { font-size: min(3.6rem, 4.8vw); }
+  .es .title { max-width: calc(100% - 64px); }
+}
+
 .underline { display: block; margin-top: 4px; }
 
 .subtitle {

@@ -17,11 +17,15 @@ interface Props {
 }
 
 export default function SectionHeading({ id, title, subtitle, align = "start", slot }: Props) {
-  const { theme } = useSiteSettings();
+  const { theme, locale } = useSiteSettings();
   const doodle = theme.decorations.heading[slot];
+  // Spanish titles run longer: the mid-heading desktop drawing would sit on their letters.
+  const spanish = locale === "es";
+  // Long titles (today only Spanish ones) shrink a little on mid-size screens to stay on one line.
+  const long = title.length > 30;
   return (
-    <Reveal className={cn(styles.wrap, align === "center" && styles.center)}>
-      <BoardDoodles area="heading" />
+    <Reveal className={cn(styles.wrap, align === "center" && styles.center, spanish && styles.es, long && styles.long)}>
+      <BoardDoodles area="heading" desktopExtras={!spanish} />
       <h2 id={id} className={cn(styles.title, "chalk")}>
         {title}
         <ChalkDoodle grain={false} name={doodle} size={30} color={slot === "portfolio" ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />

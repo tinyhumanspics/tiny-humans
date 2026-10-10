@@ -22,10 +22,16 @@ export const colorVar: Record<DoodleColor, string> = {
  * Place inside a positioned parent. Each set sketches itself once, the
  * first time it scrolls into view.
  */
-export default function BoardDoodles({ area, only }: { area: BoardArea; /** show just one drawing from the area */ only?: number }) {
+export default function BoardDoodles({ area, only, desktopExtras = true }: {
+  area: BoardArea;
+  /** show just one drawing from the area */
+  only?: number;
+  /** false = leave out the area's desktop-only drawings */
+  desktopExtras?: boolean;
+}) {
   const { theme } = useSiteSettings();
   const ref = useRef<HTMLDivElement>(null);
-  const all = theme.decorations.board[area];
+  const all = desktopExtras ? theme.decorations.board[area] : theme.decorations.board[area].filter((d) => !d.desktopOnly);
   const items = only === undefined ? all : [all[only % all.length]];
 
   useDrawOnce(ref, theme.id);

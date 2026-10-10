@@ -22,6 +22,8 @@ interface Ctx {
   applySettings: (s: SiteSettings) => void;
   /** True once the active theme is known in the browser (the intro waits for it). */
   ready: boolean;
+  /** The page's language (from the root layout). */
+  locale: AppLocale;
 }
 
 const SiteSettingsContext = createContext<Ctx | null>(null);
@@ -59,6 +61,7 @@ export function SiteSettingsProvider({ initial, locale = "en", children }: { ini
       photos: feedPhotos(liveMedia(settings, locale)),
       applySettings,
       ready,
+      locale,
     }),
     [settings, theme, locale, applySettings, ready],
   );
