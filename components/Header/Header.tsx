@@ -42,7 +42,7 @@ export default function Header({ messages, languageMessages, locale, showLanguag
   return (
     <>
       <div className={styles.introOverlay} aria-hidden="true" />
-      <header className={styles.header}>
+      <header className={styles.header} data-locale={locale}>
         <div className={cn("container", styles.bar)}>
           <Link href={homeHref} className={styles.logoLink} onClick={onLogoClick} aria-label={fill(messages.logoHome, { brand: site.name })}>
             <span className={styles.logoSlot} style={{ "--logo-aspect": logo.drawing.height / logo.drawing.width } as React.CSSProperties}>

@@ -19,7 +19,7 @@ export default function Hero({ messages = en.home.hero, locale = "en" }: { messa
   const [first, second] = media.title;
   const [doodleA, doodleB] = theme.decorations.hero;
   return (
-    <section className={styles.hero} aria-labelledby="hero-title">
+    <section className={styles.hero} aria-labelledby="hero-title" data-locale={locale}>
       <div className={cn("container", styles.grid)}>
         <Reveal className={styles.copy}>
           <BoardDoodles area="hero" />

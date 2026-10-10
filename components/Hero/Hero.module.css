@@ -77,3 +77,8 @@
 @media (min-width: 900px) {
   .title { font-size: clamp(2.1rem, 15.5cqi, 5rem); }
 }
+
+/* The Spanish headline is longer; size it to the same two-line text column instead of clipping under the photos. */
+.hero[data-locale="es"] .title {
+  font-size: clamp(1.75rem, 10cqi, 3.45rem);
+}

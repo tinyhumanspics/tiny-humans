@@ -96,6 +96,23 @@
   pointer-events: none;
 }
 
+/* "Reservar" needs a roomier oval than the shorter English label. */
+.header[data-locale="es"] .emphasis { padding-inline: 14px; }
+.header[data-locale="es"] .circle {
+  inset: -12px -16px;
+  width: calc(100% + 32px);
+  height: calc(100% + 24px);
+}
+
+@media (max-width: 767px) {
+  .header[data-locale="es"] .emphasis { padding-inline: 6px; }
+  .header[data-locale="es"] .circle {
+    inset: -8px;
+    width: calc(100% + 16px);
+    height: calc(100% + 16px);
+  }
+}
+
 /* WCAG reflow at 320 CSS px: keep the complete hand-drawn Book circle on-screen. */
 @media (max-width: 350px) {
   .bar { gap: 8px; }
