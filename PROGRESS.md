@@ -4,13 +4,15 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `889f94c` is live and smoke-tested; Vercel succeeded, production `/admin/seasonal` and
-`/home-sweet-home` returned 200, the protected settings API returned 401 without an owner session, and unfinished
-`/es/home-sweet-home` remained an intentional 404. Seasonal offers now have optional matched Spanish title/description
-fields; incomplete or missing Spanish copy stays hidden from the future Spanish landing page without affecting English.
-Phase 4 is complete: extra babies are live,
+State: app commit `aa00e69` is live and smoke-tested; Vercel succeeded, production `/admin/seasonal`, `/admin/photos`
+and `/home-sweet-home` returned 200, the protected settings API returned 401 without an owner session, and unfinished
+`/es/home-sweet-home` remained an intentional 404. The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the
+landing now contain only **Baby’s First Thanksgiving** (Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card
+data is ignored and disappears on the next seasonal save. No SQL was needed. Seasonal offers, photos and home-gallery
+prompts now accept optional matched Spanish copy; incomplete photo/seasonal drafts cannot leak English into the future
+Spanish site. Phase 4 is complete: extra babies are live,
 migration 0017 returned
-3 bundle rows, and `/admin/seasonal` now edits the Thanksgiving, Christmas cards and First Christmas offers/cutoffs.
+3 bundle rows, and `/admin/seasonal` now edits the two remaining baby-first offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
 until explicitly enabled and only appear under their matching theme through the inclusive cutoff. No seasonal SQL is
 needed. Migrations 0010–0019 ran in Neon; the owner confirmed migration 0018 succeeded Oct 8 (the final language count
@@ -50,7 +52,7 @@ email tools; no SQL was needed for that behavior.
 5. **Owner: finish SEO discovery setup:** verify `tinyhumans.photography` as a Domain property in Google Search Console
    (DNS verification), submit `https://www.tinyhumans.photography/sitemap.xml`, then claim/update Google Business
    Profile as a service-area business: hide the home address and select the real cities/ZIPs served (up to 20; no radius).
-6. **Seasonal cutoffs** (decision 7): Thanksgiving Nov 23, Christmas cards Dec 5, First Christmas Dec 21.
+6. **Seasonal cutoffs** (decision 7, revised Oct 9): Baby’s First Thanksgiving Nov 23; Baby’s First Christmas Dec 21.
 7. After the first real reminder runs (Oct 8 onward): glance at /admin → Leads → details for "Reminder" lines, and at
    Vercel → Settings → Cron Jobs → View Logs if one says "Not sent". If a payment ever shows "Not paid" after the family
    paid: lead → Payment → **Check with Stripe** (else Stripe Workbench → Webhooks → Event deliveries).
@@ -65,21 +67,21 @@ email tools; no SQL was needed for that behavior.
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 8): main = f864ea9, live and smoke-tested. Phases 4 and 5 are complete. Extra babies ($75 +30 min +5
-photos each; twins/triplets, max 3, all bundles; discounts only the bundle) and editable seasonal landing offers are
-live. SEO now has per-page canonicals/OG, sitemap, robots, truthful service-area ProfessionalService JSON-LD and
-noindex on /book; photo alt text was already editable in /admin/photos. Vercel succeeded and production metadata files
-were checked read-only. Migrations 0010–0017 ran in Neon. Not on main yet: nothing.
+State (Oct 9): main = aa00e69, live and smoke-tested. Phase 3 Spanish catalogs now cover the public/customer journey,
+emails, owner-edited seasonal copy, photos and gallery prompts; Spanish routes remain intentionally unpublished.
+Christmas Cards was removed completely: only Baby’s First Thanksgiving (Nov 23) and Baby’s First Christmas (Dec 21)
+remain in /admin/seasonal and /home-sweet-home. No SQL was needed; migrations 0010–0019 ran in Neon.
+Not on main yet: nothing.
 
-Next: Phase 3 Spanish. Research current official Next.js i18n guidance plus the maintained next-intl alternatives first;
-note links in PROGRESS.md, decide /es routing/detection/switcher/hreflang, then ship small verified slices. Native-speaker
-review is required before Spanish ads.
-Time-sensitive: Thanksgiving last sessions Nov 23, Christmas cards Dec 5, First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: enable seasonal offer(s) + matching theme; Search Console + service-area Business Profile;
-Stripe "Refunds: Write" + checkout.session.expired; deposit amounts + switch; travel fee settings; 1g Meta test;
-Vercel Analytics privacy line; /portfolio; Terms review; About photo alt text ("IMG 6087").
-Watch out: closed-day `day_closed` tokens are reschedule-only and pending deposits must be expired when closing a day;
-`bookings.blocked_until` + `bookings_no_overlap` live only in Neon (never drizzle-kit push); use full nonincremental tsc.
+Next: continue Phase 3 Spanish. Start with a customer-facing string/publication-readiness audit, then build the `/es`
+route tree, explicit language switcher and reciprocal hreflang without exposing a partly translated journey. Recheck
+the current official Next.js/next-intl routing guidance before that publication slice and note any change in PROGRESS.
+Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
+Waiting on the owner: fill/review Spanish owner copy and choose Adrian or Alondra for native review; confirm the current
+$50 deposit switch; Stripe Refunds: Write + checkout.session.expired + real refund test; travel settings; 1g Meta test;
+Search Console/Business Profile; Vercel Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
+Watch out: retired `christmasCards` Blob data is ignored and drops on the next seasonal save; no migration. Spanish
+must not publish until its bundle rows and owner copy pass the gate. Never drizzle-kit push; use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
@@ -194,11 +196,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 
 ## Status
 - **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
-  the backlog). Phase 3 is underway: routing foundation + bilingual customer-email catalog are on main, and the saved
-  booking language now drives every later customer email. The public booking journey is still English-only, so no
-  production booking selects Spanish yet. Deposit code is live; production currently shows it enabled at $50, awaiting
-  owner confirmation plus the remaining Stripe permission/webhook/refund test. BUG-5 database rule and email bounce
-  table are live; Resend webhook + secret verified. Next: NEXT STEPS 4.
+  the backlog). Phase 3 is underway: the routing foundation and paired catalogs now cover customer emails, the complete
+  public/customer journey, seasonal offers, photos and home-gallery prompts. The public routes are still English-only,
+  so no production booking selects Spanish until the publication gate, owner copy and native review are complete.
+  Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
+  live and production currently shows it enabled at $50, awaiting owner confirmation plus the remaining Stripe
+  permission/webhook/refund test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
+  Next: NEXT STEPS 4.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -568,7 +572,23 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       the full e2e suite passed 80 tests (22 expected cross-browser skips), and all 16 visual-parity pages passed. The
       expanded editor was inspected at iPhone and 1440px (`.screenshots/seasonal-i18n/`). Vercel succeeded; production
       `/admin/seasonal` and `/home-sweet-home` returned 200, the protected settings API returned 401 without a session,
-      and `/es/home-sweet-home` remained an intentional 404.
+      and `/es/home-sweet-home` remained an intentional 404. **Oct 9 media editor (`10c64e7`):** `/admin/photos` now
+      saves optional matched Spanish photo titles, screen-reader descriptions and captions for every theme, plus the
+      Spanish title/text below each home-gallery group. Starting Spanish photo or prompt copy requires completing its
+      matching fields; existing Vercel Blob settings safely parse with no drafts, so no SQL was needed and the live
+      English site is unchanged. Strict tsc/build/lint passed (0 errors/24 known warnings), the focused editor test and
+      full e2e suite passed (82 tests, 26 expected skips), and all 16 visual-parity pages passed. Photo and prompt forms
+      were inspected at iPhone and 1440px (`.screenshots/admin-media-spanish/`). Vercel succeeded and production
+      `/admin/photos` returned 200 while the settings API remained protected. **Oct 9 seasonal simplification
+      (`aa00e69`):** at the owner’s request, Christmas Cards was removed from the landing model, defaults, admin editor
+      and customer catalogs. Only **Baby’s First Thanksgiving** and **Baby’s First Christmas** remain, with their Nov 23
+      and Dec 21 inclusive cutoffs and matching theme requirement. Previously saved Christmas Cards data is ignored and
+      will be discarded on the next seasonal save; known old titles for the two retained offers normalize to the new
+      exact names. No SQL was needed. Strict tsc/build/lint passed (0 errors/24 known warnings), the focused seasonal
+      suite passed 9 tests, the full e2e suite passed 82 tests (26 expected skips), and all 16 visual-parity pages passed.
+      Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200, the live landing HTML had no
+      Christmas Cards text, the settings API returned 401 without a session, and `/es/home-sweet-home` stayed an
+      intentional 404.
 - [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
 
 ## Phase 4 — Add-ons + seasonal
@@ -591,16 +611,18 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       request returned 90-minute Little Moments slots. No production booking was created.
 - ~~Halloween theme~~ — **dropped by the owner (Oct 7): no Halloween anything; keep only the existing themes**
   (default, Thanksgiving, Christmas, New Year).
-- [x] Seasonal landing variants with real cutoffs (Thanksgiving, Christmas cards + First Christmas), editable in
+- [x] Seasonal landing variants with real cutoffs (Baby’s First Thanksgiving + Baby’s First Christmas), editable in
       `/admin/seasonal`. Title + description + on/off + cutoff live in the existing Vercel
       Blob settings (no migration); old settings parse with all offers off so production never silently publishes code
-      defaults. An enabled offer appears only with its matching live theme and through its inclusive cutoff. Christmas
-      cards disappear after Dec 5 while First Christmas can remain through Dec 21. The hard-coded final-card cutoff line
+      defaults. An enabled offer appears only with its matching live theme and through its inclusive cutoff. The
+      Thanksgiving offer ends after Nov 23 and First Christmas ends after Dec 21. The hard-coded final-card cutoff line
       is replaced by the active saved offers. Admin includes a client-side landing preview. Strict tsc/build/lint (0
       errors/26 known warnings), 36 e2e (seasonal logic + backward compatibility + admin editor on 3 devices), and all
       16 default-state visual parity checks passed. Approval screenshots: `Claude outputs/seasonal/phone-{admin,landing}.png`
-      and matching desktop files. Owner approved the visuals and final Christmas-card wording Oct 8. Commits `9d8e648`
-      + `1eb9992` are live; Vercel succeeded and production `/home-sweet-home` + `/admin/seasonal` returned 200.
+      and matching desktop files. Owner approved the original visuals Oct 8. On Oct 9, the owner asked to remove the
+      Christmas Cards offer entirely and keep only the two baby-first offers; `aa00e69` made that change, safely ignores
+      the retired saved field, and preserves the two approved cutoffs. Vercel succeeded and production
+      `/home-sweet-home` + `/admin/seasonal` returned 200.
 
 ## Phase 5 — SEO basics
 - [x] Metadata/canonicals/OG, `app/sitemap.ts`, `app/robots.ts`, JSON-LD (service-area business), alt text editable.
@@ -649,8 +671,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
    birth OK (flexible).
 5. Capacity: 10–15 sessions a week; publish **"up to 10 home sessions a week"** (owner: 10 builds scarcity).
 6. Gallery delivery: **24–72 hours** from shoot to fully edited.
-7. Seasonal: ~~run Halloween too~~ (**dropped Oct 7: no Halloween theme or offer**). Last sessions: Thanksgiving **Nov 23**, Christmas cards **Dec 5**,
-   First Christmas **Dec 21** (editable in /admin later).
+7. Seasonal: ~~run Halloween too~~ (**dropped Oct 7: no Halloween theme or offer**). ~~Christmas Cards, Dec 5~~ was
+   removed entirely Oct 9. Remaining last sessions: Baby’s First Thanksgiving **Nov 23** and Baby’s First Christmas
+   **Dec 21** (editable in `/admin/seasonal`).
 8. "Most loved" is true and recommended. Mobile order (owner: "you choose"): **Family Story first, highlight Our Little Story ($249)**.
 9. Service area: **anywhere in Florida**, based in Miami Beach, up to Orlando. Travel fee idea (owner, still deciding):
    **free up to N miles (e.g. 50) from his address, then $X per mile for the extra miles only** (60 mi → 10 billable);
