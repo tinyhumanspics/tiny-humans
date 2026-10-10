@@ -272,7 +272,7 @@ export default function LandingPage({
 
       {/* 8. FAQ */}
       <section className={cn("container", styles.section)} aria-labelledby="landing-faq">
-        <SectionHeading id="landing-faq" title={t.faq.title} slot="portfolio" />
+        <SectionHeading id="landing-faq" title={t.faq.title} slot="portfolio" align="center" />
         <div className={styles.faq}>
           {t.faq.items.map((f) => (
             <details key={f.q} className={styles.faqItem}>

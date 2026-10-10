@@ -11,15 +11,16 @@ interface Props {
   id: string;
   title: string;
   subtitle?: string;
+  align?: "start" | "center";
   /** Which section: picks the theme's doodle for it. */
   slot: "portfolio" | "bundles" | "book";
 }
 
-export default function SectionHeading({ id, title, subtitle, slot }: Props) {
+export default function SectionHeading({ id, title, subtitle, align = "start", slot }: Props) {
   const { theme } = useSiteSettings();
   const doodle = theme.decorations.heading[slot];
   return (
-    <Reveal className={styles.wrap}>
+    <Reveal className={cn(styles.wrap, align === "center" && styles.center)}>
       <BoardDoodles area="heading" />
       <h2 id={id} className={cn(styles.title, "chalk")}>
         {title}
