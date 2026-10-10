@@ -33,6 +33,13 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 300_000,
     // mock booking provider + no tracking, whatever .env.local says
-    env: { BOOKING_PROVIDER: "mock", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
+    env: {
+      BOOKING_PROVIDER: "mock",
+      NEXT_PUBLIC_META_PIXEL_ID: "",
+      META_CAPI_ACCESS_TOKEN: "",
+      // Keep admin-path tests reproducible on clean CI runners that do not have the owner's local env file.
+      ADMIN_PASSWORD: process.env.ADMIN_PASSWORD ?? "playwright-local-password",
+      ADMIN_SESSION_SECRET: process.env.ADMIN_SESSION_SECRET ?? "playwright-local-session-secret-not-for-production",
+    },
   },
 });

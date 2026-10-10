@@ -186,8 +186,9 @@ test("email-linked customer tool shells load safely", async ({ page }, testInfo)
   if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/backdrop-${testInfo.project.name}.png`, fullPage: true });
 
   await page.goto("/review");
-  await expect(page.getByRole("heading", { name: "We couldn't open this link" })).toBeVisible();
-  await expect(page.getByText(/review link isn't valid anymore/)).toBeVisible();
+  const reviewError = page.getByRole("region", { name: "We couldn't open this link" });
+  await expect(reviewError.getByRole("heading", { name: "We couldn't open this link" })).toBeVisible();
+  await expect(reviewError.getByText(/review link isn't valid anymore/)).toBeVisible();
   if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/review-${testInfo.project.name}.png`, fullPage: true });
 
   await page.goto("/pay/status?s=paid");
