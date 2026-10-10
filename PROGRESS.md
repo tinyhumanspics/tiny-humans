@@ -4,13 +4,14 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `aa00e69` is live and smoke-tested; Vercel succeeded, production `/admin/seasonal`, `/admin/photos`
+State: app commit `d7f610c` is live and smoke-tested; Vercel succeeded, production `/admin/seasonal`, `/admin/photos`
 and `/home-sweet-home` returned 200, the protected settings API returned 401 without an owner session, and unfinished
 `/es/home-sweet-home` remained an intentional 404. The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the
 landing now contain only **Baby’s First Thanksgiving** (Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card
 data is ignored and disappears on the next seasonal save. No SQL was needed. Seasonal offers, photos and home-gallery
 prompts now accept optional matched Spanish copy; incomplete photo/seasonal drafts cannot leak English into the future
-Spanish site. Phase 4 is complete: extra babies are live,
+Spanish site. The landing FAQ heading is centered on phone and desktop while its question rows remain left-aligned.
+Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the two remaining baby-first offers/cutoffs.
 Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200. Seasonal offers remain safely hidden
@@ -86,6 +87,10 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Center the landing FAQ heading** (owner, Oct 9; `d7f610c`): “Questions parents ask,” its doodle and underline
+      are centered at phone and desktop widths; the accordion questions stay left-aligned for readability. Strict tsc,
+      production build and lint passed (0 errors/24 known warnings); all 82 e2e tests passed (26 expected skips), and
+      the changed section was captured and inspected at iPhone 14 and 1440px.
 - [x] **Landing page refresh** (owner, Oct 7 night: "make sure the landing page is updated according to our main page and
       all the recent updates"; owner OK'd all 3 from `Claude outputs/landing-refresh/`, live `42d1229`). (1) Empty landing
       photo slots show the matching About Us photo (`LANDING_FROM_ABOUT` in `config/media.ts`: "Our set-up…" ← "Behind
