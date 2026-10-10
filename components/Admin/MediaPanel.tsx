@@ -7,7 +7,7 @@ import { BUILT_IN, emptyThemeMedia, LANDING_FROM_ABOUT, MEDIA_GROUPS, type Theme
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import { preparePhoto } from "@/lib/admin/client";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import es from "@/messages/es.json";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
@@ -57,7 +57,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
     const { blob, width, height } = await preparePhoto(file);
     const { src } = await upload(blob);
     const title = previous?.title && previous.src !== src ? previous.title : titleFromFile(file.name);
-    return { id: newId(), src, width, height, title, alt: previous?.alt || title, caption: previous?.caption ?? "" };
+    return { id: newId(), src, width, height, title, alt: previous?.alt || title, caption: previous?.caption ?? "", spanish: previous?.spanish ?? null };
   };
 
   const setSlot = async (path: SlotPath, photo: PortfolioPhoto | null, okText: string) => {
@@ -153,8 +153,26 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
       {MEDIA_GROUPS.feed.map((g, gi) => (
         <MediaGroupBlock key={g.label} label={g.label} where={g.where}
-          prompt={{ title: media.groups[gi]?.title ?? "", text: media.groups[gi]?.text ?? "", defaultTitle: base?.groups[gi]?.title?.trim() || g.defaultTitle, defaultText: base?.groups[gi]?.text?.trim() || g.defaultText, busy: busy === `prompt-${gi}`,
-            onSave: (title, text) => { const next = clone(media); next.groups[gi].title = title.trim() || null; next.groups[gi].text = text.trim() || null; return saveMedia(next, `prompt-${gi}`, "Prompt text saved."); } }}>
+          prompt={{
+            title: media.groups[gi]?.title ?? "",
+            text: media.groups[gi]?.text ?? "",
+            spanishTitle: media.groups[gi]?.spanish?.title ?? "",
+            spanishText: media.groups[gi]?.spanish?.text ?? "",
+            defaultTitle: base?.groups[gi]?.title?.trim() || g.defaultTitle,
+            defaultText: base?.groups[gi]?.text?.trim() || g.defaultText,
+            defaultSpanishTitle: base?.groups[gi]?.spanish?.title?.trim() || es.home.portfolio.prompts[gi].title,
+            defaultSpanishText: base?.groups[gi]?.spanish?.text?.trim() || es.home.portfolio.prompts[gi].text,
+            busy: busy === `prompt-${gi}`,
+            onSave: (title, text, spanishTitle, spanishText) => {
+              const next = clone(media);
+              next.groups[gi].title = title.trim() || null;
+              next.groups[gi].text = text.trim() || null;
+              next.groups[gi].spanish = spanishTitle.trim() || spanishText.trim()
+                ? { title: spanishTitle.trim(), text: spanishText.trim() }
+                : null;
+              return saveMedia(next, `prompt-${gi}`, "Prompt text saved.");
+            },
+          }}>
           {[0, 1, 2].map((i) => (
             <Slot key={`g${gi}-${i}-${themeId}-${media.groups[gi]?.photos[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} inherited={base?.groups[gi]?.photos[i]} inheritedLabel={baseLabel} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
               onReplace={(e) => replace(["group", gi, i], media.groups[gi]?.photos[i] ?? null, `${g.label} · Image ${i + 1}`, e)}
@@ -236,10 +254,32 @@ function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedN
   );
 }
 
-function MediaGroupBlock({ label, where, prompt, children }: { label: string; where: string; prompt?: { title: string; text: string; defaultTitle: string; defaultText: string; busy: boolean; onSave: (t: string, x: string) => Promise<void> }; children: React.ReactNode }) {
+function MediaGroupBlock({ label, where, prompt, children }: {
+  label: string;
+  where: string;
+  prompt?: {
+    title: string;
+    text: string;
+    spanishTitle: string;
+    spanishText: string;
+    defaultTitle: string;
+    defaultText: string;
+    defaultSpanishTitle: string;
+    defaultSpanishText: string;
+    busy: boolean;
+    onSave: (title: string, text: string, spanishTitle: string, spanishText: string) => Promise<void>;
+  };
+  children: React.ReactNode;
+}) {
   const [title, setTitle] = useState(prompt?.title ?? "");
   const [text, setText] = useState(prompt?.text ?? "");
-  const dirty = prompt ? title !== prompt.title || text !== prompt.text : false;
+  const [spanishTitle, setSpanishTitle] = useState(prompt?.spanishTitle ?? "");
+  const [spanishText, setSpanishText] = useState(prompt?.spanishText ?? "");
+  const spanishStarted = Boolean(spanishTitle.trim() || spanishText.trim());
+  const spanishIncomplete = spanishStarted && (!spanishTitle.trim() || !spanishText.trim());
+  const dirty = prompt
+    ? title !== prompt.title || text !== prompt.text || spanishTitle !== prompt.spanishTitle || spanishText !== prompt.spanishText
+    : false;
   return (
     <div className={styles.mediaGroup}>
       <h3 className={cn(styles.mediaGroupTitle, "chalk")}>{label}</h3>
@@ -250,9 +290,14 @@ function MediaGroupBlock({ label, where, prompt, children }: { label: string; wh
           <p className={cn(styles.label, "chalk-soft")}>Prompt shown below these pictures</p>
           <input className={styles.input} value={title} maxLength={60} placeholder={prompt.defaultTitle} onChange={(e) => setTitle(e.target.value)} aria-label={`${label}: prompt title`} />
           <input className={styles.input} value={text} maxLength={120} placeholder={prompt.defaultText} onChange={(e) => setText(e.target.value)} aria-label={`${label}: prompt text`} />
+          <p className={cn(styles.label, "chalk-soft")}>Spanish prompt (optional until the Spanish site is published)</p>
+          <input className={styles.input} value={spanishTitle} maxLength={60} placeholder={prompt.defaultSpanishTitle} onChange={(e) => setSpanishTitle(e.target.value)} aria-label={`${label}: Spanish prompt title`} />
+          <input className={styles.input} value={spanishText} maxLength={120} placeholder={prompt.defaultSpanishText} onChange={(e) => setSpanishText(e.target.value)} aria-label={`${label}: Spanish prompt text`} />
           <div className={styles.photoBar}>
-            <span className={cn(styles.hintSmall, "chalk-soft")}>Leave empty to use the original wording.</span>
-            <button type="button" className={styles.smallButton} disabled={!dirty || prompt.busy} onClick={() => prompt.onSave(title, text)}>{prompt.busy ? "Saving…" : "Save prompt"}</button>
+            <span className={cn(spanishIncomplete ? styles.error : styles.hintSmall, "chalk-soft")}>
+              {spanishIncomplete ? "Complete both Spanish prompt fields, or leave both blank." : "Leave English empty to use the original wording; leave Spanish empty to use the reviewed Spanish default."}
+            </span>
+            <button type="button" className={styles.smallButton} disabled={!dirty || prompt.busy || spanishIncomplete} onClick={() => prompt.onSave(title, text, spanishTitle, spanishText)}>{prompt.busy ? "Saving…" : "Save prompt"}</button>
           </div>
         </div>
       )}
@@ -277,6 +322,15 @@ function Slot({ name, groupLabel, custom, inherited, inheritedLabel, inheritedNo
   const [title, setTitle] = useState(shown?.title ?? "");
   const [alt, setAlt] = useState(shown?.alt ?? "");
   const [caption, setCaption] = useState(shown?.caption ?? "");
+  const [spanishTitle, setSpanishTitle] = useState(shown?.spanish?.title ?? "");
+  const [spanishAlt, setSpanishAlt] = useState(shown?.spanish?.alt ?? "");
+  const [spanishCaption, setSpanishCaption] = useState(shown?.spanish?.caption ?? "");
+  const spanishStarted = Boolean(spanishTitle.trim() || spanishAlt.trim() || spanishCaption.trim());
+  const spanishIncomplete = spanishStarted && (
+    !spanishTitle.trim() ||
+    !spanishAlt.trim() ||
+    (captions && Boolean(caption.trim()) && !spanishCaption.trim())
+  );
   return (
     <div className={styles.slot}>
       <p className={cn(styles.slotName, "chalk-soft")}>{name}</p>
@@ -305,11 +359,29 @@ function Slot({ name, groupLabel, custom, inherited, inheritedLabel, inheritedNo
           )}
           <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (shown when a parent books this photo)" : "Photo title"}<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
+          <p className={cn(styles.label, "chalk-soft")}>Spanish photo details (optional until the Spanish site is published)</p>
+          {captions && (
+            <label className={cn(styles.label, "chalk-soft")}>
+              Caption under the photo (Spanish{caption.trim() ? " · required when Spanish details are started" : " · optional"})
+              <input className={styles.input} value={spanishCaption} maxLength={40} onChange={(e) => setSpanishCaption(e.target.value)} aria-label={`${groupLabel} ${name} caption (Spanish)`} />
+            </label>
+          )}
+          <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (Spanish)" : "Photo title (Spanish)"}<input className={styles.input} value={spanishTitle} maxLength={60} onChange={(e) => setSpanishTitle(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Description for screen readers (Spanish)<input className={styles.input} value={spanishAlt} maxLength={160} onChange={(e) => setSpanishAlt(e.target.value)} /></label>
+          {spanishIncomplete && <p className={cn(styles.error, "chalk-soft")}>Complete the Spanish title and description{captions && caption.trim() ? ", plus the matching caption," : ""} or leave all Spanish fields blank.</p>}
           <button
             type="button"
             className={styles.smallButton}
-            disabled={busy || !title.trim()}
-            onClick={() => onDetails({ ...shown, title: title.trim(), alt: alt.trim() || title.trim(), caption: captions ? caption.trim() : shown.caption })}
+            disabled={busy || !title.trim() || spanishIncomplete}
+            onClick={() => onDetails({
+              ...shown,
+              title: title.trim(),
+              alt: alt.trim() || title.trim(),
+              caption: captions ? caption.trim() : shown.caption,
+              spanish: spanishStarted
+                ? { title: spanishTitle.trim(), alt: spanishAlt.trim(), caption: captions ? spanishCaption.trim() || undefined : shown.spanish?.caption }
+                : null,
+            })}
           >
             Save details
           </button>

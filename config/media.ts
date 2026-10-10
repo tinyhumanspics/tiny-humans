@@ -48,6 +48,8 @@ export interface MediaGroup {
   /** Prompt under this group (null/empty = default wording). */
   title?: string | null;
   text?: string | null;
+  /** Optional matched prompt for Spanish pages. */
+  spanish?: { title: string; text: string } | null;
 }
 
 /** One theme's pictures. */
@@ -79,7 +81,7 @@ export function emptyThemeMedia(): ThemeMedia {
     landing: MEDIA_GROUPS.landing.slots.map(() => null),
     about: MEDIA_GROUPS.about.slots.map(() => null),
     email: MEDIA_GROUPS.email.slots.map(() => null),
-    groups: MEDIA_GROUPS.feed.map(() => ({ photos: [null, null, null], title: null, text: null })),
+    groups: MEDIA_GROUPS.feed.map(() => ({ photos: [null, null, null], title: null, text: null, spanish: null })),
     extra: [],
   };
 }

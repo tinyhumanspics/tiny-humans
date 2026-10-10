@@ -43,6 +43,10 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
     const height = Math.round(Number(p.height));
     if (!(width > 0 && height > 0 && width < 20000 && height < 20000)) throw new Error(`Photo ${i + 1} in ${setName} has invalid dimensions.`);
     const title = str(p.title, 80) || `Photo ${i + 1}`;
+    const rawSpanish = p.spanish && typeof p.spanish === "object" ? (p.spanish as Record<string, unknown>) : null;
+    const spanishTitle = rawSpanish ? str(rawSpanish.title, 60) : "";
+    const spanishAlt = rawSpanish ? str(rawSpanish.alt, 160) : "";
+    const spanishCaption = rawSpanish ? str(rawSpanish.caption, 40) : "";
     return {
       id: str(p.id, 64).replace(/[^a-z0-9-]/gi, "") || `photo-${i + 1}`,
       src,
@@ -51,6 +55,7 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
       title,
       alt: str(p.alt, 200) || title,
       caption: str(p.caption, 60) || undefined,
+      spanish: spanishTitle && spanishAlt ? { title: spanishTitle, alt: spanishAlt, caption: spanishCaption || undefined } : null,
     };
   });
 }
@@ -109,7 +114,15 @@ function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string): Them
     const g = (gs[gi] ?? {}) as Record<string, unknown>;
     const ps = Array.isArray(g.photos) ? g.photos : [];
     const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
-    return { photos: [0, 1, 2].map((i) => parseSlot(ps[i], allowDataUrls, `${id} pictures`)), title: text(g.title, 60), text: text(g.text, 120) };
+    const rawSpanish = g.spanish && typeof g.spanish === "object" ? (g.spanish as Record<string, unknown>) : null;
+    const spanishTitle = rawSpanish ? text(rawSpanish.title, 60) : null;
+    const spanishText = rawSpanish ? text(rawSpanish.text, 120) : null;
+    return {
+      photos: [0, 1, 2].map((i) => parseSlot(ps[i], allowDataUrls, `${id} pictures`)),
+      title: text(g.title, 60),
+      text: text(g.text, 120),
+      spanish: spanishTitle && spanishText ? { title: spanishTitle, text: spanishText } : null,
+    };
   });
   const ex = Array.isArray(o.extra) ? o.extra.filter(Boolean) : [];
   m.extra = ex.length ? parsePhotos(ex.slice(0, MEDIA_GROUPS.extra.max), allowDataUrls, `${id} extra pictures`) : [];

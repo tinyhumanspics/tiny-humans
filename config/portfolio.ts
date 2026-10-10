@@ -15,6 +15,8 @@ export interface PortfolioPhoto {
   /** Short name shown in the booking when this photo inspired it. */
   title: string;
   caption?: string;
+  /** Optional matched copy for Spanish pages; absent copy must never fall back to English there. */
+  spanish?: { title: string; alt: string; caption?: string } | null;
 }
 
 export const portfolio: PortfolioPhoto[] = [
