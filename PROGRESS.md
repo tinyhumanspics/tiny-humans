@@ -3,8 +3,15 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 10: Phase 3 publication is controlled in /admin; owner copy/review remains)
-State: app commit `627e8ea` is live and smoke-tested. The complete `/es` public/customer route tree, explicit EN | ES
+## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish owner copy/review remains)
+State: app commit `b47c5fc` is live and smoke-tested. The first Phase 6 security/quality slice added exact-origin checks
+for every admin mutation, bounded/validated login and photo uploads, PII-safe recursive logging, Vitest security units,
+WCAG 2.2 axe/manual regression checks and element-level visual baselines. A 320px header overflow found by the audit is
+fixed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings); 5 unit tests, 103 e2e tests (56 expected
+project skips) and all 24 visual checks passed. Vercel succeeded; production `/`, `/home-sweet-home`, `/admin` and the
+no-store `/api/admin/session` endpoint passed read-only smoke checks. The prepared GitHub Actions workflow remains local
+and untracked because the current GitHub token lacks workflow-file permission.
+The complete `/es` public/customer route tree, explicit EN | ES
 switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
 `/admin/settings` now owns the Spanish publish/hide switch, shows every readiness gap and refuses to publish an
 incomplete journey. Existing Vercel Blob saves default safely off; no environment variable, redeploy, SQL or dependency
@@ -66,9 +73,9 @@ email tools; no SQL was needed for that behavior.
    paid: lead → Payment → **Check with Stripe** (else Stripe Workbench → Webhooks → Event deliveries).
 8. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner
    requests"); have the new Terms travel paragraph reviewed with the rest of the Terms.
-9. Visual baselines in `.screenshots/parity/` are current (all 16 updated Oct 7). ⚠ The parity check allows 0.2% of a
-   full page to differ, which missed the step tracker move (3 small circles): add element-level screenshots for key
-   components in Phase 6. The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9.
+9. Visual baselines in `.screenshots/parity/` are current: 16 full pages plus 8 element checks (site header, bundle
+   card, booking step tracker and landing FAQ × iPhone 14/1440), all passing Oct 10. The old `.screenshots/baseline/`
+   set was captured mid-animation → recapture before Phase 9.
 
 **Spanish publication (owner action; safely off):** complete/review every Spanish bundle field in `/admin/pricing`,
 Spanish photo and gallery-prompt copy in `/admin/photos`, and Spanish copy for any enabled offer in `/admin/seasonal`;
@@ -680,11 +687,29 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       as a service-area business, hide the home address and enter the real cities/ZIPs served (up to 20, no radius).
 
 ## Phase 6 — Security + quality
-- [ ] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit)
-- [ ] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc)
-- [ ] WCAG 2.2 AA audit (axe + manual) and fixes; gitleaks history scan; CSP report-only → enforce
-- [~] Playwright e2e started early (`tests/e2e/booking.spec.ts`, `npm run test:e2e`); Vitest units + GitHub Actions CI;
-      second bug hunt
+- [~] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit). **Oct 10 first
+      security slice (`8a9be5b`):** every owner-area mutation now requires an exact same-origin `Origin`/fallback
+      `Referer`; admin login has strict Zod input, a 2 KB request limit, no-store responses and a high-priority cookie;
+      logout clears the cookie with the same attributes. Photo uploads reject oversized requests/files and verify JPG,
+      PNG or WebP bytes instead of trusting the browser MIME type. The server logger now recursively removes secrets,
+      contact/family data, IP/user-agent fields and all raw error messages while preserving safe database/API codes.
+      Resend, Meta and delivery logs no longer pass vendor messages that can repeat customer data. `npm audit
+      --omit=dev` = 0; the 9 remaining dev-only advisories are old esbuild through drizzle-kit and braces through
+      eslint-config-next, whose npm force-fixes are breaking downgrades, so they were not applied.
+- [~] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
+      flow is now origin-checked, bounded and no-store; choosing and implementing the replacement login/recovery model
+      remains.
+- [~] WCAG 2.2 AA audit (axe + manual) and fixes; gitleaks history scan; CSP report-only → enforce. Axe reports no
+      detectable WCAG 2.2 AA violations on 11 public/customer/admin entry pages; keyboard focus, 24px targets and 320px
+      reflow checks pass. The audit found and fixed the hand-drawn Book circle overflowing at 320px (`86bbac3`). Gitleaks
+      8.30.1 scanned all 171 commits/3.75 MB with no leaks. Remaining: full manual screen-reader/color/zoom pass and CSP
+      report-only → enforce.
+- [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
+      regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
+      build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
+      checks passed. A read-only GitHub Actions workflow is prepared at `.github/workflows/ci.yml`, but the current
+      GitHub token refused that path because it lacks `workflow` scope; the file remains local and untracked until the
+      owner refreshes the credential. Second bug hunt remains.
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 - [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
@@ -795,10 +820,11 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **BUG-6 (medium, fixed 1b)** No security headers (HSTS, nosniff, Referrer-Policy, Permissions-Policy, frame-ancestors).
 - **BUG-7 (low, fixed Oct 7)** Address form has no unit/apartment, gate, parking or concierge
   fields (Miami condos).
-- **Phase 6 note (found Oct 7):** a failed Drizzle query's error message repeats the query's values, so the existing
-  `log.error(..., { error })` calls after failed inserts (e.g. "Insert failed" in `outlook-provider.ts`) would write
-  the family's name, email, phone, address and baby name into the Vercel logs. `lib/booking/access.ts` logs only the
-  database's own reason (`err.cause.message`); do the same everywhere in the Phase 6 audit.
+- **Phase 6 log leak (found Oct 7, fixed Oct 10 in `8a9be5b`):** a failed Drizzle query's error message repeats the
+  query values, so the old `log.error(..., { error })` path could write family details into Vercel logs. The logger now
+  drops every raw Error message recursively and keeps only safe error/driver metadata; explicit Resend/Meta/delivery
+  message fields were removed too. Unit coverage proves names/contact values in both direct fields and nested Drizzle
+  errors do not survive serialization.
 - **BUG-8 (low)** Confirmation step is in-memory: browser Back/refresh shows an empty form (no double booking — OK), but
   the parent loses the reference on screen. Consider sessionStorage restore on the confirmation.
 - **BUG-9 (low)** Console warning on `/`: a CSS chunk is preloaded but not used within a few seconds.
@@ -815,6 +841,10 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   18.4.0-beta.17 + `pg` 8 — local Postgres for tests because the AI workspace can't reach Neon. 0 KB to the site.
 - `@playwright/test` 1.63 (dev only) — e2e booking-funnel tests across iPhone Safari / Android / desktop / Instagram UA.
   Not shipped to the browser; browsers download separately (`npx playwright install`).
+- `@axe-core/playwright` 4.13 (dev only) — WCAG 2.2 AA regression scans inside the existing Playwright suite. 0 KB to
+  the site; maintained with axe-core and used only in tests.
+- `vitest` 5.0 (dev only) — fast unit coverage for pure security boundaries; pulls Vite/esbuild only into the dev
+  toolchain and adds 0 KB to the site. Current major, requires Node 22.12+ (CI is pinned to 22.12).
 - `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
   SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
 - `eslint` 10 + `eslint-config-next` 16.4 (dev only) — replaces the removed `next lint`. 0 KB to the site. Official.
@@ -830,6 +860,34 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 6 security/quality** (official docs checked Oct 10): OWASP recommends application-wide sanitization that
+  excludes session tokens, passwords and sensitive personal data from logs; same-origin verification for state-changing
+  requests; allowlisted file extensions/types, server-side size limits and signature checks; and server-side allowlist
+  validation. That drove the centralized log sanitizer, exact-origin admin guard, upload signature/size checks and the
+  continuing Zod audit. Next's auth guidance keeps authorization checks close to data and treats cookies as one part of
+  session security; OWASP's session/passkey/MFA guidance shows that the current seven-day signed cookie cannot support
+  server-side revocation, so passkeys/2FA/recovery remain a separate owner-login slice instead of a cosmetic password
+  change. Sources: https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html ·
+  https://cheatsheetseries.owasp.org/cheatsheets/File_Upload_Cheat_Sheet.html ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Input_Validation_Cheat_Sheet.html ·
+  https://nextjs.org/docs/app/guides/authentication ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Passkey_Security_Cheat_Sheet.html ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html
+- **Phase 6 accessibility/tests/CSP** (official docs checked Oct 10): WCAG 2.2 adds 24×24 CSS px minimum targets and
+  stronger focus requirements; automated axe checks catch only part of accessibility, so they are paired with keyboard,
+  target-size/reflow regressions and a remaining manual screen-reader/color/zoom pass. Playwright documents
+  `@axe-core/playwright`; Vitest 5 requires Node 22.12+; GitHub's Node CI example uses setup-node, `npm ci` and npm cache.
+  Gitleaks' full-history `git` scan found no leaks. Next warns that nonce-based strict CSP forces dynamic rendering, so
+  CSP will follow the planned report-only → enforce rollout rather than being added blindly. Sources:
+  https://www.w3.org/WAI/WCAG22/quickref/ · https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html ·
+  https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html ·
+  https://playwright.dev/docs/accessibility-testing · https://vitest.dev/guide/ ·
+  https://docs.github.com/en/actions/tutorials/build-and-test-code/nodejs ·
+  https://docs.npmjs.com/cli/v9/commands/npm-audit/ · https://github.com/gitleaks/gitleaks ·
+  https://nextjs.org/docs/app/guides/content-security-policy ·
+  https://cheatsheetseries.owasp.org/cheatsheets/Content_Security_Policy_Cheat_Sheet.html
 - **Phase 3 Spanish publication routing** (official docs rechecked Oct 9–10): Next.js's current App Router i18n guide
   still recommends a locale segment around the app, server-loaded dictionaries and locale validation; it now documents
   `next/root-params` as the typed way to read a root `[lang]` param. Current next-intl guidance uses `proxy.ts` on Next
