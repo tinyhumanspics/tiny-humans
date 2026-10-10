@@ -95,12 +95,12 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10 evening): main = dc8e5c4, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
+State (Oct 10 evening): main = d9356fc, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
 BUG-12 (Spanish hero cut off), BUG-13 (Spanish header wider than 320–374px phones), BUG-14 (impossible dates accepted),
 BUG-15 (EN|ES switch lost booking progress; "montajes" not counted as setups) are fixed and logged. Owner requests done:
-About closing box + landing FAQ centered; Spanish section titles no longer get the mid-heading heart doodle (long titles
-stay on one line from 900px). Gates: strict tsc, lint 0 errors/22 warnings, 12 units, 103 e2e (62 skips), 24 visual.
-Owner question open: on phones the right-edge sun touches some headings in BOTH languages (fix would change English).
+About closing box + landing FAQ centered; no chalk doodle sits on any heading's letters at 320–1440px in either language
+(live scan: 0 of the former 20). e2e is stable again (per-browser visitor addresses vs rate limits; calendar-load waits).
+Gates: strict tsc, lint 0 errors/22 warnings, 12 units, 105 e2e (66 skips) twice, 24 visual.
 Next: continue Phase 6 with the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login upgrade decision,
 CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
@@ -116,6 +116,16 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
+      scan (letter zones, not line boxes) found 20 live cases at 320–1024px in both languages, e.g. the sun on the "k"
+      of "Questions parents ask" at iPhone 14 width with its heading heart alone on the next line, "Real homes, tiny
+      humans" at 412–430px, five Spanish section titles, and the star on "pequeñitos." in the Spanish home hero
+      (320–430 and 900–1024px). Fix: section titles leave 52px (centered: 104px) for the right-edge drawings and wrap
+      before them; the last word and the heading's own doodle wrap together; the Spanish home hero is
+      `clamp(1.5rem, 9cqi, 3.45rem)` below 1100px (Codex's size from 1100px). Live re-scan of 8 pages × 12 widths
+      (320–1440): 0 overlaps. English changed only where a doodle touched letters (iPhone landing-FAQ element baseline
+      updated with the owner's OK). New `tests/e2e/doodles.spec.ts` (English pages at 9 widths; Spanish landing titles
+      at phone widths by swapping in es.json text).
 - [x] **Center the About closing box and the landing FAQ; remove the heart over the Spanish landing heading** (owner,
       Oct 10). (1) About → "We'd love to meet your tiny human": the reveal wrapper (the centered grid item) sized itself
       to the unwrapped paragraph, so the 620px box sat at its left (desktop: 315px vs 505px of space in English, worse in
@@ -126,9 +136,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Titles over 30 characters (today only "Hogares reales, pequeños protagonistas") use `min(3.6rem, 4.8vw)` from 900px
       so they stay on one line clear of the right-edge sun/heart; Spanish desktop titles also wrap before those drawings.
       English section titles are all ≤ 24 characters, so English headings are unchanged. `SiteSettingsProvider` now
-      exposes `locale`; `BoardDoodles` takes `desktopExtras={false}`. **Not changed (ask owner):** on phones (320–430px)
-      the right-edge sun touches the first line of some headings in both languages (e.g. "Questions parents ask",
-      "Preguntas de otros padres" at iPhone 14 width); fixing it would change English headings.
+      exposes `locale`; `BoardDoodles` takes `desktopExtras={false}`. The phone-width sun overlaps were fixed next (above).
 - [x] **Publish/hide Spanish from `/admin`** (owner, Oct 10; `627e8ea`): `/admin/settings` now shows whether the Spanish
       website is Hidden, Published, or On but safely hidden, lists missing live translations, and provides one protected
       publish/hide button. Enabling is refused until the live Spanish bundle rows and owner photo, gallery-prompt and
@@ -739,7 +747,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       103 e2e (62 expected project skips), 24 visual checks; Vercel + GitHub Actions green (`dc8e5c4`); production
       `/`, `/bundles`, `/home-sweet-home`, `/about` and their `/es` pages checked read-only at 320/360/390/1440 (tracking
       requests blocked). A first CI run flaked once on the WebKit 404 → home click (10/10 local passes); `dc8e5c4` waits
-      for network idle first. Remaining: API/Zod/auth audit, manual screen-reader/color/zoom pass, CSP report-only.
+      for network idle first. **Test stability (`d9356fc`):** every e2e test shared one visitor address, so late tests
+      could hit the server's per-address limits (120 calendar loads/10 min, 20 bookings/hour) and time out; each browser
+      project now sends its own documentation-range `x-forwarded-for` (verified: the 121st call from one address gets
+      429, another address is unaffected). Tests also counted calendar days before availability loaded and so jumped a
+      month by accident; `pickFirstOpenDay` waits for the availability response, and the cancel-link test books a day
+      weeks ahead (inside the notice window online cancellation is correctly refused). Two consecutive full runs: 105
+      passed each. Remaining: API/Zod/auth audit, manual screen-reader/color/zoom pass, CSP report-only.
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 - [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
