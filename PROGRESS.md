@@ -4,7 +4,10 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish is published)
-State: main includes the Phase 6 CI/test and Spanish sitemap fixes through `2bd75b6`. The first Phase 6 security/quality slice added exact-origin checks
+State: main includes Phase 6 work through `dc8e5c4` (Oct 10 evening, Claude Code): Codex's three unpushed fixes were
+verified and shipped (BUG-12 Spanish hero, BUG-14 impossible dates, BUG-15 EN|ES mid-booking), plus BUG-13 (Spanish
+header overflowed 320–374px phones) and the owner's requests (About closing box + landing FAQ centered; no heart over
+Spanish section titles). All gates, Vercel and GitHub Actions green. Earlier: main includes the Phase 6 CI/test and Spanish sitemap fixes through `2bd75b6`. The first Phase 6 security/quality slice added exact-origin checks
 for every admin mutation, bounded/validated login and photo uploads, PII-safe recursive logging, Vitest security units,
 WCAG 2.2 axe/manual regression checks and element-level visual baselines. A 320px header overflow found by the audit is
 fixed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings); 5 unit tests, 103 e2e tests (56 expected
@@ -79,7 +82,8 @@ email tools; no SQL was needed for that behavior.
 8. Ask the owner: privacy-policy line for Vercel Web Analytics/Speed Insights; `/portfolio` page (see "Owner
    requests"); have the new Terms travel paragraph reviewed with the rest of the Terms.
 9. Visual baselines in `.screenshots/parity/` are current: 16 full pages plus 8 element checks (site header, bundle
-   card, booking step tracker and landing FAQ × iPhone 14/1440), all passing Oct 10. The old `.screenshots/baseline/`
+   card, booking step tracker and landing FAQ × iPhone 14/1440), all passing Oct 10. The desktop landing-FAQ element
+   baseline was updated Oct 10 after the owner asked for the centered FAQ (`2898be4`). The old `.screenshots/baseline/`
    set was captured mid-animation → recapture before Phase 9.
 
 **Spanish publication LIVE Oct 10:** production `/es` passed the all-or-nothing gate and the public Spanish routes,
@@ -91,14 +95,12 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10): main includes CI/test and sitemap fixes through 2bd75b6. Phase 6 started: admin mutations are exact-origin checked;
-login/uploads are bounded and validated; logs strip raw errors and family/contact data; Vitest security tests and
-WCAG 2.2 axe/manual/element-visual gates are built. The audit fixed 320px header overflow. Strict tsc/build/lint passed;
-5 unit, 101 e2e (58 expected project skips) and 24 visual checks passed. GitHub Actions is live and its first corrected
-full Ubuntu run passed; the Instagram-user-agent check now runs once instead of redundantly in all three projects.
-Spanish is published: `/es` and the checked Spanish journey return 200 with the EN | ES switch and reciprocal metadata.
-The sitemap now refreshes with the live publication switch instead of being frozen at deploy time. Not on main yet: nothing.
-
+State (Oct 10 evening): main = dc8e5c4, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
+BUG-12 (Spanish hero cut off), BUG-13 (Spanish header wider than 320–374px phones), BUG-14 (impossible dates accepted),
+BUG-15 (EN|ES switch lost booking progress; "montajes" not counted as setups) are fixed and logged. Owner requests done:
+About closing box + landing FAQ centered; Spanish section titles no longer get the mid-heading heart doodle (long titles
+stay on one line from 900px). Gates: strict tsc, lint 0 errors/22 warnings, 12 units, 103 e2e (62 skips), 24 visual.
+Owner question open: on phones the right-edge sun touches some headings in BOTH languages (fix would change English).
 Next: continue Phase 6 with the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login upgrade decision,
 CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
@@ -108,10 +110,25 @@ Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
 Watch out: mutating `/api/admin/*` tests/curl need the exact Origin; all logs must use `lib/log.ts` (never copy an error
 message to another field). Existing Blob settings default Spanish off; only `/api/admin/spanish` may change it and every
 /es route fails closed on any readiness gap. Never drizzle-kit push; use full nonincremental tsc.
+Spanish routes are gated off in local/test builds: check Spanish visuals read-only on production (block Meta/Vercel
+tracking requests) by injecting the CSS change, or swap in the es.json labels in the test build (see accessibility.spec).
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Center the About closing box and the landing FAQ; remove the heart over the Spanish landing heading** (owner,
+      Oct 10). (1) About → "We'd love to meet your tiny human": the reveal wrapper (the centered grid item) sized itself
+      to the unwrapped paragraph, so the 620px box sat at its left (desktop: 315px vs 505px of space in English, worse in
+      Spanish). The wrapper now carries the box width; phones were already centered and are unchanged. (2) Landing FAQ:
+      the 820px question list is centered under its centered heading; questions stay left-aligned (readable next to the
+      "+"). (3) Spanish section headings no longer draw the desktop-only mid-heading board doodle (the heart at
+      `right: 16%` that sat on "…protagonis**tas**" at 1024–1920px and on "Preguntas de otros padres" at 900–1024px).
+      Titles over 30 characters (today only "Hogares reales, pequeños protagonistas") use `min(3.6rem, 4.8vw)` from 900px
+      so they stay on one line clear of the right-edge sun/heart; Spanish desktop titles also wrap before those drawings.
+      English section titles are all ≤ 24 characters, so English headings are unchanged. `SiteSettingsProvider` now
+      exposes `locale`; `BoardDoodles` takes `desktopExtras={false}`. **Not changed (ask owner):** on phones (320–430px)
+      the right-edge sun touches the first line of some headings in both languages (e.g. "Questions parents ask",
+      "Preguntas de otros padres" at iPhone 14 width); fixing it would change English headings.
 - [x] **Publish/hide Spanish from `/admin`** (owner, Oct 10; `627e8ea`): `/admin/settings` now shows whether the Spanish
       website is Hidden, Published, or On but safely hidden, lists missing live translations, and provides one protected
       publish/hide button. Enabling is refused until the live Spanish bundle rows and owner photo, gallery-prompt and
@@ -237,7 +254,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
   the backlog). Phase 3 implementation is complete: the paired catalogs and gated `/es` tree cover customer emails,
   the public/customer journey, seasonal offers, photos, prompts, SEO alternates and locale-aware customer links. The
-  public routes remain English-only until the owner copy, native review and publication switch are complete.
+  owner published Spanish Oct 10 (`/admin/settings` can hide it again).
   Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
   live and production currently shows it enabled at $50, awaiting owner confirmation plus the remaining Stripe
   permission/webhook/refund test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
@@ -716,7 +733,13 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       install, browser install, strict tsc, lint, units and all e2e tests. A docs-push rerun exposed a redundant/flaky
       Instagram-user-agent check: `64e5da6` runs that custom Chromium context once, asserts the transition into the
       customer-details step, and keeps the three native browser journeys. Strict tsc/lint (0 errors/23 known warnings),
-      5 units and the full 101-pass/58-expected-skip local matrix passed. Second bug hunt remains.
+      5 units and the full 101-pass/58-expected-skip local matrix passed. **Oct 10 second bug hunt (started):** Codex's
+      unpushed `0270dc5`/`ff549d4`/`5313150` were reviewed, verified and shipped (BUG-12, 14, 15), plus BUG-13 (Spanish
+      header reflow) and the owner's centering/doodle requests. Strict tsc, lint (0 errors/22 known warnings), 12 units,
+      103 e2e (62 expected project skips), 24 visual checks; Vercel + GitHub Actions green (`dc8e5c4`); production
+      `/`, `/bundles`, `/home-sweet-home`, `/about` and their `/es` pages checked read-only at 320/360/390/1440 (tracking
+      requests blocked). A first CI run flaked once on the WebKit 404 → home click (10/10 local passes); `dc8e5c4` waits
+      for network idle first. Remaining: API/Zod/auth audit, manual screen-reader/color/zoom pass, CSP report-only.
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 - [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
@@ -837,6 +860,25 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **BUG-11 (medium, fixed Oct 9, `c8fb6ec`)** The home portfolio lightbox lived inside `main`'s stacking context, so the
   fixed header sat above it on iPhone and intercepted taps on the close button. The lightbox now portals to
   `document.body`; a three-browser regression opens it, advances a photo and closes it.
+- **BUG-12 (medium, live Spanish, fixed Oct 10, `ff549d4`)** The Spanish home headline "Momentos pequeñitos. / Grandes
+  recuerdos." was wider than its text column at every width, so both lines were cut off on phones and desktop; the
+  desktop "Reservar" oval clipped its R. Spanish-only sizing (`data-locale="es"` on the header/hero); English unchanged.
+  Checked on the live `/es` page before/after at iPhone 14, 1440 and 320px: no line overflow, no photo overlap.
+- **BUG-13 (medium, live Spanish, WCAG 1.4.10 reflow, fixed Oct 10, `5850a47` + `9a6437a`)** At 320–374px (incl. common 360px Androids) the
+  Spanish header ("Portafolio · Paquetes · Reservar") was 22–48px wider than the screen: every `/es` page scrolled
+  sideways and the Reservar oval was cut off. Spanish-only at ≤374px (iPhone 14/15 sizes unchanged): 16px nav text, 10px gaps, snugger oval. Measured
+  320–430px: no page overflow, oval on screen, 44px targets. New e2e check puts the real Spanish labels into the test
+  build's header (Spanish routes are gated off there) at 320/340/351/360/374/375/390px. GitHub's Ubuntu run measured
+  the oval 4px wider than macOS (321 vs 317 at 320px), so ≤350px Spanish nav text is 0.95rem: 12px spare on screen.
+- **BUG-14 (low, fixed Oct 10, `5313150`)** Server validators accepted impossible dates such as `2026-02-30` (regex
+  only) for booking, availability, customer/owner reschedule, overrides, close-day and price/discount end dates. One
+  shared `lib/validation/date-key.ts` (`isDateKey`, `daysBetweenDateKeys`) now rejects them; 62-day ranges are counted
+  in real calendar days. 4 unit tests.
+- **BUG-15 (medium, live Spanish, fixed Oct 10, `0270dc5`)** (a) Tapping EN | ES mid-booking (a full page load) lost the
+  step, details and backdrop picks. The tab now keeps the draft in `sessionStorage` for that one page load only
+  (`lib/booking/language-draft.ts`: ≤2 min, matching route + bundle, read once then deleted; never sent anywhere; an
+  applied discount code is re-checked by the server on the review step). (b) Spanish bundle details say "2 montajes",
+  which `setupsOf` didn't recognize, so Spanish 2-setup bookings allowed only one backdrop; it now reads both.
 - Checked OK: booking funnel completes on iPhone 14, desktop, Instagram + Facebook in-app user agents (mock); no
   hydration warnings; no horizontal overflow; user input is HTML-escaped in emails + Outlook body.
 
