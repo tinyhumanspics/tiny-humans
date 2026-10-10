@@ -79,7 +79,7 @@ export async function sendScheduleEvent(e: ScheduleEvent): Promise<void> {
     const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), cache: "no-store", signal: AbortSignal.timeout(8000) });
     const data = (await res.json().catch(() => ({}))) as { events_received?: number; fbtrace_id?: string; error?: { message?: string; code?: number; error_subcode?: number } };
     if (!res.ok) {
-      log.error("meta.capi", "Schedule event rejected", { status: res.status, code: data.error?.code, subcode: data.error?.error_subcode, message: data.error?.message, test: Boolean(testCode) });
+      log.error("meta.capi", "Schedule event rejected", { status: res.status, code: data.error?.code, subcode: data.error?.error_subcode, test: Boolean(testCode) });
       return;
     }
     log.info("meta.capi", "Schedule event sent", { received: data.events_received, fbtrace: data.fbtrace_id, test: Boolean(testCode) });

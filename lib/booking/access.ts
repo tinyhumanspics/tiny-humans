@@ -4,8 +4,8 @@ import { getDb } from "@/lib/db/client";
 import { bookingAccess, type BookingAccess } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 
-/** A failed query's message repeats its values (the family's gate code), so only the database's own reason is logged. */
-const reason = (err: unknown) => new Error((err as { cause?: Error }).cause?.message ?? "query failed");
+/** Preserve safe driver metadata for the logger; it discards the value-filled Drizzle message. */
+const reason = (err: unknown) => (err instanceof Error ? err : new Error("query failed"));
 
 /**
  * Gate code / parking / concierge notes from the booking form (booking_access). Best effort: the booking is already

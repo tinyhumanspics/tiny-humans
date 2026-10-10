@@ -7,8 +7,8 @@ import { log } from "@/lib/log";
 import { depositAmountFor, depositLabel, type BookingDepositInfo, type DepositSettings } from "./types";
 import type { SiteDeposit } from "./copy";
 
-/** A failed query's message repeats its values, so only the database's own reason is logged. */
-export const dbReason = (err: unknown) => new Error((err as { cause?: Error }).cause?.message ?? "query failed");
+/** The logger keeps only safe error metadata (code/table/constraint), never Drizzle's value-filled message. */
+export const dbReason = (err: unknown) => (err instanceof Error ? err : new Error("query failed"));
 
 /** "relation does not exist": the migration hasn't run yet (deposits stay off quietly). */
 export const isMissingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));

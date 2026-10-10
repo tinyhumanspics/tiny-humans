@@ -166,7 +166,7 @@ export async function emailEventsFor(rows: Pick<Booking, "bookingReference" | "e
       .where(or(inArray(emailEvents.recipient, addresses), inArray(emailEvents.bookingReference, rows.map((r) => r.bookingReference))))
       .orderBy(desc(emailEvents.occurredAt));
   } catch (err) {
-    log.warn("email.delivery", "Could not load email problems (run drizzle/0016_email_events.sql)", { reason: (err as { cause?: { message?: string } }).cause?.message });
+    log.warn("email.delivery", "Could not load email problems (run drizzle/0016_email_events.sql)", { error: err as Error });
     return [];
   }
 }

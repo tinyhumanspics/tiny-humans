@@ -4,8 +4,8 @@ import { getDb } from "@/lib/db/client";
 import { bookingBackdrops, type BookingBackdrops } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 
-/** A failed query's message repeats its values, so only the database's own reason is logged. */
-const reason = (err: unknown) => new Error((err as { cause?: Error }).cause?.message ?? "query failed");
+/** Preserve safe driver metadata for the logger; it discards the value-filled Drizzle message. */
+const reason = (err: unknown) => (err instanceof Error ? err : new Error("query failed"));
 
 /** Saves the family's picks (replacing earlier ones). Throws on failure; the booking form's save is best effort. */
 export async function saveBackdrops(bookingId: string, picks: string[], source: "booking" | "family"): Promise<void> {

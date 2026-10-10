@@ -1,4 +1,5 @@
 import "server-only";
+import { sanitizeLogFields } from "@/lib/security/logging";
 
 /**
  * Small structured server logger. Never pass secrets, tokens, passwords or
@@ -6,21 +7,8 @@ import "server-only";
  */
 type Fields = Record<string, unknown>;
 
-const SENSITIVE = /secret|token|password|authorization|cookie|client_secret|access_token|database_url/i;
-
-function safe(fields: Fields = {}): Fields {
-  const out: Fields = {};
-  for (const [k, v] of Object.entries(fields)) {
-    if (SENSITIVE.test(k)) continue;
-    if (v instanceof Error) out[k] = { name: v.name, message: v.message.slice(0, 300) };
-    else if (typeof v === "string") out[k] = v.slice(0, 300);
-    else out[k] = v;
-  }
-  return out;
-}
-
 function write(level: "info" | "warn" | "error", scope: string, message: string, fields?: Fields) {
-  const line = JSON.stringify({ level, scope, message, ...safe(fields), at: new Date().toISOString() });
+  const line = JSON.stringify({ level, scope, message, ...sanitizeLogFields(fields), at: new Date().toISOString() });
   if (level === "error") console.error(line);
   else if (level === "warn") console.warn(line);
   else console.info(line);

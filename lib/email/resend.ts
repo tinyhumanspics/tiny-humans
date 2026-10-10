@@ -80,7 +80,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
     );
     if (error || !data) {
       const code = (error as { name?: string } | null)?.name ?? "send_failed";
-      log.error(email.scope, "Resend rejected the email", { code, detail: (error as { message?: string } | null)?.message, reference: email.reference });
+      log.error(email.scope, "Resend rejected the email", { code, reference: email.reference });
       throw new EmailSendError(code, (error as { message?: string } | null)?.message ?? "Resend send failed");
     }
     log.info(email.scope, "Email sent", { messageId: data.id, reference: email.reference });

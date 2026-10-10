@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, SOURCE_COOKIE, attributionFromRequest, decodeAttribution, encodeAttribution, isCampaign } from "@/lib/tracking/attribution";
 import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
+import { hasTrustedMutationOrigin } from "@/lib/security/origin";
 
 /**
  * Booking source capture (first touch). On a page visit, store where the family came from in a first-party,
@@ -9,6 +10,9 @@ import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
  * campaign touch. The latest Meta click id is also kept (for the Conversions API).
  */
 export function proxy(req: NextRequest) {
+  if (req.nextUrl.pathname.startsWith("/api/admin/") && !hasTrustedMutationOrigin(req)) {
+    return NextResponse.json({ error: "This request didn't come from the owner area. Reload the page and try again." }, { status: 403 });
+  }
   const requestHeaders = new Headers(req.headers);
   const spanish = req.nextUrl.pathname === "/es" || req.nextUrl.pathname.startsWith("/es/");
   requestHeaders.set(PUBLIC_LOCALE_HEADER, spanish ? "es" : "en");
@@ -27,6 +31,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  // pages only: not API routes, the owner area, Next.js assets or files with an extension (images, icons…)
-  matcher: ["/((?!api/|admin|_next/|.*\\..*).*)"],
+  // Public pages get locale/attribution handling; owner API mutations get a same-origin CSRF check.
+  matcher: ["/((?!api/|admin|_next/|.*\\..*).*)", "/api/admin/:path*"],
 };

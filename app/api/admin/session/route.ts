@@ -5,9 +5,12 @@ import { isStorageConfigured } from "@/lib/settings/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  return NextResponse.json({
-    authenticated: await isAdmin(),
-    authConfigured: isAuthConfigured(),
-    storageConfigured: isStorageConfigured(),
-  });
+  return NextResponse.json(
+    {
+      authenticated: await isAdmin(),
+      authConfigured: isAuthConfigured(),
+      storageConfigured: isStorageConfigured(),
+    },
+    { headers: { "cache-control": "no-store" } },
+  );
 }

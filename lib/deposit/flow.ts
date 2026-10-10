@@ -243,7 +243,7 @@ async function releaseHold(row: Booking, opts: { email: boolean; why: string }):
   await db.update(bookingDeposits).set({ status: "expired", updatedAt: now }).where(and(eq(bookingDeposits.bookingId, row.id), eq(bookingDeposits.status, "pending")));
   if (!cancelled) return false;
   await releaseCodeUsage(row.id).catch((err) => log.error("deposit", "Discount code use not given back", { reference: row.bookingReference, error: dbReason(err) }));
-  log.info("deposit", "Time released (deposit not paid)", { reference: row.bookingReference, email: opts.email });
+  log.info("deposit", "Time released (deposit not paid)", { reference: row.bookingReference, familyNotified: opts.email });
   if (opts.email) await sendAbandonedEmail(row);
   return true;
 }

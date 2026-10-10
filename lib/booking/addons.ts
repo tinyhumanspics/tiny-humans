@@ -5,8 +5,8 @@ import { bookingAddons, bookingBabies } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import type { AddonLine, BookingBaby } from "./extra-babies";
 
-/** A failed insert's message repeats every baby name/age, so log only the database's own reason. */
-const reason = (err: unknown) => new Error((err as { cause?: Error }).cause?.message ?? "query failed");
+/** Preserve safe driver metadata for the logger; it discards the value-filled Drizzle message. */
+const reason = (err: unknown) => (err instanceof Error ? err : new Error("query failed"));
 
 /** Best-effort detail rows. The money total also lives on `bookings`, so a missing detail table never changes a bill. */
 export async function saveBookingAddons(bookingId: string, babies: BookingBaby[], addon: AddonLine | null, reference: string): Promise<void> {

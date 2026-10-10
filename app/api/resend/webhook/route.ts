@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ received: true, saved });
   } catch (err) {
     // 500 → Resend retries the delivery later
-    log.error("email.delivery", "Webhook handling failed", { reason: (err as { cause?: { message?: string } }).cause?.message ?? (err as Error).message });
+    log.error("email.delivery", "Webhook handling failed", { error: err as Error });
     return NextResponse.json({ error: "Webhook handling failed" }, { status: 500 });
   }
 }
