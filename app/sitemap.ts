@@ -3,6 +3,9 @@ import { PUBLIC_SITE_URL } from "@/lib/seo/metadata";
 import { getSpanishPublication } from "@/i18n/publication";
 import { localePath } from "@/i18n/path";
 
+// Publication is owner-controlled at runtime; do not freeze the sitemap at deploy time.
+export const dynamic = "force-dynamic";
+
 const INDEXABLE_PATHS = ["/", "/about", "/bundles", "/home-sweet-home", "/privacy", "/terms"] as const;
 
 /** Only canonical public pages belong here; booking/manage/admin/API URLs are intentionally excluded. */
