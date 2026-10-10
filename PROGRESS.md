@@ -54,7 +54,9 @@ email tools; no SQL was needed for that behavior.
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
    to its theme shows it automatically until the cutoff; changing away hides it without disabling it.
 1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
-   mile, 250 farthest). Fees stay **off** until it's saved. Then check that /home-sweet-home (FAQ "Which areas…") and
+   mile, 250 farthest). Fees stay **off** until it's saved. **Oct 10 read-only check:** production
+   `/api/booking/travel?zip=33139` answered `freeMiles 40, perMileCents 75, maxMiles 250`, so it looks saved (with 40
+   free miles); owner to confirm 40 is intended. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
 2. **Deposit go-live / confirm current switch** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7).
    Production currently shows a $50 deposit (observed read-only Oct 9); owner must confirm that was intentional. Left:
@@ -95,14 +97,15 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10 evening): main = d9356fc, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
+State (Oct 10 evening): main = 5327dbe, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
 BUG-12 (Spanish hero cut off), BUG-13 (Spanish header wider than 320–374px phones), BUG-14 (impossible dates accepted),
 BUG-15 (EN|ES switch lost booking progress; "montajes" not counted as setups) are fixed and logged. Owner requests done:
-About closing box + landing FAQ centered; no chalk doodle sits on any heading's letters at 320–1440px in either language
-(live scan: 0 of the former 20). e2e is stable again (per-browser visitor addresses vs rate limits; calendar-load waits).
-Gates: strict tsc, lint 0 errors/22 warnings, 12 units, 105 e2e (66 skips) twice, 24 visual.
-Next: continue Phase 6 with the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login upgrade decision,
-CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
+About closing box + landing FAQ centered; no chalk doodle sits on any heading's letters at 320–1440px in either language.
+e2e is stable (per-browser visitor addresses vs rate limits; calendar-load waits). API audit done (`5327dbe`): bounded
+public JSON bodies, no raw internal errors from owner settings/Spanish routes, deposit/travel lookups catch DB errors.
+Gates: strict tsc, lint 0 errors/22 warnings, 17 units, 106 e2e (68 skips), 24 visual.
+Next: continue Phase 6 with the manual screen-reader/color/zoom pass, owner-login upgrade decision (passkeys/2FA,
+revocable sessions), CSP report-only plan, and more of the second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: confirm the $50 deposit; Stripe Refunds: Write + checkout.session.expired + real refund test;
 travel; 1g Meta; Search Console/Business Profile;
@@ -725,6 +728,19 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Resend, Meta and delivery logs no longer pass vendor messages that can repeat customer data. `npm audit
       --omit=dev` = 0; the 9 remaining dev-only advisories are old esbuild through drizzle-kit and braces through
       eslint-config-next, whose npm force-fixes are breaking downgrades, so they were not applied.
+      **Oct 10 API audit (`5327dbe`, Claude Code):** all 43 route files reviewed. Every owner handler checks the
+      session first (only login/logout are public, by design); owner mutations get the exact-origin check in
+      `proxy.ts`; the six per-lead actions share `leadAction` (session + Zod). Stripe/Resend webhooks verify HMAC
+      signatures in constant time with a 5-minute replay window; the cron compares `CRON_SECRET` in constant time and
+      ignores `?now=` in production. Public routes validate with Zod or strict patterns plus signed links/256-bit
+      tokens, and carry no ambient authority, so cross-site requests gain nothing. Fixed: (1) public JSON bodies were
+      unbounded (only login had a Content-Length check): `lib/security/body.ts` `readJson` counts bytes while
+      reading (64 KB booking, 32 KB review, 16 KB cancel, 8 KB others → 413); (2) `/api/admin/settings` and
+      `/api/admin/spanish` returned raw internal error text and didn't log: owner validation messages
+      (`SettingsInputError`, readiness gaps) still show, anything else is logged and generic; (3) the deposit-offer and
+      travel lookups didn't catch database errors: now logged + JSON 500. 5 unit tests + 1 e2e (413s and a normal
+      quote). Strict tsc, lint 0 errors, 17 units, 106 e2e, 24 visual; Vercel + Actions green; production read-only
+      smoke OK.
 - [~] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
       flow is now origin-checked, bounded and no-store; choosing and implementing the replacement login/recovery model
       remains.
