@@ -24,6 +24,6 @@ export default defineConfig({
     url: `http://localhost:${PORT}`,
     reuseExistingServer: false,
     timeout: 60_000,
-    env: { BOOKING_PROVIDER: "mock", SPANISH_SITE_PUBLISHED: "", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
+    env: { BOOKING_PROVIDER: "mock", NEXT_PUBLIC_META_PIXEL_ID: "", META_CAPI_ACCESS_TOKEN: "" },
   },
 });

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
-import type { SiteSettings } from "@/lib/settings/types";
+import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import { getAdminApi, PROTOTYPE_PASSWORD } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
@@ -34,6 +34,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
   const [storageReady, setStorageReady] = useState(true);
   const [authReady, setAuthReady] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [spanishStatus, setSpanishStatus] = useState<SpanishPublicationStatus | null>(null);
   const navRef = useRef<HTMLElement>(null);
   // Each section is its own page, so the menu is rebuilt on every click: put it back where it was.
   useLayoutEffect(() => {
@@ -41,8 +42,12 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
   }, [status]);
 
   const load = async () => {
-    const s = await api.getSettings();
+    const [s, publication] = await Promise.all([
+      api.getSettings(),
+      section === "settings" ? api.getSpanishPublication() : Promise.resolve(null),
+    ]);
     setSettings(s);
+    setSpanishStatus(publication);
     applySettings(s);
     setStatus("ready");
   };
@@ -72,6 +77,13 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
   const signOut = async () => {
     await api.logout();
     setStatus("signedOut");
+  };
+  const setSpanishPublication = async (enabled: boolean) => {
+    const result = await api.setSpanishPublication(enabled);
+    setSettings(result.settings);
+    setSpanishStatus(result.status);
+    applySettings(result.settings);
+    return result.status;
   };
   const current = ADMIN_NAV.find((n) => n.id === section)!;
 
@@ -106,7 +118,15 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
       {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
       {section === "theme" && <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />}
-      {section === "settings" && <SettingsPanel api={api} storageReady={storageReady} onSignOut={signOut} />}
+      {section === "settings" && spanishStatus && (
+        <SettingsPanel
+          api={api}
+          storageReady={storageReady}
+          spanishStatus={spanishStatus}
+          onSetSpanishPublication={setSpanishPublication}
+          onSignOut={signOut}
+        />
+      )}
     </div>
   );
 }
@@ -149,9 +169,80 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
 
 /* ---------------- settings ---------------- */
 
-function SettingsPanel({ api, storageReady, onSignOut }: { api: ReturnType<typeof getAdminApi>; storageReady: boolean; onSignOut: () => void }) {
+function SettingsPanel({
+  api,
+  storageReady,
+  spanishStatus,
+  onSetSpanishPublication,
+  onSignOut,
+}: {
+  api: ReturnType<typeof getAdminApi>;
+  storageReady: boolean;
+  spanishStatus: SpanishPublicationStatus;
+  onSetSpanishPublication: (enabled: boolean) => Promise<SpanishPublicationStatus>;
+  onSignOut: () => void;
+}) {
+  const [publicationBusy, setPublicationBusy] = useState(false);
+  const [publicationNote, setPublicationNote] = useState<Note>(null);
+
+  const changePublication = async () => {
+    setPublicationBusy(true);
+    setPublicationNote(null);
+    try {
+      const status = await onSetSpanishPublication(!spanishStatus.enabled);
+      setPublicationNote({
+        kind: "ok",
+        text: status.published ? "Spanish website is published." : "Spanish website is hidden.",
+      });
+    } catch (error) {
+      setPublicationNote({ kind: "error", text: error instanceof Error ? error.message : "Couldn't change Spanish publication." });
+    } finally {
+      setPublicationBusy(false);
+    }
+  };
+
   return (
     <section className={styles.section} aria-label="Settings">
+      <h2 className={cn(styles.h2, "chalk")}>Spanish website</h2>
+      <ChalkBox className={styles.publicationCard} seed={965} wobble={2.2} strokeWidth={2.2} color={spanishStatus.published ? "var(--sun-yellow)" : "var(--chalk-white)"}>
+        <div className={styles.publicationHead}>
+          <div>
+            <p className={cn(styles.publicationState, spanishStatus.published ? styles.publicationLive : "", "chalk") }>
+              {spanishStatus.published ? "Published" : spanishStatus.enabled ? "On, but safely hidden" : "Hidden"}
+            </p>
+            <p className={cn(styles.hintSmall, "chalk-soft")}>
+              {spanishStatus.published
+                ? "Families can use /es and the EN | ES switcher."
+                : spanishStatus.enabled
+                  ? "The switch is on, but a missing translation is keeping every Spanish route hidden."
+                  : "English stays live. Spanish routes, links and search listings stay hidden."}
+            </p>
+          </div>
+          <ChalkButton
+            variant={spanishStatus.enabled ? "outline" : "solid"}
+            onClick={changePublication}
+            disabled={publicationBusy || (api.mode === "live" && !storageReady)}
+            seed={966}
+          >
+            {publicationBusy ? "Saving…" : spanishStatus.enabled ? "Hide Spanish website" : "Publish Spanish website"}
+          </ChalkButton>
+        </div>
+        {spanishStatus.issues.length > 0 && (
+          <div className={styles.publicationIssues}>
+            <p className={cn(styles.hintSmall, "chalk-soft")}>Before Spanish can be published, complete:</p>
+            <ul>
+              {spanishStatus.issues.map((issue) => <li key={issue} className="chalk-soft">{issue}</li>)}
+            </ul>
+          </div>
+        )}
+        <p className={cn(styles.hintSmall, "chalk-soft")}>No Vercel setting or redeploy is needed. Changes take effect for the next visitor.</p>
+        {publicationNote && (
+          <p className={cn(publicationNote.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={publicationNote.kind === "error" ? "alert" : "status"}>
+            {publicationNote.text}
+          </p>
+        )}
+      </ChalkBox>
+
       <h2 className={cn(styles.h2, "chalk")}>Account</h2>
       <p className={cn(styles.muted, "chalk-soft")}>
         {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel. To change it, update the variable and redeploy."}

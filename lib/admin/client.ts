@@ -1,7 +1,7 @@
 "use client";
 
 import { defaultSettings, parseSettings } from "@/lib/settings/defaults";
-import type { SiteSettings } from "@/lib/settings/types";
+import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayBooking, ClosedDayImpact, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
 import { blockSchema, closeDaySchema, overrideSchema, weeklyAndLimitsSchema } from "@/lib/availability/validation";
 import { readPrototypeAvailability, writePrototypeAvailability } from "@/lib/availability/prototype";
@@ -23,6 +23,8 @@ export interface AdminApi {
   logout(): Promise<void>;
   getSettings(): Promise<SiteSettings>;
   saveSettings(settings: SiteSettings): Promise<SiteSettings>;
+  getSpanishPublication(): Promise<SpanishPublicationStatus>;
+  setSpanishPublication(enabled: boolean): Promise<{ settings: SiteSettings; status: SpanishPublicationStatus }>;
   uploadPhoto(file: Blob): Promise<{ src: string }>;
   /* availability (owner only) */
   getAvailability(): Promise<{ rules: AvailabilityRules; databaseConfigured: boolean }>;
@@ -89,6 +91,13 @@ const httpApi: AdminApi = {
   getSettings: async () => parseSettings(await json(await fetch("/api/admin/settings", { cache: "no-store" }))),
   saveSettings: async (s) =>
     parseSettings(await json(await fetch("/api/admin/settings", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) }))),
+  getSpanishPublication: async () => json(await fetch("/api/admin/spanish", { cache: "no-store" })),
+  setSpanishPublication: async (enabled) => {
+    const result = await json<{ settings: unknown; status: SpanishPublicationStatus }>(
+      await fetch("/api/admin/spanish", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ enabled }) }),
+    );
+    return { settings: parseSettings(result.settings), status: result.status };
+  },
   uploadPhoto: async (file) => {
     const form = new FormData();
     form.append("file", file, "photo.jpg");
@@ -203,6 +212,15 @@ const prototypeApi: AdminApi = {
       throw new Error("This browser ran out of preview storage. Use fewer or smaller photos in the prototype.");
     }
     return saved;
+  },
+  getSpanishPublication: async () => {
+    const settings = readPrototypeSettings() ?? defaultSettings;
+    return { enabled: settings.spanishPublished, published: settings.spanishPublished, issues: [] };
+  },
+  setSpanishPublication: async (enabled) => {
+    const current = readPrototypeSettings() ?? defaultSettings;
+    const settings = await prototypeApi.saveSettings({ ...current, spanishPublished: enabled });
+    return { settings, status: { enabled, published: enabled, issues: [] } };
   },
   uploadPhoto: async (file) => {
     const src = await new Promise<string>((resolve, reject) => {

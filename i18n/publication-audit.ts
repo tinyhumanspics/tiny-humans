@@ -6,19 +6,19 @@ export function spanishOwnerCopyIssues(settings: SiteSettings): string[] {
   const issues = new Set<string>();
 
   for (const photo of allMediaPhotos(settings)) {
-    if (!photo.spanish?.title.trim() || !photo.spanish.alt.trim()) issues.add("photo details");
-    if (photo.caption?.trim() && !photo.spanish?.caption?.trim()) issues.add("photo captions");
+    if (!photo.spanish?.title.trim() || !photo.spanish.alt.trim()) issues.add("Spanish titles and descriptions for uploaded photos");
+    if (photo.caption?.trim() && !photo.spanish?.caption?.trim()) issues.add("Spanish captions for uploaded gallery photos");
   }
 
   for (const media of Object.values(settings.media)) {
     for (const group of media?.groups ?? []) {
       const customized = Boolean(group.title?.trim() || group.text?.trim());
-      if (customized && (!group.spanish?.title.trim() || !group.spanish.text.trim())) issues.add("gallery prompts");
+      if (customized && (!group.spanish?.title.trim() || !group.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
     }
   }
 
   for (const offer of Object.values(settings.seasonalOffers)) {
-    if (offer.enabled && (!offer.spanish?.title.trim() || !offer.spanish.description.trim())) issues.add("enabled seasonal offers");
+    if (offer.enabled && (!offer.spanish?.title.trim() || !offer.spanish.description.trim())) issues.add("Spanish copy for enabled seasonal offers");
   }
 
   return [...issues];

@@ -312,6 +312,19 @@
 .connList { margin: 8px 0; padding-left: 18px; display: grid; gap: 6px; color: var(--chalk-white); font-size: 1.05rem; }
 .connList b { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
 
+/* settings: Spanish publication */
+.publicationCard { display: grid; gap: 12px; margin: 16px 0 34px; padding: 18px; }
+.publicationHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.publicationState { margin: 0; font-family: var(--font-chalk); font-size: 1.65rem; color: var(--chalk-white); }
+.publicationLive { color: var(--sun-yellow); }
+.publicationIssues { padding-top: 10px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); }
+.publicationIssues ul { margin: 8px 0 0; padding-left: 22px; color: var(--chalk-white); }
+.publicationIssues li + li { margin-top: 4px; }
+@media (max-width: 680px) {
+  .publicationHead { align-items: stretch; flex-direction: column; }
+  .publicationHead button { width: 100%; }
+}
+
 /* seasonal landing offers */
 .seasonalAdminGrid { display: grid; gap: 16px; margin: 20px 0; }
 @media (min-width: 980px) { .seasonalAdminGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

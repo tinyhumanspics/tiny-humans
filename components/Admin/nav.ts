@@ -10,5 +10,5 @@ export const ADMIN_NAV: { id: AdminSection; label: string; href: string; blurb: 
   { id: "seasonal", label: "Seasonal Landing", href: "/admin/seasonal", blurb: "Baby’s First Thanksgiving and Baby’s First Christmas offers and cutoff dates." },
   { id: "photos", label: "Photos / Media", href: "/admin/photos", blurb: "The pictures on the website, by section and theme." },
   { id: "theme", label: "Theme", href: "/admin/theme", blurb: "Which seasonal theme visitors see." },
-  { id: "settings", label: "Settings", href: "/admin/settings", blurb: "Account and connections." },
+  { id: "settings", label: "Settings", href: "/admin/settings", blurb: "Spanish publication, account and connections." },
 ];

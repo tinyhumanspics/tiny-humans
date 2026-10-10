@@ -33,10 +33,12 @@ test("older settings drop Christmas Cards and keep the two remaining offers", ()
   expect(parsed.seasonalOffers.thanksgiving.title).toBe("Baby’s First Thanksgiving");
   expect(parsed.seasonalOffers.firstChristmas.title).toBe("Baby’s First Christmas");
   expect(Object.values(parsed.seasonalOffers).every((offer) => offer.enabled === true)).toBe(true);
+  expect(parsed.spanishPublished).toBe(false);
+  expect(parseSettings({ ...parsed, spanishPublished: true }).spanishPublished).toBe(true);
 });
 
 test("the owner can edit and enable seasonal landing offers", async ({ page }, testInfo) => {
-  const initial: SiteSettings = { themeId: "christmas", media: {}, seasonalOffers, updatedAt: null };
+  const initial: SiteSettings = { themeId: "christmas", spanishPublished: false, media: {}, seasonalOffers, updatedAt: null };
   let saved: SiteSettings = initial;
 
   await page.route("**/api/admin/session", (route) => route.fulfill({ json: { authenticated: true, authConfigured: true, storageConfigured: true } }));

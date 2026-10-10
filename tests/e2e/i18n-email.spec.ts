@@ -123,7 +123,12 @@ test("Spanish publication blocks owner copy gaps instead of leaking English", as
       thanksgiving: { ...defaultSettings.seasonalOffers.thanksgiving, enabled: true, spanish: null },
     },
   };
-  expect(spanishOwnerCopyIssues(settings).sort()).toEqual(["enabled seasonal offers", "gallery prompts", "photo captions", "photo details"]);
+  expect(spanishOwnerCopyIssues(settings).sort()).toEqual([
+    "Spanish captions for uploaded gallery photos",
+    "Spanish copy for enabled seasonal offers",
+    "Spanish gallery prompt copy",
+    "Spanish titles and descriptions for uploaded photos",
+  ]);
   expect(resolveMedia(media, undefined, "es").title.some((photo) => photo.id === portfolio[0].id)).toBe(false);
 
   media.title[0] = { ...portfolio[0], spanish: { title: "Envuelto y dormidito", alt: "Bebé dormido", caption: "Primera semana" } };

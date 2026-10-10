@@ -17,6 +17,7 @@ const LEGACY_SEASONAL_TITLES: Partial<Record<SeasonalOfferId, readonly string[]>
 
 export const defaultSettings: SiteSettings = {
   themeId: DEFAULT_THEME,
+  spanishPublished: false,
   media: {},
   seasonalOffers: DEFAULT_SEASONAL_OFFERS,
   updatedAt: null,
@@ -151,6 +152,7 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
   if (!media.default && Array.isArray(o.photos) && o.photos.length) media.default = mediaFromList(parsePhotos(o.photos, allowDataUrls, "the Original pictures"));
   return {
     themeId,
+    spanishPublished: o.spanishPublished === true,
     media,
     seasonalOffers: parseSeasonalOffers(o.seasonalOffers),
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null,

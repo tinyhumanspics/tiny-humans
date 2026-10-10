@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { getSiteSettings } from "@/lib/settings/server";
 import { getPublicCatalog, type PublicCatalog } from "@/lib/pricing/server";
+import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import { spanishOwnerCopyIssues } from "./publication-audit";
 
 export { spanishOwnerCopyIssues } from "./publication-audit";
@@ -12,23 +13,37 @@ export interface SpanishPublication {
   catalog: PublicCatalog | null;
 }
 
-/**
- * The environment switch is the native-review sign-off. Even after it is set, the live bundle and owner-copy gates
- * are checked on every cached settings/catalog revision so deleting a translation safely unpublishes `/es`.
- */
-export const getSpanishPublication = cache(async (): Promise<SpanishPublication> => {
-  if (process.env.SPANISH_SITE_PUBLISHED !== "1") {
-    return { published: false, issues: ["native review and publication switch"], catalog: null };
-  }
-
-  const settings = await getSiteSettings();
+/** Check every live content source. Used by the public gate and the protected owner toggle. */
+export async function getSpanishReadiness(settings: SiteSettings): Promise<Omit<SpanishPublication, "published">> {
   const issues = spanishOwnerCopyIssues(settings);
   let catalog: PublicCatalog | null = null;
   try {
     catalog = await getPublicCatalog("es");
   } catch {
-    issues.push("bundle translations");
+    issues.push("Spanish bundle translations");
   }
 
-  return { published: Boolean(catalog) && issues.length === 0, issues, catalog };
+  return { issues, catalog };
+}
+
+export async function getSpanishPublicationStatus(settings: SiteSettings): Promise<SpanishPublicationStatus> {
+  const readiness = await getSpanishReadiness(settings);
+  return {
+    enabled: settings.spanishPublished,
+    published: settings.spanishPublished && Boolean(readiness.catalog) && readiness.issues.length === 0,
+    issues: readiness.issues,
+  };
+}
+
+/** The /admin switch is the native-review sign-off; readiness gates still fail closed on every content revision. */
+export const getSpanishPublication = cache(async (): Promise<SpanishPublication> => {
+  const settings = await getSiteSettings();
+  if (!settings.spanishPublished) {
+    return { published: false, issues: ["publication switch"], catalog: null };
+  }
+  const readiness = await getSpanishReadiness(settings);
+  return {
+    published: Boolean(readiness.catalog) && readiness.issues.length === 0,
+    ...readiness,
+  };
 });

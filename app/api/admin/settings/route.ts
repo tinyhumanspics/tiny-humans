@@ -16,8 +16,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Storage isn't connected yet. Connect a Vercel Blob store to this project." }, { status: 503 });
   }
   try {
-    const next = parseSettings(await req.json());
     const previous = await readSettingsFresh();
+    const parsed = parseSettings(await req.json());
+    // The dedicated Spanish endpoint validates readiness before changing this safety-critical switch.
+    const next = { ...parsed, spanishPublished: previous.spanishPublished };
     return NextResponse.json(await saveSiteSettings(next, previous));
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Couldn't save the settings." }, { status: 400 });
