@@ -4,13 +4,14 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish owner copy/review remains)
-State: app commit `b47c5fc` is live and smoke-tested. The first Phase 6 security/quality slice added exact-origin checks
+State: main `2b6c84a` is live and smoke-tested. The first Phase 6 security/quality slice added exact-origin checks
 for every admin mutation, bounded/validated login and photo uploads, PII-safe recursive logging, Vitest security units,
 WCAG 2.2 axe/manual regression checks and element-level visual baselines. A 320px header overflow found by the audit is
 fixed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings); 5 unit tests, 103 e2e tests (56 expected
 project skips) and all 24 visual checks passed. Vercel succeeded; production `/`, `/home-sweet-home`, `/admin` and the
-no-store `/api/admin/session` endpoint passed read-only smoke checks. The prepared GitHub Actions workflow remains local
-and untracked because the current GitHub token lacks workflow-file permission.
+no-store `/api/admin/session` endpoint passed read-only smoke checks. GitHub Actions now runs the same clean-install,
+strict TypeScript, lint, unit and full Playwright gates on every main push and pull request; its first corrected Ubuntu
+run passed (`ef5a6cf` + `2b6c84a`).
 The complete `/es` public/customer route tree, explicit EN | ES
 switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
 `/admin/settings` now owns the Spanish publish/hide switch, shows every readiness gap and refuses to publish an
@@ -88,18 +89,16 @@ redeploy is needed; the same control can hide Spanish again at any time.
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10): app commit b47c5fc is live and smoke-tested. Phase 6 started: admin mutations are exact-origin checked;
+State (Oct 10): main 2b6c84a is live and smoke-tested. Phase 6 started: admin mutations are exact-origin checked;
 login/uploads are bounded and validated; logs strip raw errors and family/contact data; Vitest security tests and
 WCAG 2.2 axe/manual/element-visual gates are built. The audit fixed 320px header overflow. Strict tsc/build/lint passed;
-5 unit, 103 e2e and 24 visual checks passed. Vercel/main docs through 2cc1d95 succeeded. `/es` remains intentionally 404.
-Not on main yet: `.github/workflows/ci.yml` is reviewed and local; GitHub rejected it because the current token lacks
-workflow-file permission.
+5 unit, 103 e2e and 24 visual checks passed. GitHub Actions is live and its first corrected full Ubuntu run passed.
+Vercel succeeded; `/es` remains intentionally 404. Not on main yet: nothing.
 
-Next: continue Phase 6. First ask the owner to refresh GitHub workflow permission, then commit/push the prepared CI
-workflow and verify its first run. Continue the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login
-upgrade decision, CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
+Next: continue Phase 6 with the API/Zod/auth audit, manual screen-reader/color/zoom pass, owner-login upgrade decision,
+CSP report-only plan, and second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: GitHub workflow permission; Spanish copy + Adrian/Alondra native reviewer; confirm the $50 deposit;
+Waiting on the owner: Spanish copy + Adrian/Alondra native reviewer; confirm the $50 deposit;
 Stripe Refunds: Write + checkout.session.expired + real refund test; travel; 1g Meta; Search Console/Business Profile;
 Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
 Watch out: mutating `/api/admin/*` tests/curl need the exact Origin; all logs must use `lib/log.ts` (never copy an error
@@ -706,9 +705,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
       regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
       build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
-      checks passed. A read-only GitHub Actions workflow is prepared at `.github/workflows/ci.yml`, but the current
-      GitHub token refused that path because it lacks `workflow` scope; the file remains local and untracked until the
-      owner refreshes the credential. Second bug hunt remains.
+      checks passed. `ef5a6cf` adds the read-only GitHub Actions workflow; its first Ubuntu run found one clean-runner
+      environment assumption and one WebKit locator ambiguity, fixed in `2b6c84a`. The corrected run passed clean npm
+      install, browser install, strict tsc, lint, units and all e2e tests. Second bug hunt remains.
 
 ## Phase 7 — Upgrade everything (Next 16.x, ESLint flat config, …) one family per slice
 - [x] (pulled forward, owner request Oct 7; branch `wip/next-16`) Next 15.5.27 → **16.4.0**, React 19.1 → **19.3.0**,
