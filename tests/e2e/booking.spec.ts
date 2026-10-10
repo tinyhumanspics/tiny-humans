@@ -23,6 +23,7 @@ async function bookLittleMoments(page: import("@playwright/test").Page) {
   await expect(page.getByText(/Miami time/).first()).toBeVisible();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
+  await expect(page.locator("#field-parentName")).toBeVisible();
 
   await page.fill("#field-parentName", "José Muñoz");
   await page.fill("#field-email", "jose.test@example.com");
@@ -197,7 +198,8 @@ test("email-linked customer tool shells load safely", async ({ page }, testInfo)
   if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/pay-${testInfo.project.name}.png`, fullPage: true });
 });
 
-test("booking works in the Instagram in-app browser", async ({ browser }) => {
+test("booking works in the Instagram in-app browser", async ({ browser }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "One explicit Instagram browser context is enough.");
   const ctx = await browser.newContext({ userAgent: INSTAGRAM_UA, viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true });
   await bookLittleMoments(await ctx.newPage());
   await ctx.close();
