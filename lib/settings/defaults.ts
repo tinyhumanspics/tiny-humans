@@ -7,8 +7,12 @@ import type { SeasonalOfferSettings, SiteSettings } from "./types";
 
 const DEFAULT_SEASONAL_OFFERS: Record<SeasonalOfferId, SeasonalOfferSettings> = {
   thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving, spanish: null },
-  christmasCards: { enabled: false, ...en.landing.seasonalOffers.defaults.christmasCards, spanish: null },
   firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas, spanish: null },
+};
+
+const LEGACY_SEASONAL_TITLES: Partial<Record<SeasonalOfferId, readonly string[]>> = {
+  thanksgiving: ["Baby's First Thanksgiving at Home"],
+  firstChristmas: ["Baby's First Christmas at Home"],
 };
 
 export const defaultSettings: SiteSettings = {
@@ -74,7 +78,8 @@ function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOffe
     SEASONAL_OFFER_IDS.map((id) => {
       const fallback = DEFAULT_SEASONAL_OFFERS[id];
       const value = source[id] && typeof source[id] === "object" ? (source[id] as Record<string, unknown>) : null;
-      const title = value ? str(value.title, 90) : "";
+      const savedTitle = value ? str(value.title, 90) : "";
+      const title = LEGACY_SEASONAL_TITLES[id]?.includes(savedTitle) ? fallback.title : savedTitle;
       const description = value ? str(value.description, 240) : "";
       const cutoff = value && validDate(value.cutoff) ? value.cutoff : "";
       const rawSpanish = value?.spanish && typeof value.spanish === "object" ? (value.spanish as Record<string, unknown>) : null;

@@ -179,7 +179,6 @@
       "nextDates": "Próximas fechas disponibles",
       "loading": "Consultando el calendario…",
       "cap": "Realizamos hasta 10 sesiones en casa por semana.",
-      "seasonal": "Fotos de temporada: Acción de Gracias hasta el 23 de noviembre · tarjetas navideñas fotografiadas antes del 5 de diciembre.",
       "cta": "Reserva tu sesión en casa",
       "ctaNote": "$0 hoy · paga después de tu sesión"
     },
@@ -192,11 +191,6 @@
           "title": "El primer Día de Acción de Gracias de tu bebé en casa",
           "description": "Una acogedora sesión en casa para bebés que celebran su primer Día de Acción de Gracias.",
           "cutoff": "2026-11-23"
-        },
-        "christmasCards": {
-          "title": "Tarjetas navideñas en casa",
-          "description": "Fotos navideñas de tu bebé o de toda la familia, perfectas para tarjetas, regalos y recuerdos.",
-          "cutoff": "2026-12-05"
         },
         "firstChristmas": {
           "title": "La primera Navidad de tu bebé en casa",

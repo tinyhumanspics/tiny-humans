@@ -687,7 +687,6 @@
       "nextDates": "Next open dates",
       "loading": "Checking the calendar…",
       "cap": "We take up to 10 home sessions a week.",
-      "seasonal": "Holiday photos: Thanksgiving through Nov 23 · Christmas cards shot by Dec 5.",
       "cta": "Book your Stay-Home Session",
       "ctaNote": "$0 today · pay after your session"
     },
@@ -697,17 +696,12 @@
       "cta": "See open dates",
       "defaults": {
         "thanksgiving": {
-          "title": "Baby's First Thanksgiving at Home",
+          "title": "Baby’s First Thanksgiving",
           "description": "A cozy at-home session for babies celebrating their first Thanksgiving.",
           "cutoff": "2026-11-23"
         },
-        "christmasCards": {
-          "title": "Christmas Cards at Home",
-          "description": "Christmas photos for your baby or the whole family—perfect for holiday cards, gifts and keepsakes.",
-          "cutoff": "2026-12-05"
-        },
         "firstChristmas": {
-          "title": "Baby's First Christmas at Home",
+          "title": "Baby’s First Christmas",
           "description": "A cozy keepsake session for your baby's first Christmas.",
           "cutoff": "2026-12-21"
         }
