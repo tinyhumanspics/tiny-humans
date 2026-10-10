@@ -19,3 +19,28 @@ for (const path of PAGES) {
     });
   });
 }
+
+const ELEMENTS = [
+  { name: "site-header", path: "/", locator: 'header' },
+  { name: "bundle-card", path: "/bundles", locator: 'article[aria-labelledby="bundle-little-moments"]' },
+  { name: "booking-step-tracker", path: "/book?bundle=little-moments", locator: 'nav[aria-label="Booking steps"]' },
+  { name: "landing-faq", path: "/home-sweet-home", locator: 'section[aria-labelledby="landing-faq"]' },
+];
+
+for (const item of ELEMENTS) {
+  test(`key component looks the same: ${item.name}`, async ({ page }) => {
+    await page.goto(item.path, { waitUntil: "networkidle" });
+    await page.evaluate(() => document.fonts.ready);
+    const component = page.locator(item.locator).first();
+    await component.scrollIntoViewIfNeeded();
+    if (item.name === "landing-faq") {
+      // Locator screenshots scroll tall elements to the viewport top; hide the sticky header so this baseline
+      // measures the FAQ itself instead of an unrelated overlay.
+      await page.locator("header").evaluate((header) => { header.style.visibility = "hidden"; });
+    }
+    await expect(component).toHaveScreenshot(`${item.name}.png`, {
+      animations: "disabled",
+      maxDiffPixelRatio: 0.001,
+    });
+  });
+}
