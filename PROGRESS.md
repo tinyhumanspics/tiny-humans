@@ -3,14 +3,19 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 9: Phase 3 Spanish underway; order = owner's choice below)
-State: app commit `d7f610c` is live and smoke-tested; Vercel succeeded, production `/admin/seasonal`, `/admin/photos`
-and `/home-sweet-home` returned 200, the protected settings API returned 401 without an owner session, and unfinished
-`/es/home-sweet-home` remained an intentional 404. The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the
-landing now contain only **Baby’s First Thanksgiving** (Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card
-data is ignored and disappears on the next seasonal save. No SQL was needed. Seasonal offers, photos and home-gallery
-prompts now accept optional matched Spanish copy; incomplete photo/seasonal drafts cannot leak English into the future
-Spanish site. The landing FAQ heading is centered on phone and desktop while its question rows remain left-aligned.
+## ▶ NEXT STEPS (Oct 10: Phase 3 code complete; Spanish publication waits on owner)
+State: app commit `73c837a` is live and smoke-tested. The complete `/es` public/customer route tree, explicit EN | ES
+switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
+They remain safely unpublished: production `/es` is 404, no switcher or Spanish hreflang/sitemap entry is exposed, and
+English home, About, booking, landing and payment status returned 200. Publication requires
+`SPANISH_SITE_PUBLISHED=1`, complete live Spanish bundle rows, complete owner photo/prompt/seasonal copy, and native
+review. No SQL or dependency was needed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings), the
+full suite passed 84 tests (24 expected skips), all 16 English parity baselines matched, and all 12 Spanish routes were
+captured and inspected at iPhone 14 and 1440px in an isolated published-state preview.
+The owner removed Christmas Cards Oct 9: `/admin/seasonal` and the landing contain only **Baby’s First Thanksgiving**
+(Nov 23) and **Baby’s First Christmas** (Dec 21); old saved card data is ignored and disappears on the next seasonal
+save. Seasonal offers, photos and home-gallery prompts accept optional matched Spanish copy; incomplete drafts cannot
+leak English into the Spanish site. The landing FAQ heading remains centered while its rows stay left-aligned.
 Phase 4 is complete: extra babies are live,
 migration 0017 returned
 3 bundle rows, and `/admin/seasonal` now edits the two remaining baby-first offers/cutoffs.
@@ -46,7 +51,8 @@ email tools; no SQL was needed for that behavior.
    Checklist sent Oct 7; no results yet.
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
    (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core DONE Oct 8**;
-   owner Search Console + Business Profile steps remain. (c) **Phase 3 Spanish underway**;
+   owner Search Console + Business Profile steps remain. (c) **Phase 3 code complete; owner copy/native review and
+   publication remain**;
    (d) Phase 6 security/accessibility/tests/CI; (e) rest of Phase 7, then 8, 9, 10.
    Optional backlog: /admin "Today" view with tap-to-text.
    Done Oct 7 night: Resend bounce alerts, SPF/DKIM/DMARC check, BUG-5, DST check.
@@ -63,26 +69,31 @@ email tools; no SQL was needed for that behavior.
    full page to differ, which missed the step tracker move (3 small circles): add element-level screenshots for key
    components in Phase 6. The old `.screenshots/baseline/` set was captured mid-animation → recapture before Phase 9.
 
+**Spanish publication (owner action; safely off):** complete/review every Spanish bundle field in `/admin/pricing`,
+Spanish photo and gallery-prompt copy in `/admin/photos`, and Spanish copy for any enabled offer in `/admin/seasonal`;
+choose Adrian or Alondra for the full native review. Only after that review, set `SPANISH_SITE_PUBLISHED=1` in Vercel
+Production and redeploy. The runtime gate will still refuse publication if any required live copy is incomplete.
+
 ## ▶ Next session prompt
 (Replaced by `/handoff` at the end of every phase. Copy everything inside the code block into a new session.)
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 9): main = aa00e69, live and smoke-tested. Phase 3 Spanish catalogs now cover the public/customer journey,
-emails, owner-edited seasonal copy, photos and gallery prompts; Spanish routes remain intentionally unpublished.
-Christmas Cards was removed completely: only Baby’s First Thanksgiving (Nov 23) and Baby’s First Christmas (Dec 21)
-remain in /admin/seasonal and /home-sweet-home. No SQL was needed; migrations 0010–0019 ran in Neon.
+State (Oct 10): app commit 73c837a is live and smoke-tested. Phase 3 code is complete: the gated `/es` route tree,
+EN | ES switcher, reciprocal hreflang/sitemap, and locale-aware customer links are built. Production Spanish remains
+intentionally unpublished: `/es` is 404 and English pages are unchanged. No SQL was needed; migrations 0010–0019 ran.
 Not on main yet: nothing.
 
-Next: continue Phase 3 Spanish. Start with a customer-facing string/publication-readiness audit, then build the `/es`
-route tree, explicit language switcher and reciprocal hreflang without exposing a partly translated journey. Recheck
-the current official Next.js/next-intl routing guidance before that publication slice and note any change in PROGRESS.
+Next: finish Phase 3 with the owner: complete the live Spanish bundle/photo/prompt/seasonal copy, choose Adrian or
+Alondra for native review, then set SPANISH_SITE_PUBLISHED=1 in Vercel and redeploy. If the owner defers publication,
+start Phase 6 security/quality with current official-doc research and element-level visual checks.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: fill/review Spanish owner copy and choose Adrian or Alondra for native review; confirm the current
 $50 deposit switch; Stripe Refunds: Write + checkout.session.expired + real refund test; travel settings; 1g Meta test;
 Search Console/Business Profile; Vercel Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
-Watch out: retired `christmasCards` Blob data is ignored and drops on the next seasonal save; no migration. Spanish
-must not publish until its bundle rows and owner copy pass the gate. Never drizzle-kit push; use full nonincremental tsc.
+Watch out: `SPANISH_SITE_PUBLISHED=1` is the native-review signoff, but the runtime also gates live bundle and owner
+copy; failed gates keep all `/es` routes 404. Retired `christmasCards` Blob data drops on the next seasonal save.
+Never drizzle-kit push; use full nonincremental tsc.
 When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
 ```
 
@@ -201,9 +212,9 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 
 ## Status
 - **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
-  the backlog). Phase 3 is underway: the routing foundation and paired catalogs now cover customer emails, the complete
-  public/customer journey, seasonal offers, photos and home-gallery prompts. The public routes are still English-only,
-  so no production booking selects Spanish until the publication gate, owner copy and native review are complete.
+  the backlog). Phase 3 implementation is complete: the paired catalogs and gated `/es` tree cover customer emails,
+  the public/customer journey, seasonal offers, photos, prompts, SEO alternates and locale-aware customer links. The
+  public routes remain English-only until the owner copy, native review and publication switch are complete.
   Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
   live and production currently shows it enabled at $50, awaiting owner confirmation plus the remaining Stripe
   permission/webhook/refund test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
@@ -425,7 +436,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       Dormant foundation: shared `AppLocale`, the future `as-needed` URL policy (English unprefixed, Spanish `/es`,
       detection off), request config and Next plugin. It does not publish `/es` or change today's English site. Strict
       tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 parity tests passed.
-- [~] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails. Migration
+- [x] Move all customer strings to messages/en.json + es.json; booking `locale` column; Spanish emails. Migration
       `drizzle/0018_booking_locale.sql` is additive/idempotent, keeps existing bookings in English, and must run in Neon
       before app code reads the column. Local Postgres: ran the migration twice; 9 existing bookings remained `en`, the
       non-null default was `en`, and exactly one language constraint existed. **Oct 8 email slice (`a8719e7`):** every
@@ -593,8 +604,20 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       suite passed 9 tests, the full e2e suite passed 82 tests (26 expected skips), and all 16 visual-parity pages passed.
       Vercel succeeded; production `/home-sweet-home` and `/admin/seasonal` returned 200, the live landing HTML had no
       Christmas Cards text, the settings API returned 401 without a session, and `/es/home-sweet-home` stayed an
-      intentional 404.
-- [ ] Native-speaker review before Spanish ads [?] reviewer (Adrian or Alondra?)
+      intentional 404. **Oct 10 publication slice (`73c837a`):** a customer-string/readiness audit closed the remaining
+      catalog gaps and found that live bundle rows plus owner photo, prompt and enabled-seasonal copy must be gated as
+      one unit. The complete `/es` page tree now covers home, About, bundles, booking, landing, legal pages, email-linked
+      cancel/reschedule/backdrop/review/payment pages and localized 404s. EN | ES links preserve query/hash state;
+      indexable pages emit reciprocal English/Spanish/x-default alternates and the sitemap adds Spanish only after the
+      gate passes. Booking, reminder, after-session, deposit and balance links/products follow the saved booking locale;
+      public API failures map to catalog messages instead of leaking raw English errors. Publication requires the env
+      signoff plus complete live bundle and owner copy, so a failed gate keeps `/es` 404 and hides the switch/alternates.
+      Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings), 84 e2e passed (24 expected skips), all 16
+      English parity screenshots matched, and 24 Spanish phone/desktop captures were inspected against an isolated
+      local published state. Vercel succeeded; production English pages returned 200 while `/es` remained 404 with no
+      visible switch, Spanish hreflang or sitemap entry. No SQL or new dependency was needed.
+- [?] Complete the live Spanish owner copy and native-speaker review before Spanish ads (Adrian or Alondra?).
+- [ ] After owner approval, set `SPANISH_SITE_PUBLISHED=1` in Vercel Production and redeploy; smoke-test both languages.
 
 ## Phase 4 — Add-ons + seasonal
 - [x] Extra babies add-on: twins/triplets only, all bundles, max 3 babies total; **each baby after the first adds $75,
@@ -719,6 +742,8 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- Spanish publication: complete/review live owner copy and choose Adrian or Alondra for the native review; only then
+  approve the Vercel publication switch.
 - Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
 
@@ -790,6 +815,17 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 3 Spanish publication routing** (official docs rechecked Oct 9–10): Next.js's current App Router i18n guide
+  still recommends a locale segment around the app, server-loaded dictionaries and locale validation; it now documents
+  `next/root-params` as the typed way to read a root `[lang]` param. Current next-intl guidance uses `proxy.ts` on Next
+  16, supports `localePrefix: "as-needed"`, `localeDetection: false`, localized navigation helpers and automatic
+  alternate-link headers (or disabling them in favor of explicit metadata/sitemap alternates). Because Tiny Humans does
+  not move its root layouts into route groups until Phase 8, this slice uses an explicit `/es` tree plus a trusted
+  proxy-injected request-locale header; the same all-or-nothing server gate controls routes, switcher, metadata and
+  sitemap. This preserves the live English tree and avoids advertising partial translations. Sources:
+  https://nextjs.org/docs/app/guides/internationalization · https://next-intl.dev/docs/routing/setup ·
+  https://next-intl.dev/docs/routing/configuration · https://next-intl.dev/docs/routing/middleware ·
+  https://next-intl.dev/docs/routing/navigation
 - **Phase 5 SEO** (official docs checked Oct 8): Next.js recommends static `metadata` for fixed pages, a native
   `<script type="application/ld+json">` with `<` escaped for structured data, and its root `sitemap.ts`/`robots.ts`
   metadata conventions. Metadata objects merge shallowly, so each page must repeat the complete Open Graph group when
