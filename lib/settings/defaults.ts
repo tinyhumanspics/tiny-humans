@@ -39,15 +39,18 @@ function allowedSrc(src: string, allowDataUrls: boolean): boolean {
   }
 }
 
+/** A problem with the settings the owner sent (its message is written for the owner). */
+export class SettingsInputError extends Error {}
+
 function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): PortfolioPhoto[] {
-  if (list.length > MAX_PHOTOS) throw new Error(`Too many photos in ${setName} (max ${MAX_PHOTOS}).`);
+  if (list.length > MAX_PHOTOS) throw new SettingsInputError(`Too many photos in ${setName} (max ${MAX_PHOTOS}).`);
   return list.map((raw, i) => {
     const p = (raw ?? {}) as Record<string, unknown>;
     const src = typeof p.src === "string" ? p.src : "";
-    if (!allowedSrc(src, allowDataUrls)) throw new Error(`Photo ${i + 1} in ${setName} has an invalid image address.`);
+    if (!allowedSrc(src, allowDataUrls)) throw new SettingsInputError(`Photo ${i + 1} in ${setName} has an invalid image address.`);
     const width = Math.round(Number(p.width));
     const height = Math.round(Number(p.height));
-    if (!(width > 0 && height > 0 && width < 20000 && height < 20000)) throw new Error(`Photo ${i + 1} in ${setName} has invalid dimensions.`);
+    if (!(width > 0 && height > 0 && width < 20000 && height < 20000)) throw new SettingsInputError(`Photo ${i + 1} in ${setName} has invalid dimensions.`);
     const title = str(p.title, 80) || `Photo ${i + 1}`;
     const rawSpanish = p.spanish && typeof p.spanish === "object" ? (p.spanish as Record<string, unknown>) : null;
     const spanishTitle = rawSpanish ? str(rawSpanish.title, 60) : "";

@@ -4,6 +4,7 @@ import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError } from "@/lib/booking/errors";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,9 @@ const bodySchema = z.object({
 /** POST /api/booking/cancel {token, reason}: cancels after the customer confirms on the page. */
 export async function POST(req: Request) {
   if (!(await allow("cancelPost", clientIp(req)))) return tooMany();
-  const parsed = bodySchema.safeParse(await req.json().catch(() => null));
+  const input = await readJson(req, BODY_LIMITS.cancel);
+  if (input === TOO_LARGE) return tooLargeResponse(NO_STORE);
+  const parsed = bodySchema.safeParse(input);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Please tell us why you need to cancel.", code: "invalid_request" }, { status: 400, headers: NO_STORE });
   if (!tokenOk(parsed.data.token)) return invalid();
   try {

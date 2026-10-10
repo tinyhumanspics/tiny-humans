@@ -5,6 +5,7 @@ import { releaseByFamily } from "@/lib/deposit/flow";
 import { depositLinkReference } from "@/lib/deposit/request";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import en from "@/messages/en.json";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,9 @@ export const dynamic = "force-dynamic";
 /** POST /api/booking/deposit/release { b, k }: "Pick another time" — closes the deposit page and frees the time now. */
 export async function POST(req: Request) {
   if (!(await allow("depositPost", clientIp(req)))) return NextResponse.json({ error: "Too many requests. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
-  const body = (await req.json().catch(() => null)) as { b?: unknown; k?: unknown } | null;
+  const input = await readJson(req, BODY_LIMITS.small);
+  if (input === TOO_LARGE) return tooLargeResponse();
+  const body = input as { b?: unknown; k?: unknown } | null;
   const reference = depositLinkReference(body?.b, body?.k);
   if (!reference || !isDatabaseConfigured()) return NextResponse.json({ state: "invalid" });
   try {

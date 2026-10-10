@@ -4,6 +4,7 @@ import { getBookingProvider } from "@/lib/booking/server";
 import { BookingError } from "@/lib/booking/errors";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 
 export const dynamic = "force-dynamic";
 // The browser sends only a bundle id, an optional code and the email. The price is calculated here.
@@ -12,7 +13,9 @@ const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.stri
 /** POST /api/booking/quote: server-calculated price (regular, special offer, or one discount code). */
 export async function POST(req: Request) {
   if (!(await allow("quote", clientIp(req)))) return NextResponse.json({ error: "Too many tries. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
-  const p = body.safeParse(await req.json().catch(() => null));
+  const input = await readJson(req, BODY_LIMITS.small);
+  if (input === TOO_LARGE) return tooLargeResponse();
+  const p = body.safeParse(input);
   if (!p.success) return NextResponse.json({ error: "Please check the code and try again.", code: "invalid_request" }, { status: 400 });
   try {
     return NextResponse.json({ quote: await getBookingProvider().quote(p.data.bundleId, p.data.code, p.data.email, p.data.babyCount) }, { headers: { "cache-control": "no-store" } });

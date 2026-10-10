@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { sanitizeLogFields } from "@/lib/security/logging";
 import { hasTrustedMutationOrigin } from "@/lib/security/origin";
 import { matchesPhotoSignature } from "@/lib/security/uploads";
+import { TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 
 describe("safe logging", () => {
   test("removes personal and secret fields recursively", () => {
@@ -58,5 +59,44 @@ describe("photo signatures", () => {
     expect(matchesPhotoSignature("image/webp", new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]))).toBe(true);
     expect(matchesPhotoSignature("image/png", new Uint8Array([0xff, 0xd8, 0xff, 0xe0]))).toBe(false);
     expect(matchesPhotoSignature("image/jpeg", new TextEncoder().encode("not an image"))).toBe(false);
+  });
+});
+
+describe("bounded JSON request bodies", () => {
+  const post = (body: BodyInit | null, headers: Record<string, string> = {}) =>
+    new Request("https://www.tinyhumans.photography/api/booking/quote", { method: "POST", body, headers, duplex: "half" } as RequestInit);
+
+  test("reads a body within its limit", async () => {
+    await expect(readJson(post(JSON.stringify({ bundleId: "little-moments" })), 1024)).resolves.toEqual({ bundleId: "little-moments" });
+  });
+
+  test("answers null for a missing or malformed body", async () => {
+    await expect(readJson(post(null), 1024)).resolves.toBeNull();
+    await expect(readJson(post("{not json"), 1024)).resolves.toBeNull();
+  });
+
+  test("refuses a body whose declared size is over the limit", async () => {
+    await expect(readJson(post("{}", { "content-length": "4096" }), 1024)).resolves.toBe(TOO_LARGE);
+  });
+
+  test("counts streamed bytes, so leaving out Content-Length can't get around the limit", async () => {
+    const chunk = new TextEncoder().encode(`"${"x".repeat(600)}`);
+    const stream = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(chunk);
+        controller.enqueue(chunk);
+        controller.close();
+      },
+    });
+    const request = post(stream);
+    expect(request.headers.get("content-length")).toBeNull();
+    await expect(readJson(request, 1024)).resolves.toBe(TOO_LARGE);
+  });
+
+  test("the too-large answer is a 413 with a short message", async () => {
+    const response = tooLargeResponse({ "cache-control": "no-store" });
+    expect(response.status).toBe(413);
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expect(response.json()).resolves.toEqual({ error: "That request is too large.", code: "too_large" });
   });
 });

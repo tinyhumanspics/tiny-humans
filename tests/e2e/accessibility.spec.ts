@@ -40,6 +40,18 @@ test.describe("owner API request origin", () => {
   });
 });
 
+test.describe("public API request size", () => {
+  test("oversized bodies are refused before validation", async ({ request }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "One server-level check is enough.");
+    const quote = await request.post("/api/booking/quote", { data: { bundleId: "little-moments", code: "x".repeat(9000) } });
+    expect(quote.status()).toBe(413);
+    const booking = await request.post("/api/booking/create", { data: { notes: "x".repeat(70_000) } });
+    expect(booking.status()).toBe(413);
+    const normal = await request.post("/api/booking/quote", { data: { bundleId: "little-moments" } });
+    expect(normal.status()).toBe(200);
+  });
+});
+
 test.describe("manual accessibility regression checks", () => {
   test("keyboard focus is visible on the main journeys", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One keyboard pass is enough.");

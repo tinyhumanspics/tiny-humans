@@ -5,6 +5,7 @@ import { bookingRequestSchema } from "@/lib/booking/validation";
 import { formatTimeLabel } from "@/lib/booking/dates";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { FBC_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
 import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
 import { site } from "@/config/site";
@@ -18,7 +19,8 @@ export async function POST(req: Request) {
   if (!(await allow("create", clientIp(req)))) {
     return NextResponse.json({ error: "Too many booking attempts from this connection. Please wait a little, or email hello@tinyhumans.photography and we'll book you in.", code: "rate_limited" }, { status: 429 });
   }
-  const body = await req.json().catch(() => null);
+  const body = await readJson(req, BODY_LIMITS.booking);
+  if (body === TOO_LARGE) return tooLargeResponse();
   const parsed = bookingRequestSchema.safeParse(body);
   if (!parsed.success) {
     const first = parsed.error.issues[0];

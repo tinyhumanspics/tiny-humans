@@ -4,6 +4,7 @@ import { isDatabaseConfigured } from "@/lib/db/client";
 import { NO_STORE, invalidLink, tokenOk, tooMany } from "@/lib/booking/manage-api";
 import { getReviewForm, saveReview } from "@/lib/reviews/server";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { log } from "@/lib/log";
 import en from "@/messages/en.json";
 
@@ -35,7 +36,9 @@ export async function GET(req: Request) {
 /** POST {token, rating, body, displayName, consentPublic}: saves the family's review. */
 export async function POST(req: Request) {
   if (!(await allow("reviewPost", clientIp(req)))) return tooMany();
-  const parsed = body.safeParse(await req.json().catch(() => null));
+  const raw = await readJson(req, BODY_LIMITS.review);
+  if (raw === TOO_LARGE) return tooLargeResponse(NO_STORE);
+  const parsed = body.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? e.failed }, { status: 400, headers: NO_STORE });
   const { token, ...input } = parsed.data;
   if (!tokenOk(token) || !isDatabaseConfigured()) return invalidLink();

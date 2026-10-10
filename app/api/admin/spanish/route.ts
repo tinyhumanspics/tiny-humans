@@ -3,6 +3,7 @@ import { z } from "zod";
 import { isAdmin } from "@/lib/admin/auth";
 import { getSpanishPublicationStatus, getSpanishReadiness } from "@/i18n/publication";
 import { isStorageConfigured, readSettingsFresh, saveSiteSettings } from "@/lib/settings/server";
+import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -20,8 +21,10 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Storage isn't connected yet. Connect a Vercel Blob store to this project." }, { status: 503 });
   }
 
+  const input = inputSchema.safeParse(await req.json().catch(() => null));
+  if (!input.success) return NextResponse.json({ error: "Choose whether to publish or hide Spanish." }, { status: 400 });
+  const { enabled } = input.data;
   try {
-    const { enabled } = inputSchema.parse(await req.json());
     const previous = await readSettingsFresh();
     if (enabled) {
       const readiness = await getSpanishReadiness(previous);
@@ -34,6 +37,7 @@ export async function PUT(req: Request) {
     const settings = await saveSiteSettings({ ...previous, spanishPublished: enabled }, previous);
     return NextResponse.json({ settings, status: await getSpanishPublicationStatus(settings) });
   } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Couldn't change Spanish publication." }, { status: 400 });
+    log.error("admin.spanish", "Publication change failed", { error: error as Error });
+    return NextResponse.json({ error: "Couldn't change Spanish publication. Please try again." }, { status: 500 });
   }
 }

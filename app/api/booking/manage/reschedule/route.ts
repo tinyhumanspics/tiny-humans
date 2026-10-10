@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getBookingProvider } from "@/lib/booking/server";
 import { NO_STORE, invalidLink, manageFail, tokenOk, tooMany } from "@/lib/booking/manage-api";
 import { allow, clientIp } from "@/lib/rate-limit";
+import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { isDateKey } from "@/lib/validation/date-key";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +13,9 @@ const body = z.object({ token: z.string(), date: z.string().refine(isDateKey), s
 /** POST {token, date, start}: reschedule after the customer confirms (rechecked server-side). */
 export async function POST(req: Request) {
   if (!(await allow("managePost", clientIp(req)))) return tooMany();
-  const p = body.safeParse(await req.json().catch(() => null));
+  const input = await readJson(req, BODY_LIMITS.small);
+  if (input === TOO_LARGE) return tooLargeResponse(NO_STORE);
+  const p = body.safeParse(input);
   if (!p.success) return NextResponse.json({ error: "Pick a new day and time.", code: "invalid_request" }, { status: 400, headers: NO_STORE });
   if (!tokenOk(p.data.token)) return invalidLink();
   try {
