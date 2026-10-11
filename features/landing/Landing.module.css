@@ -56,7 +56,8 @@
 .seasonalCard { position: relative; display: grid; gap: 10px; align-content: start; padding: clamp(22px, 4vw, 30px); overflow: hidden; }
 .seasonalTitle { margin: 0; max-width: 16em; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.8rem, 6vw, 2.5rem); line-height: 1.06; color: var(--sun-yellow); }
 .seasonalDescription { margin: 0; max-width: 34em; font-size: 1.15rem; color: var(--chalk-white); }
-.seasonalCutoff { margin: 2px 0 4px; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--accent-2); }
+/* Lightened toward chalk white so every theme's accent reads at 4.5:1+ (Thanksgiving's red alone is 3.4:1). */
+.seasonalCutoff { margin: 2px 0 4px; font-family: var(--font-chalk); font-size: 1.2rem; color: color-mix(in srgb, var(--accent-2) 60%, var(--chalk-white)); }
 .seasonalDoodle { position: absolute; top: 16px; right: 18px; rotate: 9deg; }
 
 /* 2. trust strip */

@@ -306,7 +306,8 @@
   color: var(--chalk-white);
   transition: border-color 0.2s ease;
 }
-.input::placeholder { color: color-mix(in srgb, var(--chalk-white) 40%, transparent); }
+/* Hints carry information: 60% white keeps them at 5.6:1 on the field (WCAG 1.4.3); Firefox dims placeholders unless opacity is 1. */
+.input::placeholder { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); opacity: 1; }
 .input:hover { border-color: color-mix(in srgb, var(--chalk-white) 65%, transparent); }
 .input:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
 .input[aria-invalid="true"] { border-color: var(--chalk-error); }
