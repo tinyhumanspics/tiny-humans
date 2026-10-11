@@ -82,9 +82,9 @@ export default function Confirmation({
     <div className={styles.confirm} role="status">
       <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
       <p className={cn(styles.confirmEyebrow, "chalk-soft")}>{messages.confirmation.eyebrow}</p>
-      <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>
+      <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>
         {fill(messages.confirmation.title, { name: firstName })}
-      </h3>
+      </h2>
       <p className={cn(styles.confirmText, "chalk-soft")}>
         {fill(messages.confirmation.home, { city: r.address.city })}
         {names ? fill(messages.confirmation.namedBabies, { names }) : babies.length > 1 ? messages.confirmation.manyBabies : messages.confirmation.oneBaby}

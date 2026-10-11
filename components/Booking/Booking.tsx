@@ -638,7 +638,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" level={1} />
         {state.status !== "done" && bundle && (
           <div className={styles.bundleSummary}>
             {inspiration && <InspirationThumb photo={inspiration} size={44} />}
@@ -684,9 +684,9 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 <StepTracker current={state.step} maxReached={state.maxStep} onGo={goTo} messages={messages} />
 
                 <div className={styles.stepBody}>
-                  <h3 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
+                  <h2 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
                     {messages.steps[state.step].title}
-                  </h3>
+                  </h2>
 
                   {state.step === STEP.date && (
                     <Calendar

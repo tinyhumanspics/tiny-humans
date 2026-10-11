@@ -22,7 +22,9 @@
 }
 
 /* "Tiny moments." and "Big memories." each stay on one line */
-.line { display: block; white-space: nowrap; }
+/* Each phrase fits its line with room to spare (≥18px at every width); it wraps only when a reader's own text
+   spacing makes it wider (WCAG 1.4.12), instead of being cut off at the screen edge. */
+.line { display: block; }
 .line + .line { padding-left: 0.6em; }
 
 .underline { display: block; margin: 6px 0 0 0.6em; }

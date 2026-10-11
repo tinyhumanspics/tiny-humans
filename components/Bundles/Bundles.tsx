@@ -18,11 +18,11 @@ export default function Bundles({ messages, locale }: { messages: typeof en.bund
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="bundles" />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="bundles" level={1} />
         {available ? (
           <div className={styles.grid}>
             {bundles.map((bundle, i) => (
-              <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} href={scheduleHref(bundle.id, inspirationId, locale)} />
+              <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} href={scheduleHref(bundle.id, inspirationId, locale)} headingLevel={2} />
             ))}
           </div>
         ) : (

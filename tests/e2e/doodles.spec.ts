@@ -31,7 +31,7 @@ async function doodlesOnLetters(page: Page): Promise<string[]> {
           hits.push(`"${label}" drawing #${index}`);
         }
       });
-      const own = heading.querySelector("h2 > span > svg");
+      const own = heading.querySelector(":is(h1, h2) > span > svg");
       const lastLine = letters.at(-1);
       if (own && lastLine && own.getBoundingClientRect().left < lastLine.right - 4) hits.push(`"${label}" doodle wrapped away from its word`);
     });

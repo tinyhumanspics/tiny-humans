@@ -116,7 +116,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
         return (
           <div className={styles.confirm} role="status">
             <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
-            <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.confirmingTitle}</h3>
+            <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.confirmingTitle}</h2>
             <p className={cn(styles.confirmText, "chalk-soft")}>{slow ? t.confirmingSlow : t.confirmingText}</p>
           </div>
         );
@@ -125,7 +125,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
         const deposit = formatMoney(state.amountCents);
         return (
           <div className={styles.confirm}>
-            <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.waitingTitle}</h3>
+            <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.waitingTitle}</h2>
             <p className={cn(styles.confirmText, "chalk-soft")}>
               {state.payUrl && state.holdUntil ? fill(t.waitingText, { ...when, until: miamiClock(state.holdUntil, locale), deposit }) : fill(t.waitingClosed, when)}
             </p>
@@ -146,7 +146,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
       case "expired":
         return (
           <div className={styles.confirm}>
-            <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.expiredTitle}</h3>
+            <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.expiredTitle}</h2>
             <p className={cn(styles.confirmText, "chalk-soft")}>{fill(t.expiredText, { date: formatLongDate(state.date, locale), time: formatTimeLabel(state.start, locale) })}</p>
             <ChalkButton variant="solid" onClick={startOver} seed={97}>{t.pickAgain}</ChalkButton>
           </div>
@@ -154,7 +154,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
       default:
         return (
           <div className={styles.confirm}>
-            <h3 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.invalidTitle}</h3>
+            <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.invalidTitle}</h2>
             <p className={cn(styles.confirmText, "chalk-soft")}>{fill(t.invalidText, { email: site.contact.email ?? "" })}</p>
             <ChalkButton variant="solid" onClick={startOver} seed={97}>{t.pickAgain}</ChalkButton>
           </div>
@@ -165,7 +165,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" level={1} />
         <div className={styles.panelAnchor} data-booking-panel>
           <ChalkBox className={styles.panel} seed={7} wobble={4} strokeWidth={3}>
             <div aria-live="polite">{body()}</div>

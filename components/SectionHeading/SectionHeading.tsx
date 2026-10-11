@@ -14,9 +14,12 @@ interface Props {
   align?: "start" | "center";
   /** Which section: picks the theme's doodle for it. */
   slot: "portfolio" | "bundles" | "book";
+  /** 1 when this heading is the page's main heading (screen readers jump to it). */
+  level?: 1 | 2;
 }
 
-export default function SectionHeading({ id, title, subtitle, align = "start", slot }: Props) {
+export default function SectionHeading({ id, title, subtitle, align = "start", slot, level = 2 }: Props) {
+  const Heading = level === 1 ? "h1" : "h2";
   const { theme, locale } = useSiteSettings();
   const doodle = theme.decorations.heading[slot];
   // Spanish titles run longer: the mid-heading desktop drawing would sit on their letters.
@@ -29,13 +32,13 @@ export default function SectionHeading({ id, title, subtitle, align = "start", s
   return (
     <Reveal className={cn(styles.wrap, align === "center" && styles.center, long && styles.long)}>
       <BoardDoodles area="heading" desktopExtras={!spanish} />
-      <h2 id={id} className={cn(styles.title, "chalk")}>
+      <Heading id={id} className={cn(styles.title, "chalk")}>
         {words.length > 0 && `${words.join(" ")} `}
         <span className={styles.tail}>
           {lastWord}
           <ChalkDoodle grain={false} name={doodle} size={30} color={slot === "portfolio" ? "var(--accent-2)" : "var(--accent)"} className={styles.doodle} />
         </span>
-      </h2>
+      </Heading>
       <ChalkDoodle name="underline" size={170} color="var(--chalk-dim)" strokeWidth={2.4} className={styles.underline} />
       {subtitle && <p className={cn(styles.subtitle, "chalk-soft")}>{subtitle}</p>}
     </Reveal>

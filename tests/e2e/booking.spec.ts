@@ -273,7 +273,10 @@ test("the landing page and legal pages load", async ({ page }) => {
 
 test("the home portfolio viewer keeps its localized controls", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: /Open photo 1 of/ }).click();
+  // Opened from the keyboard: closing must put focus back on the same photo (WCAG 2.4.3).
+  const opener = page.getByRole("button", { name: /Open photo 1 of/ });
+  await opener.focus();
+  await page.keyboard.press("Enter");
   const viewer = page.getByRole("dialog", { name: "Photo viewer" });
   await expect(viewer).toBeVisible();
   await expect(viewer.getByText(/^1 of \d+$/)).toBeVisible();
@@ -281,6 +284,7 @@ test("the home portfolio viewer keeps its localized controls", async ({ page }) 
   await expect(viewer.getByText(/^2 of \d+$/)).toBeVisible();
   await viewer.getByRole("button", { name: "Close photo viewer" }).click();
   await expect(viewer).toHaveCount(0);
+  await expect(opener).toBeFocused();
 });
 
 test("the About photo placeholder has customer-facing accessible copy", async ({ page }) => {

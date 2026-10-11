@@ -39,14 +39,16 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose, me
     return () => window.removeEventListener("keydown", onKey);
   });
 
-  // focus + scroll lock
+  // focus + scroll lock; on close, focus goes back to the photo that opened it (keyboard users keep their place)
   useEffect(() => {
     if (!open) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     closeRef.current?.focus({ preventScroll: true });
     const prevOverflow = document.documentElement.style.overflow;
     document.documentElement.style.overflow = "hidden";
     return () => {
       document.documentElement.style.overflow = prevOverflow;
+      opener?.focus({ preventScroll: true });
     };
   }, [open]);
 

@@ -24,13 +24,16 @@ interface Props {
   locale: AppLocale;
   /** Where "Choose …" goes: the booking calendar for this bundle. */
   href: string;
+  /** 2 when the cards sit directly under the page's main heading (the /bundles page). */
+  headingLevel?: 2 | 3;
 }
 
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
 /** A package box drawn on the board. Every word inside is chalk. */
-export default function BundleCard({ bundle, index, messages, locale, href }: Props) {
+export default function BundleCard({ bundle, index, messages, locale, href, headingLevel = 3 }: Props) {
+  const Name = headingLevel === 2 ? "h2" : "h3";
   const { theme } = useSiteSettings();
   const { today } = useCatalog();
   // date-based only: the offer shows while enabled and today is on/before its end date
@@ -56,7 +59,7 @@ export default function BundleCard({ bundle, index, messages, locale, href }: Pr
               {bundle.badge}
             </p>
           )}
-          <h3 id={titleId} className={styles.name}>{bundle.name}</h3>
+          <Name id={titleId} className={styles.name}>{bundle.name}</Name>
           {bundle.description && <p className={styles.description}>{bundle.description}</p>}
           {offer ? (
             <>

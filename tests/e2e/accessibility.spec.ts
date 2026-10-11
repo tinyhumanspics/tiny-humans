@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import es from "@/messages/es.json";
 
 const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
@@ -53,6 +53,69 @@ test.describe("public API request size", () => {
 });
 
 test.describe("manual accessibility regression checks", () => {
+  test("a family can book using only the keyboard", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "Chromium tabs to every control by default; one keyboard pass is enough.");
+    /** Presses Tab until `target` has focus (fails if it can't be reached by keyboard). */
+    const tabTo = async (target: Locator, max = 80) => {
+      for (let i = 0; i < max; i++) {
+        if (await target.evaluate((el) => el === document.activeElement).catch(() => false)) return;
+        await page.keyboard.press("Tab");
+      }
+      throw new Error(`Not reachable with Tab: ${target}`);
+    };
+    const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
+    await page.goto("/book?bundle=little-moments");
+    await loaded;
+    await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+    const openDay = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
+    if (!(await openDay.count())) {
+      await tabTo(page.getByRole("button", { name: "Next month" }));
+      await page.keyboard.press("Enter");
+    }
+    await tabTo(openDay);
+    await page.keyboard.press("Enter");
+    await tabTo(page.getByRole("button", { name: /Next: Time/ }));
+    await page.keyboard.press("Enter");
+    await tabTo(page.locator('input[name="time"]').first());
+    await page.keyboard.press("Space");
+    await tabTo(page.getByRole("button", { name: /Next: Details/ }));
+    await page.keyboard.press("Enter");
+    for (const [field, value] of [
+      ["#field-parentName", "Kim Keyboard"],
+      ["#field-email", "kim.keyboard@example.com"],
+      ["#field-phone", "(305) 555-0142"],
+      ["#field-street", "1500 Bay Rd"],
+      ["#field-city", "Miami Beach"],
+      ["#field-zip", "33139"],
+    ]) {
+      await tabTo(page.locator(field));
+      await page.keyboard.type(value);
+    }
+    await tabTo(page.locator("#field-babyAge"));
+    await page.keyboard.type("Newborn"); // type-ahead picks the option (arrow keys open the menu on macOS)
+    await tabTo(page.getByRole("button", { name: /Next: Review/ }));
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("Check everything")).toBeVisible();
+    await page.waitForTimeout(4500); // the server refuses forms finished in under 4 seconds
+    await tabTo(page.getByRole("button", { name: /Book my session/ }));
+    await page.keyboard.press("Enter");
+    await expect(page.getByText("Booking confirmed")).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("every page has one main heading and no skipped heading levels", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "Heading structure is the same in every browser.");
+    for (const path of ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review"]) {
+      await page.goto(path, { waitUntil: "networkidle" });
+      const levels = await page.locator("h1, h2, h3, h4, h5, h6").evaluateAll((headings) =>
+        headings.filter((h) => h.getClientRects().length).map((h) => Number(h.tagName[1])),
+      );
+      expect(levels.filter((level) => level === 1), `${path} main headings`).toHaveLength(1);
+      expect(levels[0], `${path} starts with its main heading`).toBe(1);
+      const skips = levels.filter((level, i) => i > 0 && level > levels[i - 1] + 1);
+      expect(skips, `${path} skipped heading levels`).toEqual([]);
+    }
+  });
+
   test("keyboard focus is visible on the main journeys", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One keyboard pass is enough.");
     for (const path of ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/admin"]) {
