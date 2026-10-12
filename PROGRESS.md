@@ -14,8 +14,10 @@ session must confirm a production deployment of `f2e329f` (or later) succeeded; 
 owner clicks Redeploy on the latest deployment in the Vercel dashboard (or any new push deploys it). Then smoke-test:
 `/admin` shows only the password form, `GET /api/admin/passkeys/available` → `{"available":false}` until migration 0020.
 Gates at `f2e329f`: strict tsc, lint 0 errors/22 warnings, 42 units, 110 e2e (76 expected skips), 24 visual.
-**New owner steps (passkeys):** (A) Neon → SQL editor → run `drizzle/0020_admin_passkeys.sql` (two new tables, safe
-twice); (B) on the iPhone and on the Mac: /admin → sign in with the password → Settings → Sign-in → "Add Face ID /
+**Passkeys live Oct 12:** Vercel published the passkey code during its incident without posting a GitHub deployment
+status; production answers `/api/admin/passkeys/available` (200) and `/api/admin/session/others` (405 on GET), and the
+live /admin JavaScript contains the new sign-in screens (password form unchanged). **The owner ran migration 0020 in
+Neon Oct 12.** Remaining owner step: (B) on the iPhone and on the Mac: /admin → sign in with the password → Settings → Sign-in → "Add Face ID /
 Touch ID on this device" (within 15 minutes of signing in). Lost phone: sign in with the password elsewhere → Remove it
 → "Sign out all other devices" (never rotate ADMIN_SESSION_SECRET: it signs every payment link).
 **CSP:** report-only since Oct 12. Around Oct 19, read Vercel logs for `csp` warnings (Vercel dashboard → Logs, or
@@ -107,16 +109,14 @@ Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue.
 
 State (Oct 12): main = f2e329f. Live and checked: Phase 6 bug hunt (BUG-12…15), owner layout requests, API audit,
 accessibility pass, report-only CSP (real Meta Pixel clean), lighter public pages (home 323 → 225 KB gzipped JS).
-Passkey sign-in (5c52b19, cb5f472) is pushed but had NOT deployed at handoff because of Vercel's Oct 12 incident.
-Not on main yet: nothing.
+Passkey sign-in (5c52b19, cb5f472) is live (Vercel deployed it during its Oct 12 incident without a GitHub status)
+and the owner ran migration 0020 in Neon. Not on main yet: nothing.
 
-Next: first confirm a Vercel production deployment of f2e329f or later succeeded (GitHub deployments/statuses); if not,
-ask the owner to click Redeploy in Vercel. Smoke-test /admin (password form only) and /api/admin/passkeys/available
-→ {"available":false} until migration 0020. Then Phase 8: structure move, route groups, split Booking.tsx, library
+Next: ask whether Face ID was added on the iPhone/Mac (Settings → Sign-in) and whether it works. Then Phase 8: structure move, route groups, split Booking.tsx, library
 evaluation, remove config/bundles.ts — visual parity required. Research current official docs first.
 Time-sensitive: CSP report-only since Oct 12 → read `csp` warnings in Vercel logs ~Oct 19, then enforce;
 DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: run drizzle/0020_admin_passkeys.sql in Neon, then add Face ID on iPhone + Mac (Settings → Sign-in);
+Waiting on the owner: add Face ID on iPhone + Mac (Settings → Sign-in, within 15 min of signing in);
 confirm 40 free travel miles; confirm the $50 deposit + Stripe Refunds: Write + checkout.session.expired + refund test;
 1g Meta check; Search Console/Business Profile; Analytics privacy line; /portfolio; Terms review; About alt "IMG 6087".
 Watch out: Vercel CLI on the Mac is logged out. Full passkey flow needs scripts/local-db + Chromium virtual
