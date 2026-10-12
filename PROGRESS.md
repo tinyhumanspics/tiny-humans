@@ -754,9 +754,12 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       cookies read as epoch 0, so the deploy signs nobody out. Settings → Sign-in lists devices (added / last used /
       synced), adds this device, removes one, signs out other devices; the sign-in page offers Face ID / Touch ID once a
       device exists. Before migration 0020 everything stays password-only and Settings explains the update.
-      Verified locally with `scripts/local-db` (all 21 migrations) + Chromium's virtual authenticator: 12/12 checks
-      (add, duplicate refused, Face ID sign-in, failed user verification refused, last-used shown, other device signed
-      out while this one stays, remove hides the button, replay without challenge 401, cross-site 403). 7 unit tests
+      Adding a device needs a sign-in from the last 15 minutes (OWASP re-authentication: a borrowed or stolen session
+      can't plant its own passkey); re-issued cookies keep their original sign-in time, so "Sign out all other
+      devices" can't freshen a session. Verified locally with `scripts/local-db` (all 21 migrations) + Chromium's
+      virtual authenticator: 16/16 checks (add, duplicate refused, Face ID sign-in, failed user verification refused,
+      last-used shown, other device signed out while this one stays, remove hides the button, replay without challenge
+      401, cross-site 403, 20-minute-old session can't add a device, even after signing out other devices). 7 unit tests
       (`tests/unit/admin-session.test.ts`) + 1 CI e2e for the pre-migration state. Recovery: the password always works;
       lost the phone → sign in with the password on another device → Remove it + "Sign out all other devices".
       **Owner steps:** (1) Neon → SQL editor → run `drizzle/0020_admin_passkeys.sql`; (2) on the iPhone and the Mac:
