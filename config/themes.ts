@@ -191,7 +191,19 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "thanksgiving",
     label: "Thanksgiving",
     buttonLabel: "Thanksgiving Theme",
-    colors: { ...board, chalkboard: "#8e4318", chalkboardDark: "#663012", chalkboardLight: "#ad5626", accent: "#f08b2e", accent2: "#e0574a", accent3: "#f2c14e" },
+    // On the orange board, small text and the orange/red drawings are lightened just enough to read (owner, Oct 12).
+    colors: {
+      ...board,
+      chalkboard: "#8e4318",
+      chalkboardDark: "#663012",
+      chalkboardLight: "#ad5626",
+      chalkMuted: "#cfd4c7",
+      cloudBlue: "#94d7fd",
+      chalkError: "#fdc5bd",
+      accent: "#f69035",
+      accent2: "#ff8778",
+      accent3: "#f2c14e",
+    },
     logo: logo(
       {
         sun: "/brand/thanksgiving/sun.webp",

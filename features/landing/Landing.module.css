@@ -58,6 +58,7 @@
 .seasonalDescription { margin: 0; max-width: 34em; font-size: 1.15rem; color: var(--chalk-white); }
 /* Lightened toward chalk white so every theme's accent reads at 4.5:1+ (Thanksgiving's red alone is 3.4:1). */
 .seasonalCutoff { margin: 2px 0 4px; font-family: var(--font-chalk); font-size: 1.2rem; color: color-mix(in srgb, var(--accent-2) 60%, var(--chalk-white)); }
+:global(html[data-theme="thanksgiving"]) .seasonalCutoff { color: var(--chalk-white); }
 .seasonalDoodle { position: absolute; top: 16px; right: 18px; rotate: 9deg; }
 
 /* 2. trust strip */

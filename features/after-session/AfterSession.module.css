@@ -14,6 +14,7 @@
 }
 .textarea { min-height: 130px; resize: vertical; }
 .input::placeholder, .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); opacity: 1; }
+:global(html[data-theme="thanksgiving"]) .input::placeholder, :global(html[data-theme="thanksgiving"]) .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
 .input:focus-visible, .textarea:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
 .input[aria-invalid="true"], .textarea[aria-invalid="true"] { border-color: var(--chalk-error); }
 .error { margin: 8px 0 0; color: var(--chalk-error); font-size: 1.05rem; }
@@ -22,6 +23,7 @@
 .star input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .star span { display: block; font-size: 2.4rem; line-height: 1; cursor: pointer; color: color-mix(in srgb, var(--chalk-white) 50%, transparent); transition: color 0.15s, transform 0.15s; }
 .star span[data-on="true"] { color: var(--sun-yellow); }
+:global(html[data-theme="thanksgiving"]) .star span:not([data-on="true"]) { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); }
 .star input:focus-visible + span { outline: 2px solid var(--sun-yellow); outline-offset: 3px; border-radius: 4px; }
 .star span:hover { transform: scale(1.1); }
 @media (prefers-reduced-motion: reduce) { .star span { transition: none; } .star span:hover { transform: none; } }

@@ -18,21 +18,25 @@ function mix(a: string, b: string, p: number): string {
   return `#${ca.map((v, i) => Math.round(v * p + cb[i] * (1 - p)).toString(16).padStart(2, "0")).join("")}`;
 }
 
+/** Thanksgiving-only CSS (orange board): white cutoff line, 70% hints, 60% empty stars. */
+const LIGHTER = { thanksgiving: { cutoffWhite: true, hint: 0.7, star: 0.6 } } as const;
+
 describe("theme text contrast on the chalkboard (WCAG 1.4.3, 4.5:1)", () => {
   for (const theme of Object.values(themes)) {
     const c = theme.colors;
+    const lighter = theme.id === "thanksgiving" ? LIGHTER.thanksgiving : null;
     test(`${theme.label}: body text colors`, () => {
       for (const [name, color] of Object.entries({ chalkWhite: c.chalkWhite, sunYellow: c.sunYellow, chalkMuted: c.chalkMuted, cloudBlue: c.cloudBlue, chalkError: c.chalkError })) {
         expect(contrast(color, c.chalkboard), name).toBeGreaterThanOrEqual(4.5);
       }
     });
     test(`${theme.label}: seasonal cutoff line (accent 2 lightened 60/40 with chalk white)`, () => {
-      expect(contrast(mix(c.accent2, c.chalkWhite, 0.6), c.chalkboard)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(lighter?.cutoffWhite ? c.chalkWhite : mix(c.accent2, c.chalkWhite, 0.6), c.chalkboard)).toBeGreaterThanOrEqual(4.5);
     });
     test(`${theme.label}: form hints (60% chalk white on the field) and empty rating stars (50%, 3:1)`, () => {
       const field = mix(c.chalkboardDark, c.chalkboard, 0.6);
-      expect(contrast(mix(c.chalkWhite, field, 0.6), field)).toBeGreaterThanOrEqual(4.5);
-      expect(contrast(mix(c.chalkWhite, c.chalkboard, 0.5), c.chalkboard)).toBeGreaterThanOrEqual(3);
+      expect(contrast(mix(c.chalkWhite, field, lighter?.hint ?? 0.6), field)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(mix(c.chalkWhite, c.chalkboard, lighter?.star ?? 0.5), c.chalkboard)).toBeGreaterThanOrEqual(3);
     });
   }
 });

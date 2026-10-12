@@ -17,6 +17,7 @@
   background: color-mix(in srgb, var(--chalkboard-dark) 60%, transparent); font-family: var(--font-hand); font-size: 1.15rem; color: var(--chalk-white);
 }
 .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); opacity: 1; }
+:global(html[data-theme="thanksgiving"]) .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
 .textarea:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
 .textarea[aria-invalid="true"] { border-color: var(--chalk-error); }
 .error { margin: 8px 0 0; color: var(--chalk-error); font-size: 1.05rem; }
