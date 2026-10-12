@@ -97,15 +97,13 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 10 evening): main = 5327dbe, everything pushed; Vercel + GitHub Actions green. Phase 6 second bug hunt started:
-BUG-12 (Spanish hero cut off), BUG-13 (Spanish header wider than 320–374px phones), BUG-14 (impossible dates accepted),
-BUG-15 (EN|ES switch lost booking progress; "montajes" not counted as setups) are fixed and logged. Owner requests done:
-About closing box + landing FAQ centered; no chalk doodle sits on any heading's letters at 320–1440px in either language.
-e2e is stable (per-browser visitor addresses vs rate limits; calendar-load waits). API audit done (`5327dbe`): bounded
-public JSON bodies, no raw internal errors from owner settings/Spanish routes, deposit/travel lookups catch DB errors.
-Gates: strict tsc, lint 0 errors/22 warnings, 17 units, 106 e2e (68 skips), 24 visual.
-Next: continue Phase 6 with the manual screen-reader/color/zoom pass, owner-login upgrade decision (passkeys/2FA,
-revocable sessions), CSP report-only plan, and more of the second bug hunt. Research current official docs first; note links in PROGRESS.
+State (Oct 11): main = 946b321, everything pushed; Vercel + GitHub Actions green. Phase 6 done so far: second bug hunt
+(BUG-12…15), owner layout requests (centering, doodles off heading letters), stable e2e (per-browser visitor
+addresses, calendar-load waits, intro wait on 404), API audit (`5327dbe`: bounded public JSON bodies, no raw owner
+errors), manual accessibility pass (contrast fixes + theme contrast unit test, one h1 per page, lightbox focus
+return, keyboard-only booking e2e). Gates: strict tsc, lint 0 errors/22 warnings, 29 units, 108 e2e, 24 visual.
+Next: continue Phase 6 with CSP report-only (then enforce), the owner-login upgrade decision (passkeys/2FA, revocable
+sessions), and more of the second bug hunt. Research current official docs first; note links in PROGRESS.
 Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
 Waiting on the owner: confirm the $50 deposit; Stripe Refunds: Write + checkout.session.expired + real refund test;
 travel; 1g Meta; Search Console/Business Profile;
@@ -749,6 +747,25 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       reflow checks pass. The audit found and fixed the hand-drawn Book circle overflowing at 320px (`86bbac3`). Gitleaks
       8.30.1 scanned all 171 commits/3.75 MB with no leaks. Remaining: full manual screen-reader/color/zoom pass and CSP
       report-only → enforce.
+      **Oct 11 manual pass (`9ace2e5`, `5482c57`, `946b321`; Claude Code):** axe found 0 violations on 12 EN/ES pages
+      × phone/desktop but could not judge 34–126 text items per page over the chalk texture, so contrast was computed
+      from the theme tokens: body colors pass (white 11.2, yellow 9.1, muted 7.6, blue 6.6, error 7.4:1). Fixed: field
+      hints 40% → 60% white (3.3 → 5.6:1; the cancel and review boxes had browser-default hints), empty review stars
+      35% → 50% (2.7 → 4.0:1, a state indicator), the seasonal cutoff line lightened 60/40 toward chalk white
+      (Thanksgiving red was 3.4:1 → 5.5:1); new `tests/unit/contrast.test.ts` checks every theme. Exempt by WCAG and
+      left: faded booked days (inactive), EN|ES separator, bullets, tracker circles. `/bundles` and `/book` had no h1:
+      `SectionHeading level={1}`, bundle cards h2 there (`BundleCard headingLevel`), booking steps/deposit return/
+      confirmation h3 → h2; all public pages now have one h1 and no skipped levels (e2e). Closing the photo viewer now
+      returns focus to the photo that opened it (WCAG 2.4.3). Text spacing (1.4.12): hero lines may wrap instead of
+      being clipped (≥18px spare at every width, so normal rendering is unchanged); under that test the Spanish phone
+      header needs sideways scrolling (still reachable, not lost). Checked OK: focus never hidden under the sticky
+      header (2.4.11, `scroll-padding-top`), page language/titles/landmarks (navs labelled), booking errors
+      (`aria-invalid`/`aria-describedby`, focus to the first problem field, `role=alert`), heading focus on each step,
+      autocomplete on contact/address fields (1.3.5), the honeypot hidden from screen readers, reduced motion, the
+      lightbox dialog (Escape, focus trap). New e2e: a whole booking with the keyboard only. The flaky CI WebKit 404
+      test was a click aimed during the intro's scroll reset; it now waits for the intro to finish, and CI keeps failure
+      traces 7 days (`actions/upload-artifact@v7`). Remaining here: CSP report-only → enforce; a real VoiceOver/TalkBack
+      listen-through with the owner's phone is still worth doing once.
 - [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
       regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
       build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
