@@ -766,6 +766,20 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       test was a click aimed during the intro's scroll reset; it now waits for the intro to finish, and CI keeps failure
       traces 7 days (`actions/upload-artifact@v7`). Remaining here: CSP report-only → enforce; a real VoiceOver/TalkBack
       listen-through with the owner's phone is still worth doing once.
+      **Oct 12 CSP report-only (`0abba30`):** `lib/security/csp.ts` builds the policy; `next.config.ts` sends it as
+      `Content-Security-Policy-Report-Only` + `Reporting-Endpoints` (the enforced `frame-ancestors 'self'` is unchanged).
+      No nonces (they force per-request rendering and drop ISR caching, per the Next 16 CSP guide), so scripts/styles
+      keep `'unsafe-inline'`; restricted: script hosts (self + connect.facebook.net), img (self, data:, blob:, Vercel
+      Blob, www.facebook.com), connect (self + Meta), no eval, `object-src 'none'`, `base-uri`/`form-action`
+      'self'; dev adds `'unsafe-eval'`, previews add vercel.live. `/api/csp-report` (rate-limited, 16 KB, always 204)
+      logs `csp` warnings as directive + blocked origin/path + page path (query strings dropped: manage links carry
+      tokens; extension noise ignored). The first local run found Zod 4 probing `new Function` in the browser: client
+      validation modules now import `z` from `lib/validation/zod.ts` (browser `jitless`). Local checks: 12 public
+      pages, the 404 and all 8 /admin panels signed in report nothing; 5 unit + 1 e2e. **The Vercel deployment of
+      `0abba30` failed** (local `next build` with VERCEL=1/VERCEL_ENV=production passes; the Vercel CLI here is logged
+      out, so the log wasn't readable); production kept serving `946b321`. Next: read that log, fix, then watch
+      production `csp` warnings (Meta Pixel paths) for a week before enforcing. Sources:
+      https://nextjs.org/docs/app/guides/content-security-policy · https://developers.facebook.com/docs/meta-pixel/get-started
 - [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
       regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
       build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
