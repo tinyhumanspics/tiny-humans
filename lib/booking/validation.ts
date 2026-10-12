@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 import { babyAgeOptions } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";

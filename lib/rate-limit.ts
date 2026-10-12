@@ -32,6 +32,8 @@ export const RULES = {
   pay: { limit: 30, windowSec: 600 },
   reviewGet: { limit: 40, windowSec: 600 },
   reviewPost: { limit: 10, windowSec: 600 },
+  // browser Content-Security-Policy reports (a page with several blocked items sends several)
+  cspReport: { limit: 60, windowSec: 600 },
   // owner login: per IP, and across all IPs (slows a distributed password-guessing attempt)
   adminLogin: { limit: 5, windowSec: 900 },
   adminLoginGlobal: { limit: 60, windowSec: 3600 },

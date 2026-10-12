@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 import { bookingRules } from "@/config/booking";
 import { isDateKey } from "@/lib/validation/date-key";
 

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 import { isDateKey } from "@/lib/validation/date-key";
 
 const money = z.number().finite().min(0).max(100000);

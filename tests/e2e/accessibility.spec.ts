@@ -40,6 +40,38 @@ test.describe("owner API request origin", () => {
   });
 });
 
+test.describe("content security policy (report-only)", () => {
+  test("pages send the policy and the report endpoint accepts reports", async ({ page, request }, testInfo) => {
+    test.skip(testInfo.project.name !== "desktop-chrome", "One server-level check is enough.");
+    const res = await request.get("/");
+    const policy = res.headers()["content-security-policy-report-only"] ?? "";
+    expect(policy).toContain("default-src 'self'");
+    expect(policy).toContain("report-uri /api/csp-report");
+    expect(res.headers()["reporting-endpoints"]).toBe('csp="/api/csp-report"');
+    expect(res.headers()["content-security-policy"]).toBe("frame-ancestors 'self'");
+    const report = await request.post("/api/csp-report", {
+      headers: { "content-type": "application/csp-report" },
+      data: JSON.stringify({ "csp-report": { "document-uri": "http://localhost/", "effective-directive": "img-src", "blocked-uri": "https://cdn.example/a.png" } }),
+    });
+    expect(report.status()).toBe(204);
+
+    // Nothing the site itself loads may break the policy (the Meta Pixel is off in tests; production reports cover it).
+    await page.addInitScript(() => {
+      const seen: string[] = [];
+      (window as unknown as { __csp: string[] }).__csp = seen;
+      document.addEventListener("securitypolicyviolation", (e) => seen.push(`${e.effectiveDirective} ${e.blockedURI}`));
+    });
+    for (const path of ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin", "/no-such-page"]) {
+      await page.goto(path, { waitUntil: "networkidle" });
+      if (path === "/") {
+        await page.getByRole("button", { name: /Open photo 1 of/ }).click();
+        await page.getByRole("button", { name: "Close photo viewer" }).click();
+      }
+      expect(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp), path).toEqual([]);
+    }
+  });
+});
+
 test.describe("public API request size", () => {
   test("oversized bodies are refused before validation", async ({ request }, testInfo) => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One server-level check is enough.");
