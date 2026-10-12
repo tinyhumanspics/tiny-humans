@@ -3,21 +3,28 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ NEXT STEPS (Oct 10: Phase 6 security/quality started; Spanish is published)
-State: main includes Phase 6 work through `dc8e5c4` (Oct 10 evening, Claude Code): Codex's three unpushed fixes were
-verified and shipped (BUG-12 Spanish hero, BUG-14 impossible dates, BUG-15 EN|ES mid-booking), plus BUG-13 (Spanish
-header overflowed 320–374px phones) and the owner's requests (About closing box + landing FAQ centered; no heart over
-Spanish section titles). All gates, Vercel and GitHub Actions green. Earlier: main includes the Phase 6 CI/test and Spanish sitemap fixes through `2bd75b6`. The first Phase 6 security/quality slice added exact-origin checks
-for every admin mutation, bounded/validated login and photo uploads, PII-safe recursive logging, Vitest security units,
-WCAG 2.2 axe/manual regression checks and element-level visual baselines. A 320px header overflow found by the audit is
-fixed. Strict nonincremental tsc/build/lint passed (0 errors/23 known warnings); 5 unit tests, 103 e2e tests (56 expected
-project skips) and all 24 visual checks passed. Vercel succeeded; production `/`, `/home-sweet-home`, `/admin` and the
-no-store `/api/admin/session` endpoint passed read-only smoke checks. GitHub Actions now runs the same clean-install,
-strict TypeScript, lint, unit and full Playwright gates on every main push and pull request; its first corrected Ubuntu
-run passed (`ef5a6cf` + `2b6c84a`). A later docs-push rerun exposed that the custom Instagram-user-agent booking was
-redundantly repeated in all three browser projects; `64e5da6` keeps the three native browser journeys and runs that
-explicit Instagram context once, with a checked transition into customer details. The full local matrix passed 101
-tests with 58 expected project skips.
+## ▶ NEXT STEPS (Oct 12: Phase 6 nearly done — waiting on owner steps and a quiet CSP week)
+**State Oct 12 (Claude Code):** main = `f2e329f`. Live and checked on production: Phase 6 bug hunt (BUG-12…15), the
+owner's layout requests (About box + landing FAQ centered, no doodles on heading letters), the API audit (`5327dbe`),
+the accessibility pass (`9ace2e5`, `5482c57`), report-only CSP (`0abba30`, live via `0abfe3f`; real Meta Pixel and 6
+pages clean) and lighter public pages (`25e9dcf`: home 323 → 225 KB gzipped JS, measured live). **Pushed but not yet
+deployed:** passkey sign-in (`5c52b19`, `cb5f472` + docs, head `f2e329f`) — Vercel's Oct 12 incident ("Increased build
+and deployment failures", upstream GitHub) left these pushes without a Vercel deployment at handoff; CI passed. The next
+session must confirm a production deployment of `f2e329f` (or later) succeeded; if Vercel never picked it up, the
+owner clicks Redeploy on the latest deployment in the Vercel dashboard (or any new push deploys it). Then smoke-test:
+`/admin` shows only the password form, `GET /api/admin/passkeys/available` → `{"available":false}` until migration 0020.
+Gates at `f2e329f`: strict tsc, lint 0 errors/22 warnings, 42 units, 110 e2e (76 expected skips), 24 visual.
+**New owner steps (passkeys):** (A) Neon → SQL editor → run `drizzle/0020_admin_passkeys.sql` (two new tables, safe
+twice); (B) on the iPhone and on the Mac: /admin → sign in with the password → Settings → Sign-in → "Add Face ID /
+Touch ID on this device" (within 15 minutes of signing in). Lost phone: sign in with the password elsewhere → Remove it
+→ "Sign out all other devices" (never rotate ADMIN_SESSION_SECRET: it signs every payment link).
+**CSP:** report-only since Oct 12. Around Oct 19, read Vercel logs for `csp` warnings (Vercel dashboard → Logs, or
+`npx vercel login` then `vercel logs` — the CLI on the Mac is logged out); if only expected noise, switch
+`Content-Security-Policy-Report-Only` → enforced in `next.config.ts` (keep the report endpoint).
+Earlier state (Oct 10): main included the Phase 6 CI/test and Spanish sitemap fixes through `2bd75b6`. The first Phase 6
+security/quality slice added exact-origin checks for every admin mutation, bounded/validated login and photo uploads,
+PII-safe recursive logging, Vitest security units, WCAG 2.2 axe/manual regression checks, element-level visual
+baselines and the GitHub Actions gate (`ef5a6cf` + `2b6c84a`).
 The complete `/es` public/customer route tree, explicit EN | ES
 switcher, reciprocal hreflang, bilingual sitemap entries and locale-aware booking/email/payment/manage links are built.
 `/admin/settings` now owns the Spanish publish/hide switch, shows every readiness gap and refuses to publish an
@@ -85,7 +92,8 @@ email tools; no SQL was needed for that behavior.
    requests"); have the new Terms travel paragraph reviewed with the rest of the Terms.
 9. Visual baselines in `.screenshots/parity/` are current: 16 full pages plus 8 element checks (site header, bundle
    card, booking step tracker and landing FAQ × iPhone 14/1440), all passing Oct 10. The desktop landing-FAQ element
-   baseline was updated Oct 10 after the owner asked for the centered FAQ (`2898be4`). The old `.screenshots/baseline/`
+   baseline was updated Oct 10 after the owner asked for the centered FAQ (`2898be4`); the iPhone one Oct 11 when
+   "Questions parents ask" began wrapping before the sun doodle (`f5dd838`). The old `.screenshots/baseline/`
    set was captured mid-animation → recapture before Phase 9.
 
 **Spanish publication LIVE Oct 10:** production `/es` passed the all-or-nothing gate and the public Spanish routes,
@@ -97,23 +105,23 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 11): main = 946b321, everything pushed; Vercel + GitHub Actions green. Phase 6 done so far: second bug hunt
-(BUG-12…15), owner layout requests (centering, doodles off heading letters), stable e2e (per-browser visitor
-addresses, calendar-load waits, intro wait on 404), API audit (`5327dbe`: bounded public JSON bodies, no raw owner
-errors), manual accessibility pass (contrast fixes + theme contrast unit test, one h1 per page, lightbox focus
-return, keyboard-only booking e2e). Gates: strict tsc, lint 0 errors/22 warnings, 29 units, 108 e2e, 24 visual.
-Next: continue Phase 6 with CSP report-only (then enforce), the owner-login upgrade decision (passkeys/2FA, revocable
-sessions), and more of the second bug hunt. Research current official docs first; note links in PROGRESS.
-Time-sensitive: Thanksgiving last sessions Nov 23; First Christmas Dec 21; DST ends Nov 1.
-Waiting on the owner: confirm the $50 deposit; Stripe Refunds: Write + checkout.session.expired + real refund test;
-travel; 1g Meta; Search Console/Business Profile;
-Analytics privacy line; /portfolio; Terms review; About alt text "IMG 6087".
-Watch out: mutating `/api/admin/*` tests/curl need the exact Origin; all logs must use `lib/log.ts` (never copy an error
-message to another field). Existing Blob settings default Spanish off; only `/api/admin/spanish` may change it and every
-/es route fails closed on any readiness gap. Never drizzle-kit push; use full nonincremental tsc.
-Spanish routes are gated off in local/test builds: check Spanish visuals read-only on production (block Meta/Vercel
-tracking requests) by injecting the CSS change, or swap in the es.json labels in the test build (see accessibility.spec).
-When the owner says "hand off" (to Claude or Codex), run the handoff steps and give him this kind of prompt.
+State (Oct 12): main = f2e329f. Live and checked: Phase 6 bug hunt (BUG-12…15), owner layout requests, API audit,
+accessibility pass, report-only CSP (real Meta Pixel clean), lighter public pages (home 323 → 225 KB gzipped JS).
+Passkey sign-in (5c52b19, cb5f472) is pushed but had NOT deployed at handoff because of Vercel's Oct 12 incident.
+Not on main yet: nothing.
+
+Next: first confirm a Vercel production deployment of f2e329f or later succeeded (GitHub deployments/statuses); if not,
+ask the owner to click Redeploy in Vercel. Smoke-test /admin (password form only) and /api/admin/passkeys/available
+→ {"available":false} until migration 0020. Then Phase 8: structure move, route groups, split Booking.tsx, library
+evaluation, remove config/bundles.ts — visual parity required. Research current official docs first.
+Time-sensitive: CSP report-only since Oct 12 → read `csp` warnings in Vercel logs ~Oct 19, then enforce;
+DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
+Waiting on the owner: run drizzle/0020_admin_passkeys.sql in Neon, then add Face ID on iPhone + Mac (Settings → Sign-in);
+confirm 40 free travel miles; confirm the $50 deposit + Stripe Refunds: Write + checkout.session.expired + refund test;
+1g Meta check; Search Console/Business Profile; Analytics privacy line; /portfolio; Terms review; About alt "IMG 6087".
+Watch out: Vercel CLI on the Mac is logged out. Full passkey flow needs scripts/local-db + Chromium virtual
+authenticator (CI covers only the pre-migration state). Rate limits are per visitor address: e2e projects send their
+own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it signs payment links).
 ```
 
 ## Owner requests (outside the original brief)
@@ -267,7 +275,11 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
   Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
   live and production currently shows it enabled at $50, awaiting owner confirmation plus the remaining Stripe
   permission/webhook/refund test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
-  Next: NEXT STEPS 4.
+  **Phase 6 (Oct 10–12) is done except time/owner-gated items:** second bug hunt, API audit, accessibility pass,
+  report-only CSP, lighter public pages and passkey sign-in are built; left: CSP enforce after a quiet week (~Oct 19),
+  owner runs migration 0020 + adds devices, an optional VoiceOver listen-through with the owner. Phase 7 is complete
+  apart from React Compiler warnings, which move to Phase 8. Next: Phase 8 (structure move, route groups, split
+  Booking.tsx, library evaluation, remove `config/bundles.ts`), visual parity required.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -717,7 +729,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       as a service-area business, hide the home address and enter the real cities/ZIPs served (up to 20, no radius).
 
 ## Phase 6 — Security + quality
-- [~] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit). **Oct 10 first
+- [x] Full audit (auth, CSRF/origin, Zod everywhere, error leakage, logs, upload validation, npm audit). **Oct 10 first
       security slice (`8a9be5b`):** every owner-area mutation now requires an exact same-origin `Origin`/fallback
       `Referer`; admin login has strict Zod input, a 2 KB request limit, no-store responses and a high-priority cookie;
       logout clears the cookie with the same attributes. Photo uploads reject oversized requests/files and verify JPG,
@@ -739,7 +751,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       travel lookups didn't catch database errors: now logged + JSON 500. 5 unit tests + 1 e2e (413s and a normal
       quote). Strict tsc, lint 0 errors, 17 units, 106 e2e, 24 visual; Vercel + Actions green; production read-only
       smoke OK.
-- [~] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
+- [?] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
       flow is now origin-checked, bounded and no-store; choosing and implementing the replacement login/recovery model
       remains.
       **Oct 12: owner chose Face ID / Touch ID (passkeys), password kept as backup.** Built: `lib/admin/passkeys.ts`
@@ -810,7 +822,7 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       They now come from `lib/admin/prototype.ts` (client.ts re-exports them). Measured same build settings: home
       323 → 225 KB gzipped JS (1150 → 736 KB raw), landing 326 → 228, booking 337 → 244. All gates passed. Sources:
       https://nextjs.org/docs/app/guides/content-security-policy · https://developers.facebook.com/docs/meta-pixel/get-started
-- [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
+- [x] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
       regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
       build and lint (0 errors/23 known warnings) passed; 5 units, 103 e2e (56 expected project skips) and all 24 visual
       checks passed. `ef5a6cf` adds the read-only GitHub Actions workflow; its first Ubuntu run found one clean-runner

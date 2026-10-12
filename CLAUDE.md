@@ -195,3 +195,13 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
 - SEO: every indexable page uses `pageMetadata()` from `lib/seo/metadata.ts` so its canonical and Open Graph URL stay
   in sync; `app/sitemap.ts` lists only canonical public content. `/book` is noindex. The service-area JSON-LD must not
   gain a street address, reviews, hours or prices unless the owner supplies/approves those facts.
+- CSP: `lib/security/csp.ts` (sent from `next.config.ts`, Report-Only since Oct 12; reports → `/api/csp-report` →
+  `csp` log warnings). No eval in browsers: code that also runs client-side imports `z` from `lib/validation/zod.ts`
+  (browser `jitless`). A new third-party script, image, font or connection host must be added to the policy.
+- Public pages must not import `lib/admin/client` (it pulls the whole owner-area client into every page, ~100 KB
+  gzipped): prototype checks come from `lib/admin/prototype.ts`.
+- Rate limits are per visitor address, so each Playwright project sends its own `x-forwarded-for`; booking tests pick
+  calendar days with `pickFirstOpenDay` (waits for the availability response before deciding to change month).
+- Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
+  test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
+  https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).
