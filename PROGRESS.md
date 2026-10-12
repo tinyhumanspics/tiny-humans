@@ -776,9 +776,16 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
       tokens; extension noise ignored). The first local run found Zod 4 probing `new Function` in the browser: client
       validation modules now import `z` from `lib/validation/zod.ts` (browser `jitless`). Local checks: 12 public
       pages, the 404 and all 8 /admin panels signed in report nothing; 5 unit + 1 e2e. **The Vercel deployment of
-      `0abba30` failed** (local `next build` with VERCEL=1/VERCEL_ENV=production passes; the Vercel CLI here is logged
-      out, so the log wasn't readable); production kept serving `946b321`. Next: read that log, fix, then watch
-      production `csp` warnings (Meta Pixel paths) for a week before enforcing. Sources:
+      `0abba30` failed during Vercel's Oct 12 incident** ("Increased build and deployment failures", partial outage of
+      Build & Deploy and Git integrations from 13:35 UTC, partly an upstream GitHub incident; www.vercel-status.com);
+      local `next build` with VERCEL=1/VERCEL_ENV=production passes and the routes manifest headers look normal.
+      Production kept serving `946b321`. Docs-only commits don't deploy (no Vercel status). Next: confirm the next
+      deployment succeeds (or Redeploy from the dashboard), then watch production `csp` warnings (Meta Pixel paths)
+      for a week before enforcing. The Vercel CLI on the Mac is logged out (`npx vercel login` to read build logs).
+      **Oct 12 perf (`25e9dcf`):** public pages imported `IS_PROTOTYPE`/`readPrototypeSettings` from
+      `lib/admin/client`, pulling the whole owner-area client (mock provider, admin validation, Zod) into every page.
+      They now come from `lib/admin/prototype.ts` (client.ts re-exports them). Measured same build settings: home
+      323 → 225 KB gzipped JS (1150 → 736 KB raw), landing 326 → 228, booking 337 → 244. All gates passed. Sources:
       https://nextjs.org/docs/app/guides/content-security-policy · https://developers.facebook.com/docs/meta-pixel/get-started
 - [~] Playwright e2e + Vitest units + CI + second bug hunt. `b47c5fc` adds five security unit tests, the axe/manual
       regression checks and four element-level visual baselines × iPhone 14/1440. Strict nonincremental tsc, production
