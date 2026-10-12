@@ -174,17 +174,23 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       white, empty review stars 60% (not the selected yellow ones), `.seasonalCutoff` white. Email strip leaves
       shifted by the same amount. `contrast.test.ts` mirrors those overrides and passes for all 4 themes.
       Proof: Original/Christmas/New Year screenshots 44/44 pixel-identical and emails byte-identical before vs after.
-- [?] **Dark Green backdrop** (owner, Oct 12: "crucial … on all the areas"): forest green `#2e5a3d` (glow `#407050`,
+- [x] **Dark Green backdrop — LIVE Oct 12 (`c96a6ef`)** (owner, Oct 12: "crucial … on all the areas"): forest green `#2e5a3d` (glow `#407050`,
       edge `#23462f`, same OKLCH relation as Burgundy), id `darkGreen`, "Dark Green" / "Verde Oscuro", right after
       Burgundy (`config/backdrops.ts` + both name maps in en/es.json; no migration: `booking_backdrops` stores ids
       without a check). Shows in the booking-form picker, /backdrop, confirmation + 72 h reminder swatches, "Your
       backdrops" lines, studio email, /admin lead, Outlook event (all read the one list).
-- [?] **Email swatch grid bug (live today):** one shared table + a short last row (7 backdrops = 3/3/1) stretched
+- [x] **Email swatch grid bug — fixed LIVE Oct 12 (`393715e`, owner OK'd it with the backdrop):** one shared table + a short last row (7 backdrops = 3/3/1) stretched
       the columns, squeezing the third swatch column into thin strips (Pink, Beige) on phones and desktop. Fix: one
       table per row (`emails/components/blocks.tsx` `Swatches`). Only the swatch grid changes in the emails.
       **Ship set (branch `ship/theme-backdrops`, from main):** `b338b36` board colors, `189b0cd` Thanksgiving
       readability, `9cfd85f` Dark Green, `b5494a6` swatch fix (13 files). Preview-only switcher stays on
-      `wip/theme-backgrounds`. Waiting on the owner's OK to push.
+      `wip/theme-backgrounds`. **Owner, Oct 12: themes ON HOLD ("do not … publish the themes until I approve
+      them"); ship only the backdrop.** Shipped `c96a6ef` + `393715e` (4 files) on top of `8558e7d`: strict tsc,
+      lint 0 errors, 42 units, build, 24/24 visual, 110 e2e (76 skips); phone/desktop screenshots of the picker and
+      email grid; Vercel success; production read-only: EN picker "Dark Green" and ES "Verde Oscuro" after
+      Burgundy, board still `#183a22`, 7 pages 200. **Still on hold, not live:** the seasonal board colors
+      (`5c493c1`) and the Thanksgiving readability commit (`5775ead`) on local branch `wip/theme-backgrounds`
+      (cherry-pick both when the owner approves; Dark Green + grid fix are already on main).
 - **Launch target (owner, Oct 12, later):** "we need to launch this by November 15"; after these changes go live,
   continue with the last phase(s).
 - [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
