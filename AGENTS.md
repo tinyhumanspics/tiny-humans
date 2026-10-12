@@ -161,9 +161,13 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   readiness; the general settings save preserves its previous value. `proxy.ts` supplies the trusted request-locale
   header, and booking/email/payment/manage links follow the saved booking locale. A failed gate makes every `/es` route
   a 404 without exposing partial English copy.
-- Admin auth: one password + HMAC-signed httpOnly cookie (`lib/admin/auth.ts`). `proxy.ts` rejects every mutating
+- Admin auth: the password or a passkey (Face ID / Touch ID: `lib/admin/passkeys.ts`, SimpleWebAuthn, rpID
+  `tinyhumans.photography`) → HMAC-signed httpOnly cookie carrying the owner's session epoch (`admin_auth`, migration
+  0020; `lib/admin/auth.ts`). "Sign out all other devices" raises the epoch: never rotate `ADMIN_SESSION_SECRET` to sign
+  someone out (it also signs every payment link). `proxy.ts` rejects every mutating
   `/api/admin/*` request unless its `Origin` exactly matches the request URL (Referer only when Origin is absent); local
-  API tests/curl must send the exact local origin.
+  API tests/curl must send the exact local origin. Passkeys need the database: test them with `scripts/local-db` +
+  Chromium's virtual authenticator (CDP `WebAuthn.*`); CI has no database and covers only the pre-migration state.
 - The owner often has `npm run dev` running on :3000. Stop only your own servers, by port → PID
   (`lsof -nP -t -iTCP:<port> -sTCP:LISTEN`), never `pkill` by name (every Next server is called `next-server`).
   Test servers: :3100 (e2e) and :3200 (visual parity, local Outlook mode with `scripts/local-db`).

@@ -742,6 +742,26 @@ When the owner says "hand off" (to Claude or Codex), run the handoff steps and g
 - [~] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
       flow is now origin-checked, bounded and no-store; choosing and implementing the replacement login/recovery model
       remains.
+      **Oct 12: owner chose Face ID / Touch ID (passkeys), password kept as backup.** Built: `lib/admin/passkeys.ts`
+      (SimpleWebAuthn 14; discoverable passkeys, user verification required for adding and signing in, attestation
+      none, ES256/RS256, max 10 devices, excludeCredentials stops duplicates, signature counter + backup state saved),
+      challenges in a signed httpOnly 5-minute single-use cookie (key derived from ADMIN_SESSION_SECRET, path
+      /api/admin/passkeys), rpID `tinyhumans.photography` on the live site (www + bare domain), the request's own
+      host elsewhere. Routes under `/api/admin/passkeys` (available, login options/verify — rate-limited `passkeyLogin`
+      20/15 min + the global login limit; register options/verify, list, remove — owner only) and
+      `/api/admin/session/others`. Sessions carry an epoch (`admin_auth`, `lib/admin/session-token.ts`,
+      `session-epoch.ts`): "Sign out all other devices" raises it and re-issues this device's cookie; older two-part
+      cookies read as epoch 0, so the deploy signs nobody out. Settings → Sign-in lists devices (added / last used /
+      synced), adds this device, removes one, signs out other devices; the sign-in page offers Face ID / Touch ID once a
+      device exists. Before migration 0020 everything stays password-only and Settings explains the update.
+      Verified locally with `scripts/local-db` (all 21 migrations) + Chromium's virtual authenticator: 12/12 checks
+      (add, duplicate refused, Face ID sign-in, failed user verification refused, last-used shown, other device signed
+      out while this one stays, remove hides the button, replay without challenge 401, cross-site 403). 7 unit tests
+      (`tests/unit/admin-session.test.ts`) + 1 CI e2e for the pre-migration state. Recovery: the password always works;
+      lost the phone → sign in with the password on another device → Remove it + "Sign out all other devices".
+      **Owner steps:** (1) Neon → SQL editor → run `drizzle/0020_admin_passkeys.sql`; (2) on the iPhone and the Mac:
+      /admin → Settings → Sign-in → "Add Face ID / Touch ID on this device". Sources: https://simplewebauthn.dev/docs/packages/server ·
+      https://simplewebauthn.dev/docs/packages/browser · https://cheatsheetseries.owasp.org/cheatsheets/Passkey_Security_Cheat_Sheet.html
 - [~] WCAG 2.2 AA audit (axe + manual) and fixes; gitleaks history scan; CSP report-only → enforce. Axe reports no
       detectable WCAG 2.2 AA violations on 11 public/customer/admin entry pages; keyboard focus, 24px targets and 320px
       reflow checks pass. The audit found and fixed the hand-drawn Book circle overflowing at 320px (`86bbac3`). Gitleaks
@@ -962,6 +982,9 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   toolchain and adds 0 KB to the site. Current major, requires Node 22.12+ (CI is pinned to 22.12).
 - `@upstash/ratelimit` 2.2 + `@upstash/redis` 1.39 — shared rate limits across serverless instances (official Upstash
   SDKs, updated Oct 2026). Server-only: 0 KB to the browser. Free tier.
+- `@simplewebauthn/server` 14.0.3 + `@simplewebauthn/browser` 14.0.0 (Oct 12, owner chose Face ID / Touch ID sign-in) —
+  the standard WebAuthn/passkey implementation (MIT, ~2.4k stars, released Sep 2026, commits weekly). Server package is
+  server-only; the browser package loads only in the owner area (0 KB on public pages). Node 22+.
 - `eslint` 10 + `eslint-config-next` 16.4 (dev only) — replaces the removed `next lint`. 0 KB to the site. Official.
 - `clsx` 2 + `tailwind-merge` 3 — `cn()` class joining (owner's choice, ahead of Tailwind in Phase 9). ~1 KB + ~7 KB gz in
   the browser. Both widely used and maintained.
