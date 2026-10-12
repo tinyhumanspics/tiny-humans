@@ -29,12 +29,11 @@ const patrick = localFont({ src: "./fonts/patrick-hand-400.woff2", variable: "--
 
 export const metadata: Metadata = siteMetadata;
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-  themeColor: "#183a22",
-};
+/** The phone browser's top bar matches the active theme's board color. */
+export async function generateViewport(): Promise<Viewport> {
+  const settings = await getSiteSettings();
+  return { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: getTheme(settings.themeId).colors.chalkboard };
+}
 
 /** Pages families open straight from an email or from Stripe: they see their page at once, never the intro. */
 const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop"];

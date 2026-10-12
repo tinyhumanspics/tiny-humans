@@ -18,13 +18,21 @@ export interface EmailTheme {
   accent: string;
 }
 
+/** The darker page color around the email card, per theme (same relationship to the board as the Original's green). */
+const EMAIL_BOARD_DARK: Record<TinyHumansTheme, string> = {
+  default: "#10291a",
+  thanksgiving: "#663318",
+  christmas: "#5a2423",
+  newYear: "#101a31",
+};
+
 export function emailTheme(themeId: string | null | undefined): EmailTheme {
   const t = getTheme(themeId);
   return {
     id: t.id,
     label: t.label,
-    board: "#183a22",
-    boardDark: "#10291a",
+    board: t.colors.chalkboard,
+    boardDark: EMAIL_BOARD_DARK[t.id],
     chalk: t.colors.chalkWhite,
     muted: t.colors.chalkMuted,
     yellow: t.colors.sunYellow,

@@ -129,6 +129,11 @@ export interface ThemeDefinition {
   };
 }
 
+/**
+ * The Original theme's board (green) and the chalk colors every theme shares. Seasonal themes replace only the three
+ * board colors (owner, Oct 12): their darker/lighter shades keep the green's relationship (OKLCH: dark = 0.796 × L,
+ * 0.767 × chroma; light = 1.167 × L, 1.121 × chroma; same hue).
+ */
 const board = {
   chalkboard: "#183a22",
   chalkboardDark: "#0f2817",
@@ -186,7 +191,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "thanksgiving",
     label: "Thanksgiving",
     buttonLabel: "Thanksgiving Theme",
-    colors: { ...board, accent: "#f08b2e", accent2: "#e0574a", accent3: "#f2c14e" },
+    colors: { ...board, chalkboard: "#8e4318", chalkboardDark: "#663012", chalkboardLight: "#ad5626", accent: "#f08b2e", accent2: "#e0574a", accent3: "#f2c14e" },
     logo: logo(
       {
         sun: "/brand/thanksgiving/sun.webp",
@@ -229,7 +234,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "christmas",
     label: "Christmas",
     buttonLabel: "Christmas Theme",
-    colors: { ...board, accent: "#ee4b46", accent2: "#f4f2ea", accent3: "#5cba6c" },
+    colors: { ...board, chalkboard: "#7e2e2e", chalkboardDark: "#5a2020", chalkboardLight: "#9a3d3c", accent: "#ee4b46", accent2: "#f4f2ea", accent3: "#5cba6c" },
     logo: logo(
       {
         sun: "/brand/christmas/sun.webp",
@@ -272,7 +277,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "newYear",
     label: "New Year",
     buttonLabel: "New Year Theme",
-    colors: { ...board, accent: "#ff74b1", accent2: "#7fe0a7", accent3: "#6cc6f7" },
+    colors: { ...board, chalkboard: "#172647", chalkboardDark: "#0e1931", chalkboardLight: "#203158", accent: "#ff74b1", accent2: "#7fe0a7", accent3: "#6cc6f7" },
     logo: logo(
       {
         sun: "/brand/newYear/sun.webp",
