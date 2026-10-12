@@ -163,9 +163,10 @@ export function Swatches({ theme: t, title, text, swatches }: { theme: EmailThem
       <td className="th-pad" align="center" style={{ padding: "22px 36px 0" }}>
         <p style={{ margin: "0 0 4px", fontFamily: CHALK_FONT, fontSize: 24, color: t.yellow }}>{title}</p>
         <p style={{ margin: "0 0 14px", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>{text}</p>
-        <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
-          {rows.map((row, r) => (
-            <tr key={r}>
+        {/* one table per row: a short last row in a shared table would stretch the columns above it */}
+        {rows.map((row, r) => (
+          <table key={r} role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
+            <tr>
               {row.map((s) => {
                 const width = `${Math.floor(100 / row.length)}%`;
                 return (
@@ -193,8 +194,8 @@ export function Swatches({ theme: t, title, text, swatches }: { theme: EmailThem
                 );
               })}
             </tr>
-          ))}
-        </table>
+          </table>
+        ))}
       </td>
     </tr>
   );
