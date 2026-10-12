@@ -17,7 +17,9 @@ Plan agreed in chat: launch-critical items first; Phases 8–10 (no visible chan
       no cookies, anonymous, visitor hash discarded after 24 h; the site sends only page views, URLs filtered by
       `lib/tracking/safe-url.ts`).
 - [ ] Owner: Google Search Console + Business Profile (Google needs days to process; do before launch if possible).
-- [ ] Claude: confirm Vercel deploys `cb5f472` (passkey recent-sign-in fix). **Oct 12 finding:** the last Vercel
+- [x] Claude: confirm Vercel deploys `cb5f472` (passkey recent-sign-in fix). **Deployed Oct 12** (Vercel success on
+      `f2e329f` after the backlog cleared; read-only smoke: 6 pages 200, passkeys available true, travel 30 free
+      miles, unauthenticated register → "Sign in first."). **Oct 12 finding:** the last Vercel
       deployment posted to GitHub is `ea899e2` (18:10 UTC); `f2e329f`, `5084bab`, `eddf4b2`, `7088435` have none —
       Vercel incident "Increased build and deployment failures" (Builds/Git Integrations partial outage) still open at
       18:33 UTC. So the passkey sign-in is live but the recent-sign-in rule probably is not yet. If no deployment appears
