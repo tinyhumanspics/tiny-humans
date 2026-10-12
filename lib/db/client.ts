@@ -37,6 +37,16 @@ export function isUniqueViolation(err: unknown, constraint?: string): boolean {
 }
 
 /** True when two active bookings would overlap (exclusion constraint `bookings_no_overlap`, code 23P01). */
+/** True when a query failed because its table doesn't exist yet (a migration hasn't run). */
+export function isUndefinedTable(err: unknown): boolean {
+  let e: unknown = err;
+  for (let i = 0; i < 4 && e; i++) {
+    if ((e as { code?: string }).code === "42P01") return true;
+    e = (e as { cause?: unknown }).cause;
+  }
+  return false;
+}
+
 export function isOverlapViolation(err: unknown): boolean {
   let e: unknown = err;
   for (let i = 0; i < 4 && e; i++) {

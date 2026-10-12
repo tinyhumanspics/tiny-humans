@@ -17,6 +17,7 @@ import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import SeasonalPanel from "./SeasonalPanel";
 import { ADMIN_NAV, type AdminSection } from "./nav";
+import { addPasskey, listPasskeys, passkeySignInAvailable, passkeysSupported, removePasskey, signInWithPasskey, signOutOtherDevices, type PasskeyList } from "@/lib/admin/passkeys-client";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
@@ -243,9 +244,10 @@ function SettingsPanel({
         )}
       </ChalkBox>
 
-      <h2 className={cn(styles.h2, "chalk")}>Account</h2>
+      <h2 className={cn(styles.h2, "chalk")}>Sign-in</h2>
+      {api.mode === "live" && <SignInDevices />}
       <p className={cn(styles.muted, "chalk-soft")}>
-        {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel. To change it, update the variable and redeploy."}
+        {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel and always works as a backup. To change it, update the variable and redeploy."}
       </p>
       <ChalkButton variant="outline" onClick={onSignOut} seed={970}>Sign out</ChalkButton>
       <h2 className={cn(styles.h2, "chalk")}>Connections</h2>
@@ -260,12 +262,144 @@ function SettingsPanel({
   );
 }
 
+const deviceDate = (iso: string) => new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/New_York" }).format(new Date(iso));
+
+/** Face ID / Touch ID devices and "Sign out all other devices" (live site only). */
+function SignInDevices() {
+  const [list, setList] = useState<PasskeyList | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  // Each message shows next to the button it answers.
+  const [note, setNote] = useState<(Note & { about: "devices" | "others" }) | null>(null);
+  const supported = passkeysSupported();
+
+  useEffect(() => {
+    listPasskeys().then(setList).catch((error: Error) => setNote({ kind: "error", text: error.message, about: "devices" }));
+  }, []);
+
+  const add = async () => {
+    setBusy("add");
+    setNote(null);
+    const result = await addPasskey();
+    if (result.ok) {
+      if (result.list) setList(result.list);
+      setNote({ kind: "ok", text: "This device can now sign in with Face ID / Touch ID.", about: "devices" });
+    } else if (result.error) setNote({ kind: "error", text: result.error, about: "devices" });
+    setBusy(null);
+  };
+
+  const remove = async (id: string, label: string) => {
+    const last = list?.passkeys.length === 1;
+    if (!window.confirm(`Remove ${label}? ${last ? "Sign-in will need the password again." : "It will need the password next time."}`)) return;
+    setBusy(id);
+    setNote(null);
+    try {
+      setList(await removePasskey(id));
+      setNote({ kind: "ok", text: `${label} removed.`, about: "devices" });
+    } catch (error) {
+      setNote({ kind: "error", text: (error as Error).message, about: "devices" });
+    }
+    setBusy(null);
+  };
+
+  const signOutOthers = async () => {
+    if (!window.confirm("Sign out every other phone and computer now? This one stays signed in.")) return;
+    setBusy("others");
+    setNote(null);
+    try {
+      await signOutOtherDevices();
+      setNote({ kind: "ok", text: "Every other device is signed out.", about: "others" });
+    } catch (error) {
+      setNote({ kind: "error", text: (error as Error).message, about: "others" });
+    }
+    setBusy(null);
+  };
+
+  const message = (about: "devices" | "others") =>
+    note?.about === about && (
+      <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
+        {note.text}
+      </p>
+    );
+
+  if (!list) return note ? <p className={cn(styles.error, "chalk-soft")} role="alert">{note.text}</p> : <p className={cn(styles.muted, "chalk-soft")}>Loading…</p>;
+
+  return (
+    <>
+      {!list.ready ? (
+        <p className={cn(styles.muted, "chalk-soft")}>
+          Face ID / Touch ID sign-in needs a one-time database update (migration 0020). Until then, sign in with the password.
+        </p>
+      ) : (
+        <>
+          <p className={cn(styles.muted, "chalk-soft")}>
+            Sign in with Face ID or Touch ID instead of typing the password. Add each phone or computer you use; an
+            iPhone and a Mac on the same Apple account share theirs through iCloud Keychain.
+          </p>
+          {list.passkeys.length > 0 && (
+            <ul className={styles.deviceList} aria-label="Devices that can sign in with Face ID / Touch ID">
+              {list.passkeys.map((p) => (
+                <li key={p.id} className={styles.deviceRow}>
+                  <div>
+                    <p className={styles.deviceName}>{p.label}</p>
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>
+                      Added {deviceDate(p.createdAt)} · {p.lastUsedAt ? `last used ${deviceDate(p.lastUsedAt)}` : "not used yet"}
+                      {p.synced ? " · synced to your other devices" : ""}
+                    </p>
+                  </div>
+                  <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => remove(p.id, p.label)} disabled={busy !== null}>
+                    {busy === p.id ? "Removing…" : "Remove"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          {supported ? (
+            <div className={styles.signInActions}>
+              <ChalkButton variant="solid" onClick={add} disabled={busy !== null} seed={971}>
+                {busy === "add" ? "Waiting for Face ID / Touch ID…" : "Add Face ID / Touch ID on this device"}
+              </ChalkButton>
+            </div>
+          ) : (
+            <p className={cn(styles.hintSmall, "chalk-soft")}>This browser can&apos;t use Face ID / Touch ID. Try Safari or Chrome on your phone or computer.</p>
+          )}
+          {message("devices")}
+        </>
+      )}
+      <p className={cn(styles.muted, "chalk-soft")}>
+        Lost a phone, or signed in on someone else&apos;s computer? This signs every other device out right away. This one stays
+        signed in, and the families&apos; payment links keep working.
+      </p>
+      <div className={styles.signInActions}>
+        <ChalkButton variant="outline" onClick={signOutOthers} disabled={busy !== null || !list.ready} seed={972}>
+          {busy === "others" ? "Signing out…" : "Sign out all other devices"}
+        </ChalkButton>
+      </div>
+      {message("others")}
+    </>
+  );
+}
+
 /* ---------------- login ---------------- */
 
 function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdminApi>; authReady: boolean; onSignedIn: () => Promise<void> }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [passkeyReady, setPasskeyReady] = useState(false);
+  const [passkeyError, setPasskeyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (api.mode === "live") passkeySignInAvailable().then(setPasskeyReady);
+  }, [api.mode]);
+
+  const signInWithDevice = async () => {
+    setBusy(true);
+    setPasskeyError(null);
+    const result = await signInWithPasskey();
+    if (result.ok) await onSignedIn();
+    else setPasskeyError(result.error);
+    setBusy(false);
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -284,6 +418,19 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
       <p className={cn(styles.muted, "chalk-soft")}>Sign in to change the website theme and photos.</p>
       {!authReady && (
         <p className={cn(styles.bannerError, "chalk-soft")}>The owner password isn&apos;t set up yet. Add ADMIN_PASSWORD and ADMIN_SESSION_SECRET in Vercel (see README).</p>
+      )}
+      {passkeyReady && (
+        <div className={styles.loginPasskey}>
+          <ChalkButton variant="solid" onClick={signInWithDevice} disabled={busy} seed={803}>
+            {busy ? "Checking…" : "Sign in with Face ID / Touch ID"}
+          </ChalkButton>
+          {passkeyError && (
+            <p className={cn(styles.error, "chalk-soft")} role="alert">
+              {passkeyError}
+            </p>
+          )}
+          <p className={cn(styles.loginOr, "chalk-soft")}>or use the password</p>
+        </div>
       )}
       <form onSubmit={submit} className={styles.loginForm} noValidate>
         <label htmlFor="admin-password" className={cn(styles.label, "chalk-soft")}>

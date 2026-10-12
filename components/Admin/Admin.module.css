@@ -383,3 +383,11 @@
 .codeActions { display: flex; flex-wrap: wrap; gap: 6px; }
 a.smallButton { text-decoration: none; display: inline-flex; align-items: center; }
 .slotThumbRound { aspect-ratio: 1; max-width: 180px; border-radius: 50%; }
+
+/* sign-in: Face ID / Touch ID (passkeys) */
+.loginOr { margin: 14px 0 0; text-align: center; color: var(--chalk-muted); font-size: 1rem; }
+.loginPasskey { display: grid; margin-top: 18px; }
+.deviceList { list-style: none; margin: 14px 0 6px; padding: 0; display: grid; gap: 10px; max-width: 640px; }
+.deviceRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border: 1px dashed var(--chalk-faint); border-radius: 8px; }
+.deviceName { margin: 0; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--chalk-white); }
+.signInActions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }

@@ -3,7 +3,7 @@
  * Change this file, then run `npm run db:generate` to create a migration.
  */
 import { sql } from "drizzle-orm";
-import { boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigint, boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { AppLocale } from "@/i18n/config";
 
 export const bookingStatus = pgEnum("booking_status", ["pending", "confirmed", "rescheduled", "cancelled"]);
@@ -663,3 +663,39 @@ export const discountCodeUsage = pgTable(
   },
   (t) => [uniqueIndex("discount_code_usage_one_per_email_idx").on(t.codeId, t.emailKey), index("discount_code_usage_code_idx").on(t.codeId)],
 );
+
+/**
+ * The owner's passkeys for /admin (Face ID / Touch ID / device PIN). Public keys only: nothing stored here can sign in
+ * by itself. Migration 0020; until it runs, passkey sign-in stays hidden and the password works as before.
+ */
+export const adminPasskeys = pgTable("admin_passkeys", {
+  /** WebAuthn credential ID (base64url). */
+  id: text("id").primaryKey(),
+  /** COSE public key bytes, base64url. */
+  publicKey: text("public_key").notNull(),
+  /** Signature counter (some authenticators always send 0). */
+  counter: bigint("counter", { mode: "number" }).notNull().default(0),
+  /** Comma-separated WebAuthn transports (internal, hybrid, usb…). */
+  transports: text("transports"),
+  /** "singleDevice" | "multiDevice" (synced, e.g. iCloud Keychain). */
+  deviceType: text("device_type").notNull(),
+  backedUp: boolean("backed_up").notNull().default(false),
+  /** Which device, for the owner's list (e.g. "iPhone"). */
+  label: text("label").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+});
+
+export type AdminPasskey = typeof adminPasskeys.$inferSelect;
+
+/**
+ * Owner sign-in state, one row (id 1). `session_epoch` is part of every owner session: raising it signs out every
+ * other device without touching ADMIN_SESSION_SECRET (which also signs the families' payment links). `user_handle` is
+ * the stable WebAuthn user ID, so a device re-registering replaces its passkey instead of adding another.
+ */
+export const adminAuth = pgTable("admin_auth", {
+  id: smallint("id").primaryKey(),
+  sessionEpoch: integer("session_epoch").notNull().default(0),
+  userHandle: text("user_handle"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

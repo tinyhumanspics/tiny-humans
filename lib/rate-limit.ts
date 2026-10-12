@@ -37,6 +37,8 @@ export const RULES = {
   // owner login: per IP, and across all IPs (slows a distributed password-guessing attempt)
   adminLogin: { limit: 5, windowSec: 900 },
   adminLoginGlobal: { limit: 60, windowSec: 3600 },
+  // Face ID / Touch ID sign-in: each try is two requests (options + check)
+  passkeyLogin: { limit: 20, windowSec: 900 },
 } as const;
 export type RuleName = keyof typeof RULES;
 

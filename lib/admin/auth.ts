@@ -1,9 +1,12 @@
 /**
- * SERVER ONLY. Simple owner login: one password (ADMIN_PASSWORD) and a
- * signed, httpOnly session cookie (ADMIN_SESSION_SECRET).
+ * SERVER ONLY. Owner login: the password (ADMIN_PASSWORD) or a passkey (lib/admin/passkeys.ts), then a signed,
+ * httpOnly session cookie (ADMIN_SESSION_SECRET) that carries the owner's session epoch, so "Sign out all other
+ * devices" can end every other session without changing the secret (which also signs the families' payment links).
  */
-import { createHmac, timingSafeEqual } from "crypto";
+import { timingSafeEqual } from "crypto";
 import { cookies } from "next/headers";
+import { currentSessionEpoch } from "./session-epoch";
+import { createSessionToken, readSessionToken } from "./session-token";
 
 export const SESSION_COOKIE = "th_admin";
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
@@ -15,10 +18,6 @@ function secret(): string | null {
 
 export function isAuthConfigured(): boolean {
   return Boolean(process.env.ADMIN_PASSWORD && secret());
-}
-
-function sign(value: string): string {
-  return createHmac("sha256", secret()!).update(value).digest("base64url");
 }
 
 function safeEqual(a: string, b: string): boolean {
@@ -33,19 +32,19 @@ export function checkPassword(input: string): boolean {
   return safeEqual(input, pw);
 }
 
-export function createSessionToken(): string {
-  const exp = String(Date.now() + SESSION_MAX_AGE * 1000);
-  return `${exp}.${sign(exp)}`;
+/** A new session cookie value at the owner's current epoch. */
+export async function newSessionToken(): Promise<string> {
+  return createSessionToken(secret()!, await currentSessionEpoch(), SESSION_MAX_AGE);
 }
 
-export function verifySessionToken(token: string | undefined): boolean {
-  if (!token || !secret()) return false;
-  const [exp, sig] = token.split(".");
-  if (!exp || !sig || Number(exp) < Date.now()) return false;
-  return safeEqual(sig, sign(exp));
+/** Cookie attributes for setting (maxAge = SESSION_MAX_AGE) or clearing (maxAge = 0) the session. */
+export function sessionCookieOptions(maxAge = SESSION_MAX_AGE) {
+  return { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "strict" as const, path: "/", maxAge, priority: "high" as const };
 }
 
 export async function isAdmin(): Promise<boolean> {
-  const store = await cookies();
-  return verifySessionToken(store.get(SESSION_COOKIE)?.value);
+  const s = secret();
+  if (!s) return false;
+  const session = readSessionToken((await cookies()).get(SESSION_COOKIE)?.value, s);
+  return session !== null && session.epoch === (await currentSessionEpoch());
 }

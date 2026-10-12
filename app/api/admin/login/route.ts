@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { allow, clientIp } from "@/lib/rate-limit";
-import { checkPassword, createSessionToken, isAuthConfigured, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/admin/auth";
+import { checkPassword, isAuthConfigured, newSessionToken, SESSION_COOKIE, sessionCookieOptions } from "@/lib/admin/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +26,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "That password isn't right." }, { status: 401, headers: NO_STORE });
   }
   const res = NextResponse.json({ ok: true }, { headers: NO_STORE });
-  res.cookies.set(SESSION_COOKIE, createSessionToken(), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: SESSION_MAX_AGE,
-    priority: "high",
-  });
+  res.cookies.set(SESSION_COOKIE, await newSessionToken(), sessionCookieOptions());
   return res;
 }
