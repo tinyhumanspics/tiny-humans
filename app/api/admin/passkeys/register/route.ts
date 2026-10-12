@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { RegistrationResponseJSON } from "@simplewebauthn/server";
 import { z } from "zod";
-import { isAdmin } from "@/lib/admin/auth";
+import { isAdmin, signedInRecently } from "@/lib/admin/auth";
 import { PasskeyError, completeRegistration, listPasskeys } from "@/lib/admin/passkeys";
 import { log } from "@/lib/log";
 import { TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
@@ -14,6 +14,9 @@ const body = z.object({ response: z.object({ id: z.string().min(8).max(1024), ty
 /** Owner only: step 2 of adding Face ID / Touch ID on this device. */
 export async function POST(req: Request) {
   if (!(await isAdmin())) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!(await signedInRecently())) {
+    return NextResponse.json({ error: "For your safety, sign out and sign back in, then add this device (within 15 minutes of signing in)." }, { status: 403 });
+  }
   const raw = await readJson(req, 16 * 1024);
   if (raw === TOO_LARGE) return tooLargeResponse();
   const parsed = body.safeParse(raw);

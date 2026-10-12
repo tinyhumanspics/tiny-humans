@@ -9,14 +9,14 @@ const NOW = Date.UTC(2026, 9, 12, 12);
 describe("owner session cookie", () => {
   test("a new session carries its epoch and expires after its max age", () => {
     const token = createSessionToken(SECRET, 3, 60, NOW);
-    expect(readSessionToken(token, SECRET, NOW)).toEqual({ epoch: 3 });
+    expect(readSessionToken(token, SECRET, NOW)).toEqual({ epoch: 3, expiresAt: NOW + 60_000 });
     expect(readSessionToken(token, SECRET, NOW + 61_000)).toBeNull();
   });
 
   test("cookies from before epochs existed read as epoch 0, so the upgrade signs nobody out", () => {
     const exp = String(NOW + 60_000);
     const legacy = `${exp}.${createHmac("sha256", SECRET).update(exp).digest("base64url")}`;
-    expect(readSessionToken(legacy, SECRET, NOW)).toEqual({ epoch: 0 });
+    expect(readSessionToken(legacy, SECRET, NOW)).toEqual({ epoch: 0, expiresAt: NOW + 60_000 });
   });
 
   test("a changed epoch, expiry or secret breaks the signature", () => {
@@ -24,6 +24,11 @@ describe("owner session cookie", () => {
     expect(readSessionToken(`${exp}.5.${sig}`, SECRET, NOW)).toBeNull();
     expect(readSessionToken(`${Number(exp) + 1}.0.${sig}`, SECRET, NOW)).toBeNull();
     expect(readSessionToken(createSessionToken(SECRET, 0, 60, NOW), "another-secret-0123456789", NOW)).toBeNull();
+  });
+
+  test("re-issuing with the original sign-in time keeps the original expiry", () => {
+    const signedInAt = NOW - 20 * 60_000;
+    expect(readSessionToken(createSessionToken(SECRET, 1, 60 * 60, signedInAt), SECRET, NOW)?.expiresAt).toBe(signedInAt + 60 * 60_000);
   });
 
   test("garbage is rejected", () => {

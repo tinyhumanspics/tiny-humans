@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/admin/auth";
+import { isAdmin, signedInRecently } from "@/lib/admin/auth";
 import { PasskeyError, registrationOptions } from "@/lib/admin/passkeys";
 import { log } from "@/lib/log";
 
@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 /** Owner only: step 1 of adding Face ID / Touch ID on this device. */
 export async function POST(req: Request) {
   if (!(await isAdmin())) return NextResponse.json({ error: "Sign in first." }, { status: 401 });
+  if (!(await signedInRecently())) {
+    return NextResponse.json({ error: "For your safety, sign out and sign back in, then add this device (within 15 minutes of signing in)." }, { status: 403 });
+  }
   try {
     return NextResponse.json(await registrationOptions(req), { headers: { "cache-control": "no-store" } });
   } catch (err) {

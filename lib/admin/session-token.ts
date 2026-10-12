@@ -18,18 +18,18 @@ export function createSessionToken(secret: string, epoch: number, maxAgeSec: num
   return `${payload}.${sign(secret, payload)}`;
 }
 
-/** The session's epoch when the cookie is genuine and unexpired, else null. */
-export function readSessionToken(token: string | undefined, secret: string, now = Date.now()): { epoch: number } | null {
+/** The session's epoch and expiry (ms) when the cookie is genuine and unexpired, else null. */
+export function readSessionToken(token: string | undefined, secret: string, now = Date.now()): { epoch: number; expiresAt: number } | null {
   if (!token || !secret) return null;
   const parts = token.split(".");
   if (parts.length === 2) {
     const [exp, sig] = parts;
-    return Number(exp) >= now && safeEqual(sig, sign(secret, exp)) ? { epoch: 0 } : null;
+    return /^\d+$/.test(exp) && Number(exp) >= now && safeEqual(sig, sign(secret, exp)) ? { epoch: 0, expiresAt: Number(exp) } : null;
   }
   if (parts.length === 3) {
     const [exp, epoch, sig] = parts;
     if (!/^\d+$/.test(exp) || !/^\d+$/.test(epoch) || Number(exp) < now) return null;
-    return safeEqual(sig, sign(secret, `${exp}.${epoch}`)) ? { epoch: Number(epoch) } : null;
+    return safeEqual(sig, sign(secret, `${exp}.${epoch}`)) ? { epoch: Number(epoch), expiresAt: Number(exp) } : null;
   }
   return null;
 }
