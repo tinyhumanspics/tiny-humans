@@ -167,7 +167,26 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       only (muted 4.3, blue 3.7, error 4.1, form hints 4.0, offer cutoff line 3.1 vs 4.5) — owner to decide after the
       preview. Gallery: `Claude outputs/theme-backgrounds/index.html` (12 pages + 10 emails × 4 themes × phone/desktop).
       Not themed by design: `app/global-error.tsx` (crash screen), the prototype-only email frame, the admin dialog scrim.
-      To ship: cherry-pick `5c493c1` only onto main (plus any readability decision), then the usual gates + deploy.
+      **Owner decisions (Oct 12, later):** Thanksgiving (b): lighten only its small text, cutoff line **white**,
+      drawings **"just a little lighter"** (3:1), tape/icons follow the same colors, Thanksgiving emails too (logo
+      unchanged). Values: chalkMuted `#cfd4c7`, cloudBlue `#94d7fd`, chalkError `#fdc5bd`, accent `#f69035`, accent2
+      `#ff8778` (accent3 unchanged); Thanksgiving-only CSS (`:global(html[data-theme="thanksgiving"])`): hints 70%
+      white, empty review stars 60% (not the selected yellow ones), `.seasonalCutoff` white. Email strip leaves
+      shifted by the same amount. `contrast.test.ts` mirrors those overrides and passes for all 4 themes.
+      Proof: Original/Christmas/New Year screenshots 44/44 pixel-identical and emails byte-identical before vs after.
+- [?] **Dark Green backdrop** (owner, Oct 12: "crucial … on all the areas"): forest green `#2e5a3d` (glow `#407050`,
+      edge `#23462f`, same OKLCH relation as Burgundy), id `darkGreen`, "Dark Green" / "Verde Oscuro", right after
+      Burgundy (`config/backdrops.ts` + both name maps in en/es.json; no migration: `booking_backdrops` stores ids
+      without a check). Shows in the booking-form picker, /backdrop, confirmation + 72 h reminder swatches, "Your
+      backdrops" lines, studio email, /admin lead, Outlook event (all read the one list).
+- [?] **Email swatch grid bug (live today):** one shared table + a short last row (7 backdrops = 3/3/1) stretched
+      the columns, squeezing the third swatch column into thin strips (Pink, Beige) on phones and desktop. Fix: one
+      table per row (`emails/components/blocks.tsx` `Swatches`). Only the swatch grid changes in the emails.
+      **Ship set (branch `ship/theme-backdrops`, from main):** `b338b36` board colors, `189b0cd` Thanksgiving
+      readability, `9cfd85f` Dark Green, `b5494a6` swatch fix (13 files). Preview-only switcher stays on
+      `wip/theme-backgrounds`. Waiting on the owner's OK to push.
+- **Launch target (owner, Oct 12, later):** "we need to launch this by November 15"; after these changes go live,
+  continue with the last phase(s).
 - [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
       scan (letter zones, not line boxes) found 20 live cases at 320–1024px in both languages, e.g. the sun on the "k"
       of "Questions parents ask" at iPhone 14 width with its heading heart alone on the next line, "Real homes, tiny
