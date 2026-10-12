@@ -14,6 +14,9 @@ import type { DiscountCode } from "@/lib/pricing/types";
 import { bundleInputSchema, codeInputSchema, type BundleInput, type CodeInput } from "@/lib/pricing/validation";
 import { prototypeUsageCount, readPrototypePricing, writePrototypePricing } from "@/lib/pricing/prototype";
 import { durationLabel } from "@/lib/pricing/engine";
+import { IS_PROTOTYPE, PROTOTYPE_STORAGE_KEY, readPrototypeSettings } from "./prototype";
+
+export { IS_PROTOTYPE, PROTOTYPE_STORAGE_KEY, readPrototypeSettings };
 
 /** What the owner area needs. Live site: HTTP API. Prototype: this browser only. */
 export interface AdminApi {
@@ -66,9 +69,7 @@ export interface AdminApi {
   deleteCode(id: string): Promise<DiscountCode[]>;
 }
 
-export const IS_PROTOTYPE = process.env.NEXT_PUBLIC_PROTOTYPE === "1";
 export const PROTOTYPE_PASSWORD = "tinyhumans";
-export const PROTOTYPE_STORAGE_KEY = "tinyhumans:prototype-settings";
 
 async function json<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
@@ -167,15 +168,6 @@ const firstIssue = (r: { success: boolean; error?: { issues: { message: string }
 
 const adminBundles = (bundles: Bundle[]): AdminBundle[] =>
   bundles.map((bundle) => ({ ...bundle, spanish: (bundle as Partial<AdminBundle>).spanish ?? null }));
-
-export function readPrototypeSettings(): SiteSettings | null {
-  try {
-    const raw = window.localStorage.getItem(PROTOTYPE_STORAGE_KEY);
-    return raw ? parseSettings(JSON.parse(raw), { allowDataUrls: true }) : null;
-  } catch {
-    return null;
-  }
-}
 
 const prototypeApi: AdminApi = {
   mode: "prototype",

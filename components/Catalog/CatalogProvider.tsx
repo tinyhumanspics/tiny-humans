@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Bundle } from "@/config/bundles";
 import { bookingRules } from "@/config/booking";
-import { IS_PROTOTYPE } from "@/lib/admin/client";
+import { IS_PROTOTYPE } from "@/lib/admin/prototype";
 import { todayInZone } from "@/lib/booking/timezone";
 import { sortBundles } from "@/lib/pricing/catalog";
 import { PRICING_EVENT, readPrototypePricing } from "@/lib/pricing/prototype";

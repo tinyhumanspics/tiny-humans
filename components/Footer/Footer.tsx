@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { IS_PROTOTYPE } from "@/lib/admin/client";
+import { IS_PROTOTYPE } from "@/lib/admin/prototype";
 import type en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";

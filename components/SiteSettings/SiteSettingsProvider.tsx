@@ -6,7 +6,7 @@ import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import type { AppLocale } from "@/i18n/config";
-import { IS_PROTOTYPE, readPrototypeSettings } from "@/lib/admin/client";
+import { IS_PROTOTYPE, readPrototypeSettings } from "@/lib/admin/prototype";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
