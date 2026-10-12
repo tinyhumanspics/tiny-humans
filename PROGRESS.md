@@ -150,6 +150,24 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
 ```
 
 ## Owner requests (outside the original brief)
+- [?] **Seasonal board colors** (owner, Oct 12: "only the background color… the whole site including admin but also
+      emails… only when we switch the theme"; Christmas `#7E2E2E`, Thanksgiving `#8E4318`, New Year `#172647`; keep the
+      chalkboard look and every drawing; preview before live). Owner answers: darker/lighter shades follow the color
+      (OKLCH, same ratios as the green: Christmas dark `#5a2020`/light `#9a3d3c`, Thanksgiving `#663012`/`#ad5626`,
+      New Year `#0e1931`/`#203158`; email page dark `#5a2423`/`#663318`/`#101a31`); readability judged after the
+      preview; owner emails (white InternalLayout) unchanged; phone browser bar (`theme-color`, now `generateViewport`)
+      follows; share picture (OG) stays green. **Built, NOT merged:** local branch `wip/theme-backgrounds` (worktree in
+      the session scratchpad): `5c493c1` = the feature (`config/themes.ts`, `app/layout.tsx`, `lib/email/theme.ts`,
+      `lib/email/assets.ts`: seasonal email logos re-composited from `public/brand/<theme>` layers at 440 px on the new
+      color — validated against the old green JPGs, mean |Δ| ≈ 4/255; doodle strips lifted off the green with each
+      theme's palette and put on the new color). `c2fab10` = **PREVIEW ONLY, never merge** (cookie theme switcher
+      `/preview-theme/<id>` when Blob isn't configured, also enables the matching seasonal offer). Checks: strict tsc,
+      lint 0 errors, 24/24 visual parity (Original unchanged), Original emails byte-identical (10 templates), seasonal
+      emails differ only in the two board colors + logo/strip. `tests/unit/contrast.test.ts` fails for Thanksgiving
+      only (muted 4.3, blue 3.7, error 4.1, form hints 4.0, offer cutoff line 3.1 vs 4.5) — owner to decide after the
+      preview. Gallery: `Claude outputs/theme-backgrounds/index.html` (12 pages + 10 emails × 4 themes × phone/desktop).
+      Not themed by design: `app/global-error.tsx` (crash screen), the prototype-only email frame, the admin dialog scrim.
+      To ship: cherry-pick `5c493c1` only onto main (plus any readability decision), then the usual gates + deploy.
 - [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
       scan (letter zones, not line boxes) found 20 live cases at 320–1024px in both languages, e.g. the sun on the "k"
       of "Questions parents ask" at iPhone 14 width with its heading heart alone on the next line, "Real homes, tiny
