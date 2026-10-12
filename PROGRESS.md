@@ -3,6 +3,32 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
+## ▶ LAUNCH — Friday Oct 16 (owner, Oct 12: "launch day is in 4 days … fastest way to get it done")
+Plan agreed in chat: launch-critical items first; Phases 8–10 (no visible change for families) start after launch
+(Phase 8 may be built on a branch before, merged only after launch). Code freeze on `main` the day before launch except fixes.
+- [ ] Owner, Stripe: restricted key → Refunds: Write; webhook → add `checkout.session.expired`.
+- [ ] Owner + Claude: one real $50 deposit booking → confirmation email, Outlook event, /admin "Deposit paid" → cancel
+      from the email link → Stripe shows the refund (~$1.75 Stripe fee is not returned).
+- [ ] Owner, /admin → Photos → Details: two photos are described by file name (screen readers/Google read these):
+      "IMG 7378" (home "Little moments" photo captioned "Ten Tiny Toes", also on the landing page) and "IMG 6087"
+      (About "Adrian & Alondra", also on the landing page).
+- [ ] Owner approval: privacy-policy line for Vercel Web Analytics + Speed Insights (EN + ES draft sent Oct 12; facts
+      from https://vercel.com/docs/analytics/privacy-policy and https://vercel.com/docs/speed-insights/privacy-policy:
+      no cookies, anonymous, visitor hash discarded after 24 h; the site sends only page views, URLs filtered by
+      `lib/tracking/safe-url.ts`).
+- [ ] Owner: Google Search Console + Business Profile (Google needs days to process; do before launch if possible).
+- [ ] Claude: confirm Vercel deploys `cb5f472` (passkey recent-sign-in fix). **Oct 12 finding:** the last Vercel
+      deployment posted to GitHub is `ea899e2` (18:10 UTC); `f2e329f`, `5084bab`, `eddf4b2`, `7088435` have none —
+      Vercel incident "Increased build and deployment failures" (Builds/Git Integrations partial outage) still open at
+      18:33 UTC. So the passkey sign-in is live but the recent-sign-in rule probably is not yet. If no deployment appears
+      after the incident: owner clicks Redeploy on the latest commit in the Vercel dashboard.
+- [x] Oct 12 read-only production sweep (`launch-sweep.mjs`, iPhone 14 WebKit + 1440 Chromium, Meta/Vercel analytics
+      blocked, no form submitted): 14 pages × 2 + 6 booking pages all 200 (404 page 404), 0 broken images, 0 sideways
+      scroll, one h1 each, 27 internal links OK; booking calendar loads for all 3 bundles in EN + ES. Desktop
+      "ERR_ABORTED _rsc" lines are Next.js prefetches that got 200 and were cancelled after reading (normal; client
+      navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
+      the "LCP" there is the chalk logo finishing its intro (by design, not changed).
+
 ## ▶ NEXT STEPS (Oct 12: Phase 6 nearly done — waiting on owner steps and a quiet CSP week)
 **State Oct 12 (Claude Code):** main = `f2e329f`. Live and checked on production: Phase 6 bug hunt (BUG-12…15), the
 owner's layout requests (About box + landing FAQ centered, no doodles on heading letters), the API audit (`5327dbe`),
