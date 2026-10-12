@@ -17,8 +17,7 @@ Gates at `f2e329f`: strict tsc, lint 0 errors/22 warnings, 42 units, 110 e2e (76
 **Passkeys live Oct 12:** Vercel published the passkey code during its incident without posting a GitHub deployment
 status; production answers `/api/admin/passkeys/available` (200) and `/api/admin/session/others` (405 on GET), and the
 live /admin JavaScript contains the new sign-in screens (password form unchanged). **The owner ran migration 0020 in
-Neon Oct 12.** Remaining owner step: (B) on the iPhone and on the Mac: /admin → sign in with the password → Settings → Sign-in → "Add Face ID /
-Touch ID on this device" (within 15 minutes of signing in). Lost phone: sign in with the password elsewhere → Remove it
+Neon Oct 12** and added Face ID on the iPhone and the Mac; the owner confirmed Oct 12 that it works. Lost phone: sign in with the password elsewhere → Remove it
 → "Sign out all other devices" (never rotate ADMIN_SESSION_SECRET: it signs every payment link).
 **CSP:** report-only since Oct 12. Around Oct 19, read Vercel logs for `csp` warnings (Vercel dashboard → Logs, or
 `npx vercel login` then `vercel logs` — the CLI on the Mac is logged out); if only expected noise, switch
@@ -54,29 +53,28 @@ Phase 5's core SEO is live: unique canonicals/Open Graph metadata, sitemap, robo
 noindex on the query-driven booking page. Photo descriptions were already editable in `/admin/photos`, so no migration
 was needed. Strict tsc/build/lint (0 errors/26 known warnings), 51 e2e and all 16 visual-parity tests passed. Vercel
 succeeded; production sitemap/robots, home canonical/OG/JSON-LD and `/book` noindex/canonical were checked read-only.
-**Deposit setting needs owner confirmation:** an Oct 9 read-only production check found deposits enabled at **$50**;
-Terms, About and Home Sweet Home all show the matching deposit copy. The remaining Stripe permissions/webhook and real
-refund test have not been confirmed in this chat. If the switch-on was not intentional, turn it off and save it in
-`/admin/pricing`. Deposits-off leads still support the automatic permanent payment link and existing sneak-peek/gallery
+**Deposit $50 is on intentionally** (owner confirmed Oct 12); Terms, About and Home Sweet Home show the deposit copy
+(rechecked read-only Oct 12). Left: the Stripe key permission + webhook event and one real refund test (NEXT STEPS 2). Deposits-off leads still support the automatic permanent payment link and existing sneak-peek/gallery
 email tools; no SQL was needed for that behavior.
 0. **Seasonal landing LIVE Oct 8:** in `/admin/seasonal`, enable the wanted offer(s) and save; in `/admin/theme`, choose
    the matching Thanksgiving or Christmas theme. Both are required, in either order. Once an offer is enabled, changing
    to its theme shows it automatically until the cutoff; changing away hides it without disabling it.
-1. **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
+1. **DONE Oct 12 — travel fee:** owner confirmed **30 free miles** is intended; production answered `freeMiles 30,
+   perMileCents 75, maxMiles 250` (read-only Oct 12). Earlier notes: **Owner: save the travel fee** in /admin → Availability → **Travel fee** (home-base ZIP, 30 free miles, $0.75 a
    mile, 250 farthest). Fees stay **off** until it's saved. **Oct 10 read-only check:** production
    `/api/booking/travel?zip=33139` answered `freeMiles 40, perMileCents 75, maxMiles 250`, so it looks saved (with 40
    free miles); owner to confirm 40 is intended. Then check that /home-sweet-home (FAQ "Which areas…") and
    /terms ("Packages and prices") show the numbers: saving revalidates both.
 2. **Deposit go-live / confirm current switch** (see "Owner requests" → Deposit). Owner approved the wording (Oct 7).
-   Production currently shows a $50 deposit (observed read-only Oct 9); owner must confirm that was intentional. Left:
+   Production shows a $50 deposit, on intentionally (owner, Oct 12). Left:
    (a) **DONE Oct 8:** owner ran `drizzle/0014_booking_deposits.sql` in Neon; (b) **owner, in Stripe:** restricted key → **Refunds: Write**;
-   webhook endpoint → add **`checkout.session.expired`**; (c) owner confirms the $50 amount/switch in /admin → **Pricing
-   & Promotions → Deposits** (or turns it back off); (d) one real booking with the owner (pay the deposit → event/emails/
+   webhook endpoint → add **`checkout.session.expired`** (owner asked Oct 12 what is left; steps sent); (c) **DONE Oct 12:**
+   owner confirmed the $50 deposit is on intentionally; (d) one real booking with the owner (pay the deposit → event/emails/
    admin → cancel online → refund in Stripe), then check /home-sweet-home, /about and /terms show the deposit wording.
 3. **1g production verification** with the owner (brief section 4: test event code → one real booking from
    `/home-sweet-home` → Events Manager, booking row source, emails, Outlook → cancel → remove the code), then the ads
    message (landing URL `https://www.tinyhumans.photography/home-sweet-home`, UTM template, optimize for `Schedule`).
-   Checklist sent Oct 7; no results yet.
+   Checklist sent Oct 7. **Owner reported Oct 12: 1g is done and working.**
 4. **Rest of the brief, in the owner's order (Oct 7 night: "time-sensitive first"; ship straight to main):**
    (a) **Phase 4 DONE Oct 8:** extra babies + editable seasonal landing offers. (b) **Phase 5 SEO core DONE Oct 8**;
    owner Search Console + Business Profile steps remain. (c) **Phase 3 DONE Oct 10: Spanish published**;
@@ -110,15 +108,14 @@ Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue.
 State (Oct 12): main = f2e329f. Live and checked: Phase 6 bug hunt (BUG-12…15), owner layout requests, API audit,
 accessibility pass, report-only CSP (real Meta Pixel clean), lighter public pages (home 323 → 225 KB gzipped JS).
 Passkey sign-in (5c52b19, cb5f472) is live (Vercel deployed it during its Oct 12 incident without a GitHub status)
-and the owner ran migration 0020 in Neon. Not on main yet: nothing.
+and the owner ran migration 0020 and added Face ID on iPhone + Mac (works). Owner confirmed Oct 12: 1g done,
+30 free travel miles intended (live), $50 deposit on intentionally. Not on main yet: nothing.
 
-Next: ask whether Face ID was added on the iPhone/Mac (Settings → Sign-in) and whether it works. Then Phase 8: structure move, route groups, split Booking.tsx, library
-evaluation, remove config/bundles.ts — visual parity required. Research current official docs first.
+Next: Phase 8: structure move, route groups, split Booking.tsx, library evaluation, remove config/bundles.ts — visual parity required. Research current official docs first.
 Time-sensitive: CSP report-only since Oct 12 → read `csp` warnings in Vercel logs ~Oct 19, then enforce;
 DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: add Face ID on iPhone + Mac (Settings → Sign-in, within 15 min of signing in);
-confirm 40 free travel miles; confirm the $50 deposit + Stripe Refunds: Write + checkout.session.expired + refund test;
-1g Meta check; Search Console/Business Profile; Analytics privacy line; /portfolio; Terms review; About alt "IMG 6087".
+Waiting on the owner: Stripe restricted key Refunds: Write + webhook event checkout.session.expired + one real
+deposit refund test; Search Console/Business Profile; Analytics privacy line; /portfolio; Terms review; About alt "IMG 6087".
 Watch out: Vercel CLI on the Mac is logged out. Full passkey flow needs scripts/local-db + Chromium virtual
 authenticator (CI covers only the pre-migration state). Rate limits are per visitor address: e2e projects send their
 own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it signs payment links).
@@ -268,16 +265,16 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g waits on the owner; **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
+- **Now:** Phase 1g done (owner, Oct 12); **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
   the backlog). Phase 3 implementation is complete: the paired catalogs and gated `/es` tree cover customer emails,
   the public/customer journey, seasonal offers, photos, prompts, SEO alternates and locale-aware customer links. The
   owner published Spanish Oct 10 (`/admin/settings` can hide it again).
   Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
-  live and production currently shows it enabled at $50, awaiting owner confirmation plus the remaining Stripe
-  permission/webhook/refund test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
+  live and on at $50 (owner confirmed Oct 12); left: the Stripe key permission, webhook event and one real refund
+  test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
   **Phase 6 (Oct 10–12) is done except time/owner-gated items:** second bug hunt, API audit, accessibility pass,
   report-only CSP, lighter public pages and passkey sign-in are built; left: CSP enforce after a quiet week (~Oct 19),
-  owner runs migration 0020 + adds devices, an optional VoiceOver listen-through with the owner. Phase 7 is complete
+  an optional VoiceOver listen-through with the owner. Phase 7 is complete
   apart from React Compiler warnings, which move to Phase 8. Next: Phase 8 (structure move, route groups, split
   Booking.tsx, library evaluation, remove `config/bundles.ts`), visual parity required.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
@@ -337,7 +334,8 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       real next open dates, reviews hidden. [?] owner approval of copy from screenshots
 - [~] 1f Intro on landing: skipped by default; `?intro=short` (logo slides in) / `?intro=full` previews. [?] owner pick
 - [~] 1f Metadata (title, description, canonical, OG text; reuses the brand OG image)
-- [ ] 1g Production verification with owner (test event code → one real booking → verify → cancel → remove code)
+- [x] 1g Production verification with owner (test event code → one real booking → verify → cancel → remove code);
+      owner reported Oct 12 that it is done and working.
 
 ## Phase 2 — Show rate (next 24–48h)
 - [x] 2a React Email + Resend (Oct 7): `react-email` 6.11 templates in `emails/` (`components/ChalkLayout`, `blocks`,
@@ -751,7 +749,7 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       travel lookups didn't catch database errors: now logged + JSON 500. 5 unit tests + 1 e2e (413s and a normal
       quote). Strict tsc, lint 0 errors, 17 units, 106 e2e, 24 visual; Vercel + Actions green; production read-only
       smoke OK.
-- [?] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
+- [x] Owner login research + upgrade (passkeys/2FA, logout everywhere, lockout, recovery doc). Existing password/cookie
       flow is now origin-checked, bounded and no-store; choosing and implementing the replacement login/recovery model
       remains.
       **Oct 12: owner chose Face ID / Touch ID (passkeys), password kept as backup.** Built: `lib/admin/passkeys.ts`
