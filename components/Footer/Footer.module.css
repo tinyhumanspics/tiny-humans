@@ -54,7 +54,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-  margin-top: clamp(28px, 5vw, 40px);
   padding-top: 18px;
   border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 10%, transparent);
   font-family: var(--font-chalk);

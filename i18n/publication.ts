@@ -1,8 +1,10 @@
 import "server-only";
 import { cache } from "react";
+import { headers } from "next/headers";
 import { getSiteSettings } from "@/lib/settings/server";
 import { getPublicCatalog, type PublicCatalog } from "@/lib/pricing/server";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
+import { PUBLIC_LOCALE_HEADER, type AppLocale } from "./config";
 import { spanishOwnerCopyIssues } from "./publication-audit";
 
 export { spanishOwnerCopyIssues } from "./publication-audit";
@@ -46,4 +48,13 @@ export const getSpanishPublication = cache(async (): Promise<SpanishPublication>
     published: Boolean(readiness.catalog) && readiness.issues.length === 0,
     ...readiness,
   };
+});
+
+/**
+ * The language this request renders in (root layout + site shell). Publication is all-or-nothing: an /es address
+ * renders the English shell unless the live Spanish publication passes.
+ */
+export const getPublicLocale = cache(async (): Promise<AppLocale> => {
+  const requested = (await headers()).get(PUBLIC_LOCALE_HEADER) === "es";
+  return requested && (await getSpanishPublication()).published ? "es" : "en";
 });

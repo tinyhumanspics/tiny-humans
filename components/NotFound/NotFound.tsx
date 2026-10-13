@@ -1,23 +1,12 @@
-import type { Metadata } from "next";
+import type en from "@/messages/en.json";
 import ChalkBox from "@/components/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import { bundlesHref } from "@/config/booking";
+import styles from "./NotFound.module.css";
 import { cn } from "@/lib/cn";
-import es from "@/messages/es.json";
-import en from "@/messages/en.json";
-import { getSpanishPublication } from "@/i18n/publication";
-import styles from "../not-found.module.css";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const messages = (await getSpanishPublication()).published ? es : en;
-  return { title: messages.errors.notFound.metaTitle, robots: { index: false, follow: false } };
-}
-
-export default async function NotFound() {
-  const published = (await getSpanishPublication()).published;
-  const t = (published ? es : en).errors.notFound;
-  const locale = published ? "es" : "en";
+/** The chalkboard 404 (English and Spanish 404 pages). */
+export default function NotFound({ messages: t, homeHref, bundlesHref }: { messages: typeof en.errors.notFound; homeHref: string; bundlesHref: string }) {
   return (
     <main id="top" className={cn("container", styles.page)}>
       <div className={styles.doodles} aria-hidden="true">
@@ -29,8 +18,8 @@ export default async function NotFound() {
         <h1 className={cn(styles.title, "chalk")}>{t.title}</h1>
         <p className={cn(styles.body, "chalk-soft")}>{t.body}</p>
         <div className={styles.actions}>
-          <ChalkButton href={published ? "/es" : "/"} variant="solid" seed={405}>{t.home}</ChalkButton>
-          <ChalkButton href={bundlesHref(null, locale)} variant="outline" seed={406}>{t.bundles}</ChalkButton>
+          <ChalkButton href={homeHref} variant="solid" seed={405}>{t.home}</ChalkButton>
+          <ChalkButton href={bundlesHref} variant="outline" seed={406}>{t.bundles}</ChalkButton>
         </div>
       </ChalkBox>
     </main>

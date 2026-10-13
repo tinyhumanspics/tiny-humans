@@ -1,26 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { headers } from "next/headers";
 import localFont from "next/font/local";
 import { getTheme, themeCssVariables } from "@/config/themes";
 import { getSiteSettings } from "@/lib/settings/server";
-import { SiteSettingsProvider } from "@/components/SiteSettings/SiteSettingsProvider";
-import { CatalogProvider } from "@/components/Catalog/CatalogProvider";
-import { getPublicCatalog } from "@/lib/pricing/server";
-import { publicDeposits } from "@/lib/deposit/server";
-import { todayInZone } from "@/lib/booking/timezone";
-import { bookingRules } from "@/config/booking";
 import ChalkFilters from "@/components/ChalkFilters/ChalkFilters";
-import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
-import Header from "@/components/Header/Header";
-import Footer from "@/components/Footer/Footer";
-import MetaPixel from "@/components/layout/MetaPixel";
 import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
 import { siteMetadata } from "@/lib/seo/metadata";
-import en from "@/messages/en.json";
-import es from "@/messages/es.json";
-import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
-import { getSpanishPublication } from "@/i18n/publication";
+import { getPublicLocale } from "@/i18n/publication";
 import "@/styles/globals.css";
 import { cn } from "@/lib/cn";
 
@@ -46,18 +32,12 @@ const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop"
  */
 const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var q=p==='/es'?'/':(p.indexOf('/es/')===0?p.slice(3):p);var n=${JSON.stringify(NO_INTRO_PATHS)};for(var k=0;k<n.length;k++){if(q===n[k]||q.indexOf(n[k]+'/')===0)return;}var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(q.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
+/**
+ * The one root layout: the document (html/body), fonts, theme colors, intro script and viewport. The site's shell
+ * (providers, header, footer: `components/layout/SiteShell`) is drawn by the (site) and (admin) layouts and the 404.
+ */
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const requestedLocale = (await headers()).get(PUBLIC_LOCALE_HEADER) === "es" ? "es" : "en";
-  // Publication is all-or-nothing: an incomplete live translation always renders the English shell instead.
-  const [settings, englishCatalog, spanishPublication, deposits] = await Promise.all([
-    getSiteSettings(),
-    getPublicCatalog(),
-    getSpanishPublication(),
-    publicDeposits(),
-  ]);
-  const locale = requestedLocale === "es" && spanishPublication.published ? "es" : "en";
-  const messages = locale === "es" ? es : en;
-  const catalog = locale === "es" ? spanishPublication.catalog! : englishCatalog;
+  const [settings, locale] = await Promise.all([getSiteSettings(), getPublicLocale()]);
   const theme = getTheme(settings.themeId);
   return (
     <html
@@ -76,16 +56,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <ChalkFilters />
-        <SiteSettingsProvider initial={settings} locale={locale}>
-        <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)} deposits={deposits}>
-          <SeasonalDecor />
-          {/* Header lives in the layout so the logo intro never replays between pages. */}
-          <Header messages={messages.header} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
-          {children}
-          <Footer messages={messages.footer} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
-          <MetaPixel />
-        </CatalogProvider>
-        </SiteSettingsProvider>
+        {children}
         {/* only on Vercel: its /_vercel/* script routes don't exist locally */}
         {process.env.VERCEL ? <VercelInsights /> : null}
       </body>
