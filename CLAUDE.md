@@ -61,8 +61,8 @@ npm run test:e2e     # Playwright booking-funnel tests (mock provider, productio
 New code goes here from Phase 1 on; existing code moves in Phase 8.
 ```
 app/
-  (site)/            public pages (+ [locale] segment if the i18n setup needs one)   [Phase 8]
-  (admin)/admin/     owner area with its own root layout                              [Phase 8]
+  (site)/            public pages + /es; its layout draws the site shell              [done Oct 12]
+  (admin)/admin/     owner area; nested layout, same shell until Phase 10             [done Oct 12]
   api/               route handlers
 components/
   ui/                chalk-styled primitives (buttons, inputs, cards, badges, dialogs)
@@ -83,8 +83,12 @@ Rules: server-only modules `import "server-only"`; features don't reach into eac
 feature's `index.ts`); use the `@/` alias; customer-facing text lives in `messages/` (new code now, all code by Phase 3).
 Route groups (Phase 8 decision, Oct 12, from the Next.js docs): ONE top-level root layout (html/body/fonts, theme CSS
 variables on `<html>`, intro script, viewport) with nested `(site)` and `(admin)` layouts, not multiple root layouts (no
-full reloads; the 404 keeps working). `app/not-found.tsx` renders inside the root layout only, so it draws the site
-shell (Header/Footer) itself.
+full reloads; the 404 keeps working). The shell (providers, SeasonalDecor, Header, Footer, MetaPixel) is
+`components/layout/SiteShell.tsx`. `app/not-found.tsx` (unknown addresses) renders inside the root layout only, so
+it draws SiteShell itself; `notFound()` inside the site needs `app/(site)/not-found.tsx` (no shell), otherwise the
+inherited root 404 renders inside the (site) layout = two headers. CSS order is root layout → group layout → page:
+where a global class (`globals.css`, e.g. `.container`) and a module class on one element set the same property,
+moving an import between layouts flips which wins (Oct 12: footer copyright margin), so don't set both.
 
 ## Environment / how this repo is worked on
 - **On the owner's Mac (VS Code + Claude extension)** — the normal setup from Oct 7, 2026: full network access,
@@ -128,7 +132,9 @@ shell (Header/Footer) itself.
   (`isOverlapViolation`). Never `drizzle-kit push` (it would drop the column).
 - The project lives on the iCloud-synced Desktop: Finder/iCloud " 2"/" 3" duplicates appear (seen Oct 7 in
   `.next/types/*.d 3.ts`, and as old copies of a regenerated migration). iCloud can also bring back files git just
-  removed (after `git switch`): compare them with git before deleting. `tsconfig.json` excludes `.next/**/* ?.ts` so they no longer break `npm run typecheck`;
+  removed (after `git switch` or `git stash`; Oct 12 a stash left 25 " 2" copies of moved files): compare them
+  with git before deleting. Never stash/switch here for before/after builds: use `git worktree add` in the
+  scratchpad + `cp -Rc node_modules` (APFS clone, seconds). `tsconfig.json` excludes `.next/**/* ?.ts` so they no longer break `npm run typecheck`;
   duplicates inside `.next/` are safe to delete; ask before touching any elsewhere.
 - Links in customer emails carry a 256-bit token; only its hash is stored (`bookings.cancel_token_hash` for the booking's
   own manage link, `booking_emails.link_token_hash` per reminder/after-session email). Which pages accept which kind

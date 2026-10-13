@@ -6,11 +6,12 @@ Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 ## ▶ LAUNCH — by Nov 15 (owner, Oct 12 late: "we need to launch this by November 15"; earlier that day "in 4 days")
 Launch-critical owner items below. Phase 8 runs meanwhile in small invisible slices (full gates + parity each). Code
 freeze on `main` the day before launch except fixes.
-- [ ] Owner, Stripe (guide sent Oct 12, checked against docs.stripe.com/keys + /webhooks): dashboard.stripe.com/apikeys
+- [x] **Done (owner, Oct 12 late: "All the steps of stripe has been successfully done").** Owner, Stripe (guide sent Oct 12, checked against docs.stripe.com/keys + /webhooks): dashboard.stripe.com/apikeys
       → Restricted keys → the site's `rk_live_` key → ⋯ → Edit key → **Refunds: Write** (Checkout Sessions stays Write;
       the key value doesn't change). dashboard.stripe.com/webhooks → endpoint `/api/stripe/webhook` → Edit destination
       → add **`checkout.session.expired`** (keep `checkout.session.completed`; the signing secret doesn't change).
-- [ ] Owner + Claude: one real $50 deposit booking → confirmation email, Outlook event, /admin "Deposit paid" → cancel
+- [~] **Owner, Oct 12 late: done, refund issued in Stripe** (it reaches the card in 5–10 business days). Still open: the
+      Gmail-app light/dark check below (not mentioned). Owner + Claude: one real $50 deposit booking → confirmation email, Outlook event, /admin "Deposit paid" → cancel
       from the email link → Stripe shows the refund (~$1.75 Stripe fee is not returned). In the same test, open the
       family + studio emails in the **Gmail app in light and dark mode** (color-scheme fix `dc597da`), ideally with a
       @gmail.com address (Gmail's fix may need Google-hosted accounts).
@@ -36,7 +37,10 @@ freeze on `main` the day before launch except fixes.
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Oct 12 late: Phase 8 started; owner Stripe/test steps open; quiet CSP week)
+## ▶ NEXT STEPS (Oct 12 night: Phase 8 slices 1–2 live; Stripe done; quiet CSP week)
+**Update Oct 12 night (Claude Code):** main = `a3732e9` = Phase 8 slice 2 (route groups + SiteShell), Vercel + CI
+green, production smoke-tested. The owner finished the Stripe steps and the refund test (refund reaches the card in
+5–10 business days) and approved the seasonal themes as they are ("it looks great"). Next: slice 3.
 **State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
 live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
 link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
@@ -137,20 +141,20 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 12 late): main = dc597da, live and smoke-tested: Dark Green backdrop + email swatch fix; deposit follow-up
-(owner deposit link / re-hold, "Deposit not paid" alert, same-family retry, deposit wording on cards, /book, review);
-seasonal board colors + Thanksgiving readability (inactive until the owner picks a theme); Phase 8 slice 1 (prototype
-removed); baby-only notes example; emails keep their colors in dark mode (color-scheme light only).
+State (Oct 12 night): main = a3732e9, live and smoke-tested: Phase 8 slices 1 (prototype removed) and 2 (route groups:
+one root layout, app/(site) + app/(admin)/admin layouts drawing components/layout/SiteShell, three 404 files using
+components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, seasonal board colors (owner: "looks
+great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 2, route groups: one root layout (html/body/fonts/theme vars/intro/viewport) + nested (site) and
-(admin) layouts; the 404 pages render the site shell themselves. Then slices 3-7 (PROGRESS.md → Phase 8). Full gates
-+ 24/24 visual parity per slice. Docs already read Oct 12 (Research notes → Phase 8).
+Next: Phase 8 slice 3 (move code into components/ui|layout|form|chalk + features/*, @/ imports), then slices 4-7
+(PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
+(before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
 Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
 DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: Stripe Refunds: Write + checkout.session.expired, then the real $50 test together (also check the
-emails in the Gmail app, light + dark); privacy line for Vercel Analytics (draft sent); photo descriptions "IMG 7378" /
-"IMG 6087"; Search Console/Business Profile; /portfolio; Terms review.
+Waiting on the owner: check the booking emails in the Gmail app, light + dark (color-scheme fix); privacy line for
+Vercel Analytics (draft sent); photo descriptions "IMG 7378" / "IMG 6087"; Search Console/Business Profile;
+/portfolio; Terms review.
 Watch out: stage exact paths and check `git show --stat HEAD` before pushing (Oct 12 incident). Production bundles have
 an empty `people` line (who joins lives in features). Seasonal email images are generated (no script in the repo).
 Vercel CLI on the Mac is logged out.
@@ -234,7 +238,8 @@ Vercel CLI on the Mac is logged out.
       **Themes shipped Oct 12** as `8ff5143` + `d5a6fbf` (cherry-picks onto `f29618c`): strict tsc, lint 0 errors, 42
       units (contrast passes all 4 themes), build, 24/24 visual, 110 e2e, Original emails byte-identical (12 templates);
       Vercel + CI success; production still Original (`#183a22`, theme-color meta `#183a22`). The colors change only when
-      the owner picks a theme in /admin → Theme.
+      the owner picks a theme in /admin → Theme. **Owner, Oct 12 late:** hadn't noticed the themes were live; after
+      seeing them: "it looks great". No changes; switching stays manual in /admin → Theme (no schedule, no New Year offer).
 - **Launch target (owner, Oct 12, later):** "we need to launch this by November 15"; after these changes go live,
   continue with the last phase(s).
 - [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
@@ -390,7 +395,8 @@ Vercel CLI on the Mac is logged out.
   **Phase 6 (Oct 10–12) is done except time/owner-gated items:** second bug hunt, API audit, accessibility pass,
   report-only CSP, lighter public pages and passkey sign-in are live (owner added Face ID Oct 12); left: CSP enforce
   after a quiet week (~Oct 19), an optional VoiceOver listen-through. Phase 7 is complete apart from React Compiler
-  warnings (moved to Phase 8). **Phase 8 started Oct 12:** slice 1 (prototype removal) is live; next slices below.
+  warnings (moved to Phase 8). **Phase 8 started Oct 12:** slices 1 (prototype removal) and 2 (route groups, `a3732e9`)
+  are live; next slices below.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -978,12 +984,24 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       HTTP-only, `AdminApi.mode` gone), prototype branches in Footer / CatalogProvider / SiteSettingsProvider /
       AdminApp / Booking, the mock provider's browser storage (server memory only). **Kept:** mock mode
       (`BOOKING_PROVIDER=mock`) and its confirmation-email preview (`MockPreviews`, tested by e2e).
-- [ ] Slice 2: route groups. Decision (official docs): **one top-level root layout** (html, body, fonts, theme CSS
-      variables on `<html>`, intro script, generateViewport) + nested `app/(site)/layout.tsx` (SiteSettings/Catalog
-      providers, SeasonalDecor, Header, Footer, MetaPixel) and `app/(admin)/admin/layout.tsx`. Not multiple root
-      layouts (no full reloads, the 404 keeps working). `app/not-found.tsx` and `app/es/not-found.tsx` render only
-      inside the root layout, so they must render the site shell (Header/Footer) themselves to stay identical. The
-      intro must never replay between site pages; /admin skips it (path check in the intro script stays).
+- [x] **Slice 2: route groups — LIVE Oct 12 (`a3732e9`).** One root layout (`app/layout.tsx`: html/body, fonts,
+      theme CSS variables, intro script, generateViewport, ChalkFilters, Vercel Insights) + `app/(site)/layout.tsx`
+      (public pages and /es) and `app/(admin)/admin/layout.tsx`, both drawing `components/layout/SiteShell.tsx`
+      (SiteSettings/Catalog providers, SeasonalDecor, Header, Footer, MetaPixel; /admin keeps the site shell until
+      Phase 10). `getPublicLocale()` (`i18n/publication.ts`) decides the language for both. 404s: `app/not-found.tsx`
+      (unknown addresses, draws SiteShell itself), `app/(site)/not-found.tsx` (`notFound()` inside the site, e.g. the /es
+      gate) and `app/(site)/es/not-found.tsx`, all rendering `components/NotFound`. **Found while checking:** (1) nested
+      segments inherit the root 404, so without `(site)/not-found.tsx` the hidden-Spanish 404 drew two headers/footers;
+      (2) CSS order changed (root layout CSS → group layout CSS → page): the footer copyright row's `margin-top`, always
+      overridden by the global `.container { margin: 0 auto }` before, started to apply (+28 px phone / +40 px desktop).
+      Removed the dead declaration; audited every element where the moved stylesheets (Header, Footer,
+      LanguageSwitcher, Reveal, SeasonalDecor, TinyHumansLogo) meet a global class: no other tie. **Checks:** strict
+      tsc, lint 0 errors/22 warnings, 44 units, build (route table identical), 24/24 visual, 110 e2e (76 skips);
+      computed CSS of every element on 17 pages × iPhone 14/1440 identical to the old build (only React's generated
+      logo-mask ids differ); 42 extra screenshots (404s, /about, landing, /es, admin pages) identical; Spanish published
+      (local DB): 18 screenshots + HTML identical; intro plays once, header element survives client navigation; Vercel +
+      CI success; production read-only smoke: 19 pages × WebKit iPhone/Chromium 1440 OK (status, one header/footer/main,
+      lang, copyright margin 0, `(site)`/`(admin)` segments served), intro OK.
 - [ ] Slice 3: move existing code into the target folders (components/ui|layout|form|chalk, features/*), `@/` imports.
 - [ ] Slice 4: split `components/Booking/Booking.tsx` (~1,100 lines) into step components + a state hook.
 - [ ] Slice 5: `config/bundles.ts` → `Bundle` type in `lib/pricing/types.ts`; the built-in bundles become a test/dev
@@ -1063,6 +1081,13 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
+- **BUG-16 (low, open; found Oct 12 in Phase 8 slice 2, same before and after it)** 404 tab titles: with Spanish
+  published, `/es/<unknown>` shows the default English site title instead of "Página no encontrada"
+  (`app/(site)/es/not-found.tsx` generateMetadata is not applied); with Spanish hidden, `/es/about` etc. return 404
+  but keep the Spanish page's own `<title>`. Status codes, noindex and the page itself are correct.
+- **Oct 12 iCloud + git stash (no harm):** stashing the slice-2 moves for a before/after build made iCloud restore 25
+  " 2" copies of the moved files (all byte-identical to the session's own files; moved to the session scratchpad).
+  Lesson (CLAUDE.md/AGENTS.md): before/after builds use a `git worktree` in the scratchpad, never stash in the folder.
 - **Oct 12 push incident (fixed in minutes, production never affected):** `cf73bdc` contained only the four deleted
   prototype files: `git add -A -- … hooks …` failed on the missing `hooks` path (stderr hidden), so the edits weren't
   staged. Vercel's build of `cf73bdc` failed and kept serving the previous deployment; `ac31f5c` pushed the tested
