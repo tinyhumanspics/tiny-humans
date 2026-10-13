@@ -150,7 +150,7 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
 ```
 
 ## Owner requests (outside the original brief)
-- [?] **Deposit follow-up + clearer deposit wording** (owner, Oct 12: a family's wifi failed at the deposit step;
+- [x] **Deposit follow-up + clearer deposit wording — LIVE Oct 12 (`f29618c`, owner: "Looks great, you can push it")** (owner, Oct 12: a family's wifi failed at the deposit step;
       /admin said "Waiting for deposit" and nobody got an email). Findings: by design no emails go out while pending;
       deleting a waiting lead closes its page silently; without Stripe's `checkout.session.expired` event the release
       waits for the sweep (calendar loads / daily cron); a family retrying the same time was blocked by its own hold.
@@ -166,8 +166,12 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       (cached, tags `deposit` + `catalog`, expired on deposit save) → `CatalogProvider.depositFor` → `BundleCard`.
       No migration (booking_emails kinds `deposit_link` are free text). Checks: strict tsc, lint 0 errors/22 warnings,
       42 units; local Outlook-mode end-to-end (`deposit-flow-checks.mjs`, fake Graph/Resend/Stripe): 36/36. Review:
-      `Claude outputs/deposit-link/index.html`. Waiting on the owner's OK; then visual parity + e2e + push.
-- [?] **Seasonal board colors** (owner, Oct 12: "only the background color… the whole site including admin but also
+      `Claude outputs/deposit-link/index.html`. Shipped after the owner's OK: strict tsc, lint 0 errors, 42 units,
+      build, 24/24 visual (deposits off in the test build), 110 e2e; Vercel success; production read-only: /bundles and
+      the landing show the deposit line on all 3 cards (EN + ES), /book's bundle box shows it, the new admin action
+      answers 401 unsigned, 7 pages 200. Home has no bundle cards (links to /bundles). Needs the Stripe
+      `checkout.session.expired` event for on-time releases/alerts (otherwise the sweep: calendar loads, /admin, daily cron).
+- [x] **Seasonal board colors — LIVE Oct 12 (`8ff5143`, `d5a6fbf`; owner approved: "move forward with the themes")** (owner, Oct 12: "only the background color… the whole site including admin but also
       emails… only when we switch the theme"; Christmas `#7E2E2E`, Thanksgiving `#8E4318`, New Year `#172647`; keep the
       chalkboard look and every drawing; preview before live). Owner answers: darker/lighter shades follow the color
       (OKLCH, same ratios as the green: Christmas dark `#5a2020`/light `#9a3d3c`, Thanksgiving `#663012`/`#ad5626`,
@@ -208,6 +212,10 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       Burgundy, board still `#183a22`, 7 pages 200. **Still on hold, not live:** the seasonal board colors
       (`5c493c1`) and the Thanksgiving readability commit (`5775ead`) on local branch `wip/theme-backgrounds`
       (cherry-pick both when the owner approves; Dark Green + grid fix are already on main).
+      **Themes shipped Oct 12** as `8ff5143` + `d5a6fbf` (cherry-picks onto `f29618c`): strict tsc, lint 0 errors, 42
+      units (contrast passes all 4 themes), build, 24/24 visual, 110 e2e, Original emails byte-identical (12 templates);
+      Vercel + CI success; production still Original (`#183a22`, theme-color meta `#183a22`). The colors change only when
+      the owner picks a theme in /admin → Theme.
 - **Launch target (owner, Oct 12, later):** "we need to launch this by November 15"; after these changes go live,
   continue with the last phase(s).
 - [x] **Keep chalk doodles off heading letters on every screen size** (owner, Oct 10: "Please do"; `f5dd838`). A strict
