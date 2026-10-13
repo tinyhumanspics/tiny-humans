@@ -8,7 +8,12 @@ const C = INTERNAL_COLORS;
 export function InternalLayout({ banner, bannerBg, bannerFg, summary, rows, footer }: { banner: string; bannerBg: string; bannerFg: string; summary: ReactNode; rows: [string, string][]; footer: ReactNode }) {
   return (
     <Html>
-      <Head />
+      {/* fixed colors: dark-mode email apps keep this white layout as designed */}
+      <Head>
+        <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
+        <style dangerouslySetInnerHTML={{ __html: ":root{color-scheme:light only;supported-color-schemes:light only}" }} />
+      </Head>
       <body style={{ margin: 0, padding: 0, background: "#f2f2f2" }}>
         <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{ padding: "20px 10px", background: "#f2f2f2" }}>
           <tr>

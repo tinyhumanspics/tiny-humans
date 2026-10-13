@@ -6,7 +6,9 @@ import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import type { EmailTheme } from "@/lib/email/theme";
 import { BODY_FONT } from "./blocks";
 
+// Our colors are fixed: dark-mode email apps (Gmail apps, Apple Mail) must show them as designed, never repaint them.
 const HEAD_CSS = `@import url('https://fonts.googleapis.com/css2?family=Schoolbell&display=swap');
+:root{color-scheme:light only;supported-color-schemes:light only}
 @media (max-width:620px){ .th-pad{padding-left:20px!important;padding-right:20px!important} .th-h1{font-size:28px!important} }`;
 
 /**
@@ -25,8 +27,8 @@ export function ChalkLayout({ theme: t, images, locale, preheader, children }: {
     <Html lang={locale}>
       <Head>
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <meta name="color-scheme" content="dark" />
-        <meta name="supported-color-schemes" content="dark" />
+        <meta name="color-scheme" content="light only" />
+        <meta name="supported-color-schemes" content="light only" />
         <title>{site.name}</title>
         <style dangerouslySetInnerHTML={{ __html: HEAD_CSS }} />
       </Head>
