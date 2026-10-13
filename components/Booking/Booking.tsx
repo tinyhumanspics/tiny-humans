@@ -38,6 +38,7 @@ import ChoiceCard from "./ChoiceCard";
 import StepTracker from "./StepTracker";
 import Confirmation from "./Confirmation";
 import { rememberDepositReturn } from "@/lib/booking/deposit-return";
+import { includesSiblings } from "@/lib/booking/bundle-traits";
 import type { DepositOffer } from "@/lib/deposit/types";
 import { fill } from "@/lib/email/messages";
 import Calendar from "./Calendar";
@@ -1073,8 +1074,8 @@ function DetailsForm({
           rows={3}
           value={contact.notes}
           onChange={(e) => onChange("notes", e.target.value)}
-          // siblings only appear in the example when this bundle includes them (its "people" line, edited in /admin)
-          placeholder={/sibling|herman/i.test(bundle.people) ? messages.notes.placeholder : messages.notes.placeholderBabyOnly}
+          // siblings only appear in the example when this bundle includes them
+          placeholder={includesSiblings(bundle) ? messages.notes.placeholder : messages.notes.placeholderBabyOnly}
         />
       </div>
       <div className={cn(styles.field, styles.fieldWide)}>
