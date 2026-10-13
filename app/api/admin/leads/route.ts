@@ -3,6 +3,7 @@ import { isAdmin } from "@/lib/admin/auth";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { getLead, isLeadFilter, listLeads } from "@/lib/leads/server";
 import { log } from "@/lib/log";
+import { sweepDeposits } from "@/lib/deposit/flow";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,8 @@ export async function GET(req: Request) {
       const lead = await getLead(reference);
       return lead ? NextResponse.json({ lead }) : NextResponse.json({ error: "Lead not found." }, { status: 404 });
     }
+    // holds whose 30 minutes ran out are settled first (time freed, family + studio emailed), so the list is current
+    await sweepDeposits(new Date(), 20);
     const status = url.searchParams.get("status") ?? "all";
     if (!isLeadFilter(status)) return NextResponse.json({ error: "Unknown filter." }, { status: 400 });
     const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0) || 0);

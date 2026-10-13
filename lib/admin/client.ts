@@ -50,6 +50,8 @@ export interface AdminApi {
   cancelLead(reference: string, reason: string, refundDeposit?: boolean): Promise<Lead>;
   /** Refund a paid deposit by hand (e.g. after a refund failed, or a kept deposit the owner gives back). */
   refundDeposit(reference: string): Promise<Lead>;
+  /** The family's deposit link: emailed (`email`) or prepared to copy; a released time is held again first (if free). */
+  depositLink(reference: string, email: boolean): Promise<Lead>;
   leadAvailability(reference: string, from: string, to: string): Promise<import("@/lib/booking/types").DayAvailability[]>;
   rescheduleLead(reference: string, slot: { date: string; start: string }): Promise<Lead>;
   deleteLead(reference: string): Promise<void>;
@@ -140,6 +142,8 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason, refundDeposit }) }))).lead,
   refundDeposit: async (reference) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/deposit-refund", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
+  depositLink: async (reference, email) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/deposit-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, email }) }))).lead,
   sendSneakPeek: async (reference, galleryUrl, favorites) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, favorites }) }))).lead,
   galleryDelivered: async (reference, galleryUrl) =>
@@ -267,6 +271,9 @@ const prototypeApi: AdminApi = {
     throw new Error("Not available in the prototype.");
   },
   refundDeposit: async () => {
+    throw new Error("Not available in the prototype.");
+  },
+  depositLink: async () => {
     throw new Error("Not available in the prototype.");
   },
   listLeads: async (filter) => {

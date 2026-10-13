@@ -35,7 +35,8 @@ const fill = (template: string, values: Record<string, string>) =>
 export default function BundleCard({ bundle, index, messages, locale, href, headingLevel = 3 }: Props) {
   const Name = headingLevel === 2 ? "h2" : "h3";
   const { theme } = useSiteSettings();
-  const { today } = useCatalog();
+  const { today, depositFor } = useCatalog();
+  const deposit = depositFor(bundle.id);
   // date-based only: the offer shows while enabled and today is on/before its end date
   const offer = activeOffer(bundle, today);
   const doodle = theme.decorations.cards[index % 3];
@@ -77,6 +78,7 @@ export default function BundleCard({ bundle, index, messages, locale, href, head
             </p>
           )}
           <ChalkDoodle grain={false} name="underline" size={120} color="var(--sun-yellow)" strokeWidth={3} className={styles.priceLine} />
+          {deposit ? <p className={styles.deposit}>{fill(messages.deposit, { deposit: formatMoney(deposit) })}</p> : null}
           <ul className={styles.features}>
             {bundle.features.map((f, fi) => (
               <li key={`${fi}-${f}`}>

@@ -61,7 +61,8 @@
     "card": {
       "offerPrice": "{offer}: was {regular}, now {price}",
       "offerEnds": "Offer ends: {date}",
-      "regularPrice": "Price: {price}"
+      "regularPrice": "Price: {price}",
+      "deposit": "{deposit} deposit holds your date · the rest after your session"
     },
     "paused": {
       "title": "Booking is taking a short break",
@@ -133,7 +134,8 @@
       "durationMinutes": "Up to {minutes} minutes",
       "durationHour": "Up to 1 hour",
       "durationHours": "Up to {hours} hours",
-      "totalDuration": "{duration} total"
+      "totalDuration": "{duration} total",
+      "deposit": "{deposit} deposit holds your date. It's part of your total; the rest is paid after your session."
     },
     "details": {
       "optional": " (optional)",
@@ -299,6 +301,7 @@
         "button": "Pay {deposit} deposit",
         "opening": "Opening secure payment…",
         "note": "You'll pay the deposit on Stripe's secure page. We hold your time for 30 minutes, and your booking is confirmed as soon as it's paid. Cancel online at least {notice} before your session and we refund it in full.",
+        "partOfTotal": "Your {deposit} deposit is part of your {total} total, not an extra fee: the remaining {rest} is paid after your photoshoot.",
         "notice": {
           "hour": "{n} hour",
           "hours": "{n} hours"
@@ -914,6 +917,18 @@
       "cancelRefunded": "We've refunded your {deposit} deposit to your card. It usually shows up within 5–10 business days.",
       "cancelRefundSoon": "We'll refund your {deposit} deposit to your card in the next few days.",
       "cancelKept": "As agreed when you booked, the {deposit} deposit isn't refunded for late cancellations or missed sessions.",
+      "link": {
+        "subject": "Finish booking your Tiny Humans session",
+        "preheader": "Pay the {deposit} deposit to confirm {date} at {time}.",
+        "eyebrow": "Almost booked",
+        "title": "Your date is almost booked, {name}",
+        "intro": "We're holding {bundle} on {date} at {time} for you. Pay the {deposit} deposit to confirm it.",
+        "hold": "We hold this time until {until} (Miami time). The deposit is part of your total; the rest is paid after your session.",
+        "button": "Pay the {deposit} deposit",
+        "buttonText": "Pay the deposit: {url}",
+        "help": "Something went wrong with the payment? Just reply to this email and we'll help.",
+        "smsBody": "Hi {name}! Here's your link to pay the {deposit} deposit and confirm your Tiny Humans session: {url}"
+      },
       "abandoned": {
         "subject": "Your Tiny Humans session isn't booked yet",
         "preheader": "The deposit wasn't paid, so we couldn't hold your time. Pick a time again in two minutes.",

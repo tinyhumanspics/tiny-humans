@@ -219,3 +219,35 @@ export async function internalEmailProblemEmail(p: { kind: keyof typeof PROBLEM_
   const html = await renderHtml(<InternalLayout banner={banner} bannerBg={C.red} bannerFg="#ffffff" summary={summary} rows={rows} footer="You'll also see this on the lead in /admin → Leads. We only email you about the first problem with an address." />);
   return { subject: `${PROBLEM_SUBJECT[p.kind]} — ${p.parentName} (${p.reference})`, html, text: text([banner, "", summary], rows), attachments: [] };
 }
+
+/** A family didn't pay the deposit within the hold (30 minutes): the time was released; follow up from /admin. */
+export async function internalDepositUnpaidEmail(p: { reference: string; parentName: string; email: string; phone: string; bundleName: string; date: string; start: string; amountCents: number; leadsUrl: string }): Promise<RenderedEmail> {
+  const first = firstName(p.parentName);
+  const rows: [string, string][] = [
+    ["Booking reference", p.reference],
+    ["Customer name", p.parentName],
+    ["Email", p.email],
+    ["Phone", p.phone],
+    ["Bundle", p.bundleName],
+    ["Session they picked", `${formatLongDate(p.date)} at ${formatTimeLabel(p.start)}`],
+    ["Deposit", `${formatMoney(p.amountCents)}, not paid`],
+    ["Open the lead", p.leadsUrl],
+  ];
+  const html = await renderHtml(
+    <InternalLayout
+      banner="DEPOSIT NOT PAID"
+      bannerBg={C.yellow}
+      bannerFg={C.ink}
+      summary={
+        <>
+          <b>{p.parentName}</b> started booking <b>{p.bundleName}</b> on <b>{formatLongDate(p.date)}</b> at <b>{formatTimeLabel(p.start)}</b> but didn&apos;t pay the{" "}
+          <b>{formatMoney(p.amountCents)}</b> deposit within 30 minutes, so the time was released. In /admin → Leads you can hold it again and send {first} the payment link,
+          or text {first} at {p.phone}.
+        </>
+      }
+      rows={rows}
+      footer={`Reply to this email to contact ${first} directly. ${first} also got a "Your date isn't confirmed yet" email.`}
+    />,
+  );
+  return { subject: `Deposit not paid — ${p.parentName} — ${formatLongDate(p.date)} (${p.reference})`, html, text: text(["DEPOSIT NOT PAID", "", `${p.parentName} didn't pay the ${formatMoney(p.amountCents)} deposit within 30 minutes, so the time was released.`], rows), attachments: [] };
+}

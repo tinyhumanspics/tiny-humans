@@ -2,7 +2,7 @@ import "server-only";
 import { eq, inArray } from "drizzle-orm";
 import { getDb, isDatabaseConfigured } from "@/lib/db/client";
 import { bookingDeposits, bundleDeposits, depositSettingsTable, type BookingDeposit } from "@/lib/db/schema";
-import { getPublicCatalog } from "@/lib/pricing/server";
+import { CATALOG_TAG, getPublicCatalog } from "@/lib/pricing/server";
 import { log } from "@/lib/log";
 import { depositAmountFor, depositLabel, type BookingDepositInfo, type DepositSettings } from "./types";
 import type { SiteDeposit } from "./copy";
@@ -38,6 +38,30 @@ export async function siteDeposit(): Promise<SiteDeposit | null> {
   if (!s?.enabled) return null;
   const { bundles } = await getPublicCatalog().catch(() => ({ bundles: [] as { id: string; active?: boolean }[] }));
   return depositLabel(s, bundles.filter((b) => b.active !== false).map((b) => b.id));
+}
+
+/** Cache tag of the website's deposit wording (expired when /admin saves the deposit settings). */
+export const DEPOSIT_TAG = "deposit";
+
+/** Each bookable bundle's deposit, for the bundle cards ("$50 deposit holds your date"). Null = deposits off. */
+export async function publicDeposits(): Promise<Record<string, number> | null> {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    const { unstable_cache } = await import("next/cache");
+    return await unstable_cache(
+      async () => {
+        const s = await getDepositSettings();
+        if (!s?.enabled) return null;
+        const { bundles } = await getPublicCatalog();
+        return Object.fromEntries(bundles.map((b) => [b.id, depositAmountFor(b.id, s)]));
+      },
+      ["public-deposits-v1"],
+      { tags: [DEPOSIT_TAG, CATALOG_TAG], revalidate: 300 },
+    )();
+  } catch (err) {
+    log.error("deposit", "Deposit wording unavailable (cards show no deposit line)", { error: dbReason(err) });
+    return null;
+  }
 }
 
 /** Saves the switch and the amounts together (one atomic batch). */

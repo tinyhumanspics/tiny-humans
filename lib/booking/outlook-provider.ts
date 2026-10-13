@@ -35,7 +35,7 @@ import { managedOf, rescheduleAvailability, rescheduleBookingRow } from "./resch
 import { site } from "@/config/site";
 import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
-import { openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
+import { heldForSameFamily, openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
 import { addPhotos, extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
 import { saveBookingAddons } from "./addons";
@@ -139,6 +139,14 @@ export class OutlookBookingProvider implements BookingProvider {
         // retry with the same requestId, never to pick another time (that could create a second booking).
         throw new BookingError("in_progress", friendly.inProgress);
       }
+    }
+
+    // 1a. The same family trying the same time again while their own deposit hold still blocks it (their connection
+    // dropped before the payment page opened, or they switched devices): back to that payment page, not "time taken".
+    const held = await heldForSameFamily(request.contact.email, bundle.id, zonedTimeToUtc(date, start, tz));
+    if (held) {
+      const deposit = await reopenDeposit(held);
+      if (deposit) return { ...this.toResult(held, request), status: "pending", deposit };
     }
 
     // 1b. Travel fee from the home's ZIP code (calculated here, never taken from the browser). Florida only, and not

@@ -55,6 +55,8 @@
 }
 
 .priceLine { display: block; margin: 2px 0 18px; }
+/* "$50 deposit holds your date · the rest after your session" (only while deposits are on) */
+.deposit { margin: -10px 0 16px; font-family: var(--font-hand); font-size: 1.02rem; line-height: 1.35; color: var(--chalk-muted); }
 
 .features {
   list-style: none;

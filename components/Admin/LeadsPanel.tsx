@@ -24,7 +24,7 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "cancelled", label: "Cancelled", alwaysShow: true },
 ];
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
-const statusLabel = (lead: Lead) => (lead.status === "pending" && lead.deposit?.status === "pending" ? "Waiting for deposit" : lead.status === "cancelled" && lead.deposit?.status === "expired" ? "Deposit not paid" : STATUS_LABEL[lead.status]);
+const statusLabel = (lead: Lead) => (lead.status === "pending" && lead.deposit?.status === "pending" ? "Waiting for deposit" : lead.status === "cancelled" && lead.deposit?.status === "expired" ? "Cancelled · deposit not paid" : STATUS_LABEL[lead.status]);
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 const emailLine = (e: EmailStatus) => (e.sent ? `Sent ${when(e.at)}` : e.error ? `Not sent (${e.error})` : "Not sent");
 /** Optional permissions from the booking form (server mode only). */
@@ -336,6 +336,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
             </div>
           )}
           {lead.after && <PaymentPanel lead={lead} api={api} onUpdated={onCancelled} />}
+          {lead.after && <DepositLinkPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.status !== "cancelled" && moving && (
@@ -575,6 +576,95 @@ function ConsentButtons({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; o
       <button type="button" className={styles.smallButton} disabled={busy} onClick={() => change({ photos: !c.photos })}>
         {c.photos ? "Keep their photos private" : "They said OK to feature photos"}
       </button>
+      {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+    </div>
+  );
+}
+
+/** Today's date in Miami (YYYY-MM-DD). */
+const miamiToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
+
+/**
+ * A deposit still waiting (time held) or one whose 30 minutes ran out (time released): email, text or copy the
+ * family's deposit link. A released time is held again for 30 minutes first, if it's still free.
+ */
+function DepositLinkPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
+  const d = lead.deposit;
+  const [busy, setBusy] = useState<"email" | "hold" | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const waiting = lead.status === "pending" && d?.status === "pending";
+  const released = lead.status === "cancelled" && d?.status === "expired" && lead.sessionDate >= miamiToday();
+  if (!d || (!waiting && !released)) return null;
+  const amount = formatMoney(d.amountCents);
+  const first = lead.parentName.split(" ")[0];
+  const run = async (kind: "email" | "hold", email: boolean) => {
+    setBusy(kind);
+    setErr(null);
+    setNote(null);
+    try {
+      const updated = await api.depositLink(lead.reference, email);
+      onUpdated(updated);
+      const until = clock(updated.deposit?.holdUntil ?? null);
+      setNote(email ? `Emailed to ${lead.email}. Their time is held until ${until}.` : `Held again until ${until}. Text or copy the link below.`);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't do that. Please try again.");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const copy = async () => {
+    setErr(null);
+    try {
+      await navigator.clipboard.writeText(d.link!);
+      setNote("Link copied.");
+    } catch {
+      setNote(null);
+      setErr("Couldn't copy. Press and hold the link below to copy it.");
+    }
+  };
+  return (
+    <div className={styles.history}>
+      <p className={cn(styles.h3, "chalk-soft")}>Deposit link</p>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>
+        {waiting
+          ? `Waiting for the ${amount} deposit; their time is held until ${clock(d.holdUntil)}. If ${first} didn't get to the payment page, send the link: it works until then.`
+          : `The 30 minutes ran out, so the time was released. If it's still free, you can hold it again for 30 minutes and send ${first} the link.`}
+      </p>
+      {d.linkEmail && (
+        <dl>
+          <div>
+            <dt className="chalk-soft">Payment link email</dt>
+            <dd className="chalk-soft">{sentLine(d.linkEmail)}</dd>
+          </div>
+        </dl>
+      )}
+      <div className={styles.photoBarRight}>
+        {waiting && d.link ? (
+          <>
+            <a className={styles.smallButton} href={smsHref(lead.phone, en.emails.deposit.link.smsBody.replace("{name}", first).replace("{deposit}", amount).replace("{url}", d.link))}>
+              Text the link
+            </a>
+            <button type="button" className={styles.smallButton} onClick={copy}>
+              Copy link
+            </button>
+            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("email", true)}>
+              {busy === "email" ? "Sending…" : "Email payment link"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("hold", false)}>
+              {busy === "hold" ? "Holding…" : "Hold again & get link"}
+            </button>
+            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("email", true)}>
+              {busy === "email" ? "Sending…" : "Hold again & email link"}
+            </button>
+          </>
+        )}
+      </div>
+      {waiting && d.link && <input className={styles.input} readOnly value={d.link} aria-label="Deposit payment link" onFocus={(e) => e.currentTarget.select()} />}
+      {note && <p className={cn(styles.hintSmall, "chalk-soft")} role="status">{note}</p>}
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
     </div>
   );

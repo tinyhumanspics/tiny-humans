@@ -18,12 +18,14 @@ interface Ctx {
   available: boolean;
   /** "snapshot" = Neon was unreachable and the last good copy is shown. */
   status: "live" | "snapshot" | "builtin";
+  /** A bundle's deposit (cents) for the website's wording; null while deposits are off. */
+  depositFor: (id: string) => number | null;
 }
 
 const CatalogContext = createContext<Ctx | null>(null);
 
 /** Central bundle/price data for every customer-facing page (from Neon; browser storage in the prototype). */
-export function CatalogProvider({ initial, status = "live", initialToday, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin"; initialToday: string; children: ReactNode }) {
+export function CatalogProvider({ initial, status = "live", initialToday, deposits = null, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin"; initialToday: string; deposits?: Record<string, number> | null; children: ReactNode }) {
   const [all, setAll] = useState<Bundle[]>(initial);
   const [today, setToday] = useState(initialToday);
   useEffect(() => {
@@ -37,8 +39,8 @@ export function CatalogProvider({ initial, status = "live", initialToday, childr
   }, []);
   const value = useMemo<Ctx>(() => {
     const bundles = sortBundles(all.filter((b) => b.active !== false));
-    return { bundles, getBundle: (id) => bundles.find((b) => b.id === id), today, available: bundles.length > 0, status };
-  }, [all, today, status]);
+    return { bundles, getBundle: (id) => bundles.find((b) => b.id === id), today, available: bundles.length > 0, status, depositFor: (id) => deposits?.[id] ?? null };
+  }, [all, today, status, deposits]);
   return <CatalogContext.Provider value={value}>{children}</CatalogContext.Provider>;
 }
 

@@ -17,6 +17,10 @@ export interface LeadDeposit {
   late: boolean;
   /** The "Your date isn't confirmed yet" email (expired deposits). */
   abandonedEmail: SentEmail | null;
+  /** While the time is held: the family's deposit page (email or text it from /admin). */
+  link: string | null;
+  /** The last "Finish booking" email sent from /admin. */
+  linkEmail: SentEmail | null;
 }
 
 export interface EmailStatus {

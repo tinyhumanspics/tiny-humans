@@ -64,7 +64,7 @@ export function managedOf(row: Booking, rules: AvailabilityRules, now = new Date
  * minus only that booking's own row and its own Outlook event. The booking is
  * identified server-side (token or admin), never by an id the browser sends.
  */
-async function busyExcluding(own: Booking, fromDate: string, toDate: string): Promise<Busy[]> {
+export async function busyExcluding(own: Booking, fromDate: string, toDate: string): Promise<Busy[]> {
   const tz = bookingRules.timeZone;
   const from = zonedTimeToUtc(addDaysKey(fromDate, -1), "00:00", tz);
   const to = zonedTimeToUtc(addDaysKey(toDate, 2), "00:00", tz);

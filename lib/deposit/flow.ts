@@ -4,24 +4,27 @@ import { and, desc, eq, gt, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import { getAvailabilityRules } from "@/lib/availability/server";
+import { bookingRules } from "@/config/booking";
+import { slotsForDay } from "@/lib/booking/availability";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { addressOf, detailsFromRow } from "@/lib/booking/details";
 import { BookingError } from "@/lib/booking/errors";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
+import { busyExcluding } from "@/lib/booking/reschedule";
 import { noticeHoursFor } from "@/lib/booking/terms";
 import type { BookingResult } from "@/lib/booking/types";
-import { getDb } from "@/lib/db/client";
-import { bookingDeposits, bookingEmails, bookings, type Booking, type BookingDeposit } from "@/lib/db/schema";
-import { depositAbandonedEmail } from "@/lib/email";
+import { getDb, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
+import { bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
+import { depositAbandonedEmail, depositLinkEmail, internalDepositUnpaidEmail } from "@/lib/email";
 import { fill } from "@/lib/email/messages";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
 import { depositReturnPath } from "@/lib/payments/link";
 import { createCheckoutSession, expireCheckoutSession, getCheckoutSession, isStripeConfigured, StripeError, type CheckoutSession } from "@/lib/payments/stripe";
 import { formatMoney } from "@/lib/pricing/engine";
-import { releaseCodeUsage } from "@/lib/pricing/server";
+import { attachUsage, claimCode, releaseCodeUsage } from "@/lib/pricing/server";
 import { getSiteSettings } from "@/lib/settings/server";
 import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
 import en from "@/messages/en.json";
@@ -40,6 +43,8 @@ import { DEPOSIT_HOLD_MINUTES, type DepositReturnState } from "./types";
  *    and the daily cron) → the time is released (booking cancelled, discount code use given back) and the family gets
  *    one "Your date isn't confirmed yet" email.
  * Stripe down while booking → booked without the deposit ("unpaid", flagged in /admin; the payment link takes it).
+ * The owner is alerted when a deposit isn't paid in time, and /admin can email or copy the family's deposit link: it
+ * works while the time is held, and a released time is held again (30 minutes) if it's still free.
  */
 
 const base = () => site.url.replace(/\/$/, "");
@@ -48,6 +53,7 @@ const LEASE_MS = 2 * 60_000;
 /** Stripe closes the page at hold_until; a little slack before settling it ourselves. */
 const GRACE_MS = 60_000;
 const EXPIRED_REASON = "Deposit not paid (the payment page expired, so the time was released)";
+const TAKEN_AGAIN = "That time isn't free anymore (another booking or a calendar event), so it can't be held again. The family can pick another time.";
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const totalCents = (row: Booking) => (row.finalPriceCents ?? row.packagePrice * 100) + (row.addonsTotalCents ?? 0) + (row.travelFeeCents ?? 0);
 const stripeCode = (err: unknown) => (err instanceof StripeError ? err.code : err instanceof BookingError ? err.code : undefined);
@@ -68,6 +74,35 @@ async function markUnpaid(bookingId: string, amountCents: number, reference: str
     .catch((err) => log.error("deposit", "Couldn't flag the deposit as not paid", { reference, error: dbReason(err) }));
 }
 
+/** Opens the Stripe page of a held deposit (expiring with the hold) and saves its id. Throws when Stripe can't. */
+async function createDepositPage(row: Booking, amountCents: number, noticeHours: number, holdUntil: Date, idempotencyKey: string): Promise<{ url: string }> {
+  const reference = row.bookingReference;
+  const returnPath = depositReturnPath(reference, row.packageId, row.locale);
+  if (!returnPath) throw new StripeError("not_configured", "ADMIN_SESSION_SECRET is missing");
+  const messages = row.locale === "es" ? es : en;
+  const session = await createCheckoutSession({
+    amountCents,
+    productName: fill(messages.deposit.stripe.product, { bundle: row.packageName }),
+    description: fill(messages.deposit.stripe.description, { date: formatLongDate(row.sessionDate, row.locale), time: formatTimeLabel(localTime(row.sessionStart, row.timezone), row.locale), total: formatMoney(totalCents(row)) }),
+    customerEmail: row.email,
+    reference,
+    bookingId: row.id,
+    successUrl: `${base()}${returnPath}&paid=1`,
+    cancelUrl: `${base()}${returnPath}`,
+    idempotencyKey,
+    kind: "deposit",
+    expiresAt: Math.floor(holdUntil.getTime() / 1000),
+    submitMessage: fill(messages.deposit.stripe.message, { notice: noticeLabel(noticeHours, messages.policy) }),
+  });
+  if (!session.url) throw new StripeError("no_url", "Stripe returned no payment page URL");
+  await getDb()
+    .update(bookingDeposits)
+    .set({ stripeSessionId: session.id, updatedAt: new Date() })
+    .where(eq(bookingDeposits.bookingId, row.id))
+    .catch((err) => log.error("deposit", "Stripe page id not saved (the webhook still finds the booking)", { reference, error: dbReason(err) }));
+  return { url: session.url };
+}
+
 /**
  * Opens the Stripe page for the deposit of a booking that was just saved as pending. Null when Stripe can't (not set
  * up, or not reachable): the caller then confirms the booking without it.
@@ -83,7 +118,6 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
   // a minute over Stripe's 30-minute minimum, so the request's own travel time can't make it too short
   const holdUntil = new Date(now.getTime() + (DEPOSIT_HOLD_MINUTES + 1) * 60_000);
   const db = getDb();
-  const messages = row.locale === "es" ? es : en;
   try {
     await db.insert(bookingDeposits).values({ bookingId: row.id, amountCents, status: "pending", holdUntil });
   } catch (err) {
@@ -91,28 +125,9 @@ export async function openDeposit(row: Booking, amountCents: number, noticeHours
     return null;
   }
   try {
-    const session = await createCheckoutSession({
-      amountCents,
-      productName: fill(messages.deposit.stripe.product, { bundle: row.packageName }),
-      description: fill(messages.deposit.stripe.description, { date: formatLongDate(row.sessionDate, row.locale), time: formatTimeLabel(localTime(row.sessionStart, row.timezone), row.locale), total: formatMoney(totalCents(row)) }),
-      customerEmail: row.email,
-      reference,
-      bookingId: row.id,
-      successUrl: `${base()}${returnPath}&paid=1`,
-      cancelUrl: `${base()}${returnPath}`,
-      idempotencyKey: `deposit/${row.id}`,
-      kind: "deposit",
-      expiresAt: Math.floor(holdUntil.getTime() / 1000),
-      submitMessage: fill(messages.deposit.stripe.message, { notice: noticeLabel(noticeHours, messages.policy) }),
-    });
-    if (!session.url) throw new StripeError("no_url", "Stripe returned no payment page URL");
-    await db
-      .update(bookingDeposits)
-      .set({ stripeSessionId: session.id, updatedAt: new Date() })
-      .where(eq(bookingDeposits.bookingId, row.id))
-      .catch((err) => log.error("deposit", "Stripe page id not saved (the webhook still finds the booking)", { reference, error: dbReason(err) }));
+    const { url } = await createDepositPage(row, amountCents, noticeHours, holdUntil, `deposit/${row.id}`);
     log.info("deposit", "Deposit page opened", { reference });
-    return { amountCents, status: "pending", url: session.url, returnPath, holdUntil: holdUntil.toISOString() };
+    return { amountCents, status: "pending", url, returnPath, holdUntil: holdUntil.toISOString() };
   } catch (err) {
     log.error("deposit", "Stripe couldn't open the deposit page: booked without it", { reference, code: stripeCode(err), error: err instanceof StripeError ? undefined : (err as Error) });
     await markUnpaid(row.id, amountCents, reference);
@@ -244,21 +259,29 @@ async function releaseHold(row: Booking, opts: { email: boolean; why: string }):
   if (!cancelled) return false;
   await releaseCodeUsage(row.id).catch((err) => log.error("deposit", "Discount code use not given back", { reference: row.bookingReference, error: dbReason(err) }));
   log.info("deposit", "Time released (deposit not paid)", { reference: row.bookingReference, familyNotified: opts.email });
-  if (opts.email) await sendAbandonedEmail(row);
+  if (opts.email) {
+    await sendAbandonedEmail(row);
+    await sendUnpaidAlert(row);
+  }
   return true;
 }
 
-/** "Your date isn't confirmed yet" + a link to pick a time again. Once per booking; skipped if they booked again since. */
-async function sendAbandonedEmail(row: Booking): Promise<void> {
-  const db = getDb();
-  const [rebooked] = await db
+/** The same family booked again after this booking (then nobody needs a "not confirmed" email or a follow-up). */
+async function bookedAgain(row: Booking): Promise<boolean> {
+  const [rebooked] = await getDb()
     .select({ id: bookings.id })
     .from(bookings)
     .where(and(eq(sql`lower(${bookings.email})`, row.email.toLowerCase()), ne(bookings.status, "cancelled"), gt(bookings.createdAt, row.createdAt)))
     .orderBy(desc(bookings.createdAt))
     .limit(1)
     .catch(() => []);
-  if (rebooked) return;
+  return Boolean(rebooked);
+}
+
+/** "Your date isn't confirmed yet" + a link to pick a time again. Once per booking; skipped if they booked again since. */
+async function sendAbandonedEmail(row: Booking): Promise<void> {
+  const db = getDb();
+  if (await bookedAgain(row)) return;
   const [claim] = await db
     .insert(bookingEmails)
     .values({ bookingId: row.id, kind: "deposit_abandoned", sessionStart: row.sessionStart })
@@ -293,6 +316,194 @@ async function sendAbandonedEmail(row: Booking): Promise<void> {
     const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
     log.error("deposit", "'Not confirmed yet' email not sent", { reference: row.bookingReference, code });
     await db.update(bookingEmails).set({ status: "failed", error: code, updatedAt: new Date() }).where(eq(bookingEmails.id, claim.id)).catch(() => undefined);
+  }
+}
+
+/** The studio's "Deposit not paid" alert (one per expired hold): follow up from /admin or by text. Never throws. */
+async function sendUnpaidAlert(row: Booking): Promise<void> {
+  try {
+    if (await bookedAgain(row)) return;
+    const d = await depositOf(row.id);
+    const mail = await internalDepositUnpaidEmail({
+      reference: row.bookingReference,
+      parentName: row.parentName,
+      email: row.email,
+      phone: row.phone,
+      bundleName: row.packageName,
+      date: row.sessionDate,
+      start: localTime(row.sessionStart, row.timezone),
+      amountCents: d?.amountCents ?? 0,
+      leadsUrl: `${base()}/admin/leads`,
+    });
+    await sendEmail({
+      scope: "resend.internal",
+      from: emailConfig().internalFrom,
+      to: emailConfig().notify,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+      replyTo: row.email,
+      idempotencyKey: `deposit-unpaid/${row.bookingReference}/${d?.holdUntil?.getTime() ?? 0}`,
+      reference: row.bookingReference,
+    });
+  } catch (err) {
+    log.error("deposit", "'Deposit not paid' alert not sent", { reference: row.bookingReference, code: err instanceof EmailSendError ? err.code : "send_failed" });
+  }
+}
+
+/** The family's own deposit page on our site (signed): it shows the Pay button while their time is held. */
+export function depositPageUrl(row: Pick<Booking, "bookingReference" | "packageId" | "locale">): string | null {
+  const path = depositReturnPath(row.bookingReference, row.packageId, row.locale);
+  return path ? `${base()}${path}` : null;
+}
+
+/**
+ * The same family trying the same time again (e.g. their connection dropped before Stripe's page opened, or they
+ * switched devices): their own booking still holding that time, so the booking form can reopen its payment page.
+ */
+export async function heldForSameFamily(email: string, bundleId: string, sessionStart: Date, now = new Date()): Promise<Booking | null> {
+  const [row] = await getDb()
+    .select({ booking: bookings })
+    .from(bookings)
+    .innerJoin(bookingDeposits, eq(bookingDeposits.bookingId, bookings.id))
+    .where(
+      and(
+        eq(sql`lower(${bookings.email})`, email.trim().toLowerCase()),
+        eq(bookings.packageId, bundleId),
+        eq(bookings.sessionStart, sessionStart),
+        eq(bookings.status, "pending"),
+        eq(bookingDeposits.status, "pending"),
+        gt(bookingDeposits.holdUntil, now),
+      ),
+    )
+    .limit(1)
+    .catch(() => []);
+  return row?.booking ?? null;
+}
+
+/**
+ * /admin "Email payment link" / "Copy link" for a booking's deposit. While its time is held, the link works until
+ * the hold ends; once the 30 minutes ran out (the time was released), the same time is held again for 30 minutes if
+ * it's still free. With `email`, the family gets the "Finish booking" email. Returns the link and the hold's end.
+ */
+export async function ownerDepositLink(row: Booking, opts: { email: boolean }, now = new Date()): Promise<{ url: string; holdUntil: Date }> {
+  let d = await depositOf(row.id);
+  if (!d) throw new BookingError("invalid_request", "This booking was made without a deposit.");
+  if (d.status === "paid" || d.status === "refunded") throw new BookingError("invalid_request", "This deposit is already paid.");
+  if (!isStripeConfigured()) throw new BookingError("server_error", "Stripe isn't connected (STRIPE_SECRET_KEY is missing in Vercel).");
+  let held = row;
+  if (row.status === "pending" && d.status === "pending") {
+    // still held: its Stripe page must still be open (it isn't if Stripe never opened it, or it just ran out)
+    if (!(await reopenDeposit(row).catch(() => null))) {
+      const r = await settleWithStripe(row, d, { email: false, closeOpen: true }).catch(() => "unknown" as const);
+      if (r === "paid") throw new BookingError("invalid_request", "Stripe says this deposit was just paid: the booking is being confirmed.");
+      if (r !== "released") throw new BookingError("server_error", "Couldn't check the payment page with Stripe. Please try again.");
+      held = await holdAgain({ ...row, status: "cancelled" }, d, now);
+    }
+  } else if (row.status === "cancelled" && d.status === "expired") {
+    held = await holdAgain(row, d, now);
+  } else {
+    throw new BookingError("invalid_request", "There's no deposit waiting for this booking.");
+  }
+  d = (await depositOf(row.id)) ?? d;
+  const url = depositPageUrl(held);
+  if (!url || !d.holdUntil) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
+  if (opts.email) await sendDepositLinkEmail(held, d, url);
+  return { url, holdUntil: d.holdUntil };
+}
+
+/** Holds a released time again for 30 minutes (if it's still free) and opens a new Stripe page for the deposit. */
+async function holdAgain(row: Booking, d: BookingDeposit, now: Date): Promise<Booking> {
+  if (row.sessionStart.getTime() <= now.getTime()) throw new BookingError("invalid_request", "This session time has already passed.");
+  const tz = row.timezone || bookingRules.timeZone;
+  const minutes = Math.round((row.sessionEnd.getTime() - row.sessionStart.getTime()) / 60_000);
+  const rules = await getAvailabilityRules();
+  // free in the owner's hours, clear of other bookings, Outlook events and blocks (the minimum notice is the owner's call)
+  let busy;
+  try {
+    busy = await busyExcluding(row, row.sessionDate, row.sessionDate);
+  } catch {
+    throw new BookingError("calendar_unavailable", "Couldn't check the calendar just now. Please try again in a minute.");
+  }
+  const ownerRules = { ...rules, limits: { ...rules.limits, minimumNoticeDays: 0 } };
+  if (!slotsForDay(row.sessionDate, minutes, busy, ownerRules, now).some((s) => s.start === localTime(row.sessionStart, tz))) {
+    throw new BookingError("slot_unavailable", TAKEN_AGAIN);
+  }
+  const db = getDb();
+  const holdUntil = new Date(now.getTime() + (DEPOSIT_HOLD_MINUTES + 1) * 60_000);
+  let held: Booking | undefined;
+  try {
+    // listing session_start re-runs the trigger, so the block uses today's buffer
+    [held] = await db
+      .update(bookings)
+      .set({ status: "pending", cancellationReason: null, cancelledAt: null, cancelledBy: null, sessionStart: row.sessionStart, updatedAt: now })
+      .where(and(eq(bookings.id, row.id), eq(bookings.status, "cancelled")))
+      .returning();
+  } catch (err) {
+    if (isOverlapViolation(err) || isUniqueViolation(err)) throw new BookingError("slot_unavailable", TAKEN_AGAIN);
+    throw err;
+  }
+  if (!held) throw new BookingError("invalid_request", "This lead changed meanwhile. Refresh the page and try again.");
+  await db.update(bookingDeposits).set({ status: "pending", holdUntil, stripeSessionId: null, confirmingAt: null, updatedAt: now }).where(eq(bookingDeposits.bookingId, row.id));
+  await reclaimCode(held);
+  try {
+    await createDepositPage(held, d.amountCents, await noticeHoursFor(held, rules.limits.rescheduleNoticeHours), holdUntil, `deposit/${row.id}/${holdUntil.getTime()}`);
+  } catch (err) {
+    log.error("deposit", "Stripe couldn't open the page to hold the time again", { reference: row.bookingReference, code: stripeCode(err) });
+    await releaseHold(held, { email: false, why: EXPIRED_REASON }).catch(() => undefined);
+    throw new BookingError("server_error", "Stripe couldn't open a payment page just now, so the time wasn't held. Please try again.");
+  }
+  log.info("deposit", "Time held again from /admin", { reference: row.bookingReference });
+  return held;
+}
+
+/** A discount code given back when the time was released counts again (best effort: the booked price stands). */
+async function reclaimCode(row: Booking): Promise<void> {
+  if (!row.discountCode) return;
+  try {
+    const [code] = await getDb().select({ id: discountCodes.id }).from(discountCodes).where(eq(discountCodes.code, row.discountCode.trim().toUpperCase())).limit(1);
+    if (!code) return;
+    const usage = await claimCode(code.id, row.email);
+    await attachUsage(usage.usageId, row.id);
+  } catch {
+    log.info("deposit", "Discount code use not counted again (code maxed or gone); the booked price stands", { reference: row.bookingReference });
+  }
+}
+
+/** The family's "Finish booking: pay the deposit" email (from /admin). Throws a friendly error when it can't be sent. */
+async function sendDepositLinkEmail(row: Booking, d: BookingDeposit, url: string): Promise<void> {
+  const db = getDb();
+  const now = new Date();
+  const [claimed] = await db
+    .insert(bookingEmails)
+    .values({ bookingId: row.id, kind: "deposit_link", sessionStart: row.sessionStart })
+    .onConflictDoUpdate({ target: [bookingEmails.bookingId, bookingEmails.kind, bookingEmails.sessionStart], set: { status: "sending", attempts: sql`${bookingEmails.attempts} + 1`, error: null, updatedAt: now } })
+    .returning({ id: bookingEmails.id, attempts: bookingEmails.attempts });
+  try {
+    const themeId = await getSiteSettings()
+      .then((s) => s.themeId)
+      .catch(() => "default");
+    const mail = await depositLinkEmail(
+      { parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: localTime(row.sessionStart, row.timezone), until: localTime(d.holdUntil!, row.timezone), amountCents: d.amountCents },
+      { themeId, payUrl: url, locale: row.locale },
+    );
+    const { id: resendId } = await sendEmail({
+      scope: "resend.deposit_link",
+      to: row.email,
+      subject: mail.subject,
+      html: mail.html,
+      text: mail.text,
+      attachments: mail.attachments,
+      replyTo: emailConfig().notify,
+      idempotencyKey: `deposit-link/${row.bookingReference}/${claimed.attempts}`,
+      reference: row.bookingReference,
+    });
+    await db.update(bookingEmails).set({ status: "sent", resendId, sentAt: new Date(), updatedAt: new Date() }).where(eq(bookingEmails.id, claimed.id));
+  } catch (err) {
+    const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    log.error("deposit", "Deposit link email not sent", { reference: row.bookingReference, code });
+    await db.update(bookingEmails).set({ status: "failed", error: code, updatedAt: new Date() }).where(eq(bookingEmails.id, claimed.id)).catch(() => undefined);
+    throw new BookingError("server_error", `The email wasn't sent (${code}). The time is still held: copy the link and text it instead, or try again.`);
   }
 }
 

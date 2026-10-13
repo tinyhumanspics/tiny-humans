@@ -649,6 +649,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 <span className={styles.bundleMeta}>
                   {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${fill(messages.summary.editedPhotos, { count: bundle.photos })}` : ""}
                 </span>
+                {depositOffer?.amountCents ? <span className={styles.bundleMeta}>{fill(messages.summary.deposit, { deposit: formatMoney(depositOffer.amountCents) })}</span> : null}
                 {addon && <span className={styles.bundleMeta}>{addon.quantity === 1 ? messages.summary.extraBaby : messages.summary.extraBabies}: +{formatMoney(addon.totalCents)} · {fill(messages.summary.totalDuration, { duration: flowDurationLabel(sessionMinutes(bundle, state.babies.length), messages.summary) })} · {fill(messages.summary.editedPhotos, { count: addPhotos(bundle.photos, addon.extraPhotos) })}</span>}
               </p>
               {inspiration && (
@@ -821,6 +822,9 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                     />
                   )}
                   {state.step === STEP.review && <BabyLedNote messages={messages.babyLed} compact multiple={state.babies.length > 1} />}
+                  {state.step === STEP.review && depositCents > 0 && (
+                    <p className={cn(styles.depositNote, "chalk-soft")}>{fill(messages.review.deposit.partOfTotal, { deposit, total: formatMoney(totalCents), rest: formatMoney(totalCents - depositCents) })}</p>
+                  )}
                   {state.step === STEP.review && depositCents > 0 && depositOffer && (
                     <p className={cn(styles.depositNote, "chalk-soft")}>{fill(messages.review.deposit.note, { notice: noticeLabel(depositOffer.noticeHours, messages.review.deposit.notice) })}</p>
                   )}

@@ -10,6 +10,7 @@ import { accessFor } from "@/lib/booking/access";
 import { backdropsFor } from "@/lib/booking/backdrops";
 import { amountDueCents, nextCharge } from "@/lib/booking/after-session";
 import { depositPaidCents, depositsFor } from "@/lib/deposit/server";
+import { depositPageUrl } from "@/lib/deposit/flow";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/details";
@@ -109,6 +110,8 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
   if (!d) return null;
   const notice = x.terms.find((t) => t.bookingId === r.id)?.noticeHours ?? x.noticeHours;
   const abandoned = x.emails.find((e) => e.bookingId === r.id && e.kind === "deposit_abandoned");
+  const linkEmail = x.emails.find((e) => e.bookingId === r.id && e.kind === "deposit_link");
+  const held = r.status === "pending" && d.status === "pending" && Boolean(d.holdUntil && d.holdUntil.getTime() > Date.now());
   return {
     amountCents: d.amountCents,
     status: d.status as LeadDeposit["status"],
@@ -118,6 +121,8 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
     holdUntil: iso(d.holdUntil),
     late: (r.sessionStart.getTime() - Date.now()) / 3_600_000 < notice,
     abandonedEmail: sent(abandoned),
+    link: held ? depositPageUrl(r) : null,
+    linkEmail: sent(linkEmail),
   };
 }
 

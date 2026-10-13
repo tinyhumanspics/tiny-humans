@@ -6,6 +6,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import { SiteSettingsProvider } from "@/components/SiteSettings/SiteSettingsProvider";
 import { CatalogProvider } from "@/components/Catalog/CatalogProvider";
 import { getPublicCatalog } from "@/lib/pricing/server";
+import { publicDeposits } from "@/lib/deposit/server";
 import { todayInZone } from "@/lib/booking/timezone";
 import { bookingRules } from "@/config/booking";
 import ChalkFilters from "@/components/ChalkFilters/ChalkFilters";
@@ -49,10 +50,11 @@ const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admi
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const requestedLocale = (await headers()).get(PUBLIC_LOCALE_HEADER) === "es" ? "es" : "en";
   // Publication is all-or-nothing: an incomplete live translation always renders the English shell instead.
-  const [settings, englishCatalog, spanishPublication] = await Promise.all([
+  const [settings, englishCatalog, spanishPublication, deposits] = await Promise.all([
     getSiteSettings(),
     getPublicCatalog(),
     getSpanishPublication(),
+    publicDeposits(),
   ]);
   const locale = requestedLocale === "es" && spanishPublication.published ? "es" : "en";
   const messages = locale === "es" ? es : en;
@@ -76,7 +78,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body>
         <ChalkFilters />
         <SiteSettingsProvider initial={settings} locale={locale}>
-        <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)}>
+        <CatalogProvider initial={catalog.bundles} status={catalog.status} initialToday={todayInZone(bookingRules.timeZone)} deposits={deposits}>
           <SeasonalDecor />
           {/* Header lives in the layout so the logo intro never replays between pages. */}
           <Header messages={messages.header} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />

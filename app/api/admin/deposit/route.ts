@@ -1,11 +1,11 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { LANDING_PATH } from "@/config/landing";
 import { isAdmin } from "@/lib/admin/auth";
 import { guardAvailability } from "@/lib/availability/api";
 import { isDatabaseConfigured } from "@/lib/db/client";
-import { getDepositSettings, isMissingTable, saveDepositSettings } from "@/lib/deposit/server";
+import { DEPOSIT_TAG, getDepositSettings, isMissingTable, saveDepositSettings } from "@/lib/deposit/server";
 import { log } from "@/lib/log";
 import { isStripeConfigured } from "@/lib/payments/stripe";
 import { getCatalog } from "@/lib/pricing/server";
@@ -45,6 +45,7 @@ export async function PUT(req: Request) {
   }
   // pages that mention the deposit
   for (const path of ["/terms", "/about", LANDING_PATH]) revalidatePath(path);
+  try { revalidateTag(DEPOSIT_TAG, { expire: 0 }); } catch { /* outside a request */ }
   log.info("deposit.admin", "Deposit setting saved", parsed.data);
   return NextResponse.json({ settings: await getDepositSettings(), stripeReady: stripeReady() });
 }

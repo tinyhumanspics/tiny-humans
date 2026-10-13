@@ -229,7 +229,8 @@
     "card": {
       "offerPrice": "{offer}: antes {regular}, ahora {price}",
       "offerEnds": "La oferta termina: {date}",
-      "regularPrice": "Precio: {price}"
+      "regularPrice": "Precio: {price}",
+      "deposit": "Un depósito de {deposit} guarda tu fecha · el resto después de tu sesión"
     },
     "paused": {
       "title": "Las reservas están tomando una breve pausa",
@@ -301,7 +302,8 @@
       "durationMinutes": "Hasta {minutes} minutos",
       "durationHour": "Hasta 1 hora",
       "durationHours": "Hasta {hours} horas",
-      "totalDuration": "{duration} en total"
+      "totalDuration": "{duration} en total",
+      "deposit": "Un depósito de {deposit} guarda tu fecha. Es parte de tu total; el resto se paga después de tu sesión."
     },
     "details": {
       "optional": " (opcional)",
@@ -467,6 +469,7 @@
         "button": "Pagar depósito de {deposit}",
         "opening": "Abriendo el pago seguro…",
         "note": "Pagarás el depósito en la página segura de Stripe. Guardamos tu horario durante 30 minutos y tu reserva se confirma en cuanto se pague. Cancela en línea al menos {notice} antes de tu sesión y te lo reembolsaremos por completo.",
+        "partOfTotal": "Tu depósito de {deposit} es parte de tu total de {total}, no un cargo extra: el resto ({rest}) se paga después de tu sesión de fotos.",
         "notice": {
           "hour": "{n} hora",
           "hours": "{n} horas"
@@ -914,6 +917,18 @@
       "cancelRefunded": "Reembolsamos tu depósito de {deposit} a tu tarjeta. Por lo general aparece dentro de 5 a 10 días laborables.",
       "cancelRefundSoon": "Reembolsaremos tu depósito de {deposit} a tu tarjeta en los próximos días.",
       "cancelKept": "Como se acordó al reservar, el depósito de {deposit} no se reembolsa por cancelaciones tardías ni por faltar a la sesión.",
+      "link": {
+        "subject": "Termina de reservar tu sesión de Tiny Humans",
+        "preheader": "Paga el depósito de {deposit} para confirmar el {date} a las {time}.",
+        "eyebrow": "Casi reservada",
+        "title": "Tu fecha está casi reservada, {name}",
+        "intro": "Te guardamos {bundle} el {date} a las {time}. Paga el depósito de {deposit} para confirmarlo.",
+        "hold": "Guardamos este horario hasta las {until} (hora de Miami). El depósito es parte de tu total; el resto se paga después de tu sesión.",
+        "button": "Pagar el depósito de {deposit}",
+        "buttonText": "Paga el depósito: {url}",
+        "help": "¿Hubo algún problema con el pago? Responde a este correo y te ayudaremos.",
+        "smsBody": "¡Hola, {name}! Aquí tienes el enlace para pagar el depósito de {deposit} y confirmar tu sesión de Tiny Humans: {url}"
+      },
       "abandoned": {
         "subject": "Tu sesión de Tiny Humans todavía no está reservada",
         "preheader": "El depósito no fue pagado, así que no pudimos guardar tu horario. Puedes elegirlo de nuevo en dos minutos.",
