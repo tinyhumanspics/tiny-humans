@@ -41,6 +41,8 @@ async function bookLittleMoments(page: import("@playwright/test").Page, { farAhe
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
   await expect(page.locator("#field-parentName")).toBeVisible();
+  // Little Moments is baby only: its notes example never mentions siblings
+  await expect(page.locator("#field-notes")).toHaveAttribute("placeholder", /feeding and nap/);
 
   await page.fill("#field-parentName", "José Muñoz");
   await page.fill("#field-email", "jose.test@example.com");

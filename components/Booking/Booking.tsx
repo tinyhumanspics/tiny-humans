@@ -1073,7 +1073,8 @@ function DetailsForm({
           rows={3}
           value={contact.notes}
           onChange={(e) => onChange("notes", e.target.value)}
-          placeholder={messages.notes.placeholder}
+          // siblings only appear in the example when this bundle includes them (its "people" line, edited in /admin)
+          placeholder={/sibling|herman/i.test(bundle.people) ? messages.notes.placeholder : messages.notes.placeholderBabyOnly}
         />
       </div>
       <div className={cn(styles.field, styles.fieldWide)}>

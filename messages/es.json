@@ -348,7 +348,8 @@
       },
       "notes": {
         "label": "Notas o solicitudes especiales",
-        "placeholder": "Hermanos que participarán, colores favoritos, algún recuerdo familiar que quieras incluir…"
+        "placeholder": "Hermanos que participarán, colores favoritos, algún recuerdo familiar que quieras incluir…",
+        "placeholderBabyOnly": "Colores favoritos, algún recuerdo familiar que quieras incluir, los horarios habituales de comida y siesta del bebé…"
       },
       "backdrops": {
         "title": "Elige tu fondo",

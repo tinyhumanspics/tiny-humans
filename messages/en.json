@@ -180,7 +180,8 @@
       },
       "notes": {
         "label": "Notes or special requests",
-        "placeholder": "Siblings joining, favorite colors, a family heirloom to include…"
+        "placeholder": "Siblings joining, favorite colors, a family heirloom to include…",
+        "placeholderBabyOnly": "Favorite colors, a family heirloom to include, baby's usual feeding and nap times…"
       },
       "backdrops": {
         "title": "Pick your backdrop",
