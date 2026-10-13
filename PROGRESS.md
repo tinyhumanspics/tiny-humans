@@ -150,6 +150,23 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
 ```
 
 ## Owner requests (outside the original brief)
+- [?] **Deposit follow-up + clearer deposit wording** (owner, Oct 12: a family's wifi failed at the deposit step;
+      /admin said "Waiting for deposit" and nobody got an email). Findings: by design no emails go out while pending;
+      deleting a waiting lead closes its page silently; without Stripe's `checkout.session.expired` event the release
+      waits for the sweep (calendar loads / daily cron); a family retrying the same time was blocked by its own hold.
+      Owner answers: hold stays 30 min (a link works until the hold ends); a released time can be held again for 30
+      min if still free; alert the owner when a deposit isn't paid; same family + same time → back to its payment page;
+      opening /admin → Leads settles overdue holds; label "Cancelled · deposit not paid". Deposit wording: bundle cards
+      + top of /book + review math ("part of your total, not an extra fee"), general early / exact at the end, small
+      chalk line. **Built, NOT live:** local branch `wip/deposit-flow` (`b772fff`, from `9f904cc`): `ownerDepositLink`
+      / `holdAgain` / `sendUnpaidAlert` / `heldForSameFamily` in `lib/deposit/flow.ts` (re-hold re-checks hours, blocks,
+      Outlook + other bookings via `busyExcluding` + the overlap constraint; `session_start` re-listed so the trigger
+      applies today's buffer; discount code use re-claimed best effort), `POST /api/admin/leads/deposit-link`,
+      `DepositLinkPanel` in /admin, `emails/DepositLink.tsx` (EN/ES) + `internalDepositUnpaidEmail`, `publicDeposits()`
+      (cached, tags `deposit` + `catalog`, expired on deposit save) → `CatalogProvider.depositFor` → `BundleCard`.
+      No migration (booking_emails kinds `deposit_link` are free text). Checks: strict tsc, lint 0 errors/22 warnings,
+      42 units; local Outlook-mode end-to-end (`deposit-flow-checks.mjs`, fake Graph/Resend/Stripe): 36/36. Review:
+      `Claude outputs/deposit-link/index.html`. Waiting on the owner's OK; then visual parity + e2e + push.
 - [?] **Seasonal board colors** (owner, Oct 12: "only the background color… the whole site including admin but also
       emails… only when we switch the theme"; Christmas `#7E2E2E`, Thanksgiving `#8E4318`, New Year `#172647`; keep the
       chalkboard look and every drawing; preview before live). Owner answers: darker/lighter shades follow the color
