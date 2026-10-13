@@ -6,7 +6,7 @@
  * cache, and saving calls revalidateTag so visitors get the change on their
  * next page load, without a redeploy.
  *
- * Without BLOB_READ_WRITE_TOKEN (local dev, prototype build) the built-in
+ * Without BLOB_READ_WRITE_TOKEN (local development, tests) the built-in
  * defaults are used.
  */
 import { unstable_cache, revalidateTag } from "next/cache";

@@ -137,7 +137,7 @@ export default function Confirmation({
           {changePolicyText(result.rescheduleNoticeHours, messages.confirmation.policy)} {messages.confirmation.policyLinks}
         </p>
       )}
-      {result.preview && <PrototypePreviews result={result} locale={locale} messages={messages.prototypeTools} />}
+      {result.preview && <MockPreviews result={result} locale={locale} messages={messages.prototypeTools} />}
       <ChalkBox className={styles.mockNote} seed={91} wobble={2} strokeWidth={2} color="var(--cloud-blue)" double={false}>
         <p className="chalk-soft">
           {result.status === "mock"
@@ -155,9 +155,9 @@ export default function Confirmation({
 }
 
 
-/* ---------------- prototype only: preview the email + the cancel link ---------------- */
+/* ---------------- mock mode only (local development, tests): preview the email + the cancel link ---------------- */
 
-function PrototypePreviews({ result, locale, messages }: { result: BookingResult; locale: AppLocale; messages: typeof en.bookingFlow.prototypeTools }) {
+function MockPreviews({ result, locale, messages }: { result: BookingResult; locale: AppLocale; messages: typeof en.bookingFlow.prototypeTools }) {
   const { getBundle } = useCatalog();
   const router = useRouter();
   const { theme, photos } = useSiteSettings();

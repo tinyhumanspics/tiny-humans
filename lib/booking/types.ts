@@ -4,7 +4,7 @@
  * - BookingClient: what the website's booking form uses.
  * - BookingProvider: the full server-side contract (adds cancel/reschedule).
  *
- * Providers: MockBookingProvider (prototype / BOOKING_PROVIDER=mock) and
+ * Providers: MockBookingProvider (BOOKING_PROVIDER=mock) and
  * OutlookBookingProvider (BOOKING_PROVIDER=outlook: Outlook Calendar +
  * Outlook email via Microsoft Graph, bookings stored in Neon).
  */

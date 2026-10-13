@@ -46,10 +46,10 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 export class MockBookingProvider implements BookingProvider {
   readonly name = "mock";
 
-  /** Where the owner's availability rules come from (browser storage in the prototype, Neon on the server). */
+  /** Where the owner's availability rules come from (Neon, or the defaults without a database). */
   constructor(
     private readonly rules: () => Promise<AvailabilityRules> = async () => defaultAvailabilityRules(),
-    /** Bundles + codes (Neon on the server, browser storage in the prototype). */
+    /** Bundles + codes (Neon, or the built-in bundles without a database). */
     private readonly pricing: PricingAdapter = { bundles: async () => builtInCatalog(), validateCode: async () => ({ ok: false, message: CODE_MESSAGES.notFound }) },
   ) {}
 
@@ -82,7 +82,7 @@ export class MockBookingProvider implements BookingProvider {
     );
   }
 
-  /** Mock bookings: this browser's storage in the prototype, memory on a server. Nothing real is created. */
+  /** Mock bookings: kept in the server's memory. Nothing real is created. */
   private store = mockStore();
 
   async createBooking(request: BookingRequest): Promise<BookingResult> {
@@ -236,30 +236,14 @@ function mockManaged(rec: MockRecord, noticeHours: number): ManagedBooking {
   };
 }
 
-const STORAGE_KEY = "tinyhumans:prototype-bookings";
 let memory: MockRecord[] = [];
 
+/** Mock bookings live in the server's memory (BOOKING_PROVIDER=mock: local development and tests). */
 function mockStore() {
-  const browser = typeof window !== "undefined" && typeof window.localStorage !== "undefined";
   return {
-    read(): MockRecord[] {
-      if (!browser) return memory;
-      try {
-        return JSON.parse(window.localStorage.getItem(STORAGE_KEY) ?? "[]") as MockRecord[];
-      } catch {
-        return [];
-      }
-    },
+    read: (): MockRecord[] => memory,
     write(records: MockRecord[]) {
-      if (!browser) {
-        memory = records;
-        return;
-      }
-      try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records.slice(-50)));
-      } catch {
-        /* storage full: preview only */
-      }
+      memory = records;
     },
   };
 }
@@ -294,7 +278,7 @@ function mockSummary(rec: MockRecord, noticeHours: number): CancellationSummary 
 function mockLead(rec: MockRecord): Lead {
   const r = rec.result.request;
   const p: PriceQuote = rec.result.pricing ?? { bundleId: r.bundleId, bundleName: r.bundleId, regularCents: 0, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: null, discountCents: 0, finalCents: 0, addons: [], addonsCents: 0, totalCents: 0, pricingType: "regular" };
-  const sent = { sent: false, at: null, error: "prototype (nothing sent)" };
+  const sent = { sent: false, at: null, error: "mock mode (nothing sent)" };
   return {
     reference: rec.result.id,
     status: rec.status,

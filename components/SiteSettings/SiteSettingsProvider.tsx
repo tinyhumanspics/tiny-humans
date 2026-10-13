@@ -6,7 +6,6 @@ import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import type { AppLocale } from "@/i18n/config";
-import { IS_PROTOTYPE, readPrototypeSettings } from "@/lib/admin/prototype";
 
 const useIsoLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
@@ -32,12 +31,7 @@ export function SiteSettingsProvider({ initial, locale = "en", children }: { ini
   const [settings, setSettings] = useState<SiteSettings>(initial);
   const [ready, setReady] = useState(false);
 
-  // Prototype only: the owner's choices are kept in this browser.
   useIsoLayoutEffect(() => {
-    if (IS_PROTOTYPE) {
-      const saved = readPrototypeSettings();
-      if (saved) setSettings(saved);
-    }
     setReady(true);
   }, []);
 

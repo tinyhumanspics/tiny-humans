@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
-import { getAdminApi, PROTOTYPE_PASSWORD } from "@/lib/admin/client";
+import { getAdminApi } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
@@ -105,10 +105,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       </nav>
       <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>
 
-      {api.mode === "prototype" && (
-        <p className={cn(styles.banner, "chalk-soft")}>Prototype: changes are saved in this browser only, so you can preview them. On the real site they go live for every visitor.</p>
-      )}
-      {api.mode === "live" && !storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
+      {!storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
         <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
       )}
 
@@ -118,10 +115,9 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
       {section === "pricing" && <PricingPanel api={api} />}
       {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
       {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
-      {section === "theme" && <ThemePanel settings={settings} onSave={save} prototype={api.mode === "prototype"} />}
+      {section === "theme" && <ThemePanel settings={settings} onSave={save} />}
       {section === "settings" && spanishStatus && (
         <SettingsPanel
-          api={api}
           storageReady={storageReady}
           spanishStatus={spanishStatus}
           onSetSpanishPublication={setSpanishPublication}
@@ -171,13 +167,11 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
 /* ---------------- settings ---------------- */
 
 function SettingsPanel({
-  api,
   storageReady,
   spanishStatus,
   onSetSpanishPublication,
   onSignOut,
 }: {
-  api: ReturnType<typeof getAdminApi>;
   storageReady: boolean;
   spanishStatus: SpanishPublicationStatus;
   onSetSpanishPublication: (enabled: boolean) => Promise<SpanishPublicationStatus>;
@@ -222,7 +216,7 @@ function SettingsPanel({
           <ChalkButton
             variant={spanishStatus.enabled ? "outline" : "solid"}
             onClick={changePublication}
-            disabled={publicationBusy || (api.mode === "live" && !storageReady)}
+            disabled={publicationBusy || !storageReady}
             seed={966}
           >
             {publicationBusy ? "Saving…" : spanishStatus.enabled ? "Hide Spanish website" : "Publish Spanish website"}
@@ -245,14 +239,14 @@ function SettingsPanel({
       </ChalkBox>
 
       <h2 className={cn(styles.h2, "chalk")}>Sign-in</h2>
-      {api.mode === "live" && <SignInDevices />}
+      <SignInDevices />
       <p className={cn(styles.muted, "chalk-soft")}>
-        {api.mode === "prototype" ? `Prototype password: ${PROTOTYPE_PASSWORD}. Changes stay in this browser.` : "The owner password is set with ADMIN_PASSWORD in Vercel and always works as a backup. To change it, update the variable and redeploy."}
+        The owner password is set with ADMIN_PASSWORD in Vercel and always works as a backup. To change it, update the variable and redeploy.
       </p>
       <ChalkButton variant="outline" onClick={onSignOut} seed={970}>Sign out</ChalkButton>
       <h2 className={cn(styles.h2, "chalk")}>Connections</h2>
       <ul className={styles.connList}>
-        <li className="chalk-soft"><b>Photos &amp; theme storage (Vercel Blob):</b> {api.mode === "prototype" ? "this browser (prototype)" : storageReady ? "connected" : "not connected yet"}</li>
+        <li className="chalk-soft"><b>Photos &amp; theme storage (Vercel Blob):</b> {storageReady ? "connected" : "not connected yet"}</li>
         <li className="chalk-soft"><b>Bookings &amp; availability:</b> Neon database (DATABASE_URL)</li>
         <li className="chalk-soft"><b>Calendar:</b> Outlook via Microsoft Graph (MICROSOFT_* variables)</li>
         <li className="chalk-soft"><b>Booking emails:</b> Resend (RESEND_API_KEY, BOOKING_FROM_EMAIL, BOOKING_INTERNAL_FROM_EMAIL, BOOKING_NOTIFICATION_EMAIL)</li>
@@ -389,8 +383,8 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
   const [passkeyError, setPasskeyError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (api.mode === "live") passkeySignInAvailable().then(setPasskeyReady);
-  }, [api.mode]);
+    passkeySignInAvailable().then(setPasskeyReady);
+  }, []);
 
   const signInWithDevice = async () => {
     setBusy(true);
@@ -455,14 +449,13 @@ function Login({ api, authReady, onSignedIn }: { api: ReturnType<typeof getAdmin
           {busy ? "Signing in…" : "Sign in"}
         </ChalkButton>
       </form>
-      {api.mode === "prototype" && <p className={cn(styles.hint, "chalk-soft")}>Prototype password: {PROTOTYPE_PASSWORD}</p>}
     </ChalkBox>
   );
 }
 
 /* ---------------- theme ---------------- */
 
-function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; onSave: (s: SiteSettings) => Promise<SiteSettings>; prototype: boolean }) {
+function ThemePanel({ settings, onSave }: { settings: SiteSettings; onSave: (s: SiteSettings) => Promise<SiteSettings> }) {
   const [busy, setBusy] = useState<TinyHumansTheme | null>(null);
   const [note, setNote] = useState<Note>(null);
 
@@ -506,14 +499,7 @@ function ThemePanel({ settings, onSave, prototype }: { settings: SiteSettings; o
       {note && (
         <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
           {note.text}{" "}
-          {note.kind === "ok" &&
-            (prototype ? (
-              <button type="button" className={styles.linkButton} onClick={() => window.location.reload()}>
-                See the opening animation
-              </button>
-            ) : (
-              <span>Visitors see it on their next page load.</span>
-            ))}
+          {note.kind === "ok" && <span>Visitors see it on their next page load.</span>}
         </p>
       )}
     </section>

@@ -27,7 +27,7 @@ export const defaultSettings: SiteSettings = {
 const MAX_PHOTOS = 60;
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
-/** Accept only photos stored in Vercel Blob, the built-in /portfolio files, or (prototype) data URLs. */
+/** Accept only photos stored in Vercel Blob or the built-in /portfolio files (data URLs only when a caller allows them). */
 function allowedSrc(src: string, allowDataUrls: boolean): boolean {
   if (src.startsWith("/portfolio/")) return true;
   if (allowDataUrls && src.startsWith("data:image/")) return true;

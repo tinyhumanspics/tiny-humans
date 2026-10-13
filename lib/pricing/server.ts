@@ -37,7 +37,7 @@ export class CatalogUnavailableError extends Error {}
 /**
  * Every bundle (active + inactive), from Neon. The built-in bundles in
  * config/bundles.ts are used ONLY when no database is configured (local
- * development / prototype). With a database, an error or an empty table throws:
+ * development / tests). With a database, an error or an empty table throws:
  * production never shows hardcoded prices the server wouldn't honor.
  */
 export async function getCatalog(): Promise<Bundle[]> {
@@ -160,7 +160,7 @@ async function translateCatalog(catalog: Bundle[], locale: AppLocale): Promise<B
  * What the public site shows.
  * - live: from Neon (cached; refreshed when the owner saves, and every 5 minutes)
  * - snapshot: Neon is unreachable, so the last good copy (memory / Blob) is shown — the prices the owner last published
- * - builtin: no database configured (local development / prototype only)
+ * - builtin: no database configured (local development / tests only)
  * With a database and no good copy, this throws on purpose: pages are statically regenerated (ISR), so Next keeps
  * serving the last good page, and a build fails instead of deploying wrong prices (the previous deployment stays live).
  * It never falls back to the hardcoded bundles in production.

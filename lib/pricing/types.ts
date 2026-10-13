@@ -20,7 +20,7 @@ export interface DiscountCode {
 
 export type CodeCheck = { ok: true; terms: CodeTerms; codeId: string } | { ok: false; message: string };
 
-/** Where providers get bundles + codes (Neon on the server, browser storage in the prototype). */
+/** Where providers get bundles + codes (Neon, or the built-in bundles without a database). */
 export interface PricingAdapter {
   bundles(): Promise<Bundle[]>;
   validateCode(code: string, bundleId: string, email?: string): Promise<CodeCheck>;

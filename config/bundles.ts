@@ -60,7 +60,7 @@ export interface BundleOffer {
 }
 
 /**
- * LOCAL DEVELOPMENT / PROTOTYPE ONLY. The live bundles are managed in /admin/pricing and stored in Neon
+ * LOCAL DEVELOPMENT / TESTS ONLY. The live bundles are managed in /admin/pricing and stored in Neon
  * (tables `bundles`, `bundle_inclusions`). This copy mirrors them (as of 2026-10-06) so local previews look
  * like production; it is never shown when a database is configured. Removed in Phase 8.
  */

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
 import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
 import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
-import { IS_PROTOTYPE } from "@/lib/admin/prototype";
 import type en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
@@ -72,12 +71,7 @@ export default function Footer({ messages, languageMessages, locale, showLanguag
         <ChalkDoodle name="heart" size={20} color="var(--accent-2)" />
         <p>{fill(messages.copyright, { year: String(new Date().getFullYear()), brand: site.name, location: site.location })}</p>
         {showLanguageSwitcher && !pathname.startsWith("/admin") && <LanguageSwitcher locale={locale} messages={languageMessages} placement="footer" />}
-        {/* The real site has no public link to the owner area; it lives at /admin. */}
-        {IS_PROTOTYPE && (
-          <p className={styles.owner}>
-            <Link href="/admin">{messages.owner}</Link>
-          </p>
-        )}
+        {/* No public link to the owner area: it lives at /admin. */}
       </div>
     </footer>
   );

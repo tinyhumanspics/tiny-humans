@@ -500,7 +500,6 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
   const [depositOffer, setDepositOffer] = useState<DepositOffer | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_PROTOTYPE === "1") return;
     if (!bundleId) return;
     fetch(`/api/booking/deposit?bundle=${encodeURIComponent(bundleId)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))

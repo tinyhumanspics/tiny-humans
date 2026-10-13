@@ -1,19 +1,14 @@
 import type { BookingClient } from "./types";
-import { MockBookingProvider } from "./mock-provider";
 import { HttpBookingClient } from "./http-client";
-import { readPrototypeAvailability } from "@/lib/availability/prototype";
-import { prototypePricingAdapter } from "@/lib/pricing/prototype";
 
 let client: BookingClient | null = null;
 
 /**
- * The booking form's single entry point.
- * - Static prototype (NEXT_PUBLIC_PROTOTYPE=1): in-browser mock, no server.
- * - Real site: the /api/booking routes, where the server chooses the
- *   provider from BOOKING_PROVIDER (mock or outlook).
+ * The booking form's single entry point: the /api/booking routes, where the server chooses the provider from
+ * BOOKING_PROVIDER (mock or outlook).
  */
 export function getBookingClient(): BookingClient {
-  if (!client) client = process.env.NEXT_PUBLIC_PROTOTYPE === "1" ? new MockBookingProvider(async () => readPrototypeAvailability(), prototypePricingAdapter) : new HttpBookingClient();
+  if (!client) client = new HttpBookingClient();
   return client;
 }
 

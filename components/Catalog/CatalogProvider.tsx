@@ -3,10 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Bundle } from "@/config/bundles";
 import { bookingRules } from "@/config/booking";
-import { IS_PROTOTYPE } from "@/lib/admin/prototype";
 import { todayInZone } from "@/lib/booking/timezone";
 import { sortBundles } from "@/lib/pricing/catalog";
-import { PRICING_EVENT, readPrototypePricing } from "@/lib/pricing/prototype";
 
 interface Ctx {
   /** Active bundles, in display order (what the public site shows). */
@@ -24,18 +22,13 @@ interface Ctx {
 
 const CatalogContext = createContext<Ctx | null>(null);
 
-/** Central bundle/price data for every customer-facing page (from Neon; browser storage in the prototype). */
+/** Central bundle/price data for every customer-facing page (from Neon). */
 export function CatalogProvider({ initial, status = "live", initialToday, deposits = null, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin"; initialToday: string; deposits?: Record<string, number> | null; children: ReactNode }) {
-  const [all, setAll] = useState<Bundle[]>(initial);
+  const all = initial;
   const [today, setToday] = useState(initialToday);
   useEffect(() => {
     // the page may be cached: always re-check the date so expired offers disappear
     setToday(todayInZone(bookingRules.timeZone));
-    if (!IS_PROTOTYPE) return;
-    const load = () => setAll(readPrototypePricing().bundles);
-    load();
-    window.addEventListener(PRICING_EVENT, load);
-    return () => window.removeEventListener(PRICING_EVENT, load);
   }, []);
   const value = useMemo<Ctx>(() => {
     const bundles = sortBundles(all.filter((b) => b.active !== false));

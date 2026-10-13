@@ -1,6 +1,6 @@
 import { bundles as builtInBundles, type Bundle } from "@/config/bundles";
 
-/** The original three bundles (used before the database/migration exists, and in the prototype). */
+/** The original three bundles (used before the database/migration exists: local development and tests). */
 export function builtInCatalog(): Bundle[] {
   return builtInBundles.map((b, i) => ({ ...b, active: true, sortOrder: i, offer: null }));
 }

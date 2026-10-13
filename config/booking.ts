@@ -15,7 +15,7 @@ export const babyAgeOptions = [
  * Fixed booking settings. The *changeable* rules (weekly hours, notice,
  * booking window, buffer, special dates, time blocks) are managed by the
  * owner in /admin > Availability and stored in Neon; the defaults below are
- * used until the owner saves their own (and in the prototype).
+ * used until the owner saves their own.
  */
 export const bookingRules = {
   /** The studio's time zone (IANA name). */
@@ -26,7 +26,7 @@ export const bookingRules = {
   slotIntervalMinutes: 60,
   /** Limits for the owner's settings. */
   limits: { maxNoticeDays: 60, maxWindowDays: 365, maxBufferMinutes: 240, maxRescheduleNoticeHours: 336 },
-  /** Defaults (match the original prototype behaviour). */
+  /** Defaults (the site's original behaviour). */
   defaults: {
     weekly: [
       { weekday: 0, isOpen: false, start: "09:00", end: "18:00" },

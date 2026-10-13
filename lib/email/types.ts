@@ -1,4 +1,4 @@
-/** A rendered email, ready to hand to Resend (or to preview in the prototype). */
+/** A rendered email, ready to hand to Resend (or to preview in mock mode). */
 export interface EmailAttachment {
   filename: string;
   /** base64 */

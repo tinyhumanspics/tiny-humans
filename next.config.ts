@@ -4,15 +4,7 @@ import { CSP_REPORT_PATH, contentSecurityPolicy } from "./lib/security/csp";
 
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
-/**
- * Standard Next.js App Router configuration (what Vercel builds with
- * `npm run build`).
- *
- * `npm run build:static` (scripts/build-static.mjs) produces a static export
- * for the click-through prototype. It sets STATIC_EXPORT=1 and temporarily
- * moves app/api aside, because API routes can't be part of a static export.
- */
-const isStatic = process.env.STATIC_EXPORT === "1";
+/** Standard Next.js App Router configuration (what Vercel builds with `npm run build`). */
 
 /**
  * Security headers. frame-ancestors 'self' / SAMEORIGIN (enforced): nobody else can frame the site (clickjacking);
@@ -35,8 +27,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  images: isStatic ? { unoptimized: true } : { remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }] },
-  ...(isStatic ? { output: "export", trailingSlash: true } : { headers: async () => [{ source: "/:path*", headers: securityHeaders }] }),
+  images: { remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }] },
+  headers: async () => [{ source: "/:path*", headers: securityHeaders }],
 };
 
 export default withNextIntl(nextConfig);

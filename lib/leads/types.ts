@@ -100,7 +100,7 @@ export interface Lead {
   reminders?: { kind: "72h" | "24h"; status: "sending" | "sent" | "failed"; at: string | null; error: string | null }[];
   /** After-session emails, payment and review (server mode only). */
   after?: AfterSessionStatus;
-  /** The deposit (null: booked without one; undefined in the prototype). */
+  /** The deposit (null: booked without one; undefined in mock mode). */
   deposit?: LeadDeposit | null;
   /** Emails Resend reported as not delivered (bounced, marked as spam, blocked, failed), newest first. */
   emailProblems?: { kind: "bounced" | "complained" | "suppressed" | "failed"; at: string; email: string; detail: string | null }[];

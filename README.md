@@ -28,7 +28,6 @@ Other scripts:
 | `npm run build` | Production build (what Vercel runs) |
 | `npm start` | Serve the production build locally |
 | `npm run typecheck` | TypeScript check |
-| `npm run build:static` | Static export to `out/` for the click-through prototype (temporarily sets `app/api` aside; not used by Vercel) |
 | `npm run db:generate` | Create a SQL migration from `lib/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations to `DATABASE_URL` (Neon) |
 | `npm run db:studio` | Browse the database locally (Drizzle Studio) |
@@ -40,7 +39,6 @@ Push to GitHub and import the repo in Vercel, then follow **Owner area → One-t
 ## What is mocked
 
 - **Portfolio photos are placeholders** (`public/portfolio/`), replaceable from `/admin`.
-- **The click-through prototype** (single HTML file) always uses the in-browser mock booking provider. Nothing is saved or sent.
 - **`BOOKING_PROVIDER=mock`** (the default) uses mock availability on the server too: closed Sundays, some days fully booked, fewer slots for longer bundles. The confirmation clearly says no calendar event or email was created.
 - **`BOOKING_PROVIDER=outlook`** is the real system (Outlook Calendar via Microsoft Graph, stored in Neon, booking emails via Resend). It needs the credentials below; until they exist it refuses bookings with a friendly message rather than pretending.
 
@@ -67,10 +65,6 @@ Drop real images into `public/portfolio/`, then update `config/portfolio.ts` wit
 ## Home sessions
 
 Tiny Humans brings the studio to every family's home, so there is no location choice. Families pick a bundle, then book on `/book` (**Date → Time → Details → Review**); the details step collects the home address (street, city, ZIP), which appears on the review step and is passed to the booking provider as `address`. The promise appears under the hero text (`messages/*.json` → `home.hero.promise`) and on every bundle card. Steps are referenced by name (`STEP` in `config/booking.ts`), so the flow can change without renumbering.
-
-## Phone preview
-
-`npm run build:static` plus the prototype tooling produces a single-file phone preview: the real site inside iPhone, iPhone Pro Max, small Android and iPad frames, at true size, so the phone layout can be checked from a desktop browser. On a real phone, just open the site.
 
 ## Footer and legal pages
 
@@ -113,8 +107,7 @@ Until storage is connected the site uses the built-in defaults, and the owner ar
 
 - `lib/settings/server.ts` stores a small settings file (live theme, live picture set, and every picture set) in Vercel Blob. Uploaded photos no picture set uses any more are deleted automatically. Public pages read it through a tagged cache; saving calls `revalidateTag`, so pages update without a rebuild.
 - `lib/admin/auth.ts` checks the password and issues a signed, httpOnly session cookie (7 days). Every owner API route (`app/api/admin/*/route.ts`) verifies it on the server.
-- API routes are standard App Router `route.ts` files. The static prototype build (`npm run build:static`, see `scripts/build-static.mjs`) temporarily sets `app/api` aside, since API routes can't be statically exported; it never affects `npm run build`.
-- In the prototype (`npm run build:static`) the owner area saves to the browser instead (`lib/admin/client.ts`), password `tinyhumans`.
+- API routes are standard App Router `route.ts` files.
 
 ## Seasonal themes
 
@@ -165,7 +158,7 @@ Browser (booking form)                 Server (Vercel functions)
 - `lib/db/`: `schema.ts` (bookings table), `client.ts` (Neon HTTP driver). Migrations live in `drizzle/`.
 - `lib/log.ts`: structured server logs (Graph auth, calendar, database, email failures). Secrets and tokens are never logged.
 - `config/booking.ts`: fixed settings (time zone `America/New_York`, slot interval) and the **default** availability. The owner changes the real availability in `/admin` (see "Availability" below).
-- `lib/availability/`: owner availability (types, defaults, validation, Neon repository, prototype storage).
+- `lib/availability/`: owner availability (types, defaults, validation, Neon repository).
 
 ### Booking provider modes
 
@@ -219,7 +212,7 @@ No payment is taken online. The review step shows "Due today: $0"; the confirmat
 
 ## Pricing & Promotions (/admin/pricing)
 
-**Central pricing.** Bundles live in Neon (`bundles`, `bundle_inclusions`; seeded from `config/bundles.ts` by migration 0005). Everything customer-facing reads them: the public bundle cards and booking (via `CatalogProvider`, fed by `getPublicCatalog()` in the root layout: cached, refreshed on every admin save and every 5 minutes), the server-side booking/quote logic (`getCatalog()`, always fresh), emails and Leads. Without a database, or before migration 0005 runs, the built-in bundles are used. The prototype keeps bundles/codes in browser storage.
+**Central pricing.** Bundles live in Neon (`bundles`, `bundle_inclusions`; seeded from `config/bundles.ts` by migration 0005). Everything customer-facing reads them: the public bundle cards and booking (via `CatalogProvider`, fed by `getPublicCatalog()` in the root layout: cached, refreshed on every admin save and every 5 minutes), the server-side booking/quote logic (`getCatalog()`, always fresh), emails and Leads. Without a database, or before migration 0005 runs, the built-in bundles are used.
 
 **Bundles:** name, regular price, description, session length, edited photos, small label, "What's included" (add / edit / reorder / delete), active/inactive, special offer. Inactive bundles disappear from the site and can't be booked. A bundle with any booking in its history can't be deleted (deactivate it instead).
 
@@ -386,7 +379,6 @@ Both are sent from `BOOKING_FROM_EMAIL`. Setup: in Resend, add and verify the do
 
 - **Mock (`BOOKING_PROVIDER=mock`)**: safe default for development and previews. The UI is identical; the confirmation says it's a preview.
 - **Production (`BOOKING_PROVIDER=outlook`)**: real availability, real bookings, real emails. If something isn't configured, families see "Online booking isn't available right now. Please email hello@tinyhumans.photography" and the server log says exactly what's missing.
-- The single-file prototype is always mock.
 
 ## Project structure
 

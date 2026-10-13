@@ -57,7 +57,7 @@ function depositLine(d: LeadDeposit, cancelled: boolean): string {
 const depositRows = (lead: Lead): [string, string][] => {
   const d = lead.deposit;
   // `null` is an ordinary server booking made while deposits were off. Keep
-  // `undefined` visually unchanged for the browser-only prototype, which has
+  // `undefined` visually unchanged for mock mode, which has
   // no deposit/payment system at all.
   if (d === null) {
     return lead.status === "confirmed" || lead.status === "rescheduled"
@@ -101,7 +101,7 @@ const duplicateLine = (lead: Lead) => {
     .join("; ");
 };
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
-/** Reminder emails for the current session time (none in the prototype, where nothing is sent). */
+/** Reminder emails for the current session time (none in mock mode, where nothing is sent). */
 const reminderRows = (lead: Lead): [string, string][] => {
   if (!lead.reminders || lead.status === "cancelled") return [];
   if (!lead.reminders.length) return [["Reminders", "None sent yet"]];
