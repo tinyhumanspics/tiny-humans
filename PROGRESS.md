@@ -3,16 +3,21 @@
 Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PROGRESS.md and continue."
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
-## ▶ LAUNCH — Friday Oct 16 (owner, Oct 12: "launch day is in 4 days … fastest way to get it done")
-Plan agreed in chat: launch-critical items first; Phases 8–10 (no visible change for families) start after launch
-(Phase 8 may be built on a branch before, merged only after launch). Code freeze on `main` the day before launch except fixes.
-- [ ] Owner, Stripe: restricted key → Refunds: Write; webhook → add `checkout.session.expired`.
+## ▶ LAUNCH — by Nov 15 (owner, Oct 12 late: "we need to launch this by November 15"; earlier that day "in 4 days")
+Launch-critical owner items below. Phase 8 runs meanwhile in small invisible slices (full gates + parity each). Code
+freeze on `main` the day before launch except fixes.
+- [ ] Owner, Stripe (guide sent Oct 12, checked against docs.stripe.com/keys + /webhooks): dashboard.stripe.com/apikeys
+      → Restricted keys → the site's `rk_live_` key → ⋯ → Edit key → **Refunds: Write** (Checkout Sessions stays Write;
+      the key value doesn't change). dashboard.stripe.com/webhooks → endpoint `/api/stripe/webhook` → Edit destination
+      → add **`checkout.session.expired`** (keep `checkout.session.completed`; the signing secret doesn't change).
 - [ ] Owner + Claude: one real $50 deposit booking → confirmation email, Outlook event, /admin "Deposit paid" → cancel
-      from the email link → Stripe shows the refund (~$1.75 Stripe fee is not returned).
+      from the email link → Stripe shows the refund (~$1.75 Stripe fee is not returned). In the same test, open the
+      family + studio emails in the **Gmail app in light and dark mode** (color-scheme fix `dc597da`), ideally with a
+      @gmail.com address (Gmail's fix may need Google-hosted accounts).
 - [ ] Owner, /admin → Photos → Details: two photos are described by file name (screen readers/Google read these):
       "IMG 7378" (home "Little moments" photo captioned "Ten Tiny Toes", also on the landing page) and "IMG 6087"
       (About "Adrian & Alondra", also on the landing page).
-- [ ] Owner approval: privacy-policy line for Vercel Web Analytics + Speed Insights (EN + ES draft sent Oct 12; facts
+- [ ] Owner approval (still unanswered): privacy-policy line for Vercel Web Analytics + Speed Insights (EN + ES draft sent Oct 12; facts
       from https://vercel.com/docs/analytics/privacy-policy and https://vercel.com/docs/speed-insights/privacy-policy:
       no cookies, anonymous, visitor hash discarded after 24 h; the site sends only page views, URLs filtered by
       `lib/tracking/safe-url.ts`).
@@ -31,17 +36,16 @@ Plan agreed in chat: launch-critical items first; Phases 8–10 (no visible chan
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Oct 12: Phase 6 nearly done — waiting on owner steps and a quiet CSP week)
-**State Oct 12 (Claude Code):** main = `f2e329f`. Live and checked on production: Phase 6 bug hunt (BUG-12…15), the
-owner's layout requests (About box + landing FAQ centered, no doodles on heading letters), the API audit (`5327dbe`),
-the accessibility pass (`9ace2e5`, `5482c57`), report-only CSP (`0abba30`, live via `0abfe3f`; real Meta Pixel and 6
-pages clean) and lighter public pages (`25e9dcf`: home 323 → 225 KB gzipped JS, measured live). **Pushed but not yet
-deployed:** passkey sign-in (`5c52b19`, `cb5f472` + docs, head `f2e329f`) — Vercel's Oct 12 incident ("Increased build
-and deployment failures", upstream GitHub) left these pushes without a Vercel deployment at handoff; CI passed. The next
-session must confirm a production deployment of `f2e329f` (or later) succeeded; if Vercel never picked it up, the
-owner clicks Redeploy on the latest deployment in the Vercel dashboard (or any new push deploys it). Then smoke-test:
-`/admin` shows only the password form, `GET /api/admin/passkeys/available` → `{"available":false}` until migration 0020.
-Gates at `f2e329f`: strict tsc, lint 0 errors/22 warnings, 42 units, 110 e2e (76 expected skips), 24 visual.
+## ▶ NEXT STEPS (Oct 12 late: Phase 8 started; owner Stripe/test steps open; quiet CSP week)
+**State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
+live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
+link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
+not paid", deposit wording on cards / /book / review: `f29618c`); seasonal board colors + Thanksgiving readability
+(`8ff5143`, `d5a6fbf`; production still Original until the owner picks a theme); Phase 8 slice 1, prototype removed
+(`cf73bdc` + `ac31f5c`); baby-only notes example (`f700d9d`, `d1468e2`); emails keep their colors in dark mode
+(`dc597da`). Gates at `dc597da`: strict tsc, lint 0 errors/22 warnings, 44 units, build, 24/24 visual, 110 e2e (76
+expected skips). Nothing unpushed; local worktrees/branches in the session scratchpad are disposable
+(`wip/theme-backgrounds` holds only the preview-only theme switcher, never merge it).
 **Passkeys live Oct 12:** Vercel published the passkey code during its incident without posting a GitHub deployment
 status; production answers `/api/admin/passkeys/available` (200) and `/api/admin/session/others` (405 on GET), and the
 live /admin JavaScript contains the new sign-in screens (password form unchanged). **The owner ran migration 0020 in
@@ -133,23 +137,38 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 12): main = f2e329f. Live and checked: Phase 6 bug hunt (BUG-12…15), owner layout requests, API audit,
-accessibility pass, report-only CSP (real Meta Pixel clean), lighter public pages (home 323 → 225 KB gzipped JS).
-Passkey sign-in (5c52b19, cb5f472) is live (Vercel deployed it during its Oct 12 incident without a GitHub status)
-and the owner ran migration 0020 and added Face ID on iPhone + Mac (works). Owner confirmed Oct 12: 1g done,
-30 free travel miles intended (live), $50 deposit on intentionally. Not on main yet: nothing.
+State (Oct 12 late): main = dc597da, live and smoke-tested: Dark Green backdrop + email swatch fix; deposit follow-up
+(owner deposit link / re-hold, "Deposit not paid" alert, same-family retry, deposit wording on cards, /book, review);
+seasonal board colors + Thanksgiving readability (inactive until the owner picks a theme); Phase 8 slice 1 (prototype
+removed); baby-only notes example; emails keep their colors in dark mode (color-scheme light only).
+Not on main yet: nothing.
 
-Next: Phase 8: structure move, route groups, split Booking.tsx, library evaluation, remove config/bundles.ts — visual parity required. Research current official docs first.
-Time-sensitive: CSP report-only since Oct 12 → read `csp` warnings in Vercel logs ~Oct 19, then enforce;
+Next: Phase 8 slice 2, route groups: one root layout (html/body/fonts/theme vars/intro/viewport) + nested (site) and
+(admin) layouts; the 404 pages render the site shell themselves. Then slices 3-7 (PROGRESS.md → Phase 8). Full gates
++ 24/24 visual parity per slice. Docs already read Oct 12 (Research notes → Phase 8).
+Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
 DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: Stripe restricted key Refunds: Write + webhook event checkout.session.expired + one real
-deposit refund test; Search Console/Business Profile; Analytics privacy line; /portfolio; Terms review; About alt "IMG 6087".
-Watch out: Vercel CLI on the Mac is logged out. Full passkey flow needs scripts/local-db + Chromium virtual
-authenticator (CI covers only the pre-migration state). Rate limits are per visitor address: e2e projects send their
-own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it signs payment links).
+Waiting on the owner: Stripe Refunds: Write + checkout.session.expired, then the real $50 test together (also check the
+emails in the Gmail app, light + dark); privacy line for Vercel Analytics (draft sent); photo descriptions "IMG 7378" /
+"IMG 6087"; Search Console/Business Profile; /portfolio; Terms review.
+Watch out: stage exact paths and check `git show --stat HEAD` before pushing (Oct 12 incident). Production bundles have
+an empty `people` line (who joins lives in features). Seasonal email images are generated (no script in the repo).
+Vercel CLI on the Mac is logged out.
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Emails keep their own colors in phone dark mode** (owner, Oct 12: saw them change in the Gmail app; "keep
+      them white too" for the studio emails; LIVE `dc597da`). Both layouts now declare
+      `<meta name="color-scheme" content="light only">` + `supported-color-schemes` + `:root{color-scheme:light only}`
+      (were `dark`). Rendered diff over 48 family emails: only those head lines. Gmail iOS/Android honor it since ~Oct
+      2026 (maybe only Google-hosted accounts); Apple Mail honors it; Outlook mobile/web may still adjust (no
+      `[data-ogsc]` overrides added; owner didn't see it there); classic Outlook for Windows can't be controlled.
+      **Test with the owner** during the $50 deposit test (Gmail app, light + dark).
+- [x] **Notes example without siblings for baby-only bundles** (owner, Oct 12; LIVE `f700d9d` + `d1468e2`): Little
+      Moments / Our Little Story show "Favorite colors, a family heirloom to include, baby's usual feeding and nap
+      times…" (ES matched); Our Family Story keeps "Siblings joining…". `includesSiblings()` (`lib/booking/
+      bundle-traits.ts`) reads the bundle's `people` line **and features**: in production `people` is empty and "Baby
+      + parents + siblings" is a feature (first push read `people` only and missed it; caught by the live check).
 - [x] **Deposit follow-up + clearer deposit wording — LIVE Oct 12 (`f29618c`, owner: "Looks great, you can push it")** (owner, Oct 12: a family's wifi failed at the deposit step;
       /admin said "Waiting for deposit" and nobody got an email). Findings: by design no emails go out while pending;
       deleting a waiting lead closes its page silently; without Stripe's `checkout.session.expired` event the release
@@ -369,10 +388,9 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
   live and on at $50 (owner confirmed Oct 12); left: the Stripe key permission, webhook event and one real refund
   test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
   **Phase 6 (Oct 10–12) is done except time/owner-gated items:** second bug hunt, API audit, accessibility pass,
-  report-only CSP, lighter public pages and passkey sign-in are built; left: CSP enforce after a quiet week (~Oct 19),
-  an optional VoiceOver listen-through with the owner. Phase 7 is complete
-  apart from React Compiler warnings, which move to Phase 8. Next: Phase 8 (structure move, route groups, split
-  Booking.tsx, library evaluation, remove `config/bundles.ts`), visual parity required.
+  report-only CSP, lighter public pages and passkey sign-in are live (owner added Face ID Oct 12); left: CSP enforce
+  after a quiet week (~Oct 19), an optional VoiceOver listen-through. Phase 7 is complete apart from React Compiler
+  warnings (moved to Phase 8). **Phase 8 started Oct 12:** slice 1 (prototype removal) is live; next slices below.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -952,6 +970,28 @@ own x-forwarded-for. Never rotate ADMIN_SESSION_SECRET to sign someone out (it s
       esbuild-kit, eslint's braces chain); "fixes" are downgrades → ignore. Kept `@types/node` 22 (match Vercel's Node).
 - [ ] React Compiler lint rules are warnings for now (set-state-in-effect, purity, refs, immutability) → fix in Phase 8.
 ## Phase 8 — Structure move, route groups, split Booking.tsx, library evaluation, remove `config/bundles.ts`
+Rules: small slices, each with strict tsc + lint + units + build + 24/24 visual parity + e2e before pushing; no visible
+change. Docs read Oct 12 (see Research notes → Phase 8).
+- [x] **Slice 1: remove the static click-through prototype** (owner OK Oct 12; `cf73bdc` + `ac31f5c`, −500 lines):
+      `scripts/build-static.mjs`, `build:static`, the STATIC_EXPORT branch of `next.config.ts`, `lib/admin/prototype.ts`,
+      `lib/pricing/prototype.ts`, `lib/availability/prototype.ts`, the in-browser admin API (`lib/admin/client.ts` is
+      HTTP-only, `AdminApi.mode` gone), prototype branches in Footer / CatalogProvider / SiteSettingsProvider /
+      AdminApp / Booking, the mock provider's browser storage (server memory only). **Kept:** mock mode
+      (`BOOKING_PROVIDER=mock`) and its confirmation-email preview (`MockPreviews`, tested by e2e).
+- [ ] Slice 2: route groups. Decision (official docs): **one top-level root layout** (html, body, fonts, theme CSS
+      variables on `<html>`, intro script, generateViewport) + nested `app/(site)/layout.tsx` (SiteSettings/Catalog
+      providers, SeasonalDecor, Header, Footer, MetaPixel) and `app/(admin)/admin/layout.tsx`. Not multiple root
+      layouts (no full reloads, the 404 keeps working). `app/not-found.tsx` and `app/es/not-found.tsx` render only
+      inside the root layout, so they must render the site shell (Header/Footer) themselves to stay identical. The
+      intro must never replay between site pages; /admin skips it (path check in the intro script stays).
+- [ ] Slice 3: move existing code into the target folders (components/ui|layout|form|chalk, features/*), `@/` imports.
+- [ ] Slice 4: split `components/Booking/Booking.tsx` (~1,100 lines) into step components + a state hook.
+- [ ] Slice 5: `config/bundles.ts` → `Bundle` type in `lib/pricing/types.ts`; the built-in bundles become a test/dev
+      fixture (CI e2e has no database and still needs them).
+- [ ] Slice 6: the 22 lint warnings (React Compiler: set-state-in-effect, purity, refs, immutability).
+- [ ] Slice 7: library evaluation (forms RHF+Zod vs React 19 actions; Radix/Base UI/React Aria for dialogs/menus/
+      lightbox; TanStack Query; Motion/GSAP vs current animation): research, decide, justify here; switch only where
+      visually identical and clearly better; **ask the owner before replacing any core library**.
 ## Phase 9 — Tailwind v4 + tokens, one component per slice vs baseline screenshots
 ## Phase 10 — Admin rebuild (light/dark, dashboard, charts, phone-friendly)
 
@@ -1023,6 +1063,10 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
+- **Oct 12 push incident (fixed in minutes, production never affected):** `cf73bdc` contained only the four deleted
+  prototype files: `git add -A -- … hooks …` failed on the missing `hooks` path (stderr hidden), so the edits weren't
+  staged. Vercel's build of `cf73bdc` failed and kept serving the previous deployment; `ac31f5c` pushed the tested
+  edits. Lesson (in CLAUDE.md/AGENTS.md): stage exact existing paths and check `git show --stat HEAD` before pushing.
 - **BUG-1 (high, fixed 1a)** `outlook-provider.createBooking`: a retry while the first request is still saving hits the unique
   `request_id` → returns code `slot_unavailable` ("already being saved"). `Booking.tsx` treats `slot_unavailable` as
   "time taken": drops the slot, clears the requestId and sends the parent back to pick another time — while the first
@@ -1107,6 +1151,19 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 8** (official docs, Oct 12): Next.js 16.4 route groups — groups only organize; *multiple* root layouts cause
+  full page loads between them and need the home route inside a group; nested group layouts "nest within the existing
+  app layout". https://nextjs.org/docs/app/api-reference/file-conventions/route-groups ·
+  https://nextjs.org/docs/app/getting-started/project-structure (private `_folders`, project files outside `app`,
+  split by feature). React Compiler lint rules (recommended preset: set-state-in-effect, set-state-in-render, purity,
+  refs, immutability, globals, static-components, …; the compiler skips non-compliant components, so fix gradually):
+  https://react.dev/reference/eslint-plugin-react-hooks
+- **Email dark mode** (Oct 12): Gmail apps now honor `<meta name="color-scheme" content="light only">` (reported Oct 8,
+  2026; real sends worked, Litmus previews didn't; possibly Google accounts only); Apple Mail reads it too; Outlook
+  mobile/web use `[data-ogsc]`/`[data-ogsb]` hooks; classic Outlook for Windows has no supported fix.
+  https://www.dyspatch.io/blog/gmail-now-respects-your-color-scheme-how-to-stop-forced-dark-mode-in-the-gmail-app/ ·
+  https://www.courier.com/blog/dark-mode-email-design ·
+  https://learn.microsoft.com/en-gb/answers/questions/2287935/how-can-i-stop-outlook-from-inverting-colors-in-da
 - **Phase 6 security/quality** (official docs checked Oct 10): OWASP recommends application-wide sanitization that
   excludes session tokens, passwords and sensitive personal data from logs; same-origin verification for state-changing
   requests; allowlisted file extensions/types, server-side size limits and signature checks; and server-side allowlist

@@ -81,8 +81,10 @@ tests/               e2e/ and unit/
 ```
 Rules: server-only modules `import "server-only"`; features don't reach into each other's internals (import from a
 feature's `index.ts`); use the `@/` alias; customer-facing text lives in `messages/` (new code now, all code by Phase 3).
-Route groups: `(site)` and `(admin)` will each get their own root layout; navigating between different root layouts is
-a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps only html/body/fonts after Phase 8.
+Route groups (Phase 8 decision, Oct 12, from the Next.js docs): ONE top-level root layout (html/body/fonts, theme CSS
+variables on `<html>`, intro script, viewport) with nested `(site)` and `(admin)` layouts, not multiple root layouts (no
+full reloads; the 404 keeps working). `app/not-found.tsx` renders inside the root layout only, so it draws the site
+shell (Header/Footer) itself.
 
 ## Environment / how this repo is worked on
 - **On the owner's Mac (VS Code + Claude extension)** — the normal setup from Oct 7, 2026: full network access,
@@ -202,6 +204,18 @@ a full page load (fine: /admin is separate). The root `app/layout.tsx` keeps onl
   gzipped). The old static click-through prototype was removed in Phase 8 (owner OK, Oct 12).
 - Rate limits are per visitor address, so each Playwright project sends its own `x-forwarded-for`; booking tests pick
   calendar days with `pickFirstOpenDay` (waits for the availability response before deciding to change month).
+- Commits: stage exact, existing paths (one missing path makes `git add` stage nothing) and check `git show --stat HEAD`
+  before pushing (Oct 12: a push carried only the deletions; Vercel's failed build kept the old version live).
+- Emails declare `color-scheme: light only` (meta + `:root`, both layouts) so dark-mode mail apps (Gmail apps, Apple
+  Mail) keep our colors; never set it back to `dark`. Classic Outlook for Windows can't be controlled.
+- Themes: each theme's board colors (`chalkboard`/`Dark`/`Light`) and Thanksgiving's lighter text/accents are in
+  `config/themes.ts`; Thanksgiving-only CSS uses `:global(html[data-theme="thanksgiving"])` and
+  `tests/unit/contrast.test.ts` mirrors it. Seasonal email logos/strips in `lib/email/assets.ts` are generated images on
+  each board color (logo = the theme's `public/brand` layers composited at 440 px wide); no generator in the repo.
+- Production bundles have an empty `people` line; who can join lives in `features` (use `includesSiblings()`).
+- /admin deposit link: `ownerDepositLink()` re-holds a released time for 30 min only if still free (hours, blocks,
+  Outlook, other bookings + the overlap constraint). Opening /admin → Leads runs `sweepDeposits()` (releases overdue
+  holds and sends the family + studio emails).
 - Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
   test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
   https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).
