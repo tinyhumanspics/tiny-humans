@@ -65,10 +65,11 @@ app/
   (admin)/admin/     owner area; nested layout, same shell until Phase 10             [done Oct 12]
   api/               route handlers
 components/
-  ui/                chalk-styled primitives (buttons, inputs, cards, badges, dialogs)
-  layout/            header, footer, seasonal decor, section wrappers
+  ui/                chalk-styled primitives (buttons, boxes, photo cards)            [done Oct 13]
+  layout/            SiteShell, header, footer, seasonal decor, Reveal, 404           [done Oct 13]
   form/              form fields, labels, errors, step layouts
-  chalk/             doodles, filters, logo, texture effects
+  chalk/             doodles, filters, logo, board drawings                           [done Oct 13]
+  providers/         site settings + catalog React contexts                           [done Oct 13]
 features/            booking/, landing/, seasonal/, admin/ — feature components + their own hooks
 hooks/               shared client hooks
 lib/                 logic: booking/, pricing/, db/, email/, tracking/ (Meta), i18n helpers, rate limiting, auth
@@ -88,7 +89,10 @@ full reloads; the 404 keeps working). The shell (providers, SeasonalDecor, Heade
 it draws SiteShell itself; `notFound()` inside the site needs `app/(site)/not-found.tsx` (no shell), otherwise the
 inherited root 404 renders inside the (site) layout = two headers. CSS order is root layout → group layout → page:
 where a global class (`globals.css`, e.g. `.container`) and a module class on one element set the same property,
-moving an import between layouts flips which wins (Oct 12: footer copyright margin), so don't set both.
+moving an import between layouts flips which wins (Oct 12: footer copyright margin), so don't set both. The same
+goes for two CSS modules on one element (a component's own class + a `className` passed in): Turbopack's merged
+chunks can order them either way and moving files changes it (Oct 13: bundle-card button). After moving or
+restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expect 0 ties).
 
 ## Environment / how this repo is worked on
 - **On the owner's Mac (VS Code + Claude extension)** — the normal setup from Oct 7, 2026: full network access,
@@ -119,7 +123,7 @@ moving an import between layouts flips which wins (Oct 12: footer copyright marg
 ## Gotchas
 - Chalk grain is a texture mask (`.chalk-grain` in `styles/globals.css`), NOT a live SVG `feTurbulence` filter — keep it
   that way (scroll performance). Board doodle groups share one grain mask; `Reveal` layers use `will-change: opacity`.
-- The intro animation = `components/Header/useIntroAnimation.ts` + the inline `introScript` in `app/layout.tsx`
+- The intro animation = `components/layout/Header/useIntroAnimation.ts` + the inline `introScript` in `app/layout.tsx`
   (sets `data-intro` before first paint; skipped under /admin). It must never replay between site pages.
 - Drizzle inserts/selects list every schema column: **apply a migration to production BEFORE deploying code that adds
   columns to `lib/db/schema.ts`**, or bookings break. Migrations are applied in the Neon SQL editor (owner) for now;

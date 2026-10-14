@@ -40,7 +40,8 @@ freeze on `main` the day before launch except fixes.
 ## ▶ NEXT STEPS (Oct 12 night: Phase 8 slices 1–2 live; Stripe done; quiet CSP week)
 **Update Oct 12 night (Claude Code):** main = `a3732e9` = Phase 8 slice 2 (route groups + SiteShell), Vercel + CI
 green, production smoke-tested. The owner finished the Stripe steps and the refund test (refund reaches the card in
-5–10 business days) and approved the seasonal themes as they are ("it looks great"). Next: slice 3.
+5–10 business days) and approved the seasonal themes as they are ("it looks great"). **Oct 13:** slice 3a live
+(`b37fe12`, shared components moved; CSS tie fix) + `scripts/css-ties.mjs`. Next: slice 3b (features).
 **State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
 live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
 link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
@@ -141,13 +142,14 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 12 night): main = a3732e9, live and smoke-tested: Phase 8 slices 1 (prototype removed) and 2 (route groups:
+State (Oct 13): main = b37fe12 + docs, live and smoke-tested: Phase 8 slice 3a (shared components in components/ui,
+chalk, layout, providers; `scripts/css-ties.mjs` finds CSS order ties, expect 0). Before: slices 1 and 2 (route groups:
 one root layout, app/(site) + app/(admin)/admin layouts drawing components/layout/SiteShell, three 404 files using
 components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, seasonal board colors (owner: "looks
 great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 3 (move code into components/ui|layout|form|chalk + features/*, @/ imports), then slices 4-7
+Next: Phase 8 slice 3b (features/admin, booking, home, legal + index.ts; watch page bytes), then slices 4-7
 (PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
 (before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
 Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
@@ -1002,7 +1004,23 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       (local DB): 18 screenshots + HTML identical; intro plays once, header element survives client navigation; Vercel +
       CI success; production read-only smoke: 19 pages × WebKit iPhone/Chromium 1440 OK (status, one header/footer/main,
       lang, copyright margin 0, `(site)`/`(admin)` segments served), intro OK.
-- [ ] Slice 3: move existing code into the target folders (components/ui|layout|form|chalk, features/*), `@/` imports.
+- [x] **Slice 3a: shared components — LIVE Oct 13 (`b37fe12`).** components/ui (ChalkBox, ChalkButton, PinnedPhoto,
+      PhotoPlaceholder, SitePhotoSlot), components/chalk (ChalkDoodle, ChalkFilters, TinyHumansLogo, BoardDoodles),
+      components/layout (Header, Footer, SeasonalDecor, LanguageSwitcher, Reveal, SectionHeading, NotFound),
+      components/providers (Catalog + SiteSettings). **Found:** moving files changed Turbopack's merged CSS order, so
+      the bundle-card button lost its 24 px top margin (ChalkButton's `margin: 0` and BundleCard's `.cta` tied at equal
+      specificity). Fixed as `.card .cta`. New `scripts/css-ties.mjs` (read-only) lists every such tie: production
+      had exactly that one; now 0 live and locally (16 pages × phone/desktop). Side effect: the home Hero's CSS
+      (1.6 KB raw, ~0.5 KB gzipped) now sits in the shared stylesheet (re-check after 3b; Turbopack
+      `experimental.cssChunking: 'graph'` is the documented knob). JS +1–8 bytes/page. **Checks:** strict tsc, lint 0
+      errors, 44 units, build (route table identical), 24/24 visual, 42 extra screenshots, computed CSS of every element
+      on 17 pages × 2 widths identical to the old build captured the same day (a Turbopack worktree build), 110 e2e;
+      Vercel + CI success; production smoke 19 pages × 2 OK, ties 0, bundle buttons 24 px.
+- [ ] **Slice 3b: features.** components/Admin → features/admin; Booking, Backdrops, Cancel, Reschedule, Bundles,
+      BundleCard → features/booking; Hero, Portfolio, PortfolioCta, PortfolioLightbox → features/home; LegalPage →
+      features/legal; one `index.ts` per feature for cross-feature imports (admin → RescheduleFlow, home →
+      InspirationThumb, landing → BundleCard). Watch page JS/CSS bytes: a server page importing one export of a
+      barrel `index.ts` can pull every client component (+ CSS) it re-exports into that page.
 - [ ] Slice 4: split `components/Booking/Booking.tsx` (~1,100 lines) into step components + a state hook.
 - [ ] Slice 5: `config/bundles.ts` → `Bundle` type in `lib/pricing/types.ts`; the built-in bundles become a test/dev
       fixture (CI e2e has no database and still needs them).

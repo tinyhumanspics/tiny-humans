@@ -79,7 +79,7 @@ The legal text lives in `config/legal.ts` as plain sections, so it can be edited
 - **When a page opens**, whatever is on screen is chalk-drawn once: a soft chalk wipe plus chalk frames drawing their lines.
 - **While scrolling** (up or down), elements simply fade in as they enter the screen and fade out as they leave. Nothing is redrawn.
 
-Wrap any new element in `<Reveal>` to get the same behavior. Fade timing lives in `components/Reveal/Reveal.module.css`. Skipped entirely for reduced motion.
+Wrap any new element in `<Reveal>` to get the same behavior. Fade timing lives in `components/layout/Reveal/Reveal.module.css`. Skipped entirely for reduced motion.
 
 ## "Book a memory like this one"
 
@@ -117,7 +117,7 @@ Until storage is connected the site uses the built-in defaults, and the owner ar
 - **Accent colors:** `--accent`, `--accent-2`, `--accent-3` (photo tape, doodles). The green board stays the same.
 - **Decorations:** the doodles beside section headings, in the hero, on bundle cards and prompts, plus chalk doodles in the page margins on wide screens.
 - **Board drawings:** little chalk drawings around the hero, headings, booking prompts, bundle cards and the baby-led note (`decorations.board`). Each theme supplies a palette of six drawings; one shared layout (`boardFrom` in `config/themes.ts`) places them in spots that never cover photos, text or buttons. They sketch themselves once, the first time they scroll into view (`components/BoardDoodles`).
-- **Medium drawings for empty spots:** when a portfolio row isn't full (e.g. two photos per row on tablets, leaving a gap beside the third photo), the gap gets a medium chalk drawing from the theme (`decorations.scenes`, `components/BoardDoodles/BoardScene.tsx`).
+- **Medium drawings for empty spots:** when a portfolio row isn't full (e.g. two photos per row on tablets, leaving a gap beside the third photo), the gap gets a medium chalk drawing from the theme (`decorations.scenes`, `components/chalk/BoardDoodles/BoardScene.tsx`).
 
 To add a future theme, add its logo layers + drawing data and a new entry in `themes`. The owner area picks it up automatically.
 
@@ -125,7 +125,7 @@ To add a future theme, add its logo layers + drawing data and a new entry in `th
 
 - The official logo is split into four transparent layers in `public/brand/default/`.
 - `components/TinyHumansLogo` reveals each layer through SVG masks whose chalk strokes animate with `stroke-dashoffset`. Pure CSS + SVG, no animation library.
-- `components/Header/useIntroAnimation.ts` positions the header logo large in the center, lets it draw (~2.4s), then transitions the same element into the header (~1.1s). There is only ever one logo element.
+- `components/layout/Header/useIntroAnimation.ts` positions the header logo large in the center, lets it draw (~2.4s), then transitions the same element into the header (~1.1s). There is only ever one logo element.
 - Plays on first visit and every reload, never when moving between sections. Respects `prefers-reduced-motion` (skips the drawing, quick move). Without JavaScript the page simply shows normally.
 
 ## Scrolling to the booking box
