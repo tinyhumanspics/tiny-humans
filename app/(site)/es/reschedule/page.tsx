@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import ReschedulePage from "@/components/Reschedule/ReschedulePage";
+import ReschedulePage from "@/features/booking/reschedule/ReschedulePage";
 import es from "@/messages/es.json";
 
 export const metadata: Metadata = { title: es.reschedulePage.metaTitle, robots: { index: false, follow: false }, referrer: "no-referrer" };

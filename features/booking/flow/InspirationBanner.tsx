@@ -4,7 +4,7 @@ import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsP
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import { useBookingSelection } from "./BookingSelectionContext";
-import InspirationThumb from "./InspirationThumb";
+import InspirationThumb from "@/features/booking/InspirationThumb";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type en from "@/messages/en.json";

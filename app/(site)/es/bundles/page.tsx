@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import Bundles from "@/components/Bundles/Bundles";
-import InspirationBanner from "@/components/Booking/InspirationBanner";
-import InspirationFromUrl from "@/components/Booking/InspirationFromUrl";
-import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
+import Bundles from "@/features/booking/bundles/Bundles";
+import InspirationBanner from "@/features/booking/flow/InspirationBanner";
+import InspirationFromUrl from "@/features/booking/flow/InspirationFromUrl";
+import { BookingSelectionProvider } from "@/features/booking/flow/BookingSelectionContext";
 import { pageMetadata } from "@/lib/seo/metadata";
 import es from "@/messages/es.json";
 

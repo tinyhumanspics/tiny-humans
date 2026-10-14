@@ -10,7 +10,7 @@ import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
-import RescheduleFlow from "@/components/Reschedule/RescheduleFlow";
+import RescheduleFlow from "@/features/booking/RescheduleFlow";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";

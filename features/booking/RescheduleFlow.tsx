@@ -2,13 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { addDays, formatLongDate, formatTimeLabel, fromDateKey, startOfDay, toDateKey, type DateKey, type DayAvailability, type TimeSlot } from "@/lib/booking";
-import Calendar from "@/components/Booking/Calendar";
-import ChoiceCard from "@/components/Booking/ChoiceCard";
+import Calendar from "@/features/booking/flow/Calendar";
+import ChoiceCard from "@/features/booking/flow/ChoiceCard";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import en from "@/messages/en.json";
-import bstyles from "@/components/Booking/Booking.module.css";
-import styles from "./Reschedule.module.css";
+import bstyles from "@/features/booking/flow/Booking.module.css";
+import styles from "@/features/booking/reschedule/Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import { fill } from "@/lib/email/messages";
 import type { AppLocale } from "@/i18n/config";

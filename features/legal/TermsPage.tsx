@@ -6,7 +6,7 @@ import { depositText } from "@/lib/deposit/copy";
 import { formatMoney } from "@/lib/pricing/engine";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
-import LegalPage from "@/components/LegalPage/LegalPage";
+import LegalPage from "@/features/legal/LegalPage";
 import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";

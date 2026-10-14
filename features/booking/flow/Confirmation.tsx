@@ -20,7 +20,7 @@ import { formatMoney, toCents } from "@/lib/pricing/engine";
 import { travelFeeValue } from "@/lib/travel/format";
 import type { BookingTravel } from "@/lib/travel/types";
 import { cn } from "@/lib/cn";
-import InspirationThumb from "./InspirationThumb";
+import InspirationThumb from "@/features/booking/InspirationThumb";
 import styles from "./Booking.module.css";
 import { babyNames } from "@/lib/booking/extra-babies";
 import type { EmailLocale } from "@/lib/email";

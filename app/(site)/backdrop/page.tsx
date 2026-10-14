@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import en from "@/messages/en.json";
-import BackdropPage from "@/components/Backdrops/BackdropPage";
+import BackdropPage from "@/features/booking/backdrops/BackdropPage";
 
 export const metadata: Metadata = {
   title: en.backdropPage.metaTitle,

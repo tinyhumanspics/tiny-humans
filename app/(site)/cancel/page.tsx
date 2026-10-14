@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import CancelBooking from "@/components/Cancel/CancelBooking";
+import CancelBooking from "@/features/booking/cancel/CancelBooking";
 import en from "@/messages/en.json";
 
 export const metadata: Metadata = {

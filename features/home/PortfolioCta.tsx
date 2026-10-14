@@ -7,7 +7,7 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
-import InspirationThumb from "@/components/Booking/InspirationThumb";
+import InspirationThumb from "@/features/booking/InspirationThumb";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import styles from "./PortfolioCta.module.css";
 import { cn } from "@/lib/cn";

@@ -4,7 +4,7 @@ import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { site } from "@/config/site";
 import en from "@/messages/en.json";
-import shared from "@/components/Booking/Booking.module.css";
+import shared from "@/features/booking/flow/Booking.module.css";
 import styles from "./BookingPaused.module.css";
 import { cn } from "@/lib/cn";
 

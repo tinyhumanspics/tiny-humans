@@ -7,7 +7,7 @@ import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { useCatalog } from "@/components/providers/CatalogProvider";
-import RescheduleFlow from "./RescheduleFlow";
+import RescheduleFlow from "@/features/booking/RescheduleFlow";
 import styles from "./Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import { rescheduleClosedText } from "@/lib/booking/reschedule-policy";

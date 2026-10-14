@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import ScheduleBooking from "@/components/Booking/ScheduleBooking";
-import { BookingSelectionProvider } from "@/components/Booking/BookingSelectionContext";
+import ScheduleBooking from "@/features/booking/flow/ScheduleBooking";
+import { BookingSelectionProvider } from "@/features/booking/flow/BookingSelectionContext";
 import { pageMetadata } from "@/lib/seo/metadata";
 import es from "@/messages/es.json";
 

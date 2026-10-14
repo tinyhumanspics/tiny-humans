@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import BackdropPage from "@/components/Backdrops/BackdropPage";
+import BackdropPage from "@/features/booking/backdrops/BackdropPage";
 import es from "@/messages/es.json";
 
 export const metadata: Metadata = { title: es.backdropPage.metaTitle, robots: { index: false, follow: false }, referrer: "no-referrer" };

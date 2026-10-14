@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import en from "@/messages/en.json";
-import { ReviewForm } from "@/features/after-session";
+import ReviewForm from "@/features/after-session/ReviewForm";
 
 export const metadata: Metadata = {
   title: en.review.metaTitle,

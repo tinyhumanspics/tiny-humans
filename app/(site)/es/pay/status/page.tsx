@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PayStatus, PAY_STATES, type PayState } from "@/features/after-session";
+import PayStatus, { PAY_STATES, type PayState } from "@/features/after-session/PayStatus";
 import es from "@/messages/es.json";
 
 export const metadata: Metadata = { title: es.pay.metaTitle, robots: { index: false, follow: false }, referrer: "no-referrer" };

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import en from "@/messages/en.json";
-import { PayStatus, PAY_STATES, type PayState } from "@/features/after-session";
+import PayStatus, { PAY_STATES, type PayState } from "@/features/after-session/PayStatus";
 
 export const metadata: Metadata = {
   title: en.pay.metaTitle,

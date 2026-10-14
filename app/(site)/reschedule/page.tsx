@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import ReschedulePage from "@/components/Reschedule/ReschedulePage";
+import ReschedulePage from "@/features/booking/reschedule/ReschedulePage";
 import en from "@/messages/en.json";
 
 export const metadata: Metadata = {

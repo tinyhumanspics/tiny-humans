@@ -9,7 +9,7 @@ import { fill } from "@/lib/email/messages";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import BackdropPicker from "./BackdropPicker";
-import styles from "@/components/Reschedule/Reschedule.module.css";
+import styles from "@/features/booking/reschedule/Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";

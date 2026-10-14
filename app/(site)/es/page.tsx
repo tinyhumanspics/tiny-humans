@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Hero from "@/components/Hero/Hero";
-import Portfolio from "@/components/Portfolio/Portfolio";
+import Hero from "@/features/home/Hero";
+import Portfolio from "@/features/home/Portfolio";
 import { DEFAULT_SITE_TITLE_ES, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
 import es from "@/messages/es.json";
