@@ -42,7 +42,8 @@ freeze on `main` the day before launch except fixes.
 green, production smoke-tested. The owner finished the Stripe steps and the refund test (refund reaches the card in
 5–10 business days) and approved the seasonal themes as they are ("it looks great"). **Oct 13:** slice 3a live
 (`b37fe12`, shared components moved; CSS tie fix) + `scripts/css-ties.mjs`; slice 3b live (`cbe95ae`, features;
-no barrel index.ts). Next: slice 4 (split Booking.tsx).
+no barrel index.ts). **Oct 14:** slice 4 live (`5835d78`, booking form split into a state hook + step components).
+Next: slice 5 (`config/bundles.ts` → types + a test/dev fixture).
 **State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
 live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
 link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
@@ -143,7 +144,8 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 13): main = cbe95ae + docs, live and smoke-tested: Phase 8 slice 3 done (3a: components/ui, chalk,
+State (Oct 14): main = 5835d78 + docs, live and smoke-tested: Phase 8 slice 4 (booking form = booking-state.ts +
+useBookingFlow.ts + steps/*) and slice 3 (3a: components/ui, chalk,
 layout, providers; 3b: features/admin, booking, home, legal; cross-feature imports use a feature's root files, no
 barrel index.ts; `scripts/css-ties.mjs` finds CSS order ties, expect 0). Before: slices 1 and 2 (route groups:
 one root layout, app/(site) + app/(admin)/admin layouts drawing components/layout/SiteShell, three 404 files using
@@ -151,7 +153,7 @@ components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, se
 great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 4 (split features/booking/flow/Booking.tsx into steps + a state hook), then slices 5-7
+Next: Phase 8 slice 5 (config/bundles.ts → Bundle type in lib/pricing/types.ts + test/dev fixture), then slices 6-7
 (PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
 (before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
 Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
@@ -1032,7 +1034,19 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       pages × 2 widths identical to the old build the same day (only Chrome's flaky computed `margin: auto` readings,
       same in both builds, positions identical), CSS ties 0, 110 e2e; Vercel + CI success; production smoke 19 pages
       × 2 OK, ties 0, calendar + home portfolio viewer work, no page errors.
-- [ ] Slice 4: split `features/booking/flow/Booking.tsx` (~1,100 lines) into step components + a state hook.
+- [x] **Slice 4: booking form split — LIVE Oct 14 (`5835d78`).** `features/booking/flow/Booking.tsx` 1,204 → 177 lines:
+      `booking-state.ts` (state, reducer, contact checks, helpers; no React), `useBookingFlow.ts` (availability,
+      travel estimate, deposit, discount quote, language-switch draft, submit with the same requestId on retries;
+      moved verbatim), `steps/TimeStep`, `steps/DetailsForm` (+ twins/triplets picker), `steps/ReviewStep` (+ discount
+      field). Only code change: `loadMonth` lists `dispatch` + `setDays` (stable setters) because the React Compiler
+      lint reports an error for them once the code is in a custom hook. **Checks:** strict tsc, lint 0 errors and the
+      same 22 warnings, 44 units, build (route table identical), 24/24 visual, computed CSS identical (17 pages × 2),
+      CSS ties 0, a 12-step booking walk-through (calendar → times → empty/invalid details → twins picker → filled →
+      review → bad discount code → edit → booked) on the old vs new build: 24/24 screenshots identical and the booking
+      HTML identical except the random reference; 110 e2e. /book JS +1.2 KB raw (module overhead), other pages ±0.
+      Vercel + CI success; production: smoke OK, ties 0, the booking form walked to the review step (never submitted;
+      booking requests blocked) on iPhone WebKit + desktop: 10 times, 7 empty-form errors, 14 review rows, "Pay $50
+      deposit", no page errors.
 - [ ] Slice 5: `config/bundles.ts` → `Bundle` type in `lib/pricing/types.ts`; the built-in bundles become a test/dev
       fixture (CI e2e has no database and still needs them).
 - [ ] Slice 6: the 22 lint warnings (React Compiler: set-state-in-effect, purity, refs, immutability).
