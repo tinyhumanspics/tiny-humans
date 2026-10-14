@@ -226,7 +226,7 @@ No payment is taken online. The review step shows "Due today: $0"; the confirmat
 
 ## Owner area layout (/admin)
 
-Each section has its own page, with one shared navigation bar (`components/Admin/nav.ts`, shell in `components/Admin/AdminApp.tsx`):
+Each section has its own page, with one shared navigation bar (`features/admin/nav.ts`, shell in `features/admin/AdminApp.tsx`):
 
 | Page | What it does |
 |---|---|

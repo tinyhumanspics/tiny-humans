@@ -41,7 +41,8 @@ freeze on `main` the day before launch except fixes.
 **Update Oct 12 night (Claude Code):** main = `a3732e9` = Phase 8 slice 2 (route groups + SiteShell), Vercel + CI
 green, production smoke-tested. The owner finished the Stripe steps and the refund test (refund reaches the card in
 5–10 business days) and approved the seasonal themes as they are ("it looks great"). **Oct 13:** slice 3a live
-(`b37fe12`, shared components moved; CSS tie fix) + `scripts/css-ties.mjs`. Next: slice 3b (features).
+(`b37fe12`, shared components moved; CSS tie fix) + `scripts/css-ties.mjs`; slice 3b live (`cbe95ae`, features;
+no barrel index.ts). Next: slice 4 (split Booking.tsx).
 **State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
 live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
 link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
@@ -142,14 +143,15 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 13): main = b37fe12 + docs, live and smoke-tested: Phase 8 slice 3a (shared components in components/ui,
-chalk, layout, providers; `scripts/css-ties.mjs` finds CSS order ties, expect 0). Before: slices 1 and 2 (route groups:
+State (Oct 13): main = cbe95ae + docs, live and smoke-tested: Phase 8 slice 3 done (3a: components/ui, chalk,
+layout, providers; 3b: features/admin, booking, home, legal; cross-feature imports use a feature's root files, no
+barrel index.ts; `scripts/css-ties.mjs` finds CSS order ties, expect 0). Before: slices 1 and 2 (route groups:
 one root layout, app/(site) + app/(admin)/admin layouts drawing components/layout/SiteShell, three 404 files using
 components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, seasonal board colors (owner: "looks
 great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 3b (features/admin, booking, home, legal + index.ts; watch page bytes), then slices 4-7
+Next: Phase 8 slice 4 (split features/booking/flow/Booking.tsx into steps + a state hook), then slices 5-7
 (PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
 (before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
 Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
@@ -1016,12 +1018,21 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       errors, 44 units, build (route table identical), 24/24 visual, 42 extra screenshots, computed CSS of every element
       on 17 pages × 2 widths identical to the old build captured the same day (a Turbopack worktree build), 110 e2e;
       Vercel + CI success; production smoke 19 pages × 2 OK, ties 0, bundle buttons 24 px.
-- [ ] **Slice 3b: features.** components/Admin → features/admin; Booking, Backdrops, Cancel, Reschedule, Bundles,
-      BundleCard → features/booking; Hero, Portfolio, PortfolioCta, PortfolioLightbox → features/home; LegalPage →
-      features/legal; one `index.ts` per feature for cross-feature imports (admin → RescheduleFlow, home →
-      InspirationThumb, landing → BundleCard). Watch page JS/CSS bytes: a server page importing one export of a
-      barrel `index.ts` can pull every client component (+ CSS) it re-exports into that page.
-- [ ] Slice 4: split `components/Booking/Booking.tsx` (~1,100 lines) into step components + a state hook.
+- [x] **Slice 3b: features — LIVE Oct 13 (`cbe95ae`).** features/admin (was components/Admin), features/booking
+      ({flow,backdrops,cancel,reschedule,bundles}/ from Booking, Backdrops, Cancel, Reschedule, Bundles), features/home
+      (Hero, Portfolio, PortfolioCta, PortfolioLightbox), features/legal (+ LegalPage). components/ now holds only ui,
+      chalk, layout, providers. **Decision (measured):** no barrel `index.ts` for client components. Routing the four
+      cross-feature imports through `features/booking/index.ts` added +16.5 KB JS to the home page, +10 KB to the ad
+      landing page and +10.8 KB to /admin (each importer got every re-exported client component). Instead booking's
+      shared components (BookingPaused, BundleCard, InspirationThumb, RescheduleFlow) sit at the feature root = its
+      public API; subfolders are internal (rule updated in CLAUDE.md/AGENTS.md). The old `features/after-session`
+      barrel made /pay/status load the review form: removed (/pay/status −5.9 KB; /review +3 KB because ChalkButton
+      became its own shared chunk, not duplicated; all other pages ±30 bytes). **Checks:** strict tsc, lint 0 errors,
+      44 units, build (route table identical), 24/24 visual, 42 extra screenshots, computed CSS of every element on 17
+      pages × 2 widths identical to the old build the same day (only Chrome's flaky computed `margin: auto` readings,
+      same in both builds, positions identical), CSS ties 0, 110 e2e; Vercel + CI success; production smoke 19 pages
+      × 2 OK, ties 0, calendar + home portfolio viewer work, no page errors.
+- [ ] Slice 4: split `features/booking/flow/Booking.tsx` (~1,100 lines) into step components + a state hook.
 - [ ] Slice 5: `config/bundles.ts` → `Bundle` type in `lib/pricing/types.ts`; the built-in bundles become a test/dev
       fixture (CI e2e has no database and still needs them).
 - [ ] Slice 6: the 22 lint warnings (React Compiler: set-state-in-effect, purity, refs, immutability).

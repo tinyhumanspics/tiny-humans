@@ -70,7 +70,8 @@ components/
   form/              form fields, labels, errors, step layouts
   chalk/             doodles, filters, logo, board drawings                           [done Oct 13]
   providers/         site settings + catalog React contexts                           [done Oct 13]
-features/            booking/, landing/, seasonal/, admin/ — feature components + their own hooks
+features/            admin/, booking/, home/, landing/, about/, legal/, after-session/ (seasonal/ later) —
+                     feature components + their own hooks                             [done Oct 13]
 hooks/               shared client hooks
 lib/                 logic: booking/, pricing/, db/, email/, tracking/ (Meta), i18n helpers, rate limiting, auth
 emails/              React Email templates                                             [Phase 2]
@@ -80,8 +81,11 @@ config/              true constants only (themes, booking rules) — no owner-ed
 types/               shared TypeScript types
 tests/               e2e/ and unit/
 ```
-Rules: server-only modules `import "server-only"`; features don't reach into each other's internals (import from a
-feature's `index.ts`); use the `@/` alias; customer-facing text lives in `messages/` (new code now, all code by Phase 3).
+Rules: server-only modules `import "server-only"`; features don't reach into each other's internals: another feature
+imports only a feature's root files (e.g. `@/features/booking/BundleCard`), never its subfolders (`flow/`,
+`reschedule/`, …), and never through a barrel `index.ts` (measured Oct 13: an index re-exporting client components
+added 10–16 KB of JS to the home, landing and /admin pages); use the `@/` alias; customer-facing text lives in
+`messages/` (new code now, all code by Phase 3).
 Route groups (Phase 8 decision, Oct 12, from the Next.js docs): ONE top-level root layout (html/body/fonts, theme CSS
 variables on `<html>`, intro script, viewport) with nested `(site)` and `(admin)` layouts, not multiple root layouts (no
 full reloads; the 404 keeps working). The shell (providers, SeasonalDecor, Header, Footer, MetaPixel) is
