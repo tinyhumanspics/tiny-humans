@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import { useBookingSelection } from "./BookingSelectionContext";
 
 /** Picks up ?inspiration=<photo id> from "Book a memory like this one" links. */

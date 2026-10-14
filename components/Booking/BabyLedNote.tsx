@@ -1,7 +1,7 @@
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import Reveal from "@/components/Reveal/Reveal";
-import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 import type en from "@/messages/en.json";

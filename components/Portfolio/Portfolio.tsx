@@ -2,13 +2,13 @@
 
 import { useRef, useState } from "react";
 import { buildFeedFromMedia } from "@/config/media";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import SectionHeading from "@/components/SectionHeading/SectionHeading";
-import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
+import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
+import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
 import PortfolioLightbox from "@/components/PortfolioLightbox/PortfolioLightbox";
 import PortfolioCta from "@/components/PortfolioCta/PortfolioCta";
-import Reveal from "@/components/Reveal/Reveal";
-import BoardScene from "@/components/BoardDoodles/BoardScene";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import BoardScene from "@/components/chalk/BoardDoodles/BoardScene";
 import { fill } from "@/lib/email/messages";
 import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";

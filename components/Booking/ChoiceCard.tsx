@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 

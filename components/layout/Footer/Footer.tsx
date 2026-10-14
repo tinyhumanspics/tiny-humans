@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { site } from "@/config/site";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import LanguageSwitcher from "@/components/LanguageSwitcher/LanguageSwitcher";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import LanguageSwitcher from "@/components/layout/LanguageSwitcher/LanguageSwitcher";
 import type en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";

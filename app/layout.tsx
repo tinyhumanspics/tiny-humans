@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { getTheme, themeCssVariables } from "@/config/themes";
 import { getSiteSettings } from "@/lib/settings/server";
-import ChalkFilters from "@/components/ChalkFilters/ChalkFilters";
+import ChalkFilters from "@/components/chalk/ChalkFilters/ChalkFilters";
 import VercelInsights from "@/components/layout/VercelInsights";
 import { LANDING_PATH } from "@/config/landing";
 import { siteMetadata } from "@/lib/seo/metadata";

@@ -1,9 +1,9 @@
 "use client";
 
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import Reveal from "@/components/Reveal/Reveal";
-import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import styles from "./SectionHeading.module.css";
 import { cn } from "@/lib/cn";
 

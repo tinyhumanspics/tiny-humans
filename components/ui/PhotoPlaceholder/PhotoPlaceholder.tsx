@@ -1,5 +1,5 @@
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import styles from "./PhotoPlaceholder.module.css";
 import { cn } from "@/lib/cn";
 import { fill } from "@/lib/email/messages";

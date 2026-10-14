@@ -1,5 +1,5 @@
 import Image from "next/image";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import styles from "./PinnedPhoto.module.css";
 import { cn } from "@/lib/cn";

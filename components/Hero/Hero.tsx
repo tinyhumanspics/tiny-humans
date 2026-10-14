@@ -1,15 +1,15 @@
 "use client";
 
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import { bundlesHref } from "@/config/booking";
 import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
-import Reveal from "@/components/Reveal/Reveal";
-import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import styles from "./Hero.module.css";
 import { cn } from "@/lib/cn";
 

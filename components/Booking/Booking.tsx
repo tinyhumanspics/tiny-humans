@@ -2,11 +2,11 @@
 
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { site } from "@/config/site";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { activeOffer, formatMoney, toCents, type PriceQuote } from "@/lib/pricing/engine";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import BabyLedNote from "./BabyLedNote";
 import { babyAgeOptions, bookingSettings, bookingSteps, bundlesHref, STEP } from "@/config/booking";
 import {
@@ -23,9 +23,9 @@ import {
   type DateKey,
   type TimeSlot,
 } from "@/lib/booking";
-import SectionHeading from "@/components/SectionHeading/SectionHeading";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { useBookingSelection } from "./BookingSelectionContext";
 import { unitLine } from "@/lib/booking/templates";
 import { isFloridaZip, type TravelQuote } from "@/lib/travel/types";
@@ -43,7 +43,7 @@ import type { DepositOffer } from "@/lib/deposit/types";
 import { fill } from "@/lib/email/messages";
 import Calendar from "./Calendar";
 import InspirationThumb from "./InspirationThumb";
-import Reveal, { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
+import Reveal, { INTRO_DONE_EVENT } from "@/components/layout/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import en from "@/messages/en.json";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";

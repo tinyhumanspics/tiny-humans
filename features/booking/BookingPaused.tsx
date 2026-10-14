@@ -1,7 +1,7 @@
 "use client";
 
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { site } from "@/config/site";
 import en from "@/messages/en.json";
 import shared from "@/components/Booking/Booking.module.css";

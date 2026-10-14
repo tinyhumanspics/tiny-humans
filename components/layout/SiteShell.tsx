@@ -1,9 +1,9 @@
 import "server-only";
-import { SiteSettingsProvider } from "@/components/SiteSettings/SiteSettingsProvider";
-import { CatalogProvider } from "@/components/Catalog/CatalogProvider";
-import SeasonalDecor from "@/components/SeasonalDecor/SeasonalDecor";
-import Header from "@/components/Header/Header";
-import Footer from "@/components/Footer/Footer";
+import { SiteSettingsProvider } from "@/components/providers/SiteSettingsProvider";
+import { CatalogProvider } from "@/components/providers/CatalogProvider";
+import SeasonalDecor from "@/components/layout/SeasonalDecor/SeasonalDecor";
+import Header from "@/components/layout/Header/Header";
+import Footer from "@/components/layout/Footer/Footer";
 import MetaPixel from "@/components/layout/MetaPixel";
 import { getSiteSettings } from "@/lib/settings/server";
 import { getPublicCatalog } from "@/lib/pricing/server";

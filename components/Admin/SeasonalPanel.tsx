@@ -4,8 +4,8 @@ import { useState } from "react";
 import { SEASONAL_OFFER_DEFINITIONS, type SeasonalOfferId } from "@/config/seasonal";
 import { themes } from "@/config/themes";
 import type { SeasonalOfferSettings, SiteSettings } from "@/lib/settings/types";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { cn } from "@/lib/cn";
 import styles from "./Admin.module.css";
 

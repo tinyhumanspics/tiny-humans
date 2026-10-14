@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import en from "@/messages/en.json";
 import { bundlesHref } from "@/config/booking";
-import NotFound from "@/components/NotFound/NotFound";
+import NotFound from "@/components/layout/NotFound/NotFound";
 
 const t = en.errors.notFound;
 

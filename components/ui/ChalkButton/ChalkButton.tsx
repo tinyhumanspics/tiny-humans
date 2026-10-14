@@ -2,7 +2,7 @@
 
 import type { MouseEventHandler, ReactNode } from "react";
 import Link from "next/link";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import styles from "./ChalkButton.module.css";
 import { cn } from "@/lib/cn";
 

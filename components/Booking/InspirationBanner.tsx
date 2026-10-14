@@ -1,8 +1,8 @@
 "use client";
 
-import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import Reveal from "@/components/Reveal/Reveal";
+import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import Reveal from "@/components/layout/Reveal/Reveal";
 import { useBookingSelection } from "./BookingSelectionContext";
 import InspirationThumb from "./InspirationThumb";
 import styles from "./Booking.module.css";

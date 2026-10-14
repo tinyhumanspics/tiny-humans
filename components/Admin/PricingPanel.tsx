@@ -10,7 +10,7 @@ import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
 import { formatLongDate } from "@/lib/booking/dates";
 import { todayInZone } from "@/lib/booking/timezone";
 import { bookingRules } from "@/config/booking";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { DEFAULT_DEPOSIT_CENTS } from "@/lib/deposit/types";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";

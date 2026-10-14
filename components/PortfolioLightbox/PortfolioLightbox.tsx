@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent } from "react";
 import { createPortal } from "react-dom";
 import type { PortfolioPhoto } from "@/config/portfolio";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import styles from "./PortfolioLightbox.module.css";
 import { cn } from "@/lib/cn";
 import { fill } from "@/lib/email/messages";

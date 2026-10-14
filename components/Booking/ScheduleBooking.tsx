@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
-import { findPhoto, useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
+import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import { useBookingSelection } from "./BookingSelectionContext";
 import Booking from "./Booking";
 import DepositReturn from "./DepositReturn";

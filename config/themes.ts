@@ -1,5 +1,5 @@
 import type { LogoAsset, LogoDrawing } from "./logo/types";
-import type { DoodleShape } from "@/components/ChalkDoodle/shapes";
+import type { DoodleShape } from "@/components/chalk/ChalkDoodle/shapes";
 import { defaultLogoDrawing } from "./logo/default-drawing";
 import { christmasLogoDrawing } from "./logo/christmas-drawing";
 import { thanksgivingLogoDrawing } from "./logo/thanksgiving-drawing";

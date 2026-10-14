@@ -7,10 +7,10 @@ import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/type
 import { getAdminApi } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import TinyHumansLogo from "@/components/TinyHumansLogo/TinyHumansLogo";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
+import TinyHumansLogo from "@/components/chalk/TinyHumansLogo/TinyHumansLogo";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
 import LeadsPanel from "./LeadsPanel";
 import MediaPanel from "./MediaPanel";

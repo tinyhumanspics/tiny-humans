@@ -6,14 +6,14 @@ import { site } from "@/config/site";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { fill } from "@/lib/email/messages";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import BackdropPicker from "./BackdropPicker";
 import styles from "@/components/Reschedule/Reschedule.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 interface BackdropView {
   bundleId: string;

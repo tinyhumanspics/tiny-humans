@@ -3,10 +3,10 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { formatLongDate, formatTimeLabel, getBookingClient, BookingApiError, type ManagedBooking } from "@/lib/booking";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import RescheduleFlow from "./RescheduleFlow";
 import styles from "./Reschedule.module.css";
 import { cn } from "@/lib/cn";

@@ -1,8 +1,8 @@
 "use client";
 
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
-import PinnedPhoto from "@/components/PinnedPhoto/PinnedPhoto";
-import PhotoPlaceholder from "@/components/PhotoPlaceholder/PhotoPlaceholder";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
+import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
+import PhotoPlaceholder from "@/components/ui/PhotoPlaceholder/PhotoPlaceholder";
 import en from "@/messages/en.json";
 
 interface Props {

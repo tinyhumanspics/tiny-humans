@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { LegalDocument } from "@/config/legal";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { site } from "@/config/site";
 import type { ReactNode } from "react";
 import en from "@/messages/en.json";

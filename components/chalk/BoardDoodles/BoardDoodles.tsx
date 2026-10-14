@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import { INTRO_DONE_EVENT } from "@/components/layout/Reveal/Reveal";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import type { BoardArea, DoodleColor } from "@/config/themes";
 import styles from "./BoardDoodles.module.css";
 import { cn } from "@/lib/cn";

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import NotFound from "@/components/NotFound/NotFound";
+import NotFound from "@/components/layout/NotFound/NotFound";
 import { bundlesHref } from "@/config/booking";
 import es from "@/messages/es.json";
 import en from "@/messages/en.json";

@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { formatLongDate, formatTimeLabel, getBookingClient, BookingApiError, type CancellationSummary } from "@/lib/booking";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import styles from "./CancelBooking.module.css";
 import { site } from "@/config/site";
 import { cancelClosedText } from "@/lib/booking/reschedule-policy";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
 import { fill } from "@/lib/email/messages";
 import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 
 type View = "loading" | "invalid" | "form" | "done" | "already" | "past" | "closed";
 

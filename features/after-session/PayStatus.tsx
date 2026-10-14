@@ -1,6 +1,6 @@
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
 import { localePath } from "@/i18n/path";

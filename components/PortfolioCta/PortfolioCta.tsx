@@ -2,13 +2,13 @@
 
 import type { PortfolioPhoto } from "@/config/portfolio";
 import { bundlesHref } from "@/config/booking";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import Reveal from "@/components/Reveal/Reveal";
-import BoardDoodles from "@/components/BoardDoodles/BoardDoodles";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import InspirationThumb from "@/components/Booking/InspirationThumb";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import styles from "./PortfolioCta.module.css";
 import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";

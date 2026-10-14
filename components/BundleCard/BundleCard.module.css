@@ -84,7 +84,8 @@
   color: var(--chalk-muted);
 }
 
-.cta { margin-top: 24px; width: 100%; }
+/* `.card` outranks ChalkButton's own `margin: 0`, whatever order the CSS chunks load in. */
+.card .cta { margin-top: 24px; width: 100%; }
 
 /* ---------- special offer (chalk sticker, crossed-out price) ---------- */
 .card.hasOffer { position: relative; }

@@ -3,7 +3,7 @@
 import type { CSSProperties } from "react";
 import { BACKDROPS, type Backdrop } from "@/config/backdrops";
 import { backdropName } from "@/lib/booking/backdrop-names";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { cn } from "@/lib/cn";
 import styles from "./BackdropPicker.module.css";
 

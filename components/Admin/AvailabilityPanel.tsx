@@ -9,7 +9,7 @@ import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { formatMoney } from "@/lib/pricing/engine";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import { todayInZone } from "@/lib/booking/timezone";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 

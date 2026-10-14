@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import { colorVar, useDrawOnce } from "./BoardDoodles";
 import styles from "./BoardDoodles.module.css";
 import { cn } from "@/lib/cn";

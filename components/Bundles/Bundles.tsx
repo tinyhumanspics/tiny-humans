@@ -1,10 +1,10 @@
 "use client";
 
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { scheduleHref } from "@/config/booking";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
-import SectionHeading from "@/components/SectionHeading/SectionHeading";
+import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BundleCard from "@/components/BundleCard/BundleCard";
 import { useBookingSelection } from "@/components/Booking/BookingSelectionContext";
 import BookingPaused from "@/features/booking/BookingPaused";

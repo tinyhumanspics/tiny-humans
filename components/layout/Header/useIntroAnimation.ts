@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { site } from "@/config/site";
-import type { LogoDrawState } from "@/components/TinyHumansLogo/TinyHumansLogo";
-import { INTRO_DONE_EVENT } from "@/components/Reveal/Reveal";
+import type { LogoDrawState } from "@/components/chalk/TinyHumansLogo/TinyHumansLogo";
+import { INTRO_DONE_EVENT } from "@/components/layout/Reveal/Reveal";
 
 /** Intrinsic width the logo is rendered at; the header scales it down. */
 export const LOGO_BASE_WIDTH = 520;

@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import type en from "@/messages/en.json";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";

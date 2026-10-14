@@ -1,8 +1,8 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import { useSiteSettings } from "@/components/SiteSettings/SiteSettingsProvider";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import type { ScatterDoodle } from "@/config/themes";
 import styles from "./SeasonalDecor.module.css";
 

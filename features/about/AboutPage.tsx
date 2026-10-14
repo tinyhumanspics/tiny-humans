@@ -1,11 +1,11 @@
 import en from "@/messages/en.json";
 import { bundlesHref } from "@/config/booking";
-import ChalkBox from "@/components/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ChalkButton/ChalkButton";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
-import SitePhotoSlot from "@/components/SitePhotoSlot/SitePhotoSlot";
-import Reveal from "@/components/Reveal/Reveal";
-import SectionHeading from "@/components/SectionHeading/SectionHeading";
+import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import SitePhotoSlot from "@/components/ui/SitePhotoSlot/SitePhotoSlot";
+import Reveal from "@/components/layout/Reveal/Reveal";
+import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import styles from "./About.module.css";
 import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";

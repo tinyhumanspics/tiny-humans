@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { bookingSettings } from "@/config/booking";
 import { addDays, formatLongDate, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
-import ChalkDoodle from "@/components/ChalkDoodle/ChalkDoodle";
+import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import styles from "./Booking.module.css";

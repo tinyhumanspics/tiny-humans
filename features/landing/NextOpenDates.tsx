@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCatalog } from "@/components/Catalog/CatalogProvider";
+import { useCatalog } from "@/components/providers/CatalogProvider";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { formatShortDate } from "@/lib/booking/dates";
 import type { AppLocale } from "@/i18n/config";
