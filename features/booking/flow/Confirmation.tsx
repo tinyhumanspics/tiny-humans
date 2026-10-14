@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";

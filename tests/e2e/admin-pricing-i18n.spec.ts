@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import type { AdminBundle } from "@/config/bundles";
+import type { AdminBundle } from "@/lib/pricing/types";
 import { defaultSettings } from "@/lib/settings/defaults";
 import type { BundleInput } from "@/lib/pricing/validation";
 

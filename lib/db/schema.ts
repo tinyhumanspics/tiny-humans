@@ -19,7 +19,7 @@ export const bookings = pgTable(
 
     packageId: text("package_id").notNull(),
     packageName: text("package_name").notNull(),
-    /** Whole US dollars, taken from config/bundles.ts on the server (never from the browser). */
+    /** Whole US dollars, taken from the bundle catalog on the server (never from the browser). */
     packagePrice: integer("package_price").notNull(),
 
     parentName: text("parent_name").notNull(),

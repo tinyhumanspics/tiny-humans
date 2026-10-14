@@ -1,6 +1,6 @@
 "use client";
 
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";

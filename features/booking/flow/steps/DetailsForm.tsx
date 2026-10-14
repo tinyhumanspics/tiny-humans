@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { site } from "@/config/site";
 import { babyAgeOptions } from "@/config/booking";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { formatMoney, toCents } from "@/lib/pricing/engine";
 import type { BookingConsents } from "@/lib/booking";
 import { includesSiblings } from "@/lib/booking/bundle-traits";

@@ -1,4 +1,4 @@
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { babyAgeOptions } from "@/config/booking";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { formatMoney } from "@/lib/pricing/engine";

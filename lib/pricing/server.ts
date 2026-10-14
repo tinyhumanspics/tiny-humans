@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, count, eq, isNull, lt, or, sql } from "drizzle-orm";
-import type { AdminBundle, Bundle } from "@/config/bundles";
+import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import { defaultLocale, type AppLocale } from "@/i18n/config";
 import { builtInCatalog } from "./catalog";
 export { builtInCatalog };
@@ -36,7 +36,7 @@ export class CatalogUnavailableError extends Error {}
 
 /**
  * Every bundle (active + inactive), from Neon. The built-in bundles in
- * config/bundles.ts are used ONLY when no database is configured (local
+ * lib/pricing/dev-bundles.ts are used ONLY when no database is configured (local
  * development / tests). With a database, an error or an empty table throws:
  * production never shows hardcoded prices the server wouldn't honor.
  */

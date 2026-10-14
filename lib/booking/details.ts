@@ -1,6 +1,6 @@
 import "server-only";
 import { eq } from "drizzle-orm";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { portfolio } from "@/config/portfolio";
 import { getDb } from "@/lib/db/client";
 import { bookingConsents, type Booking } from "@/lib/db/schema";

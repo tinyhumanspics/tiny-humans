@@ -6,7 +6,7 @@ import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayImpact,
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import type { DepositSettings } from "@/lib/deposit/types";
-import type { AdminBundle } from "@/config/bundles";
+import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
 

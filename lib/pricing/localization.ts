@@ -1,4 +1,4 @@
-import type { Bundle, BundleTranslation } from "@/config/bundles";
+import type { Bundle, BundleTranslation } from "@/lib/pricing/types";
 import type { AppLocale } from "@/i18n/config";
 import es from "@/messages/es.json";
 

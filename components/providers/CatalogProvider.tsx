@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { bookingRules } from "@/config/booking";
 import { todayInZone } from "@/lib/booking/timezone";
 import { sortBundles } from "@/lib/pricing/catalog";

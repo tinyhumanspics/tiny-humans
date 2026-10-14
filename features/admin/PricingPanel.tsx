@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import type { AdminBundle, Bundle } from "@/config/bundles";
+import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import type { AdminApi } from "@/lib/admin/client";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
 import type { DiscountCode } from "@/lib/pricing/types";

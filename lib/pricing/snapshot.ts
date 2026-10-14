@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "crypto";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { defaultLocale, type AppLocale } from "@/i18n/config";
 import { log } from "@/lib/log";
 

@@ -1,4 +1,4 @@
-import type { Bundle, ExtraBabyAddon } from "@/config/bundles";
+import type { Bundle, ExtraBabyAddon } from "@/lib/pricing/types";
 import type { PriceQuote } from "@/lib/pricing/engine";
 
 export const EXTRA_BABY_KIND = "extra_baby" as const;

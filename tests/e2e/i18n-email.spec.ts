@@ -7,7 +7,7 @@ import type { PriceQuote } from "@/lib/pricing/engine";
 import { bookingRequestSchema } from "@/lib/booking/validation";
 import { bundleInputSchema } from "@/lib/pricing/validation";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { babyAgeOptions, bookingSteps, bundlesHref, scheduleHref } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { localePath, publicPathname, switchLocalePath } from "@/i18n/path";

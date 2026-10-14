@@ -1,4 +1,4 @@
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import type { AddonLine } from "@/lib/booking/extra-babies";
 
 /**

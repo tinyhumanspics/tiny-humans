@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { bundles } from "@/config/bundles";
+import { devBundles as bundles } from "@/lib/pricing/dev-bundles";
 import { defaultSettings } from "@/lib/settings/defaults";
 import type { Lead, LeadList } from "@/lib/leads/types";
 

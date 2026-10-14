@@ -1,5 +1,5 @@
 import { site } from "@/config/site";
-import type { Bundle } from "@/config/bundles";
+import type { Bundle } from "@/lib/pricing/types";
 import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "./dates";
 import type { BookingConsents, BookingContact, SessionAddress } from "./types";
