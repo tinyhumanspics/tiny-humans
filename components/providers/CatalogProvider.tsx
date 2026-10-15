@@ -15,7 +15,7 @@ interface Ctx {
   /** False when there are no bookable bundles (booking shows a friendly pause message). */
   available: boolean;
   /** "snapshot" = Neon was unreachable and the last good copy is shown. */
-  status: "live" | "snapshot" | "builtin";
+  status: "live" | "snapshot" | "builtin" | "unavailable";
   /** A bundle's deposit (cents) for the website's wording; null while deposits are off. */
   depositFor: (id: string) => number | null;
 }
@@ -26,7 +26,7 @@ const CatalogContext = createContext<Ctx | null>(null);
 const noSubscription = () => () => {};
 
 /** Central bundle/price data for every customer-facing page (from Neon). */
-export function CatalogProvider({ initial, status = "live", initialToday, deposits = null, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin"; initialToday: string; deposits?: Record<string, number> | null; children: ReactNode }) {
+export function CatalogProvider({ initial, status = "live", initialToday, deposits = null, children }: { initial: Bundle[]; status?: "live" | "snapshot" | "builtin" | "unavailable"; initialToday: string; deposits?: Record<string, number> | null; children: ReactNode }) {
   const all = initial;
   // the page may be cached: the browser re-checks the studio date so expired offers disappear
   const today = useSyncExternalStore(noSubscription, () => todayInZone(bookingRules.timeZone), () => initialToday);

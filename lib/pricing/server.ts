@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, count, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import { defaultLocale, type AppLocale } from "@/i18n/config";
-import { builtInCatalog } from "./catalog";
+import { builtInCatalog, isLiveSite } from "./catalog";
 export { builtInCatalog };
 import { bookingRules } from "@/config/booking";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
@@ -165,7 +165,7 @@ async function translateCatalog(catalog: Bundle[], locale: AppLocale): Promise<B
  * serving the last good page, and a build fails instead of deploying wrong prices (the previous deployment stays live).
  * It never falls back to the hardcoded bundles in production.
  */
-export type CatalogStatus = "live" | "snapshot" | "builtin";
+export type CatalogStatus = "live" | "snapshot" | "builtin" | "unavailable";
 export interface PublicCatalog {
   bundles: Bundle[];
   status: CatalogStatus;
@@ -176,6 +176,11 @@ const activeOnly = (list: Bundle[]) => list.filter((b) => b.active !== false);
 export async function getPublicCatalog(locale: AppLocale = defaultLocale): Promise<PublicCatalog> {
   if (!isDatabaseConfigured()) {
     if (locale !== defaultLocale) throw new IncompleteCatalogTranslationError("catalog");
+    if (isLiveSite()) {
+      // never built-in prices on the live site: pages still load and booking shows as paused
+      log.error("pricing.catalog", "DATABASE_URL is missing on the live site: booking is shown as paused");
+      return { bundles: [], status: "unavailable" };
+    }
     return { bundles: activeOnly(builtInCatalog()), status: "builtin" };
   }
   try {
