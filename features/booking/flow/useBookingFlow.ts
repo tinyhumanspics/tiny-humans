@@ -97,6 +97,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
 
   useEffect(() => {
     if (state.step >= STEP.date && state.bundleId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- loads what is on screen (fine per react.dev)
       void loadMonth(month, state.bundleId, state.babies.length);
     }
   }, [state.step, state.bundleId, state.babies.length, month, loadMonth]);

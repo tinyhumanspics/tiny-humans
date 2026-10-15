@@ -138,6 +138,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads what is on screen (fine per react.dev)
     void load(filter);
   }, [filter, load]);
 

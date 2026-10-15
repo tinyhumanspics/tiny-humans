@@ -6,9 +6,8 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   {
-    // React Compiler advice (react-hooks 7), warnings for now. Phase 8 slice 6 fixed all but four effects that load
-    // data (LeadsPanel, RescheduleFlow, DepositReturn, useBookingFlow): slice 7 decides how data is fetched.
-    // New code should follow these rules.
+    // React Compiler advice (react-hooks 7), warnings. Phase 8 fixed every finding; the four effects that load data
+    // keep a line-level exception (decision: no data library, stale answers ignored). New code follows these rules.
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/purity": "warn",

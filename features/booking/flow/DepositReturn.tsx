@@ -57,6 +57,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
   }, [reference, signature, t.error]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads what is on screen (fine per react.dev)
     void load();
   }, [load]);
 

@@ -72,6 +72,7 @@ export default function RescheduleFlow({ current, loadDays, submit, onKeep, keep
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- loads what is on screen (fine per react.dev)
     void load(month);
   }, [month, load]);
 
