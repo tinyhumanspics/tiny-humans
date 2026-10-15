@@ -46,7 +46,7 @@ Push to GitHub and import the repo in Vercel, then follow **Owner area → One-t
 
 | What | File |
 | --- | --- |
-| Bundle names, prices, features, buttons | `config/bundles.ts` |
+| Bundle names, prices, features, buttons | /admin → Pricing (Neon); local dev/tests without a database: `lib/pricing/dev-bundles.ts` |
 | Baby-led session note (booking page) | `config/site.ts` (`babyLedNote`) |
 | Instagram link, contact email (footer) | `config/site.ts` (`social`, `contact`) |
 | Privacy Policy and Terms of Service text | `messages/en.json` + `messages/es.json` (`legal`) |
@@ -151,7 +151,7 @@ Browser (booking form)                 Server (Vercel functions)
 - `lib/booking/types.ts`: `BookingClient` (what the form uses) and `BookingProvider` (adds `cancelBooking`, `rescheduleBooking`).
 - `lib/booking/mock-provider.ts`, `lib/booking/outlook-provider.ts`: the two providers.
 - `lib/booking/availability.ts`: real-calendar slot engine (business hours, lead time, booking window, travel buffers).
-- `lib/booking/validation.ts`: Zod schemas. The server takes the price and session length from `config/bundles.ts`, never from the browser.
+- `lib/booking/validation.ts`: Zod schemas. The server takes the price and session length from the bundle catalog (`getCatalog()`), never from the browser.
 - `lib/booking/templates.ts`: calendar event text, the customer confirmation email and the internal new-booking email (inline styles, table layouts).
 - `lib/microsoft/`: `auth.ts` (client-credentials token, cached server-side), `graph.ts`, `calendar.ts`, `config.ts`. Calendar only; no Graph mail.
 - `lib/email/resend.ts`: server-only Resend client (`RESEND_API_KEY`, `BOOKING_FROM_EMAIL`, `BOOKING_NOTIFICATION_EMAIL`).
@@ -212,7 +212,7 @@ No payment is taken online. The review step shows "Due today: $0"; the confirmat
 
 ## Pricing & Promotions (/admin/pricing)
 
-**Central pricing.** Bundles live in Neon (`bundles`, `bundle_inclusions`; seeded from `config/bundles.ts` by migration 0005). Everything customer-facing reads them: the public bundle cards and booking (via `CatalogProvider`, fed by `getPublicCatalog()` in the root layout: cached, refreshed on every admin save and every 5 minutes), the server-side booking/quote logic (`getCatalog()`, always fresh), emails and Leads. Without a database, or before migration 0005 runs, the built-in bundles are used.
+**Central pricing.** Bundles live in Neon (`bundles`, `bundle_inclusions`; seeded by migration 0005). Everything customer-facing reads them: the public bundle cards and booking (via `CatalogProvider`, fed by `getPublicCatalog()` in the root layout: cached, refreshed on every admin save and every 5 minutes), the server-side booking/quote logic (`getCatalog()`, always fresh), emails and Leads. Without a database, or before migration 0005 runs, the built-in bundles (`lib/pricing/dev-bundles.ts`) are used.
 
 **Bundles:** name, regular price, description, session length, edited photos, small label, "What's included" (add / edit / reorder / delete), active/inactive, special offer. Inactive bundles disappear from the site and can't be booked. A bundle with any booking in its history can't be deleted (deactivate it instead).
 
