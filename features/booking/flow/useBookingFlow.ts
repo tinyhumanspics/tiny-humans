@@ -65,19 +65,25 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     return () => window.clearTimeout(t);
   }, []);
 
+  // availability is per bundle and baby count: an answer for a count the family has since changed is dropped
+  const availabilityFor = useRef("");
   const loadMonth = useCallback(
     async (m: Date, bundleId: string, babyCount: number) => {
+      const key = `${bundleId}:${babyCount}`;
+      availabilityFor.current = key;
       setLoadingDays(true);
       try {
         const from = toDateKey(new Date(m.getFullYear(), m.getMonth(), 1));
         const to = toDateKey(new Date(m.getFullYear(), m.getMonth() + 1, 0));
         const result = await provider.getAvailability({ bundleId, babyCount, from, to });
+        if (availabilityFor.current !== key) return;
         setDays((prev) => {
           const next = { ...prev };
           result.forEach((d) => (next[d.date] = d.slots));
           return next;
         });
       } catch (err) {
+        if (availabilityFor.current !== key) return;
         dispatch({
           type: "stepError",
           message: apiErrorMessage(err, messages, messages.errors.availability),

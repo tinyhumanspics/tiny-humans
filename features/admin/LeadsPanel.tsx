@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadDeposit, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
@@ -116,17 +116,22 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
 
+  // only the newest list request may show its result (a quick filter change could otherwise show the old list)
+  const latestRequest = useRef(0);
   const load = useCallback(
     async (f: LeadFilter, offset = 0) => {
+      const request = ++latestRequest.current;
       setLoading(true);
       setError(null);
       try {
         const res = await api.listLeads(f, offset);
+        if (request !== latestRequest.current) return;
         setData((prev) => (offset && prev ? { ...res, leads: [...prev.leads, ...res.leads] } : res));
       } catch (e) {
+        if (request !== latestRequest.current) return;
         setError(e instanceof Error ? e.message : "Couldn't load leads.");
       } finally {
-        setLoading(false);
+        if (request === latestRequest.current) setLoading(false);
       }
     },
     [api],
