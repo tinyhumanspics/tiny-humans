@@ -44,7 +44,8 @@ green, production smoke-tested. The owner finished the Stripe steps and the refu
 (`b37fe12`, shared components moved; CSS tie fix) + `scripts/css-ties.mjs`; slice 3b live (`cbe95ae`, features;
 no barrel index.ts). **Oct 14:** slice 4 live (`5835d78`, booking form split into a state hook + step components).
 Slice 5 live (`604cdbf`, `config/bundles.ts` → `lib/pricing/types.ts` + `lib/pricing/dev-bundles.ts`).
-Next: slice 6 (the 22 lint warnings: React Compiler rules + unused vars).
+Slice 6 live (`d51daa7`, lint warnings 22 → 4; the 4 data-loading effects wait for slice 7). Next: slice 7 (library
+evaluation: forms, dialogs/lightbox, data fetching, animation; ask the owner before replacing any core library).
 **State Oct 12 late (Claude Code):** main = `dc597da`, Vercel + CI green, production smoke-tested. Shipped today, all
 live and checked: Dark Green backdrop + email swatch-grid fix (`c96a6ef`, `393715e`); deposit follow-up (owner deposit
 link + re-hold, studio "Deposit not paid" alert, same-family retry, /admin settles overdue holds, "Cancelled · deposit
@@ -145,7 +146,8 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 14): main = 604cdbf + docs, live and smoke-tested: Phase 8 slice 5 (config/bundles.ts gone: types in
+State (Oct 14): main = d51daa7 + docs, live and smoke-tested: Phase 8 slice 6 (lint warnings 22 → 4: React Compiler
+fixes; 4 data-loading effects left for slice 7), slice 5 (config/bundles.ts gone: types in
 lib/pricing/types.ts, built-in bundles in lib/pricing/dev-bundles.ts for dev/CI), slice 4 (booking form = booking-state.ts +
 useBookingFlow.ts + steps/*) and slice 3 (3a: components/ui, chalk,
 layout, providers; 3b: features/admin, booking, home, legal; cross-feature imports use a feature's root files, no
@@ -155,7 +157,7 @@ components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, se
 great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 6 (the 22 lint warnings: React Compiler rules + unused vars), then slice 7 (library evaluation)
+Next: Phase 8 slice 7 (library evaluation: research, decide, justify; ask the owner before replacing a core library)
 (PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
 (before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
 Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
@@ -982,7 +984,8 @@ Vercel CLI on the Mac is logged out.
       e2e now runs on a production build (`next build && next start`; Next 16 allows one `next dev` per project).
       `npm audit --omit=dev`: 0 (Next 16 fixed the postcss advisories). Remaining 9 are dev-only (drizzle-kit's
       esbuild-kit, eslint's braces chain); "fixes" are downgrades → ignore. Kept `@types/node` 22 (match Vercel's Node).
-- [ ] React Compiler lint rules are warnings for now (set-state-in-effect, purity, refs, immutability) → fix in Phase 8.
+- [~] React Compiler lint rules are warnings for now (set-state-in-effect, purity, refs, immutability): Phase 8 slice 6
+      fixed all but four data-loading effects (slice 7).
 ## Phase 8 — Structure move, route groups, split Booking.tsx, library evaluation, remove `config/bundles.ts`
 Rules: small slices, each with strict tsc + lint + units + build + 24/24 visual parity + e2e before pushing; no visible
 change. Docs read Oct 12 (see Research notes → Phase 8).
@@ -1059,7 +1062,18 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       shows the live $149/$249/$399. **Option for the owner (not done):** today only a missing `DATABASE_URL` would make
       production show the built-in prices; a guard could refuse them on Vercel production (the site would show an error
       instead). Ask before adding.
-- [ ] Slice 6: the 22 lint warnings (React Compiler: set-state-in-effect, purity, refs, immutability).
+- [x] **Slice 6: lint warnings 22 → 4 — LIVE Oct 14 (`8ff09e8` chore + `d51daa7` refactor).** Unused imports removed
+      (mock provider, email templates); `no-unused-vars` allows the `{ key: _k, ...rest }` omit pattern
+      (`ignoreRestSiblings`). React Compiler fixes: Portfolio numbers prompts/photo groups before rendering; the intro
+      hook syncs its image list from an effect declared before the intro effect; the booking form notes its opening
+      time in a mount effect (the language-switch draft still restores its own) and clears cached availability where
+      the baby count changes (twins picker, draft restore) instead of in an effect; cancel/reschedule links without a
+      token show "couldn't open this link" at once (derived) instead of a brief loading state; the catalog reads the
+      studio date with `useSyncExternalStore`. **Left (4, warnings):** the data-loading effects in LeadsPanel,
+      RescheduleFlow, DepositReturn and useBookingFlow → slice 7 decides the data-fetching approach. **Checks:** strict
+      tsc, lint 0 errors/4 warnings, 44 units, build (route table identical), 24/24 visual, 42 extra screenshots +
+      intro checks, computed CSS identical, booking walk-through 24/24 identical, ties 0, 110 e2e; Vercel + CI success;
+      production smoke + booking walk (not submitted) OK, no console/hydration errors on 7 key pages.
 - [ ] Slice 7: library evaluation (forms RHF+Zod vs React 19 actions; Radix/Base UI/React Aria for dialogs/menus/
       lightbox; TanStack Query; Motion/GSAP vs current animation): research, decide, justify here; switch only where
       visually identical and clearly better; **ask the owner before replacing any core library**.
