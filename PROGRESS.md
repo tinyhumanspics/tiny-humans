@@ -4,6 +4,10 @@ Living plan + log. Update after every slice. New session: "Read CLAUDE.md and PR
 Legend: `[x]` done · `[~]` in progress · `[ ]` to do · `[?]` waiting on owner
 
 ## ▶ LAUNCH — by Nov 15 (owner, Oct 12 late: "we need to launch this by November 15"; earlier that day "in 4 days")
+**LAUNCHED Oct 15, 2026 (owner: "The launch is today").** Launch-day read-only check passed: 19 pages × iPhone WebKit
++ desktop Chromium OK, booking walked to "Pay $50 deposit" (never submitted), no console errors, CSS ties 0, travel
+quote (33139: 6 mi, free; 30 free mi, $0.75/mi, 250 max) and deposit ($50, 48 h notice) answer, Vercel success. Fixes
+only on `main` today; Phase 9 restyling resumes after launch with the Phase 8 checks.
 Launch-critical owner items below. Phase 8 runs meanwhile in small invisible slices (full gates + parity each). Code
 freeze on `main` the day before launch except fixes.
 - [x] **Done (owner, Oct 12 late: "All the steps of stripe has been successfully done").** Owner, Stripe (guide sent Oct 12, checked against docs.stripe.com/keys + /webhooks): dashboard.stripe.com/apikeys
@@ -31,7 +35,11 @@ freeze on `main` the day before launch except fixes.
 - [ ] Owner: Google Search Console + Business Profile (Google needs days to process; do before launch if possible).
       Step-by-step sent Oct 15 (DNS is at Squarespace Domains: TXT record from Search Console → domains.squarespace.com →
       DNS settings → Custom records; sitemap https://www.tinyhumans.photography/sitemap.xml; Business Profile at
-      business.google.com/add as a service-area business with the address hidden).
+      business.google.com/add as a service-area business with the address hidden). Owner, Oct 15: fine if the profile
+      isn't a "place" as long as Tiny Humans shows up when people search. Google's guidelines
+      (support.google.com/business/answer/3038177): businesses that travel to customers get one service-area profile
+      with the address hidden, which fits. Site is indexable (robots allows, 12-page sitemap, canonical OK) but not
+      listed yet on launch day: Search Console verify + sitemap + URL Inspection "Request indexing" speeds it up.
 - [x] Claude: confirm Vercel deploys `cb5f472` (passkey recent-sign-in fix). **Deployed Oct 12** (Vercel success on
       `f2e329f` after the backlog cleared; read-only smoke: 6 pages 200, passkeys available true, travel 30 free
       miles, unauthenticated register → "Sign in first."). **Oct 12 finding:** the last Vercel
@@ -169,7 +177,7 @@ Not on main yet: nothing.
 Next: Phase 9 (Tailwind v4 + tokens), slice 1: read the current Tailwind v4 + Next 16 docs (note links), rebuild the
 Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs exists), then one
 component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
-Time-sensitive: launch by Nov 15 (no Phase 9 restyling on main from Nov 14); CSP report-only → read `csp` warnings
+Time-sensitive: LAUNCHED Oct 15 (keep main stable; Phase 9 one small verified slice at a time); CSP report-only → read `csp` warnings
 ~Oct 19, then enforce; DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
 Waiting on the owner: OK for the privacy sentence (text in PROGRESS.md → LAUNCH; then add EN + ES); photo descriptions
 "IMG 7378" / "IMG 6087" (owner doing it); Search Console/Business Profile (steps sent Oct 15); /portfolio; Terms review.
