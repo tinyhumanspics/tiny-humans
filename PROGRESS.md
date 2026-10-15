@@ -10,19 +10,28 @@ freeze on `main` the day before launch except fixes.
       → Restricted keys → the site's `rk_live_` key → ⋯ → Edit key → **Refunds: Write** (Checkout Sessions stays Write;
       the key value doesn't change). dashboard.stripe.com/webhooks → endpoint `/api/stripe/webhook` → Edit destination
       → add **`checkout.session.expired`** (keep `checkout.session.completed`; the signing secret doesn't change).
-- [~] **Owner, Oct 12 late: done, refund issued in Stripe** (it reaches the card in 5–10 business days). Still open: the
+- [x] **Owner, Oct 12 late: done, refund issued in Stripe; Gmail light/dark check "all good" (Oct 15).** (it reaches the card in 5–10 business days). Still open: the
       Gmail-app light/dark check below (not mentioned). Owner + Claude: one real $50 deposit booking → confirmation email, Outlook event, /admin "Deposit paid" → cancel
       from the email link → Stripe shows the refund (~$1.75 Stripe fee is not returned). In the same test, open the
       family + studio emails in the **Gmail app in light and dark mode** (color-scheme fix `dc597da`), ideally with a
       @gmail.com address (Gmail's fix may need Google-hosted accounts).
-- [ ] Owner, /admin → Photos → Details: two photos are described by file name (screen readers/Google read these):
+- [ ] Owner (Oct 15: "I will"), /admin → Photos → Details: two photos are described by file name (screen readers/Google read these):
       "IMG 7378" (home "Little moments" photo captioned "Ten Tiny Toes", also on the landing page) and "IMG 6087"
       (About "Adrian & Alondra", also on the landing page).
-- [ ] Owner approval (still unanswered): privacy-policy line for Vercel Web Analytics + Speed Insights (EN + ES draft sent Oct 12; facts
-      from https://vercel.com/docs/analytics/privacy-policy and https://vercel.com/docs/speed-insights/privacy-policy:
-      no cookies, anonymous, visitor hash discarded after 24 h; the site sends only page views, URLs filtered by
-      `lib/tracking/safe-url.ts`).
+- [ ] Owner approval: privacy-policy sentence for Vercel Web Analytics + Speed Insights (re-explained Oct 15; the
+      owner hadn't understood the Oct 12 note). Goes after the hosting sentence in Privacy → "Information we collect"
+      (`legal.privacy.sections[0].body[4]` in en.json/es.json), Meta sentence unchanged. Facts from
+      https://vercel.com/docs/analytics/privacy-policy + https://vercel.com/docs/speed-insights/privacy-policy.
+      EN: "Our host also gives us anonymous visitor statistics (Vercel Web Analytics and Speed Insights) so we can count
+      visits and see how quickly our pages load; they record things like the page, your type of device and browser and
+      your approximate location, and they don't identify you."
+      ES: "Nuestro proveedor de alojamiento también nos da estadísticas anónimas de visitas (Vercel Web Analytics y Speed
+      Insights) para contar las visitas y ver qué tan rápido cargan nuestras páginas; registran datos como la página,
+      tu tipo de dispositivo y navegador y tu ubicación aproximada, y no te identifican."
 - [ ] Owner: Google Search Console + Business Profile (Google needs days to process; do before launch if possible).
+      Step-by-step sent Oct 15 (DNS is at Squarespace Domains: TXT record from Search Console → domains.squarespace.com →
+      DNS settings → Custom records; sitemap https://www.tinyhumans.photography/sitemap.xml; Business Profile at
+      business.google.com/add as a service-area business with the address hidden).
 - [x] Claude: confirm Vercel deploys `cb5f472` (passkey recent-sign-in fix). **Deployed Oct 12** (Vercel success on
       `f2e329f` after the backlog cleared; read-only smoke: 6 pages 200, passkeys available true, travel 30 free
       miles, unauthenticated register → "Sign in first."). **Oct 12 finding:** the last Vercel
@@ -150,7 +159,7 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 14): main = f97c3e0 + handoff docs, live and smoke-tested: Phase 8 done. Route groups (one root layout +
+State (Oct 15): main = eff9e79 + docs, live and smoke-tested: Phase 8 done; live-site guard (never built-in prices). Route groups (one root layout +
 app/(site), app/(admin)/admin drawing components/layout/SiteShell); components/{ui,chalk,layout,providers} +
 features/{admin,booking,home,landing,about,legal,after-session}; booking form = booking-state.ts + useBookingFlow.ts +
 steps/*; config/bundles.ts → lib/pricing/types.ts + lib/pricing/dev-bundles.ts; lint 0 problems; library evaluation:
@@ -162,9 +171,8 @@ Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only s
 component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
 Time-sensitive: launch by Nov 15 (no Phase 9 restyling on main from Nov 14); CSP report-only → read `csp` warnings
 ~Oct 19, then enforce; DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: Gmail-app light/dark check of the booking emails; privacy line for Vercel Analytics (draft sent);
-photo descriptions "IMG 7378" / "IMG 6087"; Search Console/Business Profile; /portfolio; Terms review; optional guard
-so production never shows built-in prices if DATABASE_URL disappears (ask first).
+Waiting on the owner: OK for the privacy sentence (text in PROGRESS.md → LAUNCH; then add EN + ES); photo descriptions
+"IMG 7378" / "IMG 6087" (owner doing it); Search Console/Business Profile (steps sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (use a scratchpad worktree); stage exact existing paths and
 check `git show --stat HEAD`; moving files can reorder Turbopack CSS (run scripts/css-ties.mjs); no barrel index.ts
 for client components (+10–16 KB per page); never submit a booking on production (block /api/booking/create).
@@ -1059,9 +1067,12 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       true constants only. **Checks:** strict tsc, lint 0 errors/22 warnings, 44 units, build (route table identical),
       24/24 visual, CSS ties 0, page bytes identical (−45/−52 bytes on /reschedule and /admin), 110 e2e; Vercel success;
       CI failed once on an unrelated WebKit click (see bug log), passed on rerun; production smoke OK, ties 0, /bundles
-      shows the live $149/$249/$399. **Option for the owner (not done):** today only a missing `DATABASE_URL` would make
-      production show the built-in prices; a guard could refuse them on Vercel production (the site would show an error
-      instead). Ask before adding.
+      shows the live $149/$249/$399. **Live-site guard (owner "Sure", Oct 15; `eff9e79`):** `builtInCatalog()` refuses
+      on Vercel production (`VERCEL_ENV=production`); `getPublicCatalog()` then returns no bundles (status
+      `unavailable`) and logs `pricing.catalog` "DATABASE_URL is missing on the live site", so pages load and booking
+      shows "Booking is taking a short break"; previews/local/CI unchanged. Checked with a local production build
+      (VERCEL_ENV=production, no DATABASE_URL): 6 pages 200, no prices, paused on /bundles, /book, landing, quote API
+      refuses; 3 unit tests; 24/24 visual, 111 e2e; Vercel + CI success; live prices unchanged.
 - [x] **Slice 6: lint warnings 22 → 4 — LIVE Oct 14 (`8ff09e8` chore + `d51daa7` refactor).** Unused imports removed
       (mock provider, email templates); `no-unused-vars` allows the `{ key: _k, ...rest }` omit pattern
       (`ignoreRestSiblings`). React Compiler fixes: Portfolio numbers prompts/photo groups before rendering; the intro
