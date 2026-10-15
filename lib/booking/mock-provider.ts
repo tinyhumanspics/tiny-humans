@@ -23,7 +23,7 @@ import type {
   DayAvailability,
   TimeSlot,
 } from "./types";
-import { addDays, addMinutes, formatTimeLabel, fromDateKey, startOfDay, toDateKey } from "./dates";
+import { addMinutes, formatTimeLabel } from "./dates";
 import { extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
 
 /** Deterministic pseudo-random number in [0,1) for a string seed. */
