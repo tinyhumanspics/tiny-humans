@@ -28,7 +28,7 @@ npm run dev          # local dev (use BOOKING_PROVIDER=mock)
 npm run typecheck    # tsc --noEmit
 npm run build        # production build (what Vercel runs)
 npm run db:generate  # SQL migration from lib/db/schema.ts
-npm run lint         # ESLint flat config (0 errors expected; warnings are known)
+npm run lint         # ESLint flat config (0 problems expected since Oct 14)
 npm run test:e2e     # Playwright booking-funnel tests (mock provider, production build)
 ```
 
@@ -123,6 +123,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   The booking API refuses forms finished in < 4 s (spam check), so tests wait on the review step.
 - Visual parity: `npm run build && npx playwright test -c playwright.visual.config.ts` (8 pages × iPhone 14/1440 vs
   `.screenshots/parity/`, gitignored; `--update-snapshots` only after the owner approves a visual change).
+- Refactor parity method (Phase 8): build the old commit in a scratchpad `git worktree` (`cp -Rc node_modules`), serve
+  old and new side by side (`next start -p`), then compare the computed CSS of every element (17 pages × iPhone/1440),
+  a booking walk-through (12 steps, screenshots + HTML), page JS/CSS bytes and `scripts/css-ties.mjs`. Capture both
+  builds the same day (the calendar's "today" moves). Chrome sometimes reports `margin: auto` as `0px` in
+  `getComputedStyle`; compare element positions before calling that a change.
 
 ## Gotchas
 - Chalk grain is a texture mask (`.chalk-grain` in `styles/globals.css`), NOT a live SVG `feTurbulence` filter — keep it

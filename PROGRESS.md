@@ -37,7 +37,11 @@ freeze on `main` the day before launch except fixes.
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Oct 12 night: Phase 8 slices 1–2 live; Stripe done; quiet CSP week)
+## ▶ NEXT STEPS (Oct 14: Phase 8 done; next Phase 9; quiet CSP week until ~Oct 19)
+**State Oct 14 (Claude Code):** main = `f97c3e0` + handoff docs, Vercel + CI green, production smoke-tested after
+every slice. Phase 8 complete (route groups, components/ + features/, booking form split, `config/bundles.ts` gone,
+lint 0 problems, library evaluation: no switch, two stale-answer races fixed). Next: Phase 9 slice 1 (research +
+parity tooling). Owner items below are unchanged except Stripe (done Oct 12).
 **Update Oct 12 night (Claude Code):** main = `a3732e9` = Phase 8 slice 2 (route groups + SiteShell), Vercel + CI
 green, production smoke-tested. The owner finished the Stripe steps and the refund test (refund reaches the card in
 5–10 business days) and approved the seasonal themes as they are ("it looks great"). **Oct 13:** slice 3a live
@@ -146,28 +150,24 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 14): main = d51daa7 + docs, live and smoke-tested: Phase 8 slice 6 (lint warnings 22 → 4: React Compiler
-fixes; 4 data-loading effects left for slice 7), slice 5 (config/bundles.ts gone: types in
-lib/pricing/types.ts, built-in bundles in lib/pricing/dev-bundles.ts for dev/CI), slice 4 (booking form = booking-state.ts +
-useBookingFlow.ts + steps/*) and slice 3 (3a: components/ui, chalk,
-layout, providers; 3b: features/admin, booking, home, legal; cross-feature imports use a feature's root files, no
-barrel index.ts; `scripts/css-ties.mjs` finds CSS order ties, expect 0). Before: slices 1 and 2 (route groups:
-one root layout, app/(site) + app/(admin)/admin layouts drawing components/layout/SiteShell, three 404 files using
-components/NotFound). Earlier Oct 12: Dark Green backdrop, deposit follow-up, seasonal board colors (owner: "looks
-great", switched by hand in /admin → Theme), emails keep their colors in dark mode. Stripe steps + refund test done.
+State (Oct 14): main = f97c3e0 + handoff docs, live and smoke-tested: Phase 8 done. Route groups (one root layout +
+app/(site), app/(admin)/admin drawing components/layout/SiteShell); components/{ui,chalk,layout,providers} +
+features/{admin,booking,home,landing,about,legal,after-session}; booking form = booking-state.ts + useBookingFlow.ts +
+steps/*; config/bundles.ts → lib/pricing/types.ts + lib/pricing/dev-bundles.ts; lint 0 problems; library evaluation:
+no switch; stale-answer races fixed (/admin Leads filter, booking baby count) with tests/e2e/admin-leads.spec.ts.
 Not on main yet: nothing.
 
-Next: Phase 8 slice 7 (library evaluation: research, decide, justify; ask the owner before replacing a core library)
-(PROGRESS.md → Phase 8). Per slice: full gates + 24/24 visual parity + a computed-style diff against the old build
-(before/after builds in a scratchpad git worktree with `cp -Rc node_modules`; never git stash in the iCloud folder).
-Time-sensitive: launch by Nov 15; CSP report-only since Oct 12 → read `csp` warnings ~Oct 19, then enforce;
-DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: check the booking emails in the Gmail app, light + dark (color-scheme fix); privacy line for
-Vercel Analytics (draft sent); photo descriptions "IMG 7378" / "IMG 6087"; Search Console/Business Profile;
-/portfolio; Terms review.
-Watch out: stage exact paths and check `git show --stat HEAD` before pushing (Oct 12 incident). Production bundles have
-an empty `people` line (who joins lives in features). Seasonal email images are generated (no script in the repo).
-Vercel CLI on the Mac is logged out.
+Next: Phase 9 (Tailwind v4 + tokens), slice 1: read the current Tailwind v4 + Next 16 docs (note links), rebuild the
+Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs exists), then one
+component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
+Time-sensitive: launch by Nov 15 (no Phase 9 restyling on main from Nov 14); CSP report-only → read `csp` warnings
+~Oct 19, then enforce; DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
+Waiting on the owner: Gmail-app light/dark check of the booking emails; privacy line for Vercel Analytics (draft sent);
+photo descriptions "IMG 7378" / "IMG 6087"; Search Console/Business Profile; /portfolio; Terms review; optional guard
+so production never shows built-in prices if DATABASE_URL disappears (ask first).
+Watch out: never git stash/switch in the iCloud folder (use a scratchpad worktree); stage exact existing paths and
+check `git show --stat HEAD`; moving files can reorder Turbopack CSS (run scripts/css-ties.mjs); no barrel index.ts
+for client components (+10–16 KB per page); never submit a booking on production (block /api/booking/create).
 ```
 
 ## Owner requests (outside the original brief)
@@ -400,13 +400,13 @@ Vercel CLI on the Mac is logged out.
   the public/customer journey, seasonal offers, photos, prompts, SEO alternates and locale-aware customer links. The
   owner published Spanish Oct 10 (`/admin/settings` can hide it again).
   Christmas Cards was removed Oct 9; only Baby’s First Thanksgiving and Baby’s First Christmas remain. Deposit code is
-  live and on at $50 (owner confirmed Oct 12); left: the Stripe key permission, webhook event and one real refund
-  test. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
+  live and on at $50 (owner confirmed Oct 12); the owner finished the Stripe key/webhook steps and the real refund test
+  Oct 12. BUG-5 database rule and email bounce table are live; Resend webhook + secret verified.
   **Phase 6 (Oct 10–12) is done except time/owner-gated items:** second bug hunt, API audit, accessibility pass,
   report-only CSP, lighter public pages and passkey sign-in are live (owner added Face ID Oct 12); left: CSP enforce
-  after a quiet week (~Oct 19), an optional VoiceOver listen-through. Phase 7 is complete apart from React Compiler
-  warnings (moved to Phase 8). **Phase 8 started Oct 12:** slices 1 (prototype removal) and 2 (route groups, `a3732e9`)
-  are live; next slices below.
+  after a quiet week (~Oct 19), an optional VoiceOver listen-through. **Phases 7 and 8 are complete (Oct 14):** route
+  groups, the components/ + features/ structure, the booking form split, `config/bundles.ts` removed, lint 0 problems,
+  library evaluation (no switch). **Next: Phase 9** (Tailwind v4 + tokens).
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -984,8 +984,8 @@ Vercel CLI on the Mac is logged out.
       e2e now runs on a production build (`next build && next start`; Next 16 allows one `next dev` per project).
       `npm audit --omit=dev`: 0 (Next 16 fixed the postcss advisories). Remaining 9 are dev-only (drizzle-kit's
       esbuild-kit, eslint's braces chain); "fixes" are downgrades → ignore. Kept `@types/node` 22 (match Vercel's Node).
-- [~] React Compiler lint rules are warnings for now (set-state-in-effect, purity, refs, immutability): Phase 8 slice 6
-      fixed all but four data-loading effects (slice 7).
+- [x] React Compiler lint rules (set-state-in-effect, purity, refs, immutability): fixed in Phase 8 slices 6–7; four
+      data-loading effects keep explained line-level exceptions. `npm run lint`: 0 problems.
 ## Phase 8 — Structure move, route groups, split Booking.tsx, library evaluation, remove `config/bundles.ts`
 Rules: small slices, each with strict tsc + lint + units + build + 24/24 visual parity + e2e before pushing; no visible
 change. Docs read Oct 12 (see Research notes → Phase 8).
@@ -1074,10 +1074,33 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       tsc, lint 0 errors/4 warnings, 44 units, build (route table identical), 24/24 visual, 42 extra screenshots +
       intro checks, computed CSS identical, booking walk-through 24/24 identical, ties 0, 110 e2e; Vercel + CI success;
       production smoke + booking walk (not submitted) OK, no console/hydration errors on 7 key pages.
-- [ ] Slice 7: library evaluation (forms RHF+Zod vs React 19 actions; Radix/Base UI/React Aria for dialogs/menus/
-      lightbox; TanStack Query; Motion/GSAP vs current animation): research, decide, justify here; switch only where
-      visually identical and clearly better; **ask the owner before replacing any core library**.
+- [x] **Slice 7: library evaluation — decided Oct 14 (no library switch; `947bcb5` fix + `f97c3e0` lint).** Sources in
+      Research notes → Phase 8 slice 7. **Data fetching:** keep fetch-in-Effect (React: fine when it ignores stale
+      answers; Next.js: SWR/TanStack Query when components need a shared browser cache, which these pages don't).
+      Fixed the two stale-answer races this review found: /admin Leads could show the previous filter's list after a
+      quick switch (new `tests/e2e/admin-leads.spec.ts` fails on the old code, passes now); the booking calendar could
+      merge availability for a baby count the family had just changed. The four data-loading effects keep a
+      line-level lint exception with the reason → `npm run lint` is now 0 problems. Revisit TanStack Query (~13 KB gz)
+      only in Phase 10 if the new /admin needs shared caching/mutations. **Dialogs:** no Radix/Base UI. The customer
+      photo viewer already traps focus, closes on Escape, locks scroll and restores focus. The three /admin
+      confirmations (`role="alertdialog"`) have no Escape/initial focus → Phase 10 uses native `<dialog>` +
+      `showModal()` (inert page, Escape, initial focus from the browser; focus return stays manual per MDN).
+      **Forms:** keep the hand-written booking form (multi-step, controlled fields, JSON API; React 19
+      `useActionState` targets form actions) and server-side Zod; no React Hook Form. **Animation:** keep CSS
+      keyframes + the small Reveal/intro hooks (Motion: `m` + LazyMotion ~4.6 KB, full `motion` ~34 KB; no visual gain).
+      **Checks:** strict tsc, lint 0 problems, 44 units, build, 24/24 visual, booking walk-through identical, ties 0,
+      111 e2e; Vercel + CI success; production smoke + booking walk (not submitted) + console OK.
+- **Phase 8 DONE Oct 14.**
 ## Phase 9 — Tailwind v4 + tokens, one component per slice vs baseline screenshots
+- [ ] Slice 1: research the current Tailwind v4 + Next 16 docs (install, `@theme` tokens, cascade layers, Turbopack),
+      then decide how the theme tokens in `config/themes.ts` (CSS variables on `<html>`) map to Tailwind tokens. Watch:
+      Tailwind v4 puts its styles in `@layer`s, and unlayered CSS (globals.css + every CSS Module today) beats layered
+      CSS regardless of specificity, so mixed components can change silently; prove each slice with the Phase 8
+      checks (computed-style diff vs an old-build worktree, `scripts/css-ties.mjs`, booking walk-through, page bytes).
+      Only `scripts/css-ties.mjs` is in the repo; the other Phase 8 comparison scripts were session scratch files:
+      rebuild them as `scripts/parity/*` first (method in CLAUDE.md → Tests).
+- [ ] Then one component per slice (start with small ui/ primitives), each with 24/24 visual + the checks above.
+- Launch freeze: no Phase 9 restyling on `main` from Nov 14 (the day before launch) until after launch.
 ## Phase 10 — Admin rebuild (light/dark, dashboard, charts, phone-friendly)
 
 ---
@@ -1247,6 +1270,16 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   (esbuild, tailwindcss, socket.io…) into node_modules; none of that is bundled. Maintained by Resend, weekly releases.
 
 ## Research notes
+- **Phase 8 slice 7 library evaluation** (official docs, Oct 14): Next.js 16 client-side data fetching guide — read-once
+  server data: pass a Promise + `use()`; use SWR/TanStack Query "when Client Components need a shared browser cache"
+  https://nextjs.org/docs/app/guides/client-side-data-fetching · React — fetching in an Effect is fine for keeping UI
+  in sync with the network, with cleanup that ignores stale responses; prefer a custom hook/framework
+  https://react.dev/learn/you-might-not-need-an-effect · MDN `<dialog>` — `showModal()` makes the page inert, focuses
+  the first focusable element, Esc fires `cancel`; `closedby="any"` for light dismiss; focus return not specified
+  https://developer.mozilla.org/en-US/docs/Web/HTML/Reference/Elements/dialog · Motion bundle sizes (useAnimate mini
+  2.3 KB, `m` + LazyMotion ~4.6 KB, `motion` ~34 KB) https://motion.dev/docs/react-reduce-bundle-size · TanStack Query
+  v5 supports React 19 (~13 KB gz per package comparisons) https://www.pkgpulse.com/guides/tanstack-query-vs-swr-2026 ·
+  `useActionState` targets `<form action>` (multi-step/onSubmit not covered) https://github.com/reactjs/react.dev/issues/7310
 - **Phase 8** (official docs, Oct 12): Next.js 16.4 route groups — groups only organize; *multiple* root layouts cause
   full page loads between them and need the home route inside a group; nested group layouts "nest within the existing
   app layout". https://nextjs.org/docs/app/api-reference/file-conventions/route-groups ·
