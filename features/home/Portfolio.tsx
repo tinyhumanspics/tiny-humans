@@ -30,8 +30,11 @@ export default function Portfolio({ messages = en.home.portfolio, locale = "en" 
     if (i !== null) triggers.current[i]?.focus({ preventScroll: true });
   };
 
-  let ctaCount = 0;
-  let groupCount = 0;
+  // Each prompt's number (1, 2, …) and each photo group's index (0, 1, …), in feed order.
+  const blockNumbers: number[] = [];
+  let ctaTotal = 0;
+  let groupTotal = 0;
+  for (const block of feed) blockNumbers.push(block.type === "cta" ? ++ctaTotal : groupTotal++);
 
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
@@ -39,11 +42,11 @@ export default function Portfolio({ messages = en.home.portfolio, locale = "en" 
         <SectionHeading id={`${id}-title`} title={messages.title} subtitle={messages.subtitle} slot="portfolio" />
         {feed.map((block, b) => {
           if (block.type === "cta") {
-            ctaCount += 1;
+            const ctaCount = blockNumbers[b];
             const localized = locale === "en" ? block : (messages.prompts[ctaCount - 1] ?? block);
             return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={localized.title} text={localized.text} label={messages.ctaLabel} locale={locale} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
           }
-          const groupIndex = groupCount++;
+          const groupIndex = blockNumbers[b];
           return (
             <ul key={`group-${b}`} className={styles.grid} data-odd={block.photos.length % 2 === 1} data-short={block.photos.length % 3 !== 0}>
               {block.photos.map((photo, j) => {

@@ -34,14 +34,16 @@ export default function ReschedulePage({
   const token = useSearchParams().get("t") ?? "";
   const router = useRouter();
   const { getBundle } = useCatalog();
-  const [view, setView] = useState<View>("loading");
+  const [loadedView, setView] = useState<View>("loading");
+  // a link without its token can never load: show that at once
+  const view: View = token ? loadedView : "invalid";
   const [booking, setBooking] = useState<ManagedBooking | null>(null);
   const [previous, setPrevious] = useState<ManagedBooking | null>(null);
   const [message, setMessage] = useState("");
   const client = getBookingClient();
 
   useEffect(() => {
-    if (!token) return setView("invalid");
+    if (!token) return;
     client
       .getManagedBooking(token)
       .then((b) => {

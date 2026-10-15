@@ -23,7 +23,9 @@ type View = "loading" | "invalid" | "form" | "done" | "already" | "past" | "clos
 export default function CancelBooking({ locale = "en", messages = en.cancelPage, policyMessages = en.policy }: { locale?: AppLocale; messages?: typeof en.cancelPage; policyMessages?: typeof en.policy }) {
   const token = useSearchParams().get("t") ?? "";
   const { getBundle } = useCatalog();
-  const [view, setView] = useState<View>("loading");
+  const [loadedView, setView] = useState<View>("loading");
+  // a link without its token can never load: show that at once
+  const view: View = token ? loadedView : "invalid";
   const [booking, setBooking] = useState<CancellationSummary | null>(null);
   const [message, setMessage] = useState("");
   const [reason, setReason] = useState("");
@@ -31,10 +33,7 @@ export default function CancelBooking({ locale = "en", messages = en.cancelPage,
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setView("invalid");
-      return;
-    }
+    if (!token) return;
     getBookingClient()
       .getCancellation(token)
       .then((b) => {

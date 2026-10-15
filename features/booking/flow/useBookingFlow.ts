@@ -31,7 +31,10 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   // one id per submission: retries of the same booking can never double-book
   const requestIdRef = useRef<string | null>(null);
   // spam signals: when the booking box opened, and a hidden field only bots fill in
-  const openedAt = useRef(Date.now());
+  const openedAt = useRef(0);
+  useEffect(() => {
+    openedAt.current = Date.now();
+  }, []);
   const [hp, setHp] = useState("");
   const selection = useBookingSelection();
   const [state, dispatch] = useReducer(reducer, { ...initialState, bundleId });
@@ -61,11 +64,6 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     const t = window.setTimeout(() => scrollToBooking("smooth"), 140);
     return () => window.clearTimeout(t);
   }, []);
-
-  // reset cached availability whenever its inputs change
-  useEffect(() => {
-    setDays({});
-  }, [state.bundleId, state.babies.length]);
 
   const loadMonth = useCallback(
     async (m: Date, bundleId: string, babyCount: number) => {
@@ -165,6 +163,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     queueMicrotask(() => {
       if (!active) return;
       dispatch({ type: "restore", state: restoredState });
+      setDays({}); // the restored baby count may differ: drop availability loaded for the old one
       setBackdrops(draft.backdrops.slice(0, setups));
       setAppliedCode(draft.appliedCode);
       setQuote(null);

@@ -30,7 +30,9 @@ function preload(srcs: string[], timeoutMs: number): Promise<void> {
 export function useIntroAnimation(logoRef: RefObject<HTMLDivElement | null>, ready: boolean, assets: string[]) {
   const [drawState, setDrawState] = useState<LogoDrawState>("drawn");
   const assetsRef = useRef(assets);
-  assetsRef.current = assets;
+  useEffect(() => {
+    assetsRef.current = assets;
+  });
   const started = useRef(false);
 
   useEffect(() => {
