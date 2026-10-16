@@ -154,14 +154,13 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   };
 
   return (
-    <section className={styles.section} aria-labelledby="leads-title">
+    <section className={styles.section} aria-label="Leads">
       <div className={styles.leadsTop}>
-        <h2 id="leads-title" className={cn(styles.h2, "chalk")}>Leads</h2>
+        <p className={cn(styles.muted, "chalk-soft")}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
         <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => load(filter)} disabled={loading}>
           {loading ? "Loading…" : "Refresh"}
         </button>
       </div>
-      <p className={cn(styles.muted, "chalk-soft")}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
 
       <div className={styles.editTabs} role="group" aria-label="Filter leads">
         {FILTERS.filter((f) => f.alwaysShow || (data?.counts[f.id] ?? 0) > 0).map((f) => (
@@ -299,6 +298,12 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
         {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
+      </p>
+      <p className={styles.contactActions}>
+        <a className={styles.smallButton} href={telHref(lead.phone)} aria-label={`Call ${lead.parentName}`}>Call</a>
+        <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>
+        <a className={styles.smallButton} href={`mailto:${lead.email}`} aria-label={`Email ${lead.parentName}`}>Email</a>
+        <a className={styles.smallButton} href={mapsHref(lead.address)} target="_blank" rel="noopener noreferrer" aria-label={`Directions to ${lead.parentName}'s home (opens Maps)`}>Directions</a>
       </p>
       {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
@@ -676,12 +681,21 @@ function DepositLinkPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi;
   );
 }
 
+/** US numbers as +1XXXXXXXXXX for tel:/sms: links. */
+function dialNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
+}
+
 /** "sms:" link that opens Messages with the text filled in (works on iPhone and Android). */
 function smsHref(phone: string, body: string): string {
-  const digits = phone.replace(/\D/g, "");
-  const number = digits.length === 10 ? `+1${digits}` : `+${digits}`;
-  return `sms:${number}?&body=${encodeURIComponent(body)}`;
+  return `sms:${dialNumber(phone)}?&body=${encodeURIComponent(body)}`;
 }
+
+const telHref = (phone: string) => `tel:${dialNumber(phone)}`;
+
+/** Google Maps search link (opens the Maps app on a phone): https://developers.google.com/maps/documentation/urls/get-started */
+const mapsHref = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 /** Payment: status + the booking's payment link (never expires) to text, copy or email — before or after the session. */
 function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {

@@ -195,7 +195,7 @@
 }
 
 .toggle { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; font-family: var(--font-chalk); font-size: 1.1rem; color: var(--chalk-white); }
-.toggle input { width: 22px; height: 22px; accent-color: var(--sun-yellow); }
+.toggle input { width: 26px; height: 26px; accent-color: var(--sun-yellow); }
 .formToggle { align-self: end; }
 
 .timeInput { width: auto; min-width: 128px; color-scheme: dark; }
@@ -246,6 +246,7 @@
 
 /* ---------- leads ---------- */
 .leadsTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.contactActions { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 0; }
 .leadList { list-style: none; margin: 16px 0; padding: 0; display: grid; gap: 12px; }
 .leadCard { padding: 14px 16px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 12px; display: grid; gap: 4px; }
 .leadCancelled { border-color: color-mix(in srgb, var(--chalk-error) 55%, transparent); }
@@ -364,6 +365,11 @@
 /* ---------- pricing & promotions ---------- */
 .bundleList { list-style: none; margin: 12px 0 14px; padding: 0; display: grid; gap: 10px; }
 .bundleRow { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px 14px; padding: 12px 14px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 12px; }
+/* phones: the bundle details use the full width, Active / Edit go underneath */
+@media (max-width: 600px) {
+  .bundleRow { display: flex; flex-wrap: wrap; }
+  .bundleRow > :first-child { flex-basis: 100%; }
+}
 .offerInline { font-family: var(--font-chalk); font-weight: 400; color: var(--sun-yellow); }
 .editorBox { margin: 16px 0; padding: 16px; border: 2px dashed var(--sun-yellow); border-radius: 14px; display: grid; gap: 10px; }
 .editorGrid { display: grid; gap: 10px 16px; }
