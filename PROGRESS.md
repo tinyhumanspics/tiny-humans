@@ -1144,8 +1144,16 @@ keeps the chalk design) → reuse the chalk primitives (ChalkBox/ChalkButton/Cha
 are simple (bars over time, share bars by bundle/source), so small chalk-style SVG chart components with text/table
 equivalents for screen readers. Sources: https://www.pkgpulse.com/guides/recharts-vs-chartjs-vs-nivo-vs-visx-react-charting-2026 ·
 https://blog.logrocket.com/top-5-react-chart-libraries/ (sizes disagreed → measured locally).
-- [ ] Slice 1: dashboard data (`lib/admin/dashboard.ts`, server-only, pure aggregation helpers + unit tests) and an
-      owner-only `GET /api/admin/dashboard`.
+- [x] **Slice 1: dashboard data — LIVE Oct 15 (`04ab1a2`).** `GET /api/admin/dashboard` (owner only, no-store):
+      `lib/admin/dashboard.ts` (server-only queries) + `lib/admin/dashboard-summary.ts` (pure counting, 5 unit tests) +
+      `lib/admin/dashboard-types.ts`. Definitions: upcoming = today + next 6 days, not cancelled (pending = deposit hold);
+      weeks = last 12 Miami weeks (Monday first) of bookings made that are still on (confirmed/rescheduled), booked
+      total = final price (or package price) + add-ons + travel fee; bundles/sources = same bookings (`sourceLabel`);
+      changes = cancellations vs unpaid-deposit holds (`booking_deposits.status` expired/unpaid) + reschedule history,
+      same weeks; emails = `booking_emails` sent/failed + `email_events` over 30 days. Checked on the local test DB
+      (scripts/local-db): numbers match direct SQL (8 bookings on, $1,317.20; 1 cancelled + 2 unpaid holds; 1
+      reschedule; 3 sent); upcoming from Oct 9 = 6 sessions in Miami time. 52 units, 24/24 visual, 111 e2e; Vercel + CI
+      success; production endpoint 401 when signed out.
 - [ ] Slice 2: dashboard UI — upcoming sessions first, then the number tiles and chalk charts (before/after screenshots
       at iPhone 14 + 1440 for the owner).
 - [ ] Slices 3–6: phone-friendly passes, one section per slice: Leads, Pricing & offers, Availability, Photos.
