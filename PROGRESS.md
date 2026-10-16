@@ -1172,8 +1172,17 @@ https://blog.logrocket.com/top-5-react-chart-libraries/ (sizes disagreed → mea
       full width on ≤ 600 px, Active / Edit wrap underneath (flex, so the Active label keeps its size); check boxes
       26 px. Availability and Photos were already comfortable on a phone. 52 units, 24/24 visual, 111 e2e; Vercel + CI
       success; production /admin scripts contain the new buttons.
-- [ ] Slice 7: native `<dialog>` for the three /admin confirmations (Escape, focus) + e2e tests for the critical admin
-      flows (mocked APIs, like `tests/e2e/admin-leads.spec.ts`).
+- [x] **Slice 7: dialogs + admin tests — LIVE Oct 16 (`1c1b8ad` fix + `52b7ed4` test).** `features/admin/AdminDialog.tsx`
+      (native modal `<dialog>`, `showModal()` in a layout effect: inert page, Escape via `cancel`, focus starts on the
+      first button = Cancel and returns to the opener, backdrop click closes, `busy` keeps it open) replaces the three
+      createPortal overlays (delete lead, send before the session, delete bundle/code); no `autoFocus` on its buttons
+      (React's autoFocus would move focus before the opener is remembered). `.dialog` keeps the old size
+      (`max-width: none` over the UA cap) → pixel-identical at 1440, 27 px anti-aliasing at iPhone 14. Tests:
+      `tests/e2e/admin-dialogs.spec.ts` (dialogs, pricing delete confirmation, dashboard render) on shared
+      `tests/e2e/fixtures/admin.ts`; the dialog tests fail on the old overlay. Earlier: `admin-leads.spec.ts` (filter
+      race). 52 units, 24/24 visual, 114 e2e; Vercel + CI success; production smoke OK, ties 0.
+- **Phase 10 DONE Oct 16.** Not done by owner decision: light/dark mode (keep the chalk design), shadcn/ui and a chart
+  library (measured, declined). Possible follow-ups: open one booking in Leads from the dashboard's "Coming up" list.
 
 ---
 
