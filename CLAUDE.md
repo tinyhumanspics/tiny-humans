@@ -62,7 +62,7 @@ New code goes here from Phase 1 on; existing code moves in Phase 8.
 ```
 app/
   (site)/            public pages + /es; its layout draws the site shell              [done Oct 12]
-  (admin)/admin/     owner area; nested layout, same shell until Phase 10             [done Oct 12]
+  (admin)/admin/     owner area; nested layout, same site shell (owner keeps chalk)  [done Oct 12]
   api/               route handlers
 components/
   ui/                chalk-styled primitives (buttons, boxes, photo cards)            [done Oct 13]
@@ -103,7 +103,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   push with the owner's own git credentials (`git push origin main`), Vercel CLI / Neon console reachable.
   Local run: `npm install` → `.env.local` (see below) → `npm run dev` → http://localhost:3000.
   - Safe `.env.local` for local work: `BOOKING_PROVIDER=mock`, `NEXT_PUBLIC_SITE_URL=http://localhost:3000`,
-    `ADMIN_PASSWORD` + `ADMIN_SESSION_SECRET` (local values). No `DATABASE_URL` = built-in bundles (dev only).
+    `ADMIN_PASSWORD` + `ADMIN_SESSION_SECRET` (local values). No `DATABASE_URL` = built-in bundles (dev/CI only;
+    `builtInCatalog()` refuses them when `VERCEL_ENV=production`, so the live site shows booking as paused instead).
   - For database work use a **Neon dev branch** (or `scripts/local-db`). **Never put the production `DATABASE_URL` in
     `.env.local`** and never run tests against production (a real booking = real Outlook event + real emails).
   - Don't load the Meta Pixel locally unless testing it (leave `NEXT_PUBLIC_META_PIXEL_ID` unset).
@@ -235,6 +236,12 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - /admin deposit link: `ownerDepositLink()` re-holds a released time for 30 min only if still free (hours, blocks,
   Outlook, other bookings + the overlap constraint). Opening /admin → Leads runs `sweepDeposits()` (releases overdue
   holds and sends the family + studio emails).
+- Owner area (Phase 10, Oct 15–16): /admin keeps the chalkboard design (owner: no light/dark mode). Confirmations use
+  `features/admin/AdminDialog.tsx` (native modal `<dialog>`: inert page, Escape, focus back to the opener); never a
+  createPortal overlay, and no `autoFocus` on its buttons. Dashboard numbers: `lib/admin/dashboard.ts` (server-only
+  queries) + `lib/admin/dashboard-summary.ts` (pure counting, unit tested); charts are small chalk SVG components
+  (`features/admin/DashboardInsights.tsx`, no chart library: Recharts measured 106 KB gzipped). Admin e2e tests fake the
+  owner APIs with `tests/e2e/fixtures/admin.ts` (signed-in session + a sample lead).
 - Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
   test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
   https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).

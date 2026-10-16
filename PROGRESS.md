@@ -54,7 +54,13 @@ freeze on `main` the day before launch except fixes.
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Oct 14: Phase 8 done; next Phase 9; quiet CSP week until ~Oct 19)
+## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
+**State Oct 16 (Claude Code):** main = `1021aac` + handoff docs, Vercel + CI green, production smoke-tested after every
+slice. Since the Phase 8 handoff: launch (Oct 15); live-site price guard (`eff9e79`); arrival note in the confirmation
+email, day-before reminder and confirmation screen (`59aade6`); privacy sentence for Vercel Analytics (`7f9049c`);
+Phase 10 — dashboard data (`04ab1a2`) + chalk dashboard (`ca12524`), phone pass (`0ba63be`), AdminDialog (`1c1b8ad`) +
+admin tests (`52b7ed4`). Owner items still open: photo descriptions (doing it), Search Console + Business Profile
+(steps sent Oct 15; a service-area profile is fine), /portfolio, Terms review.
 **State Oct 14 (Claude Code):** main = `f97c3e0` + handoff docs, Vercel + CI green, production smoke-tested after
 every slice. Phase 8 complete (route groups, components/ + features/, booking form split, `config/bundles.ts` gone,
 lint 0 problems, library evaluation: no switch, two stale-answer races fixed). Next: Phase 9 slice 1 (research +
@@ -167,23 +173,24 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 15): main = eff9e79 + docs, live and smoke-tested: Phase 8 done; live-site guard (never built-in prices). Route groups (one root layout +
-app/(site), app/(admin)/admin drawing components/layout/SiteShell); components/{ui,chalk,layout,providers} +
-features/{admin,booking,home,landing,about,legal,after-session}; booking form = booking-state.ts + useBookingFlow.ts +
-steps/*; config/bundles.ts → lib/pricing/types.ts + lib/pricing/dev-bundles.ts; lint 0 problems; library evaluation:
-no switch; stale-answer races fixed (/admin Leads filter, booking baby count) with tests/e2e/admin-leads.spec.ts.
+State (Oct 16): main = 1021aac + handoff docs, live and smoke-tested. LAUNCHED Oct 15. Phase 10 done: /admin dashboard
+(sessions coming up, chalk SVG charts, GET /api/admin/dashboard), phone pass (Leads Call/Text/Email/Directions,
+Pricing layout, 26 px check boxes), native AdminDialog for confirmations, admin e2e tests. Also Oct 15: arrival note in
+confirmation email / day-before reminder / confirmation screen, privacy sentence for Vercel Analytics, live-site guard
+(built-in prices refused when VERCEL_ENV=production). /admin keeps the chalk design (owner: no light/dark mode).
 Not on main yet: nothing.
 
-Next: Phase 10 slice 1 (see Phase 10 in PROGRESS.md; owner chose it before Phase 9). Phase 9 later (Tailwind v4 + tokens), slice 1: read the current Tailwind v4 + Next 16 docs (note links), rebuild the
-Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs exists), then one
-component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
-Time-sensitive: LAUNCHED Oct 15 (keep main stable; Phase 9 one small verified slice at a time); CSP report-only → read `csp` warnings
-~Oct 19, then enforce; DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: photo descriptions
-"IMG 7378" / "IMG 6087" (owner doing it); Search Console/Business Profile (steps sent Oct 15); /portfolio; Terms review.
-Watch out: never git stash/switch in the iCloud folder (use a scratchpad worktree); stage exact existing paths and
-check `git show --stat HEAD`; moving files can reorder Turbopack CSS (run scripts/css-ties.mjs); no barrel index.ts
-for client components (+10–16 KB per page); never submit a booking on production (block /api/booking/create).
+Next: Phase 9 (Tailwind v4 + tokens), the last phase. Slice 1: read the current Tailwind v4 + Next 16 docs (note
+links), rebuild the Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs
+exists), then one component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered
+utilities. The site is live with paying families: small verified slices only.
+Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
+Thanksgiving last sessions Nov 23; First Christmas Dec 21.
+Waiting on the owner: photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
+sent Oct 15); /portfolio; Terms review.
+Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
+with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
+index.ts for client components; never submit a booking on production (block /api/booking/create in checks).
 ```
 
 ## Owner requests (outside the original brief)
@@ -432,7 +439,9 @@ for client components (+10–16 KB per page); never submit a booking on producti
   report-only CSP, lighter public pages and passkey sign-in are live (owner added Face ID Oct 12); left: CSP enforce
   after a quiet week (~Oct 19), an optional VoiceOver listen-through. **Phases 7 and 8 are complete (Oct 14):** route
   groups, the components/ + features/ structure, the booking form split, `config/bundles.ts` removed, lint 0 problems,
-  library evaluation (no switch). **Next: Phase 9** (Tailwind v4 + tokens).
+  library evaluation (no switch). **Launched Oct 15.** **Phase 10 complete (Oct 15–16):** dashboard (sessions coming
+  up, chalk charts), phone pass, native admin dialogs + admin tests; /admin keeps the chalk design. **Next: Phase 9**
+  (Tailwind v4 + tokens), the last phase.
 - **Tools (Oct 8):** the owner continues with **Codex** (VS Code on the Mac) while Claude credits are low, and may
   come back to Claude Code (e.g. Monday). `AGENTS.md` (Codex) mirrors `CLAUDE.md`; both handoff skills write one
   prompt that works in either tool. Keep the two rule files in sync.
@@ -1528,6 +1537,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
 
 ## Local test database
+**Oct 15:** the local sample bookings were shifted for the dashboard preview (session dates +7 days, booking dates spread
+over 6 weeks); local only. `--reset` restores the seed.
 `cd scripts/local-db && npm install && node start.mjs` (add `--reset` to start over; as root set `LOCAL_DB_DIR=/var/tmp/th-pg/data` — a dir the `postgres` user owns, NOT the scratchpad).
 Applies every `drizzle/*.sql` in journal order, seeds a mirror of production's bundles, and serves a Neon-HTTP-compatible
 endpoint. `.env.local`: `DATABASE_URL=postgres://tiny:tiny@localhost:5433/tinyhumans`,
