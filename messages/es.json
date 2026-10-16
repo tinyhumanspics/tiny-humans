@@ -1192,7 +1192,7 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "7 de octubre de 2026",
+      "lastUpdated": "15 de octubre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
@@ -1203,7 +1203,7 @@
             { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
             "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia.",
-            "Como la mayoría de los sitios web, nuestro proveedor de alojamiento registra automáticamente información técnica básica cuando nos visitas, como el tipo de navegador, las páginas que ves y tu dirección IP. También usamos herramientas de medición publicitaria de Meta (consulta la sección «Publicidad y medición» más abajo)."
+            "Como la mayoría de los sitios web, nuestro proveedor de alojamiento registra automáticamente información técnica básica cuando nos visitas, como el tipo de navegador, las páginas que ves y tu dirección IP. Nuestro proveedor de alojamiento también nos da estadísticas anónimas de visitas (Vercel Web Analytics y Speed Insights) para contar las visitas y ver qué tan rápido cargan nuestras páginas; registran datos como la página, tu tipo de dispositivo y navegador y tu ubicación aproximada, y no te identifican. También usamos herramientas de medición publicitaria de Meta (consulta la sección «Publicidad y medición» más abajo)."
           ]
         },
         {

@@ -1192,7 +1192,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "October 7, 2026",
+      "lastUpdated": "October 15, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
@@ -1203,7 +1203,7 @@
             { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
             "During your session we take photographs of your baby and, depending on your package, your family.",
-            "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below)."
+            "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. Our host also gives us anonymous visitor statistics (Vercel Web Analytics and Speed Insights) so we can count visits and see how quickly our pages load; they record things like the page, your type of device and browser and your approximate location, and they don't identify you. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below)."
           ]
         },
         {
