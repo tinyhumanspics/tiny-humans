@@ -6,12 +6,14 @@ import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import { getAdminApi } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
+import type { Dashboard as DashboardData } from "@/lib/admin/dashboard-types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import TinyHumansLogo from "@/components/chalk/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
+import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights";
 import LeadsPanel from "./LeadsPanel";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
@@ -133,14 +135,18 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
 function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; settings: SiteSettings }) {
   const [leads, setLeads] = useState<LeadList | null>(null);
   const [leadsError, setLeadsError] = useState(false);
+  const [dash, setDash] = useState<DashboardData | null>(null);
+  const [dashError, setDashError] = useState(false);
   useEffect(() => {
     api.listLeads("all").then(setLeads).catch(() => setLeadsError(true));
+    api.dashboard().then(setDash).catch(() => setDashError(true));
   }, [api]);
   const theme = themes[settings.themeId];
   const stat = (n: number | undefined) => (leads ? String(n ?? 0) : leadsError ? "–" : "…");
   const money = (show: (m: NonNullable<LeadList["money"]>) => string) => (leads ? (leads.money ? show(leads.money) : "–") : leadsError ? "–" : "…");
   return (
     <section className={styles.section} aria-label="Dashboard">
+      {dash ? <ComingUp data={dash} /> : <p className={cn(styles.hintSmall, "chalk-soft")}>{dashError ? "Sessions and charts appear once the database is connected." : "Loading sessions…"}</p>}
       <div className={styles.stats}>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
@@ -150,6 +156,12 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
         <div className={styles.stat}><span className={cn(styles.statNum, styles.statTheme, "chalk")}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
       </div>
       {leadsError && <p className={cn(styles.hintSmall, "chalk-soft")}>Lead numbers appear once the database is connected.</p>}
+      {dash && (
+        <>
+          <DashboardCharts data={dash} />
+          <ChangesAndEmails data={dash} weeks={dash.weeks.length} />
+        </>
+      )}
       <ul className={styles.dashCards}>
         {ADMIN_NAV.filter((n) => n.id !== "dashboard").map((n) => (
           <li key={n.id}>

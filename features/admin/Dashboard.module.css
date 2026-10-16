@@ -1,0 +1,40 @@
+/* Owner dashboard sections: sessions coming up, bookings by week, shares, changes and emails (chalk look, phone first). */
+.block { margin-top: 30px; }
+.insights { display: grid; column-gap: 48px; }
+@media (min-width: 960px) {
+  .insights { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  .insights > :first-child { grid-row: span 2; }
+}
+.empty { margin: 10px 0 0; font-size: 1.1rem; color: var(--chalk-muted); }
+
+.day { margin-top: 14px; }
+.dayTitle { margin: 0 0 6px; font-family: var(--font-chalk); font-weight: 400; font-size: 1.3rem; color: var(--sun-yellow); }
+.sessions { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-width: 640px; }
+.session { display: grid; gap: 2px; padding: 10px 14px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 12px; }
+.sessionTime { font-family: var(--font-chalk); font-size: 1.35rem; color: var(--chalk-white); }
+.sessionWho { font-size: 1.08rem; color: var(--chalk-white); }
+.sessionWhere { font-size: 0.98rem; color: var(--chalk-muted); overflow-wrap: anywhere; }
+.tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 0.9rem; color: var(--chalkboard); background: var(--sun-yellow); }
+.more { display: inline-block; margin-top: 10px; min-height: 44px; line-height: 44px; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--cloud-blue); }
+
+.toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+.toggleButton { min-height: 44px; padding: 0 16px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 30%, transparent); border-radius: 999px; background: none; color: var(--chalk-muted); font-family: var(--font-chalk); font-size: 1.1rem; cursor: pointer; }
+.toggleButton[aria-pressed="true"] { border-style: solid; border-color: var(--sun-yellow); color: var(--sun-yellow); }
+
+.chart { margin: 8px 0 0; max-width: 560px; }
+.chartSvg { display: block; width: 100%; height: auto; overflow: visible; }
+.bar { fill: color-mix(in srgb, var(--cloud-blue) 35%, transparent); stroke: var(--cloud-blue); stroke-width: 2; stroke-linejoin: round; }
+.barNow { fill: color-mix(in srgb, var(--sun-yellow) 35%, transparent); stroke: var(--sun-yellow); }
+.barValue { fill: var(--chalk-white); font-family: var(--font-chalk); font-size: 11px; }
+.axisLabel { fill: var(--chalk-muted); font-family: var(--font-chalk); font-size: 11px; }
+.baseline { fill: none; stroke: color-mix(in srgb, var(--chalk-white) 55%, transparent); stroke-width: 2; stroke-linecap: round; }
+
+.shares { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 12px; max-width: 560px; }
+.share { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "label value" "track track"; gap: 4px 10px; }
+.shareLabel { grid-area: label; font-size: 1.1rem; color: var(--chalk-white); overflow-wrap: anywhere; }
+.shareValue { grid-area: value; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--sun-yellow); }
+.shareTrack { grid-area: track; display: block; height: 14px; border-radius: 8px; background: color-mix(in srgb, var(--chalk-white) 8%, transparent); overflow: hidden; }
+.shareFill { display: block; height: 100%; border-radius: 8px; background: color-mix(in srgb, var(--cloud-blue) 70%, transparent); }
+
+/* `.block` outranks the shared tile style (Admin.module.css `.stat`) whatever order the stylesheets load in. */
+.block .statWarn { border-color: color-mix(in srgb, var(--chalk-error) 75%, transparent); }
