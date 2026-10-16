@@ -22,7 +22,7 @@ freeze on `main` the day before launch except fixes.
 - [ ] Owner (Oct 15: "I will"), /admin → Photos → Details: two photos are described by file name (screen readers/Google read these):
       "IMG 7378" (home "Little moments" photo captioned "Ten Tiny Toes", also on the landing page) and "IMG 6087"
       (About "Adrian & Alondra", also on the landing page).
-- [ ] Owner approval: privacy-policy sentence for Vercel Web Analytics + Speed Insights (re-explained Oct 15; the
+- [x] **LIVE Oct 15 (`7f9049c`, owner "OK")**, privacy date now October 15, 2026 (Terms unchanged). Owner approval: privacy-policy sentence for Vercel Web Analytics + Speed Insights (re-explained Oct 15; the
       owner hadn't understood the Oct 12 note). Goes after the hosting sentence in Privacy → "Information we collect"
       (`legal.privacy.sections[0].body[4]` in en.json/es.json), Meta sentence unchanged. Facts from
       https://vercel.com/docs/analytics/privacy-policy + https://vercel.com/docs/speed-insights/privacy-policy.
@@ -179,7 +179,7 @@ Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only s
 component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
 Time-sensitive: LAUNCHED Oct 15 (keep main stable; Phase 9 one small verified slice at a time); CSP report-only → read `csp` warnings
 ~Oct 19, then enforce; DST ends Nov 1; Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: OK for the privacy sentence (text in PROGRESS.md → LAUNCH; then add EN + ES); photo descriptions
+Waiting on the owner: photo descriptions
 "IMG 7378" / "IMG 6087" (owner doing it); Search Console/Business Profile (steps sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (use a scratchpad worktree); stage exact existing paths and
 check `git show --stat HEAD`; moving files can reorder Turbopack CSS (run scripts/css-ties.mjs); no barrel index.ts
@@ -187,6 +187,16 @@ for client components (+10–16 KB per page); never submit a booking on producti
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Arrival note — LIVE Oct 15 (`59aade6`)** (owner, Oct 15: tell families we may arrive 30 min early to set up).
+      Owner's picks: wording "We arrive up to 30 minutes before your session to set up our lights and backdrops, so
+      everything is ready and looks just the way you imagined. Your session time stays the same." (ES: "Llegamos hasta
+      30 minutos antes de tu sesión…"), right under the session details in the confirmation email, the day-before
+      reminder and the website "Booking confirmed" screen (3-day reminder unchanged). Keys `emails.common.arrival` +
+      `bookingFlow.confirmation.arrival`. The calendar already keeps `bufferMinutes` (default 45, /admin →
+      Availability) free before and after each session; owner asked to confirm it's ≥ 30 (it also covers driving
+      between back-to-back sessions). Checks: emails rendered before/after (text diff = only the note; 3-day reminder
+      byte-identical), gallery `Claude outputs/arrival-note/index.html`, 47 units, 24/24 visual, 111 e2e; production
+      booking pages (EN + ES) carry the note.
 - [x] **Emails keep their own colors in phone dark mode** (owner, Oct 12: saw them change in the Gmail app; "keep
       them white too" for the studio emails; LIVE `dc597da`). Both layouts now declare
       `<meta name="color-scheme" content="light only">` + `supported-color-schemes` + `:root{color-scheme:light only}`
