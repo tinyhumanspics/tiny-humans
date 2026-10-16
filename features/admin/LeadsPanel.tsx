@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { createPortal } from "react-dom";
+import AdminDialog from "./AdminDialog";
 import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadDeposit, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
@@ -411,9 +411,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
           </div>
         </div>
       )}
-      {confirmDelete && createPortal(
-        <div className={styles.dialogBackdrop} role="presentation" onClick={() => !deleting && setConfirmDelete(false)}>
-          <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={`del-t-${lead.reference}`} aria-describedby={`del-d-${lead.reference}`} onClick={(e) => e.stopPropagation()}>
+      {confirmDelete && (
+          <AdminDialog labelledBy={`del-t-${lead.reference}`} describedBy={`del-d-${lead.reference}`} onClose={() => setConfirmDelete(false)} busy={deleting}>
             <h3 id={`del-t-${lead.reference}`} className={cn(styles.h3, "chalk")}>Delete this lead permanently?</h3>
             <p id={`del-d-${lead.reference}`} className={cn(styles.muted, "chalk-soft")}>
               This will permanently remove the booking record and cannot be undone. ({lead.parentName}, {lead.reference})
@@ -423,12 +422,10 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
             </p>
             {deleteErr && <p className={cn(styles.error, "chalk-soft")} role="alert">{deleteErr}</p>}
             <div className={styles.photoBar}>
-              <button type="button" className={styles.smallButton} onClick={() => setConfirmDelete(false)} disabled={deleting} autoFocus>Cancel</button>
+              <button type="button" className={styles.smallButton} onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
               <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={doDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete Permanently"}</button>
             </div>
-          </div>
-        </div>,
-        document.body,
+          </AdminDialog>
       )}
     </li>
   );
@@ -532,16 +529,14 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
         </div>
       )}
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
-      {early &&
-        createPortal(
-          <div className={styles.dialogBackdrop} role="presentation" onClick={() => setEarly(null)}>
-            <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby={`${id}-early-t`} aria-describedby={`${id}-early-d`} onClick={(e) => e.stopPropagation()}>
+      {early && (
+            <AdminDialog labelledBy={`${id}-early-t`} describedBy={`${id}-early-d`} onClose={() => setEarly(null)}>
               <h3 id={`${id}-early-t`} className={cn(styles.h3, "chalk")}>The session hasn&apos;t happened yet</h3>
               <p id={`${id}-early-d`} className={cn(styles.muted, "chalk-soft")}>
                 {lead.parentName}&apos;s session is on {formatLongDate(lead.sessionDate)} at {formatTimeLabel(lead.start)}. Send the {early.what === "done" ? "sneak peek" : "gallery and review request"} anyway?
               </p>
               <div className={styles.photoBar}>
-                <button type="button" className={styles.smallButton} onClick={() => setEarly(null)} autoFocus>
+                <button type="button" className={styles.smallButton} onClick={() => setEarly(null)}>
                   Cancel
                 </button>
                 <button
@@ -555,9 +550,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
                   Send anyway
                 </button>
               </div>
-            </div>
-          </div>,
-          document.body,
+            </AdminDialog>
         )}
     </div>
   );

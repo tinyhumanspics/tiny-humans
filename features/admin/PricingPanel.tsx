@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
+import AdminDialog from "./AdminDialog";
 import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import type { AdminApi } from "@/lib/admin/client";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
@@ -135,18 +135,15 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
         </>
       )}
 
-      {confirm && createPortal(
-        <div className={styles.dialogBackdrop} role="presentation" onClick={() => setConfirm(null)}>
-          <div className={styles.dialog} role="alertdialog" aria-modal="true" aria-labelledby="pr-confirm-t" onClick={(e) => e.stopPropagation()}>
+      {confirm && (
+          <AdminDialog labelledBy="pr-confirm-t" onClose={() => setConfirm(null)}>
             <h3 id="pr-confirm-t" className={cn(styles.h3, "chalk")}>{confirm.title}</h3>
             <p className={cn(styles.muted, "chalk-soft")}>{confirm.text}</p>
             <div className={styles.photoBar}>
-              <button type="button" className={styles.smallButton} onClick={() => setConfirm(null)} autoFocus>Cancel</button>
+              <button type="button" className={styles.smallButton} onClick={() => setConfirm(null)}>Cancel</button>
               <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={async () => { try { await confirm.action(); } catch (e) { setNote({ kind: "error", text: errText(e, "Couldn't delete.") }); } setConfirm(null); }}>Delete Permanently</button>
             </div>
-          </div>
-        </div>,
-        document.body,
+          </AdminDialog>
       )}
     </section>
   );
