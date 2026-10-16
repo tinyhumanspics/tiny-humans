@@ -1247,7 +1247,9 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
-- Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).
+- ~~Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).~~
+  **Answered:** domain verified by DNS TXT (1d); 1g live test done (owner, Oct 12). Read-only check Oct 16 (Meta requests
+  blocked): every public page loads fbevents.js and calls `fbq init 1027728456958311` + PageView.
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
 
 ## Placeholders (must be approved before showing)
