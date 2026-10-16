@@ -1154,8 +1154,16 @@ https://blog.logrocket.com/top-5-react-chart-libraries/ (sizes disagreed → mea
       (scripts/local-db): numbers match direct SQL (8 bookings on, $1,317.20; 1 cancelled + 2 unpaid holds; 1
       reschedule; 3 sent); upcoming from Oct 9 = 6 sessions in Miami time. 52 units, 24/24 visual, 111 e2e; Vercel + CI
       success; production endpoint 401 when signed out.
-- [ ] Slice 2: dashboard UI — upcoming sessions first, then the number tiles and chalk charts (before/after screenshots
-      at iPhone 14 + 1440 for the owner).
+- [x] **Slice 2: dashboard UI — LIVE Oct 15 (`ca12524`, owner "ok" on the before/after gallery
+      `Claude outputs/admin-dashboard/index.html`).** `features/admin/DashboardInsights.tsx` + `Dashboard.module.css`:
+      Coming up (by day, tags for rescheduled/deposit holds, "See all bookings"), the six existing tiles, Bookings by
+      week (chalk SVG bars via `roughRectPath`, toggle bookings/booked total, short bar labels "$423"/"$1.3k", exact
+      totals in the summary, screen-reader table), By bundle + Where bookings come from (share bars; beside the chart
+      at ≥ 960 px), Changes and emails (failed/problem tiles outlined in --chalk-error when > 0; `.block .statWarn` avoids
+      a CSS order tie with Admin.module.css `.stat`), then the section links. Checked with the local test DB (session
+      dates moved +7 days and booking dates spread over 6 weeks, local only): no page errors; 52 units, 24/24 visual,
+      111 e2e; Vercel + CI success; production /admin scripts contain the new dashboard. Lead deep links from the
+      session list (open one booking in Leads) are a possible follow-up.
 - [ ] Slices 3–6: phone-friendly passes, one section per slice: Leads, Pricing & offers, Availability, Photos.
 - [ ] Slice 7: native `<dialog>` for the three /admin confirmations (Escape, focus) + e2e tests for the critical admin
       flows (mocked APIs, like `tests/e2e/admin-leads.spec.ts`).
