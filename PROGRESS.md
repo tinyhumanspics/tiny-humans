@@ -174,7 +174,7 @@ steps/*; config/bundles.ts → lib/pricing/types.ts + lib/pricing/dev-bundles.ts
 no switch; stale-answer races fixed (/admin Leads filter, booking baby count) with tests/e2e/admin-leads.spec.ts.
 Not on main yet: nothing.
 
-Next: Phase 9 (Tailwind v4 + tokens), slice 1: read the current Tailwind v4 + Next 16 docs (note links), rebuild the
+Next: Phase 10 slice 1 (see Phase 10 in PROGRESS.md; owner chose it before Phase 9). Phase 9 later (Tailwind v4 + tokens), slice 1: read the current Tailwind v4 + Next 16 docs (note links), rebuild the
 Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs exists), then one
 component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered utilities.
 Time-sensitive: LAUNCHED Oct 15 (keep main stable; Phase 9 one small verified slice at a time); CSP report-only → read `csp` warnings
@@ -1130,7 +1130,27 @@ change. Docs read Oct 12 (see Research notes → Phase 8).
       rebuild them as `scripts/parity/*` first (method in CLAUDE.md → Tests).
 - [ ] Then one component per slice (start with small ui/ primitives), each with 24/24 visual + the checks above.
 - Launch freeze: no Phase 9 restyling on `main` from Nov 14 (the day before launch) until after launch.
-## Phase 10 — Admin rebuild (light/dark, dashboard, charts, phone-friendly)
+## Phase 10 — Admin rebuild (dashboard, charts, phone-friendly) — started Oct 15 (before Phase 9, owner's choice)
+**Owner decisions (Oct 15):** keep the current chalkboard design for /admin ("just keep the same design, do not change it
+to either light or dark") → no light/dark mode (overrides the brief). Phone-friendly first for all four: Leads,
+Pricing & offers, Availability, Photos. Dashboard wants all four groups: upcoming sessions (today + this week), bookings
+& booked revenue over time + by bundle, where bookings come from (Meta ads vs the rest, `sourceLabel()` in
+`lib/tracking/attribution.ts`), cancellations/reschedules + email delivery (`booking_emails`, `email_events`). No known
+admin bugs to fix first.
+**Decisions (research Oct 15):** no shadcn/ui (needs Tailwind = postponed Phase 9, and brings its own look; the owner
+keeps the chalk design) → reuse the chalk primitives (ChalkBox/ChalkButton/ChalkDoodle) and native `<dialog>`
+(`showModal()`) for confirmations. **Charts: no library** — a minimal Recharts 3.10.1 bar chart measured 361 KB minified
+/ 106 KB gzipped (esbuild, React external), and its look would need heavy restyling to match the chalkboard; our charts
+are simple (bars over time, share bars by bundle/source), so small chalk-style SVG chart components with text/table
+equivalents for screen readers. Sources: https://www.pkgpulse.com/guides/recharts-vs-chartjs-vs-nivo-vs-visx-react-charting-2026 ·
+https://blog.logrocket.com/top-5-react-chart-libraries/ (sizes disagreed → measured locally).
+- [ ] Slice 1: dashboard data (`lib/admin/dashboard.ts`, server-only, pure aggregation helpers + unit tests) and an
+      owner-only `GET /api/admin/dashboard`.
+- [ ] Slice 2: dashboard UI — upcoming sessions first, then the number tiles and chalk charts (before/after screenshots
+      at iPhone 14 + 1440 for the owner).
+- [ ] Slices 3–6: phone-friendly passes, one section per slice: Leads, Pricing & offers, Availability, Photos.
+- [ ] Slice 7: native `<dialog>` for the three /admin confirmations (Escape, focus) + e2e tests for the critical admin
+      flows (mocked APIs, like `tests/e2e/admin-leads.spec.ts`).
 
 ---
 
