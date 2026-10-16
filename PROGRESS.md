@@ -1164,7 +1164,14 @@ https://blog.logrocket.com/top-5-react-chart-libraries/ (sizes disagreed → mea
       dates moved +7 days and booking dates spread over 6 weeks, local only): no page errors; 52 units, 24/24 visual,
       111 e2e; Vercel + CI success; production /admin scripts contain the new dashboard. Lead deep links from the
       session list (open one booking in Leads) are a possible follow-up.
-- [ ] Slices 3–6: phone-friendly passes, one section per slice: Leads, Pricing & offers, Availability, Photos.
+- [x] **Slices 3–6: phone pass — LIVE Oct 16 (`0ba63be`, owner "ok" on `Claude outputs/admin-phone/index.html`).**
+      Audit first (iPhone 14, signed in, local test DB): no sideways scrolling, no field under 16 px (no iOS zoom), all
+      buttons ≥ 44 px except hidden 1×1 file inputs behind Photos' "Replace" buttons (fine); check boxes 22 px. Owner
+      picked: Leads — Call / Text / Email / Directions buttons on every booking card (`tel:`/`sms:` share
+      `dialNumber()`, Directions = Google Maps URL `api=1`), doubled "Leads" heading removed; Pricing — bundle details
+      full width on ≤ 600 px, Active / Edit wrap underneath (flex, so the Active label keeps its size); check boxes
+      26 px. Availability and Photos were already comfortable on a phone. 52 units, 24/24 visual, 111 e2e; Vercel + CI
+      success; production /admin scripts contain the new buttons.
 - [ ] Slice 7: native `<dialog>` for the three /admin confirmations (Escape, focus) + e2e tests for the critical admin
       flows (mocked APIs, like `tests/e2e/admin-leads.spec.ts`).
 
