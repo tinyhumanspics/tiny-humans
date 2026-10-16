@@ -99,6 +99,7 @@ export function BookingConfirmation({
           ...travelRows(d, locale),
         ]}
       />
+      <Paragraph theme={t} align="center">{m.common.arrival}</Paragraph>
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={due.note} />
       <BackdropChoice theme={t} locale={locale} picks={d.backdrops ?? []} swatches={swatches} url={backdropUrl} />
       <ChalkList theme={t} title={m.prepGuide.title} items={prepGuide} />
@@ -150,6 +151,9 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${d.babies.length > 1 ? m.common.babies : m.common.baby}: ${customerBabiesLabel(d.babies, locale)}`,
     ...customerPricingRows(d.pricing, locale).map(([k, v]) => `${k}: ${v}`),
     ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
+    "",
+    m.common.arrival,
+    "",
     ...due.rows.map(([k, v]) => `${k}: ${v}`),
     "",
     due.note,

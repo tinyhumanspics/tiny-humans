@@ -101,6 +101,7 @@ export function SessionReminder({
         {fill(x.intro, { day, time: start })}
       </Paragraph>
       <Details theme={t} rows={rows} />
+      <Paragraph theme={t} align="center">{m.common.arrival}</Paragraph>
       <ChalkList theme={t} title={x.checklistTitle} items={x.checklist} />
       <Paragraph theme={t} align="center">
         {payAfterLine(locale, Boolean(r.depositPaid))}
@@ -167,6 +168,8 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     fill(x.intro, { day, time: start }),
     "",
     ...details(true),
+    "",
+    m.common.arrival,
     "",
     `${x.checklistTitle}:`,
     ...x.checklist.map((i) => `- ${i}`),

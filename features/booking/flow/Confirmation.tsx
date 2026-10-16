@@ -97,6 +97,7 @@ export default function Confirmation({
           </div>
         ))}
       </dl>
+      <p className={cn(styles.arrivalNote, "chalk-soft")}>{messages.confirmation.arrival}</p>
       <ChalkBox className={styles.paymentBox} seed={93} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
         <p className={cn(styles.paymentTitle, "chalk-soft")}>{messages.confirmation.labels.payment}</p>
         <dl className={styles.paymentRows}>
