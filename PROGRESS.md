@@ -55,6 +55,8 @@ freeze on `main` the day before launch except fixes.
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
 ## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
+**Oct 17 (Claude Code):** optional baby gender (Boy / Girl) on the booking form, owner-approved and pushed. **The owner
+must run `drizzle/0021_baby_gender.sql` in the Neon SQL editor**; until then bookings work but genders aren't saved.
 **State Oct 16 (Claude Code):** main = `1021aac` + handoff docs, Vercel + CI green, production smoke-tested after every
 slice. Since the Phase 8 handoff: launch (Oct 15); live-site price guard (`eff9e79`); arrival note in the confirmation
 email, day-before reminder and confirmation screen (`59aade6`); privacy sentence for Vercel Analytics (`7f9049c`);
@@ -186,7 +188,8 @@ exists), then one component per slice. Tailwind v4 uses cascade layers: unlayere
 utilities. The site is live with paying families: small verified slices only.
 Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
 Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
+Waiting on the owner: run drizzle/0021_baby_gender.sql in Neon (baby gender, live Oct 17; bookings work without it but
+genders aren't saved); photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
 sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
 with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
@@ -194,6 +197,16 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Baby gender on the booking form — LIVE Oct 17 (`bb63d63`)** (owner, Oct 17: "add gender on the steps of
+      booking, only Male or Female"). Owner's picks: **optional**, words **Boy / Girl** (ES "Niño" / "Niña", label
+      "Género"), **two tap buttons** under each baby's age (tap again = clear), shown on the review step, the
+      confirmation screen, the family confirmation email, the studio email + Outlook event and /admin → Leads
+      ("Luna (Girl, Newborn (0–2 weeks))"). Stored as `boy`/`girl` in its own best-effort table
+      `booking_baby_genders` (migration `drizzle/0021_baby_gender.sql`, by `booking_babies.position`): a database
+      without it keeps booking, only the gender is skipped (tested locally with the table renamed). Never sent to
+      Meta/analytics; `gender` added to the log sanitizer. **Owner: run 0021 in the Neon SQL editor** (until then
+      genders aren't saved). Checks: 56 units, 114 e2e, 24/24 visual, 0 CSS ties, local twins booking end to end
+      (DB rows, both emails, fake Outlook event, /admin); owner approved the preview (artifact, Oct 17).
 - [x] **Arrival note — LIVE Oct 15 (`59aade6`)** (owner, Oct 15: tell families we may arrive 30 min early to set up).
       Owner's picks: wording "We arrive up to 30 minutes before your session to set up our lights and backdrops, so
       everything is ready and looks just the way you imagined. Your session time stays the same." (ES: "Llegamos hasta

@@ -199,9 +199,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - Failed Drizzle error messages repeat query values (customer data). All server logs must go through `lib/log.ts`, whose
   recursive sanitizer drops raw Error messages, secrets, contact/family fields, IPs and user agents; pass the Error plus
   safe identifiers/codes, never copy vendor/error messages into another field. New per-booking extras go in their own
-  table with a best-effort insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`) so a
-  missing migration never breaks bookings; anything that changes money (e.g. `travel_fee_cents`) stays on `bookings`,
-  migration-first.
+  table with a best-effort insert (`booking_access`, `booking_backdrops`, `booking_consents`, `booking_terms`,
+  `booking_baby_genders`) so a missing migration never breaks bookings; anything that changes money (e.g.
+  `travel_fee_cents`) stays on `bookings`, migration-first.
 - `npm run typecheck` (TS 7, `incremental: true`) can report "clean" from a stale `tsconfig.tsbuildinfo` and miss new
   errors (seen Oct 7): before committing run `npx tsc --noEmit -p . --incremental false` (or delete the tsbuildinfo).
 - The owner sometimes records new decisions in PROGRESS.md (own commits) while a session is working: check `git log`
