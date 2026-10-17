@@ -57,7 +57,7 @@ freeze on `main` the day before launch except fixes.
 ## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
 **Oct 17 — Stripe webhook (BUG-17, FIXED same day):** every live delivery got 400 "Invalid signature" and Stripe
 disabled the endpoint. The owner copied the signing secret into Vercel, redeployed and re-enabled it; resends now get
-200 Delivered. Code hardening `2db4a7e` logs mismatches. Confirm a resent event shows "Delivered".
+200 Delivered. Code hardening `2db4a7e` logs mismatches.
 **Oct 17 (Claude Code):** optional baby gender (Boy / Girl) on the booking form, owner-approved, live (`bb63d63`),
 migration 0021 run by the owner. **Seen Oct 17: production `/es` returns 404** (Spanish was published Oct 10). The gate
 reads only /admin settings + content (switch, Spanish bundle rows, photo titles/alt, gallery prompts, enabled seasonal
