@@ -55,9 +55,9 @@ freeze on `main` the day before launch except fixes.
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
 ## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
-**Oct 17 — Stripe webhook (BUG-17):** every live delivery got 400 "Invalid signature" and Stripe disabled the endpoint.
-Owner steps sent (copy the signing secret into Vercel `STRIPE_WEBHOOK_SECRET`, Redeploy, Enable, resend one event);
-code hardening `2db4a7e` logs mismatches. Confirm a resent event shows "Delivered".
+**Oct 17 — Stripe webhook (BUG-17, FIXED same day):** every live delivery got 400 "Invalid signature" and Stripe
+disabled the endpoint. The owner copied the signing secret into Vercel, redeployed and re-enabled it; resends now get
+200 Delivered. Code hardening `2db4a7e` logs mismatches. Confirm a resent event shows "Delivered".
 **Oct 17 (Claude Code):** optional baby gender (Boy / Girl) on the booking form, owner-approved, live (`bb63d63`),
 migration 0021 run by the owner. **Seen Oct 17: production `/es` returns 404** (Spanish was published Oct 10). The gate
 reads only /admin settings + content (switch, Spanish bundle rows, photo titles/alt, gallery prompts, enabled seasonal
@@ -196,8 +196,7 @@ exists), then one component per slice. Tailwind v4 uses cascade layers: unlayere
 utilities. The site is live with paying families: small verified slices only.
 Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
 Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: Stripe webhook fix (BUG-17: STRIPE_WEBHOOK_SECRET in Vercel → Redeploy → Enable → resend one
-event, expect Delivered); photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
+Waiting on the owner: photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
 sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
 with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
@@ -1295,8 +1294,10 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   deposit, `depositPageExpired` only acts on a still-pending booking with that same page). Code: the secret is
   trimmed and a Stripe-signed request that fails the check logs `warn payments "Stripe webhook signature didn't
   match"` (unsigned probes stay silent); verified locally (right secret + trailing newline → 200, wrong → 400 + warn,
-  unsigned → 400). **Owner:** copy the endpoint's signing secret into Vercel `STRIPE_WEBHOOK_SECRET` (Production) →
-  Redeploy → Enable the endpoint → resend one event (expect 200 Delivered). Live mode retries failed events for 3 days.
+  unsigned → 400). **FIXED Oct 17 ~1:42 PM EDT:** the owner put the endpoint's signing secret into Vercel
+  `STRIPE_WEBHOOK_SECRET`, redeployed and re-enabled the endpoint; manual resends of `checkout.session.completed`
+  answered **200 `{"received":true}`** (Stripe: Delivered · Recovered). Stripe retries the other failed events for up
+  to 3 days in live mode (now succeeding). If deliveries fail again, Vercel logs show the warning above.
 - **CI flake (low, watch; Oct 14 on `604cdbf`):** `booking.spec.ts` › "mock management links…" on iphone-safari:
   clicking "Choose Little Moments" on /bundles didn't navigate within 15 s on the GitHub runner (109/110 passed). Same
   code: 5/5 local repeats pass, the CI rerun passed, no earlier CI failure in ~30 runs. If it repeats, look at clicks
