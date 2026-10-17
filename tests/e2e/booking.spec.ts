@@ -53,6 +53,13 @@ async function bookLittleMoments(page: import("@playwright/test").Page, { farAhe
   await page.fill("#field-zip", "33139");
   await page.fill("#field-access", "Gate code 4821, guest parking on level 2");
   await page.selectOption("#field-babyAge", { index: 1 });
+  // optional gender: tapping the picked one again clears it
+  const girl = page.getByRole("button", { name: "Girl", exact: true });
+  await girl.click();
+  await expect(girl).toHaveAttribute("aria-pressed", "true");
+  await girl.click();
+  await expect(girl).toHaveAttribute("aria-pressed", "false");
+  await girl.click();
   // optional permissions: both start unticked
   await expect(page.locator("#field-consent-sms")).not.toBeChecked();
   await expect(page.locator("#field-consent-photos")).not.toBeChecked();
@@ -65,12 +72,14 @@ async function bookLittleMoments(page: import("@playwright/test").Page, { farAhe
   await expect(page.getByText("1500 Bay Rd, Unit 1204, Miami Beach 33139")).toBeVisible();
   await expect(page.getByText("Gate code 4821, guest parking on level 2")).toBeVisible();
   await expect(page.locator("dl").getByText("Pink", { exact: true })).toBeVisible();
+  await expect(page.locator("dl").getByText("Baby 1 (Girl, Newborn (0–2 weeks))", { exact: true })).toBeVisible();
   await expect(page.getByText("OK to text you")).toBeVisible();
   await expect(page.getByText("Kept private")).toBeVisible();
   // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
   await page.waitForTimeout(4500);
   await page.getByRole("button", { name: /Book my session/ }).click();
   await expect(page.getByText("Booking confirmed")).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByText("Baby 1 (Girl, Newborn (0–2 weeks))", { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 }
 
@@ -83,7 +92,7 @@ test("a family can book a session (mock provider)", async ({ page }, testInfo) =
   if (process.env.CAPTURE_BOOKING_CONFIRMATION === "1") {
     await page.screenshot({ path: `.screenshots/booking-confirmation-i18n/${testInfo.project.name}.png`, fullPage: true });
   }
-  expect(submitted).toMatchObject({ locale: "en" });
+  expect(submitted).toMatchObject({ locale: "en", babies: [{ age: "Newborn (0–2 weeks)", gender: "girl" }] });
 });
 
 test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
