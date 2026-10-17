@@ -59,7 +59,9 @@ freeze on `main` the day before launch except fixes.
 migration 0021 run by the owner. **Seen Oct 17: production `/es` returns 404** (Spanish was published Oct 10). The gate
 reads only /admin settings + content (switch, Spanish bundle rows, photo titles/alt, gallery prompts, enabled seasonal
 offers), so a content gap (e.g. new photos without Spanish titles) or the switch being off hides all of /es; the
-reason is listed in /admin → Settings → Spanish. Ask the owner.
+reason is listed in /admin → Settings → Spanish. **Owner re-published it Oct 17:** production `/es`, `/es/bundles`,
+`/es/book`, `/es/home-sweet-home`, `/es/about`, `/es/privacy`, `/es/terms` return 200, hreflang en/es/x-default back on
+the home page, and `/es/book` shows "Género (opcional)" with Niño / Niña (read-only check, booking API blocked).
 **State Oct 16 (Claude Code):** main = `1021aac` + handoff docs, Vercel + CI green, production smoke-tested after every
 slice. Since the Phase 8 handoff: launch (Oct 15); live-site price guard (`eff9e79`); arrival note in the confirmation
 email, day-before reminder and confirmation screen (`59aade6`); privacy sentence for Vercel Analytics (`7f9049c`);
@@ -191,8 +193,7 @@ exists), then one component per slice. Tailwind v4 uses cascade layers: unlayere
 utilities. The site is live with paying families: small verified slices only.
 Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
 Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: why production /es is 404 since at least Oct 17 (see /admin → Settings → Spanish for the
-missing item); photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
+Waiting on the owner: photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
 sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
 with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
