@@ -55,8 +55,11 @@ freeze on `main` the day before launch except fixes.
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
 ## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
-**Oct 17 (Claude Code):** optional baby gender (Boy / Girl) on the booking form, owner-approved and pushed. **The owner
-must run `drizzle/0021_baby_gender.sql` in the Neon SQL editor**; until then bookings work but genders aren't saved.
+**Oct 17 (Claude Code):** optional baby gender (Boy / Girl) on the booking form, owner-approved, live (`bb63d63`),
+migration 0021 run by the owner. **Seen Oct 17: production `/es` returns 404** (Spanish was published Oct 10). The gate
+reads only /admin settings + content (switch, Spanish bundle rows, photo titles/alt, gallery prompts, enabled seasonal
+offers), so a content gap (e.g. new photos without Spanish titles) or the switch being off hides all of /es; the
+reason is listed in /admin → Settings → Spanish. Ask the owner.
 **State Oct 16 (Claude Code):** main = `1021aac` + handoff docs, Vercel + CI green, production smoke-tested after every
 slice. Since the Phase 8 handoff: launch (Oct 15); live-site price guard (`eff9e79`); arrival note in the confirmation
 email, day-before reminder and confirmation screen (`59aade6`); privacy sentence for Vercel Analytics (`7f9049c`);
@@ -188,8 +191,8 @@ exists), then one component per slice. Tailwind v4 uses cascade layers: unlayere
 utilities. The site is live with paying families: small verified slices only.
 Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
 Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: run drizzle/0021_baby_gender.sql in Neon (baby gender, live Oct 17; bookings work without it but
-genders aren't saved); photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
+Waiting on the owner: why production /es is 404 since at least Oct 17 (see /admin → Settings → Spanish for the
+missing item); photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
 sent Oct 15); /portfolio; Terms review.
 Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
 with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
@@ -204,8 +207,9 @@ index.ts for client components; never submit a booking on production (block /api
       ("Luna (Girl, Newborn (0–2 weeks))"). Stored as `boy`/`girl` in its own best-effort table
       `booking_baby_genders` (migration `drizzle/0021_baby_gender.sql`, by `booking_babies.position`): a database
       without it keeps booking, only the gender is skipped (tested locally with the table renamed). Never sent to
-      Meta/analytics; `gender` added to the log sanitizer. **Owner: run 0021 in the Neon SQL editor** (until then
-      genders aren't saved). Checks: 56 units, 114 e2e, 24/24 visual, 0 CSS ties, local twins booking end to end
+      Meta/analytics; `gender` added to the log sanitizer. **Owner ran 0021 in the Neon SQL editor Oct 17.**
+      Production check after deploy (read-only, booking API blocked): /book shows "Gender (optional)" + Boy / Girl,
+      tap / tap again toggles. First real booking with a gender = the end-to-end proof (/admin + studio email). Checks: 56 units, 114 e2e, 24/24 visual, 0 CSS ties, local twins booking end to end
       (DB rows, both emails, fake Outlook event, /admin); owner approved the preview (artifact, Oct 17).
 - [x] **Arrival note — LIVE Oct 15 (`59aade6`)** (owner, Oct 15: tell families we may arrive 30 min early to set up).
       Owner's picks: wording "We arrive up to 30 minutes before your session to set up our lights and backdrops, so
