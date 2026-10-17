@@ -11,6 +11,11 @@ export const babyAgeOptions = [
   "Not born yet",
 ] as const;
 
+/** Optional, per baby (owner, Oct 17: Boy or Girl only). Stored as these codes; the words live in messages/. */
+export const babyGenders = ["boy", "girl"] as const;
+export type BabyGender = (typeof babyGenders)[number];
+export const isBabyGender = (value: unknown): value is BabyGender => babyGenders.some((gender) => gender === value);
+
 /**
  * Fixed booking settings. The *changeable* rules (weekly hours, notice,
  * booking window, buffer, special dates, time blocks) are managed by the

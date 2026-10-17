@@ -330,7 +330,9 @@
         "chooseAge": "Elige una edad",
         "ageError": "Elige una edad para cada bebé.",
         "olderNote": "¿Tu pequeño tiene más de 2 años? Escríbenos a {email} y te avisaremos cuando aceptemos más edades.",
-        "ageOptions": ["Recién nacido (0–2 semanas)", "2–6 semanas", "6 semanas–3 meses", "3–6 meses", "6–12 meses", "1–2 años", "Aún no ha nacido"]
+        "ageOptions": ["Recién nacido (0–2 semanas)", "2–6 semanas", "6 semanas–3 meses", "3–6 meses", "6–12 meses", "1–2 años", "Aún no ha nacido"],
+        "gender": "Género",
+        "genders": { "boy": "Niño", "girl": "Niña" }
       },
       "extraBabies": {
         "one": "1 bebé",
@@ -703,6 +705,7 @@
       "extraBaby": "Bebé adicional",
       "extraBabies": "Bebés adicionales",
       "babyNumber": "Bebé {number}",
+      "genders": { "boy": "Niño", "girl": "Niña" },
       "and": "y",
       "ages": {
         "Newborn (0–2 weeks)": "Recién nacido (0–2 semanas)",

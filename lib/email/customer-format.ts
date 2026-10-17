@@ -24,7 +24,9 @@ export function customerPricingRows(p: PriceQuote, locale: EmailLocale): [string
 export function customerBabiesLabel(babies: BookingBaby[], locale: EmailLocale): string {
   const m = emailMessages(locale).common;
   const ages = m.ages as Record<string, string>;
-  return babies.map((baby, index) => `${baby.name?.trim() || fill(m.babyNumber, { number: String(index + 1) })} (${ages[baby.age] ?? baby.age})`).join(", ");
+  return babies
+    .map((baby, index) => `${baby.name?.trim() || fill(m.babyNumber, { number: String(index + 1) })} (${baby.gender ? `${m.genders[baby.gender]}, ` : ""}${ages[baby.age] ?? baby.age})`)
+    .join(", ");
 }
 
 export function customerBabyNames(babies: BookingBaby[], locale: EmailLocale): string | null {

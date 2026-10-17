@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { site } from "@/config/site";
-import { babyAgeOptions } from "@/config/booking";
+import { babyAgeOptions, babyGenders } from "@/config/booking";
 import type { Bundle } from "@/lib/pricing/types";
 import { formatMoney, toCents } from "@/lib/pricing/engine";
 import type { BookingConsents } from "@/lib/booking";
@@ -144,6 +144,7 @@ export default function DetailsForm({
     const nameId = index === 0 ? "field-babyName" : `field-baby-${index}-name`;
     const ageId = index === 0 ? "field-babyAge" : `field-baby-${index}-age`;
     const errorId = `${ageId}-error`;
+    const genderId = index === 0 ? "field-babyGender" : `field-baby-${index}-gender`;
     return (
       <div key={index} className={styles.babyCard}>
         {babies.length > 1 && <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(messages.baby.number, { number: String(index + 1) })}</p>}
@@ -155,6 +156,21 @@ export default function DetailsForm({
           {babyAgeOptions.map((a, optionIndex) => <option key={a} value={a}>{messages.baby.ageOptions[optionIndex]}</option>)}
         </select>
         {babyErrors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{babyErrors[index]}</p>}
+        <p id={genderId} className={cn(styles.label, styles.genderLabel, "chalk-soft")}>{messages.baby.gender}<span className={styles.optional}>{messages.optional}</span></p>
+        {/* optional: tapping the picked one again clears it */}
+        <div className={styles.genderChoices} role="group" aria-labelledby={genderId}>
+          {babyGenders.map((gender) => (
+            <button
+              key={gender}
+              type="button"
+              className={cn(styles.genderChoice, baby.gender === gender && styles.genderChoiceSelected, "chalk-soft")}
+              aria-pressed={baby.gender === gender}
+              onClick={() => onBabyChange(index, "gender", baby.gender === gender ? "" : gender)}
+            >
+              {messages.baby.genders[gender]}
+            </button>
+          ))}
+        </div>
       </div>
     );
   };

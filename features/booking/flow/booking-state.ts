@@ -1,4 +1,4 @@
-import { bookingSteps, STEP } from "@/config/booking";
+import { bookingSteps, isBabyGender, STEP, type BabyGender } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { BookingApiError, type BookingConsents, type BookingResult, type DateKey, type TimeSlot } from "@/lib/booking";
 import { isFloridaZip } from "@/lib/travel/types";
@@ -23,7 +23,8 @@ export interface ContactDraft {
 }
 
 export type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
-export type BabyDraft = { name: string; age: string };
+/** gender "" = not picked (it's optional). */
+export type BabyDraft = { name: string; age: string; gender: "" | BabyGender };
 
 export interface State {
   step: number;
@@ -57,7 +58,7 @@ export const initialState: State = {
   step: STEP.date,
   maxStep: STEP.date,
   bundleId: null,
-  babies: [{ name: "", age: "" }],
+  babies: [{ name: "", age: "", gender: "" }],
   date: null,
   slot: null,
   contact: emptyContact,
@@ -91,7 +92,8 @@ export function isLanguageDraftPayload(value: unknown, bundleId: string): value 
     && Array.isArray(babies)
     && babies.length >= 1
     && babies.length <= 3
-    && babies.every((baby) => isRecord(baby) && typeof baby.name === "string" && typeof baby.age === "string")
+    // gender is missing from drafts saved before it existed (Oct 17)
+    && babies.every((baby) => isRecord(baby) && typeof baby.name === "string" && typeof baby.age === "string" && (baby.gender === undefined || baby.gender === "" || isBabyGender(baby.gender)))
     && isRecord(contact)
     && Object.keys(emptyContact).every((key) => typeof contact[key] === "string")
     && isRecord(consents)
@@ -153,7 +155,7 @@ export function reducer(state: State, action: Action): State {
     }
     case "babyCount": {
       const count = Math.max(1, Math.min(3, action.count));
-      const babies = Array.from({ length: count }, (_, i) => state.babies[i] ?? { name: "", age: "" });
+      const babies = Array.from({ length: count }, (_, i) => state.babies[i] ?? { name: "", age: "", gender: "" });
       const slot = action.slot === undefined ? state.slot : action.slot;
       return { ...state, babies, slot, maxStep: slot === null ? Math.min(state.maxStep, STEP.time) : state.maxStep, stepError: null, babyErrors: [] };
     }

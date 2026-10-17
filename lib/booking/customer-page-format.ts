@@ -8,13 +8,17 @@ import type { BookingBaby } from "./extra-babies";
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
-/** Baby names and stored age values as the booking page shows them in the selected language. */
-export function bookingBabiesLabel(babies: BookingBaby[], messages: typeof en.bookingFlow.details): string {
+/** Saved babies, or the form's drafts (gender "" = not picked). */
+type BabyLike = Omit<BookingBaby, "gender"> & { gender?: BookingBaby["gender"] | "" };
+
+/** Baby names, genders and stored age values as the booking page shows them in the selected language. */
+export function bookingBabiesLabel(babies: BabyLike[], messages: typeof en.bookingFlow.details): string {
   return babies
     .map((baby, index) => {
       const ageIndex = babyAgeOptions.indexOf(baby.age as (typeof babyAgeOptions)[number]);
       const age = ageIndex >= 0 ? messages.baby.ageOptions[ageIndex] : baby.age;
-      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })} (${age})`;
+      const gender = baby.gender ? `${messages.baby.genders[baby.gender]}, ` : "";
+      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })} (${gender}${age})`;
     })
     .join(", ");
 }

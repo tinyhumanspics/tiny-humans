@@ -603,6 +603,25 @@ export const bookingBabies = pgTable(
 );
 
 /**
+ * Each baby's gender when the parent picked one (optional: boy or girl), by the baby's `booking_babies.position`.
+ * Its own table (migration 0021) so bookings keep working before the migration is applied.
+ */
+export const bookingBabyGenders = pgTable(
+  "booking_baby_genders",
+  {
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull(),
+    gender: text("gender").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bookingId, t.position] }),
+    check("booking_baby_genders_position_check", sql`${t.position} between 0 and 2`),
+    check("booking_baby_genders_gender_check", sql`${t.gender} in ('boy', 'girl')`),
+  ],
+);
+
+/**
  * Each bundle's deposit (/admin → Pricing & Promotions → Deposits). A bundle without a row uses the default ($50,
  * DEFAULT_DEPOSIT_CENTS). New bookings only: each booking keeps the amount it paid (booking_deposits).
  */

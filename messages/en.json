@@ -162,7 +162,9 @@
         "chooseAge": "Choose an age",
         "ageError": "Choose an age for each baby.",
         "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages.",
-        "ageOptions": ["Newborn (0–2 weeks)", "2–6 weeks", "6 weeks – 3 months", "3–6 months", "6–12 months", "1–2 years", "Not born yet"]
+        "ageOptions": ["Newborn (0–2 weeks)", "2–6 weeks", "6 weeks – 3 months", "3–6 months", "6–12 months", "1–2 years", "Not born yet"],
+        "gender": "Gender",
+        "genders": { "boy": "Boy", "girl": "Girl" }
       },
       "extraBabies": {
         "one": "1 baby",
@@ -703,6 +705,7 @@
       "extraBaby": "Extra baby",
       "extraBabies": "Extra babies",
       "babyNumber": "Baby {number}",
+      "genders": { "boy": "Boy", "girl": "Girl" },
       "and": "and",
       "ages": {
         "Newborn (0–2 weeks)": "Newborn (0–2 weeks)",

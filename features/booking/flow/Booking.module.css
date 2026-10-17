@@ -336,6 +336,12 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .babiesGrid { display: grid; gap: 14px; }
 .babyCard { display: grid; gap: 6px; padding: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 9px; }
 .babyTitle { margin: 0; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
+.genderLabel { margin: 6px 0 0; }
+.genderChoices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.genderChoice { min-height: 50px; padding: 8px 12px; border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); border-radius: 6px 10px 7px 9px; background: transparent; font-family: var(--font-hand); font-size: 1.2rem; color: var(--chalk-white); cursor: pointer; transition: border-color 0.2s ease; }
+.genderChoice:hover { border-color: color-mix(in srgb, var(--chalk-white) 65%, transparent); }
+.genderChoice:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
+.genderChoiceSelected, .genderChoiceSelected:hover { border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 12%, transparent); color: var(--sun-yellow); }
 .extraBabiesPrompt { display: grid; gap: 8px; padding: 14px; border: 2px dashed color-mix(in srgb, var(--sun-yellow) 58%, transparent); border-radius: 10px; }
 .extraBabiesIncluded, .extraBabiesHint, .extraBabiesChecking { margin: 0; line-height: 1.4; }
 .extraBabiesIncluded { color: var(--chalk-white); }

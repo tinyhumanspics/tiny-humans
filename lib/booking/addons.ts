@@ -1,7 +1,8 @@
 import "server-only";
 import { inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { bookingAddons, bookingBabies } from "@/lib/db/schema";
+import { isBabyGender } from "@/config/booking";
+import { bookingAddons, bookingBabies, bookingBabyGenders } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import type { AddonLine, BookingBaby } from "./extra-babies";
 
@@ -17,14 +18,28 @@ export async function saveBookingAddons(bookingId: string, babies: BookingBaby[]
       ? [db.insert(bookingAddons).values({ bookingId, kind: addon.kind, name: addon.name, quantity: addon.quantity, unitPriceCents: addon.unitPriceCents, totalPriceCents: addon.totalCents, extraMinutes: addon.extraMinutes, extraPhotos: addon.extraPhotos }).onConflictDoNothing()]
       : []),
   ];
-  await db.batch(writes as never).catch((err) => log.error("booking.db", "Babies/add-on details not saved", { reference, error: reason(err) }));
+  const genders = babies.flatMap((baby, position) => (baby.gender ? [{ bookingId, position, gender: baby.gender }] : []));
+  await Promise.all([
+    db.batch(writes as never).catch((err) => log.error("booking.db", "Babies/add-on details not saved", { reference, error: reason(err) })),
+    // separate write: a database without migration 0021 loses only the genders, never the rows above
+    genders.length
+      ? db.insert(bookingBabyGenders).values(genders).onConflictDoNothing().catch((err) => log.error("booking.db", "Baby genders not saved", { reference, error: reason(err) }))
+      : null,
+  ]);
 }
 
 export async function babiesFor(ids: string[]): Promise<Map<string, BookingBaby[]>> {
   const out = new Map<string, BookingBaby[]>();
   if (!ids.length) return out;
-  const rows = await getDb().select().from(bookingBabies).where(inArray(bookingBabies.bookingId, ids)).catch(() => []);
-  rows.sort((a, b) => a.position - b.position).forEach((r) => out.set(r.bookingId, [...(out.get(r.bookingId) ?? []), { name: r.name ?? undefined, age: r.age }]));
+  const [rows, genderRows] = await Promise.all([
+    getDb().select().from(bookingBabies).where(inArray(bookingBabies.bookingId, ids)).catch(() => []),
+    getDb().select().from(bookingBabyGenders).where(inArray(bookingBabyGenders.bookingId, ids)).catch(() => []),
+  ]);
+  const genders = new Map(genderRows.map((g) => [`${g.bookingId}:${g.position}`, g.gender]));
+  rows.sort((a, b) => a.position - b.position).forEach((r) => {
+    const gender = genders.get(`${r.bookingId}:${r.position}`);
+    out.set(r.bookingId, [...(out.get(r.bookingId) ?? []), { name: r.name ?? undefined, age: r.age, ...(isBabyGender(gender) ? { gender } : {}) }]);
+  });
   return out;
 }
 

@@ -1,6 +1,6 @@
 /** Values that must never be copied into application logs. */
 const SENSITIVE_KEY =
-  /secret|token|password|authorization|cookie|client.?secret|access.?token|database.?url|email|phone|address|street|parent|baby|customer|family|recipient|display.?name|first.?name|last.?name|full.?name|given.?name|surname|notes?|fbclid|user.?agent|client.?ip|remote.?addr|\bip\b/i;
+  /secret|token|password|authorization|cookie|client.?secret|access.?token|database.?url|email|phone|address|street|parent|baby|gender|customer|family|recipient|display.?name|first.?name|last.?name|full.?name|given.?name|surname|notes?|fbclid|user.?agent|client.?ip|remote.?addr|\bip\b/i;
 
 const MAX_STRING = 300;
 const MAX_ARRAY = 25;

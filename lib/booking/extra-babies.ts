@@ -1,5 +1,6 @@
 import type { Bundle, ExtraBabyAddon } from "@/lib/pricing/types";
 import type { PriceQuote } from "@/lib/pricing/engine";
+import type { BabyGender } from "@/config/booking";
 
 export const EXTRA_BABY_KIND = "extra_baby" as const;
 export const DEFAULT_EXTRA_BABY: ExtraBabyAddon = { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 };
@@ -7,7 +8,12 @@ export const DEFAULT_EXTRA_BABY: ExtraBabyAddon = { active: true, price: 75, ext
 export interface BookingBaby {
   name?: string;
   age: string;
+  /** Only when the parent picked one (optional). Never sent to Meta or analytics. */
+  gender?: BabyGender;
 }
+
+/** Studio-side words (owner emails, Outlook event, /admin); customers get them from messages/. */
+const OWNER_GENDERS: Record<BabyGender, string> = { boy: "Boy", girl: "Girl" };
 
 export interface AddonLine {
   kind: typeof EXTRA_BABY_KIND;
@@ -57,7 +63,7 @@ export function addPhotos(label: string | null | undefined, extra: number): stri
 
 export function babiesLabel(babies: BookingBaby[]): string {
   return babies
-    .map((baby, i) => `${baby.name?.trim() || `Baby ${i + 1}`} (${baby.age})`)
+    .map((baby, i) => `${baby.name?.trim() || `Baby ${i + 1}`} (${baby.gender ? `${OWNER_GENDERS[baby.gender]}, ` : ""}${baby.age})`)
     .join(", ");
 }
 

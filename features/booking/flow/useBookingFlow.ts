@@ -158,6 +158,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
 
     const restoredState: State = {
       ...draft.state,
+      babies: draft.state.babies.map((baby) => ({ ...baby, gender: baby.gender ?? "" })),
       bundleId,
       status: "editing",
       result: null,
@@ -310,7 +311,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     dispatch({ type: "submitting" });
     try {
       const c = state.contact;
-      const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age }));
+      const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age, gender: baby.gender || undefined }));
       const request = {
         bundleId: state.bundleId,
         locale,
