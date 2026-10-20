@@ -211,6 +211,11 @@ index.ts for client components; never submit a booking on production (block /api
       viewer opens, and its photos now get the same tape/frames as English (the same lookup bug had hidden them);
       all 3 boxes → /bundles banner in EN + ES; /admin + /admin/photos 200. **Owner to do:** rename box 2's picture
       "TinyHumans Balanced 04" (EN + ES title) in its "Caption & details".
+      Owner follow-up Oct 19: the landing page already showed 6 pictures (automatic) but /admin left every "On landing
+      page" unticked. The ticks now show what the landing page shows (`resolveMedia(...).gallery`), automatic ones
+      say "automatic"; the first change starts from the 6 showing; "Go back to the first 6 automatically" clears the
+      picks. Checked with the live settings: the 6 ticked = the live landing gallery, same order. Live box 2 now uses
+      Image 3 "TinyHumans DSC09689 Vertical" (owner's pick; flagged as a file-name title).
       (owner, Oct 19: create more sections like "Love this one?", more pictures per section, switch the "Want a
       moment like this" box on/off per section, choose its picture; same instant update of home + landing page).
       Owner's picks: box OFF hides the **whole box**; **each theme has its own sections** (a theme shows the Original
