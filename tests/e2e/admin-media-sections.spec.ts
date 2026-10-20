@@ -54,9 +54,20 @@ test("the owner adds, fills, orders and deletes Little moments sections", async 
   await saved(page, "Section 4: the box now shows Image 1.");
   expect(sections()[3].promptPhotoId).toBe(first.id);
 
+  // the ticks show what the landing page shows: nothing picked = the first 6 pictures that aren't title photos
+  const automatic = ["tiny-toes", "basket-nap", "mom-and-dad", "sleepy-sunday", "tummy-time", "cloud-wrap"];
+  await expect(page.getByLabel("Section 1 Image 1: on landing page")).not.toBeChecked();
+  await expect(page.getByLabel("Section 1 Image 2: on landing page")).toBeChecked();
+  await expect(section(page, 1).getByText("automatic", { exact: true })).toHaveCount(2);
+  await expect(page.getByLabel("Section 4 Image 2: on landing page")).toBeDisabled();
+  // the first change starts from the pictures showing now
+  await page.getByLabel("Section 1 Image 2: on landing page").click();
+  await saved(page, "Image 2 taken off the landing page.");
+  expect(state.saved.media.default!.landingPicks).toEqual(automatic.slice(1));
+  await expect(page.getByText("automatic", { exact: true })).toHaveCount(0);
   await page.getByLabel("Section 4 Image 2: on landing page").click();
   await saved(page, "Image 2 added to the landing page.");
-  expect(state.saved.media.default!.landingPicks).toEqual([second.id]);
+  expect(state.saved.media.default!.landingPicks).toEqual([...automatic.slice(1), second.id]);
 
   // moving keeps the box picture and the landing pick with their pictures
   await page.getByRole("button", { name: "Move section 4 Image 2 earlier" }).click();
@@ -65,7 +76,7 @@ test("the owner adds, fills, orders and deletes Little moments sections", async 
   await page.getByRole("button", { name: "Move section 4 up" }).click();
   await saved(page, "Section 4 moved up.");
   expect(sections()[2]).toMatchObject({ title: "Love the tiny details?", promptPhotoId: first.id });
-  expect(state.saved.media.default!.landingPicks).toEqual([second.id]);
+  expect(state.saved.media.default!.landingPicks).toEqual([...automatic.slice(1), second.id]);
 
   // switching a box off keeps its wording for later
   const s1 = section(page, 1);
@@ -80,7 +91,12 @@ test("the owner adds, fills, orders and deletes Little moments sections", async 
   await dialog.getByRole("button", { name: "Delete section" }).click();
   await saved(page, "Section 3 · “Love the tiny details?” deleted.");
   expect(sections()).toHaveLength(3);
+  expect(state.saved.media.default!.landingPicks).toEqual(automatic.slice(1));
+
+  await page.getByRole("button", { name: "Go back to the first 6 automatically" }).click();
+  await saved(page, "The landing page shows the first 6 pictures automatically again.");
   expect(state.saved.media.default!.landingPicks).toEqual([]);
+  await expect(page.getByLabel("Section 1 Image 2: on landing page")).toBeChecked();
 });
 
 test("another theme copies the Original theme's sections on its first change and can start over", async ({ page }, testInfo) => {
