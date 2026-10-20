@@ -13,7 +13,8 @@ test("older photo settings safely have no Spanish drafts", async ({}, testInfo) 
     },
   });
   expect(parsed.media.default?.title[0]?.spanish).toBeNull();
-  expect(parsed.media.default?.groups.every((group) => group.spanish === null)).toBe(true);
+  // nothing in "Little moments" was changed: the built-in sections (with their reviewed Spanish wording) stay in use
+  expect(parsed.media.default?.sections).toBeNull();
 });
 
 test("the owner can save Spanish photo details and prompt copy", async ({ page }, testInfo) => {
@@ -51,14 +52,13 @@ test("the owner can save Spanish photo details and prompt copy", async ({ page }
     caption: "Primera semana",
   });
 
-  const firstPrompt = "Love This One Pictures";
-  await page.getByLabel(`${firstPrompt}: Spanish prompt title`).fill("¿Enmarcarías esta foto?");
-  await page.getByLabel(`${firstPrompt}: Spanish prompt text`).fill("Guarda un recuerdo así de tu bebé.");
-  await page.getByLabel(`${firstPrompt}: Spanish prompt title`).scrollIntoViewIfNeeded();
+  await page.getByLabel("Section 1: Spanish box title").fill("¿Enmarcarías esta foto?");
+  await page.getByLabel("Section 1: Spanish box text").fill("Guarda un recuerdo así de tu bebé.");
+  await page.getByLabel("Section 1: Spanish box title").scrollIntoViewIfNeeded();
   if (visualCapture) await page.screenshot({ path: `.screenshots/admin-media-spanish/${testInfo.project.name}-prompt.png` });
-  await page.getByRole("button", { name: "Save prompt" }).first().click();
-  await expect(page.getByText("Prompt text saved. It's live on the website now.")).toBeVisible();
-  expect(saved.media.default?.groups[0].spanish).toEqual({
+  await page.getByRole("button", { name: "Save box" }).first().click();
+  await expect(page.getByText("Section 1: box saved. It's live on the website now.")).toBeVisible();
+  expect(saved.media.default?.sections?.[0].spanish).toEqual({
     title: "¿Enmarcarías esta foto?",
     text: "Guarda un recuerdo así de tu bebé.",
   });

@@ -16,7 +16,7 @@ import styles from "./Portfolio.module.css";
 
 const tapes = ["yellow", undefined, "blue", undefined, "white", "yellow", undefined, "blue", undefined] as const;
 
-/** Home page feed: photo groups with "Book a memory like this one" prompts between them. */
+/** Home page feed: each section's photos, then its "Book a memory like this one" box (wording already in the page's language). */
 export default function Portfolio({ messages = en.home.portfolio, locale = "en" }: { messages?: typeof en.home.portfolio; locale?: AppLocale }) {
   const id = "portfolio";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
@@ -43,8 +43,7 @@ export default function Portfolio({ messages = en.home.portfolio, locale = "en" 
         {feed.map((block, b) => {
           if (block.type === "cta") {
             const ctaCount = blockNumbers[b];
-            const localized = locale === "en" ? block : (messages.prompts[ctaCount - 1] ?? block);
-            return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={localized.title} text={localized.text} label={messages.ctaLabel} locale={locale} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
+            return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={block.title} text={block.text} label={messages.ctaLabel} locale={locale} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
           }
           const groupIndex = blockNumbers[b];
           return (

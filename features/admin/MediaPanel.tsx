@@ -1,19 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import { BUILT_IN, emptyThemeMedia, LANDING_FROM_ABOUT, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import { preparePhoto } from "@/lib/admin/client";
-import es from "@/messages/es.json";
+import MediaSections from "./MediaSections";
+import Slot from "./MediaSlot";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
 type Upload = (b: Blob) => Promise<{ src: string }>;
 type Note = { kind: "ok" | "error"; text: string } | null;
-type SlotPath = ["title" | "landing" | "about" | "email", number] | ["group", number, number];
+type SlotPath = ["title" | "landing" | "about" | "email", number];
 
 const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
 const titleFromFile = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
@@ -65,8 +65,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
     if (path[0] === "title") next.title[path[1]] = photo;
     else if (path[0] === "landing") next.landing[path[1]] = photo;
     else if (path[0] === "about") next.about[path[1]] = photo;
-    else if (path[0] === "email") (next.email ??= emptyThemeMedia().email)[path[1]] = photo;
-    else next.groups[path[1]].photos[path[2]!] = photo;
+    else (next.email ??= emptyThemeMedia().email)[path[1]] = photo;
     await saveMedia(next, path.join("-"), okText);
   };
 
@@ -97,7 +96,6 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
       <p className={cn(styles.editingFor, "chalk-soft")} aria-live="polite">
         Editing media for: <b>{label}</b> {live ? <span className={styles.mediaLiveTag}>live on the site now</span> : <span className={styles.mediaOffTag}>not the active theme</span>}
       </p>
-      {note && <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
 
       <MediaGroupBlock label={MEDIA_GROUPS.title.label} where={`${MEDIA_GROUPS.title.where} These two are shown without captions.`}>
         {[0, 1].map((i) => (
@@ -151,67 +149,10 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         })}
       </MediaGroupBlock>
 
-      {MEDIA_GROUPS.feed.map((g, gi) => (
-        <MediaGroupBlock key={g.label} label={g.label} where={g.where}
-          prompt={{
-            title: media.groups[gi]?.title ?? "",
-            text: media.groups[gi]?.text ?? "",
-            spanishTitle: media.groups[gi]?.spanish?.title ?? "",
-            spanishText: media.groups[gi]?.spanish?.text ?? "",
-            defaultTitle: base?.groups[gi]?.title?.trim() || g.defaultTitle,
-            defaultText: base?.groups[gi]?.text?.trim() || g.defaultText,
-            defaultSpanishTitle: base?.groups[gi]?.spanish?.title?.trim() || es.home.portfolio.prompts[gi].title,
-            defaultSpanishText: base?.groups[gi]?.spanish?.text?.trim() || es.home.portfolio.prompts[gi].text,
-            busy: busy === `prompt-${gi}`,
-            onSave: (title, text, spanishTitle, spanishText) => {
-              const next = clone(media);
-              next.groups[gi].title = title.trim() || null;
-              next.groups[gi].text = text.trim() || null;
-              next.groups[gi].spanish = spanishTitle.trim() || spanishText.trim()
-                ? { title: spanishTitle.trim(), text: spanishText.trim() }
-                : null;
-              return saveMedia(next, `prompt-${gi}`, "Prompt text saved.");
-            },
-          }}>
-          {[0, 1, 2].map((i) => (
-            <Slot key={`g${gi}-${i}-${themeId}-${media.groups[gi]?.photos[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={g.label} custom={media.groups[gi]?.photos[i] ?? null} inherited={base?.groups[gi]?.photos[i]} inheritedLabel={baseLabel} builtIn={BUILT_IN.groups[gi][i]} busy={busy === `group-${gi}-${i}`}
-              onReplace={(e) => replace(["group", gi, i], media.groups[gi]?.photos[i] ?? null, `${g.label} · Image ${i + 1}`, e)}
-              onReset={() => setSlot(["group", gi, i], null, back(`${g.label} · Image ${i + 1}`, base?.groups[gi]?.photos[i], "is back to the built-in picture."))}
-              resetLabel={base?.groups[gi]?.photos[i] ? `Use the ${baseLabel} picture` : undefined}
-              onDetails={(p) => setSlot(["group", gi, i], p, p.caption ? `Caption saved: “${p.caption}”.` : "Saved. No caption, so the photo fills the frame.")} />
-          ))}
-        </MediaGroupBlock>
-      ))}
-
-      <MediaGroupBlock label={MEDIA_GROUPS.extra.label} where={MEDIA_GROUPS.extra.where}>
-        {!media.extra.length && Boolean(base?.extra.length) && (
-          <p className={cn(styles.hintSmall, "chalk-soft")}>
-            Visitors see the {baseLabel} theme&apos;s {base!.extra.length} extra picture{base!.extra.length > 1 ? "s" : ""} until you add some here.
-          </p>
-        )}
-        {media.extra.map((p, i) => (
-          <Slot key={p.id} name={`Extra image ${i + 1}`} groupLabel={MEDIA_GROUPS.extra.label} custom={p} builtIn={null} busy={busy === `extra-${i}`}
-            onReplace={async (e) => {
-              const file = e.target.files?.[0]; e.target.value = ""; if (!file) return;
-              setBusy(`extra-${i}`);
-              try { const next = clone(media); next.extra[i] = await toPhoto(file, p); await saveMedia(next, `extra-${i}`, `Extra image ${i + 1} replaced.`); } catch (err) { setBusy(null); setNote({ kind: "error", text: err instanceof Error ? err.message : "Couldn't use that picture." }); }
-            }}
-            onReset={() => { const next = clone(media); next.extra.splice(i, 1); return saveMedia(next, `extra-${i}`, `Extra image ${i + 1} removed.`); }}
-            resetLabel="Remove"
-            onDetails={(ph) => { const next = clone(media); next.extra[i] = ph; return saveMedia(next, `extra-${i}`, "Details saved."); }} />
-        ))}
-        {media.extra.length < MEDIA_GROUPS.extra.max && (
-          <label className={cn(styles.addTile, "chalk-soft")}>
-            <input type="file" accept="image/*" multiple className={styles.visuallyHidden}
-              onChange={async (e) => {
-                const files = Array.from(e.target.files ?? []).slice(0, MEDIA_GROUPS.extra.max - media.extra.length); e.target.value = ""; if (!files.length) return;
-                setBusy("extra-add");
-                try { const next = clone(media); for (const f of files) next.extra.push(await toPhoto(f)); await saveMedia(next, "extra-add", `${files.length} picture${files.length > 1 ? "s" : ""} added.`); } catch (err) { setBusy(null); setNote({ kind: "error", text: err instanceof Error ? err.message : "Couldn't add those pictures." }); }
-              }} />
-            {busy === "extra-add" ? "Adding…" : "+ Add pictures"}
-          </label>
-        )}
-      </MediaGroupBlock>
+      <MediaSections media={media} base={base} themeId={themeId} isOriginal={themeId === "default"} themeLabel={label} baseLabel={baseLabel} spanishLive={settings.spanishPublished}
+        busy={busy} setBusy={setBusy} saveMedia={saveMedia} toPhoto={toPhoto}
+        fail={(err, fallback) => setNote({ kind: "error", text: err instanceof Error ? err.message : fallback })} />
+      {note && <p className={cn(note.kind === "ok" ? styles.ok : styles.error, styles.mediaNote)} role={note.kind === "error" ? "alert" : "status"}>{note.text}</p>}
     </section>
   );
 }
@@ -254,139 +195,12 @@ function FixedPlaceholderGroup({ definition, kind, photos, inherited, inheritedN
   );
 }
 
-function MediaGroupBlock({ label, where, prompt, children }: {
-  label: string;
-  where: string;
-  prompt?: {
-    title: string;
-    text: string;
-    spanishTitle: string;
-    spanishText: string;
-    defaultTitle: string;
-    defaultText: string;
-    defaultSpanishTitle: string;
-    defaultSpanishText: string;
-    busy: boolean;
-    onSave: (title: string, text: string, spanishTitle: string, spanishText: string) => Promise<void>;
-  };
-  children: React.ReactNode;
-}) {
-  const [title, setTitle] = useState(prompt?.title ?? "");
-  const [text, setText] = useState(prompt?.text ?? "");
-  const [spanishTitle, setSpanishTitle] = useState(prompt?.spanishTitle ?? "");
-  const [spanishText, setSpanishText] = useState(prompt?.spanishText ?? "");
-  const spanishStarted = Boolean(spanishTitle.trim() || spanishText.trim());
-  const spanishIncomplete = spanishStarted && (!spanishTitle.trim() || !spanishText.trim());
-  const dirty = prompt
-    ? title !== prompt.title || text !== prompt.text || spanishTitle !== prompt.spanishTitle || spanishText !== prompt.spanishText
-    : false;
+function MediaGroupBlock({ label, where, children }: { label: string; where: string; children: React.ReactNode }) {
   return (
     <div className={styles.mediaGroup}>
       <h3 className={cn(styles.mediaGroupTitle, "chalk")}>{label}</h3>
       <p className={cn(styles.hintSmall, "chalk-soft")}>{where}</p>
       <div className={styles.slotGrid}>{children}</div>
-      {prompt && (
-        <div className={styles.promptEdit}>
-          <p className={cn(styles.label, "chalk-soft")}>Prompt shown below these pictures</p>
-          <input className={styles.input} value={title} maxLength={60} placeholder={prompt.defaultTitle} onChange={(e) => setTitle(e.target.value)} aria-label={`${label}: prompt title`} />
-          <input className={styles.input} value={text} maxLength={120} placeholder={prompt.defaultText} onChange={(e) => setText(e.target.value)} aria-label={`${label}: prompt text`} />
-          <p className={cn(styles.label, "chalk-soft")}>Spanish prompt (optional until the Spanish site is published)</p>
-          <input className={styles.input} value={spanishTitle} maxLength={60} placeholder={prompt.defaultSpanishTitle} onChange={(e) => setSpanishTitle(e.target.value)} aria-label={`${label}: Spanish prompt title`} />
-          <input className={styles.input} value={spanishText} maxLength={120} placeholder={prompt.defaultSpanishText} onChange={(e) => setSpanishText(e.target.value)} aria-label={`${label}: Spanish prompt text`} />
-          <div className={styles.photoBar}>
-            <span className={cn(spanishIncomplete ? styles.error : styles.hintSmall, "chalk-soft")}>
-              {spanishIncomplete ? "Complete both Spanish prompt fields, or leave both blank." : "Leave English empty to use the original wording; leave Spanish empty to use the reviewed Spanish default."}
-            </span>
-            <button type="button" className={styles.smallButton} disabled={!dirty || prompt.busy || spanishIncomplete} onClick={() => prompt.onSave(title, text, spanishTitle, spanishText)}>{prompt.busy ? "Saving…" : "Save prompt"}</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Slot({ name, groupLabel, custom, inherited, inheritedLabel, inheritedNote, round, builtIn, busy, onReplace, onReset, onDetails, resetLabel = "Use built-in picture", captions = true }: {
-  name: string; groupLabel: string; custom: PortfolioPhoto | null; builtIn: PortfolioPhoto | null; busy: boolean;
-  /** The Original theme's picture for this slot (shown when this theme has none). */
-  inherited?: PortfolioPhoto | null; inheritedLabel?: string;
-  /** Overrides "Same as the … theme" (e.g. the email photo borrowed from About Us). */
-  inheritedNote?: string;
-  /** Round preview (the email shows this photo as a circle). */
-  round?: boolean;
-  onReplace: (e: ChangeEvent<HTMLInputElement>) => void; onReset: () => void; onDetails: (p: PortfolioPhoto) => void; resetLabel?: string;
-  /** Show the caption field (pictures in "Little moments" show a caption under the photo). */
-  captions?: boolean;
-}) {
-  const shown = custom ?? inherited ?? builtIn;
-  const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState(shown?.title ?? "");
-  const [alt, setAlt] = useState(shown?.alt ?? "");
-  const [caption, setCaption] = useState(shown?.caption ?? "");
-  const [spanishTitle, setSpanishTitle] = useState(shown?.spanish?.title ?? "");
-  const [spanishAlt, setSpanishAlt] = useState(shown?.spanish?.alt ?? "");
-  const [spanishCaption, setSpanishCaption] = useState(shown?.spanish?.caption ?? "");
-  const spanishStarted = Boolean(spanishTitle.trim() || spanishAlt.trim() || spanishCaption.trim());
-  const spanishIncomplete = spanishStarted && (
-    !spanishTitle.trim() ||
-    !spanishAlt.trim() ||
-    (captions && Boolean(caption.trim()) && !spanishCaption.trim())
-  );
-  return (
-    <div className={styles.slot}>
-      <p className={cn(styles.slotName, "chalk-soft")}>{name}</p>
-      <div className={cn(styles.slotThumb, round && styles.slotThumbRound)}>
-        {shown ? <Image src={shown.src} alt={shown.alt} fill sizes="220px" style={{ objectFit: "cover" }} unoptimized={shown.src.startsWith("data:")} /> : null}
-        {busy && <span className={cn(styles.slotBusy, "chalk-soft")}>Saving…</span>}
-      </div>
-      <p className={cn(styles.slotSource, "chalk-soft")}>{custom ? "Your picture" : inherited ? (inheritedNote ?? `Same as the ${inheritedLabel} theme`) : builtIn ? "Built-in picture" : round ? "No photo: the email skips it" : "Photo coming soon"}</p>
-      <label className={cn(styles.smallButton, styles.replaceBtn)}>
-        <input type="file" accept="image/*" className={styles.visuallyHidden} onChange={onReplace} aria-label={`Replace ${groupLabel} ${name}`} disabled={busy} />
-        {shown ? "Replace" : "Add picture"}
-      </label>
-      {captions && shown && <p className={cn(styles.slotCaption, "chalk-soft")}>{shown.caption ? `Caption: “${shown.caption}”` : "No caption: the photo fills the frame"}</p>}
-      {shown && (
-        <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Hide details" : captions ? "Caption & details" : "Details"}</button>
-      )}
-      {custom && <button type="button" className={cn(styles.linkButton, styles.dangerText, "chalk-soft")} onClick={onReset} disabled={busy}>{resetLabel}</button>}
-      {open && shown && (
-        <div className={styles.slotDetails}>
-          {captions && (
-            <label className={cn(styles.label, "chalk-soft")}>
-              Caption under the photo (optional)
-              <input className={styles.input} value={caption} maxLength={40} placeholder="e.g. First week" onChange={(e) => setCaption(e.target.value)} aria-label={`${groupLabel} ${name} caption`} />
-              <span className={cn(styles.hintSmall, "chalk-soft")}>Leave empty and the photo fills the whole frame.</span>
-            </label>
-          )}
-          <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (shown when a parent books this photo)" : "Photo title"}<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
-          <label className={cn(styles.label, "chalk-soft")}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
-          <p className={cn(styles.label, "chalk-soft")}>Spanish photo details (optional until the Spanish site is published)</p>
-          {captions && (
-            <label className={cn(styles.label, "chalk-soft")}>
-              Caption under the photo (Spanish{caption.trim() ? " · required when Spanish details are started" : " · optional"})
-              <input className={styles.input} value={spanishCaption} maxLength={40} onChange={(e) => setSpanishCaption(e.target.value)} aria-label={`${groupLabel} ${name} caption (Spanish)`} />
-            </label>
-          )}
-          <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (Spanish)" : "Photo title (Spanish)"}<input className={styles.input} value={spanishTitle} maxLength={60} onChange={(e) => setSpanishTitle(e.target.value)} /></label>
-          <label className={cn(styles.label, "chalk-soft")}>Description for screen readers (Spanish)<input className={styles.input} value={spanishAlt} maxLength={160} onChange={(e) => setSpanishAlt(e.target.value)} /></label>
-          {spanishIncomplete && <p className={cn(styles.error, "chalk-soft")}>Complete the Spanish title and description{captions && caption.trim() ? ", plus the matching caption," : ""} or leave all Spanish fields blank.</p>}
-          <button
-            type="button"
-            className={styles.smallButton}
-            disabled={busy || !title.trim() || spanishIncomplete}
-            onClick={() => onDetails({
-              ...shown,
-              title: title.trim(),
-              alt: alt.trim() || title.trim(),
-              caption: captions ? caption.trim() : shown.caption,
-              spanish: spanishStarted
-                ? { title: spanishTitle.trim(), alt: spanishAlt.trim(), caption: captions ? spanishCaption.trim() || undefined : shown.spanish?.caption }
-                : null,
-            })}
-          >
-            Save details
-          </button>
-        </div>
-      )}
     </div>
   );
 }

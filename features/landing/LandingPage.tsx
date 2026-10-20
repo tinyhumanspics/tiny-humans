@@ -86,7 +86,7 @@ export default function LandingPage({
   const t = messages;
   const pay = paymentCopy(deposit, t, depositMessages);
   const { bundles, today, available } = useCatalog();
-  const { settings, media, photos, theme } = useSiteSettings();
+  const { settings, media, theme } = useSiteSettings();
   // the theme's two doodles by the hero photos (as on the home page)
   const [doodleA, doodleB] = theme.decorations.hero;
   const featured = bundles.find((b) => b.badge) ?? bundles[0];
@@ -96,7 +96,7 @@ export default function LandingPage({
     requestBookingScroll();
   };
   const [first, second] = media.title;
-  const gallery = photos.filter((p) => p !== first && p !== second).slice(0, 6);
+  const gallery = media.gallery;
   const seasonalOffers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today, locale);
 
   return (

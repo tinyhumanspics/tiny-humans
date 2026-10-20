@@ -10,7 +10,7 @@
  * defaults are used.
  */
 import { unstable_cache, revalidateTag } from "next/cache";
-import { allPhotoSources, defaultSettings, parseSettings } from "./defaults";
+import { allPhotoSources, defaultSettings, parseSettings, storedSettings } from "./defaults";
 import type { SiteSettings } from "./types";
 
 export const SETTINGS_TAG = "site-settings";
@@ -40,7 +40,8 @@ const readCached = unstable_cache(
       return defaultSettings;
     }
   },
-  ["site-settings-v1"],
+  // v2: "Little moments" sections. A new key, so this code never reads a cached copy in the older shape.
+  ["site-settings-v2"],
   { tags: [SETTINGS_TAG] },
 );
 
@@ -53,7 +54,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 export async function saveSiteSettings(next: SiteSettings, previous: SiteSettings): Promise<SiteSettings> {
   const { put, list, del } = await import("@vercel/blob");
   const saved: SiteSettings = { ...next, updatedAt: new Date().toISOString() };
-  await put(`${PREFIX}${Date.now()}.json`, JSON.stringify(saved), {
+  await put(`${PREFIX}${Date.now()}.json`, JSON.stringify(storedSettings(saved)), {
     access: "public",
     contentType: "application/json",
     addRandomSuffix: false,

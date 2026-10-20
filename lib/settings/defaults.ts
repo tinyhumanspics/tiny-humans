@@ -1,4 +1,4 @@
-import { emptyThemeMedia, mediaFromList, MEDIA_GROUPS, type ThemeMedia } from "@/config/media";
+import { emptyThemeMedia, mediaFromList, MEDIA_GROUPS, sectionsFromLegacy, type LegacyMedia, type MediaSection, type ThemeMedia } from "@/config/media";
 import { SEASONAL_OFFER_IDS, type SeasonalOfferId } from "@/config/seasonal";
 import { DEFAULT_THEME, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
@@ -101,7 +101,60 @@ function parseSlot(v: unknown, allowDataUrls: boolean, where: string): Portfolio
   return parsePhotos([v], allowDataUrls, where)[0] ?? null;
 }
 
-function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string): ThemeMedia {
+const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
+const spanishWording = (v: unknown) => {
+  const raw = v && typeof v === "object" ? (v as Record<string, unknown>) : null;
+  const title = raw ? text(raw.title, 60) : null;
+  const body = raw ? text(raw.text, 120) : null;
+  return title && body ? { title, text: body } : null;
+};
+
+/** "Little moments" as saved before sections existed (three groups of 3 + extra pictures). */
+function parseLegacy(o: Record<string, unknown>, allowDataUrls: boolean, id: string): LegacyMedia {
+  const gs = Array.isArray(o.groups) ? o.groups : [];
+  const ex = Array.isArray(o.extra) ? o.extra.filter(Boolean) : [];
+  return {
+    groups: [0, 1, 2].map((gi) => {
+      const g = (gs[gi] ?? {}) as Record<string, unknown>;
+      const ps = Array.isArray(g.photos) ? g.photos : [];
+      return {
+        photos: [0, 1, 2].map((i) => parseSlot(ps[i], allowDataUrls, `${id} pictures`)),
+        title: text(g.title, 60),
+        text: text(g.text, 120),
+        spanish: spanishWording(g.spanish),
+      };
+    }),
+    extra: ex.length ? parsePhotos(ex.slice(0, 12), allowDataUrls, `${id} extra pictures`) : [],
+  };
+}
+
+function parseSections(list: unknown[], allowDataUrls: boolean, id: string): MediaSection[] {
+  const { maxSections, maxPhotos } = MEDIA_GROUPS.sections;
+  if (list.length > maxSections) throw new SettingsInputError(`Too many sections in ${id} (max ${maxSections}).`);
+  const sectionIds = new Set<string>();
+  const photoIds = new Set<string>();
+  return list.map((raw, si) => {
+    const s = (raw ?? {}) as Record<string, unknown>;
+    const ps = Array.isArray(s.photos) ? s.photos.filter(Boolean) : [];
+    if (ps.length > maxPhotos) throw new SettingsInputError(`Too many pictures in section ${si + 1} (max ${maxPhotos}).`);
+    // ids pick the box picture, the landing pictures and booking inspiration: keep them unique within the theme
+    const photos = parsePhotos(ps, allowDataUrls, `${id} section ${si + 1}`).map((p, i) => {
+      const unique = photoIds.has(p.id) ? `${p.id}-${si + 1}-${i + 1}` : p.id;
+      photoIds.add(unique);
+      return unique === p.id ? p : { ...p, id: unique };
+    });
+    let sectionId = str(s.id, 40).replace(/[^a-z0-9-]/gi, "") || `section-${si + 1}`;
+    if (sectionIds.has(sectionId)) sectionId = `${sectionId}-${si + 1}`;
+    sectionIds.add(sectionId);
+    const title = text(s.title, 60) ?? "";
+    const body = text(s.text, 120) ?? "";
+    const promptPhotoId = typeof s.promptPhotoId === "string" && photos.some((p) => p.id === s.promptPhotoId) ? s.promptPhotoId : null;
+    // a box without wording stays hidden (the owner area asks for it before switching the box on)
+    return { id: sectionId, photos, prompt: s.prompt === true && Boolean(title && body), promptPhotoId, title, text: body, spanish: spanishWording(s.spanish) };
+  });
+}
+
+function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string, legacyBase?: LegacyMedia): ThemeMedia {
   const o = (raw ?? {}) as Record<string, unknown>;
   const m = emptyThemeMedia();
   const t = Array.isArray(o.title) ? o.title : [];
@@ -112,23 +165,13 @@ function parseThemeMedia(raw: unknown, allowDataUrls: boolean, id: string): Them
   m.about = MEDIA_GROUPS.about.slots.map((_, i) => parseSlot(about[i], allowDataUrls, `${id} about pictures`));
   const email = Array.isArray(o.email) ? o.email : [];
   m.email = MEDIA_GROUPS.email.slots.map((_, i) => parseSlot(email[i], allowDataUrls, `${id} email pictures`));
-  const gs = Array.isArray(o.groups) ? o.groups : [];
-  m.groups = m.groups.map((_, gi) => {
-    const g = (gs[gi] ?? {}) as Record<string, unknown>;
-    const ps = Array.isArray(g.photos) ? g.photos : [];
-    const text = (v: unknown, max: number) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
-    const rawSpanish = g.spanish && typeof g.spanish === "object" ? (g.spanish as Record<string, unknown>) : null;
-    const spanishTitle = rawSpanish ? text(rawSpanish.title, 60) : null;
-    const spanishText = rawSpanish ? text(rawSpanish.text, 120) : null;
-    return {
-      photos: [0, 1, 2].map((i) => parseSlot(ps[i], allowDataUrls, `${id} pictures`)),
-      title: text(g.title, 60),
-      text: text(g.text, 120),
-      spanish: spanishTitle && spanishText ? { title: spanishTitle, text: spanishText } : null,
-    };
-  });
-  const ex = Array.isArray(o.extra) ? o.extra.filter(Boolean) : [];
-  m.extra = ex.length ? parsePhotos(ex.slice(0, MEDIA_GROUPS.extra.max), allowDataUrls, `${id} extra pictures`) : [];
+  if (Array.isArray(o.sections)) m.sections = parseSections(o.sections, allowDataUrls, id);
+  else if (!("sections" in o)) m.sections = sectionsFromLegacy(parseLegacy(o, allowDataUrls, id), legacyBase);
+  if (m.sections) {
+    const ids = new Set(m.sections.flatMap((s) => s.photos.map((p) => p.id)));
+    const picks = Array.isArray(o.landingPicks) ? o.landingPicks : [];
+    m.landingPicks = [...new Set(picks.filter((p): p is string => typeof p === "string" && ids.has(p)))].slice(0, MEDIA_GROUPS.sections.landingPicks);
+  }
   return m;
 }
 
@@ -139,8 +182,10 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
   const media: Partial<Record<TinyHumansTheme, ThemeMedia>> = {};
   const rawMedia = (o.media ?? {}) as Record<string, unknown>;
   const legacySets = (o.photoSets ?? {}) as Record<string, unknown>;
+  // themes saved before sections existed took the Original theme's picture for every empty "Little moments" spot
+  const legacyBase = rawMedia.default && !("sections" in (rawMedia.default as object)) ? parseLegacy(rawMedia.default as Record<string, unknown>, allowDataUrls, "default") : undefined;
   for (const id of THEME_IDS) {
-    if (rawMedia[id]) media[id] = parseThemeMedia(rawMedia[id], allowDataUrls, id);
+    if (rawMedia[id]) media[id] = parseThemeMedia(rawMedia[id], allowDataUrls, id, id === "default" ? undefined : legacyBase);
     else if (Array.isArray(legacySets[id]) && (legacySets[id] as unknown[]).length) {
       // settings saved before media slots existed: same pictures, same positions
       media[id] = mediaFromList(parsePhotos(legacySets[id] as unknown[], allowDataUrls, `the ${id} pictures`));
@@ -159,11 +204,31 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
 /** Every custom photo in every theme. */
 export function allMediaPhotos(s: SiteSettings): PortfolioPhoto[] {
   return Object.values(s.media).flatMap((m) =>
-    m ? [...m.title, ...m.landing, ...m.about, ...(m.email ?? []), ...m.groups.flatMap((g) => g.photos), ...m.extra].filter(Boolean) as PortfolioPhoto[] : [],
+    m ? [...m.title, ...m.landing, ...m.about, ...(m.email ?? []), ...(m.sections ?? []).flatMap((s) => s.photos)].filter(Boolean) as PortfolioPhoto[] : [],
   );
 }
 
 /** Every photo address used by any theme. */
 export function allPhotoSources(s: SiteSettings): string[] {
   return allMediaPhotos(s).map((p) => p.src);
+}
+
+/**
+ * The settings file as stored: each theme with its own sections also carries the pre-sections fields (first three
+ * sections as the three groups, every other picture as extra pictures), so an older deployment (after a revert)
+ * still shows the owner's pictures instead of built-in ones. parseSettings reads `sections` first.
+ */
+export function storedSettings(s: SiteSettings): unknown {
+  const media = Object.fromEntries(
+    Object.entries(s.media).map(([id, m]) => {
+      if (!m?.sections) return [id, m];
+      const groups = [0, 1, 2].map((gi) => {
+        const section = m.sections![gi];
+        return { photos: [0, 1, 2].map((i) => section?.photos[i] ?? null), title: section?.title || null, text: section?.text || null, spanish: section?.spanish ?? null };
+      });
+      const extra = m.sections.flatMap((section, si) => (si < 3 ? section.photos.slice(3) : section.photos)).slice(0, 12);
+      return [id, { ...m, groups, extra }];
+    }),
+  );
+  return { ...s, media };
 }

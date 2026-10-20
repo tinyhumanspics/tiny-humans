@@ -11,9 +11,8 @@ export function spanishOwnerCopyIssues(settings: SiteSettings): string[] {
   }
 
   for (const media of Object.values(settings.media)) {
-    for (const group of media?.groups ?? []) {
-      const customized = Boolean(group.title?.trim() || group.text?.trim());
-      if (customized && (!group.spanish?.title.trim() || !group.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
+    for (const section of media?.sections ?? []) {
+      if (section.prompt && (!section.spanish?.title.trim() || !section.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
     }
   }
 

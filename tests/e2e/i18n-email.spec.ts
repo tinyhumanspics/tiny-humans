@@ -114,7 +114,7 @@ test("Spanish publication blocks owner copy gaps instead of leaking English", as
   test.skip(testInfo.project.name !== "desktop-chrome", "Publication validation only needs one Node project");
   const media = emptyThemeMedia();
   media.title[0] = { ...portfolio[0], spanish: null };
-  media.groups[0] = { ...media.groups[0], title: "A custom prompt", text: "Custom supporting text", spanish: null };
+  media.sections = [{ id: "section-1", photos: [portfolio[1]], prompt: true, promptPhotoId: null, title: "A custom prompt", text: "Custom supporting text", spanish: null }];
   const settings = {
     ...defaultSettings,
     media: { default: media },
