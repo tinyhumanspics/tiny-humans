@@ -46,19 +46,20 @@ export function SiteSettingsProvider({ initial, locale = "en", children }: { ini
 
   const applySettings = useCallback((s: SiteSettings) => setSettings(s), []);
 
-  const value = useMemo<Ctx>(
-    () => ({
+  const value = useMemo<Ctx>(() => {
+    // one resolve, so the feed's photos are the same objects as `photos` (the lightbox finds them by identity)
+    const media = liveMedia(settings, locale);
+    return {
       settings,
       themeId: theme.id,
       theme,
-      media: liveMedia(settings, locale),
-      photos: feedPhotos(liveMedia(settings, locale)),
+      media,
+      photos: feedPhotos(media),
       applySettings,
       ready,
       locale,
-    }),
-    [settings, theme, locale, applySettings, ready],
-  );
+    };
+  }, [settings, theme, locale, applySettings, ready]);
 
   return <SiteSettingsContext.Provider value={value}>{children}</SiteSettingsContext.Provider>;
 }
