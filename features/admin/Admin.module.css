@@ -364,6 +364,7 @@
 .slotTools > button { min-width: 44px; padding: 6px 10px; }
 .boxPick { margin: 0; min-height: 44px; display: flex; align-items: center; color: var(--sun-yellow); font-family: var(--font-chalk); font-size: 1.1rem; }
 .slotWarning { margin: 0; font-size: 0.95rem; }
+.autoTag { display: block; color: var(--chalk-muted); font-size: 0.9rem; line-height: 1.2; }
 .rolePick { display: flex; align-items: flex-start; gap: 12px; }
 .rolePickThumb { flex: none; width: 56px; height: auto; border-radius: 6px; border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); }
 .rolePickText { min-width: 0; display: grid; gap: 6px; }

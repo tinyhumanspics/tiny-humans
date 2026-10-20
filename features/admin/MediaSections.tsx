@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
-import { MEDIA_GROUPS, sectionsFor, type MediaSection, type ThemeMedia } from "@/config/media";
+import { MEDIA_GROUPS, resolveMedia, sectionsFor, type MediaSection, type ThemeMedia } from "@/config/media";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import en from "@/messages/en.json";
 import AdminDialog from "./AdminDialog";
@@ -52,7 +52,10 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
   const { sections, landingPicks } = sectionsFor(media, base);
   const inheriting = !media.sections && !isOriginal;
   const builtIn = isOriginal && !media.sections;
-  const picksFull = landingPicks.length >= maxPicks;
+  // what the ad landing page shows right now (the ticked pictures, else the first 6 that aren't title photos): the ticks match it
+  const onLanding = new Set(resolveMedia(media, base).gallery.map((p) => p.id));
+  const automatic = landingPicks.length === 0;
+  const landingFull = onLanding.size >= maxPicks;
 
   const edit = (key: string, okText: string, change: (d: Draft) => void) => {
     const draft: Draft = { sections: JSON.parse(JSON.stringify(sections)), picks: [...landingPicks] };
@@ -107,9 +110,18 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
       )}
       <p className={cn(styles.sectionNote, "chalk-soft")}>
         <b>Ad landing page (/home-sweet-home):</b>{" "}
-        {landingPicks.length
-          ? `${landingPicks.length} of ${maxPicks} pictures picked (“On landing page” under a picture).`
-          : `no pictures picked, so it shows the first ${maxPicks}. Tick “On landing page” under up to ${maxPicks} pictures to choose them yourself.`}
+        {automatic
+          ? `it shows the first ${onLanding.size} pictures automatically (ticked “On landing page” below). Untick or tick pictures to choose up to ${maxPicks} yourself.`
+          : `it shows the ${onLanding.size} picture${onLanding.size === 1 ? "" : "s"} you ticked “On landing page” below (up to ${maxPicks}).`}
+        {!automatic && (
+          <>
+            {" "}
+            <button type="button" className={cn(styles.linkButton, "chalk-soft")} disabled={busy !== null}
+              onClick={() => edit("landing-auto", `The landing page shows the first ${maxPicks} pictures automatically again.`, (d) => { d.picks = []; })}>
+              Go back to the first {maxPicks} automatically
+            </button>
+          </>
+        )}
       </p>
 
       {sections.map((section, si) => {
@@ -136,7 +148,7 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
               {section.photos.map((photo, pi) => {
                 const name = `Image ${pi + 1}`;
                 const photoKey = `${key}-${photo.id}`;
-                const picked = landingPicks.includes(photo.id);
+                const shown = onLanding.has(photo.id);
                 return (
                   <MediaSlot key={`${themeId}-${photo.id}`} name={name} groupLabel={`Section ${si + 1}`} custom={photo} builtIn={null} busy={busy === photoKey} spanishLive={spanishLive}
                     note={inheriting ? `Same as the ${baseLabel} theme` : photo.src.startsWith("/portfolio/") ? "Built-in picture" : undefined}
@@ -166,11 +178,17 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
                       : <button type="button" className={cn(styles.linkButton, "chalk-soft")} disabled={busy !== null}
                           onClick={() => edit(photoKey, `Section ${si + 1}: the box now shows ${name}.`, (d) => { d.sections[si].promptPhotoId = photo.id; })}>Use in the box</button>)}
                     <label className={styles.toggle}>
-                      <input type="checkbox" checked={picked} disabled={busy !== null || (!picked && picksFull)} aria-label={`Section ${si + 1} ${name}: on landing page`}
-                        onChange={(e) => edit(photoKey, e.target.checked ? `${name} added to the landing page.` : `${name} taken off the landing page.`, (d) => {
-                          d.picks = e.target.checked ? [...d.picks, photo.id] : d.picks.filter((id) => id !== photo.id);
-                        })} />
-                      On landing page
+                      <input type="checkbox" checked={shown} disabled={busy !== null || (!shown && landingFull)} aria-label={`Section ${si + 1} ${name}: on landing page`}
+                        onChange={(e) => {
+                          // the first change while it's automatic starts from the pictures showing now
+                          const showing = automatic ? [...onLanding] : landingPicks;
+                          const next = e.target.checked ? [...showing, photo.id] : showing.filter((id) => id !== photo.id);
+                          const ok = e.target.checked ? `${name} added to the landing page.`
+                            : next.length ? `${name} taken off the landing page.`
+                            : `${name} taken off the landing page. Nothing is ticked now, so it shows the first ${maxPicks} pictures automatically again.`;
+                          return edit(photoKey, ok, (d) => { d.picks = next; });
+                        }} />
+                      <span>On landing page{automatic && shown && <span className={styles.autoTag}>automatic</span>}</span>
                     </label>
                   </MediaSlot>
                 );
