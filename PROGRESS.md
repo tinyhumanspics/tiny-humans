@@ -204,7 +204,13 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
-- [x] **"Little moments" sections in /admin → Photos / Media — owner OK Oct 19 ("proceed to push"; "make sure nothing else is touched")**
+- [x] **"Little moments" sections in /admin → Photos / Media — LIVE Oct 19 (`37ba5dd`, `f4bb429`, `1ee1de2`, `d3b925d`;
+      owner: "proceed to push"; "make sure nothing else is touched")**. Production check after Vercel success (read-only,
+      Meta/analytics/booking API blocked): English home + landing pixel-identical to the pre-push capture (desktop +
+      iPhone); /es home shows the owner's corrected Spanish box wording (owner fixed it before the push), its photo
+      viewer opens, and its photos now get the same tape/frames as English (the same lookup bug had hidden them);
+      all 3 boxes → /bundles banner in EN + ES; /admin + /admin/photos 200. **Owner to do:** rename box 2's picture
+      "TinyHumans Balanced 04" (EN + ES title) in its "Caption & details".
       (owner, Oct 19: create more sections like "Love this one?", more pictures per section, switch the "Want a
       moment like this" box on/off per section, choose its picture; same instant update of home + landing page).
       Owner's picks: box OFF hides the **whole box**; **each theme has its own sections** (a theme shows the Original
