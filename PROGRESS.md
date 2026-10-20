@@ -204,6 +204,37 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **"Little moments" sections in /admin → Photos / Media — owner OK Oct 19 ("proceed to push"; "make sure nothing else is touched")**
+      (owner, Oct 19: create more sections like "Love this one?", more pictures per section, switch the "Want a
+      moment like this" box on/off per section, choose its picture; same instant update of home + landing page).
+      Owner's picks: box OFF hides the **whole box**; **each theme has its own sections** (a theme shows the Original
+      theme's until its first change, which copies them; "Start over from the Original theme's sections" undoes
+      it); **delete sections (confirm dialog), move sections up/down, move pictures**, "More Little Moments" merged
+      into a normal section with the box off; landing page **"On landing page" tick per picture (max 6), none = the
+      first 6** (as before). Limits: 10 sections × 12 pictures. A box needs English + Spanish wording to switch on.
+      Data: `ThemeMedia.sections` (null = follow Original / built-in) + `landingPicks` in the Blob settings file (no
+      migration). Old saves convert on read (same pictures, wording, order; empty spots took Original's/built-in
+      picture as before); each save also writes the old `groups`/`extra` fields so a revert still shows the owner's
+      pictures; settings cache key → `site-settings-v2` so the new code never reads an old-shape cached copy.
+      Also fixed: (1) /es ignored the Spanish box wording saved in /admin (always showed es.json); it now shows the
+      saved wording — **the owner's saved Spanish has typos** (see Open owner questions); (2) tapping a photo on the
+      /es home page didn't open the photo viewer (production checked Oct 19: EN opens, ES doesn't); one resolve in
+      `SiteSettingsProvider` fixes it. Photos page: saved/error message floats at the bottom of the screen; pictures
+      without Spanish details say so while Spanish is published.
+      Owner follow-up Oct 19 ("role model"): tapping any box (new sections too) picks its picture for the booking
+      (/bundles banner, "Inspired by" on every step, review, confirmation, saved on the booking → /admin, studio
+      email, Outlook). Owner's pick: booking steps keep showing the **picture's own title**; each box's settings now
+      say "The booking steps show it as “…” (Spanish site: “…”)" and warn when the title looks like a file name
+      (IMG/DSC/PXL…, 4+ digits, "TinyHumans…", underscores). Live box 2's picture is "TinyHumans Balanced 04" (owner
+      to rename). New `tests/e2e/inspiration.spec.ts` (home box → bundles → booking → confirmation, saved id) + a
+      unit check; local walk-through through a brand-new box with screenshots in the owner preview.
+      Checks before the push: strict tsc, lint 0, 68 units (12 new, `tests/unit/media-sections.test.ts`), e2e 117
+      passed incl. new `admin-media-sections.spec.ts` + `inspiration.spec.ts` (an iPhone twins booking test flaked
+      once in an earlier run, 3/3 on rerun), 24/24 visual, 0 CSS ties. Diff limited to the media/sections files,
+      their tests and docs (no deps, config, DB, booking, prices, emails or legal text). Old vs new builds side by side with the production settings (local Blob stand-in +
+      `scripts/local-db` with stand-in Spanish bundle rows): home, landing, /bundles?inspiration, /es/home-sweet-home
+      pixel-identical at iPhone 14 + 1440; /es home differs only by the saved Spanish box wording; /es photo viewer
+      opens. Owner preview: screenshots of the new /admin controls, home, landing (local demo data).
 - [x] **Baby gender on the booking form — LIVE Oct 17 (`bb63d63`)** (owner, Oct 17: "add gender on the steps of
       booking, only Male or Female"). Owner's picks: **optional**, words **Boy / Girl** (ES "Niño" / "Niña", label
       "Género"), **two tap buttons** under each baby's age (tap again = clear), shown on the review step, the
@@ -1272,6 +1303,11 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
   **Answered:** domain verified by DNS TXT (1d); 1g live test done (owner, Oct 12). Read-only check Oct 16 (Meta requests
   blocked): every public page loads fbevents.js and calls `fbq init 1027728456958311` + PageView.
 - Landing URL pick (`/home-sweet-home` proposed) · travel-fee model + numbers.
+- **Spanish box wording saved in /admin (Oct 19)** becomes visible on /es once "Little moments" sections ship (until
+  now /es showed the built-in Spanish). Saved today: "Te encanta esa foto?" / "Planifiquemos tu sessions inspirada en
+  ella?", "Imagina tu familia aqui" / "Tu bebe, la familia y todos los pequeños detalles" (English box 2 now says "Want
+  to save this memory?"), "Quieres recordar un momento como este?" / "Cada etapa pasa rapido. Guardemos este momento."
+  Corrections suggested to the owner; owner fixes them in /admin (before or right after the push).
 
 ## Placeholders (must be approved before showing)
 - Photo placeholders (`PhotoPlaceholder`, "photo coming soon"): /about → "Adrian & Alondra", "Behind the scenes at a

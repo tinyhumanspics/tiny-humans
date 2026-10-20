@@ -175,6 +175,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - Theme changes in /admin reach the site and every customer email at once (settings cache tag expired on save; emails
   read the active theme when sent). Photos are per theme; empty slots in non-default themes show the default
   ("Original") theme's picture (`config/media.ts` → `resolveMedia`).
+- Home "Little moments" = `ThemeMedia.sections` (`config/media.ts`): each section's pictures in rows of 3, then its
+  optional box; `null` = follow the Original theme (built-in for Original). `landingPicks` (max 6, else the first 6)
+  feed the landing gallery. Old saves (`groups`/`extra`) convert on read; `storedSettings()` also writes those old
+  fields so a revert keeps the owner's pictures. Changing the settings shape: bump the `unstable_cache` key in
+  `lib/settings/server.ts` (Vercel's data cache outlives deployments).
 - `getPublicCatalog()` caches the bundle list (tag `catalog`, 5 min) and is read in the root layout.
 - Spanish publication is all-or-nothing: `/es`, the language switcher, reciprocal hreflang and Spanish sitemap entries
   appear only when the switch in `/admin/settings` is on **and** `getSpanishPublication()` passes the live Spanish
