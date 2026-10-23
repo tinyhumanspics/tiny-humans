@@ -40,6 +40,11 @@
 @media (min-width: 900px) {
   .long .title { font-size: min(3.6rem, 4.8vw); }
 }
+/* Small phones: long titles shrink a little so the last word and its drawing fit on the line (at 320px
+   "protagonistas" + its heart ran past the title's edge and the heart was cut). */
+@media (max-width: 420px) {
+  .long .title { font-size: clamp(1.9rem, 9.5vw, 2.3rem); }
+}
 
 .underline { display: block; margin-top: 4px; }
 

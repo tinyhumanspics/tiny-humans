@@ -65,6 +65,10 @@
   .copy { padding-bottom: 44px; }
   .grid { row-gap: 0; }
 }
+/* Spanish on computers: its wider buttons reach the same drawing's spot */
+@media (min-width: 900px) {
+  .hero[data-locale="es"] .copy { padding-bottom: 44px; }
+}
 
 /* The Tiny Humans difference: we come to you */
 .promise {
