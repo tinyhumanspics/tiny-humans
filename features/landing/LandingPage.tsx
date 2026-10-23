@@ -227,7 +227,7 @@ export default function LandingPage({
         ) : (
           <BookingPaused messages={bundleMessages.paused} />
         )}
-        <p className={cn(styles.ctaNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
+        <p className={cn(styles.bundlesNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
         <Reveal className={styles.bonusWrap}>
           <ChalkBox className={styles.bonus} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">
             <h3 className={cn(styles.bonusTitle, "chalk")}>{t.offer.bonusTitle}</h3>

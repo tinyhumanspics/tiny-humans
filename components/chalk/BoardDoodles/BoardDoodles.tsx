@@ -36,17 +36,21 @@ export default function BoardDoodles({ area, only, desktopExtras = true }: {
 
   useDrawOnce(ref, theme.id);
 
+  // The grain is a mask, which only paints inside its own box: the layer reaches past the area so drawings placed at
+  // or past its edge stay whole; the drawings are placed in (and sketch when you reach) the area itself.
   return (
-    <div ref={ref} className={cn(styles.layer, "chalk-grain")} aria-hidden="true" key={theme.id}>
-      {items.map((d, i) => (
-        <span
-          key={i}
-          className={cn(styles.item, d.desktopOnly ? styles.desktopOnly : "")}
-          style={{ top: d.top, right: d.right, bottom: d.bottom, left: d.left, rotate: `${d.rotate}deg`, "--i": i } as CSSProperties}
-        >
-          <ChalkDoodle name={d.shape} size={d.size} color={colorVar[d.color]} strokeWidth={2.6} drawable grain={false} />
-        </span>
-      ))}
+    <div className={cn(styles.layer, "chalk-grain")} aria-hidden="true" key={theme.id}>
+      <div ref={ref} className={styles.spots}>
+        {items.map((d, i) => (
+          <span
+            key={i}
+            className={cn(styles.item, d.desktopOnly ? styles.desktopOnly : "")}
+            style={{ top: d.top, right: d.right, bottom: d.bottom, left: d.left, rotate: `${d.rotate}deg`, "--i": i } as CSSProperties}
+          >
+            <ChalkDoodle name={d.shape} size={d.size} color={colorVar[d.color]} strokeWidth={2.6} drawable grain={false} />
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

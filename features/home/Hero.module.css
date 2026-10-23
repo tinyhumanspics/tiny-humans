@@ -60,6 +60,11 @@
 .sparkle { position: absolute; right: 6%; top: 0; }
 
 .copy { position: relative; container-type: inline-size; }
+/* Phones: room under the buttons for the hero's bottom drawing (it sat behind "Book a session"); same space before the photos */
+@media (max-width: 899px) {
+  .copy { padding-bottom: 44px; }
+  .grid { row-gap: 0; }
+}
 
 /* The Tiny Humans difference: we come to you */
 .promise {

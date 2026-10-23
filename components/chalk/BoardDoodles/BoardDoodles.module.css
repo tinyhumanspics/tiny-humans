@@ -1,9 +1,16 @@
 .layer {
   position: absolute;
-  inset: 0;
+  /* room for drawings at or past the area's edge (the grain mask paints only inside this box) */
+  inset: calc(-1 * var(--board-reach));
   z-index: -1;
   pointer-events: none;
+  /* same grain position as when the layer was the area itself */
+  -webkit-mask-position: var(--board-reach) var(--board-reach);
+  mask-position: var(--board-reach) var(--board-reach);
+  --board-reach: 96px;
 }
+/* the area the drawings are placed in */
+.spots { position: absolute; inset: var(--board-reach); }
 
 .item { position: absolute; opacity: 0.8; line-height: 0; }
 
@@ -13,9 +20,9 @@
 }
 
 /* sketched in chalk once, when first seen */
-.layer[data-draw="pending"] path,
+.spots[data-draw="pending"] path,
 .scene[data-draw="pending"] path { stroke-dasharray: 1 3; stroke-dashoffset: 1.2; }
-.layer[data-draw="drawn"] path,
+.spots[data-draw="drawn"] path,
 .scene[data-draw="drawn"] path {
   stroke-dasharray: 1 3;
   stroke-dashoffset: 1.2;

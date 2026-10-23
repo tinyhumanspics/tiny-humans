@@ -32,4 +32,5 @@
   .button { grid-column: auto; width: auto; }
 }
 
-.doodle { position: absolute; top: -16px; right: 22px; rotate: 10deg; }
+/* on the box's top edge, clear of the title under it */
+.doodle { position: absolute; top: -24px; right: 22px; rotate: 10deg; }

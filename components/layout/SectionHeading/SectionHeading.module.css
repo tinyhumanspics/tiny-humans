@@ -1,21 +1,27 @@
 .wrap { position: relative; margin-bottom: clamp(32px, 5vw, 56px); }
 .center { text-align: center; }
 .center .underline { margin-left: auto; margin-right: auto; }
-.center .subtitle { margin-left: auto; margin-right: auto; }
+.center .subtitle { margin-left: auto; margin-right: auto; max-width: min(34em, calc(100% - 104px)); }
 
 .title {
   position: relative;
   display: inline-block;
-  margin: 0;
   font-family: var(--font-chalk);
   font-weight: 400;
   font-size: clamp(2.3rem, 7vw, 3.6rem);
   line-height: 1.05;
   color: var(--chalk-white);
+  /* The chalk texture (a mask) paints only inside this box: room above for the tilted drawing after the last word,
+     below for letters like g and y, and on the right for the drawing's tilt. The negative margins and the texture's
+     content-box origin keep every letter (and its texture) exactly where it was. */
+  padding: 0.55em 0.15em 0.25em 0;
+  margin: -0.55em -0.15em -0.25em 0;
+  -webkit-mask-origin: content-box;
+  mask-origin: content-box;
   /* Wrap before the board drawings at the heading's right edge, so they never sit on its letters. */
-  max-width: calc(100% - 52px);
+  max-width: calc(100% - 52px + 0.15em);
 }
-.center .title { max-width: calc(100% - 104px); }
+.center .title { max-width: calc(100% - 104px + 0.15em); }
 
 .tail { white-space: nowrap; }
 
@@ -24,6 +30,10 @@
   margin-left: 0.25em;
   vertical-align: top;
   transform: translateY(-0.35em) rotate(14deg);
+}
+/* Phones and tablets: titles can wrap, so the drawing stays inside its own line instead of rising onto the one above. */
+@media (max-width: 899px) {
+  .doodle { vertical-align: middle; transform: rotate(14deg); }
 }
 
 /* Desktop: long titles stay on one line. */
@@ -35,7 +45,8 @@
 
 .subtitle {
   margin: 14px 0 0;
-  max-width: 34em;
+  /* clear of the board drawings at the heading's right edge (phones) */
+  max-width: min(34em, calc(100% - 52px));
   color: var(--chalk-muted);
   font-size: 1.2rem;
 }

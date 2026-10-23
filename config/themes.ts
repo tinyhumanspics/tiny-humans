@@ -79,7 +79,7 @@ function boardFrom(p: Palette): Record<BoardArea, BoardDoodle[]> {
   const at = (i: number) => ({ shape: p[i % p.length][0], color: p[i % p.length][1] });
   return {
     hero: [
-      { ...at(0), top: "0px", right: "2%", size: 44, rotate: -8 },
+      { ...at(0), top: "-14px", right: "2%", size: 44, rotate: -8 },
       { ...at(1), bottom: "4px", right: "6%", size: 52, rotate: 4 },
       { ...at(4), top: "38%", right: "-2%", size: 31, rotate: 12, desktopOnly: true },
     ],

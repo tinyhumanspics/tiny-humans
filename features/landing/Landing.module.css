@@ -32,6 +32,8 @@
 .sub { margin: 16px 0 0; max-width: 28em; font-size: clamp(1.2rem, 3.6vw, 1.4rem); color: var(--chalk-white); }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 24px; }
 .ctaNote { margin: 12px 0 0; font-size: 1.05rem; color: var(--chalk-muted); }
+/* under the bundle cards: clear of the drawing in the gap below each card */
+.bundlesNote { margin: 48px 0 0; font-size: 1.05rem; color: var(--chalk-muted); }
 
 .snaps { position: relative; height: clamp(230px, 62vw, 400px); max-width: 520px; width: 100%; margin: 0 auto; }
 .snapsInner { position: absolute; inset: 0; }
