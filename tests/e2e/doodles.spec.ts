@@ -22,7 +22,8 @@ async function doodlesOnLetters(page: Page): Promise<string[]> {
         }
       }
       const label = heading.textContent?.trim().slice(0, 40);
-      [...layer.children].forEach((drawing, index) => {
+      // the layer holds one box (the drawing area) with the drawings in it
+      [...layer.querySelectorAll(":scope > div > span")].forEach((drawing, index) => {
         const raw = drawing.getBoundingClientRect();
         if (!raw.width || getComputedStyle(drawing).display === "none") return;
         const inset = raw.width * 0.12; // a drawing doesn't fill its square
