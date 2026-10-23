@@ -221,6 +221,12 @@ index.ts for client components; never submit a booking on production (block /api
       0 problems; old vs new side by side the same day with the live settings: only the intended changes;
       `doodles.spec.ts` updated for the new layer structure (also checks the real Spanish titles); 68 units, 117 e2e,
       24/24 visual (baselines refreshed after the owner's OK), 0 CSS ties. WebKit and Chromium draw them the same.
+      LIVE Oct 23 (`df520a7`). Live audit after the deploy: English 0 problems; Spanish (longer text) 3 →
+      "Hogares reales, pequeños protagonistas" at 320px ran past its edge (heart cut): long titles shrink a little
+      below 421px; /es desktop hero: the cloud sat behind the wider "Reserva una sesión": room under the buttons for
+      Spanish ≥900px; the "Conoce a Adrian y Alondra" heart was a false alarm (≥12px from the letters; the audit now
+      measures letters like doodles.spec.ts does). Local check with `scripts/local-db` + live settings: /es pages
+      0 problems at 320–1440; 117 e2e, 24/24 visual.
 - [x] **"Little moments" sections in /admin → Photos / Media — LIVE Oct 19 (`37ba5dd`, `f4bb429`, `1ee1de2`, `d3b925d`;
       owner: "proceed to push"; "make sure nothing else is touched")**. Production check after Vercel success (read-only,
       Meta/analytics/booking API blocked): English home + landing pixel-identical to the pre-push capture (desktop +
