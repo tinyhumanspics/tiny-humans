@@ -133,6 +133,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 ## Gotchas
 - Chalk grain is a texture mask (`.chalk-grain` in `styles/globals.css`), NOT a live SVG `feTurbulence` filter — keep it
   that way (scroll performance). Board doodle groups share one grain mask; `Reveal` layers use `will-change: opacity`.
+- A mask (`.chalk`, `.chalk-soft`, `.chalk-grain`) paints only inside its own element's box: anything drawn past it is cut
+  (owner, Oct 22: "drawings must be fully drawn"; WebKit ignores `mask-clip: no-clip`). Board drawing layers reach
+  `--board-reach` (96px) past their area (`.spots` = the area), and `SectionHeading` titles have padding + negative margins +
+  `mask-origin: content-box`. Keep new drawings inside a masked box, never on letters or under buttons/photos; check with
+  `tests/e2e/doodles.spec.ts` (heading letters) and a phone-to-desktop look.
 - The intro animation = `components/layout/Header/useIntroAnimation.ts` + the inline `introScript` in `app/layout.tsx`
   (sets `data-intro` before first paint; skipped under /admin). It must never replay between site pages.
 - Drizzle inserts/selects list every schema column: **apply a migration to production BEFORE deploying code that adds

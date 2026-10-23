@@ -204,6 +204,23 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Chalk drawings whole and off the letters — owner OK Oct 23 ("Looks perfect, you can push it")** (owner, Oct 22:
+      on phone some drawings on the landing page looked unfinished and some sat on letters). Cause: the chalk texture is a
+      mask, which paints only inside its element's box. The drawing after each section title was nudged above the
+      title box (cut to a tip on desktop, half on phones), the heart under each title's sun reached below short title
+      areas, the "g" of "Where we go" was cut on phones, and drawings meant to sit just outside a box (gaps below bundle
+      cards, above/below the home boxes) were hidden. Owner's picks: fix **everywhere** (all pages, phone + desktop),
+      **move** drawings into free space when they don't fit (hide only as a last resort), keep the corner "stickers" on
+      frames. Fix: board layers reach 96px past their area (`.spots` keeps the places and the sketch timing), section
+      titles get padding + negative margins + `mask-origin: content-box` (letters and texture don't move), title
+      drawings stay inside their own line below 900px, subtitles keep 52px clear of the right-hand drawings on phones,
+      the hero star moved up 14px, home hero (phones) got room under the buttons for its cloud (it sat behind "Book a
+      session"), the home box corner drawing moved up 8px, the line under the landing bundle cards moved down 36px
+      (the drawing in the gap below the last card was on it). Checks: read-only audit (every decorative drawing: cut by
+      its box, past the screen edge, on visible text, hidden behind a button/photo) on 5 pages × 7 widths (320–1440):
+      0 problems; old vs new side by side the same day with the live settings: only the intended changes;
+      `doodles.spec.ts` updated for the new layer structure (also checks the real Spanish titles); 68 units, 117 e2e,
+      24/24 visual (baselines refreshed after the owner's OK), 0 CSS ties. WebKit and Chromium draw them the same.
 - [x] **"Little moments" sections in /admin → Photos / Media — LIVE Oct 19 (`37ba5dd`, `f4bb429`, `1ee1de2`, `d3b925d`;
       owner: "proceed to push"; "make sure nothing else is touched")**. Production check after Vercel success (read-only,
       Meta/analytics/booking API blocked): English home + landing pixel-identical to the pre-push capture (desktop +
@@ -1310,6 +1327,11 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Next.js security patch (seen Oct 22):** `npm audit` flags next 16.0.0–16.4.0 (we run 16.4.0) as critical: remote code
+  execution in the Image Optimization API with SVGs (GHSA-2464-fhr4-w9xw), Server Actions denial of service
+  (GHSA-p3m5-59mp-jv5r), remote code execution in `use cache` functions returning typed arrays (GHSA-673q-mjm6-r5xr).
+  Fixed in 16.4.2. Local `next build` also stops once per run with a "SecurityFatalError" notice (retry continues).
+  Proposed to the owner as its own slice (patch bump + full gates); not done without the owner's OK.
 - ~~Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).~~
   **Answered:** domain verified by DNS TXT (1d); 1g live test done (owner, Oct 12). Read-only check Oct 16 (Meta requests
   blocked): every public page loads fbevents.js and calls `fbq init 1027728456958311` + PageView.
