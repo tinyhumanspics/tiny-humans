@@ -204,7 +204,7 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
-- [x] **Travel fee $1.75 a mile after the 30 free miles — LIVE Oct 24 (`635023c`; owner saved it in /admin)** (owner, Oct 24; was $0.75), only for
+- [x] **Travel fee $1.75 a mile, now after 40 free miles — LIVE Oct 24 (`635023c`; owner saved it in /admin)** (owner, Oct 24; was $0.75), only for
       new bookings. The price is a setting (/admin → Availability → Travel fee, table `travel_settings`): the landing
       FAQ, the Terms (EN + ES), the booking steps and the emails read it, so no copy changes. Existing bookings keep
       the fee stored on them (`bookings.travel_fee_cents`; payment links, deposit pages, reschedules and /admin use the
@@ -215,6 +215,8 @@ index.ts for client components; never submit a booking on production (block /api
       Live check after the owner's save (read-only): /api/booking/travel answers perMileCents 175; landing FAQ (EN +
       ES) and Terms (EN + ES) show $1.75, no page mentions 0.75; Terms "Last updated October 24, 2026" / "24 de
       octubre de 2026"; quotes 69 mi → $68, 231 mi → $351, 6 mi free.
+      Same day, owner: **40 free miles** instead of 30 (saved in /admin; no code). Live check: FAQ + Terms (EN + ES) say
+      40, nothing says 30 miles; quotes 69 mi → $50, 231 mi → $334; Terms date still October 24.
 - [x] **Chalk drawings whole and off the letters — owner OK Oct 23 ("Looks perfect, you can push it")** (owner, Oct 22:
       on phone some drawings on the landing page looked unfinished and some sat on letters). Cause: the chalk texture is a
       mask, which paints only inside its element's box. The drawing after each section title was nudged above the
