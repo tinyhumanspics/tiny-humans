@@ -17,6 +17,18 @@ export async function getTravelSettings(): Promise<TravelSettings | null> {
   }
 }
 
+/** When the owner last saved the travel fee (ISO), or null: the Terms' "Last updated" date follows it. */
+export async function getTravelSettingsSavedAt(): Promise<string | null> {
+  if (!isDatabaseConfigured()) return null;
+  try {
+    const [row] = await getDb().select({ updatedAt: travelSettingsTable.updatedAt }).from(travelSettingsTable).where(eq(travelSettingsTable.id, 1)).limit(1);
+    return row ? row.updatedAt.toISOString() : null;
+  } catch (err) {
+    log.error("travel", "Could not load when the travel settings were saved", { error: err as Error });
+    return null;
+  }
+}
+
 export async function saveTravelSettings(s: TravelSettings): Promise<void> {
   const values = { ...s, updatedAt: new Date() };
   await getDb()

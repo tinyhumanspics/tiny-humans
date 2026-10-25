@@ -1,6 +1,6 @@
 import { site } from "@/config/site";
-import { depositTerms, fillLegal, travelTerms, type LegalDocument, type LegalDynamicCopy } from "@/config/legal";
-import { getTravelSettings } from "@/lib/travel/server";
+import { depositTerms, fillLegal, termsUpdatedAt, travelTerms, type LegalDocument, type LegalDynamicCopy } from "@/config/legal";
+import { getTravelSettings, getTravelSettingsSavedAt } from "@/lib/travel/server";
 import { getDepositSettings, siteDeposit } from "@/lib/deposit/server";
 import { depositText } from "@/lib/deposit/copy";
 import { formatMoney } from "@/lib/pricing/engine";
@@ -28,9 +28,10 @@ const updatedDate = (iso: string, locale: AppLocale) =>
 
 /** Locale-ready Terms page with the current notice, travel and deposit settings from /admin. */
 export default async function TermsPageContent({ locale, messages, depositMessages, policyMessages }: Props) {
-  const [notice, travel, settings, deposit] = await Promise.all([
+  const [notice, travel, travelSavedAt, settings, deposit] = await Promise.all([
     getNoticeHoursSetting(),
     getTravelSettings(),
+    getTravelSettingsSavedAt(),
     getDepositSettings(),
     siteDeposit(),
   ]);
@@ -42,10 +43,10 @@ export default async function TermsPageContent({ locale, messages, depositMessag
       booking: depositText(depositMessages.booking, deposit),
       refunds: depositMessages.refunds,
     });
-    if (settings?.updatedAt && Date.parse(settings.updatedAt) > Date.parse(messages.terms.lastUpdatedIso)) {
-      terms = { ...terms, lastUpdated: updatedDate(settings.updatedAt, locale) };
-    }
   }
+  // "Last updated" follows the owner's latest save of what the Terms quote from /admin (deposit, travel fee)
+  const updated = termsUpdatedAt(messages.terms.lastUpdatedIso, [deposit ? settings?.updatedAt : null, travel ? travelSavedAt : null]);
+  if (updated) terms = { ...terms, lastUpdated: updatedDate(updated, locale) };
   const doc = fillLegal(terms, {
     notice: noticeLabel(notice, policyMessages),
     phone: site.contact.phone,

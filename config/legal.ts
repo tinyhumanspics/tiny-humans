@@ -60,3 +60,13 @@ export function travelTerms(doc: LegalDocument, paragraph: string): LegalDocumen
     ),
   };
 }
+
+/**
+ * The Terms' "Last updated" date: the latest owner save of a setting the Terms quote (deposit, travel fee) when it's
+ * newer than the written Terms' own date; null keeps the written date.
+ */
+export function termsUpdatedAt(writtenIso: string, saves: (string | null | undefined)[]): string | null {
+  const written = Date.parse(writtenIso);
+  const latest = Math.max(...saves.filter((d): d is string => Boolean(d)).map(Date.parse).filter(Number.isFinite), -Infinity);
+  return latest > written ? new Date(latest).toISOString() : null;
+}
