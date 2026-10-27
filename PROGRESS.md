@@ -204,7 +204,7 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
-- [x] **Travel fee (now $1.25 a mile after 40 free miles) — LIVE Oct 24 (`635023c`; owner saved it in /admin)** (owner, Oct 24; was $0.75), only for
+- [x] **Travel fee (now $1.25 a mile after 30 free miles) — LIVE Oct 24 (`635023c`; owner saved it in /admin)** (owner, Oct 24; was $0.75), only for
       new bookings. The price is a setting (/admin → Availability → Travel fee, table `travel_settings`): the landing
       FAQ, the Terms (EN + ES), the booking steps and the emails read it, so no copy changes. Existing bookings keep
       the fee stored on them (`bookings.travel_fee_cents`; payment links, deposit pages, reschedules and /admin use the
@@ -220,6 +220,18 @@ index.ts for client components; never submit a booking on production (block /api
       Oct 26, owner: lowered to **$1.25 a mile** after the 40 free miles ($1.75 cost leads; saved in /admin, no code).
       Live check: FAQ + Terms (EN + ES) say $1.25, no public page mentions $1.75 or $0.75; Terms "Last updated
       October 26, 2026" / "26 de octubre de 2026"; quotes 69 mi → $36, 231 mi → $238, 6 mi free.
+      Oct 27, owner: back to **30 free miles** (still $1.25; saved in /admin, no code). Live check: FAQ + Terms (EN +
+      ES) say 30 and $1.25, no page says 40 miles, $1.75 or $0.75; Terms "Last updated October 27, 2026" / "27 de
+      octubre de 2026"; quotes 69 mi → $48, 231 mi → $251, 6 mi free.
+- [x] **Sessions per day after a longer buffer — checked Oct 27, no code** (owner raised /admin → Availability →
+      "Buffer between sessions"; the number is only in Neon `booking_settings`, not public). Live calendar (read-only):
+      Mon + Tue 9:00–19:00, Thu 16:30–21:30, other days closed; starts every hour from opening; no bookings yet in the
+      30-day window. The buffer only has to fit between sessions (not before the first or after the last), and the
+      next start rounds up to the hourly grid, so for 1-hour sessions any buffer from 15 to 60 min gives the same day.
+      Most sessions per day (families booking back to back from opening) — Little Moments 60 / Our Little Story 120 /
+      Our Family Story 180 min: buffer ≤ 60 → Mon/Tue 5 / 3 / 2, Thu 3 / 2 / 1; buffer 75–120 → Mon/Tue 4 / 3 / 2,
+      Thu 2 / 1 / 1. Awkward picks can leave fewer (buffer 90: Little Moments at 11:00 + 16:00 fill a Monday). Each
+      extra baby adds 30 min.
 - [x] **Chalk drawings whole and off the letters — owner OK Oct 23 ("Looks perfect, you can push it")** (owner, Oct 22:
       on phone some drawings on the landing page looked unfinished and some sat on letters). Cause: the chalk texture is a
       mask, which paints only inside its element's box. The drawing after each section title was nudged above the
