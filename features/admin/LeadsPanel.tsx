@@ -454,6 +454,7 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
   // before the session these can still be sent, after a confirm (owner, Oct 7)
   const [early, setEarly] = useState<{ what: "done" | "gallery"; fn: () => Promise<Lead> } | null>(null);
   const [galleryUrl, setGalleryUrl] = useState("");
+  const [downloadPin, setDownloadPin] = useState("");
   const [peekUrl, setPeekUrl] = useState("");
   const [favorites, setFavorites] = useState(a.favorites ?? "");
   const run = async (what: string, fn: () => Promise<Lead>) => {
@@ -504,8 +505,10 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
         <div className={styles.adminReschedule}>
           <label htmlFor={`${id}-gallery`} className={cn(styles.label, "chalk-soft")}>Final gallery link (optional)</label>
           <input id={`${id}-gallery`} className={styles.input} type="url" inputMode="url" placeholder="https://…" value={galleryUrl} onChange={(e) => setGalleryUrl(e.target.value)} />
-          <p className={cn(styles.hintSmall, "chalk-soft")}>Sends a thank-you with a link to leave a review{a.payment.status !== "paid" && a.payment.amountCents > 0 ? `, plus a ${amount} payment button (still unpaid)` : ""}.</p>
-          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => sendOrConfirm("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined))}>
+          <label htmlFor={`${id}-pin`} className={cn(styles.label, "chalk-soft")}>Download PIN (optional)</label>
+          <input id={`${id}-pin`} className={styles.input} inputMode="numeric" autoComplete="off" maxLength={12} placeholder="1234" value={downloadPin} onChange={(e) => setDownloadPin(e.target.value)} />
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Sends a thank-you with a link to leave a review{downloadPin.trim() ? `, and the download PIN ${downloadPin.trim()}` : ""}{a.payment.status !== "paid" && a.payment.amountCents > 0 ? `, plus a ${amount} payment button (still unpaid)` : ""}.</p>
+          <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => sendOrConfirm("gallery", () => api.galleryDelivered(lead.reference, galleryUrl.trim() || undefined, downloadPin.trim() || undefined))}>
             {busy === "gallery" ? "Sending…" : a.gallery ? "Try again: Gallery delivered" : "Gallery delivered: send review request"}
           </button>
         </div>

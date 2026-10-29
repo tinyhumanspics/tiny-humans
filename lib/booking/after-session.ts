@@ -121,12 +121,12 @@ export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favor
   );
 }
 
-/** "Gallery delivered": review request + referral, and a pay button while the session is still unpaid. */
-export async function sendGalleryEmail(row: Booking, galleryUrl?: string) {
+/** "Gallery delivered": review request + referral (+ the download PIN if given), and a pay button while still unpaid. */
+export async function sendGalleryEmail(row: Booking, galleryUrl?: string, downloadPin?: string) {
   const amountCents = await balanceDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
-    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token, row.locale), galleryUrl, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token, row.locale), galleryUrl, downloadPin, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
   );
 }
 

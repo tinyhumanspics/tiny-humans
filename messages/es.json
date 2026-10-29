@@ -888,6 +888,8 @@
       "pixieset": "Encontrarás el enlace de tu galería en el correo de Pixieset, nuestro servicio de galerías.",
       "viewGallery": "Ver mi galería",
       "galleryText": "Mira tu galería: {url}",
+      "pinTitle": "Tu PIN de descarga: {pin}",
+      "pinText": "Pixieset te lo pedirá cuando descargues tus fotos.",
       "reviewTitle": "¿Nos contarías cómo fue tu sesión?",
       "reviewText": "Solo toma un minuto y significa muchísimo para un pequeño negocio familiar como el nuestro.",
       "reviewButton": "Compartir mi experiencia",

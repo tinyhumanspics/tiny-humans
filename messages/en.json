@@ -888,6 +888,8 @@
       "pixieset": "You'll find your gallery link in the email from Pixieset, our gallery service.",
       "viewGallery": "View your gallery",
       "galleryText": "View your gallery: {url}",
+      "pinTitle": "Your download PIN: {pin}",
+      "pinText": "Pixieset asks for it when you download your photos.",
       "reviewTitle": "Would you tell us about your session?",
       "reviewText": "It takes about a minute, and it means the world to a small family business like ours.",
       "reviewButton": "Share your experience",

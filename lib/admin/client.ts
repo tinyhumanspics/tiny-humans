@@ -50,7 +50,7 @@ export interface AdminApi {
   deleteLead(reference: string): Promise<void>;
   /** After the session (server mode only). */
   sendSneakPeek(reference: string, galleryUrl: string, favorites: string): Promise<Lead>;
-  galleryDelivered(reference: string, galleryUrl?: string): Promise<Lead>;
+  galleryDelivered(reference: string, galleryUrl?: string, downloadPin?: string): Promise<Lead>;
   setReviewApproved(reference: string, approved: boolean): Promise<Lead>;
   setConsent(reference: string, change: { sms?: boolean; photos?: boolean }): Promise<Lead>;
   emailPaymentLink(reference: string): Promise<Lead>;
@@ -137,8 +137,8 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/deposit-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, email }) }))).lead,
   sendSneakPeek: async (reference, galleryUrl, favorites) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/after-session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, favorites }) }))).lead,
-  galleryDelivered: async (reference, galleryUrl) =>
-    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/gallery", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl }) }))).lead,
+  galleryDelivered: async (reference, galleryUrl, downloadPin) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/gallery", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, downloadPin }) }))).lead,
   setReviewApproved: async (reference, approved) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, approved }) }))).lead,
   setConsent: async (reference, change) =>
