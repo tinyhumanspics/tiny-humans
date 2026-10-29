@@ -204,6 +204,14 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Download PIN in the "Gallery delivered" email — owner OK Oct 29 ("push it")** (owner, Oct 29: Pixieset asks for a
+      PIN to download). /admin → Leads → After the Session: optional "Download PIN" box under the final gallery link
+      (`LeadsPanel.tsx`, 4–12 letters/numbers, checked in `/api/admin/leads/gallery`). The email shows a yellow dashed
+      box under "View your gallery" (also when no link was pasted) + a plain-text line, EN/ES from the booking's
+      language (`emails.gallery.pinTitle` / `pinText`). Owner picks: optional; email only (not saved in Neon, not
+      logged; no migration); under the button. Checks: unit test `tests/unit/gallery-email.test.ts`, e2e
+      `tests/e2e/admin-gallery-pin.spec.ts`, full e2e suite; local walk-through (`scripts/local-db` + fake Resend):
+      EN + ES leads sent with PIN 4821 (HTML + text), a 2-digit PIN refused with nothing sent.
 - [x] **Travel fee (now $1.25 a mile after 30 free miles) — LIVE Oct 24 (`635023c`; owner saved it in /admin)** (owner, Oct 24; was $0.75), only for
       new bookings. The price is a setting (/admin → Availability → Travel fee, table `travel_settings`): the landing
       FAQ, the Terms (EN + ES), the booking steps and the emails read it, so no copy changes. Existing bookings keep
