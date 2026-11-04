@@ -255,3 +255,10 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
   test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
   https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).
+- Unfinished bookings (`lib/unfinished/`, migration 0022, /admin → Unfinished bookings): the booking form saves the
+  parent's contact details when they leave a contact box (`POST /api/booking/draft`, always 204, never baby details)
+  and anonymous step counts (`/api/booking/funnel`; "booked" is counted server-side in the create route). Everything is
+  best effort: a missing table must never reach the form. The "What stopped you?" email is marketing (CAN-SPAM):
+  ChalkLayout `marketing` footer (ad note, mailing address, unsubscribe) + `List-Unsubscribe` one-click headers; it
+  can't be sent without the mailing address and never to `email_unsubscribes`. /unsubscribe needs a button press
+  (link scanners). Changing what's saved means changing the Privacy Policy and the note under the email box.

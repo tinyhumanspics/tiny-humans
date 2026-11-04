@@ -204,6 +204,30 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Unfinished bookings — owner OK Nov 3 ("It looks great, let's run it"; wording + screenshots approved)** (owner, Nov 3:
+      Meta shows 12 "checkouts" but nobody booked; wants their emails in /admin, a "What stopped you?" email and the
+      answers). Findings: Meta's InitiateCheckout fires when the /book calendar opens (`trackBeginBooking`), before any
+      contact field; nothing was saved before "Book my session", so those 12 emails don't exist anywhere (people who
+      pressed Book but didn't pay the $50 deposit are already in Leads as cancelled "Deposit not paid"). Owner picks:
+      save from a valid email (on leaving a contact box), owner presses Send (one or "everyone not contacted yet"),
+      anonymous step counts too, mailing address later (follow-ups stay off until it's saved in /admin).
+      Built: migration `0022_unfinished_bookings` (new tables only: `booking_drafts` one row per lower-cased email,
+      `email_unsubscribes`, `funnel_counts` per Miami day/step/bundle/source, `marketing_settings` id 1 =
+      mailing address); `lib/unfinished/` (server best effort: a missing table or error never reaches the form;
+      `summary.ts` pure + unit tested); `POST /api/booking/draft` + `/api/booking/funnel` (always 204, rate limited),
+      booking create marks the email's draft booked and counts "booked" server-side (deposit bookings too);
+      /admin → Unfinished bookings (`UnfinishedPanel.tsx`: step counts 7/30/90 days by source, reasons, families with
+      stage details/review/deposit, Call/Text/Email, send, remove); "What stopped you?" email
+      (`emails/UnfinishedBooking.tsx`, EN/ES by the visitor's language, CAN-SPAM footer in `ChalkLayout` `marketing`:
+      ad disclosure, mailing address, unsubscribe link, plus `List-Unsubscribe` + one-click POST headers);
+      /feedback + /unsubscribe (EN/ES, button press, never on open), `/api/feedback`, `/api/unsubscribe` (also RFC 8058
+      one-click); note under the email box + Privacy Policy sentences (EN/ES, date Nov 3); daily cron deletes drafts
+      after 12 months. Never baby details (e2e checks the request bodies).
+      Checks: typecheck, lint, 85 unit tests, full e2e (124 passed) + `tests/e2e/unfinished.spec.ts`; local walk-through
+      (`scripts/local-db` + fake Graph + fake Resend, Outlook mode): Meta-ad visitor saved with step/travel fee/campaign,
+      a booking left the list, address gate, EN + ES emails with headers, answer + unsubscribe + one-click shown in
+      /admin; with the tables hidden (= before the Neon step) booking, cron and /admin still work (banner).
+      **Before pushing:** owner runs `drizzle/0022_unfinished_bookings.sql` in the Neon SQL editor (safe twice).
 - [x] **Download PIN in the "Gallery delivered" email — owner OK Oct 29 ("push it")** (owner, Oct 29: Pixieset asks for a
       PIN to download). /admin → Leads → After the Session: optional "Download PIN" box under the final gallery link
       (`LeadsPanel.tsx`, 4–12 letters/numbers, checked in `/api/admin/leads/gallery`). The email shows a yellow dashed
@@ -1369,6 +1393,9 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Unfinished bookings (Nov 3):** ~~approve the wording + screenshots~~ (approved Nov 3); run migration 0022 in Neon; get a mailing address
+  (USPS PO Box, a UPS Store-type private mailbox or a virtual mailbox; CAN-SPAM) and save it in /admin → Unfinished
+  bookings before the first follow-up. Not legal advice: a lawyer can confirm the footer if the list grows.
 - **Next.js security patch (seen Oct 22):** `npm audit` flags next 16.0.0–16.4.0 (we run 16.4.0) as critical: remote code
   execution in the Image Optimization API with SVGs (GHSA-2464-fhr4-w9xw), Server Actions denial of service
   (GHSA-p3m5-59mp-jv5r), remote code execution in `use cache` functions returning typed arrays (GHSA-673q-mjm6-r5xr).
@@ -1683,6 +1710,13 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **Meta Graph API:** v26.0 released 2026-07-29 (current). https://developers.facebook.com/docs/graph-api/changelog/version26.0
 - **Meta domain verification:** Business Settings → Brand Safety → Domains → domain → Meta Tag Verification → Verify.
   https://developers.facebook.com/docs/sharing/domain-verification/verifying-your-domain
+- **Marketing email rules (Nov 3):** FTC CAN-SPAM guide: valid physical postal address (street, USPS PO box or a
+  private mailbox at a commercial mail receiving agency), clear opt-out honored within 10 business days and working
+  30 days, disclose that it's an ad, "primary purpose" decides commercial vs transactional; up to $53,088 per email.
+  https://www.ftc.gov/business-guidance/resources/can-spam-act-compliance-guide-business · Resend custom headers and
+  unsubscribe (bulk senders: `List-Unsubscribe` URL + `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, RFC 8058,
+  the POST returns 200): https://resend.com/docs/dashboard/emails/custom-headers ·
+  https://resend.com/docs/dashboard/emails/add-unsubscribe-to-transactional-emails
 
 ## Local test database
 **Oct 15:** the local sample bookings were shifted for the dashboard preview (session dates +7 days, booking dates spread
