@@ -316,8 +316,14 @@ export async function followUpAndReload(target: { id: string } | { all: true }, 
 
 async function draftByToken(token: string): Promise<BookingDraft | null> {
   if (!looksLikeCancelToken(token)) return null;
-  const [row] = await getDb().select().from(bookingDrafts).where(eq(bookingDrafts.linkTokenHash, hashCancelToken(token))).limit(1);
-  return row ?? null;
+  try {
+    const [row] = await getDb().select().from(bookingDrafts).where(eq(bookingDrafts.linkTokenHash, hashCancelToken(token))).limit(1);
+    return row ?? null;
+  } catch (err) {
+    // before migration 0022 no such email exists: the link just isn't valid
+    if (isMissingTable(err)) return null;
+    throw err;
+  }
 }
 
 /** /feedback?t=…: first name + any earlier answer. */
