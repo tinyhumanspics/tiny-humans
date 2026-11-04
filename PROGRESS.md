@@ -227,7 +227,13 @@ index.ts for client components; never submit a booking on production (block /api
       (`scripts/local-db` + fake Graph + fake Resend, Outlook mode): Meta-ad visitor saved with step/travel fee/campaign,
       a booking left the list, address gate, EN + ES emails with headers, answer + unsubscribe + one-click shown in
       /admin; with the tables hidden (= before the Neon step) booking, cron and /admin still work (banner).
-      **Before pushing:** owner runs `drizzle/0022_unfinished_bookings.sql` in the Neon SQL editor (safe twice).
+      **LIVE Nov 3** (`107cec7`, fix `538d3ba`: fake/early links answer 404, not 500, before the tables exist).
+      Production check (read-only, nothing saved): /, landing, /book, /privacy ("If you start a booking…", "Last
+      updated November 3, 2026"), /feedback, /unsubscribe, /admin/unfinished 200; owner APIs 401 signed out. Waiting for
+      the owner to run `drizzle/0022_unfinished_bookings.sql` in the Neon SQL editor (until then nothing is saved;
+      /admin shows the reminder). Seen the same day: every /es page is 404 and the home page has no hreflang = the
+      Spanish publication gate is off (switch or a readiness issue: new photo/box/seasonal offer/bundle without
+      Spanish); not caused by this change (the gate reads owner content only). Owner to check /admin → Settings.
 - [x] **Download PIN in the "Gallery delivered" email — owner OK Oct 29 ("push it")** (owner, Oct 29: Pixieset asks for a
       PIN to download). /admin → Leads → After the Session: optional "Download PIN" box under the final gallery link
       (`LeadsPanel.tsx`, 4–12 letters/numbers, checked in `/api/admin/leads/gallery`). The email shows a yellow dashed
