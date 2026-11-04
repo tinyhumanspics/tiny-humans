@@ -142,6 +142,8 @@
       "honeypot": "Leave this empty",
       "parentName": "Parent / guardian name",
       "email": "Email",
+      "saveNote": "We save your name, email and phone as you type, so we can follow up if you don't finish booking. See our {privacy}.",
+      "saveNotePrivacy": "Privacy Policy",
       "phone": "Phone",
       "address": {
         "title": "Where should we bring the studio?",
@@ -900,6 +902,26 @@
       "payButton": "Pay {amount}",
       "payText": "Pay {amount} by card: {url}"
     },
+    "unfinished": {
+      "subject": "Did something stop you, {name}?",
+      "subjectNoName": "Did something stop you?",
+      "preheader": "We'd love to know what got in the way of your booking.",
+      "eyebrow": "Your booking",
+      "title": "We'd love to have you with us, {name}",
+      "titleNoName": "We'd love to have you with us",
+      "intro": "We noticed you started booking {bundle} with Tiny Humans but didn't finish.",
+      "introNoBundle": "We noticed you started booking a session with Tiny Humans but didn't finish.",
+      "ask": "If something got in the way, would you tell us what? It takes less than a minute, and it helps us make booking easier for every family.",
+      "askButton": "Tell us what stopped you",
+      "askLine": "Tell us what stopped you: {url}",
+      "bookTitle": "Still thinking about it?",
+      "bookText": "Whenever you're ready, you can pick a date and time in a couple of minutes.",
+      "bookButton": "Finish booking",
+      "bookLine": "Finish booking: {url}",
+      "adNote": "This is a marketing email from Tiny Humans. You're getting it because you started a booking on our website.",
+      "unsubscribe": "Unsubscribe",
+      "unsubscribeLine": "Unsubscribe: {url}"
+    },
     "paymentLink": {
       "subject": "Your Tiny Humans payment link",
       "preheader": "Pay for your session whenever it suits you, before or after.",
@@ -949,6 +971,49 @@
         "help": "Something went wrong with the payment? Just reply to this email and we'll help."
       }
     }
+  },
+  "feedback": {
+    "metaTitle": "What stopped you? · Tiny Humans",
+    "loading": "Loading…",
+    "invalidTitle": "This link isn't working",
+    "invalidText": "Please use the link in your most recent Tiny Humans email, or just reply to that email and tell us there.",
+    "eyebrow": "Your booking",
+    "title": "What stopped you, {name}?",
+    "titleNoName": "What stopped you?",
+    "intro": "Tap everything that applies. Your answer comes straight to us and helps us make booking easier for every family.",
+    "reasonsLabel": "What got in the way?",
+    "reasons": {
+      "price": "The price",
+      "travel_fee": "The travel fee",
+      "dates": "The dates or times didn't work for me",
+      "trust": "I wanted to see more photos or reviews first",
+      "not_ready": "I'm not ready yet, or baby isn't here yet",
+      "other_photographer": "I chose another photographer",
+      "other": "Something else"
+    },
+    "commentLabel": "Anything else you'd like to tell us?",
+    "submit": "Send my answer",
+    "sending": "Sending…",
+    "doneTitle": "Thank you, {name}!",
+    "doneTitleNoName": "Thank you!",
+    "doneText": "We read every answer. If you'd like to talk, just reply to our email and we'll get back to you.",
+    "bundlesLink": "See our bundles",
+    "errors": {
+      "reason": "Pick at least one answer, or tell us in the box below.",
+      "failed": "We couldn't send your answer. Please try again."
+    }
+  },
+  "unsubscribe": {
+    "metaTitle": "Unsubscribe · Tiny Humans",
+    "title": "Unsubscribe from our emails",
+    "text": "Press the button and we won't send you any more marketing emails. If you book a session, you'll still get the emails about it.",
+    "button": "Unsubscribe",
+    "sending": "One moment…",
+    "doneTitle": "You're unsubscribed",
+    "doneText": "We won't send you any more marketing emails. Thank you for your interest in Tiny Humans.",
+    "invalidTitle": "This link isn't working",
+    "invalidText": "Reply to our email and we'll remove your address by hand.",
+    "failed": "Something went wrong. Please try again."
   },
   "review": {
     "metaTitle": "Share your experience",
@@ -1197,7 +1262,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "October 15, 2026",
+      "lastUpdated": "November 3, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
@@ -1207,6 +1272,7 @@
             "When you book a session, you give us:",
             { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
+            "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked, your ZIP code and how far you got, so we can follow up. We don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",
             "During your session we take photographs of your baby and, depending on your package, your family.",
             "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. Our host also gives us anonymous visitor statistics (Vercel Web Analytics and Speed Insights) so we can count visits and see how quickly our pages load; they record things like the page, your type of device and browser and your approximate location, and they don't identify you. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below)."
           ]
@@ -1215,7 +1281,7 @@
           "id": "use",
           "heading": "How we use your information",
           "body": [
-            { "list": ["To schedule, prepare for and travel to your session at your home", "To contact you about your booking, including reminders and any changes", "To edit and deliver your photos through your online gallery", "To keep business records we're required to keep", "To keep our website working and secure, including limiting repeated requests from the same connection", "To understand which ads and links bring families to us, and to measure and improve our ads on Facebook and Instagram"] },
+            { "list": ["To schedule, prepare for and travel to your session at your home", "To contact you about your booking, including reminders and any changes", "To edit and deliver your photos through your online gallery", "To keep business records we're required to keep", "To keep our website working and secure, including limiting repeated requests from the same connection", "To understand which ads and links bring families to us, and to measure and improve our ads on Facebook and Instagram", "If you started a booking but didn't finish it, to email you about it and ask what stopped you (these emails always have an unsubscribe link, and we stop as soon as you use it)"] },
             "We never sell or rent your information."
           ]
         },
@@ -1259,7 +1325,7 @@
         {
           "id": "retention",
           "heading": "How long we keep information",
-          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time."]
+          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time. Contact details from a booking you didn't finish are deleted after 12 months."]
         },
         {
           "id": "security",

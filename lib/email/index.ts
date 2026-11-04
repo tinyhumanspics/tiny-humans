@@ -15,3 +15,4 @@ export { paymentLinkEmail } from "@/emails/PaymentLink";
 export { depositAbandonedEmail } from "@/emails/DepositAbandoned";
 export { depositLinkEmail } from "@/emails/DepositLink";
 export { dayClosedEmail } from "@/emails/DayClosed";
+export { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";

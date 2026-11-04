@@ -718,3 +718,88 @@ export const adminAuth = pgTable("admin_auth", {
   userHandle: text("user_handle"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * Unfinished bookings: the parent's contact details, saved while they fill the booking form (from a valid email on),
+ * one row per email (`email_key` = lower-cased). Never any baby details. Booking with that email sets
+ * `booked_reference`; the owner sends one "What stopped you?" email from /admin, whose link token (hash only) opens
+ * /feedback and /unsubscribe. Migration 0022; until it runs, nothing is saved and bookings work as before.
+ */
+export const bookingDrafts = pgTable(
+  "booking_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    emailKey: text("email_key").notNull().unique(),
+    email: text("email").notNull(),
+    parentName: text("parent_name"),
+    phone: text("phone"),
+    bundleId: text("bundle_id"),
+    bundleName: text("bundle_name"),
+    sessionDate: date("session_date"),
+    /** "HH:MM", Miami time. */
+    startTime: text("start_time"),
+    zip: text("zip"),
+    /** The travel fee for that ZIP when they were on the form. */
+    travelFeeCents: integer("travel_fee_cents"),
+    /** Furthest step reached: "details" | "review". */
+    step: text("step").notNull().default("details"),
+    locale: text("locale").$type<AppLocale>().notNull().default("en"),
+    /** Where they came from (as in /admin Leads, e.g. "Meta ads") and the ad campaign name. */
+    source: text("source"),
+    campaign: text("campaign"),
+    /** Separate visits to the booking form with this email. */
+    attempts: integer("attempts").notNull().default(1),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    /** Last time they typed on the form. */
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    bookedReference: text("booked_reference"),
+    bookedAt: timestamp("booked_at", { withTimezone: true }),
+    /** The "What stopped you?" email: "sending" | "sent" | "failed". */
+    followUpStatus: text("follow_up_status"),
+    followUpError: text("follow_up_error"),
+    followUpAttempts: integer("follow_up_attempts").notNull().default(0),
+    followUpSentAt: timestamp("follow_up_sent_at", { withTimezone: true }),
+    followUpResendId: text("follow_up_resend_id"),
+    /** SHA-256 of the token in that email's links. */
+    linkTokenHash: text("link_token_hash").unique(),
+    feedbackReasons: text("feedback_reasons").array(),
+    feedbackComment: text("feedback_comment"),
+    feedbackAt: timestamp("feedback_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("booking_drafts_updated_idx").on(t.updatedAt),
+    check("booking_drafts_step_check", sql`${t.step} in ('details', 'review')`),
+    check("booking_drafts_follow_up_check", sql`${t.followUpStatus} is null or ${t.followUpStatus} in ('sending', 'sent', 'failed')`),
+  ],
+);
+
+export type BookingDraft = typeof bookingDrafts.$inferSelect;
+
+/** Emails that asked for no more marketing emails (lower-cased). Checked before every follow-up. */
+export const emailUnsubscribes = pgTable("email_unsubscribes", {
+  emailKey: text("email_key").primaryKey(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * Anonymous booking-form step counts per Miami day (no names, emails, IPs or ids): how many visits reached each step,
+ * by bundle and by source ("Meta ads", "Direct", …). Steps: config/unfinished.ts FUNNEL_STEPS.
+ */
+export const funnelCounts = pgTable(
+  "funnel_counts",
+  {
+    day: date("day").notNull(),
+    step: text("step").notNull(),
+    bundleId: text("bundle_id").notNull(),
+    source: text("source").notNull(),
+    count: integer("count").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.day, t.step, t.bundleId, t.source] })],
+);
+
+/** Owner settings for marketing emails, one row (id 1): the mailing address CAN-SPAM requires in the footer. */
+export const marketingSettings = pgTable("marketing_settings", {
+  id: smallint("id").primaryKey(),
+  mailingAddress: text("mailing_address"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

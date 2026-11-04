@@ -11,11 +11,19 @@ const HEAD_CSS = `@import url('https://fonts.googleapis.com/css2?family=Schoolbe
 :root{color-scheme:light only;supported-color-schemes:light only}
 @media (max-width:620px){ .th-pad{padding-left:20px!important;padding-right:20px!important} .th-h1{font-size:28px!important} }`;
 
+/** Marketing emails only (CAN-SPAM): says it's an ad, why they got it, an unsubscribe link and our mailing address. */
+export interface MarketingFooter {
+  note: string;
+  unsubscribeLabel: string;
+  unsubscribeUrl: string;
+  mailingAddress: string;
+}
+
 /**
  * Customer email layout: chalkboard green, chalk-white text, yellow/blue chalk accents, the active website theme's
  * logo and doodle strips. Children are block rows from ./blocks.
  */
-export function ChalkLayout({ theme: t, images, locale, preheader, children }: { theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; preheader: string; children: ReactNode }) {
+export function ChalkLayout({ theme: t, images, locale, preheader, marketing, children }: { theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; preheader: string; marketing?: MarketingFooter; children: ReactNode }) {
   const m = emailMessages(locale).layout;
   const logoW = 220;
   const logoH = Math.round((images.logo.height * logoW) / images.logo.width);
@@ -68,6 +76,17 @@ export function ChalkLayout({ theme: t, images, locale, preheader, children }: {
                         {site.social.instagram.handle ?? site.social.instagram.label}
                       </a>
                     </p>
+                    {marketing && (
+                      <>
+                        <p style={{ ...footerText, margin: "0 0 4px" }}>{marketing.note}</p>
+                        <p style={{ ...footerText, margin: "0 0 4px" }}>{marketing.mailingAddress}</p>
+                        <p style={{ ...footerText, margin: "0 0 8px" }}>
+                          <a href={marketing.unsubscribeUrl} style={link}>
+                            {marketing.unsubscribeLabel}
+                          </a>
+                        </p>
+                      </>
+                    )}
                   </td>
                 </tr>
                 <tr>

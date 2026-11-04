@@ -8,6 +8,7 @@ import { allow, clientIp } from "@/lib/rate-limit";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { FBC_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
 import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
+import { countFunnelStep, markDraftBooked } from "@/lib/unfinished/server";
 import { site } from "@/config/site";
 import { scheduleHref } from "@/config/booking";
 import { cookies } from "next/headers";
@@ -70,6 +71,11 @@ export async function POST(req: Request) {
           client: { ip: ((ip) => (ip === "unknown" ? undefined : ip))(clientIp(req)), userAgent: req.headers.get("user-agent") ?? undefined, fbp: jar.get("_fbp")?.value, fbc: jar.get("_fbc")?.value ?? jar.get(FBC_COOKIE)?.value },
         }),
       );
+    }
+    // this family is no longer an unfinished booking (best effort, after the response)
+    if (booking.status !== "mock") {
+      const source = jar.get(SOURCE_COOKIE)?.value;
+      after(() => Promise.all([markDraftBooked(r.contact.email, booking.id), countFunnelStep("booked", r.bundleId, source)]));
     }
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {

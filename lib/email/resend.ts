@@ -55,6 +55,8 @@ export interface OutgoingEmail {
   /** Same key = Resend won't send twice (e.g. on retries). */
   idempotencyKey?: string;
   reference?: string;
+  /** Extra headers, e.g. List-Unsubscribe on marketing emails. */
+  headers?: Record<string, string>;
 }
 
 /** Sends one email. Returns the Resend message id; throws EmailSendError (no secrets) on failure. */
@@ -72,6 +74,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
         html: email.html,
         text: email.text,
         replyTo: email.replyTo,
+        headers: email.headers,
         attachments: email.attachments?.map((a) => ({ filename: a.filename, content: a.content, contentType: a.contentType, contentId: a.contentId })),
         // "booking" lets the delivery webhook (lib/email/delivery.ts) find the lead an email was about
         tags: [{ name: "category", value: email.scope.replace(/[^a-zA-Z0-9_-]/g, "_") }, ...(isTagValue(email.reference) ? [{ name: "booking", value: email.reference }] : [])],

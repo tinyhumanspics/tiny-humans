@@ -15,6 +15,7 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
 import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights";
 import LeadsPanel from "./LeadsPanel";
+import UnfinishedPanel from "./UnfinishedPanel";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import SeasonalPanel from "./SeasonalPanel";
@@ -113,6 +114,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
 
       {section === "dashboard" && <Dashboard api={api} settings={settings} />}
       {section === "leads" && <LeadsPanel api={api} />}
+      {section === "unfinished" && <UnfinishedPanel api={api} />}
       {section === "availability" && <AvailabilityPanel api={api} />}
       {section === "pricing" && <PricingPanel api={api} />}
       {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}

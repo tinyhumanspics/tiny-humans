@@ -22,7 +22,7 @@ export async function generateViewport(): Promise<Viewport> {
 }
 
 /** Pages families open straight from an email or from Stripe: they see their page at once, never the intro. */
-const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop"];
+const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop", "/feedback", "/unsubscribe"];
 
 /**
  * Runs before first paint: decides whether the chalk intro plays.

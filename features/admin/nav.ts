@@ -1,10 +1,11 @@
 /** Owner area sections and navigation (shared by the admin shell and dashboard). */
-export type AdminSection = "dashboard" | "leads" | "availability" | "pricing" | "seasonal" | "photos" | "theme" | "settings";
+export type AdminSection = "dashboard" | "leads" | "unfinished" | "availability" | "pricing" | "seasonal" | "photos" | "theme" | "settings";
 
 /** Admin navigation: one place to move between sections. */
 export const ADMIN_NAV: { id: AdminSection; label: string; href: string; blurb: string }[] = [
   { id: "dashboard", label: "Dashboard", href: "/admin", blurb: "Overview" },
   { id: "leads", label: "Leads", href: "/admin/leads", blurb: "Every booking: details, reschedule, cancel, delete." },
+  { id: "unfinished", label: "Unfinished bookings", href: "/admin/unfinished", blurb: "Families who started booking but didn't finish, where they stopped and why." },
   { id: "availability", label: "Availability", href: "/admin/availability", blurb: "Weekly hours, booking rules, special dates, time blocks." },
   { id: "pricing", label: "Pricing & Promotions", href: "/admin/pricing", blurb: "Bundles, prices, special offers and discount codes." },
   { id: "seasonal", label: "Seasonal Landing", href: "/admin/seasonal", blurb: "Baby’s First Thanksgiving and Baby’s First Christmas offers and cutoff dates." },

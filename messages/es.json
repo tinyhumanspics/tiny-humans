@@ -310,6 +310,8 @@
       "honeypot": "Deja este campo vacío",
       "parentName": "Nombre del padre, madre o tutor",
       "email": "Correo electrónico",
+      "saveNote": "Guardamos tu nombre, correo y teléfono mientras escribes, para poder escribirte si no terminas la reserva. Consulta nuestra {privacy}.",
+      "saveNotePrivacy": "Política de privacidad",
       "phone": "Teléfono",
       "address": {
         "title": "¿Dónde debemos llevar el estudio?",
@@ -900,6 +902,26 @@
       "payButton": "Pagar {amount}",
       "payText": "Paga {amount} con tarjeta: {url}"
     },
+    "unfinished": {
+      "subject": "¿Algo te detuvo, {name}?",
+      "subjectNoName": "¿Algo te detuvo?",
+      "preheader": "Nos encantaría saber qué te impidió terminar tu reserva.",
+      "eyebrow": "Tu reserva",
+      "title": "Nos encantaría tenerte con nosotros, {name}",
+      "titleNoName": "Nos encantaría tenerte con nosotros",
+      "intro": "Vimos que empezaste a reservar {bundle} con Tiny Humans, pero no terminaste.",
+      "introNoBundle": "Vimos que empezaste a reservar una sesión con Tiny Humans, pero no terminaste.",
+      "ask": "Si algo te lo impidió, ¿nos contarías qué fue? Toma menos de un minuto y nos ayuda a que reservar sea más fácil para todas las familias.",
+      "askButton": "Cuéntanos qué pasó",
+      "askLine": "Cuéntanos qué pasó: {url}",
+      "bookTitle": "¿Todavía lo estás pensando?",
+      "bookText": "Cuando quieras, puedes elegir fecha y hora en un par de minutos.",
+      "bookButton": "Terminar mi reserva",
+      "bookLine": "Termina tu reserva: {url}",
+      "adNote": "Este es un correo de marketing de Tiny Humans. Lo recibes porque empezaste una reserva en nuestro sitio web.",
+      "unsubscribe": "Cancelar suscripción",
+      "unsubscribeLine": "Cancelar suscripción: {url}"
+    },
     "paymentLink": {
       "subject": "Tu enlace de pago de Tiny Humans",
       "preheader": "Paga tu sesión cuando te convenga, antes o después.",
@@ -949,6 +971,49 @@
         "help": "¿Hubo algún problema con el pago? Responde a este correo y te ayudaremos."
       }
     }
+  },
+  "feedback": {
+    "metaTitle": "¿Qué te detuvo? · Tiny Humans",
+    "loading": "Cargando…",
+    "invalidTitle": "Este enlace no funciona",
+    "invalidText": "Usa el enlace de tu correo más reciente de Tiny Humans, o simplemente responde a ese correo y cuéntanos allí.",
+    "eyebrow": "Tu reserva",
+    "title": "¿Qué te detuvo, {name}?",
+    "titleNoName": "¿Qué te detuvo?",
+    "intro": "Toca todo lo que aplique. Tu respuesta nos llega directamente y nos ayuda a que reservar sea más fácil para todas las familias.",
+    "reasonsLabel": "¿Qué te lo impidió?",
+    "reasons": {
+      "price": "El precio",
+      "travel_fee": "El cargo de viaje",
+      "dates": "Las fechas u horarios no me funcionaban",
+      "trust": "Quería ver más fotos o reseñas primero",
+      "not_ready": "Todavía no es el momento, o el bebé aún no ha nacido",
+      "other_photographer": "Elegí a otro fotógrafo",
+      "other": "Otra cosa"
+    },
+    "commentLabel": "¿Hay algo más que quieras contarnos?",
+    "submit": "Enviar mi respuesta",
+    "sending": "Enviando…",
+    "doneTitle": "¡Gracias, {name}!",
+    "doneTitleNoName": "¡Gracias!",
+    "doneText": "Leemos cada respuesta. Si quieres conversar, responde a nuestro correo y te contestaremos.",
+    "bundlesLink": "Ver nuestros paquetes",
+    "errors": {
+      "reason": "Elige al menos una respuesta, o cuéntanos en el cuadro de abajo.",
+      "failed": "No pudimos enviar tu respuesta. Inténtalo de nuevo."
+    }
+  },
+  "unsubscribe": {
+    "metaTitle": "Cancelar suscripción · Tiny Humans",
+    "title": "Cancelar la suscripción a nuestros correos",
+    "text": "Presiona el botón y no te enviaremos más correos de marketing. Si reservas una sesión, igual recibirás los correos sobre tu reserva.",
+    "button": "Cancelar suscripción",
+    "sending": "Un momento…",
+    "doneTitle": "Cancelaste tu suscripción",
+    "doneText": "No te enviaremos más correos de marketing. Gracias por tu interés en Tiny Humans.",
+    "invalidTitle": "Este enlace no funciona",
+    "invalidText": "Responde a nuestro correo y quitaremos tu dirección manualmente.",
+    "failed": "Algo salió mal. Inténtalo de nuevo."
   },
   "review": {
     "metaTitle": "Comparte tu experiencia",
@@ -1197,7 +1262,7 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "15 de octubre de 2026",
+      "lastUpdated": "3 de noviembre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
@@ -1207,6 +1272,7 @@
             "Cuando reservas una sesión, nos das:",
             { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
+            "Si empiezas una reserva y no la terminas, guardamos el nombre, el correo electrónico y el teléfono que escribiste, el paquete, la fecha y la hora que elegiste, tu código postal y hasta qué paso llegaste, para poder escribirte. No guardamos los datos de tu bebé de una reserva que no terminaste. También contamos cuántos visitantes llegan a cada paso del formulario de reserva, sin nombres, correos ni nada que te identifique.",
             "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia.",
             "Como la mayoría de los sitios web, nuestro proveedor de alojamiento registra automáticamente información técnica básica cuando nos visitas, como el tipo de navegador, las páginas que ves y tu dirección IP. Nuestro proveedor de alojamiento también nos da estadísticas anónimas de visitas (Vercel Web Analytics y Speed Insights) para contar las visitas y ver qué tan rápido cargan nuestras páginas; registran datos como la página, tu tipo de dispositivo y navegador y tu ubicación aproximada, y no te identifican. También usamos herramientas de medición publicitaria de Meta (consulta la sección «Publicidad y medición» más abajo)."
           ]
@@ -1215,7 +1281,7 @@
           "id": "use",
           "heading": "Cómo usamos tu información",
           "body": [
-            { "list": ["Para programar y preparar tu sesión en casa, y trasladarnos hasta allí", "Para comunicarnos contigo sobre tu reserva, incluidos recordatorios y cualquier cambio", "Para editar y entregar tus fotos mediante tu galería en línea", "Para mantener los registros comerciales que debemos conservar", "Para mantener nuestro sitio web en funcionamiento y protegido, incluido limitar solicitudes repetidas desde la misma conexión", "Para entender qué anuncios y enlaces atraen familias a nuestro sitio, y medir y mejorar nuestros anuncios en Facebook e Instagram"] },
+            { "list": ["Para programar y preparar tu sesión en casa, y trasladarnos hasta allí", "Para comunicarnos contigo sobre tu reserva, incluidos recordatorios y cualquier cambio", "Para editar y entregar tus fotos mediante tu galería en línea", "Para mantener los registros comerciales que debemos conservar", "Para mantener nuestro sitio web en funcionamiento y protegido, incluido limitar solicitudes repetidas desde la misma conexión", "Para entender qué anuncios y enlaces atraen familias a nuestro sitio, y medir y mejorar nuestros anuncios en Facebook e Instagram", "Si empezaste una reserva y no la terminaste, para escribirte al respecto y preguntarte qué te detuvo (estos correos siempre tienen un enlace para cancelar la suscripción, y dejamos de escribirte en cuanto lo usas)"] },
             "Nunca vendemos ni alquilamos tu información."
           ]
         },
@@ -1259,7 +1325,7 @@
         {
           "id": "retention",
           "heading": "Cuánto tiempo conservamos la información",
-          "body": ["Conservamos la información de la reserva durante el tiempo necesario para brindar tu sesión y cumplir con nuestras obligaciones legales y contables. Conservamos las fotos de tu sesión durante un tiempo limitado después de entregarlas, para poder ayudarte si pierdes acceso a tu galería. Puedes pedirnos en cualquier momento que eliminemos antes tus fotos o tu información."]
+          "body": ["Conservamos la información de la reserva durante el tiempo necesario para brindar tu sesión y cumplir con nuestras obligaciones legales y contables. Conservamos las fotos de tu sesión durante un tiempo limitado después de entregarlas, para poder ayudarte si pierdes acceso a tu galería. Puedes pedirnos en cualquier momento que eliminemos antes tus fotos o tu información. Los datos de contacto de una reserva que no terminaste se eliminan después de 12 meses."]
         },
         {
           "id": "security",

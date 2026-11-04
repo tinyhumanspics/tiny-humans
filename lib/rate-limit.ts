@@ -32,6 +32,12 @@ export const RULES = {
   pay: { limit: 30, windowSec: 600 },
   reviewGet: { limit: 40, windowSec: 600 },
   reviewPost: { limit: 10, windowSec: 600 },
+  // unfinished bookings: saves while typing on the booking form, step counts, "What stopped you?", unsubscribe
+  draft: { limit: 40, windowSec: 600 },
+  funnel: { limit: 60, windowSec: 600 },
+  feedbackGet: { limit: 40, windowSec: 600 },
+  feedbackPost: { limit: 10, windowSec: 600 },
+  unsubscribe: { limit: 20, windowSec: 600 },
   // browser Content-Security-Policy reports (a page with several blocked items sends several)
   cspReport: { limit: 60, windowSec: 600 },
   // owner login: per IP, and across all IPs (slows a distributed password-guessing attempt)

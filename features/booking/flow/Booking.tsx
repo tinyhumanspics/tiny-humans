@@ -23,6 +23,7 @@ import DetailsForm from "./steps/DetailsForm";
 import ReviewStep from "./steps/ReviewStep";
 import { flowDurationLabel } from "./booking-state";
 import { useBookingFlow } from "./useBookingFlow";
+import { localePath } from "@/i18n/path";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 
@@ -113,6 +114,8 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                       contact={state.contact}
                       errors={state.fieldErrors}
                       onChange={(field, value) => dispatch({ type: "contact", field, value })}
+                      onBlurField={flow.onContactBlur}
+                      privacyHref={localePath("/privacy", locale)}
                       babies={state.babies}
                       babyErrors={state.babyErrors}
                       onBabyChange={(index, field, value) => dispatch({ type: "baby", index, field, value })}

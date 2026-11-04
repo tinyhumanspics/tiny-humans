@@ -10,6 +10,7 @@ import type { DepositSettings } from "@/lib/deposit/types";
 import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
+import type { FollowUpResult, UnfinishedData } from "@/lib/unfinished/types";
 
 /** What the owner area needs: the /api/admin routes. */
 export interface AdminApi {
@@ -62,7 +63,19 @@ export interface AdminApi {
   deleteBundle(id: string): Promise<AdminBundle[]>;
   saveCode(c: CodeInput): Promise<DiscountCode[]>;
   deleteCode(id: string): Promise<DiscountCode[]>;
+  /* unfinished bookings (owner only); `period` = step counts' days + source */
+  getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
+  saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
+  deleteUnfinished(id: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
+  sendUnfinishedFollowUp(target: { id: string } | { all: true }, period: UnfinishedPeriod): Promise<FollowUpResult>;
 }
+
+export interface UnfinishedPeriod {
+  days: number;
+  source: string | null;
+}
+const periodQuery = (p: UnfinishedPeriod, extra: Record<string, string> = {}) =>
+  new URLSearchParams({ days: String(p.days), ...(p.source ? { source: p.source } : {}), ...extra }).toString();
 
 async function json<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
@@ -147,6 +160,12 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
   checkPayment: async (reference) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
+  getUnfinished: async (period) => json(await fetch(`/api/admin/unfinished?${periodQuery(period)}`, { cache: "no-store" })),
+  saveMailingAddress: async (mailingAddress, period) =>
+    json(await fetch(`/api/admin/unfinished?${periodQuery(period)}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ mailingAddress }) })),
+  deleteUnfinished: async (id, period) => json(await fetch(`/api/admin/unfinished?${periodQuery(period, { id })}`, { method: "DELETE" })),
+  sendUnfinishedFollowUp: async (target, period) =>
+    json(await fetch(`/api/admin/unfinished/follow-up?${periodQuery(period)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(target) })),
 };
 
 export function getAdminApi(): AdminApi {

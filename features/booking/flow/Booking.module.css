@@ -656,3 +656,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 /* ---------- deposit (review step + the page after Stripe) ---------- */
 .depositNote { margin: 14px 0 0; max-width: 36em; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }
 .depositActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+
+/* the note under the email box: room for the Privacy Policy link's wavy underline inside the chalk mask */
+.fieldNote { padding-bottom: 0.45em; }

@@ -15,6 +15,8 @@ import type { DepositOffer } from "@/lib/deposit/types";
 import { INTRO_DONE_EVENT } from "@/components/layout/Reveal/Reveal";
 import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
+import { countBookingStep, looksLikeEmail, saveBookingDraft } from "@/lib/unfinished/client";
+import type { ContactDraft } from "./booking-state";
 import { extraBabyLine, type BookingBaby } from "@/lib/booking/extra-babies";
 import { BOOKING_LANGUAGE_SWITCH_EVENT, consumeBookingLanguageDraft, saveBookingLanguageDraft } from "@/lib/booking/language-draft";
 import type { AppLocale } from "@/i18n/config";
@@ -280,6 +282,49 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle?.id]);
 
+  // /admin step counts (no names or emails): which screen each visit reached; "Book my session" is counted by the server
+  useEffect(() => {
+    if (!bundle || state.status === "done") return;
+    const reached = { [STEP.date]: "calendar", [STEP.time]: "date", [STEP.details]: "time", [STEP.review]: "details" } as const;
+    const step = reached[state.step as keyof typeof reached];
+    if (step) countBookingStep(step, bundle.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bundle?.id, state.step, state.status]);
+
+  // /admin → Unfinished bookings: the parent's contact details, saved when they leave a contact box and on the review
+  // step (the Privacy Policy says so under the email box). Never baby details.
+  const savedEmail = useRef<string | null>(null);
+  const lastDraft = useRef("");
+  const saveDraft = (step: "details" | "review") => {
+    const c = state.contact;
+    const email = c.email.trim();
+    if (!bundle || state.status !== "editing" || !looksLikeEmail(email)) return;
+    const draft = {
+      email,
+      parentName: c.parentName.trim() || undefined,
+      phone: c.phone.trim() || undefined,
+      bundleId: bundle.id,
+      date: state.slot?.date ?? state.date ?? undefined,
+      start: state.slot?.start,
+      zip: /^\d{5}$/.test(zip) ? zip : undefined,
+      step,
+      locale,
+      replaces: savedEmail.current && savedEmail.current.toLowerCase() !== email.toLowerCase() ? savedEmail.current : undefined,
+    };
+    const key = JSON.stringify(draft);
+    if (key === lastDraft.current) return;
+    lastDraft.current = key;
+    savedEmail.current = email;
+    saveBookingDraft(draft);
+  };
+  const onContactBlur = (field: keyof ContactDraft) => {
+    if (field === "email" || field === "parentName" || field === "phone" || field === "zip") saveDraft("details");
+  };
+  useEffect(() => {
+    if (state.step === STEP.review) saveDraft("review");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.step]);
+
   const next = () => {
     switch (state.step) {
       case STEP.date:
@@ -391,7 +436,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     inspiration, bundle, today, addon, quote, setQuote, zip, travel, travelChecking, travelFee,
     backdrops, setBackdrops, setups, appliedCode, setAppliedCode, checkingBabyCount, changeBabyCount,
     depositOffer, redirecting, bundleCents, beforeTravelCents, totalCents, depositCents, deposit,
-    goTo, goBack, next, submit, daySlots,
+    goTo, goBack, next, submit, daySlots, onContactBlur,
   };
 }
 

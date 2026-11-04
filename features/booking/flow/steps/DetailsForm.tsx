@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { site } from "@/config/site";
 import { babyAgeOptions, babyGenders } from "@/config/booking";
 import type { Bundle } from "@/lib/pricing/types";
@@ -82,10 +82,16 @@ export default function DetailsForm({
   onBackdrops,
   setups,
   messages,
+  onBlurField,
+  privacyHref,
 }: {
   contact: ContactDraft;
   errors: ContactErrors;
   onChange: (field: keyof ContactDraft, value: string) => void;
+  /** They left a box (unfinished bookings are saved then). */
+  onBlurField?: (field: keyof ContactDraft) => void;
+  /** Privacy Policy in this language (linked from the note under the email box). */
+  privacyHref: string;
   babies: BabyDraft[];
   babyErrors: string[];
   onBabyChange: (index: number, field: keyof BabyDraft, value: string) => void;
@@ -106,12 +112,15 @@ export default function DetailsForm({
 }) {
   /** Newborns up to 2 years for now: the note under the age box, split around the email link. */
   const olderNote = messages.baby.olderNote.split("{email}");
+  /** Under the email box: what is saved while they type (owner, Nov 3), split around the Privacy Policy link. */
+  const saveNote = messages.saveNote.split("{privacy}");
   const field = (
     name: keyof ContactDraft,
     label: string,
-    opts: { type?: string; autoComplete?: string; optional?: boolean; inputMode?: "tel" | "email" | "text" | "numeric"; maxLength?: number } = {},
+    opts: { type?: string; autoComplete?: string; optional?: boolean; inputMode?: "tel" | "email" | "text" | "numeric"; maxLength?: number; note?: ReactNode } = {},
   ) => {
     const errId = `field-${name}-error`;
+    const noteId = `field-${name}-note`;
     return (
       <div className={styles.field}>
         <label htmlFor={`field-${name}`} className={cn(styles.label, "chalk-soft")}>
@@ -127,13 +136,19 @@ export default function DetailsForm({
           maxLength={opts.maxLength}
           value={contact[name]}
           onChange={(e) => onChange(name, e.target.value)}
+          onBlur={() => onBlurField?.(name)}
           aria-invalid={Boolean(errors[name])}
-          aria-describedby={errors[name] ? errId : undefined}
+          aria-describedby={[errors[name] && errId, opts.note && noteId].filter(Boolean).join(" ") || undefined}
           required={!opts.optional}
         />
         {errors[name] && (
           <p id={errId} className={cn(styles.fieldError, "chalk-soft")}>
             {errors[name]}
+          </p>
+        )}
+        {opts.note && (
+          <p id={noteId} className={cn(styles.optional, styles.fieldNote, "chalk-soft")}>
+            {opts.note}
           </p>
         )}
       </div>
@@ -183,7 +198,7 @@ export default function DetailsForm({
         <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
       </div>
       {field("parentName", messages.parentName, { autoComplete: "name" })}
-      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email" })}
+      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email", note: <>{saveNote[0]}<a href={privacyHref} className={styles.inlineLink} target="_blank" rel="noopener">{messages.saveNotePrivacy}</a>{saveNote[1]}</> })}
       {field("phone", messages.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
       <div className={cn(styles.fieldWide, styles.homeBlock)}>
         <p className={cn(styles.homeTitle, "chalk-soft")}>{messages.address.title}</p>
