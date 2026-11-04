@@ -11,6 +11,7 @@ import { backdropNames } from "@/lib/booking/backdrop-names";
 import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/features/booking/RescheduleFlow";
+import { smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
@@ -676,19 +677,6 @@ function DepositLinkPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi;
     </div>
   );
 }
-
-/** US numbers as +1XXXXXXXXXX for tel:/sms: links. */
-function dialNumber(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  return digits.length === 10 ? `+1${digits}` : `+${digits}`;
-}
-
-/** "sms:" link that opens Messages with the text filled in (works on iPhone and Android). */
-function smsHref(phone: string, body: string): string {
-  return `sms:${dialNumber(phone)}?&body=${encodeURIComponent(body)}`;
-}
-
-const telHref = (phone: string) => `tel:${dialNumber(phone)}`;
 
 /** Google Maps search link (opens the Maps app on a phone): https://developers.google.com/maps/documentation/urls/get-started */
 const mapsHref = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
