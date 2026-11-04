@@ -229,9 +229,10 @@ index.ts for client components; never submit a booking on production (block /api
       /admin; with the tables hidden (= before the Neon step) booking, cron and /admin still work (banner).
       **LIVE Nov 3** (`107cec7`, fix `538d3ba`: fake/early links answer 404, not 500, before the tables exist).
       Production check (read-only, nothing saved): /, landing, /book, /privacy ("If you start a booking…", "Last
-      updated November 3, 2026"), /feedback, /unsubscribe, /admin/unfinished 200; owner APIs 401 signed out. Waiting for
-      the owner to run `drizzle/0022_unfinished_bookings.sql` in the Neon SQL editor (until then nothing is saved;
-      /admin shows the reminder). Seen the same day: every /es page is 404 and the home page has no hreflang = the
+      updated November 3, 2026"), /feedback, /unsubscribe, /admin/unfinished 200; owner APIs 401 signed out. Owner ran
+      `drizzle/0022_unfinished_bookings.sql` in the Neon SQL editor (Nov 3, "Done"); it can't be confirmed from outside
+      (public answers are the same either way): the owner checks that /admin → Unfinished bookings no longer shows the
+      reminder. Seen the same day: every /es page is 404 and the home page has no hreflang = the
       Spanish publication gate is off (switch or a readiness issue: new photo/box/seasonal offer/bundle without
       Spanish); not caused by this change (the gate reads owner content only). Owner to check /admin → Settings.
 - [x] **Download PIN in the "Gallery delivered" email — owner OK Oct 29 ("push it")** (owner, Oct 29: Pixieset asks for a
@@ -1399,7 +1400,7 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
-- **Unfinished bookings (Nov 3):** ~~approve the wording + screenshots~~ (approved Nov 3); run migration 0022 in Neon; get a mailing address
+- **Unfinished bookings (Nov 3):** ~~approve the wording + screenshots~~ (approved Nov 3); ~~run migration 0022 in Neon~~ (owner, Nov 3); get a mailing address
   (USPS PO Box, a UPS Store-type private mailbox or a virtual mailbox; CAN-SPAM) and save it in /admin → Unfinished
   bookings before the first follow-up. Not legal advice: a lawyer can confirm the footer if the list grows.
 - **Next.js security patch (seen Oct 22):** `npm audit` flags next 16.0.0–16.4.0 (we run 16.4.0) as critical: remote code
