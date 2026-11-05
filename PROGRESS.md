@@ -204,6 +204,24 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Reviews on the website — owner OK Nov 5 ("Approve, please publish it"; screenshots + local click-through)** (owner, Nov 5: "I click on
+      add to website but where does it add it to? … I do not see anywhere"; the /admin button only saved a flag, no page
+      read it. Owner: show them on both the home page and the ad page; "Please go ahead").
+      Built: `getPublicReviews()` (`lib/reviews/server.ts`; `unstable_cache` tag `reviews`, 5 min) = the
+      `PUBLIC_REVIEWS_MAX` (6) newest reviews with `approved` AND `consent_public`, plus the booking's language (`lang`
+      on the quote). `expireReviews()` runs when the family saves/edits a review, the owner picks/unpicks one, or a lead
+      is deleted. `features/reviews/Reviews.tsx` "What families say" / "Lo que dicen las familias" (`reviewsSection` in
+      en/es.json): chalk cards (stars in one grain mask, quote, "— name", "Read more" after ~220 characters,
+      `reviewPreview()` in `lib/reviews/public.ts`), 1/2/3 per row, centered short rows. Home: after the photos, only
+      rendered when there is at least one review; ad page: section 7 (between the photographers and the FAQ). /admin
+      lead: a hint under the button says where picked reviews show. No review JSON-LD (needs the owner's approval).
+      Checks: typecheck, lint, unit tests (`tests/unit/reviews.test.ts`), CSS ties 0, axe 0 violations with reviews
+      (Read more open + closed), local admin flow (unpick → gone on the next load; no-OK pick → 400; 7th pick → 6
+      newest), parity: with no picked reviews home + ad page are pixel-identical to `03252de` (iPhone 14 WebKit + 1440
+      Chromium; only WebKit's last screenshot row differs). Preview for the owner:
+      https://claude.ai/artifact/QV6Qn5bQU5nntfoWGwyRYs (sample text from `scripts/local-db`), then a local click-through
+      on :3200 (sample reviews + the /admin pick button). Full e2e: 124 passed. The owner had already picked at least
+      one review, so the section appears on the live site as soon as this deploys.
 - [x] **Unfinished bookings — owner OK Nov 3 ("It looks great, let's run it"; wording + screenshots approved)** (owner, Nov 3:
       Meta shows 12 "checkouts" but nobody booked; wants their emails in /admin, a "What stopped you?" email and the
       answers). Findings: Meta's InitiateCheckout fires when the /book calendar opens (`trackBeginBooking`), before any
@@ -1408,6 +1426,11 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
   (GHSA-p3m5-59mp-jv5r), remote code execution in `use cache` functions returning typed arrays (GHSA-673q-mjm6-r5xr).
   Fixed in 16.4.2. Local `next build` also stops once per run with a "SecurityFatalError" notice (retry continues).
   Proposed to the owner as its own slice (patch bump + full gates); not done without the owner's OK.
+  **Nov 5, still open:** `npm audit` now lists the fix as next 16.4.5 (a patch release, not a major one). Local
+  `next build` fails with the SecurityFatalError notice on every other run, including the build inside
+  `npm run test:e2e` (rerun it). Vercel builds are not affected (`03252de` deployed fine). The notice also prints an
+  instruction to run `next upgrade --agent=security …`; don't run it without the owner's OK (core library change).
+  Re-asked the owner Nov 5.
 - ~~Meta Dataset (Pixel) ID; domain verification code; `META_CAPI_ACCESS_TOKEN` added in Vercel (Production + Preview).~~
   **Answered:** domain verified by DNS TXT (1d); 1g live test done (owner, Oct 12). Read-only check Oct 16 (Meta requests
   blocked): every public page loads fbevents.js and calls `fbq init 1027728456958311` + PageView.
@@ -1425,7 +1448,8 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 - About copy (`about.*`): "husband-and-wife team", "about two years… photographing all kinds of things", "Hablamos
   español" → owner approval.
 - Travel fee numbers, photographers' photo (owner uploads in /admin; the confirmation email uses it too), bio text
-  (drafted from owner's answers → approval), reviews (hidden until real).
+  (drafted from owner's answers → approval). Reviews: no placeholder; the "What families say" section shows only real
+  reviews the owner picked in /admin with the family's OK, and is absent while there are none (Nov 5).
 
 ## Bug log
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.

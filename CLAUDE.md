@@ -262,3 +262,7 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   ChalkLayout `marketing` footer (ad note, mailing address, unsubscribe) + `List-Unsubscribe` one-click headers; it
   can't be sent without the mailing address and never to `email_unsubscribes`. /unsubscribe needs a button press
   (link scanners). Changing what's saved means changing the Privacy Policy and the note under the email box.
+- Website reviews ("What families say", home after the photos + ad page section 7): `getPublicReviews()`
+  (`lib/reviews/server.ts`, cache tag `reviews`) = the 6 newest reviews with `approved` AND `consent_public`. Anything
+  that changes a review, its pick or deletes a lead calls `expireReviews()`. No picked reviews = no section (pages stay
+  exactly as before). Never add review JSON-LD or star ratings to search data without the owner's approval.
