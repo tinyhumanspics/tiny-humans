@@ -19,6 +19,8 @@ import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
+import Reviews from "@/features/reviews/Reviews";
+import type { PublicReview } from "@/lib/reviews/public";
 import { activeOffer, toCents } from "@/lib/pricing/engine";
 import { requestBookingScroll } from "@/lib/scroll/booking";
 import { trackSelectBundle } from "@/lib/tracking/client";
@@ -60,27 +62,32 @@ function paymentCopy(deposit: SiteDeposit | null, t: typeof en.landing, d: typeo
 
 /**
  * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off), both from /admin >
- * Availability; `deposit`: the deposit paid while booking (null = none), from /admin > Pricing & Promotions.
+ * Availability; `deposit`: the deposit paid while booking (null = none), from /admin > Pricing & Promotions;
+ * `reviews`: the reviews picked in /admin > Leads (none = no reviews section).
  */
 export default function LandingPage({
   noticeHours,
   travel,
   deposit = null,
+  reviews = [],
   messages = en.landing,
   bundleMessages = en.bundlesPage,
   photoMessages = en.photoPlaceholder,
   depositMessages = en.deposit.landing,
   noticeMessages = en.policy,
+  reviewMessages = en.reviewsSection,
   locale = "en",
 }: {
   noticeHours: number;
   travel: TravelSettings | null;
   deposit?: SiteDeposit | null;
+  reviews?: PublicReview[];
   messages?: typeof en.landing;
   bundleMessages?: typeof en.bundlesPage;
   photoMessages?: typeof en.photoPlaceholder;
   depositMessages?: typeof en.deposit.landing;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
+  reviewMessages?: typeof en.reviewsSection;
   locale?: AppLocale;
 }) {
   const t = messages;
@@ -268,7 +275,8 @@ export default function LandingPage({
         </Reveal>
       </section>
 
-      {/* 7. Reviews: hidden until real reviews exist */}
+      {/* 7. Reviews: only the ones picked in /admin (the family said OK); nothing while there are none */}
+      <Reviews reviews={reviews} messages={reviewMessages} placement="landing" />
 
       {/* 8. FAQ */}
       <section className={cn("container", styles.section)} aria-labelledby="landing-faq">

@@ -6,6 +6,7 @@ import { depositText } from "@/lib/deposit/copy";
 import { siteDeposit } from "@/lib/deposit/server";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { getTravelSettings } from "@/lib/travel/server";
+import { getPublicReviews } from "@/lib/reviews/server";
 import es from "@/messages/es.json";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,6 +21,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [noticeHours, travel, deposit] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit()]);
-  return <LandingPage noticeHours={noticeHours} travel={travel} deposit={deposit} messages={es.landing} bundleMessages={es.bundlesPage} photoMessages={es.photoPlaceholder} depositMessages={es.deposit.landing} noticeMessages={es.policy} locale="es" />;
+  const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
+  return <LandingPage noticeHours={noticeHours} travel={travel} deposit={deposit} reviews={reviews} messages={es.landing} bundleMessages={es.bundlesPage} photoMessages={es.photoPlaceholder} depositMessages={es.deposit.landing} noticeMessages={es.policy} reviewMessages={es.reviewsSection} locale="es" />;
 }

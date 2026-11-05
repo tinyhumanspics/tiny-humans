@@ -1,0 +1,66 @@
+/* Home: right after the photos (their section already leaves room above). Ad landing page: like its other sections.
+   Only top/bottom padding here: the global .container class sets the side padding. */
+.section[data-placement="home"] { padding-bottom: clamp(64px, 9vw, 110px); }
+.section[data-placement="landing"] { padding-top: clamp(56px, 9vw, 110px); }
+
+/* Centered rows: 1 card per row on phones, 2 on tablets, 3 on desktops (2 + 2 for four reviews). Cards don't grow,
+   so a short last row keeps the same card width and sits in the middle. */
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(26px, 3.4vw, 36px);
+}
+.item { flex: 0 1 100%; max-width: 620px; }
+@media (min-width: 700px) {
+  .item { flex-basis: calc(50% - 18px); }
+  .list[data-count="1"] .item { flex-basis: 100%; }
+}
+@media (min-width: 1024px) {
+  .list:not([data-count="1"], [data-count="2"], [data-count="4"]) .item { flex-basis: calc(33.333% - 24px); max-width: none; }
+}
+
+/* a little hand-pinned tilt, like the photographers' box */
+.card { height: 100%; padding: 24px 24px 22px; rotate: 0.4deg; --chalkbox-opacity: 0.8; }
+.item:nth-child(even) .card { rotate: -0.5deg; }
+
+.figure { position: relative; margin: 0; height: 100%; display: flex; flex-direction: column; gap: 12px; }
+
+/* big chalk quote mark in the card's top corner (inside the card, so the chalk texture shows all of it) */
+.mark {
+  position: absolute;
+  top: 4px;
+  right: 16px;
+  font-family: var(--font-chalk);
+  font-size: 5.2rem;
+  line-height: 1;
+  color: var(--accent-2);
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.stars { display: inline-flex; gap: 4px; align-self: flex-start; padding: 2px; margin: -2px; }
+.stars svg { display: block; }
+
+.quote { margin: 0; color: var(--chalk-white); font-size: 1.2rem; line-height: 1.45; }
+.quote p { margin: 0; white-space: pre-line; overflow-wrap: anywhere; }
+
+.more {
+  align-self: flex-start;
+  margin: -4px 0 0;
+  padding: 2px 0;
+  border: 0;
+  background: none;
+  font-family: var(--font-chalk);
+  font-size: 1.15rem;
+  color: var(--cloud-blue);
+  text-decoration: underline dashed 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.more:focus-visible { outline: 2px solid var(--sun-yellow); outline-offset: 3px; border-radius: 4px; }
+
+.name { margin-top: auto; padding-top: 4px; font-family: var(--font-chalk); font-size: 1.4rem; line-height: 1.2; color: var(--sun-yellow); }

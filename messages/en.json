@@ -1049,6 +1049,14 @@
     "invalidText": "This review link isn't valid anymore. Reply to your Tiny Humans email and we'll help.",
     "home": "Back to Tiny Humans"
   },
+  "reviewsSection": {
+    "title": "What families say",
+    "subtitle": "Reviews from families we've photographed, in their own words.",
+    "rating": "Rated {rating} out of 5",
+    "signature": "— {name}",
+    "more": "Read more",
+    "less": "Show less"
+  },
   "pay": {
     "metaTitle": "Payment",
     "paid": {

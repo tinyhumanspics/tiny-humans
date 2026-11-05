@@ -6,6 +6,7 @@ import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { siteDeposit } from "@/lib/deposit/server";
 import { depositText } from "@/lib/deposit/copy";
 import { getTravelSettings } from "@/lib/travel/server";
+import { getPublicReviews } from "@/lib/reviews/server";
 import { pageMetadata } from "@/lib/seo/metadata";
 import { getSpanishPublication } from "@/i18n/publication";
 
@@ -22,17 +23,19 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page() {
-  const [noticeHours, travel, deposit] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit()]);
+  const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
   return (
     <LandingPage
       noticeHours={noticeHours}
       travel={travel}
       deposit={deposit}
+      reviews={reviews}
       messages={en.landing}
       bundleMessages={en.bundlesPage}
       photoMessages={en.photoPlaceholder}
       depositMessages={en.deposit.landing}
       noticeMessages={en.policy}
+      reviewMessages={en.reviewsSection}
       locale="en"
     />
   );

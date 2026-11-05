@@ -16,6 +16,7 @@ import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import { babiesLabel } from "@/lib/booking/extra-babies";
+import { PUBLIC_REVIEWS_MAX } from "@/lib/reviews/public";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
@@ -526,9 +527,14 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
             {a.review.approved ? " · Picked for the website" : ""}
           </p>
           {a.review.consentPublic && (
-            <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("review", () => api.setReviewApproved(lead.reference, !a.review!.approved))}>
-              {busy === "review" ? "Saving…" : a.review.approved ? "Don't use on the website" : "Use on the website"}
-            </button>
+            <>
+              <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => run("review", () => api.setReviewApproved(lead.reference, !a.review!.approved))}>
+                {busy === "review" ? "Saving…" : a.review.approved ? "Don't use on the website" : "Use on the website"}
+              </button>
+              <p className={cn(styles.hintSmall, "chalk-soft")}>
+                Picked reviews show under “What families say” on the home page and the ad page ({PUBLIC_REVIEWS_MAX} newest).
+              </p>
+            </>
           )}
         </div>
       )}

@@ -1049,6 +1049,14 @@
     "invalidText": "Este enlace para dejar una reseña ya no es válido. Responde a tu correo de Tiny Humans y te ayudaremos.",
     "home": "Volver a Tiny Humans"
   },
+  "reviewsSection": {
+    "title": "Lo que dicen las familias",
+    "subtitle": "Reseñas de familias que hemos fotografiado, en sus propias palabras.",
+    "rating": "Calificación: {rating} de 5",
+    "signature": "— {name}",
+    "more": "Leer más",
+    "less": "Ver menos"
+  },
   "pay": {
     "metaTitle": "Pago",
     "paid": {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Hero from "@/features/home/Hero";
 import Portfolio from "@/features/home/Portfolio";
+import Reviews from "@/features/reviews/Reviews";
+import { getPublicReviews } from "@/lib/reviews/server";
 import { DEFAULT_SITE_TITLE_ES, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
 import es from "@/messages/es.json";
@@ -14,13 +16,15 @@ export const metadata: Metadata = pageMetadata({
   translations: true,
 });
 
-export default function SpanishHomePage() {
+export default async function SpanishHomePage() {
+  const reviews = await getPublicReviews();
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd("es")) }} />
       <main id="top">
         <Hero messages={es.home.hero} locale="es" />
         <Portfolio messages={es.home.portfolio} locale="es" />
+        {reviews.length > 0 && <Reviews reviews={reviews} messages={es.reviewsSection} placement="home" />}
       </main>
     </>
   );

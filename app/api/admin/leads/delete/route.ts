@@ -4,6 +4,7 @@ import { isAdmin } from "@/lib/admin/auth";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { BookingError } from "@/lib/booking/errors";
 import { deleteLeadPermanently, getLeadRow } from "@/lib/leads/server";
+import { expireReviews } from "@/lib/reviews/server";
 import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +20,7 @@ export async function POST(req: Request) {
   if (!row) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
   try {
     await deleteLeadPermanently(row);
+    expireReviews(); // its review (if picked) leaves the website too
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: `Nothing was deleted: ${err.message}` }, { status: err.status });
