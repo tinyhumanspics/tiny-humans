@@ -43,7 +43,7 @@ const PERIODS = [7, 30, 90];
 
 /** /admin → Unfinished bookings: where visitors stop, why (their answers), the families to follow up with. */
 export default function UnfinishedPanel({ api }: { api: AdminApi }) {
-  const [period, setPeriod] = useState<UnfinishedPeriod>({ days: 30, source: null });
+  const [period, setPeriod] = useState<UnfinishedPeriod>({ days: 7, source: null });
   const [data, setData] = useState<UnfinishedData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);

@@ -149,7 +149,7 @@ const data = (over: Partial<UnfinishedData> = {}): UnfinishedData => ({
   answered: 1,
   reasons: [{ reason: "travel_fee", count: 1 }],
   funnel: {
-    days: 30,
+    days: 7,
     source: null,
     sources: ["Meta ads", "Direct"],
     steps: [
@@ -206,6 +206,9 @@ test("/admin → Unfinished bookings: step counts, answers, and the email only o
 
   await page.goto("/admin/unfinished");
   await expect(page.getByRole("heading", { name: "Unfinished bookings", level: 1 })).toBeVisible();
+  // opens on the last 7 days (owner, Nov 6)
+  await expect(page.getByRole("button", { name: "Last 7 days" })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => periods[0]).toBe("7|");
   await expect(page.getByText("Opened the calendar (what Meta counts as a checkout)")).toBeVisible();
   await expect(page.getByText("2 · 17%")).toBeVisible();
   await expect(page.getByText("Maria Lopez")).toBeVisible();
@@ -226,6 +229,6 @@ test("/admin → Unfinished bookings: step counts, answers, and the email only o
   expect(sent).toEqual([{ id: "6f1d2c3b-1111-4222-8333-944455556666" }]);
 
   await page.getByLabel("From").selectOption("Meta ads");
-  await page.getByRole("button", { name: "Last 7 days" }).click();
-  await expect.poll(() => periods.at(-1)).toBe("7|Meta ads");
+  await page.getByRole("button", { name: "Last 30 days" }).click();
+  await expect.poll(() => periods.at(-1)).toBe("30|Meta ads");
 });

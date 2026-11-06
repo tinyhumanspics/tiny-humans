@@ -67,10 +67,10 @@ describe("unfinished bookings: step counts and answers", () => {
     expect(needsFollowUp({ followUp: { status: "failed", at: null, error: "x" }, unsubscribed: false })).toBe(false);
     expect(needsFollowUp({ followUp: null, unsubscribed: true })).toBe(false);
   });
-  test("the period defaults to 30 days and only allows 7, 30 or 90", () => {
-    expect(periodOf(new URL("https://x.test/a"))).toEqual({ days: 30, source: null });
-    expect(periodOf(new URL("https://x.test/a?days=7&source=Meta%20ads"))).toEqual({ days: 7, source: "Meta ads" });
-    expect(periodOf(new URL("https://x.test/a?days=365"))).toEqual({ days: 30, source: null });
+  test("the period defaults to 7 days and only allows 7, 30 or 90", () => {
+    expect(periodOf(new URL("https://x.test/a"))).toEqual({ days: 7, source: null });
+    expect(periodOf(new URL("https://x.test/a?days=30&source=Meta%20ads"))).toEqual({ days: 30, source: "Meta ads" });
+    expect(periodOf(new URL("https://x.test/a?days=365"))).toEqual({ days: 7, source: null });
   });
   test("half-typed emails aren't saved", () => {
     expect(looksLikeEmail("maria@gmail.com")).toBe(true);
