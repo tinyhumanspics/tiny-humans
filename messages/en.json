@@ -1270,7 +1270,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "November 3, 2026",
+      "lastUpdated": "November 9, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
@@ -1281,7 +1281,7 @@
             { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
             "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked, your ZIP code and how far you got, so we can follow up. We don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",
-            "During your session we take photographs of your baby and, depending on your package, your family.",
+            "During your session we take photographs of your baby and, depending on your package, your family. If you sign our photo and video release at your session, we keep your name, whether you're the parent or legal guardian, your signature, the choices you made and when you signed, together with your booking.",
             "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. Our host also gives us anonymous visitor statistics (Vercel Web Analytics and Speed Insights) so we can count visits and see how quickly our pages load; they record things like the page, your type of device and browser and your approximate location, and they don't identify you. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below)."
           ]
         },
@@ -1296,14 +1296,14 @@
         {
           "id": "photos",
           "heading": "Photos of your family",
-          "body": ["Your photos belong in your family's memories first. We will only show photos from your session in our portfolio, on this website or on social media (such as Instagram) if you give us permission. You can change your mind at any time, and we'll stop using them for anything new."]
+          "body": ["Your photos belong in your family's memories first. We only use photos and videos from your session on this website and in our portfolio, on our social media (such as Instagram and Facebook) or in our ads on Facebook and Instagram if a parent or legal guardian gives us permission. At your session we ask you to sign a short photo and video release on our iPad, where you choose exactly where we may use them. We never share your last name or your address, and we never tag your location. You can change your mind at any time: text or email us, and we'll stop using them in anything new and take them off our website and any running ads within 7 days."]
         },
         {
           "id": "advertising",
           "heading": "Advertising and measurement (Meta)",
           "body": [
             "We advertise on Facebook and Instagram. To measure how our ads work, we use the Meta Pixel on our website and the Meta Conversions API from our server, both provided by Meta Platforms, Inc.",
-            { "list": ["When you visit our website, the Meta Pixel may collect the pages you view, actions such as choosing a bundle or starting and completing a booking, and technical information such as your IP address and browser. It uses cookies (see below).", "When you complete a booking, we send Meta a booking event with the bundle and price, together with your email address, phone number, name, city, state and ZIP code in hashed (scrambled) form, plus your IP address and browser details, so Meta can match the booking to an ad and show our ads to people more likely to be interested.", "We never send your baby's name, age, notes or photos to Meta or any other advertising service."] },
+            { "list": ["When you visit our website, the Meta Pixel may collect the pages you view, actions such as choosing a bundle or starting and completing a booking, and technical information such as your IP address and browser. It uses cookies (see below).", "When you complete a booking, we send Meta a booking event with the bundle and price, together with your email address, phone number, name, city, state and ZIP code in hashed (scrambled) form, plus your IP address and browser details, so Meta can match the booking to an ad and show our ads to people more likely to be interested.", "The information our website sends to Meta to measure our ads never includes your baby's name, age or notes. Photos or videos from your session appear in our ads on Facebook and Instagram only if you said yes to ads in the photo release you signed."] },
             "Meta uses this information as described in its Privacy Policy (facebook.com/privacy/policy). You can control the ads you see in your Facebook and Instagram ad settings (facebook.com/adpreferences), and you can block or delete cookies in your browser settings."
           ]
         },
@@ -1333,7 +1333,7 @@
         {
           "id": "retention",
           "heading": "How long we keep information",
-          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time. Contact details from a booking you didn't finish are deleted after 12 months."]
+          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time. Contact details from a booking you didn't finish are deleted after 12 months. We keep signed photo releases as our record of your permission, even after a booking is deleted."]
         },
         {
           "id": "security",
