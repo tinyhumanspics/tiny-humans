@@ -284,7 +284,6 @@
 .adminReschedule { width: 100%; padding: 12px; border: 2px dashed var(--sun-yellow); border-radius: 12px; }
 
 /* ---------- admin shell: navigation + sections ---------- */
-.pageWide { max-width: 1240px; }
 .areaName { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--chalk-muted); }
 /* menu on the left (AdminMenu): a column beside the page on a computer, a panel from the left on a phone */
 .topbarStart { display: flex; align-items: center; gap: 12px; min-width: 0; }
@@ -297,6 +296,12 @@
 .shell { margin-top: 10px; }
 .shellWithMenu { display: grid; grid-template-columns: 214px minmax(0, 1fr); gap: clamp(22px, 2.6vw, 36px); align-items: start; }
 .shellMain { min-width: 0; }
+/* laptop/desktop: the menu at the far left, the page to the right edge (the site's centered column is lifted) */
+.shellWide { grid-template-columns: 236px minmax(0, 1fr); gap: clamp(32px, 3vw, 56px); }
+:global(main.container):has(.shellWide),
+:global(body):has(.shellWide) :global(header .container) { max-width: none; padding-left: max(24px, env(safe-area-inset-left, 0px)); padding-right: max(32px, env(safe-area-inset-right, 0px)); }
+/* the seasonal doodles live in the side margins, which the full-width page now uses */
+:global(body):has(.shellWide) :global([data-margin-decor]) { display: none; }
 .sidebar {
   position: sticky; top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 16px);
   max-height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px) - 32px); overflow-y: auto; overscroll-behavior: contain;

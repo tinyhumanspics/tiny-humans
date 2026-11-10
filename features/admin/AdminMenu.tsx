@@ -8,14 +8,26 @@ import styles from "./Admin.module.css";
 
 /** Below this width there's no room beside the page: the menu opens as a panel from the left instead. */
 const PHONE_QUERY = "(max-width: 899px)";
+/**
+ * A laptop or desktop (wide window, mouse or trackpad): the menu is always shown at the far left and the page uses the
+ * whole width (owner, Nov 10). iPads (touch) and narrower windows keep the centered page with "« Hide".
+ */
+const LAPTOP_QUERY = "(min-width: 1200px) and (hover: hover) and (pointer: fine)";
 const STORAGE_KEY = "tinyhumans.adminMenu";
 
-const subscribePhone = (onChange: () => void) => {
-  const query = window.matchMedia(PHONE_QUERY);
-  query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
-};
-const isPhoneNow = () => window.matchMedia(PHONE_QUERY).matches;
+function mediaStore(queryText: string) {
+  return {
+    subscribe: (onChange: () => void) => {
+      const query = window.matchMedia(queryText);
+      query.addEventListener("change", onChange);
+      return () => query.removeEventListener("change", onChange);
+    },
+    now: () => window.matchMedia(queryText).matches,
+  };
+}
+const phoneStore = mediaStore(PHONE_QUERY);
+const laptopStore = mediaStore(LAPTOP_QUERY);
+const never = () => false;
 
 /** "Hide menu" is remembered on this device (each section is its own page, so the menu is drawn again on every click). */
 let hiddenCache: boolean | null = null;
@@ -40,18 +52,20 @@ function writeHidden(hidden: boolean) {
 
 /**
  * The owner area's frame (owner, Nov 10): the sections as a menu on the left instead of a row that scrolls sideways.
- * Computer: a column beside the page that stays in view while scrolling; "Hide" folds it away (remembered on this
- * device) and "☰ Menu" brings it back. Phone and small tablet: "☰ Menu" opens the same list as a panel from the left
- * (native modal <dialog>: the page behind is inert, Escape or a tap outside closes it, focus returns to the button).
+ * Laptop/desktop: the menu is always at the far left and the page fills the rest of the screen. iPad sideways and
+ * narrower computer windows: a column beside the centered page; "Hide" folds it away (remembered on this device) and
+ * "☰ Menu" brings it back. Phone and iPad upright: "☰ Menu" opens the same list as a panel from the left (native
+ * modal <dialog>: the page behind is inert, Escape or a tap outside closes it, focus returns to the button).
  */
 export default function AdminMenu({ section, onSignOut, children }: { section: AdminSection; onSignOut: () => void; children: ReactNode }) {
-  const phone = useSyncExternalStore(subscribePhone, isPhoneNow, () => false);
+  const phone = useSyncExternalStore(phoneStore.subscribe, phoneStore.now, never);
+  const laptop = useSyncExternalStore(laptopStore.subscribe, laptopStore.now, never);
   const [hidden, setHidden] = useState(readHidden);
   const [open, setOpen] = useState(false);
   const menuButton = useRef<HTMLButtonElement>(null);
   const hideButton = useRef<HTMLButtonElement>(null);
   const focusNext = useRef<"menu" | "hide" | null>(null);
-  const sidebar = !phone && !hidden;
+  const sidebar = laptop || (!phone && !hidden);
 
   useEffect(() => {
     if (focusNext.current === "menu") menuButton.current?.focus();
@@ -101,14 +115,16 @@ export default function AdminMenu({ section, onSignOut, children }: { section: A
         </div>
         <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={onSignOut}>Sign out</button>
       </div>
-      <div className={cn(styles.shell, sidebar ? styles.shellWithMenu : "")}>
+      <div className={cn(styles.shell, sidebar ? styles.shellWithMenu : "", laptop ? styles.shellWide : "")}>
         {sidebar && (
           <aside id="admin-sidebar" className={styles.sidebar}>
             <div className={styles.sidebarHead}>
               <span className={cn(styles.sidebarTitle, "chalk-soft")} aria-hidden="true">Menu</span>
-              <button ref={hideButton} type="button" className={cn(styles.linkButton, styles.hideButton, "chalk-soft")} aria-expanded="true" aria-controls="admin-sidebar" onClick={() => toggle(true)}>
-                <span aria-hidden="true">«</span> Hide<span className={styles.visuallyHidden}> menu</span>
-              </button>
+              {!laptop && (
+                <button ref={hideButton} type="button" className={cn(styles.linkButton, styles.hideButton, "chalk-soft")} aria-expanded="true" aria-controls="admin-sidebar" onClick={() => toggle(true)}>
+                  <span aria-hidden="true">«</span> Hide<span className={styles.visuallyHidden}> menu</span>
+                </button>
+              )}
             </div>
             {links}
           </aside>

@@ -15,12 +15,15 @@ const colorVar: Record<ScatterDoodle["color"], string> = {
   white: "var(--chalk-white)",
 };
 
-/** Seasonal chalk doodles in the page margins (wide screens only, never over content). */
+/**
+ * Seasonal chalk doodles in the page margins (wide screens only, never over content). `data-margin-decor`: pages that
+ * use the full width hide them (the owner area on a laptop, features/admin/Admin.module.css).
+ */
 export default function SeasonalDecor() {
   const { theme } = useSiteSettings();
   if (!theme.decorations.scatter.length) return null;
   return (
-    <div className={styles.layer} aria-hidden="true" key={theme.id}>
+    <div className={styles.layer} aria-hidden="true" data-margin-decor="" key={theme.id}>
       {theme.decorations.scatter.map((d, i) => (
         <span
           key={i}

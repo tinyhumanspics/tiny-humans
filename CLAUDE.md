@@ -254,10 +254,13 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   queries) + `lib/admin/dashboard-summary.ts` (pure counting, unit tested); charts are small chalk SVG components
   (`features/admin/DashboardInsights.tsx`, no chart library: Recharts measured 106 KB gzipped). Admin e2e tests fake the
   owner APIs with `tests/e2e/fixtures/admin.ts` (signed-in session + a sample lead).
-- Owner menu (owner, Nov 10): `features/admin/AdminMenu.tsx` draws the sections as a column on the left at 900 px and
-  wider (sticky; "« Hide" is remembered per device in localStorage `tinyhumans.adminMenu`) and, narrower, as a panel
-  from the left on a native modal `<dialog>` behind "☰ Menu". Keep `<nav aria-label="Owner area">` and the ADMIN_NAV
-  order (e2e tests use both); on phone sizes the nav only exists while the panel is open.
+- Owner menu (owner, Nov 10): `features/admin/AdminMenu.tsx`. Laptop/desktop (`min-width: 1200px` + hover + fine
+  pointer): menu always shown at the far left, no Hide, and the page, header and topbar use the full width (Admin.module.css
+  lifts `main.container`/`header .container` with `:has(.shellWide)` and hides `[data-margin-decor]`, the SeasonalDecor
+  doodles that live in the side margins). iPad sideways / narrower windows (900 px+): sticky column beside the centered
+  page with "« Hide" (localStorage `tinyhumans.adminMenu`). Phone / iPad upright: "☰ Menu" opens a panel from the left
+  on a native modal `<dialog>`. Keep `<nav aria-label="Owner area">` and the ADMIN_NAV order (e2e tests use both); on
+  phone sizes the nav only exists while the panel is open.
 - Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
   test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
   https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).

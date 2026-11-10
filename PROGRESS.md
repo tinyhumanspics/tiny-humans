@@ -210,6 +210,12 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
       dialog: Escape, tap outside or ✕ closes; Sign out at the bottom). Same sections, order and chalk look; the old
       sideways row and its scroll memory are gone. Checks: typecheck, lint, 132 units, full e2e, css-ties 0 on 6 owner
       pages × iPhone 14/1440, before/after screenshots (local DB).
+      **Then full width on a computer (owner, Nov 10: "make the menu all the way to the far left… the rest from the menu
+      all the way to the right… do not hide it… only for laptop; phone and iPad we should be fine"):** laptop/desktop
+      (≥ 1200 px with a mouse/trackpad) = menu always shown at the far left, no Hide, page + site header stretched to
+      the edges, the margin doodles hidden there (they'd sit on the menu). iPad sideways keeps the centered page + Hide;
+      phone/iPad upright unchanged. Checks: lint, 132 units, full e2e, css-ties 0 (owner + public pages), screenshots
+      at 1440, 1920, iPad Pro 11 both ways and iPhone 14 (no sideways scroll).
 - [x] **Spanish fills itself in — LIVE Nov 10 (`cd8bb2f`, English copied until ANTHROPIC_API_KEY is added) (owner, Nov 9: "from now on… I attach a new picture, just automatically fill out the
       page for the Spanish… if I need to change something specific, I will do it myself") — built Nov 9, local, not
       pushed.** Why /es "gets stuck": `getSpanishPublication()` hides ALL of /es while any photo lacks a Spanish

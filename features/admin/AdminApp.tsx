@@ -93,7 +93,7 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
   const current = ADMIN_NAV.find((n) => n.id === section)!;
 
   return (
-    <div className={cn(styles.page, section === "leads" ? styles.pageWide : "")}>
+    <div className={styles.page}>
       <AdminMenu section={section} onSignOut={signOut}>
         {!(section === "shoots" && (view === "folder" || view === "day")) && <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>}
 
