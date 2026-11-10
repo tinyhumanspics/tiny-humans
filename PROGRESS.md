@@ -257,8 +257,15 @@ index.ts for client components; never submit a booking on production (block /api
       `drizzle/0023_shoots.sql` → Run → expect success; then `select name, jsonb_array_length(items) from
       shoot_bring_sections order by sort;` → Studio kit 9, Camera gear 10, Wardrobe (Adri and Alo) 6. Running the
       file a second time must also succeed with the same 3 rows. Production `main` only after the owner's OK.
-      `[?]` Owner: commit `docs/shoots/` (spec + template) to the public repo, or keep it local? (untracked for now;
-      the template's sample families are made up.)
+      `[x]` Owner: commit `docs/shoots/` → yes ("Go ahead and adjust everything please", Nov 9). Committed locally
+      (spec v3.3 + template; sample families are made up; checked: no emails, phones, addresses or secrets).
+      **Spec v3.3 (owner, Nov 9, 22:38):** adds the **photo waiver** (§10: parents sign a photo/video release on the
+      iPad inside /admin; `photo_waivers` table, immutable signed rows, "Sign again" supersedes; Leads "Photo use" +
+      `booking_consents.photos`; waiver card in the folder / day sheet / Shoot days; privacy policy EN + ES update,
+      owner-approved per the spec, Alondra checks the Spanish; draft wording needs a Florida lawyer + the legal business
+      name before real families sign) as **slice 9b, after slice 5**. Sections 2–8 unchanged, so slices 1–2 stand.
+      The spec puts `photo_waivers` "in the same migration": 0023 is idempotent and only on the Neon dev branch, so
+      9b appends it to 0023 and the owner re-runs the file on `shoots-test`.
       **Slice 2 done Nov 9 (local, not pushed):** "Shoots" in the admin menu right after Leads (+ its dashboard card,
       spec blurb); `/admin/shoots` (Shoot days: Coming up / Done day cards = "Monday, November 16", "2 shoots · sunset
       5:31", tick bar, each shoot's time, title, bundle or "No booking", "6 inspo · 3 BTS ideas" / "No inspo yet",
