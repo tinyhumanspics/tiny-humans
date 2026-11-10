@@ -21,6 +21,8 @@ import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
 import { duplicateBookingsFor } from "./duplicates";
 import { addonsFor, babiesFor } from "@/lib/booking/addons";
+import { waiversForBookings } from "@/lib/waiver/server";
+import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 
 const time = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
@@ -43,11 +45,13 @@ interface Extras {
   emailEvents: EmailEvent[];
   babies: Map<string, BookingBaby[]>;
   addons: Map<string, AddonLine[]>;
+  /** Photo and video releases (best effort: none before migration 0023). */
+  waivers: Map<string, WaiverSummary>;
   /** Today's cancel/reschedule notice (bookings without their own terms). */
   noticeHours: number;
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), addons: new Map(), noticeHours: 48 };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48 };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -59,7 +63,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, noticeHours] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, waivers, noticeHours] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -71,9 +75,10 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     emailEventsFor(rows),
     babiesFor(bookingIds),
     addonsFor(bookingIds),
+    waiversForBookings(bookingIds),
     getNoticeHoursSetting().catch(() => 48),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, noticeHours };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, waivers, noticeHours };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -164,6 +169,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     after: afterOf(r, x),
     deposit: leadDepositOf(r, x),
     emailProblems: problemsOf(r, x.emailEvents).map((e) => ({ kind: e.type as EmailProblem, at: e.occurredAt.toISOString(), email: emailNameOf(e.category), detail: e.detail })),
+    waiver: x.waivers.get(r.id) ?? null,
     consents: (({ sms, smsAt, photos, photosAt }) => ({ sms, smsAt: iso(smsAt), photos, photosAt: iso(photosAt) }))(x.consents.find((c) => c.bookingId === r.id) ?? { sms: false, smsAt: null, photos: false, photosAt: null }),
     cancellation:
       r.status === "cancelled"

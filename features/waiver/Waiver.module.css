@@ -1,0 +1,133 @@
+/* Photo and video release on the iPad (look: docs/shoots/shoots-template.html, "kiosk"). The page has no site
+   header, footer or admin menu (route group (kiosk)), so the parent can't wander into the owner area.
+   18 px+ text, 52 px+ touch targets, portrait and landscape. */
+
+.kiosk {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(120% 80% at 50% 0%, var(--chalkboard-light, #22492d) 0%, var(--chalkboard, #183a22) 60%);
+  color: var(--chalk-white);
+  font-family: var(--font-hand);
+}
+
+.bar {
+  position: sticky; top: 0; z-index: 2;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: max(10px, env(safe-area-inset-top, 0px)) clamp(16px, 4.5vw, 40px) 10px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 2px solid var(--chalk-faint);
+}
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--chalk-white); }
+.sun { width: 20px; height: 20px; border-radius: 50%; background: var(--sun-yellow); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
+.ownerBox { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.ownerTag { font-family: var(--font-chalk); font-size: 1rem; color: var(--chalk-muted); }
+.ownerNote { flex-basis: 100%; margin: 0; font-size: 0.95rem; color: var(--chalk-muted); }
+.barButton, .ownerLink, .nextButton {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 6px 16px;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); border-radius: 10px;
+  background: none; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.1rem; text-decoration: none; cursor: pointer;
+}
+.ownerLink { border-color: transparent; color: var(--cloud-blue); text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 4px; }
+.nextButton { border-color: var(--sun-yellow); color: var(--sun-yellow); font-size: 1.3rem; }
+.barButton:focus-visible, .ownerLink:focus-visible, .nextButton:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
+
+.body { max-width: 780px; margin: 0 auto; padding: 20px clamp(16px, 4.5vw, 40px) calc(60px + env(safe-area-inset-bottom, 0px)); }
+.notice { margin: 24px 0 10px; padding: 14px 16px; border: 2px dashed var(--chalk-faint); border-radius: 10px; font-size: 1.2rem; }
+.summary { margin: 0 0 12px; color: var(--chalk-muted); font-size: 1.05rem; }
+
+/* thank-you screen */
+.thanks { text-align: center; padding-top: clamp(60px, 16vh, 140px); }
+.bigSun {
+  width: 90px; height: 90px; margin: 0 auto 26px; border-radius: 50%; background: var(--sun-yellow);
+  box-shadow: 0 0 0 14px color-mix(in srgb, var(--sun-yellow) 22%, transparent), 0 0 0 30px color-mix(in srgb, var(--sun-yellow) 10%, transparent);
+}
+.thanksTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(2.4rem, 7vw, 3.4rem); color: var(--chalk-white); }
+.thanksTitle:focus { outline: none; }
+.thanksSub { max-width: 28em; margin: 14px auto 0; font-size: 1.35rem; color: var(--chalk-muted); }
+
+/* the paper */
+.paper {
+  background: #fbf7ee; color: #1d2a20; border-radius: 12px 16px 13px 15px; padding: clamp(20px, 4.5vw, 40px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); font-size: 1.2rem; line-height: 1.5;
+}
+.paper p { margin: 0 0 10px; }
+.paper :focus-visible { outline: 2px dashed #2e5a3d; outline-offset: 3px; }
+.paperBrand { font-family: var(--font-chalk); color: #2e5a3d; font-size: 1.1rem; }
+.paper .paperBrand { margin: 0; }
+.paperTitle { margin: 2px 0 12px; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.9rem, 5vw, 2.5rem); line-height: 1.1; color: #183a22; }
+.paperH { margin: 26px 0 8px; font-family: var(--font-chalk); font-weight: 400; font-size: 1.45rem; color: #183a22; }
+.paperFacts { padding: 8px 12px; border-radius: 8px; background: #f1eadb; font-size: 1.1rem; }
+.paperFine { font-size: 1.05rem; color: #3a463c; }
+.paperList { margin: 0; padding-left: 1.2em; }
+.paperList li { margin: 6px 0; }
+.paper .paperHint { margin: 6px 0 0; font-size: 1.05rem; color: #4f5a51; }
+.paperLabel { display: block; margin: 16px 0 6px; padding: 0; font-family: var(--font-chalk); font-size: 1.2rem; color: #183a22; }
+.paper .paperMeta { margin: 10px 0 0; font-size: 1rem; color: #4f5a51; }
+
+.choices { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.choice, .choiceOn, .choiceOff {
+  display: flex; gap: 12px; align-items: flex-start; min-height: 52px; padding: 12px 14px;
+  border: 2px solid #e2d9c6; border-radius: 10px; background: #fff;
+}
+.choice { cursor: pointer; }
+.choiceOff { color: #6b746c; }
+.choiceOff > span:last-child { text-decoration: line-through; }
+.mark { flex: none; width: 26px; text-align: center; font-family: var(--font-chalk); font-size: 1.3rem; line-height: 1.2; }
+.choiceOn .mark { color: #2e5a3d; }
+.agree { margin-top: 18px; border-color: #2e5a3d; }
+
+.tick {
+  appearance: none; -webkit-appearance: none; flex: none; display: grid; place-items: center;
+  width: 28px; height: 28px; margin: 1px 0 0; border: 2px solid #6b746c; border-radius: 6px 8px 7px 9px; background: #fff; cursor: pointer;
+}
+.tick:checked { background: #2e5a3d; border-color: #2e5a3d; }
+.tick::after { content: ""; width: 7px; height: 13px; border: solid #fff; border-width: 0 3px 3px 0; transform: translateY(-2px) rotate(45deg); opacity: 0; }
+.tick:checked::after { opacity: 1; }
+
+.paperButton {
+  min-height: 52px; margin-bottom: 10px; padding: 6px 18px; border: 2px solid #2e5a3d; border-radius: 10px;
+  background: #fff; color: #2e5a3d; font-family: var(--font-chalk); font-size: 1.2rem; cursor: pointer;
+}
+.paperButtonSmall { min-height: 48px; margin: 0; font-size: 1.05rem; padding: 4px 14px; }
+
+.field {
+  width: 100%; min-height: 52px; padding: 10px 14px; border: 2px solid #b9ae96; border-radius: 10px;
+  background: #fff; color: #1d2a20; font-family: var(--font-hand); font-size: 1.25rem;
+}
+.field:focus-visible { outline: none; border-color: #2e5a3d; box-shadow: 0 0 0 3px rgba(46, 90, 61, 0.25); }
+
+.relation { margin: 0; padding: 0; border: 0; }
+.segment { display: inline-flex; flex-wrap: wrap; border: 2px solid #b9ae96; border-radius: 10px; overflow: hidden; }
+.segmentOn, .segmentOff { display: inline-flex; align-items: center; min-height: 52px; padding: 6px 18px; font-size: 1.2rem; cursor: pointer; }
+.segmentOn { background: #2e5a3d; color: #fff; }
+.segmentOff { background: #fff; color: #1d2a20; }
+.segmentOff + .segmentOn, .segmentOn + .segmentOff, .segmentOff + .segmentOff { border-left: 2px solid #b9ae96; }
+.segment:focus-within { outline: 2px dashed #2e5a3d; outline-offset: 3px; }
+
+.signHead { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin: 20px 0 6px; }
+.signHead .paperLabel { margin: 0; }
+.signBox { position: relative; height: 220px; border: 2px dashed #6b746c; border-radius: 12px; background: #fff; }
+.signBox::after { content: ""; position: absolute; left: 44px; right: 20px; bottom: 48px; border-bottom: 2px solid #d8d0bd; pointer-events: none; }
+.signX { position: absolute; left: 18px; bottom: 42px; color: #6b746c; font-size: 1.2rem; pointer-events: none; }
+.pad { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; touch-action: none; cursor: crosshair; }
+.signedBox { padding: 10px; border: 2px solid #e2d9c6; border-radius: 12px; background: #fff; }
+.signedBox img { display: block; max-width: 100%; max-height: 180px; margin: 0 auto; }
+
+.paper .missing { min-height: 1.4em; margin: 12px 0 0; color: #8f2f1f; font-size: 1.1rem; }
+.doneButton {
+  display: block; width: 100%; min-height: 60px; margin-top: 8px; border: 0; border-radius: 12px;
+  background: #2e5a3d; color: #fff; font-family: var(--font-chalk); font-size: 1.5rem; cursor: pointer;
+}
+.doneButton[aria-disabled="true"] { background: #8d978b; color: #fff; }
+
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+@media print {
+  .noPrint { display: none !important; }
+  .kiosk { min-height: 0; background: #fff; }
+  .body { max-width: none; padding: 0; }
+  .paper { box-shadow: none; border-radius: 0; padding: 0; background: #fff; font-size: 11pt; }
+  .choice, .choiceOn, .choiceOff { min-height: 0; padding: 4px 8px; break-inside: avoid; }
+  .signedBox { break-inside: avoid; }
+}

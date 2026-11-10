@@ -45,6 +45,8 @@ export const RULES = {
   adminLoginGlobal: { limit: 60, windowSec: 3600 },
   // Face ID / Touch ID sign-in: each try is two requests (options + check)
   passkeyLogin: { limit: 20, windowSec: 900 },
+  // owner area → Leads → photo and video release (open, sign, see a signed copy)
+  adminWaiver: { limit: 60, windowSec: 600 },
 } as const;
 export type RuleName = keyof typeof RULES;
 

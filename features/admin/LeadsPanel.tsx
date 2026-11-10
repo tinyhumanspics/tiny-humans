@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import AdminDialog from "./AdminDialog";
 import type { AdminApi } from "@/lib/admin/client";
@@ -17,6 +18,7 @@ import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import { babiesLabel } from "@/lib/booking/extra-babies";
 import { PUBLIC_REVIEWS_MAX } from "@/lib/reviews/public";
+import { usesSummary } from "@/lib/waiver/text";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
@@ -29,13 +31,22 @@ const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", c
 const statusLabel = (lead: Lead) => (lead.status === "pending" && lead.deposit?.status === "pending" ? "Waiting for deposit" : lead.status === "cancelled" && lead.deposit?.status === "expired" ? "Cancelled · deposit not paid" : STATUS_LABEL[lead.status]);
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 const emailLine = (e: EmailStatus) => (e.sent ? `Sent ${when(e.at)}` : e.error ? `Not sent (${e.error})` : "Not sent");
+/** "Photo use": the signed photo release when there is one (it's the record that counts), else the booking form's box. */
+function photoUseLine(lead: Lead): string {
+  const c = lead.consents!;
+  const w = lead.waiver;
+  if (w?.status === "signed") return `Waiver signed ${when(w.signedAt)}: ${usesSummary(w.uses)}${w.firstNameOk ? " · first name OK" : ""}`;
+  if (w?.status === "revoked") return `Waiver taken back ${when(w.revokedAt)}: keep private`;
+  return c.photos ? `OK to feature on the website + social media${c.photosAt ? ` (since ${when(c.photosAt)})` : ""} (booking form, no waiver yet)` : c.photosAt ? `Keep private (changed ${when(c.photosAt)})` : "Keep private";
+}
+
 /** Optional permissions from the booking form (server mode only). */
 const consentRows = (lead: Lead): [string, string][] => {
   const c = lead.consents;
   if (!c) return [];
   return [
     ["Texts", c.sms ? `OK to text${c.smsAt ? ` (since ${when(c.smsAt)})` : ""}` : c.smsAt ? `Don't text (changed ${when(c.smsAt)})` : "Not OK to text"],
-    ["Photo use", c.photos ? `OK to feature on the website + social media${c.photosAt ? ` (since ${when(c.photosAt)})` : ""}` : c.photosAt ? `Keep private (changed ${when(c.photosAt)})` : "Keep private"],
+    ["Photo use", photoUseLine(lead)],
   ];
 };
 const clock = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/New_York" }).format(new Date(iso)) : "");
@@ -117,6 +128,16 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [savedNote, setSavedNote] = useState<string | null>(null);
+
+  // back from the iPad ("Next →" on the thank-you screen): say it's saved, then tidy the address bar
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("waiver") !== "saved") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the address once, on arrival
+    setSavedNote(`Waiver saved${q.get("ref") ? ` for ${q.get("ref")}` : ""}. It's on the lead under Photo use.`);
+    window.history.replaceState(null, "", window.location.pathname);
+  }, []);
 
   // only the newest list request may show its result (a quick filter change could otherwise show the old list)
   const latestRequest = useRef(0);
@@ -172,6 +193,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
         ))}
       </div>
 
+      {savedNote && <p className={cn(styles.ok, "chalk-soft")} role="status">{savedNote}</p>}
       {error && <p className={cn(styles.bannerError, "chalk-soft")} role="alert">{error}</p>}
       {data && data.leads.length === 0 && !loading && <p className={cn(styles.hintSmall, "chalk-soft")}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>}
 
@@ -306,7 +328,13 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>
         <a className={styles.smallButton} href={`mailto:${lead.email}`} aria-label={`Email ${lead.parentName}`}>Email</a>
         <a className={styles.smallButton} href={mapsHref(lead.address)} target="_blank" rel="noopener noreferrer" aria-label={`Directions to ${lead.parentName}'s home (opens Maps)`}>Directions</a>
+        {lead.waiver?.status === "signed" ? (
+          <Link className={styles.smallButton} href={`/admin/waiver/signed/${lead.waiver.id}`}>See signed waiver</Link>
+        ) : (
+          lead.status !== "cancelled" && <Link className={styles.smallButton} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>Waiver signature</Link>
+        )}
       </p>
+      <WaiverLine lead={lead} />
       {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? "Not tracked"}</b>
@@ -352,6 +380,14 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
           {lead.after && <DepositLinkPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
+          {lead.waiver && lead.status !== "cancelled" && (
+            <p className={styles.contactActions}>
+              <Link className={cn(styles.linkButton, "chalk-soft")} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>
+                {lead.waiver.status === "signed" ? "Sign the waiver again (replaces this one)" : "Sign a new waiver"}
+              </Link>
+              {lead.waiver.status !== "signed" && <Link className={cn(styles.linkButton, "chalk-soft")} href={`/admin/waiver/signed/${lead.waiver.id}`}>See the old waiver</Link>}
+            </p>
+          )}
           {lead.status !== "cancelled" && moving && (
             <div className={styles.adminReschedule}>
               <p className={cn(styles.h3, "chalk-soft")}>Reschedule Booking</p>
@@ -563,6 +599,17 @@ function AfterSessionPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi
             </AdminDialog>
         )}
     </div>
+  );
+}
+
+/** Photo waiver at a glance: signed (what they said yes to) or taken back. Nothing when there's none yet. */
+function WaiverLine({ lead }: { lead: Lead }) {
+  const w = lead.waiver;
+  if (!w) return null;
+  return (
+    <p className={cn(styles.leadMeta, "chalk-soft")}>
+      {w.status === "signed" ? `Photo waiver signed ✓ ${when(w.signedAt)} · ${usesSummary(w.uses)}` : `Photo waiver taken back ${when(w.revokedAt)}: keep their photos private`}
+    </p>
   );
 }
 

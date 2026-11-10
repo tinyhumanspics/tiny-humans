@@ -1,3 +1,4 @@
+import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 
 /** A booking as shown in /admin > Leads (no raw technical ids). */
@@ -106,6 +107,8 @@ export interface Lead {
   emailProblems?: { kind: "bounced" | "complained" | "suppressed" | "failed"; at: string; email: string; detail: string | null }[];
   /** Optional permissions from the booking form, with when each was given (server mode only). */
   consents?: { sms: boolean; smsAt: string | null; photos: boolean; photosAt: string | null };
+  /** The photo and video release signed on the iPad (latest active one, else the latest taken back); null = none. */
+  waiver?: WaiverSummary | null;
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;
