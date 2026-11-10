@@ -332,3 +332,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   reservation (`claimDue`, 5-minute lease), copies the paid deposit into `booking_deposits` (`carryDueDeposit`) so the
   balance/refunds count it, then marks it scheduled. The mock provider refuses due bookings (needs the database), so CI
   has no coverage: test with `scripts/local-db` + fake Stripe (`/_pay/<id>`). Never send the due date to Meta/analytics.
+- Seasonal offer boxes (owner, Nov 10): `settings.seasonalOffers` is a LIST (the built-in `thanksgiving` and
+  `firstChristmas`, never deletable, then the owner's own `offer-…` ones, max 12), each with `themeId` (one theme or
+  "any"). Saved as `seasonalOfferList` plus the old { thanksgiving, firstChristmas } record so a code revert keeps the
+  built-in two (settings cache key `site-settings-v3`). `features/seasonal/SeasonalOffers.tsx` draws them on the ad page
+  AND the home page (after the hero), with the running bundle offer line inside the box. The bundle card's discounted
+  price is 0.82em of a regular price (owner, Nov 10).

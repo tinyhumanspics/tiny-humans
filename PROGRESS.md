@@ -203,6 +203,13 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Seasonal offers on the home page too, owner-added offers, offer line in the box, smaller discounted price —
+  LIVE Nov 10**. Owner asked: the seasonal box (e.g. Baby's First Thanksgiving) also on the home page, switched on from
+  /admin → Seasonal Landing; a line in the box about the running discount; add more offers (e.g. Valentine's Day "Show
+  love to your tiny human"); the discounted price on bundle cards a little smaller. Checked: the ad page box is
+  pixel-identical old vs new (test-only switch, never committed); all 24 parity views unchanged with no offer on.
+- [ ] **Valentine's season (February) theme — DESIGN PREVIEW sent Nov 10, waiting for the owner's OK before building**
+  (owner: "send it to me before we proceed").
 - [x] **% offers, offer line, Quotes, "Not born yet" — LIVE Nov 10 (`4d9684c`; migration 0026 run by the owner first)**.
   Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
   "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin
