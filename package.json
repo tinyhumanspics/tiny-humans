@@ -33,7 +33,7 @@
     "resend": "^6.32.0",
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.7.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
@@ -47,5 +47,8 @@
     "eslint-config-next": "^16.4.5",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "zod": "$zod"
   }
 }
