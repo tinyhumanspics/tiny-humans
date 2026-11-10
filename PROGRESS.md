@@ -203,6 +203,13 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Owner menu on the left — Nov 10 (owner: "put those on the left side instead of sliding left and right… with the
+      option for me to hide it"; preview approved: "I like the new menu, so run it").** `features/admin/AdminMenu.tsx`:
+      computer (≥ 900 px) = sticky column beside the page, "« Hide" folds it away (remembered on that device) and
+      "☰ Menu" brings it back; phone/iPad upright = "☰ Menu" opens the same list as a panel from the left (native modal
+      dialog: Escape, tap outside or ✕ closes; Sign out at the bottom). Same sections, order and chalk look; the old
+      sideways row and its scroll memory are gone. Checks: typecheck, lint, 132 units, full e2e, css-ties 0 on 6 owner
+      pages × iPhone 14/1440, before/after screenshots (local DB).
 - [x] **Spanish fills itself in — LIVE Nov 10 (`cd8bb2f`, English copied until ANTHROPIC_API_KEY is added) (owner, Nov 9: "from now on… I attach a new picture, just automatically fill out the
       page for the Spanish… if I need to change something specific, I will do it myself") — built Nov 9, local, not
       pushed.** Why /es "gets stuck": `getSpanishPublication()` hides ALL of /es while any photo lacks a Spanish

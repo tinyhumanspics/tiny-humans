@@ -254,6 +254,10 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   queries) + `lib/admin/dashboard-summary.ts` (pure counting, unit tested); charts are small chalk SVG components
   (`features/admin/DashboardInsights.tsx`, no chart library: Recharts measured 106 KB gzipped). Admin e2e tests fake the
   owner APIs with `tests/e2e/fixtures/admin.ts` (signed-in session + a sample lead).
+- Owner menu (owner, Nov 10): `features/admin/AdminMenu.tsx` draws the sections as a column on the left at 900 px and
+  wider (sticky; "« Hide" is remembered per device in localStorage `tinyhumans.adminMenu`) and, narrower, as a panel
+  from the left on a native modal `<dialog>` behind "☰ Menu". Keep `<nav aria-label="Owner area">` and the ADMIN_NAV
+  order (e2e tests use both); on phone sizes the nav only exists while the panel is open.
 - Production checks with Playwright: abort `facebook.(net|com)` and `/_vercel/(insights|speed-insights)` requests so a
   test visit never reaches the Meta Pixel or Vercel Analytics. A failed or missing Vercel deploy: check
   https://www.vercel-status.com first (an Oct 12 incident failed/delayed builds that passed locally).

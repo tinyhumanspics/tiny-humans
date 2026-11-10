@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import { getAdminApi } from "@/lib/admin/client";
@@ -23,6 +23,7 @@ import ShootsList from "@/features/shoots/ShootsList";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import SeasonalPanel from "./SeasonalPanel";
+import AdminMenu from "./AdminMenu";
 import { ADMIN_NAV, type AdminSection } from "./nav";
 import { addPasskey, listPasskeys, passkeySignInAvailable, passkeysSupported, removePasskey, signInWithPasskey, signOutOtherDevices, type PasskeyList } from "@/lib/admin/passkeys-client";
 import styles from "./Admin.module.css";
@@ -30,9 +31,6 @@ import { cn } from "@/lib/cn";
 
 type Status = "loading" | "signedOut" | "ready";
 type Note = { kind: "ok" | "error"; text: string } | null;
-
-/** Where the admin menu was scrolled to (kept while moving between sections). */
-let navScrollLeft = 0;
 
 /**
  * Owner area shell: sign-in, settings, navigation, then one section. `view` picks a screen inside a section
@@ -47,11 +45,6 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
   const [authReady, setAuthReady] = useState(true);
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [spanishStatus, setSpanishStatus] = useState<SpanishPublicationStatus | null>(null);
-  const navRef = useRef<HTMLElement>(null);
-  // Each section is its own page, so the menu is rebuilt on every click: put it back where it was.
-  useLayoutEffect(() => {
-    if (navRef.current) navRef.current.scrollLeft = navScrollLeft;
-  }, [status]);
 
   const load = async () => {
     const [s, publication] = await Promise.all([
@@ -101,42 +94,31 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
 
   return (
     <div className={cn(styles.page, section === "leads" ? styles.pageWide : "")}>
-      <div className={styles.topbar}>
-        <p className={cn(styles.areaName, "chalk-soft")}>Owner area</p>
-        <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={signOut}>Sign out</button>
-      </div>
-      <nav ref={navRef} className={styles.adminNav} aria-label="Owner area" onScroll={(e) => (navScrollLeft = e.currentTarget.scrollLeft)}>
-        <ul>
-          {ADMIN_NAV.map((n) => (
-            <li key={n.id}>
-              <Link href={n.href} className={cn(styles.navLink, "chalk-soft")} aria-current={n.id === section ? "page" : undefined}>{n.label}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {!(section === "shoots" && (view === "folder" || view === "day")) && <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>}
+      <AdminMenu section={section} onSignOut={signOut}>
+        {!(section === "shoots" && (view === "folder" || view === "day")) && <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>}
 
-      {!storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
-        <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
-      )}
+        {!storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
+          <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
+        )}
 
-      {section === "dashboard" && <Dashboard api={api} settings={settings} />}
-      {section === "leads" && <LeadsPanel api={api} />}
-      {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
-      {section === "unfinished" && <UnfinishedPanel api={api} />}
-      {section === "availability" && <AvailabilityPanel api={api} />}
-      {section === "pricing" && <PricingPanel api={api} />}
-      {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
-      {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
-      {section === "theme" && <ThemePanel settings={settings} onSave={save} />}
-      {section === "settings" && spanishStatus && (
-        <SettingsPanel
-          storageReady={storageReady}
-          spanishStatus={spanishStatus}
-          onSetSpanishPublication={setSpanishPublication}
-          onSignOut={signOut}
-        />
-      )}
+        {section === "dashboard" && <Dashboard api={api} settings={settings} />}
+        {section === "leads" && <LeadsPanel api={api} />}
+        {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
+        {section === "unfinished" && <UnfinishedPanel api={api} />}
+        {section === "availability" && <AvailabilityPanel api={api} />}
+        {section === "pricing" && <PricingPanel api={api} />}
+        {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
+        {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
+        {section === "theme" && <ThemePanel settings={settings} onSave={save} />}
+        {section === "settings" && spanishStatus && (
+          <SettingsPanel
+            storageReady={storageReady}
+            spanishStatus={spanishStatus}
+            onSetSpanishPublication={setSpanishPublication}
+            onSignOut={signOut}
+          />
+        )}
+      </AdminMenu>
     </div>
   );
 }

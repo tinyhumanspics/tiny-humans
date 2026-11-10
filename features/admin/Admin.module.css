@@ -1,7 +1,7 @@
 .page { padding: clamp(24px, 4vw, 48px) 0 clamp(56px, 8vw, 90px); }
 .loading { padding: 80px 0; text-align: center; color: var(--chalk-muted); }
 
-.topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 
 .h1 { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(2.2rem, 6vw, 3rem); color: var(--chalk-white); }
 .h2 { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.8rem, 5vw, 2.3rem); color: var(--chalk-white); }
@@ -286,15 +286,47 @@
 /* ---------- admin shell: navigation + sections ---------- */
 .pageWide { max-width: 1240px; }
 .areaName { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--chalk-muted); }
-.adminNav { margin: 6px 0 4px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.adminNav ul { list-style: none; margin: 0; padding: 0 0 6px; display: flex; gap: 6px; min-width: max-content; }
-.navLink {
-  display: inline-flex; align-items: center; min-height: 44px; padding: 6px 14px; border-radius: 999px;
-  border: 2px dashed color-mix(in srgb, var(--chalk-white) 28%, transparent);
-  font-family: var(--font-chalk); font-size: 1.12rem; color: var(--chalk-white); text-decoration: none; white-space: nowrap;
+/* menu on the left (AdminMenu): a column beside the page on a computer, a panel from the left on a phone */
+.topbarStart { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.menuButton {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 16px; border-radius: 999px;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 45%, transparent); background: transparent;
+  font-family: var(--font-chalk); font-size: 1.12rem; color: var(--chalk-white); cursor: pointer; white-space: nowrap;
 }
-.navLink:hover { border-color: var(--cloud-blue); }
-.navLink[aria-current="page"] { background: var(--sun-yellow); border: 2px solid var(--sun-yellow); color: var(--chalkboard); }
+.menuButton:hover { border-color: var(--cloud-blue); }
+.shell { margin-top: 10px; }
+.shellWithMenu { display: grid; grid-template-columns: 214px minmax(0, 1fr); gap: clamp(22px, 2.6vw, 36px); align-items: start; }
+.shellMain { min-width: 0; }
+.sidebar {
+  position: sticky; top: calc(var(--header-h) + env(safe-area-inset-top, 0px) + 16px);
+  max-height: calc(100dvh - var(--header-h) - env(safe-area-inset-top, 0px) - 32px); overflow-y: auto; overscroll-behavior: contain;
+  padding: 10px 8px 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 24%, transparent); border-radius: 16px;
+}
+.sidebarHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 2px 6px 8px; }
+.sidebarTitle { font-family: var(--font-chalk); font-size: 1.05rem; color: var(--chalk-muted); }
+.hideButton { font-size: 1.02rem; }
+.menuNav ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.menuLink {
+  display: flex; align-items: center; min-height: 44px; padding: 6px 12px; border-radius: 12px;
+  border: 2px dashed transparent; font-family: var(--font-chalk); font-size: 1.15rem; line-height: 1.15;
+  color: var(--chalk-white); text-decoration: none;
+}
+.menuLink:hover { border-color: color-mix(in srgb, var(--cloud-blue) 75%, transparent); }
+.menuLink[aria-current="page"] { background: var(--sun-yellow); border: 2px solid var(--sun-yellow); color: var(--chalkboard); }
+.menuPanel {
+  margin: 0; inset: 0 auto 0 0; width: min(320px, 86vw); max-width: none; height: 100%; max-height: none; padding: 0;
+  color: var(--chalk-white); background-color: var(--chalkboard); background-image: url("/textures/board-grain.png"); background-size: 512px 512px;
+  border: 0; border-right: 2px dashed color-mix(in srgb, var(--chalk-white) 30%, transparent); box-shadow: 18px 0 40px rgba(0, 0, 0, 0.45);
+}
+.menuPanel[open] { animation: menuPanelIn 0.22s var(--ease-chalk); }
+.menuPanel::backdrop { background: rgba(5, 14, 9, 0.7); }
+.menuPanelInner {
+  min-height: 100%; display: flex; flex-direction: column; gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 14px) 14px calc(env(safe-area-inset-bottom, 0px) + 20px) calc(env(safe-area-inset-left, 0px) + 14px);
+}
+.menuSignOut { align-self: flex-start; margin-top: auto; }
+@keyframes menuPanelIn { from { transform: translateX(-100%); } to { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .menuPanel[open] { animation: none; } }
 .visuallyHidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* dashboard */
