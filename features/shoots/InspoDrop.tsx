@@ -22,7 +22,7 @@ const isVisual = (i: InspoItem) => (i.type === "image" || i.type === "video") &&
 /**
  * One group of a shoot folder (the family's inspo, or our BTS-on-phones ideas): drop photos (or pick them on the
  * phone; shrunk to 2000 px before upload), paste a link, add a shot with no photo, then a card per item with
- * "What's the shot?" and Remove. Tap a photo to see it full screen. Videos: paste a link (uploads need the owner's OK).
+ * "What's the shot?" and Remove. Tap a photo to see it full screen. Videos: paste the link (owner, Nov 10: no video uploads).
  */
 export default function InspoDrop({
   shootKey,
@@ -54,7 +54,7 @@ export default function InspoDrop({
     const pictures = files.filter((f) => f.type.startsWith("image/"));
     const skipped = files.length - pictures.length;
     if (!pictures.length) {
-      setMessage({ text: skipped ? "Videos can't be uploaded yet: paste a link to it instead." : "Those weren't photos.", error: true });
+      setMessage({ text: skipped ? "Videos aren't uploaded here: paste the link to the video instead." : "Those weren't photos.", error: true });
       return;
     }
     setBusy("upload");
@@ -74,7 +74,7 @@ export default function InspoDrop({
     if (fileRef.current) fileRef.current.value = "";
     const parts = [
       added ? `${added} ${added === 1 ? "photo" : "photos"} added. Write what each one is below.` : "",
-      skipped ? "Videos can't be uploaded yet: paste a link instead." : "",
+      skipped ? "Videos aren't uploaded here: paste the link instead." : "",
       failed.length ? `Not added: ${failed.join("; ")}` : "",
     ].filter(Boolean);
     setMessage({ text: parts.join(" "), error: failed.length > 0 && added === 0 });

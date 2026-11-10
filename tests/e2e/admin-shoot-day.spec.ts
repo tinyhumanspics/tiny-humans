@@ -189,7 +189,7 @@ test("folder: drop photos (shrunk, uploaded one by one), a video is turned away,
     { name: "b.jpg", mimeType: "image/jpeg", buffer: JPEG },
     { name: "clip.mov", mimeType: "video/quicktime", buffer: Buffer.from("not really a video") },
   ]);
-  await expect(inspo.getByText("2 photos added. Write what each one is below. Videos can't be uploaded yet: paste a link instead.")).toBeVisible();
+  await expect(inspo.getByText("2 photos added. Write what each one is below. Videos aren't uploaded here: paste the link instead.")).toBeVisible();
   expect(uploads).toEqual([
     { group: "inspo", type: "image/jpeg", width: "1" },
     { group: "inspo", type: "image/jpeg", width: "1" },
