@@ -259,6 +259,28 @@ index.ts for client components; never submit a booking on production (block /api
       file a second time must also succeed with the same 3 rows. Production `main` only after the owner's OK.
       `[?]` Owner: commit `docs/shoots/` (spec + template) to the public repo, or keep it local? (untracked for now;
       the template's sample families are made up.)
+      **Slice 2 done Nov 9 (local, not pushed):** "Shoots" in the admin menu right after Leads (+ its dashboard card,
+      spec blurb); `/admin/shoots` (Shoot days: Coming up / Done day cards = "Monday, November 16", "2 shoots · sunset
+      5:31", tick bar, each shoot's time, title, bundle or "No booking", "6 inspo · 3 BTS ideas" / "No inspo yet",
+      links to the folder and "Open day sheet →"; 60 days back to 330 ahead in one request) with "+ Shoot without a
+      booking" (title, day = tomorrow, start 15:00, place → POST → its folder); `/admin/shoots/bring` (one card per
+      section: name + "What to bring" one per line, box grows with its text, autosave "Saving… / Saved / Not saved yet,
+      retrying…" with backoff, "Remove this section" two taps, "+ Add a section" focuses the new name); Leads →
+      "Open shoot folder" on every lead that isn't cancelled (`/admin/shoots/folder/b-<reference>`; that page is
+      slice 3, so the button and the day-card links lead to a 404 until then — local only). API:
+      `GET|POST /api/admin/shoots`, `GET|POST /api/admin/shoots/bring`, `PATCH|DELETE /api/admin/shoots/bring/[id]`,
+      all via `lib/shoots/route.ts` (owner check, `adminShoots` rate limit 600 / 10 min per address, zod, 503
+      `notReady` → "Run the shoots migration" banner). `AdminApp` takes `view` ("days" | "bring"); browser calls in
+      `lib/shoots/client.ts`; wording helpers `lib/shoots/format.ts` (Miami "today", "9:00", "Monday, November 16").
+      Found + fixed: the admin's "+" style (`.addButton`) has no background, so on a `<button>` the browser's grey
+      showed (axe: contrast 1.21) → `.addReset` (like Photos' `.addSection`); the Wardrobe list was cut off on iPhone
+      (rows counted lines, not wrapped lines) → auto-height. Checks: strict tsc, lint 0, 112 unit tests, build,
+      `tests/e2e/admin-shoots.spec.ts` (6: menu order + cards + links + request range + axe; new shoot form → POST
+      body → folder URL; not-ready banner; bring rename/fill/add/remove two taps + autosave body + axe; failed save
+      retries; Leads button only on non-cancelled) + every admin spec + accessibility.spec = 40 passed; real
+      click-through on `scripts/local-db` + :3200 (login, create styled shoot, list, bad range 400, signed out 401,
+      cross-origin 403) with iPhone 14 + 1440 screenshots compared to the template; `scripts/css-ties.mjs` 0 ties on
+      public pages and 0 on signed-in /admin, /admin/shoots, /admin/shoots/bring, /admin/leads (scratchpad variant).
 - [x] **Travel fee everywhere (owner, Nov 9: "whenever I change the price for the miles … it changes … on the FAQ,
       also on the landing page, and everywhere").** Already connected: one database row (/admin → Availability →
       Travel fee) is read on every request by the ad page FAQ (en + es), the Terms (en + es), the booking form's ZIP
