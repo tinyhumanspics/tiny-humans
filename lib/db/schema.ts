@@ -904,8 +904,9 @@ export const shootInspo = pgTable(
     /** "Instagram", "TikTok", … or the site's host name. */
     platform: text("platform"),
     caption: text("caption").notNull().default(""),
-    /** Who's in the shot (migration 0025): "all", "baby:<n>" and "fam:<n>" keys of the booking's people (lib/shoots/people.ts). */
-    who: text("who").array().notNull().default(sql`'{}'::text[]`),
+    // `who` text[] (migration 0025: "all", "baby:<n>", "fam:<n>" keys, lib/shoots/people.ts) lives only in the database,
+    // like bookings.blocked_until: read and written best effort in lib/shoots/server.ts, so Shoots keeps working on a
+    // database where 0025 hasn't run. Never `drizzle-kit push` (it would drop it).
     sort: integer("sort").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

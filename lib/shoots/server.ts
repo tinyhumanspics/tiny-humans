@@ -1,6 +1,7 @@
 import "server-only";
 import { and, asc, eq, gte, inArray, lte, max, sql } from "drizzle-orm";
 import { getDb, isDatabaseConfigured, isUndefinedTable } from "@/lib/db/client";
+import { log } from "@/lib/log";
 import { shootBringSections, shootInspo, shootTicks, shoots, type Shoot, type ShootInspo as InspoRow } from "@/lib/db/schema";
 import { bookingShootByReference, bookingShootsBetween, bookingShootsById } from "./booking-source";
 import { referenceOfKey } from "./from-bookings";
@@ -68,7 +69,7 @@ const rowOf = (s: Shoot): ShootRow => ({
  * Photos/videos are shown from their Blob address for now; slice 4 decides between Blob's private access (then this
  * becomes an owner-only route) and a public address that is never linked from public pages.
  */
-const itemOf = (r: InspoRow): InspoItem => ({
+const itemOf = (r: InspoRow, who: string[] = []): InspoItem => ({
   id: r.id,
   group: r.group as InspoGroup,
   type: r.type as InspoItem["type"],
@@ -79,15 +80,34 @@ const itemOf = (r: InspoRow): InspoItem => ({
   linkUrl: r.linkUrl,
   platform: r.platform,
   caption: r.caption,
-  who: r.who ?? [],
+  who,
   sort: r.sort,
 });
+
+const WHO_KEY = /^(all|baby:[0-2]|fam:([0-9]|1[0-3]))$/;
+
+/**
+ * Who's in each shot, by item id. `shoot_inspo.who` is a database-only column (migration 0025): without it every shot
+ * simply has nobody picked yet, and nothing else on the Shoots pages changes.
+ */
+async function whoOf(ids: string[]): Promise<Map<string, string[]>> {
+  const out = new Map<string, string[]>();
+  if (!ids.length) return out;
+  try {
+    const res = (await getDb().execute(sql`select "id", "who" from "shoot_inspo" where "id" in ${ids}`)) as unknown as { rows: { id: string; who: unknown }[] };
+    for (const r of res.rows ?? []) out.set(r.id, Array.isArray(r.who) ? r.who.filter((k): k is string => typeof k === "string" && WHO_KEY.test(k)) : []);
+  } catch (err) {
+    log.warn("shoots.db", "Who's-in-the-shot tags not loaded (run migration 0025)", { error: err as Error });
+  }
+  return out;
+}
 
 async function inspoOf(shootIds: string[]): Promise<Map<string, InspoItem[]>> {
   const out = new Map<string, InspoItem[]>();
   if (!shootIds.length) return out;
   const rows = await getDb().select().from(shootInspo).where(inArray(shootInspo.shootId, shootIds)).orderBy(asc(shootInspo.sort), asc(shootInspo.createdAt));
-  for (const r of rows) out.set(r.shootId, [...(out.get(r.shootId) ?? []), itemOf(r)]);
+  const who = await whoOf(rows.map((r) => r.id));
+  for (const r of rows) out.set(r.shootId, [...(out.get(r.shootId) ?? []), itemOf(r, who.get(r.id))]);
   return out;
 }
 
@@ -295,9 +315,21 @@ export async function addInspoFile(
 /** "What's the shot?" / "What's the idea?", and who's in it (keys checked by the route; at most 9). */
 export async function updateInspo(id: string, patch: { caption?: string; who?: string[] }): Promise<InspoItem> {
   return guard(async () => {
-    const [updated] = await getDb().update(shootInspo).set(patch).where(eq(shootInspo.id, id)).returning();
-    if (!updated) throw new ShootNotFoundError("That item was already removed.");
-    return itemOf(updated);
+    const db = getDb();
+    const [row] =
+      patch.caption !== undefined
+        ? await db.update(shootInspo).set({ caption: patch.caption }).where(eq(shootInspo.id, id)).returning()
+        : await db.select().from(shootInspo).where(eq(shootInspo.id, id)).limit(1);
+    if (!row) throw new ShootNotFoundError("That item was already removed.");
+    if (patch.who !== undefined) {
+      const keys = patch.who.filter((k) => WHO_KEY.test(k));
+      // a Postgres array literal; the keys are checked above, so they need no quoting
+      await db.execute(sql`update "shoot_inspo" set "who" = ${`{${keys.join(",")}}`}::text[] where "id" = ${id}`).catch((err) => {
+        log.error("shoots.db", "Who's-in-the-shot not saved (run migration 0025)", { error: err as Error });
+        throw new ShootInputError("Who's in it can't be saved yet: the database step for it hasn't run.");
+      });
+    }
+    return itemOf(row, (await whoOf([id])).get(id));
   });
 }
 

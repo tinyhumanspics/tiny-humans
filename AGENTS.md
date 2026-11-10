@@ -301,6 +301,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   in `lib/booking/extra-babies.ts`), priced on the server like the extra baby (quote sends `familyCount`; booking_addons
   keeps one row per kind; the Stripe page lists each add-on). Saved best effort in `booking_family_members`
   (`saveBookingFamily`/`familyFor` in `lib/booking/addons.ts`) and shown in review, confirmation, both emails, the Outlook
-  event, Leads and Shoots. Shot ideas keep `shoot_inspo.who` keys ("all", "baby:<n>", "fam:<n>"; `lib/shoots/people.ts`);
-  that column is in the Drizzle schema, so 0025 must run in production BEFORE the code deploys. Family names are parent
-  data: never to Meta/analytics, never in the unfinished-booking draft.
+  event, Leads and Shoots. Shot ideas keep `shoot_inspo.who` keys ("all", "baby:<n>", "fam:<n>"; `lib/shoots/people.ts`):
+  a database-only column like `bookings.blocked_until` (not in `lib/db/schema.ts` or the 0025 snapshot; read/written
+  with raw SQL best effort in `lib/shoots/server.ts`), so Shoots keeps working where 0025 hasn't run. The extra_person
+  bundle row is saved outside the bundle batch for the same reason. Family names are parent data: never to
+  Meta/analytics, never in the unfinished-booking draft.

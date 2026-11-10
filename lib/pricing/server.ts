@@ -257,14 +257,6 @@ export async function saveBundle(input: BundleInput): Promise<string> {
       .insert(bundleAddons)
       .values({ bundleId: id, kind: "extra_baby", name: "Extra baby", active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() })
       .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() } }),
-    ...(extraPerson
-      ? [
-          db
-            .insert(bundleAddons)
-            .values({ bundleId: id, kind: "extra_person", name: "Extra family member", active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), extraMinutes: 0, extraPhotos: 0, maxQuantity: extraPerson.maxExtra, sortOrder: 1, updatedAt: new Date() })
-            .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), maxQuantity: extraPerson.maxExtra, updatedAt: new Date() } }),
-        ]
-      : []),
     db
       .delete(bundleInclusionTranslations)
       .where(and(eq(bundleInclusionTranslations.bundleId, id), eq(bundleInclusionTranslations.locale, "es"))),
@@ -301,6 +293,15 @@ export async function saveBundle(input: BundleInput): Promise<string> {
         ]
       : [db.delete(bundleTranslations).where(and(eq(bundleTranslations.bundleId, id), eq(bundleTranslations.locale, "es")))]),
   ] as never);
+  // Separate from the batch: a database where migration 0025 hasn't widened bundle_addons_kind_check refuses this row,
+  // and that must never stop the bundle itself from saving.
+  if (extraPerson) {
+    await db
+      .insert(bundleAddons)
+      .values({ bundleId: id, kind: "extra_person", name: "Extra family member", active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), extraMinutes: 0, extraPhotos: 0, maxQuantity: extraPerson.maxExtra, sortOrder: 1, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), maxQuantity: extraPerson.maxExtra, updatedAt: new Date() } })
+      .catch((err) => log.error("pricing.db", "Extra family member charge not saved (run migration 0025)", { bundleId: id, error: err as Error }));
+  }
   return id;
 }
 

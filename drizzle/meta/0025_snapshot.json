@@ -3694,13 +3694,6 @@
           "notNull": true,
           "default": "''"
         },
-        "who": {
-          "name": "who",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'{}'::text[]"
-        },
         "sort": {
           "name": "sort",
           "type": "integer",
