@@ -67,7 +67,7 @@ export function createCheckoutSession(input: {
   /** Separate full-price add-on/travel lines on the payment page. */
   extraLines?: { name: string; amountCents: number }[];
   /** "deposit" (paid while booking) or "balance" (the payment link); the webhook tells them apart by this. */
-  kind?: "deposit" | "balance";
+  kind?: "deposit" | "balance" | "due_deposit";
   /** When the page expires (epoch seconds, 30 min to 24 h from now; Stripe's default is 24 h). */
   expiresAt?: number;
   /** "book" labels the button "Book"; default "pay". */

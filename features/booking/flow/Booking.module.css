@@ -674,3 +674,8 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* the note under the email box: room for the Privacy Policy link's wavy underline inside the chalk mask */
 .fieldNote { padding-bottom: 0.45em; }
+
+/* "Not born yet": booking from a due-date reservation's link (price kept, deposit already paid) */
+.dueBanner { display: grid; gap: 4px; margin: 0 0 16px; padding: 12px 16px; border: 2px dashed var(--sun-yellow); border-radius: 12px; color: var(--chalk-white); font-size: 1.1rem; }
+.dueBanner p { margin: 0; }
+.dueTitle { font-family: var(--font-chalk); font-size: 1.3rem; color: var(--sun-yellow); }

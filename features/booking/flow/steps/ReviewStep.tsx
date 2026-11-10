@@ -24,14 +24,15 @@ import { cn } from "@/lib/cn";
 
 /** Step 4: everything the family chose, the price (calculated by the server), an optional code and the deposit. */
 export default function ReviewStep({ flow, locale, messages }: { flow: BookingFlow; locale: AppLocale; messages: typeof en.bookingFlow }) {
-  const { state, bundle, selection, quote, setQuote, appliedCode, setAppliedCode, provider, addon, personAddon, bundleCents, beforeTravelCents, travel, travelFee, depositOffer, depositCents, deposit, totalCents, inspiration, setups, backdrops, goTo } = flow;
+  const { state, bundle, selection, quote, setQuote, appliedCode, setAppliedCode, provider, addon, personAddon, bundleCents, beforeTravelCents, travel, travelFee, depositOffer, depositCents, deposit, totalCents, inspiration, setups, backdrops, goTo, due } = flow;
+  const duePaid = due?.summary.depositPaidCents ?? 0;
   return (
     <>
       {bundle && state.date && state.slot && (
         <Review
           messages={messages.review}
           rows={[
-            { label: messages.review.labels.package, value: bundle.name, step: -1, href: bundlesHref(selection.inspirationId, locale) },
+            { label: messages.review.labels.package, value: bundle.name, step: -1, href: due ? undefined : bundlesHref(selection.inspirationId, locale) },
             ...(quote
               ? bookingPricingRows(quote, bundle, messages.review)
               : ([
@@ -47,7 +48,12 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
                   { label: messages.review.labels.total, value: formatMoney(beforeTravelCents + travelFee), step: -1 },
                 ]
               : []),
-            ...(depositCents > 0
+            ...(duePaid > 0
+              ? [
+                  { label: messages.due.depositPaid, value: formatMoney(duePaid), step: -1 },
+                  { label: messages.due.left, value: formatMoney(Math.max(0, totalCents - duePaid)), step: -1 },
+                ]
+              : depositCents > 0
               ? [
                   { label: messages.review.deposit.today, value: fill(messages.review.deposit.value, { deposit }), step: -1 },
                   { label: messages.review.deposit.rest, value: formatMoney(totalCents - depositCents), step: -1 },
@@ -71,7 +77,7 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
           onEdit={goTo}
         />
       )}
-      {bundle && (
+      {bundle && !due && (
         <DiscountField
           key={bundle.id}
           applied={appliedCode}

@@ -56,6 +56,15 @@ export const bundleInputSchema = z
     if (!b.offer?.label && s.offerLabel) ctx.addIssue({ code: "custom", path: ["spanish", "offerLabel"], message: "Clear the Spanish offer label, or add the English label too." });
   });
 
+/** /admin → Pricing → "Same offer on every bundle": a whole percent off, an optional label and the last day. */
+export const offerForAllSchema = z.object({
+  percent: z.number().int("Use a whole percent, like 10.").min(1, "Enter the percent off (1 to 90).").max(90, "90% off at most."),
+  label: z.string().trim().max(30, "Offer label: 30 characters at most.").optional().nullable(),
+  /** Blank = translated from the English label when saved. */
+  labelEs: z.string().trim().max(30, "Spanish label: 30 characters at most.").optional().nullable(),
+  endsOn: dateKey,
+});
+
 export const codeInputSchema = z
   .object({
     id: z.string().uuid().optional(),
@@ -79,3 +88,4 @@ export const codeInputSchema = z
 
 export type BundleInput = z.infer<typeof bundleInputSchema>;
 export type CodeInput = z.infer<typeof codeInputSchema>;
+export type OfferForAllInput = z.infer<typeof offerForAllSchema>;

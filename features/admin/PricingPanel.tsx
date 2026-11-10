@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import AdminDialog from "./AdminDialog";
 import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import type { AdminApi } from "@/lib/admin/client";
-import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
+import { activeOffer, formatMoney, MAX_OFFER_PERCENT, offerPercent, percentOffCents, toCents } from "@/lib/pricing/engine";
+import OfferForAll from "./OfferForAll";
 import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
 import { formatLongDate } from "@/lib/booking/dates";
@@ -48,6 +49,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
 
       {bundles && (
         <>
+          <OfferForAll api={api} bundles={bundles} today={today} onSaved={(next, text) => { setBundles(next); setEditing(null); setNote({ kind: "ok", text }); }} />
           <ul className={styles.bundleList}>
             {bundles.map((b) => {
               const offer = activeOffer(b, today);
@@ -56,7 +58,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
                   <div>
                     <p className={cn(styles.leadName, "chalk-soft")}>{b.name}</p>
                     <p className={cn(styles.leadMeta, "chalk-soft")}>
-                      {offer ? <><s>{formatMoney(toCents(b.price))}</s> {offer.label}: <b className={styles.offerInline}>{formatMoney(offer.cents)}</b>{offer.endsOn ? ` (until ${shortDate(offer.endsOn)})` : ""}</> : formatMoney(toCents(b.price))}
+                      {offer ? <><s>{formatMoney(toCents(b.price))}</s> {offer.label}: <b className={styles.offerInline}>{formatMoney(offer.cents)}</b>{offer.percent ? ` (${offer.percent}% off)` : ""}{offer.endsOn ? ` until ${shortDate(offer.endsOn)}` : ""}</> : formatMoney(toCents(b.price))}
                       {" · "}{b.duration}
                       {b.offer?.enabled && !offer ? " · offer ended (regular price shown)" : ""}
                     </p>
@@ -281,6 +283,10 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   const [active, setActive] = useState(bundle?.active !== false);
   const [offerOn, setOfferOn] = useState(Boolean(bundle?.offer?.enabled));
   const [offerPrice, setOfferPrice] = useState(bundle?.offer?.price ? String(bundle.offer.price) : "");
+  // "% off" or a set price (owner, Nov 10); a saved offer opens as % when its price is exactly a whole percent off
+  const savedPercent = bundle?.offer?.price ? offerPercent(toCents(bundle.price), toCents(bundle.offer.price)) : null;
+  const [offerMode, setOfferMode] = useState<"percent" | "price">(bundle?.offer?.price && savedPercent === null ? "price" : "percent");
+  const [offerPct, setOfferPct] = useState(savedPercent ? String(savedPercent) : "");
   const [offerLabel, setOfferLabel] = useState(bundle?.offer?.label ?? "");
   const [offerEnds, setOfferEnds] = useState(bundle?.offer?.endsOn ?? "");
   const [extraBabyOn, setExtraBabyOn] = useState(bundle?.extraBaby?.active ?? true);
@@ -300,7 +306,21 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
     setFeatures(swap);
     setSpanishFeatures(swap);
   };
+  const pct = Number(offerPct);
+  const pctOk = Number.isInteger(pct) && pct >= 1 && pct <= MAX_OFFER_PERCENT;
+  const regularCents = toCents(Number(price) || 0);
+  const pctPriceCents = pctOk && regularCents > 0 ? percentOffCents(regularCents, pct) : null;
+  const switchMode = (mode: "percent" | "price") => {
+    if (mode === "price" && pctPriceCents) setOfferPrice(String(pctPriceCents / 100));
+    if (mode === "percent" && Number(offerPrice) > 0 && regularCents > 0) {
+      const p = Math.round((1 - toCents(Number(offerPrice)) / regularCents) * 100);
+      if (p >= 1 && p <= MAX_OFFER_PERCENT) setOfferPct(String(p));
+    }
+    setOfferMode(mode);
+  };
   const save = async () => {
+    if (offerOn && offerMode === "percent" && !pctOk) return setErr(`Enter the percent off: a whole number from 1 to ${MAX_OFFER_PERCENT}.`);
+    const offerDollars = offerMode === "percent" ? (pctPriceCents ?? 0) / 100 : Number(offerPrice) || 0;
     setBusy(true);
     setErr(null);
     try {
@@ -315,7 +335,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
       await onSave({
         id: bundle?.id, name: name.trim(), price: Number(price), description: description.trim() || null, durationMinutes: Number(minutes), photos: photos.trim() || null, badge: badge.trim() || null,
         features: features.map((f) => f.trim()).filter(Boolean), active, sortOrder: bundle?.sortOrder ?? sortOrder,
-        offer: offerOn || offerPrice ? { enabled: offerOn, price: Number(offerPrice) || 0, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
+        offer: offerOn || offerDollars ? { enabled: offerOn, price: offerDollars, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
         spanish: spanishStarted ? spanish : null,
         extraBaby: { active: extraBabyOn, price: Number(extraBabyPrice), extraMinutes: Number(extraBabyMinutes), extraPhotos: Number(extraBabyPhotos), maxBabies: Number(maxBabies) },
         ...(familyBundle ? { extraPerson: { active: extraPersonOn, price: Number(extraPersonPrice), maxExtra: Number(maxExtraPeople) } } : {}),
@@ -399,12 +419,20 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         <label className={styles.toggle}><input type="checkbox" checked={offerOn} onChange={(e) => setOfferOn(e.target.checked)} /><span className="chalk-soft">Enable Special Offer</span></label>
         {offerOn && (
           <div className={styles.editorGrid}>
-            <label className={cn(styles.label, "chalk-soft")}>Offer price ($)<input className={styles.input} type="number" min={0} step="0.01" value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} /></label>
+            <label className={cn(styles.label, "chalk-soft")}>Offer type
+              <select className={styles.input} value={offerMode} onChange={(e) => switchMode(e.target.value as "percent" | "price")}><option value="percent">Percent off (%)</option><option value="price">Offer price ($)</option></select>
+            </label>
+            {offerMode === "percent" ? (
+              <label className={cn(styles.label, "chalk-soft")}>Percent off (%)<input className={styles.input} type="number" min={1} max={MAX_OFFER_PERCENT} step={1} value={offerPct} placeholder="10" onChange={(e) => setOfferPct(e.target.value)} /></label>
+            ) : (
+              <label className={cn(styles.label, "chalk-soft")}>Offer price ($)<input className={styles.input} type="number" min={0} step="0.01" value={offerPrice} onChange={(e) => setOfferPrice(e.target.value)} /></label>
+            )}
             <label className={cn(styles.label, "chalk-soft")}>Offer label<input className={styles.input} value={offerLabel} maxLength={30} placeholder="Special offer" onChange={(e) => setOfferLabel(e.target.value)} /></label>
             <label className={cn(styles.label, "chalk-soft")}>Offer ends (last day)<input className={cn(styles.input, styles.timeInput)} type="date" value={offerEnds} onChange={(e) => setOfferEnds(e.target.value)} /></label>
           </div>
         )}
-        <p className={cn(styles.hintSmall, "chalk-soft")}>The offer shows through its end date, then the regular price comes back automatically.</p>
+        {offerOn && offerMode === "percent" && pctPriceCents !== null && <p className={cn(styles.hintSmall, "chalk-soft")}>Offer price: <s>{formatMoney(regularCents)}</s> <b className={styles.offerInline}>{formatMoney(pctPriceCents)}</b> ({pct}% off)</p>}
+        <p className={cn(styles.hintSmall, "chalk-soft")}>The offer shows through its end date, then the regular price comes back automatically. To put one offer on every bundle at once, use &ldquo;Same offer on every bundle&rdquo; above.</p>
       </div>
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
       <div className={styles.photoBar}>

@@ -53,6 +53,14 @@
       "title": "Bundles",
       "subtitle": "Three simple packages, all at your home. We bring the studio to you."
     },
+    "promo": {
+      "every": "{label} on every bundle.",
+      "everyPercent": "{label}: {percent}% off every bundle.",
+      "some": "{label} on {bundles}.",
+      "somePercent": "{label}: {percent}% off {bundles}.",
+      "endsOn": "Book by {date}.",
+      "specialOffer": "Special offer"
+    },
     "inspiration": {
       "picked": "You picked “{title}”",
       "body": "We'll plan your session around it. Choose a bundle below.",
@@ -71,7 +79,107 @@
       "emailLabel": "Email us"
     }
   },
+  "quoteMessage": {
+    "intro": "Hi! Here are our prices for a session at your home (ZIP code {zip}):",
+    "line": "• {bundle}: {total}",
+    "lineParts": "• {bundle}: {total} ({parts})",
+    "offerOnly": "{offer}, regular {regular}",
+    "offer": "{offer} {price}",
+    "twins": "{price} for twins",
+    "triplets": "{price} for triplets",
+    "extraPerson": "{price} for 1 extra family member",
+    "extraPeople": "{price} for {count} extra family members",
+    "travel": "{price} travel fee",
+    "noTravel": "No travel fee for your area.",
+    "deposit": "A {deposit} deposit holds your date, and the rest is paid after your session.",
+    "depositFrom": "A deposit from {deposit} holds your date, and the rest is paid after your session.",
+    "noDeposit": "Nothing to pay today: you pay after your session.",
+    "book": "See what's in each bundle and book here: {link}"
+  },
+  "dueDate": {
+    "meta": {
+      "title": "Book with your due date",
+      "description": "Not born yet? Reserve your newborn session with your due date, and we'll plan it around your baby's arrival."
+    },
+    "invite": {
+      "title": "Not born yet?",
+      "text": "Book with your due date and we'll adjust your session around your baby's arrival.",
+      "button": "Book with my due date"
+    },
+    "page": {
+      "title": "Not born yet?",
+      "subtitle": "Reserve your session with your due date. When your baby arrives, you pick the day, or text us and we'll do it for you.",
+      "bundle": "Your bundle",
+      "dueDate": "Your due date",
+      "dueHint": "Any day from today to {last}.",
+      "babies": "How many babies are you expecting?",
+      "one": "One baby",
+      "twins": "Twins",
+      "triplets": "Triplets",
+      "you": "Your details",
+      "name": "Your name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Your home (where we bring the studio)",
+      "street": "Street address",
+      "unit": "Apt / unit (optional)",
+      "city": "City",
+      "zip": "ZIP code",
+      "notes": "Anything we should know? (optional)",
+      "how": "How it works",
+      "steps": [
+        "Reserve your bundle today with your due date.",
+        "When your baby is born, pick your session date with the link in your email, or text us at {phone} and we'll book it for you.",
+        "We adjust your session around your baby's arrival, and your price today is kept."
+      ],
+      "price": "Your price: {price}, kept for you",
+      "priceOffer": "{offer}: {price} (regular {regular}), kept for you",
+      "depositNote": "{deposit} deposit today, part of your total. The rest is paid after your session.",
+      "noDepositNote": "$0 today: you pay after your session.",
+      "submit": "Reserve my spot",
+      "submitDeposit": "Pay the {deposit} deposit and reserve",
+      "submitting": "Reserving…",
+      "redirecting": "Opening the secure payment page…",
+      "pickBundle": "Choose a bundle.",
+      "pickDate": "Pick your due date (today to {last})."
+    },
+    "done": {
+      "title": "Your spot is reserved!",
+      "body": "Congratulations, {name}! We've emailed you the details. When your baby is born, use the link in that email to pick your session date, or text us at {phone} and we'll book it for you.",
+      "pendingTitle": "Almost there",
+      "pendingBody": "Your deposit isn't paid yet, so your spot isn't reserved yet.",
+      "pay": "Pay the deposit",
+      "checking": "We're still confirming your payment. Refresh this page in a minute.",
+      "expiredTitle": "This reservation wasn't finished",
+      "expiredBody": "The payment page closed before the deposit was paid. You can reserve again any time.",
+      "again": "Reserve again",
+      "invalid": "This link isn't valid. Check your email, or text us and we'll help.",
+      "bundles": "See the bundles"
+    },
+    "stripe": {
+      "product": "Deposit · {bundle} (due-date reservation)",
+      "description": "Reserves your session for your due date ({date}). Part of your total; the rest is paid after your session.",
+      "message": "Your deposit reserves your spot. When your baby arrives, pick your session date with the link in your email."
+    },
+    "errors": {
+      "bundle": "That bundle isn't available anymore. Please choose another one.",
+      "babies": "That bundle doesn't offer this many babies. Please choose again.",
+      "window": "Pick a due date between today and 9 months from now.",
+      "server": "We couldn't reserve your spot just now. Please try again, or text us and we'll reserve it for you.",
+      "inProgress": "We're still saving your reservation. Please wait a moment.",
+      "spam": "We couldn't reserve this automatically. Please try again, or text us and we'll help.",
+      "rateLimited": "Too many tries from this connection. Please wait a little, or text us and we'll help."
+    }
+  },
   "bookingFlow": {
+    "due": {
+      "title": "Your due-date reservation",
+      "body": "Pick a day and time for {bundle}. Your price ({price}) is kept.",
+      "deposit": "Your {deposit} deposit is already paid, so there's nothing to pay now.",
+      "used": "This due-date link was already used, or isn't valid anymore. Text us at {phone} and we'll book your session.",
+      "depositPaid": "Deposit already paid",
+      "left": "Left to pay after your session"
+    },
     "meta": {
       "title": "Pick your date",
       "description": "Choose a day and time, and we'll bring the studio to your home."
@@ -692,6 +800,21 @@
     }
   },
   "emails": {
+    "dueDate": {
+      "subject": "Your Tiny Humans spot is reserved",
+      "preheader": "When your baby arrives, pick your session date with one tap.",
+      "eyebrow": "Spot reserved",
+      "title": "Your spot is reserved, {name}!",
+      "intro": "Thank you for reserving {bundle} with your due date, {date}. We'll adjust your session around your baby's arrival.",
+      "kept": "Your price is kept: {price}.",
+      "keptOffer": "Your price is kept: {price} with the {offer} (regular {regular}).",
+      "depositPaid": "Your {deposit} deposit is paid and counts toward your total.",
+      "when": "When your baby is born, pick your session date here. There's nothing to pay now.",
+      "button": "Pick my session date",
+      "buttonText": "Pick your session date: {url}",
+      "orText": "Prefer that we do it? Text us at {phone} and we'll book it for you.",
+      "reference": "Reservation {reference}"
+    },
     "layout": {
       "logoAlt": "Tiny Humans",
       "footer": "Tiny Humans · Newborn & baby photography in {location}. We bring the studio to you.",
@@ -1305,7 +1428,7 @@
           "heading": "Information we collect",
           "body": [
             "When you book a session, you give us:",
-            { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "For family sessions, who else will be in the photos (for example Mom, Dad or a sibling) and their names, if you choose to share them", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
+            { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "For family sessions, who else will be in the photos (for example Mom, Dad or a sibling) and their names, if you choose to share them", "The package, date and time you choose", "If you book with your due date (\"Not born yet?\"), your due date and how many babies you're expecting", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
             "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked, your ZIP code and how far you got, so we can follow up. We don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",
             "During your session we take photographs of your baby and, depending on your package, your family. If you sign our photo and video release at your session, we keep your name, whether you're the parent or legal guardian, your signature, the choices you made and when you signed, together with your booking.",

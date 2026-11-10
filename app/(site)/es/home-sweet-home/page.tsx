@@ -22,5 +22,5 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function Page() {
   const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
-  return <LandingPage noticeHours={noticeHours} travel={travel} deposit={deposit} reviews={reviews} messages={es.landing} bundleMessages={es.bundlesPage} photoMessages={es.photoPlaceholder} depositMessages={es.deposit.landing} noticeMessages={es.policy} reviewMessages={es.reviewsSection} locale="es" />;
+  return <LandingPage noticeHours={noticeHours} travel={travel} deposit={deposit} reviews={reviews} messages={es.landing} bundleMessages={es.bundlesPage} dueMessages={es.dueDate.invite} photoMessages={es.photoPlaceholder} depositMessages={es.deposit.landing} noticeMessages={es.policy} reviewMessages={es.reviewsSection} locale="es" />;
 }

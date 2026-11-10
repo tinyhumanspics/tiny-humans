@@ -51,6 +51,8 @@ export async function POST(req: Request) {
       discountCode: r.discountCode,
       consents: r.consents,
       backdrops: r.backdrops,
+      // "Not born yet": the schedule link's token (their kept price, no new deposit; checked on the server)
+      dueToken: r.dueToken,
       // where this family came from (first-party cookie set by proxy.ts; never taken from the request body)
       attribution: decodeAttribution(jar.get(SOURCE_COOKIE)?.value) ?? undefined,
     });

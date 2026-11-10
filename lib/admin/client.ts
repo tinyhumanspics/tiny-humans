@@ -9,8 +9,17 @@ import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import type { DepositSettings } from "@/lib/deposit/types";
 import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
-import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
+import type { BundleInput, CodeInput, OfferForAllInput } from "@/lib/pricing/validation";
+import type { QuoteResult } from "@/lib/quotes/types";
+import type { DueReservationRow } from "@/lib/due-date/types";
 import type { FollowUpResult, UnfinishedData } from "@/lib/unfinished/types";
+
+/** /admin → Leads → Due dates. `ready` false = migration 0026 not run yet. */
+export interface DueList {
+  reservations: DueReservationRow[];
+  ready: boolean;
+  error?: string;
+}
 
 /** What the owner area needs: the /api/admin routes. */
 export interface AdminApi {
@@ -63,6 +72,15 @@ export interface AdminApi {
   deleteBundle(id: string): Promise<AdminBundle[]>;
   saveCode(c: CodeInput): Promise<DiscountCode[]>;
   deleteCode(id: string): Promise<DiscountCode[]>;
+  /** The same "% off" offer on every active bundle; returns the bundles and how many got it. */
+  applyOfferToAll(o: OfferForAllInput): Promise<{ bundles: AdminBundle[]; count: number }>;
+  endOffersForAll(): Promise<AdminBundle[]>;
+  /* due-date reservations ("Not born yet", owner only) */
+  listDueDates(): Promise<DueList>;
+  bookDueDate(input: { id: string; date: string; start: string; babyAge: string; babyName?: string }): Promise<DueList & { booked: string }>;
+  cancelDueDate(id: string, refund: boolean): Promise<DueList & { refunded: boolean; refundError?: string }>;
+  /* quotes (owner only): every bundle's price for a ZIP code */
+  getQuote(zip: string, babies: number, family: number): Promise<QuoteResult>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */
   getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
   saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
@@ -137,6 +155,12 @@ const httpApi: AdminApi = {
   deleteBundle: async (id) => (await json<{ bundles: AdminBundle[] }>(await fetch(`/api/admin/pricing/bundles?id=${encodeURIComponent(id)}`, { method: "DELETE" }))).bundles,
   saveCode: async (c) => (await json<{ codes: DiscountCode[] }>(await fetch("/api/admin/pricing/codes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(c) }))).codes,
   deleteCode: async (id) => (await json<{ codes: DiscountCode[] }>(await fetch(`/api/admin/pricing/codes?id=${id}`, { method: "DELETE" }))).codes,
+  applyOfferToAll: async (o) => json(await fetch("/api/admin/pricing/offer", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(o) })),
+  endOffersForAll: async () => (await json<{ bundles: AdminBundle[] }>(await fetch("/api/admin/pricing/offer", { method: "DELETE" }))).bundles,
+  listDueDates: async () => json(await fetch("/api/admin/due-dates", { cache: "no-store" })),
+  bookDueDate: async (input) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "book", ...input }) })),
+  cancelDueDate: async (id, refund) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "cancel", id, refund }) })),
+  getQuote: async (zip, babies, family) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
   },

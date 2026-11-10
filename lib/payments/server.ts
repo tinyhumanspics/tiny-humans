@@ -1,4 +1,5 @@
 import "server-only";
+import { dueDepositExpired, dueDepositPaid } from "@/lib/due-date/server";
 import { eq, sql } from "drizzle-orm";
 import { site } from "@/config/site";
 import { getDb } from "@/lib/db/client";
@@ -202,6 +203,12 @@ export async function handleStripeEvent(event: { type?: string; data?: { object?
   const session = event.data?.object;
   const bookingId = session?.metadata?.booking_id;
   if (!session || !bookingId) return;
+  // "Not born yet" deposits: the id is the due-date reservation's, never a booking's
+  if (session.metadata?.kind === "due_deposit") {
+    if (event.type === "checkout.session.expired") await dueDepositExpired(bookingId);
+    else if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") await dueDepositPaid(bookingId, session);
+    return;
+  }
   if (event.type === "checkout.session.expired") {
     if (isDepositPage(session)) await depositPageExpired(bookingId, session);
     return;

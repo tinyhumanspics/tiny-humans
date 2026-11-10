@@ -90,6 +90,8 @@ export class MockBookingProvider implements BookingProvider {
 
   async createBooking(request: BookingRequest): Promise<BookingResult> {
     await wait(700);
+    // due-date reservations live in the database (Outlook mode only)
+    if (request.dueToken || request.dueReservationId) throw new BookingError("invalid_request", "Due-date reservations need the database.");
     const b = await this.bundle(request.bundleId);
     if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const babies: BookingBaby[] = request.babies?.length ? request.babies : [{ name: request.contact.babyName, age: request.contact.babyAge }];

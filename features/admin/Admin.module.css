@@ -462,3 +462,18 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 .periodBar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 14px; }
 .sourcePick { display: flex; align-items: center; gap: 8px; }
 .sourcePick .input { width: auto; min-width: 180px; margin: 0; }
+
+/* Quotes (owner, Nov 10): address/ZIP, babies, family members, then the button; one under the other on phones. */
+.quoteForm { display: grid; gap: 10px 16px; align-items: end; margin: 8px 0 6px; }
+.quoteForm .label { display: grid; gap: 4px; }
+@media (min-width: 900px) { .quoteForm { grid-template-columns: minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.3fr) auto; } }
+.quoteMessage { min-height: 200px; resize: vertical; line-height: 1.45; white-space: pre-wrap; }
+.smallButtonOn { border-color: var(--sun-yellow); color: var(--sun-yellow); }
+/* the "same offer on every bundle" box above the bundle list */
+.offerAll { margin: 12px 0 18px; padding: 14px 16px; border: 2px dashed var(--sun-yellow); border-radius: 14px; display: grid; gap: 10px; }
+.offerAllPrices { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--chalk-white); }
+/* Leads → Due dates: the card head is the open/close button */
+.dueHead { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dueHead:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 4px; border-radius: 6px; }
+.dueMeta { display: block; }
+.quoteMessageField { display: grid; gap: 6px; margin: 8px 0 10px; }

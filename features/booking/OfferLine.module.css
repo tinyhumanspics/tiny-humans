@@ -1,0 +1,12 @@
+/* The special-offer line under the Bundles heading: sun-yellow like the offer prices on the cards. */
+.line {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 12px 0 0;
+  max-width: min(34em, calc(100% - 52px));
+  color: var(--sun-yellow);
+  font-size: 1.2rem;
+  line-height: 1.35;
+}
+.star { flex: none; margin-top: 2px; }

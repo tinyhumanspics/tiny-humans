@@ -66,6 +66,8 @@ export const bookingRequestSchema = z.object({
   consents: z.object({ sms: z.boolean(), photos: z.boolean() }).optional(),
   // optional backdrop picks (one per setup; trimmed to the bundle's setups on the server)
   backdrops: backdropPicks.optional(),
+  // "Not born yet": the schedule link's token from the family's email (kept price, no new deposit)
+  dueToken: z.string().trim().regex(/^[A-Za-z0-9_-]{43}$/).optional(),
   // Spam signals (never stored): a hidden field people never see, and how long the form was open.
   hp: z.string().max(200).optional(),
   elapsedMs: z.number().int().nonnegative().optional(),

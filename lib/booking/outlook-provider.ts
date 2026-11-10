@@ -6,7 +6,8 @@ import { bookingRules } from "@/config/booking";
 import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
 import { getDb, isDatabaseConfigured, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
-import { bookingConsents, bookings, type Booking } from "@/lib/db/schema";
+import { bookingConsents, bookings, type Booking, type DueDateReservation } from "@/lib/db/schema";
+import { carryDueDeposit, claimDue, dueById, dueByToken, finishDue, keptPriceBundle, releaseDue } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
@@ -63,6 +64,9 @@ function sourceColumns(a: BookingRequest["attribution"]) {
  * Real bookings: Outlook Calendar + Outlook email (Microsoft Graph), stored in Neon.
  * Active when BOOKING_PROVIDER=outlook.
  */
+/** The family's message when a due-date link was used already (or cancelled): text us instead. */
+const dueUsedMessage = (locale?: string) => fill((locale === "es" ? es : en).bookingFlow.due.used, { phone: site.contact.phone });
+
 export class OutlookBookingProvider implements BookingProvider {
   readonly name = "outlook";
 
@@ -115,9 +119,13 @@ export class OutlookBookingProvider implements BookingProvider {
   async createBooking(request: BookingRequest): Promise<BookingResult> {
     this.ensureConfigured();
     const db = getDb();
-    // Price + bundle always come from the central catalog on the server (never from the browser).
-    const bundle = (await getCatalog()).find((b) => b.id === request.bundleId && b.active !== false);
+    // "Not born yet": a due-date reservation becomes this booking (its bundle, its kept price, no new deposit).
+    const due = await this.dueFor(request);
+    // Price + bundle always come from the central catalog on the server (never from the browser). A reservation's
+    // bundle is honored even if it was turned off since.
+    const bundle = (await getCatalog()).find((b) => b.id === request.bundleId && (b.active !== false || due?.packageId === b.id));
     if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
+    if (due && due.packageId !== bundle.id) throw new BookingError("invalid_request", "This link is for another bundle. Please use the link in your email.");
     const babies: BookingBaby[] = request.babies?.length ? request.babies : [{ name: request.contact.babyName, age: request.contact.babyAge }];
     const addon = extraBabyLine(bundle, babies.length);
     if (babies.length > 1 && !addon) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count anymore. Please choose again.");
@@ -144,6 +152,9 @@ export class OutlookBookingProvider implements BookingProvider {
         throw new BookingError("in_progress", friendly.inProgress);
       }
     }
+
+    // 1-due. A reservation books once: already booked or cancelled = text us instead.
+    if (due && due.status !== "reserved" && due.status !== "scheduling") throw new BookingError("invalid_request", dueUsedMessage(request.locale));
 
     // 1a. The same family trying the same time again while their own deposit hold still blocks it (their connection
     // dropped before the payment page opened, or they switched devices): back to that payment page, not "time taken".
@@ -177,13 +188,19 @@ export class OutlookBookingProvider implements BookingProvider {
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
-    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length, family.length);
+    const { quote: pricing, codeId } = due
+      ? { quote: withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone)), bundle, babies.length, family.length), codeId: null }
+      : await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length, family.length);
     let usage: { usageId: string; release: () => Promise<void> } | null = null;
     if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
     const releaseUsage = () => usage?.release().catch(() => undefined);
 
     // 2c. Deposit: the bundle's, paid on Stripe as the last step (confirmed once it's paid). Never more than the total.
-    const depositCents = depositCentsFor(pricing.totalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
+    // A due-date reservation paid its deposit already (carried over below), so it never pays a new one.
+    const depositCents = due ? 0 : depositCentsFor(pricing.totalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
+    // One booking per reservation: claim it now; given back if this booking fails.
+    if (due && !(await claimDue(due.id))) throw new BookingError("invalid_request", dueUsedMessage(request.locale));
+    const releaseDueClaim = () => (due ? releaseDue(due.id) : Promise.resolve());
 
     // 3. Save as pending (unique index on start time blocks a simultaneous double booking).
     const sessionStart = zonedTimeToUtc(date, start, tz);
@@ -237,6 +254,7 @@ export class OutlookBookingProvider implements BookingProvider {
       } catch (err) {
         if (isUniqueViolation(err, "booking_reference")) continue; // rare: try another reference
         await releaseUsage();
+        await releaseDueClaim();
         if (isUniqueViolation(err, "request_id")) throw new BookingError("in_progress", friendly.inProgress);
         if (isUniqueViolation(err) || isOverlapViolation(err)) throw new BookingError("slot_unavailable", friendly.slotTaken);
         log.error("booking.db", "Insert failed", { error: err as Error });
@@ -245,9 +263,12 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     if (!row) {
       await releaseUsage();
+      await releaseDueClaim();
       throw new BookingError("server_error", friendly.server);
     }
     if (usage) await attachUsage(usage.usageId, row.id);
+    // the reservation's paid deposit becomes this booking's (the balance, Leads and refunds count it)
+    if (due) await carryDueDeposit(due, row.id).catch((err) => log.error("booking.db", "Due-date deposit not carried over", { reference: row.bookingReference, error: err as Error }));
 
     // What this booking was promised (online cancel/reschedule notice, photo count): later /admin changes don't touch
     // it. Saved now with the other extras (best effort), so a booking confirmed after its deposit has them too.
@@ -270,7 +291,7 @@ export class OutlookBookingProvider implements BookingProvider {
 
     // 4a. Deposit: send the family to Stripe. The booking stays pending (holding its time) until it's paid; then the
     // webhook or the page they come back to confirms it (lib/deposit/flow.ts). Stripe down → booked without it.
-    let deposit: BookingDetails["deposit"];
+    let deposit: BookingDetails["deposit"] = due?.depositStatus === "paid" && due.depositCents ? { amountCents: due.depositCents, status: "paid" } : undefined;
     if (depositCents > 0) {
       const opened = await openDeposit(row, depositCents, noticeHours);
       if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
@@ -303,8 +324,10 @@ export class OutlookBookingProvider implements BookingProvider {
     } catch (err) {
       await db.delete(bookings).where(eq(bookings.id, row.id)).catch((e) => log.error("booking.db", "Rollback delete failed", { error: e }));
       await releaseUsage();
+      await releaseDueClaim();
       throw err;
     }
+    if (due) await finishDue(due.id, row.id);
     return { id: row.bookingReference, status: "confirmed", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: noticeHours, deposit };
   }
 
@@ -322,8 +345,28 @@ export class OutlookBookingProvider implements BookingProvider {
     return { quote: withAddons(computeQuote(bundle, today, check.terms), bundle, babyCount, family), codeId: check.codeId };
   }
 
-  async quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0): Promise<PriceQuote> {
+  async quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0, dueToken?: string): Promise<PriceQuote> {
+    // a schedule link from a due-date reservation: its kept price (no code), with today's add-ons
+    const due = dueToken ? await dueByToken(dueToken) : null;
+    if (due && due.packageId === bundleId && (due.status === "reserved" || due.status === "scheduling")) {
+      const bundle = (await getCatalog()).find((b) => b.id === bundleId);
+      if (bundle) {
+        const family = asksFamily(bundle) ? familyCount : 0;
+        return withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone)), bundle, babyCount, family);
+      }
+    }
     return (await this.priceFor(bundleId, code, email, babyCount, familyCount)).quote;
+  }
+
+  /**
+   * The due-date reservation this booking comes from (schedule link or /admin); null for a normal booking. Its status
+   * is checked after the retry check, so a retried submission still gets its booking back.
+   */
+  private async dueFor(request: BookingRequest): Promise<DueDateReservation | null> {
+    if (!request.dueToken && !request.dueReservationId) return null;
+    const due = request.dueReservationId ? await dueById(request.dueReservationId) : await dueByToken(request.dueToken!);
+    if (!due) throw new BookingError("invalid_request", dueUsedMessage(request.locale));
+    return due;
   }
 
   async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {

@@ -9,7 +9,7 @@ import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/securi
 
 export const dynamic = "force-dynamic";
 // The browser sends only a bundle id, an optional code and the email. The price is calculated here.
-const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.string().trim().max(40).optional(), email: z.string().trim().max(254).optional(), babyCount: z.number().int().min(1).max(3).default(1), familyCount: z.number().int().min(0).max(MAX_FAMILY_MEMBERS).default(0) });
+const body = z.object({ bundleId: z.string().trim().min(1).max(64), code: z.string().trim().max(40).optional(), email: z.string().trim().max(254).optional(), babyCount: z.number().int().min(1).max(3).default(1), familyCount: z.number().int().min(0).max(MAX_FAMILY_MEMBERS).default(0), dueToken: z.string().trim().max(64).optional() });
 
 /** POST /api/booking/quote: server-calculated price (regular, special offer, or one discount code). */
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   const p = body.safeParse(input);
   if (!p.success) return NextResponse.json({ error: "Please check the code and try again.", code: "invalid_request" }, { status: 400 });
   try {
-    return NextResponse.json({ quote: await getBookingProvider().quote(p.data.bundleId, p.data.code, p.data.email, p.data.babyCount, p.data.familyCount) }, { headers: { "cache-control": "no-store" } });
+    return NextResponse.json({ quote: await getBookingProvider().quote(p.data.bundleId, p.data.code, p.data.email, p.data.babyCount, p.data.familyCount, p.data.dueToken) }, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.quote", "Unexpected error", { error: err as Error });

@@ -19,6 +19,8 @@ import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
+import OfferLine from "@/features/booking/OfferLine";
+import NotBornYet from "@/features/booking/NotBornYet";
 import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
 import type { PublicReview } from "@/lib/reviews/public";
@@ -73,6 +75,7 @@ export default function LandingPage({
   reviews = [],
   messages = en.landing,
   bundleMessages = en.bundlesPage,
+  dueMessages = en.dueDate.invite,
   photoMessages = en.photoPlaceholder,
   depositMessages = en.deposit.landing,
   noticeMessages = en.policy,
@@ -85,6 +88,7 @@ export default function LandingPage({
   reviews?: PublicReview[];
   messages?: typeof en.landing;
   bundleMessages?: typeof en.bundlesPage;
+  dueMessages?: typeof en.dueDate.invite;
   photoMessages?: typeof en.photoPlaceholder;
   depositMessages?: typeof en.deposit.landing;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
@@ -223,7 +227,7 @@ export default function LandingPage({
 
       {/* 5. The offer: bundles + what every session includes */}
       <section id="bundles" className={cn("container", styles.section)} aria-labelledby="landing-bundles">
-        <SectionHeading id="landing-bundles" title={t.offer.title} subtitle={t.offer.sub} slot="bundles" />
+        <SectionHeading id="landing-bundles" title={t.offer.title} subtitle={t.offer.sub} slot="bundles" note={<OfferLine messages={bundleMessages.promo} locale={locale} />} />
         {available ? (
           <div className={styles.bundles} style={bundleColumns(bundles.length)}>
             {bundles.map((b, i) => (
@@ -236,6 +240,7 @@ export default function LandingPage({
           <BookingPaused messages={bundleMessages.paused} />
         )}
         <p className={cn(styles.bundlesNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
+        <NotBornYet messages={dueMessages} locale={locale} headingLevel={3} />
         <Reveal className={styles.bonusWrap}>
           <ChalkBox className={styles.bonus} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">
             <h3 className={cn(styles.bonusTitle, "chalk")}>{t.offer.bonusTitle}</h3>

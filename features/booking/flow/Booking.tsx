@@ -22,15 +22,15 @@ import TimeStep from "./steps/TimeStep";
 import DetailsForm from "./steps/DetailsForm";
 import ReviewStep from "./steps/ReviewStep";
 import { flowDurationLabel } from "./booking-state";
-import { useBookingFlow } from "./useBookingFlow";
+import { useBookingFlow, type DueLink } from "./useBookingFlow";
 import { localePath } from "@/i18n/path";
 import styles from "./Booking.module.css";
 import { cn } from "@/lib/cn";
 
 /** The booking calendar for one bundle (chosen on the bundles page). State and actions live in useBookingFlow. */
-export default function Booking({ bundleId, locale = "en", messages }: { bundleId: string; locale?: AppLocale; messages: typeof en.bookingFlow }) {
+export default function Booking({ bundleId, locale = "en", messages, due = null }: { bundleId: string; locale?: AppLocale; messages: typeof en.bookingFlow; due?: DueLink | null }) {
   const id = "book";
-  const flow = useBookingFlow(bundleId, locale, messages);
+  const flow = useBookingFlow(bundleId, locale, messages, due);
   const {
     state, dispatch, router, selection, headingRef, panelRef, hp, setHp, days, loadingDays, studioToday, month, setMonth,
     inspiration, bundle, today, addon, personAddon, maxFamily, zip, travel, travelChecking, backdrops, setBackdrops, setups, checkingBabyCount,
@@ -49,7 +49,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 <span className={styles.chipLabel}>{messages.summary.yourBundle}</span>{" "}
                 <span className={styles.bundleName}>{bundle.name}</span>
                 <span className={styles.bundleMeta}>
-                  {formatMoney(activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${fill(messages.summary.editedPhotos, { count: bundle.photos })}` : ""}
+                  {formatMoney(due?.summary.bundlePriceCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price))} · {bundle.duration}{bundle.photos ? ` · ${fill(messages.summary.editedPhotos, { count: bundle.photos })}` : ""}
                 </span>
                 {depositOffer?.amountCents ? <span className={styles.bundleMeta}>{fill(messages.summary.deposit, { deposit: formatMoney(depositOffer.amountCents) })}</span> : null}
                 {addon && <span className={styles.bundleMeta}>{addon.quantity === 1 ? messages.summary.extraBaby : messages.summary.extraBabies}: +{formatMoney(addon.totalCents)} · {fill(messages.summary.totalDuration, { duration: flowDurationLabel(sessionMinutes(bundle, state.babies.length), messages.summary) })} · {fill(messages.summary.editedPhotos, { count: addPhotos(bundle.photos, addon.extraPhotos) })}</span>}
@@ -64,9 +64,18 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 </p>
               )}
             </div>
-            <Link href={bundlesHref(selection.inspirationId, locale)} className={cn(styles.linkButton, "chalk-soft")}>
-              {messages.summary.changeBundle}
-            </Link>
+            {!due && (
+              <Link href={bundlesHref(selection.inspirationId, locale)} className={cn(styles.linkButton, "chalk-soft")}>
+                {messages.summary.changeBundle}
+              </Link>
+            )}
+          </div>
+        )}
+        {due && state.status !== "done" && (
+          <div className={cn(styles.dueBanner, "chalk-soft")} role="note">
+            <p className={cn(styles.dueTitle, "chalk")}>{messages.due.title}</p>
+            <p>{fill(messages.due.body, { bundle: due.summary.bundleName, price: formatMoney(due.summary.bundlePriceCents) })}</p>
+            {due.summary.depositPaidCents > 0 && <p>{fill(messages.due.deposit, { deposit: formatMoney(due.summary.depositPaidCents) })}</p>}
           </div>
         )}
         <BabyLedNote messages={messages.babyLed} multiple={state.babies.length > 1} />

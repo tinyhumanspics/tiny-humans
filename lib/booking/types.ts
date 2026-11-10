@@ -100,6 +100,10 @@ export interface BookingRequest {
   elapsedMs?: number;
   /** Booking source (set on the server from the first-party cookie, never by the browser). */
   attribution?: Attribution;
+  /** "Not born yet": the schedule link's token from the family's email (their kept price, no new deposit). */
+  dueToken?: string;
+  /** The same, when the owner books it in /admin (set on the server only, never taken from the browser). */
+  dueReservationId?: string;
 }
 
 export interface BookingResult {
@@ -175,7 +179,7 @@ export interface BookingClient {
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
   createBooking(request: BookingRequest): Promise<BookingResult>;
   /** Price for a bundle (optionally with a code). Always calculated server-side for real bookings. */
-  quote(bundleId: string, code?: string, email?: string, babyCount?: number, familyCount?: number): Promise<PriceQuote>;
+  quote(bundleId: string, code?: string, email?: string, babyCount?: number, familyCount?: number, dueToken?: string): Promise<PriceQuote>;
   /** Customer cancel link: look up the booking behind a token. */
   getCancellation(token: string): Promise<CancellationSummary>;
   /** Customer cancel link: cancel with a required reason. */

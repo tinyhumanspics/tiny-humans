@@ -46,12 +46,29 @@ export function formatMoney(cents: number): string {
   return `$${Number.isInteger(d) ? d.toString() : d.toFixed(2)}`;
 }
 
+/** Percent offers: the most a "% off" offer can take off (an offer must stay above $0). */
+export const MAX_OFFER_PERCENT = 90;
+
+/** The price after a whole-percent offer, in exact cents (rounded like a percentage discount code). */
+export const percentOffCents = (regularCents: number, percent: number) => Math.round((regularCents * (100 - percent)) / 100);
+
+/**
+ * The whole percent an offer takes off, when its price is exactly that percent off the regular price, else null.
+ * "% off" offers are saved as that exact price, so no separate column is needed (owner, Nov 10).
+ */
+export function offerPercent(regularCents: number, offerCents: number): number | null {
+  if (!(offerCents > 0) || offerCents >= regularCents) return null;
+  const percent = Math.round((1 - offerCents / regularCents) * 100);
+  return percent >= 1 && percent <= MAX_OFFER_PERCENT && percentOffCents(regularCents, percent) === offerCents ? percent : null;
+}
+
 /** The offer that applies today, or null (disabled, expired, or not cheaper). */
 export function activeOffer(b: Bundle, today: string) {
   const o = b.offer;
   if (!o || !o.enabled || !(o.price > 0) || toCents(o.price) >= toCents(b.price)) return null;
   if (o.endsOn && today > o.endsOn) return null;
-  return { cents: toCents(o.price), label: o.label?.trim() || "Special offer", endsOn: o.endsOn ?? null };
+  const cents = toCents(o.price);
+  return { cents, label: o.label?.trim() || "Special offer", endsOn: o.endsOn ?? null, percent: offerPercent(toCents(b.price), cents) };
 }
 
 export function codeDiscountCents(regularCents: number, c: CodeTerms): number {

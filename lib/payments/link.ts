@@ -38,3 +38,11 @@ export function depositReturnPath(reference: string, bundleId: string, locale: A
 }
 
 export const verifyDepositLink = (reference: string, signature: string) => verify("deposit-link:v1", reference, signature);
+
+/** Back from the due-date deposit page ("Not born yet"): /due-date/done?r=<reference>&k=<signature>. */
+export function dueReturnPath(reference: string, locale: AppLocale = "en"): string | null {
+  if (!secret()) return null;
+  return `${localePath("/due-date/done", locale)}?${new URLSearchParams({ r: reference, k: signFor("due-return:v1", reference) })}`;
+}
+
+export const verifyDueReturn = (reference: string, signature: string) => verify("due-return:v1", reference, signature);

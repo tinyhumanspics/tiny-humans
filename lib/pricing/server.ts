@@ -20,11 +20,11 @@ import {
 import { log } from "@/lib/log";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
-import { durationLabel, toCents } from "./engine";
+import { durationLabel, percentOffCents, toCents } from "./engine";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "./localization";
 import { lastGoodCatalog, rememberCatalog } from "./snapshot";
 import { CODE_MESSAGES, type CodeCheck, type DiscountCode, type PricingAdapter } from "./types";
-import type { BundleInput, CodeInput } from "./validation";
+import type { BundleInput, CodeInput, OfferForAllInput } from "./validation";
 
 export const CATALOG_TAG = "catalog";
 const LOCATION = "We bring the studio to your home";
@@ -303,6 +303,41 @@ export async function saveBundle(input: BundleInput): Promise<string> {
       .catch((err) => log.error("pricing.db", "Extra family member charge not saved (run migration 0025)", { bundleId: id, error: err as Error }));
   }
   return id;
+}
+
+/**
+ * The same "% off" offer on every active bundle (owner, Nov 10): it replaces each bundle's own offer, and each price is
+ * worked out from that bundle's regular price. Bundles with Spanish copy get the Spanish label too (a Spanish copy
+ * without it would hide the Spanish site). One batch, so every bundle changes together or none does.
+ * Returns how many bundles now carry the offer.
+ */
+export async function applyOfferToAll(input: OfferForAllInput & { labelEs: string | null }): Promise<number> {
+  const db = getDb();
+  // an offer must stay above $0, so a free bundle can't carry one
+  const bundles = (await getCatalog()).filter((b) => b.active !== false && toCents(b.price) >= 100);
+  if (!bundles.length) return 0;
+  const now = new Date();
+  const label = input.label || null;
+  await db.batch([
+    ...bundles.map((b) =>
+      db
+        .update(bundlesTable)
+        .set({ offerEnabled: true, offerPriceCents: percentOffCents(toCents(b.price), input.percent), offerLabel: label, offerEndsOn: input.endsOn, updatedAt: now })
+        .where(eq(bundlesTable.id, b.id)),
+    ),
+    ...bundles.map((b) =>
+      db
+        .update(bundleTranslations)
+        .set({ offerLabel: label ? input.labelEs : null, updatedAt: now })
+        .where(and(eq(bundleTranslations.bundleId, b.id), eq(bundleTranslations.locale, "es"))),
+    ),
+  ] as never);
+  return bundles.length;
+}
+
+/** Switches the special offer off on every bundle: regular prices come back at once (each bundle keeps its old offer to switch on again). */
+export async function endOffersForAll(): Promise<void> {
+  await getDb().update(bundlesTable).set({ offerEnabled: false, updatedAt: new Date() }).where(eq(bundlesTable.offerEnabled, true));
 }
 
 export class BundleInUseError extends Error {}

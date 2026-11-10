@@ -253,3 +253,61 @@ export async function internalDepositUnpaidEmail(p: { reference: string; parentN
   );
   return { subject: `Deposit not paid — ${p.parentName} — ${formatLongDate(p.date)} (${p.reference})`, html, text: text(["DEPOSIT NOT PAID", "", `${p.parentName} didn't pay the ${formatMoney(p.amountCents)} deposit within 30 minutes, so the time was released.`], rows), attachments: [] };
 }
+
+/** "Not born yet": a family reserved a bundle with their due date (and paid the deposit when deposits are on). */
+export async function internalDueReservedEmail(p: {
+  reference: string;
+  parentName: string;
+  email: string;
+  phone: string;
+  address: string;
+  notes: string | null;
+  bundleName: string;
+  dueDate: string;
+  babyCount: number;
+  bundlePriceCents: number;
+  regularPriceCents: number;
+  offerLabel: string | null;
+  depositStatus: string;
+  depositCents: number;
+  travelFeeCents: number | null;
+  travelMiles: number | null;
+  scheduleUrl: string;
+  leadsUrl: string;
+}): Promise<RenderedEmail> {
+  const first = firstName(p.parentName);
+  const price = p.bundlePriceCents < p.regularPriceCents ? `${formatMoney(p.bundlePriceCents)} (${p.offerLabel ?? "offer"}, regular ${formatMoney(p.regularPriceCents)}), kept for them` : `${formatMoney(p.bundlePriceCents)}, kept for them`;
+  const deposit = p.depositStatus === "paid" ? `${formatMoney(p.depositCents)}, paid` : p.depositStatus === "unpaid" ? `${formatMoney(p.depositCents)}, NOT paid (Stripe was down): follow up` : "None (deposits are off)";
+  const rows: [string, string][] = [
+    ["Reservation", p.reference],
+    ["Due date", formatLongDate(p.dueDate)],
+    ["Bundle", p.bundleName],
+    ["Babies expected", p.babyCount === 1 ? "1" : p.babyCount === 2 ? "Twins" : "Triplets"],
+    ["Price", price],
+    ["Deposit", deposit],
+    ["Customer name", p.parentName],
+    ["Email", p.email],
+    ["Phone", p.phone],
+    ["Home", p.address],
+    ["Travel (estimate)", p.travelFeeCents === null ? "Travel fees off" : p.travelFeeCents ? `${formatMoney(p.travelFeeCents)} (about ${p.travelMiles} miles)` : `No fee${p.travelMiles !== null ? ` (about ${p.travelMiles} miles)` : ""}`],
+    ...(p.notes ? ([["Notes", p.notes]] as [string, string][]) : []),
+    ["Their link to pick the session", p.scheduleUrl],
+    ["Due dates in /admin", p.leadsUrl],
+  ];
+  const html = await renderHtml(
+    <InternalLayout
+      banner="DUE-DATE RESERVATION"
+      bannerBg={C.yellow}
+      bannerFg={C.ink}
+      summary={
+        <>
+          <b>{p.parentName}</b> reserved <b>{p.bundleName}</b> with their due date, <b>{formatLongDate(p.dueDate)}</b>. When the baby arrives, {first} picks the session with the link
+          in their email, or you book it in /admin → Leads → Due dates. Nothing is on the calendar yet.
+        </>
+      }
+      rows={rows}
+      footer={`Reply to this email to contact ${first} directly.`}
+    />,
+  );
+  return { subject: `Due-date reservation — ${p.parentName} — due ${formatLongDate(p.dueDate)} (${p.reference})`, html, text: text(["DUE-DATE RESERVATION", "", `${p.parentName} reserved ${p.bundleName} with their due date (${formatLongDate(p.dueDate)}). Nothing is on the calendar yet.`], rows), attachments: [] };
+}

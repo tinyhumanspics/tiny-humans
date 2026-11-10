@@ -1,0 +1,7 @@
+/* "Not born yet?" box under the bundle cards: centered, narrower than the cards row. */
+.wrap { display: flex; justify-content: center; margin-top: clamp(36px, 5vw, 56px); }
+.box { position: relative; width: min(100%, 620px); padding: 26px clamp(18px, 4vw, 34px) 28px; text-align: center; display: grid; justify-items: center; gap: 10px; }
+.doodle { position: absolute; top: 14px; right: 18px; transform: rotate(10deg); }
+.title { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.7rem, 4.6vw, 2.2rem); color: var(--chalk-white); }
+.text { margin: 0; max-width: 30em; color: var(--chalk-muted); font-size: 1.15rem; line-height: 1.4; }
+.button { margin-top: 6px; }

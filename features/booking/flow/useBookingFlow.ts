@@ -1,5 +1,6 @@
 "use client";
 
+import type { DueSummary } from "@/lib/due-date/types";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCatalog } from "@/components/providers/CatalogProvider";
@@ -29,7 +30,13 @@ import { apiErrorMessage, filledFamily, initialState, isLanguageDraftPayload, ne
  * The booking form's state and actions: availability, travel estimate, deposit, discount quote, the language-switch
  * draft and the submit (same requestId on retries). `Booking` and the step components only render it.
  */
-export function useBookingFlow(bundleId: string, locale: AppLocale, messages: typeof en.bookingFlow) {
+/** A due-date reservation's schedule link ("Not born yet"): its token and what it holds. */
+export interface DueLink {
+  token: string;
+  summary: DueSummary;
+}
+
+export function useBookingFlow(bundleId: string, locale: AppLocale, messages: typeof en.bookingFlow, due: DueLink | null = null) {
   const provider = getBookingClient();
   // one id per submission: retries of the same booking can never double-book
   const requestIdRef = useRef<string | null>(null);
@@ -40,7 +47,8 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   }, []);
   const [hp, setHp] = useState("");
   const selection = useBookingSelection();
-  const [state, dispatch] = useReducer(reducer, { ...initialState, bundleId });
+  // from a due-date reservation's link: the parent's details are filled in already
+  const [state, dispatch] = useReducer(reducer, { ...initialState, bundleId, contact: due ? { ...initialState.contact, ...due.summary.contact } : initialState.contact });
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -261,13 +269,14 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   const [depositOffer, setDepositOffer] = useState<DepositOffer | null>(null);
   const [redirecting, setRedirecting] = useState(false);
   useEffect(() => {
-    if (!bundleId) return;
+    // a due-date reservation paid its deposit already: no new one
+    if (!bundleId || due) return;
     fetch(`/api/booking/deposit?bundle=${encodeURIComponent(bundleId)}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((o: DepositOffer | null) => setDepositOffer(o))
       .catch(() => undefined);
-  }, [bundleId]);
-  const bundleCents = bundle ? quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price) : 0;
+  }, [bundleId, due]);
+  const bundleCents = bundle ? quote?.finalCents ?? due?.summary.bundlePriceCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price) : 0;
   const beforeTravelCents = quote?.totalCents ?? bundleCents + (addon?.totalCents ?? 0) + (personAddon?.totalCents ?? 0);
   const totalCents = beforeTravelCents + travelFee;
   const depositCents = depositOffer?.amountCents ? Math.min(depositOffer.amountCents, totalCents) : 0;
@@ -275,7 +284,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
     provider
-      .quote(state.bundleId, appliedCode ?? undefined, appliedCode ? state.contact.email.trim() || undefined : undefined, state.babies.length, familyCount)
+      .quote(state.bundleId, appliedCode ?? undefined, appliedCode ? state.contact.email.trim() || undefined : undefined, state.babies.length, familyCount, due?.token)
       .then(setQuote)
       .catch(() => {
         setQuote(null);
@@ -382,7 +391,8 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
         family,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,
-        discountCode: appliedCode ?? undefined,
+        discountCode: due ? undefined : appliedCode ?? undefined,
+        dueToken: due?.token,
         contact: {
           parentName: c.parentName.trim(),
           email: c.email.trim(),
@@ -454,7 +464,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     hp, setHp, days, loadingDays, studioToday, month, setMonth,
     inspiration, bundle, today, addon, personAddon, maxFamily, quote, setQuote, zip, travel, travelChecking, travelFee,
     backdrops, setBackdrops, setups, appliedCode, setAppliedCode, checkingBabyCount, changeBabyCount,
-    depositOffer, redirecting, bundleCents, beforeTravelCents, totalCents, depositCents, deposit,
+    depositOffer, redirecting, bundleCents, beforeTravelCents, totalCents, depositCents, deposit, due,
     goTo, goBack, next, submit, daySlots, onContactBlur,
   };
 }

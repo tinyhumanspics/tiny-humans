@@ -12,6 +12,7 @@ import { backdropNames } from "@/lib/booking/backdrop-names";
 import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/features/booking/RescheduleFlow";
+import DueDatesPanel from "./DueDatesPanel";
 import { smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
@@ -125,6 +126,14 @@ const reminderRows = (lead: Lead): [string, string][] => {
 /** Owner area: every booking/lead, filterable, with details and admin cancellation. */
 export default function LeadsPanel({ api }: { api: AdminApi }) {
   const [filter, setFilter] = useState<LeadFilter>("all");
+  // "Due dates" ("Not born yet" reservations) shows its own list instead of the bookings (?view=due opens it)
+  const [dueView, setDueView] = useState(false);
+  const [dueWaiting, setDueWaiting] = useState<number | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the address once, on arrival
+    if (new URLSearchParams(window.location.search).get("view") === "due") setDueView(true);
+    api.listDueDates().then((l) => setDueWaiting(l.reservations.filter((r) => r.status === "reserved" || r.status === "scheduling").length)).catch(() => undefined);
+  }, [api]);
   const [data, setData] = useState<LeadList | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -188,11 +197,19 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
 
       <div className={styles.editTabs} role="group" aria-label="Filter leads">
         {FILTERS.filter((f) => f.alwaysShow || (data?.counts[f.id] ?? 0) > 0).map((f) => (
-          <button key={f.id} type="button" className={cn(styles.tab, filter === f.id ? styles.tabActive : "")} aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+          <button key={f.id} type="button" className={cn(styles.tab, !dueView && filter === f.id ? styles.tabActive : "")} aria-pressed={!dueView && filter === f.id} onClick={() => (setDueView(false), setFilter(f.id))}>
             {f.label} ({data?.counts[f.id] ?? 0})
           </button>
         ))}
+        <button type="button" className={cn(styles.tab, dueView ? styles.tabActive : "")} aria-pressed={dueView} onClick={() => setDueView(true)}>
+          Due dates ({dueWaiting ?? 0})
+        </button>
       </div>
+
+      {dueView ? (
+        <DueDatesPanel api={api} onCount={setDueWaiting} />
+      ) : (
+        <>
 
       {savedNote && <p className={cn(styles.ok, "chalk-soft")} role="status">{savedNote}</p>}
       {error && <p className={cn(styles.bannerError, "chalk-soft")} role="alert">{error}</p>}
@@ -207,6 +224,8 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
         <button type="button" className={styles.smallButton} onClick={() => load(filter, data.leads.length)} disabled={loading}>
           Show more
         </button>
+      )}
+        </>
       )}
     </section>
   );

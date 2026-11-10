@@ -16,9 +16,11 @@ interface Props {
   slot: "portfolio" | "bundles" | "book";
   /** 1 when this heading is the page's main heading (screen readers jump to it). */
   level?: 1 | 2;
+  /** Optional extra line under the subtitle (the special-offer line on the Bundles headings). */
+  note?: React.ReactNode;
 }
 
-export default function SectionHeading({ id, title, subtitle, align = "start", slot, level = 2 }: Props) {
+export default function SectionHeading({ id, title, subtitle, align = "start", slot, level = 2, note }: Props) {
   const Heading = level === 1 ? "h1" : "h2";
   const { theme, locale } = useSiteSettings();
   const doodle = theme.decorations.heading[slot];
@@ -41,6 +43,7 @@ export default function SectionHeading({ id, title, subtitle, align = "start", s
       </Heading>
       <ChalkDoodle name="underline" size={170} color="var(--chalk-dim)" strokeWidth={2.4} className={styles.underline} />
       {subtitle && <p className={cn(styles.subtitle, "chalk-soft")}>{subtitle}</p>}
+      {note}
     </Reveal>
   );
 }

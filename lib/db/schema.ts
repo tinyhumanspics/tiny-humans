@@ -461,6 +461,70 @@ export const bookingDeposits = pgTable(
 
 export type BookingDeposit = typeof bookingDeposits.$inferSelect;
 
+/* ---------------- due-date reservations ("Not born yet", owner Nov 10) ---------------- */
+
+/**
+ * A family books with their due date instead of a session time: the bundle (and today's price, kept for them), the
+ * due date and the parent's contact details, plus the deposit paid on Stripe when deposits are on. It blocks no time
+ * and makes no Outlook event. When the baby is born the family (schedule link in their email) or the owner (/admin →
+ * Leads → Due dates) picks the session: that creates a normal booking without a new deposit, linked here.
+ * Status: pending (deposit page open) → reserved → scheduled; or cancelled / expired (deposit never paid).
+ */
+export const dueDateReservations = pgTable(
+  "due_date_reservations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reference: text("reference").notNull().unique(),
+    /** Same value for retries of one submission. */
+    requestId: text("request_id").unique(),
+    packageId: text("package_id").notNull(),
+    packageName: text("package_name").notNull(),
+    regularPriceCents: integer("regular_price_cents").notNull(),
+    /** The bundle price kept for this family: the special offer when one ran the day they reserved. */
+    bundlePriceCents: integer("bundle_price_cents").notNull(),
+    offerLabel: text("offer_label"),
+    /** Babies they expect (twins/triplets add their charge when the session is booked). */
+    babyCount: integer("baby_count").notNull().default(1),
+    dueDate: date("due_date", { mode: "string" }).notNull(),
+    parentName: text("parent_name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    locale: text("locale").$type<AppLocale>().notNull().default("en"),
+    street: text("street").notNull(),
+    unit: text("unit"),
+    city: text("city").notNull(),
+    zip: text("zip").notNull(),
+    notes: text("notes"),
+    /** Travel estimate when they reserved (the booking works it out again from the address). */
+    travelFeeCents: integer("travel_fee_cents"),
+    travelMiles: integer("travel_miles"),
+    status: text("status").notNull().default("reserved"),
+    depositCents: integer("deposit_cents").notNull().default(0),
+    /** none (deposits off) · pending · paid · unpaid (Stripe was down) · refunded · expired */
+    depositStatus: text("deposit_status").notNull().default("none"),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntent: text("stripe_payment_intent"),
+    depositPaidAt: timestamp("deposit_paid_at", { withTimezone: true }),
+    refundId: text("refund_id"),
+    /** SHA-256 of the family's schedule link token (the token itself is derived from the id, never stored). */
+    scheduleTokenHash: text("schedule_token_hash").notNull(),
+    /** The booking made from this reservation. */
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("due_date_reservations_status_idx").on(t.status, t.dueDate),
+    index("due_date_reservations_token_idx").on(t.scheduleTokenHash),
+    check("due_date_reservations_status_check", sql`${t.status} in ('pending', 'reserved', 'scheduling', 'scheduled', 'cancelled', 'expired')`),
+    check("due_date_reservations_deposit_check", sql`${t.depositStatus} in ('none', 'pending', 'paid', 'unpaid', 'refunded', 'expired')`),
+    check("due_date_reservations_babies_check", sql`${t.babyCount} between 1 and 3`),
+  ],
+);
+
+export type DueDateReservation = typeof dueDateReservations.$inferSelect;
+
 /* ---------------- pricing & promotions (/admin/pricing) ---------------- */
 
 export const bundlesTable = pgTable(

@@ -5,7 +5,7 @@
 export { bookingConfirmationEmail } from "@/emails/BookingConfirmation";
 export { bookingCancellationEmail } from "@/emails/BookingCancellation";
 export { bookingRescheduledEmail } from "@/emails/BookingRescheduled";
-export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail, internalNewReviewEmail, internalBackdropEmail, internalEmailProblemEmail, internalDepositUnpaidEmail } from "@/emails/Internal";
+export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail, internalNewReviewEmail, internalBackdropEmail, internalEmailProblemEmail, internalDepositUnpaidEmail, internalDueReservedEmail } from "@/emails/Internal";
 export type { RenderedEmail, EmailAttachment, ImageMode } from "./types";
 export type { EmailLocale } from "./messages";
 export { sessionReminderEmail, type ReminderKind } from "@/emails/SessionReminder";
@@ -16,3 +16,4 @@ export { depositAbandonedEmail } from "@/emails/DepositAbandoned";
 export { depositLinkEmail } from "@/emails/DepositLink";
 export { dayClosedEmail } from "@/emails/DayClosed";
 export { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";
+export { dueReservedEmail } from "@/emails/DueDateReserved";

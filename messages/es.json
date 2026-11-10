@@ -221,6 +221,14 @@
       "title": "Paquetes",
       "subtitle": "Tres paquetes sencillos, todos en tu hogar. Nosotros llevamos el estudio."
     },
+    "promo": {
+      "every": "{label} en todos los paquetes.",
+      "everyPercent": "{label}: {percent}% de descuento en todos los paquetes.",
+      "some": "{label} en {bundles}.",
+      "somePercent": "{label}: {percent}% de descuento en {bundles}.",
+      "endsOn": "Reserva hasta el {date}.",
+      "specialOffer": "Oferta especial"
+    },
     "inspiration": {
       "picked": "Elegiste “{title}”",
       "body": "Planificaremos tu sesión inspirándonos en esta foto. Elige un paquete abajo.",
@@ -239,7 +247,107 @@
       "emailLabel": "Escríbenos"
     }
   },
+  "quoteMessage": {
+    "intro": "¡Hola! Estos son nuestros precios para una sesión en tu hogar (código postal {zip}):",
+    "line": "• {bundle}: {total}",
+    "lineParts": "• {bundle}: {total} ({parts})",
+    "offerOnly": "{offer}, precio regular {regular}",
+    "offer": "{offer} {price}",
+    "twins": "{price} por gemelos",
+    "triplets": "{price} por trillizos",
+    "extraPerson": "{price} por 1 familiar adicional",
+    "extraPeople": "{price} por {count} familiares adicionales",
+    "travel": "{price} de cargo de viaje",
+    "noTravel": "Sin cargo de viaje para tu zona.",
+    "deposit": "Un depósito de {deposit} guarda tu fecha, y el resto se paga después de tu sesión.",
+    "depositFrom": "Un depósito desde {deposit} guarda tu fecha, y el resto se paga después de tu sesión.",
+    "noDeposit": "Nada que pagar hoy: pagas después de tu sesión.",
+    "book": "Mira lo que incluye cada paquete y reserva aquí: {link}"
+  },
+  "dueDate": {
+    "meta": {
+      "title": "Reserva con tu fecha de parto",
+      "description": "¿Tu bebé aún no nace? Reserva tu sesión de recién nacido con tu fecha de parto y la planificamos según la llegada de tu bebé."
+    },
+    "invite": {
+      "title": "¿Aún no nace?",
+      "text": "Reserva con tu fecha de parto y ajustamos tu sesión según la llegada de tu bebé.",
+      "button": "Reservar con mi fecha de parto"
+    },
+    "page": {
+      "title": "¿Aún no nace?",
+      "subtitle": "Reserva tu sesión con tu fecha de parto. Cuando llegue tu bebé, tú eliges el día, o escríbenos y lo hacemos por ti.",
+      "bundle": "Tu paquete",
+      "dueDate": "Tu fecha de parto",
+      "dueHint": "Cualquier día desde hoy hasta el {last}.",
+      "babies": "¿Cuántos bebés esperas?",
+      "one": "Un bebé",
+      "twins": "Gemelos",
+      "triplets": "Trillizos",
+      "you": "Tus datos",
+      "name": "Tu nombre",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "address": "Tu hogar (donde llevamos el estudio)",
+      "street": "Dirección",
+      "unit": "Apto / unidad (opcional)",
+      "city": "Ciudad",
+      "zip": "Código postal",
+      "notes": "¿Algo que debamos saber? (opcional)",
+      "how": "Cómo funciona",
+      "steps": [
+        "Reserva hoy tu paquete con tu fecha de parto.",
+        "Cuando nazca tu bebé, elige la fecha de tu sesión con el enlace de tu correo, o escríbenos al {phone} y la reservamos por ti.",
+        "Ajustamos tu sesión según la llegada de tu bebé, y te guardamos el precio de hoy."
+      ],
+      "price": "Tu precio: {price}, guardado para ti",
+      "priceOffer": "{offer}: {price} (precio regular {regular}), guardado para ti",
+      "depositNote": "Depósito de {deposit} hoy, parte de tu total. El resto se paga después de tu sesión.",
+      "noDepositNote": "$0 hoy: pagas después de tu sesión.",
+      "submit": "Reservar mi lugar",
+      "submitDeposit": "Pagar el depósito de {deposit} y reservar",
+      "submitting": "Reservando…",
+      "redirecting": "Abriendo la página de pago segura…",
+      "pickBundle": "Elige un paquete.",
+      "pickDate": "Elige tu fecha de parto (desde hoy hasta el {last})."
+    },
+    "done": {
+      "title": "¡Tu lugar está reservado!",
+      "body": "¡Felicidades, {name}! Te enviamos los detalles por correo. Cuando nazca tu bebé, usa el enlace de ese correo para elegir la fecha de tu sesión, o escríbenos al {phone} y la reservamos por ti.",
+      "pendingTitle": "Ya casi",
+      "pendingBody": "Tu depósito aún no está pagado, así que tu lugar todavía no está reservado.",
+      "pay": "Pagar el depósito",
+      "checking": "Todavía estamos confirmando tu pago. Actualiza esta página en un minuto.",
+      "expiredTitle": "Esta reserva no se terminó",
+      "expiredBody": "La página de pago se cerró antes de pagar el depósito. Puedes reservar de nuevo cuando quieras.",
+      "again": "Reservar de nuevo",
+      "invalid": "Este enlace no es válido. Revisa tu correo, o escríbenos y te ayudamos.",
+      "bundles": "Ver los paquetes"
+    },
+    "stripe": {
+      "product": "Depósito · {bundle} (reserva con fecha de parto)",
+      "description": "Reserva tu sesión para tu fecha de parto ({date}). Es parte de tu total; el resto se paga después de tu sesión.",
+      "message": "Tu depósito reserva tu lugar. Cuando llegue tu bebé, elige la fecha de tu sesión con el enlace de tu correo."
+    },
+    "errors": {
+      "bundle": "Ese paquete ya no está disponible. Elige otro, por favor.",
+      "babies": "Ese paquete no ofrece esa cantidad de bebés. Elige de nuevo, por favor.",
+      "window": "Elige una fecha de parto entre hoy y dentro de 9 meses.",
+      "server": "No pudimos reservar tu lugar en este momento. Inténtalo de nuevo, o escríbenos y lo reservamos por ti.",
+      "inProgress": "Todavía estamos guardando tu reserva. Espera un momento, por favor.",
+      "spam": "No pudimos reservar esto automáticamente. Inténtalo de nuevo, o escríbenos y te ayudamos.",
+      "rateLimited": "Demasiados intentos desde esta conexión. Espera un poco, o escríbenos y te ayudamos."
+    }
+  },
   "bookingFlow": {
+    "due": {
+      "title": "Tu reserva con fecha de parto",
+      "body": "Elige un día y una hora para {bundle}. Te guardamos tu precio ({price}).",
+      "deposit": "Tu depósito de {deposit} ya está pagado, así que no hay nada que pagar ahora.",
+      "used": "Este enlace ya se usó o ya no es válido. Escríbenos al {phone} y reservamos tu sesión.",
+      "depositPaid": "Depósito ya pagado",
+      "left": "Por pagar después de tu sesión"
+    },
     "meta": {
       "title": "Elige la fecha",
       "description": "Elige un día y una hora, y llevaremos el estudio a tu hogar."
@@ -692,6 +800,21 @@
     "owner": "Área del propietario (solo prototipo)"
   },
   "emails": {
+    "dueDate": {
+      "subject": "Tu lugar en Tiny Humans está reservado",
+      "preheader": "Cuando llegue tu bebé, elige la fecha de tu sesión con un toque.",
+      "eyebrow": "Lugar reservado",
+      "title": "¡Tu lugar está reservado, {name}!",
+      "intro": "Gracias por reservar {bundle} con tu fecha de parto, {date}. Ajustaremos tu sesión según la llegada de tu bebé.",
+      "kept": "Te guardamos tu precio: {price}.",
+      "keptOffer": "Te guardamos tu precio: {price} con la {offer} (precio regular {regular}).",
+      "depositPaid": "Tu depósito de {deposit} está pagado y cuenta para tu total.",
+      "when": "Cuando nazca tu bebé, elige aquí la fecha de tu sesión. No hay nada que pagar ahora.",
+      "button": "Elegir la fecha de mi sesión",
+      "buttonText": "Elige la fecha de tu sesión: {url}",
+      "orText": "¿Prefieres que lo hagamos nosotros? Escríbenos al {phone} y la reservamos por ti.",
+      "reference": "Reserva {reference}"
+    },
     "layout": {
       "logoAlt": "Tiny Humans",
       "footer": "Tiny Humans · Fotografía de recién nacidos y bebés en {location}. Llevamos el estudio hasta ti.",
@@ -1305,7 +1428,7 @@
           "heading": "Información que recopilamos",
           "body": [
             "Cuando reservas una sesión, nos das:",
-            { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "En las sesiones familiares, quién más saldrá en las fotos (por ejemplo, mamá, papá o un hermano) y sus nombres, si decides compartirlos", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
+            { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "En las sesiones familiares, quién más saldrá en las fotos (por ejemplo, mamá, papá o un hermano) y sus nombres, si decides compartirlos", "El paquete, la fecha y la hora que eliges", "Si reservas con tu fecha de parto («¿Aún no nace?»), tu fecha de parto y cuántos bebés esperas", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
             "Si empiezas una reserva y no la terminas, guardamos el nombre, el correo electrónico y el teléfono que escribiste, el paquete, la fecha y la hora que elegiste, tu código postal y hasta qué paso llegaste, para poder escribirte. No guardamos los datos de tu bebé de una reserva que no terminaste. También contamos cuántos visitantes llegan a cada paso del formulario de reserva, sin nombres, correos ni nada que te identifique.",
             "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia. Si firmas nuestra autorización de fotos y videos en tu sesión, guardamos tu nombre, si eres el padre, la madre o el tutor legal, tu firma, lo que elegiste y cuándo firmaste, junto con tu reserva.",
