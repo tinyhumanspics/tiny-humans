@@ -6,6 +6,8 @@ import { BookingError } from "@/lib/booking/errors";
 import { deleteLeadPermanently, getLeadRow } from "@/lib/leads/server";
 import { expireReviews } from "@/lib/reviews/server";
 import { log } from "@/lib/log";
+import { removeShootFiles } from "@/lib/shoots/files";
+import { removeBookingShootFiles } from "@/lib/shoots/server";
 
 export const dynamic = "force-dynamic";
 const body = z.object({ reference: z.string().trim().min(3).max(40), confirm: z.literal("DELETE") });
@@ -18,6 +20,13 @@ export async function POST(req: Request) {
   if (!p.success) return NextResponse.json({ error: "Please confirm the permanent delete." }, { status: 400 });
   const row = await getLeadRow(p.data.reference).catch(() => null);
   if (!row) return NextResponse.json({ error: "Lead not found." }, { status: 404 });
+  // its shoot's photos first (the shoot rows go with the booking): a failure stops here, so no file is left behind
+  try {
+    await removeBookingShootFiles(row.id, removeShootFiles);
+  } catch (err) {
+    log.error("admin.leads", "Shoot photos not removed", { error: err as Error, reference: row.bookingReference });
+    return NextResponse.json({ error: "Nothing was deleted: the shoot photos couldn't be removed. Please try again." }, { status: 500 });
+  }
   try {
     await deleteLeadPermanently(row);
     expireReviews(); // its review (if picked) leaves the website too

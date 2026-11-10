@@ -1,4 +1,4 @@
-import type { BringSection, InspoGroup, InspoItem, ShootDay, ShootDetail } from "./types";
+import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail } from "./types";
 
 /** Browser calls for /admin → Shoots (owner only; the routes check the session). */
 
@@ -16,7 +16,7 @@ export class ShootsApiError extends Error {
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(url, { cache: "no-store", ...init, headers: init?.body ? { "content-type": "application/json", ...init.headers } : init?.headers });
+    res = await fetch(url, { cache: "no-store", ...init, headers: typeof init?.body === "string" ? { "content-type": "application/json", ...init.headers } : init?.headers });
   } catch {
     throw new ShootsApiError("No connection. Check the internet and try again.", 0);
   }
@@ -44,6 +44,19 @@ export const shootsApi = {
   saveCaption: async (key: string, id: string, caption: string) =>
     (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ caption }) })).item,
   removeInspo: (key: string, id: string) => call<void>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "DELETE" }),
+  /** One photo, already shrunk in the browser (preparePhoto). */
+  uploadPhoto: async (key: string, group: InspoGroup, photo: { blob: Blob; width: number; height: number }) => {
+    const form = new FormData();
+    form.append("file", photo.blob, "photo.jpg");
+    form.append("group", group);
+    form.append("width", String(photo.width));
+    form.append("height", String(photo.height));
+    return (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/photo`, { method: "POST", body: form })).item;
+  },
+
+  day: async (date: string) => (await call<{ day: DaySheet }>(`/api/admin/shoots/day/${date}`)).day,
+  tick: (date: string, key: string, on: boolean) => call<void>("/api/admin/shoots/ticks", { method: "POST", body: body({ date, key, on }) }),
+  clearTicks: (date: string) => call<void>(`/api/admin/shoots/ticks?${new URLSearchParams({ date })}`, { method: "DELETE" }),
 
   bring: async () => (await call<{ sections: BringSection[] }>("/api/admin/shoots/bring")).sections,
   addSection: async (name = "") => (await call<{ section: BringSection }>("/api/admin/shoots/bring", { method: "POST", body: body({ name }) })).section,

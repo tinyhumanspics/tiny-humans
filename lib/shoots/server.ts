@@ -180,6 +180,11 @@ async function ensureRow(key: string): Promise<Shoot> {
   return row;
 }
 
+/** The shoot's row id for a key (creating a booking's row on first use): uploads need it for the file path. */
+export async function ensureShootRowId(key: string): Promise<string> {
+  return guard(async () => (await ensureRow(key)).id);
+}
+
 /** Saves folder edits (title, tab label, what they asked for, still to confirm, bring extra; day/start/place for styled). */
 export async function updateShoot(key: string, patch: ShootPatch): Promise<ShootDetail> {
   return guard(async () => {

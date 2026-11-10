@@ -1,0 +1,32 @@
+/* A photo full screen (folder + day sheet). 44 px+ buttons, works one-handed on a phone. */
+.lightbox {
+  width: 100vw; max-width: 100vw; height: 100vh; height: 100dvh; max-height: none; margin: 0; padding: 0; border: 0;
+  display: grid; grid-template-rows: auto 1fr auto;
+  background: rgba(8, 18, 11, 0.97); color: var(--chalk-white); font-family: var(--font-hand);
+}
+.lightbox::backdrop { background: rgba(0, 0, 0, 0.7); }
+.lightbox:not([open]) { display: none; }
+
+.top, .bottom {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+  padding: max(10px, env(safe-area-inset-top, 0px)) clamp(12px, 4vw, 28px) 10px;
+}
+.bottom { justify-content: center; padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
+.count { font-family: var(--font-chalk); color: var(--chalk-muted); font-size: 1.05rem; }
+
+.stage { margin: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; padding: 0 clamp(8px, 3vw, 24px); }
+.stage img { max-width: 100%; max-height: 100%; min-height: 0; object-fit: contain; border-radius: 8px; transition: opacity 0.2s; }
+.doneImage { opacity: 0.55; }
+.caption { margin: 10px 0 0; text-align: center; font-size: 1.2rem; max-width: 40em; }
+
+.close, .nav, .mark, .markOn {
+  min-height: 48px; padding: 6px 18px; border-radius: 10px; font-family: var(--font-chalk); font-size: 1.15rem; cursor: pointer;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 45%, transparent); background: none; color: var(--chalk-white);
+}
+.mark { border-color: var(--sun-yellow); color: var(--sun-yellow); }
+.markOn { border-color: var(--sun-yellow); background: var(--sun-yellow); color: var(--chalkboard-dark); }
+.close:focus-visible, .nav:focus-visible, .mark:focus-visible, .markOn:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage img { transition: none; }
+}
