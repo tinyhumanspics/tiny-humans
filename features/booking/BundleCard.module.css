@@ -101,6 +101,7 @@
   -webkit-mask-size: 140px 140px; mask-size: 140px 140px;
 }
 .wasPrice { font-size: 0.55em; color: var(--chalk-muted); text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--chalk-white) 75%, transparent); }
-.offerPrice { color: var(--sun-yellow); }
+/* a little smaller than a regular price (owner, Nov 10: "$134.10" with cents read too big next to the chalk) */
+.offerPrice { color: var(--sun-yellow); font-size: 0.82em; }
 .offerEnds { margin: -6px 0 6px; font-size: 1.02rem; color: var(--cloud-blue); }
 .description { margin: -2px 0 6px; font-size: 1.05rem; color: var(--chalk-muted); line-height: 1.4; }
