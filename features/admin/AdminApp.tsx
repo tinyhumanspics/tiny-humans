@@ -17,6 +17,7 @@ import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights
 import LeadsPanel from "./LeadsPanel";
 import UnfinishedPanel from "./UnfinishedPanel";
 import BringLists from "@/features/shoots/BringLists";
+import ShootFolder from "@/features/shoots/ShootFolder";
 import ShootsList from "@/features/shoots/ShootsList";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
@@ -34,9 +35,10 @@ let navScrollLeft = 0;
 
 /**
  * Owner area shell: sign-in, settings, navigation, then one section. `view` picks a screen inside a section
- * (Shoots: "days" = Shoot days, "bring" = What we always bring).
+ * (Shoots: "days" = Shoot days, "bring" = What we always bring, "folder" = the shoot `shootKey`; the folder
+ * draws its own main heading, the family's name).
  */
-export default function AdminApp({ section = "dashboard", view }: { section?: AdminSection; view?: "days" | "bring" }) {
+export default function AdminApp({ section = "dashboard", view, shootKey }: { section?: AdminSection; view?: "days" | "bring" | "folder"; shootKey?: string }) {
   const api = useMemo(() => getAdminApi(), []);
   const { applySettings } = useSiteSettings();
   const [status, setStatus] = useState<Status>("loading");
@@ -111,7 +113,7 @@ export default function AdminApp({ section = "dashboard", view }: { section?: Ad
           ))}
         </ul>
       </nav>
-      <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>
+      {!(section === "shoots" && view === "folder") && <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>}
 
       {!storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
         <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
@@ -119,7 +121,7 @@ export default function AdminApp({ section = "dashboard", view }: { section?: Ad
 
       {section === "dashboard" && <Dashboard api={api} settings={settings} />}
       {section === "leads" && <LeadsPanel api={api} />}
-      {section === "shoots" && (view === "bring" ? <BringLists /> : <ShootsList />)}
+      {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : <ShootsList />)}
       {section === "unfinished" && <UnfinishedPanel api={api} />}
       {section === "availability" && <AvailabilityPanel api={api} />}
       {section === "pricing" && <PricingPanel api={api} />}

@@ -22,6 +22,12 @@ export function dayLabel(date: string): string {
   return `${p.weekday}, ${p.month} ${p.day}`;
 }
 
+/** "Mon Nov 16" */
+export function shortDay(date: string): string {
+  const p = dayParts(date);
+  return `${p.weekday.slice(0, 3)} ${p.month.slice(0, 3)} ${p.day}`;
+}
+
 /** "09:00" → "9:00", "17:31" → "5:31" (the day sheet is read in context, like the template). */
 export function clock(time: string | null | undefined): string {
   if (!time) return "";

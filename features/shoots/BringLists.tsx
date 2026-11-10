@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "@/features/admin/Admin.module.css";
 import { cn } from "@/lib/cn";
 import { shootsApi, ShootsApiError } from "@/lib/shoots/client";
@@ -8,10 +8,9 @@ import type { BringSection } from "@/lib/shoots/types";
 import NotReady from "./NotReady";
 import ShootsTabs from "./ShootsTabs";
 import { saveText, useAutosave, type SaveState } from "./useAutosave";
+import { useAutoHeight } from "./useAutoHeight";
+import { useTwoTap } from "./useTwoTap";
 import css from "./Shoots.module.css";
-
-/** How long "Tap again to remove" waits for the second tap. */
-const CONFIRM_MS = 4000;
 
 /** /admin/shoots/bring: the sections every day sheet lists under "What to bring". Changes save by themselves. */
 export default function BringLists() {
@@ -112,12 +111,11 @@ function SectionCard({
 }) {
   const [name, setName] = useState(section.name);
   const [items, setItems] = useState(section.items.join("\n"));
-  const [confirming, setConfirming] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removeError, setRemoveError] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
-  const itemsRef = useRef<HTMLTextAreaElement>(null);
-  const confirmTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const itemsRef = useAutoHeight(items);
+  const twoTap = useTwoTap();
   const save = useCallback(async (value: { name: string; items: string }) => {
     await shootsApi.saveSection(section.id, value);
   }, [section.id]);
@@ -131,8 +129,6 @@ function SectionCard({
     if (focus) nameRef.current?.focus();
   }, [focus]);
 
-  useEffect(() => () => clearTimeout(confirmTimer.current), []);
-
   const change = (next: { name?: string; items?: string }) => {
     const value = { name: next.name ?? name, items: next.items ?? items };
     if (next.name !== undefined) setName(next.name);
@@ -140,43 +136,23 @@ function SectionCard({
     autosave.queue(value);
   };
 
-  /** Two taps: the first asks, the second removes (no browser confirm box). */
-  const remove = async () => {
-    if (!confirming) {
-      setConfirming(true);
-      confirmTimer.current = setTimeout(() => setConfirming(false), CONFIRM_MS);
-      return;
-    }
-    clearTimeout(confirmTimer.current);
-    autosave.cancel();
-    setRemoving(true);
-    setRemoveError(null);
-    try {
-      await shootsApi.removeSection(section.id);
-      onRemoved(section.id);
-    } catch (err) {
-      setRemoveError((err as Error).message);
-      setRemoving(false);
-      setConfirming(false);
-    }
-  };
+  const remove = () =>
+    twoTap.tap(async () => {
+      autosave.cancel();
+      setRemoving(true);
+      setRemoveError(null);
+      try {
+        await shootsApi.removeSection(section.id);
+        onRemoved(section.id);
+      } catch (err) {
+        setRemoveError((err as Error).message);
+        setRemoving(false);
+        twoTap.reset();
+      }
+    });
+  const confirming = twoTap.confirming;
 
   const rows = Math.max(3, items.split("\n").length + 1);
-
-  // the box grows with its text (long lines wrap on a phone), so nothing hides below the fold; again when the
-  // chalk font arrives or the phone turns
-  const fit = useCallback(() => {
-    const el = itemsRef.current;
-    if (!el) return;
-    el.style.height = "auto";
-    el.style.height = `${el.scrollHeight + 4}px`;
-  }, []);
-  useLayoutEffect(fit, [items, fit]);
-  useEffect(() => {
-    window.addEventListener("resize", fit);
-    void document.fonts?.ready.then(fit);
-    return () => window.removeEventListener("resize", fit);
-  }, [fit]);
 
   const label = name.trim() || "untitled section";
 

@@ -1,4 +1,4 @@
-import type { BringSection, ShootDay, ShootDetail } from "./types";
+import type { BringSection, InspoGroup, InspoItem, ShootDay, ShootDetail } from "./types";
 
 /** Browser calls for /admin → Shoots (owner only; the routes check the session). */
 
@@ -32,6 +32,18 @@ export const shootsApi = {
   days: async (from: string, to: string) => (await call<{ days: ShootDay[] }>(`/api/admin/shoots?${new URLSearchParams({ from, to })}`)).days,
   createStyled: async (input: { title: string; date: string; startTime: string | null; place: string | null }) =>
     (await call<{ shoot: ShootDetail }>("/api/admin/shoots", { method: "POST", body: body(input) })).shoot,
+
+  shoot: async (key: string) => (await call<{ shoot: ShootDetail }>(`/api/admin/shoots/${key}`)).shoot,
+  saveShoot: async (key: string, patch: { said?: string; confirm?: string; bringExtra?: string }) =>
+    (await call<{ shoot: ShootDetail }>(`/api/admin/shoots/${key}`, { method: "PATCH", body: body(patch) })).shoot,
+  deleteShoot: (key: string) => call<void>(`/api/admin/shoots/${key}`, { method: "DELETE" }),
+  addLink: async (key: string, group: InspoGroup, url: string) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "link", group, url }) })).item,
+  addNote: async (key: string, group: InspoGroup) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "note", group, caption: "" }) })).item,
+  saveCaption: async (key: string, id: string, caption: string) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ caption }) })).item,
+  removeInspo: (key: string, id: string) => call<void>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "DELETE" }),
 
   bring: async () => (await call<{ sections: BringSection[] }>("/api/admin/shoots/bring")).sections,
   addSection: async (name = "") => (await call<{ section: BringSection }>("/api/admin/shoots/bring", { method: "POST", body: body({ name }) })).section,
