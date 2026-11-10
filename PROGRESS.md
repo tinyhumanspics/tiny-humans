@@ -266,6 +266,43 @@ index.ts for client components; never submit a booking on production (block /api
       name before real families sign) as **slice 9b, after slice 5**. Sections 2–8 unchanged, so slices 1–2 stand.
       The spec puts `photo_waivers` "in the same migration": 0023 is idempotent and only on the Neon dev branch, so
       9b appends it to 0023 and the owner re-runs the file on `shoots-test`.
+      **Slice 3 done Nov 9 (local, not pushed):** `/admin/shoots/folder/[id]` (`ShootFolder.tsx`, `AdminApp`
+      `view="folder"` + `shootKey`; the folder draws the only h1 = the family's name): crumbs "← All shoots · Mon Nov 16
+      day sheet", kicker "Shoot folder · Mon Nov 16 · 9:00 to 11:00" (styled: "Shoot without a booking · …"), chips
+      (bundle · hours · backdrops, each baby + age, who's in the photos, backdrop swatches, add-ons, city/place,
+      reference, "Waiting on the deposit" for pending), their pick (next/image), "Open the day sheet →", a cancelled
+      banner; main column "Inspo for {names}" / "Inspo for the set" + "BTS on phones" (`InspoDrop.tsx`, used twice:
+      "Or paste a link" + Add with the template's error wording, "+ A shot with no photo" / "+ Write an idea (no
+      photo)" focusing the new card, cards = link tile (opens in a new tab) or "Shot idea"/"Idea · no photo" tile +
+      "What's the shot?"/"What's the idea?" autosave + Remove); side "Notes" (What the family asked for / The idea,
+      Still to confirm, Bring extra; autosave sends only the boxes that changed, so editing one box never copies the
+      booking notes into "said"). The first save of a booking creates its row (`ensureRow`). API:
+      `GET|PATCH|DELETE /api/admin/shoots/[id]`, `POST /api/admin/shoots/[id]/inspo`,
+      `PATCH|DELETE /api/admin/shoots/[id]/inspo/[inspoId]`; `lib/shoots/files.ts` `removeShootFiles()` (Blob `del`,
+      only "shoots/" paths, throws without Blob so a row is never deleted before its file). Shared hooks:
+      `useAutoHeight`, `useTwoTap` (BringLists uses both now).
+      Deviations from the template (small, for safety; owner can veto): inspo "Remove" takes two taps like sections
+      (one tap removes a client's photo for good in slice 4); shoots without a booking get "Delete this shoot" (two
+      taps) under Notes, otherwise a mistaken one could never be removed; the drop zone arrives with uploads (slice 4).
+      Not in the template, so not built: renaming the title/tab label (the API accepts it).
+      Checks: strict tsc, lint 0, 112 units, `tests/e2e/admin-shoot-folder.spec.ts` (6: header chips + pick + links +
+      axe; bad link explained + no request, good link → POST body + card; BTS note focus + caption PATCH + two-tap
+      remove; notes send only the changed box + "Saved"; styled "The idea" + two-tap delete → list; 404) + all admin
+      specs + accessibility = 46 passed; real click-through on `scripts/local-db` (Leads → Open shoot folder →
+      Pinterest/TikTok links + captions, shots with no photo, notes → reload keeps all → day card "2 inspo · 2 BTS
+      ideas"), iPhone 14 + 1440 screenshots vs the template, css-ties 0 (signed-in variant incl. the folder).
+- [~] **Next.js security patch 16.4.0 → 16.4.5 (owner: "Go ahead and adjust everything please", Nov 9) — ready on
+      branch `security/next-16.4.5` (`d65ff56`, from `origin/main` = the live code, so no Shoots work rides along),
+      NOT pushed.** Fixes GHSA-2464-fhr4-w9xw (RCE, image optimizer + SVG), GHSA-p3m5-59mp-jv5r (Server Actions DoS),
+      GHSA-673q-mjm6-r5xr (RCE, `use cache` typed arrays); `eslint-config-next` 16.4.5 too. 16.4.5 (Nov 3) rather than
+      16.4.6 (published a few hours earlier, Nov 9): same fixes for these advisories, more time in the wild.
+      `npm audit signatures`: 164 verified attestations. Checks in a scratchpad worktree, both builds today: strict
+      tsc, lint, 89 units, build (the "SecurityFatalError" notice is gone), visual parity 24/24 identical to a 16.4.0
+      build of `origin/main`, full e2e 124 passed / 104 expected skips / 0 failed. `[?]` Owner OK to push it to
+      production (`git push origin security/next-16.4.5:main`, a fast-forward; then rebase local main onto it).
+      Other `npm audit` findings (not touched, one slice each with the owner's OK): `zod` high (<4.6.6; we run 4.6.5),
+      `@vercel/blob` high, `undici` high, `@vercel/oidc` + `@vercel/cli-config` high (Vercel CLI deps), and moderate /
+      low dev-tool ones (eslint, typescript-eslint, drizzle-kit/esbuild, react-email).
       **Slice 2 done Nov 9 (local, not pushed):** "Shoots" in the admin menu right after Leads (+ its dashboard card,
       spec blurb); `/admin/shoots` (Shoot days: Coming up / Done day cards = "Monday, November 16", "2 shoots · sunset
       5:31", tick bar, each shoot's time, title, bundle or "No booking", "6 inspo · 3 BTS ideas" / "No inspo yet",
