@@ -208,8 +208,11 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
   /admin → Seasonal Landing; a line in the box about the running discount; add more offers (e.g. Valentine's Day "Show
   love to your tiny human"); the discounted price on bundle cards a little smaller. Checked: the ad page box is
   pixel-identical old vs new (test-only switch, never committed); all 24 parity views unchanged with no offer on.
-- [ ] **Valentine's season (February) theme — DESIGN PREVIEW sent Nov 10, waiting for the owner's OK before building**
-  (owner: "send it to me before we proceed").
+- [x] **Valentine's season (February) theme — LIVE Nov 10 (switched OFF until the owner picks it in /admin → Theme)**.
+  Owner chose option A (Raspberry) from the design preview, approved the "Show love to your tiny human" box (built-in
+  seasonal offer `valentines`, last sessions Feb 28, off by default) and the drawings. Checked with a test-only switch
+  (never committed): intro draws the hearts before the lettering, home/bundles/booking pages, a Valentine's email; every
+  text color passes the contrast test (lowest 4.7:1).
 - [x] **% offers, offer line, Quotes, "Not born yet" — LIVE Nov 10 (`4d9684c`; migration 0026 run by the owner first)**.
   Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
   "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin
