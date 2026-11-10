@@ -11,7 +11,8 @@ import { travelFeeValue } from "@/lib/travel/format";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
-import { asksFamily, cleanFamily, familyLabel } from "@/lib/booking/family";
+import { asksFamily, familyLabel } from "@/lib/booking/family";
+import { filledFamily } from "../booking-state";
 import { fill } from "@/lib/email/messages";
 import InspirationThumb from "@/features/booking/InspirationThumb";
 import type { AppLocale } from "@/i18n/config";
@@ -61,7 +62,7 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
             { label: messages.review.labels.email, value: state.contact.email, step: STEP.details },
             { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.details },
             { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: bookingBabiesLabel(state.babies, messages.details), step: STEP.details },
-            ...(asksFamily(bundle) && cleanFamily(state.family).length ? [{ label: messages.review.labels.family, value: familyLabel(cleanFamily(state.family), messages.details.family.roles), step: STEP.details }] : []),
+            ...(asksFamily(bundle) && filledFamily(state.family).length ? [{ label: messages.review.labels.family, value: familyLabel(filledFamily(state.family), messages.details.family.roles), step: STEP.details }] : []),
             ...(state.contact.notes.trim() ? [{ label: messages.review.labels.notes, value: state.contact.notes.trim(), step: STEP.details }] : []),
             { label: setups > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, value: backdrops.length ? backdropNames(backdrops, messages.details.backdrops.names, messages.review.and) : messages.review.labels.backdropNone, step: STEP.details },
             { label: messages.review.labels.texts, value: state.consents.sms ? messages.review.labels.textsYes : messages.review.labels.textsNo, step: STEP.details },

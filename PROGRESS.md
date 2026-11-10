@@ -203,7 +203,18 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
-- [ ] **Family members + twins on shoot day — built Nov 10 on branch `feat/family-members`, preview sent, NOT pushed**
+- [x] **Family members + twins on shoot day — LIVE Nov 10 (`70001a5`, safety fix `d13028a`)**. `[!]` After the owner
+      said "Done" to the 0025 SQL, the live catalog showed `extraPerson: null` (no `extra_person` row for
+      `forever-little`), so the SQL did not reach the production database (or not all of it). `d13028a` makes the code
+      work either way: `shoot_inspo.who` is now database-only/best effort (Shoots loads; tagging shows "the database step
+      hasn't run"), the bundle save stores the extra_person row separately (never fails the bundle). Without 0025: no
+      $75 charge (max 4 family with one baby), no saved family list, no shot tags. `[?]` Owner (morning): run
+      `drizzle/0025_family.sql` again in the Neon SQL editor on the PRODUCTION branch/database and check the last
+      statement says 1 row; or open Pricing → Our Family Story → Save (creates the $75 row if the kind check allows it).
+      Then reload /bundles: "Each extra person is +$75." must show under "Who else is in the photos?".
+      Follow-ups (owner, Nov 10, while asleep): family list fully optional (starts empty; empty rows ignored; name
+      without role = "other"); /bundles cards get room above the footer's dashed line and fit 4 bundles in one row.
+      Was: built on branch `feat/family-members`, preview sent
       (owner: "on the booking page only for the family story… how many family members… the role mom, dad, sister,
       brother… cousin, grandma… only up to 5 people, and their names is optional"; "on the shoot day… info for David,
       info for the other baby… on different sections"; "all together, whole family, single, mom and dad, dad and

@@ -296,7 +296,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   10: videos are added as links, which open Instagram/TikTok/YouTube). Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).
 - Family members + who's in each shot (owner, Nov 10; migration 0025_family): bundles whose people/features mention
   siblings (`asksFamily()`, today Our Family Story) ask "Who else is in the photos?" (`config/booking.ts` familyRoles;
-  role required, name optional). FAMILY_INCLUDED_PEOPLE = 5 counting the babies; each person over that is the bundle's
+  all optional (owner, Nov 10): the list starts empty, an empty row is left out, a name without a role is kept as
+  "other" — `filledFamily()` in features/booking/flow/booking-state.ts; only a row past the bundle's maximum stops it). FAMILY_INCLUDED_PEOPLE = 5 counting the babies; each person over that is the bundle's
   `extra_person` add-on (`bundle_addons`, /admin → Pricing, $75, max extra 1–9; `extraPersonLine`/`familyLimit`/`withAddons`
   in `lib/booking/extra-babies.ts`), priced on the server like the extra baby (quote sends `familyCount`; booking_addons
   keeps one row per kind; the Stripe page lists each add-on). Saved best effort in `booking_family_members`
@@ -306,3 +307,7 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   with raw SQL best effort in `lib/shoots/server.ts`), so Shoots keeps working where 0025 hasn't run. The extra_person
   bundle row is saved outside the bundle batch for the same reason. Family names are parent data: never to
   Meta/analytics, never in the unfinished-booking draft.
+- Bundle cards (/bundles and the ad landing page): columns come from `bundleColumns(count)` (`lib/pricing/columns.ts`,
+  CSS vars `--cols-md`/`--cols-lg`): phones one under the other, 900 px+ up to 3 (4 bundles = 2 × 2), 1180 px+ up to 4
+  in a row, each card at most 380 px and centered. /bundles keeps 48–72 px under the tallest card so it never reaches
+  the footer's dashed line (owner, Nov 10).

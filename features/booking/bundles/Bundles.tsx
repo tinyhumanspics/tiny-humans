@@ -8,6 +8,7 @@ import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BundleCard from "@/features/booking/BundleCard";
 import { useBookingSelection } from "@/features/booking/flow/BookingSelectionContext";
 import BookingPaused from "@/features/booking/BookingPaused";
+import { bundleColumns } from "@/lib/pricing/columns";
 import styles from "./Bundles.module.css";
 
 /** Step one of booking: pick a bundle. Each card leads to the calendar. */
@@ -20,7 +21,7 @@ export default function Bundles({ messages, locale }: { messages: typeof en.bund
       <div className="container">
         <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="bundles" level={1} />
         {available ? (
-          <div className={styles.grid}>
+          <div className={styles.grid} style={bundleColumns(bundles.length)}>
             {bundles.map((bundle, i) => (
               <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} href={scheduleHref(bundle.id, inspirationId, locale)} headingLevel={2} />
             ))}

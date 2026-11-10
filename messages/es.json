@@ -348,7 +348,6 @@
         "member": "Familiar {number}",
         "role": "¿Quién es?",
         "chooseRole": "Elige uno",
-        "roleError": "Elige quién es, o quítalo.",
         "name": "Nombre",
         "add": "+ Agregar un familiar",
         "remove": "Quitar",

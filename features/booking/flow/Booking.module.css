@@ -370,8 +370,11 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .familyFields { display: grid; gap: 10px; }
 .familyRemove, .familyAdd { min-height: 44px; padding: 2px 6px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.1rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; }
 .familyAdd { justify-self: start; font-size: 1.25rem; }
+/* the list + the extra-charge line: no room taken while both are empty */
+.familyBody { display: grid; }
 /* stays in the page (empty) so screen readers hear the extra charge when it appears */
 .familyExtra { margin: 0; color: var(--sun-yellow); font-size: 1.15rem; }
+.familyExtra:not(:empty) { margin-top: 10px; }
 .familyRemove:hover, .familyRemove:focus-visible, .familyAdd:hover, .familyAdd:focus-visible { color: var(--sun-yellow); }
 
 /* ---------- review ---------- */

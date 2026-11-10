@@ -25,16 +25,28 @@ export interface ContactDraft {
 export type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
 /** gender "" = not picked (it's optional). */
 export type BabyDraft = { name: string; age: string; gender: "" | BabyGender };
-/** Who else is in the photos (bundles that include the family); role "" = not picked yet. */
+/** Who else is in the photos (bundles that include the family); role "" = not picked yet. All of it is optional. */
 export type FamilyDraft = { role: "" | FamilyRole; name: string };
 export const emptyFamilyMember = (): FamilyDraft => ({ role: "", name: "" });
+
+/**
+ * The family as it's booked (owner, Nov 10: "it's just optional"): an empty row is left out, a name without a role is
+ * kept as "other" (shown as "Family member"), names trimmed. Never blocks the booking.
+ */
+export function filledFamily(family: FamilyDraft[]): { role: FamilyRole; name?: string }[] {
+  return family.flatMap((m) => {
+    const name = m.name.trim();
+    if (!m.role && !name) return [];
+    return [{ role: m.role || "other", ...(name ? { name } : {}) }];
+  });
+}
 
 export interface State {
   step: number;
   maxStep: number;
   bundleId: string | null;
   babies: BabyDraft[];
-  /** Asked only on bundles that include the family (lib/booking/family.ts asksFamily); one empty row to start. */
+  /** Asked only on bundles that include the family (lib/booking/family.ts asksFamily); optional, starts empty. */
   family: FamilyDraft[];
   date: DateKey | null;
   slot: TimeSlot | null;
@@ -65,7 +77,7 @@ export const initialState: State = {
   maxStep: STEP.date,
   bundleId: null,
   babies: [{ name: "", age: "", gender: "" }],
-  family: [emptyFamilyMember()],
+  family: [],
   date: null,
   slot: null,
   contact: emptyContact,
@@ -103,7 +115,7 @@ export function isLanguageDraftPayload(value: unknown, bundleId: string): value 
     // gender is missing from drafts saved before it existed (Oct 17)
     && babies.every((baby) => isRecord(baby) && typeof baby.name === "string" && typeof baby.age === "string" && (baby.gender === undefined || baby.gender === "" || isBabyGender(baby.gender)))
     // family is missing from drafts saved before it existed (Nov 10)
-    && (state.family === undefined || (Array.isArray(state.family) && state.family.length >= 1 && state.family.length <= MAX_FAMILY_MEMBERS && state.family.every((m) => isRecord(m) && typeof m.name === "string" && (m.role === "" || isFamilyRole(m.role)))))
+    && (state.family === undefined || (Array.isArray(state.family) && state.family.length <= MAX_FAMILY_MEMBERS && state.family.every((m) => isRecord(m) && typeof m.name === "string" && (m.role === "" || isFamilyRole(m.role)))))
     && isRecord(contact)
     && Object.keys(emptyContact).every((key) => typeof contact[key] === "string")
     && isRecord(consents)
@@ -186,10 +198,8 @@ export function reducer(state: State, action: Action): State {
     }
     case "familyAdd":
       return state.family.length >= MAX_FAMILY_MEMBERS ? state : { ...state, family: [...state.family, emptyFamilyMember()] };
-    case "familyRemove": {
-      if (state.family.length <= 1) return { ...state, family: [emptyFamilyMember()], familyErrors: [] };
+    case "familyRemove":
       return { ...state, family: state.family.filter((_, i) => i !== action.index), familyErrors: state.familyErrors.filter((_, i) => i !== action.index) };
-    }
     case "consent":
       return { ...state, consents: { ...state.consents, [action.field]: action.value } };
     case "go":

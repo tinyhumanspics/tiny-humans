@@ -19,6 +19,7 @@ import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
+import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
 import type { PublicReview } from "@/lib/reviews/public";
 import { activeOffer, toCents } from "@/lib/pricing/engine";
@@ -224,7 +225,7 @@ export default function LandingPage({
       <section id="bundles" className={cn("container", styles.section)} aria-labelledby="landing-bundles">
         <SectionHeading id="landing-bundles" title={t.offer.title} subtitle={t.offer.sub} slot="bundles" />
         {available ? (
-          <div className={styles.bundles}>
+          <div className={styles.bundles} style={bundleColumns(bundles.length)}>
             {bundles.map((b, i) => (
               <div key={b.id} className={styles.bundleCell} style={{ "--phone-order": PHONE_ORDER.indexOf(b.id) === -1 ? 9 : PHONE_ORDER.indexOf(b.id) } as React.CSSProperties}>
                 <BundleCard bundle={b} index={i} messages={bundleMessages.card} locale={locale} href={scheduleHref(b.id, null, locale)} />

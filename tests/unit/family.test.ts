@@ -13,6 +13,7 @@ import { whoLineOf } from "@/lib/shoots/from-bookings";
 import { cleanWho, groupByWho, peopleOf, picksWho, toggleWho, whoLabel, WHO_ALL } from "@/lib/shoots/people";
 import type { InspoItem, ShootBaby } from "@/lib/shoots/types";
 import { inspoPatchSchema } from "@/lib/shoots/validation";
+import { filledFamily } from "@/features/booking/flow/booking-state";
 
 vi.mock("server-only", () => ({}));
 
@@ -54,6 +55,18 @@ describe("family members on the booking", () => {
     const family = cleanFamily([{ role: "mom", name: "Ana" }, { role: "dad" }, { role: "brother", name: "Leo" }]);
     expect(familyLabel(family)).toBe("Mom (Ana), Dad, Brother (Leo)");
     expect(customerFamilyLabel(family, "es")).toBe("Mamá (Ana), Papá, Hermano (Leo)");
+  });
+});
+
+describe("the booking form's family list is optional", () => {
+  test("empty rows are left out; a name without a role is kept as other; names trimmed", () => {
+    expect(filledFamily([])).toEqual([]);
+    expect(filledFamily([{ role: "", name: "  " }])).toEqual([]);
+    expect(filledFamily([{ role: "mom", name: " Ana " }, { role: "", name: "" }, { role: "", name: "Carlos" }, { role: "dad", name: "" }])).toEqual([
+      { role: "mom", name: "Ana" },
+      { role: "other", name: "Carlos" },
+      { role: "dad" },
+    ]);
   });
 });
 

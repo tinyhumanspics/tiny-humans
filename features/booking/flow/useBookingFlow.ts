@@ -23,7 +23,7 @@ import { BOOKING_LANGUAGE_SWITCH_EVENT, consumeBookingLanguageDraft, saveBooking
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import { useBookingSelection } from "./BookingSelectionContext";
-import { apiErrorMessage, emptyFamilyMember, initialState, isLanguageDraftPayload, newRequestId, reducer, validateContact, type LanguageDraftPayload, type State } from "./booking-state";
+import { apiErrorMessage, filledFamily, initialState, isLanguageDraftPayload, newRequestId, reducer, validateContact, type LanguageDraftPayload, type State } from "./booking-state";
 
 /**
  * The booking form's state and actions: availability, travel estimate, deposit, discount quote, the language-switch
@@ -125,7 +125,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   const bundle = getBundle(state.bundleId);
   const addon = bundle ? extraBabyLine(bundle, state.babies.length) : null;
   // family bundles: people listed (with a role) and the charge for anyone over the included ones
-  const familyCount = bundle && asksFamily(bundle) ? state.family.filter((m) => m.role).length : 0;
+  const familyCount = bundle && asksFamily(bundle) ? filledFamily(state.family).length : 0;
   const personAddon = bundle ? extraPersonLine(bundle, state.babies.length, familyCount) : null;
   const maxFamily = bundle ? familyLimit(bundle, state.babies.length) : 0;
   // review-step price: always calculated by the server (the browser only displays it)
@@ -166,7 +166,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     const restoredState: State = {
       ...draft.state,
       babies: draft.state.babies.map((baby) => ({ ...baby, gender: baby.gender ?? "" })),
-      family: draft.state.family ?? [emptyFamilyMember()],
+      family: draft.state.family ?? [],
       bundleId,
       status: "editing",
       result: null,
@@ -344,9 +344,9 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
       case STEP.details: {
         const errors = validateContact(state.contact, messages.details);
         const babyErrors = state.babies.map((baby) => (baby.age ? "" : messages.details.baby.ageError));
-        // who else is in the photos: each listed person needs a role (or is removed), and fits this bundle
+        // who else is in the photos: optional; only people past this bundle's maximum (e.g. after choosing twins) stop it
         const familyErrors = bundle && asksFamily(bundle)
-          ? state.family.map((m, i) => (i >= maxFamily ? messages.details.family.overLimit : m.role ? "" : messages.details.family.roleError))
+          ? state.family.map((m, i) => (i >= maxFamily && (m.role || m.name.trim()) ? messages.details.family.overLimit : ""))
           : [];
         const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
         if (tooFar && !errors.zip) errors.zip = tooFar.text;
@@ -374,9 +374,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     try {
       const c = state.contact;
       const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age, gender: baby.gender || undefined }));
-      const family: FamilyMember[] | undefined = bundle && asksFamily(bundle)
-        ? state.family.flatMap((m) => (m.role ? [{ role: m.role, name: m.name.trim() || undefined }] : []))
-        : undefined;
+      const family: FamilyMember[] | undefined = bundle && asksFamily(bundle) ? filledFamily(state.family) : undefined;
       const request = {
         bundleId: state.bundleId,
         locale,

@@ -12,7 +12,7 @@ import { asksFamily } from "@/lib/booking/family";
 import { fill } from "@/lib/email/messages";
 import BackdropPicker from "@/features/booking/backdrops/BackdropPicker";
 import type en from "@/messages/en.json";
-import type { BabyDraft, ContactDraft, ContactErrors, FamilyDraft } from "../booking-state";
+import { filledFamily, type BabyDraft, type ContactDraft, type ContactErrors, type FamilyDraft } from "../booking-state";
 import styles from "../Booking.module.css";
 import { cn } from "@/lib/cn";
 
@@ -82,60 +82,62 @@ function FamilyMembers({ family, errors, onChange, onAdd, onRemove, bundle, baby
   // 5 people included, babies counted; each person over that is the bundle's extra-person price
   const extra = bundle.extraPerson?.active ? bundle.extraPerson : null;
   const price = extra ? formatMoney(toCents(extra.price)) : "";
-  const extras = extra ? extraPeopleCount(babyCount, family.length) : 0;
+  const extras = extra ? extraPeopleCount(babyCount, filledFamily(family).length) : 0;
   const extrasTotal = extra ? formatMoney(toCents(extra.price) * extras) : "";
   return (
     <fieldset className={cn(styles.fieldset, styles.fieldWide, styles.familyForm)} aria-describedby="family-hint">
-      <legend className={cn(styles.label, "chalk-soft")}>{m.title}</legend>
+      <legend className={cn(styles.label, "chalk-soft")}>{m.title}<span className={styles.optional}>{messages.optional}</span></legend>
       <p id="family-hint" className={cn(styles.optional, styles.flush, "chalk-soft")}>
         {fill(m.hint, { included: String(FAMILY_INCLUDED_PEOPLE) })}
         {extra ? ` ${fill(m.extraPrice, { price })}` : ""}
       </p>
-      <ol className={styles.familyList}>
-        {family.map((member, index) => {
-          const roleId = `field-family-${index}-role`;
-          const nameId = `field-family-${index}-name`;
-          const errorId = `${roleId}-error`;
-          const number = String(index + 1);
-          return (
-            <li key={index} className={styles.familyRow}>
-              <div className={styles.familyHead}>
-                <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(m.member, { number })}</p>
-                {family.length > 1 && (
-                  <button
-                    type="button"
-                    className={cn(styles.familyRemove, "chalk-soft")}
-                    aria-label={fill(m.removeLabel, { number })}
-                    onClick={() => {
-                      onRemove(index);
-                      requestAnimationFrame(() => addRef.current?.focus());
-                    }}
-                  >
-                    {m.remove}
-                  </button>
-                )}
-              </div>
-              <div className={styles.familyFields}>
-                <div className={styles.field}>
-                  <label htmlFor={roleId} className={cn(styles.label, "chalk-soft")}>{m.role}</label>
-                  <select id={roleId} className={styles.input} value={member.role} onChange={(e) => onChange(index, "role", e.target.value)} aria-invalid={Boolean(errors[index])} aria-describedby={errors[index] ? errorId : undefined} required>
-                    <option value="">{m.chooseRole}</option>
-                    {familyRoles.map((role) => <option key={role} value={role}>{m.roles[role]}</option>)}
-                  </select>
-                  {errors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{errors[index]}</p>}
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{m.name}<span className={styles.optional}>{messages.optional}</span></label>
-                  <input id={nameId} className={styles.input} value={member.name} maxLength={60} autoComplete="off" onChange={(e) => onChange(index, "name", e.target.value)} />
-                </div>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-      <p className={cn(styles.familyExtra, "chalk-soft")} role="status">
-        {extras > 0 ? (extras === 1 ? fill(m.extraOne, { total: extrasTotal }) : fill(m.extraMany, { count: String(extras), total: extrasTotal })) : ""}
-      </p>
+      <div className={styles.familyBody}>
+        {family.length > 0 && (
+          <ol className={styles.familyList}>
+            {family.map((member, index) => {
+              const roleId = `field-family-${index}-role`;
+              const nameId = `field-family-${index}-name`;
+              const errorId = `${roleId}-error`;
+              const number = String(index + 1);
+              return (
+                <li key={index} className={styles.familyRow}>
+                  <div className={styles.familyHead}>
+                    <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(m.member, { number })}</p>
+                    <button
+                      type="button"
+                      className={cn(styles.familyRemove, "chalk-soft")}
+                      aria-label={fill(m.removeLabel, { number })}
+                      onClick={() => {
+                        onRemove(index);
+                        requestAnimationFrame(() => addRef.current?.focus());
+                      }}
+                    >
+                      {m.remove}
+                    </button>
+                  </div>
+                  <div className={styles.familyFields}>
+                    <div className={styles.field}>
+                      <label htmlFor={roleId} className={cn(styles.label, "chalk-soft")}>{m.role}</label>
+                      <select id={roleId} className={styles.input} value={member.role} onChange={(e) => onChange(index, "role", e.target.value)} aria-invalid={Boolean(errors[index])} aria-describedby={errors[index] ? errorId : undefined}>
+                        <option value="">{m.chooseRole}</option>
+                        {familyRoles.map((role) => <option key={role} value={role}>{m.roles[role]}</option>)}
+                      </select>
+                      {errors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{errors[index]}</p>}
+                    </div>
+                    <div className={styles.field}>
+                      <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{m.name}<span className={styles.optional}>{messages.optional}</span></label>
+                      <input id={nameId} className={styles.input} value={member.name} maxLength={60} autoComplete="off" onChange={(e) => onChange(index, "name", e.target.value)} />
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+        <p className={cn(styles.familyExtra, "chalk-soft")} role="status">
+          {extras > 0 ? (extras === 1 ? fill(m.extraOne, { total: extrasTotal }) : fill(m.extraMany, { count: String(extras), total: extrasTotal })) : ""}
+        </p>
+      </div>
       {family.length < max ? (
         <button
           ref={addRef}

@@ -180,7 +180,6 @@
         "member": "Family member {number}",
         "role": "Who is this?",
         "chooseRole": "Choose one",
-        "roleError": "Choose who this is, or remove them.",
         "name": "Name",
         "add": "+ Add a family member",
         "remove": "Remove",
