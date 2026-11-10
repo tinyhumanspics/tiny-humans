@@ -311,3 +311,23 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   CSS vars `--cols-md`/`--cols-lg`): phones one under the other, 900 px+ up to 3 (4 bundles = 2 × 2), 1180 px+ up to 4
   in a row, each card at most 380 px and centered. /bundles keeps 48–72 px under the tallest card so it never reaches
   the footer's dashed line (owner, Nov 10).
+- Special offers (owner, Nov 10): an offer is still one price per bundle (`bundles.offer_price_cents`); "% off" is saved as
+  that exact price (`percentOffCents`, cents like a % discount code) and read back with `offerPercent()` (a price that is
+  exactly a whole % off = a % offer), so there's no percent column. /admin → Pricing → "Same offer on every bundle"
+  (`applyOfferToAll`, `/api/admin/pricing/offer`) puts one %/label/last day on every ACTIVE bundle in one batch and
+  writes the Spanish label on existing `bundle_translations` rows (a label without its Spanish pair hides /es). The line
+  under the Bundles heading on /bundles and the ad page (`lib/pricing/promo.ts`, `features/booking/OfferLine.tsx`) is
+  written from the offers themselves and disappears with them; no offers = pages exactly as before.
+- Quotes (/admin/quotes, `lib/quotes/`): a family's ZIP code (read from a pasted address in the browser; the address is
+  never sent) → every active bundle priced with the booking form's own functions (offer, twins, extra people, travel,
+  deposit) + a ready-to-send EN/ES message. Owner-only GET `/api/admin/quote`.
+- "Not born yet" (owner, Nov 10; migration 0026, table `due_date_reservations`): /due-date reserves a bundle with a due
+  date (today to 9 months ahead, `dueWindow`), keeps today's bundle price (offer included) and takes the deposit on
+  Stripe (`metadata.kind = "due_deposit"`, the id in `metadata.booking_id` is the RESERVATION's; `handleStripeEvent`
+  routes it to `lib/due-date/server.ts` first). It blocks no time and makes no Outlook event. The family's email link is
+  `/book?bundle=…&due=<token>` (token = HMAC of the id with `ADMIN_SESSION_SECRET`, only its hash stored: rotating the
+  secret breaks these links too). `createBooking` with `dueToken` (or the server-only `dueReservationId` from /admin →
+  Leads → Due dates → "Book their session") uses the kept price (`keptPriceBundle`), no code, NO new deposit, claims the
+  reservation (`claimDue`, 5-minute lease), copies the paid deposit into `booking_deposits` (`carryDueDeposit`) so the
+  balance/refunds count it, then marks it scheduled. The mock provider refuses due bookings (needs the database), so CI
+  has no coverage: test with `scripts/local-db` + fake Stripe (`/_pay/<id>`). Never send the due date to Meta/analytics.

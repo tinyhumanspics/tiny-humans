@@ -203,6 +203,20 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [ ] **% offers, offer line, Quotes, "Not born yet" — built Nov 10 on branch `feat/offers-quotes`, IN PREVIEW (not pushed)**.
+  Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
+  "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin
+  Quotes: an address or ZIP code → every bundle's price with travel; (4) "Not born yet?" under the bundles (/bundles +
+  ad page): book with the due date (today to 9 months ahead), deposit paid now, the confirmation email says we adjust
+  around the birth and gives a link to pick the session with no new payment, or text us; Leads gets a "Due dates" tab
+  where the owner books the session for them. Owner approved (Nov 10, after the preview): the line is written
+  automatically from the offers (no typing); % prices stay exact cents ($149 − 10% = $134.10, like % codes; "do not
+  round it"); a due-date family keeps the price of the day they reserved, offer included ("leave the offer on"); the
+  $50 deposit is paid when reserving and counts toward the total; twins/extra people are charged when the session is
+  booked; the new Privacy Policy line (due date + babies expected, EN/ES) is approved. `drizzle/0026_due_dates.sql`
+  must be in Neon BEFORE the code deploys (owner runs it). Checked locally (scripts/local-db + fake Graph/Resend/Stripe): 3 reservations paid → family +
+  studio emails, one booked from the email link (kept $134.10, deposit carried, Outlook event, confirmation), one
+  booked by the owner, one cancelled with a $50 refund; unit tests (`tests/unit/offers-quotes-due.test.ts`).
 - [x] **Family members + twins on shoot day — LIVE Nov 10 (`70001a5`, safety fix `d13028a`, follow-ups `8665c5f`)**.
       Owner ran `0025_family.sql` in Neon production ("Done"). Right after the push the cached catalog briefly showed
       `extraPerson: null`; the live quote API (uncached) then priced Family Story with 5 family at $399 + $75 = $474, so
