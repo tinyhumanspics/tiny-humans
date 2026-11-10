@@ -13,6 +13,7 @@ import {
   whoLineOf,
   type BookingSource,
 } from "@/lib/shoots/from-bookings";
+import { clock, dayLabel, inspoCounts, plural, todayMiami, tomorrowMiami } from "@/lib/shoots/format";
 import { normalizeLink, platformOf } from "@/lib/shoots/links";
 import { DEFAULT_BRING_SECTIONS, linesOf } from "@/lib/shoots/lists";
 import { sunsetOn } from "@/lib/shoots/sunset";
@@ -260,5 +261,24 @@ describe("shoots: sunset and starting lists", () => {
     }));
     expect(rows).toEqual(DEFAULT_BRING_SECTIONS.map((s, sort) => ({ name: s.name, items: s.items, sort })));
     expect(sql).not.toMatch(/^(CREATE TABLE|CREATE INDEX|ALTER TABLE)(?! IF NOT EXISTS)/m);
+  });
+});
+
+describe("shoots: wording on the day cards", () => {
+  test("days, times and counts", () => {
+    expect(dayLabel("2026-11-16")).toBe("Monday, November 16");
+    expect(clock("09:00")).toBe("9:00");
+    expect(clock("13:05")).toBe("1:05");
+    expect(clock("00:30")).toBe("12:30");
+    expect(clock(null)).toBe("");
+    expect(plural(1, "shoot", "shoots")).toBe("1 shoot");
+    expect(inspoCounts(6, 1)).toEqual({ inspo: "6 inspo", bts: "1 BTS idea" });
+    expect(inspoCounts(0, 3)).toEqual({ inspo: null, bts: "3 BTS ideas" });
+  });
+
+  test("today is Miami's today, whatever the phone's time zone", () => {
+    // 10:30 PM in Miami on Nov 9 is already Nov 10 in UTC
+    expect(todayMiami(new Date("2026-11-10T03:30:00Z"))).toBe("2026-11-09");
+    expect(tomorrowMiami(new Date("2026-11-10T03:30:00Z"))).toBe("2026-11-10");
   });
 });

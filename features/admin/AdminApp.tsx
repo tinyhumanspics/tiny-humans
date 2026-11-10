@@ -16,6 +16,8 @@ import AvailabilityPanel from "./AvailabilityPanel";
 import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights";
 import LeadsPanel from "./LeadsPanel";
 import UnfinishedPanel from "./UnfinishedPanel";
+import BringLists from "@/features/shoots/BringLists";
+import ShootsList from "@/features/shoots/ShootsList";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import SeasonalPanel from "./SeasonalPanel";
@@ -30,8 +32,11 @@ type Note = { kind: "ok" | "error"; text: string } | null;
 /** Where the admin menu was scrolled to (kept while moving between sections). */
 let navScrollLeft = 0;
 
-/** Owner area shell: sign-in, settings, navigation, then one section. */
-export default function AdminApp({ section = "dashboard" }: { section?: AdminSection }) {
+/**
+ * Owner area shell: sign-in, settings, navigation, then one section. `view` picks a screen inside a section
+ * (Shoots: "days" = Shoot days, "bring" = What we always bring).
+ */
+export default function AdminApp({ section = "dashboard", view }: { section?: AdminSection; view?: "days" | "bring" }) {
   const api = useMemo(() => getAdminApi(), []);
   const { applySettings } = useSiteSettings();
   const [status, setStatus] = useState<Status>("loading");
@@ -114,6 +119,7 @@ export default function AdminApp({ section = "dashboard" }: { section?: AdminSec
 
       {section === "dashboard" && <Dashboard api={api} settings={settings} />}
       {section === "leads" && <LeadsPanel api={api} />}
+      {section === "shoots" && (view === "bring" ? <BringLists /> : <ShootsList />)}
       {section === "unfinished" && <UnfinishedPanel api={api} />}
       {section === "availability" && <AvailabilityPanel api={api} />}
       {section === "pricing" && <PricingPanel api={api} />}

@@ -91,6 +91,8 @@ export interface ShootSummary {
   tabLabel: string;
   /** "Our Little Story · 2 h · 2 backdrops"; null for shoots without a booking. */
   bundleLine: string | null;
+  /** The booked bundle's name (day cards); null for shoots without a booking. */
+  bundleName: string | null;
   /** City for bookings, the typed place otherwise. */
   place: string | null;
   inspoCount: number;

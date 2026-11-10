@@ -1,0 +1,76 @@
+/* /admin → Shoots (look: docs/shoots/shoots-template.html). Buttons, inputs and labels come from Admin.module.css;
+   this file only lays them out, never restyles the same element (see CLAUDE.md: two CSS modules on one element). */
+
+.top { display: grid; justify-items: start; gap: 14px; margin-top: 8px; }
+
+.subtabs { margin: 18px 0 4px; }
+.subtabs ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.subtab {
+  display: inline-flex; align-items: center; min-height: 44px; padding: 4px 16px; border-radius: 22px;
+  border: 2px solid var(--chalk-faint); color: var(--chalk-white); text-decoration: none;
+  font-family: var(--font-chalk); font-size: 1.1rem;
+}
+.subtab:hover { border-color: var(--cloud-blue); }
+.subtab[aria-current="page"] { border-color: var(--sun-yellow); color: var(--sun-yellow); }
+
+.card {
+  --card: color-mix(in srgb, var(--chalkboard-dark) 58%, transparent);
+  background: var(--card);
+  border: 2px dashed var(--chalk-faint);
+  border-radius: 10px 14px 11px 13px;
+  padding: 16px clamp(14px, 3vw, 20px);
+}
+
+/* + Shoot without a booking */
+.newForm { margin-top: 14px; }
+.newForm h2 { margin: 0 0 4px; font-family: var(--font-chalk); font-weight: 400; font-size: 1.55rem; color: var(--chalk-white); }
+.fields { display: grid; gap: 4px 14px; margin-top: 8px; }
+.field { display: grid; gap: 4px; }
+@media (min-width: 700px) { .fields { grid-template-columns: 1fr 1fr; } }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 14px; }
+
+/* shoot days */
+.block { margin-top: clamp(26px, 4vw, 36px); }
+.dayGrid { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 16px; }
+@media (min-width: 860px) { .dayGrid { grid-template-columns: 1fr 1fr; } }
+.dayCard { display: flex; flex-direction: column; }
+.dayHead { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.75rem; line-height: 1.1; }
+.dayHead a { color: var(--chalk-white); text-decoration: none; }
+.dayHead a:hover { text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 4px; }
+.dayDate { color: var(--sun-yellow); }
+.meta { margin: 4px 0 0; font-size: 0.98rem; color: var(--chalk-muted); }
+.bar { height: 8px; margin: 10px 0 4px; border-radius: 6px; background: var(--chalk-faint); overflow: hidden; }
+.bar span { display: block; height: 100%; border-radius: 6px; background: var(--sun-yellow); transition: width 0.3s; }
+.ticked { margin: 0; font-size: 0.98rem; }
+
+.shootList { list-style: none; margin: 12px 0 6px; padding: 0; display: grid; gap: 6px; }
+.shootLink {
+  display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center;
+  min-height: 52px; padding: 8px 10px; border-radius: 8px; border: 2px solid var(--chalk-faint);
+  color: var(--chalk-white); text-decoration: none;
+}
+.shootLink:hover { border-color: var(--cloud-blue); }
+.shootLink:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
+.time { font-family: var(--font-chalk); color: var(--sun-yellow); }
+.family { line-height: 1.2; overflow-wrap: anywhere; }
+.family small { display: block; color: var(--chalk-muted); font-size: 0.92rem; }
+.counts { font-size: 0.92rem; color: var(--chalk-muted); text-align: right; }
+.counts span { display: block; }
+.warn { color: var(--sun-yellow); }
+.cardCta { margin-top: auto; padding-top: 8px; }
+
+/* what we always bring */
+.sections { display: grid; gap: 16px; max-width: 720px; margin-top: 16px; }
+.items { resize: vertical; }
+.sectionFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.addRow { margin-top: 16px; }
+.saved { margin: 12px 0 0; min-height: 1.5em; font-size: 1rem; color: var(--chalk-muted); }
+.savedError { color: var(--chalk-error); }
+
+@media (prefers-reduced-motion: reduce) {
+  .bar span { transition: none; }
+}
+
+/* the admin's "+" style is drawn for labels; on a <button> it also needs no background (contrast) */
+.addReset { background: none; }
+.addReset:disabled { opacity: 0.35; cursor: default; }

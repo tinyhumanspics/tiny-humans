@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import AdminDialog from "./AdminDialog";
 import type { AdminApi } from "@/lib/admin/client";
@@ -306,6 +307,9 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
         <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>
         <a className={styles.smallButton} href={`mailto:${lead.email}`} aria-label={`Email ${lead.parentName}`}>Email</a>
         <a className={styles.smallButton} href={mapsHref(lead.address)} target="_blank" rel="noopener noreferrer" aria-label={`Directions to ${lead.parentName}'s home (opens Maps)`}>Directions</a>
+        {lead.status !== "cancelled" && (
+          <Link className={styles.smallButton} href={`/admin/shoots/folder/b-${lead.reference}`}>Open shoot folder</Link>
+        )}
       </p>
       {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
