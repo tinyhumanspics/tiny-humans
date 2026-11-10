@@ -291,15 +291,15 @@ index.ts for client components; never submit a booking on production (block /api
       specs + accessibility = 46 passed; real click-through on `scripts/local-db` (Leads → Open shoot folder →
       Pinterest/TikTok links + captions, shots with no photo, notes → reload keeps all → day card "2 inspo · 2 BTS
       ideas"), iPhone 14 + 1440 screenshots vs the template, css-ties 0 (signed-in variant incl. the folder).
-- [~] **Next.js security patch 16.4.0 → 16.4.5 (owner: "Go ahead and adjust everything please", Nov 9) — ready on
-      branch `security/next-16.4.5` (`d65ff56`, from `origin/main` = the live code, so no Shoots work rides along),
-      NOT pushed.** Fixes GHSA-2464-fhr4-w9xw (RCE, image optimizer + SVG), GHSA-p3m5-59mp-jv5r (Server Actions DoS),
+- [x] **Next.js security patch 16.4.0 → 16.4.5 — LIVE Nov 9 (`d65ff56`, owner: "go ahead and push it").** Built on
+      branch `security/next-16.4.5` from `origin/main` (the live code, so no Shoots work rode along). Vercel: success;
+      production smoke test: 8 pages 200, real Chromium on iPhone 14 + 1440 (home, /book calendar 30 days, ad page): no
+      page errors (Meta, Vercel Analytics and booking writes blocked). Local main rebased onto it + `npm install`. Fixes GHSA-2464-fhr4-w9xw (RCE, image optimizer + SVG), GHSA-p3m5-59mp-jv5r (Server Actions DoS),
       GHSA-673q-mjm6-r5xr (RCE, `use cache` typed arrays); `eslint-config-next` 16.4.5 too. 16.4.5 (Nov 3) rather than
       16.4.6 (published a few hours earlier, Nov 9): same fixes for these advisories, more time in the wild.
       `npm audit signatures`: 164 verified attestations. Checks in a scratchpad worktree, both builds today: strict
       tsc, lint, 89 units, build (the "SecurityFatalError" notice is gone), visual parity 24/24 identical to a 16.4.0
-      build of `origin/main`, full e2e 124 passed / 104 expected skips / 0 failed. `[?]` Owner OK to push it to
-      production (`git push origin security/next-16.4.5:main`, a fast-forward; then rebase local main onto it).
+      build of `origin/main`, full e2e 124 passed / 104 expected skips / 0 failed.
       Other `npm audit` findings (not touched, one slice each with the owner's OK): `zod` high (<4.6.6; we run 4.6.5),
       `@vercel/blob` high, `undici` high, `@vercel/oidc` + `@vercel/cli-config` high (Vercel CLI deps), and moderate /
       low dev-tool ones (eslint, typescript-eslint, drizzle-kit/esbuild, react-email).
