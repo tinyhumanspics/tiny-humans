@@ -300,9 +300,18 @@ index.ts for client components; never submit a booking on production (block /api
       `npm audit signatures`: 164 verified attestations. Checks in a scratchpad worktree, both builds today: strict
       tsc, lint, 89 units, build (the "SecurityFatalError" notice is gone), visual parity 24/24 identical to a 16.4.0
       build of `origin/main`, full e2e 124 passed / 104 expected skips / 0 failed.
-      Other `npm audit` findings (not touched, one slice each with the owner's OK): `zod` high (<4.6.6; we run 4.6.5),
-      `@vercel/blob` high, `undici` high, `@vercel/oidc` + `@vercel/cli-config` high (Vercel CLI deps), and moderate /
-      low dev-tool ones (eslint, typescript-eslint, drizzle-kit/esbuild, react-email).
+- [x] **npm audit fixes — LIVE Nov 9 (`c73b158`, owner: "fix whatever you need to").** zod 4.6.5 → 4.6.7
+      (GHSA-mrhx-c7xc-m3w5, high) for the app and, via `overrides: { zod: "$zod" }`, for `@vercel/blob` → `@vercel/oidc`
+      → `@vercel/cli-config`'s old nested zod 4.1.11 (that chain was the "high" on @vercel/blob/@vercel/oidc; newest
+      oidc 3.x still pins it); undici 6.29.0 → 6.29.1 (high, via @vercel/blob); `npm audit fix` (no --force):
+      react-email 6.11.10 + @react-email/render 2.3.0 (+ html-to-text 10, deepmerge gone), fast-uri, glob 14,
+      typescript-eslint 8.72.2. 46 lockfile changes, listed in the commit. Emails: rendered 9 templates (confirmation,
+      gallery, unfinished, payment link EN + ES, studio new booking) with old vs new: plain text identical; HTML
+      identical except the invisible preview-text filler (react-email no longer adds U+200E/U+200F). Same checks as
+      the Next.js patch (both builds today): tsc, lint, 89 units, build, visual parity 24/24, e2e 124 passed / 104
+      skipped / 0 failed; Vercel success; production smoke (8 pages 200, real Chromium iPhone 14 + 1440, calendar 30
+      days, no page errors). Left on purpose (moderate, dev tools only, need major versions): eslint/minimatch and
+      drizzle-kit/esbuild advisories.
       **Slice 2 done Nov 9 (local, not pushed):** "Shoots" in the admin menu right after Leads (+ its dashboard card,
       spec blurb); `/admin/shoots` (Shoot days: Coming up / Done day cards = "Monday, November 16", "2 shoots · sunset
       5:31", tick bar, each shoot's time, title, bundle or "No booking", "6 inspo · 3 BTS ideas" / "No inspo yet",
