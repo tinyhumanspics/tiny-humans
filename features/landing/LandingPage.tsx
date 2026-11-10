@@ -20,7 +20,7 @@ import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
 import OfferLine from "@/features/booking/OfferLine";
-import NotBornYet from "@/features/booking/NotBornYet";
+import NotBornYet, { NotBornYetStrip } from "@/features/booking/NotBornYet";
 import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
@@ -152,6 +152,8 @@ export default function LandingPage({
 
       {/* Seasonal offer boxes (/admin → Seasonal Landing), also on the home page: only while one is live. */}
       <SeasonalOffers messages={t.seasonalOffers} promoMessages={bundleMessages.promo} locale={locale} />
+      {/* "Not born yet?" near the top too (owner, Nov 10), besides the box under the bundles */}
+      <NotBornYetStrip messages={dueMessages} locale={locale} />
 
       {/* 2. Trust strip */}
       <section className="container" aria-label={t.trustLabel}>

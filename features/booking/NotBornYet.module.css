@@ -5,3 +5,11 @@
 .title { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.7rem, 4.6vw, 2.2rem); color: var(--chalk-white); }
 .text { margin: 0; max-width: 30em; color: var(--chalk-muted); font-size: 1.15rem; line-height: 1.4; }
 .button { margin-top: 6px; }
+
+/* the short version near the top of the home page and the ad page: heart, line, button in one row (stacked on phones) */
+.stripSection { margin-top: clamp(24px, 5vw, 40px); }
+.strip { display: grid; gap: 12px 20px; align-items: center; justify-items: center; text-align: center; max-width: 920px; margin: 0 auto; padding: 18px clamp(16px, 3vw, 28px); }
+@media (min-width: 760px) { .strip { grid-template-columns: auto minmax(0, 1fr) auto; justify-items: start; text-align: left; } }
+.stripDoodle { transform: rotate(-8deg); }
+.stripText { display: grid; gap: 4px; }
+.stripTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.5rem, 4.2vw, 1.85rem); line-height: 1.1; color: var(--chalk-white); }

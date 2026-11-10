@@ -29,3 +29,28 @@ export default function NotBornYet({ messages, locale, headingLevel = 2 }: { mes
     </Reveal>
   );
 }
+
+/**
+ * The short version near the top of the home page and the ad page, under the seasonal offer boxes (owner, Nov 10:
+ * "so they can also see it at the top"): one line and the button, on every page load (not tied to an offer).
+ */
+export function NotBornYetStrip({ messages, locale }: { messages: typeof en.dueDate.invite; locale: AppLocale }) {
+  const { available } = useCatalog();
+  if (!available) return null;
+  return (
+    <section className={cn("container", styles.stripSection)} aria-labelledby="not-born-yet-top">
+      <Reveal>
+        <ChalkBox className={styles.strip} seed={73} wobble={2.2} strokeWidth={2.4} color="var(--cloud-blue)">
+          <ChalkDoodle name="heart" size={34} color="var(--accent)" className={styles.stripDoodle} />
+          <div className={styles.stripText}>
+            <h2 id="not-born-yet-top" className={cn(styles.stripTitle, "chalk")}>{messages.title}</h2>
+            <p className={cn(styles.text, "chalk-soft")}>{messages.text}</p>
+          </div>
+          <ChalkButton variant="outline" href={localePath("/due-date", locale)} seed={74}>
+            {messages.button}
+          </ChalkButton>
+        </ChalkBox>
+      </Reveal>
+    </section>
+  );
+}
