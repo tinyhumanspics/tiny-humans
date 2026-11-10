@@ -48,6 +48,8 @@ npm run test:e2e     # Playwright booking-funnel tests (mock provider, productio
 - **Don't invent business facts** (reviews, counts, stats, guarantees, scarcity). Use `[PLACEHOLDER]`, list it in
   PROGRESS.md, keep the section hidden until the owner approves.
 - **Children's privacy:** never send baby names/ages/notes/photos to Meta or any analytics tool — parent contact fields only.
+  Session photos may appear in ads only when the family's signed photo waiver says yes to ads; the owner chooses
+  and uploads them by hand, code never sends them.
 - Research current official docs before each phase; note findings + links in PROGRESS.md. Every new dependency gets one
   line in PROGRESS.md (why, bundle impact, maintenance).
 - The owner is not deeply technical: explain decisions in 1–2 plain sentences; give numbered one-line steps for anything
@@ -266,3 +268,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   (`lib/reviews/server.ts`, cache tag `reviews`) = the 6 newest reviews with `approved` AND `consent_public`. Anything
   that changes a review, its pick or deletes a lead calls `expireReviews()`. No picked reviews = no section (pages stay
   exactly as before). Never add review JSON-LD or star ratings to search data without the owner's approval.
+- Photo waivers (`lib/waiver/`, `features/waiver/`, migration 0023_photo_waivers, /admin → Leads → "Waiver signature" /
+  "See signed waiver"): the iPad screen and the signed copy live in route group `app/(kiosk)` (no site shell, admin
+  menu or Meta Pixel, so a parent can't wander into the admin). A signed row is the business's record: code never
+  edits or deletes it, and a trigger (only in the migration, like 0015) refuses changes to what was signed; "Sign
+  again" supersedes, "Keep their photos private" revokes, deleting a lead keeps it (`booking_id` → null). The server
+  rebuilds the text from `WAIVER_VERSION` + language (never from the browser) and stores it + its SHA-256. Wording
+  lives in `lib/waiver/text.ts`: any change = a new `WAIVER_VERSION` (`tests/unit/waiver.test.ts` pins the
+  fingerprint). Signing updates `booking_consents.photos` (website or social = yes).
