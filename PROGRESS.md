@@ -204,6 +204,53 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [~] **Spanish fills itself in (owner, Nov 9: "from now on… I attach a new picture, just automatically fill out the
+      page for the Spanish… if I need to change something specific, I will do it myself") — built Nov 9, local, not
+      pushed.** Why /es "gets stuck": `getSpanishPublication()` hides ALL of /es while any photo lacks a Spanish
+      title/description (+ caption), any prompt box or enabled seasonal offer lacks Spanish, or any active bundle lacks
+      its translation; and the bundle form refused saves with incomplete Spanish. Now, on save, every EMPTY Spanish
+      field is filled from its English pair (`lib/i18n/spanish-autofill.ts`: settings route = photos in every theme and
+      section, prompt boxes, seasonal offers; bundles route = name, description, small label, offer label, each
+      included item; a Spanish field whose English was cleared is cleared). Spanish typed by hand is never replaced.
+      Codes/file names ("C225", "IMG_7378") are copied as is; sentences are translated by Claude
+      (`lib/i18n/autotranslate.ts`, `claude-opus-5-5`, effort low, JSON schema output, `fallbacks: "default"`, 20 s
+      timeout, one batched request per save) when `ANTHROPIC_API_KEY` is set; without it, or on any failure/refusal,
+      the English is copied so the save never fails. Over-long translations fall back to the English or cut at a word
+      (field limits). Hints reworded in Pricing, Photos and Seasonal ("left blank = filled in for you when you save").
+      Checks: `tests/unit/spanish-autofill.test.ts` (10: codes, length fit, settings fill + audit clears + Spanish kept
+      + nothing sent when complete, bundle fill / new item / cleared English, schema now passes, translator request
+      shape with a fake SDK, no-key copy, failure/refusal/wrong-shape copy); real bundle saves on `scripts/local-db`
+      (no Spanish → saved complete; new item + hand-typed Spanish → kept + filled); seasonal e2e updated to the new
+      wording; full e2e green. `[?]` Owner: (1) for real translations, create an API key at console.anthropic.com and
+      add `ANTHROPIC_API_KEY` in Vercel (Production) — costs a fraction of a cent per save that has new text; (2) turn
+      Spanish on in /admin → Settings → Spanish once the list there is empty.
+- [~] **Shoots slices 4 + 5 done Nov 9 (local, not pushed; owner: "just build whatever it's missing").** Slice 4: photo
+      uploads in the folder (`InspoDrop`: drop zone + "tap to choose", `preparePhoto` shrinks to 2000 px, one by one with
+      "Uploading 2 of 5…", videos turned away with "paste a link"), `POST /api/admin/shoots/[id]/inspo/photo` (owner,
+      rate limit, PHOTO_TYPES + signature + 4 MB, Blob `shoots/<shoot id>/<group>-<random>.jpg`, the file is removed
+      again if the row can't be saved), full-screen viewer `InspoLightbox` (native modal dialog, prev/next, arrow keys,
+      swipe, focus back), file cleanup on remove + **lead delete** (`/api/admin/leads/delete` removes the shoot's files
+      first; a failure deletes nothing). Storage: Vercel Blob private access needs a separate PRIVATE store (Vercel
+      docs: access is per store); the site's store is public, so shoot photos use unguessable random addresses shown
+      only in /admin and never through the public image optimizer (`<img>`, not next/image). Option later: owner
+      creates a private store → switch. Slice 5: the day sheet `/admin/shoots/[date]` (`DaySheet.tsx`): header (date,
+      shoots · places, inspo · BTS · sunset, ticked + bar), sticky chips per family + What to bring (current chip
+      follows the scroll), Who's on camera, Still to confirm (booking's automatic lines + owners'), each family (Shoot n
+      · times, address · Map · bundle · reference, backdrop swatches, what they asked for + their pick, Inspo / BTS
+      grids with a 44 px tick per card, n/total, photo → lightbox with "Mark as done", link tiles open the link, folder
+      link), What to bring (backdrops with family, extras, every section; checkboxes), "Clear all ticks" (two taps).
+      Ticks (`useDayTicks`): instant on screen + POST; a failed send keeps the tick, says "Not saved yet, retrying…"
+      and retries every 4 s; the day reloads every 10 s while visible and on focus/visibility. API:
+      `GET /api/admin/shoots/day/[date]`, `GET|POST|DELETE /api/admin/shoots/ticks`.
+      Checks: `tests/e2e/admin-shoot-day.spec.ts` (4: sheet content + axe at 390 px; ticks + failed send + retry +
+      other phone's tick after 10 s with Playwright's clock; lightbox next/Mark as done/Escape/focus + two-tap clear;
+      folder upload of 2 JPEGs (resized, multipart checked) + a video turned away + lightbox); scratchpad integration
+      run of the upload route on `scripts/local-db` with Blob replaced by an in-memory stand-in (path/options, fake
+      JPEG/video/bad group refused before upload, remove → file deleted, lead cleanup → rest deleted); real two-phone
+      run (iPhone 14 ×2): Adri's ticks showed on Alo's phone after 9 s, reload kept them, clear emptied both; local
+      upload without Blob → "Photo storage isn't connected yet."; css-ties 0 incl. the day sheet; full e2e green.
+      Left: video uploads (spec §5/§6: owner OK for Blob cost first); owner review on his phone; go-live = run
+      `drizzle/0024_shoots.sql` on Neon production, then push main.
 - [x] **Photo and video release (waiver) on Leads — LIVE Nov 9 (`34e7b30`; owner: "I need both to go live", ran
       `0023_photo_waivers.sql` on Neon production `main` himself, "Done").** (owner, Nov 9: "I need to create a waiver for
       parents … not on the shoots side but on the leads of every client, we need to have access to see it later"; spec
@@ -1726,6 +1773,8 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 
 ## Dependencies log
 (one line per new dependency: why · bundle impact · maintenance)
+- `@anthropic-ai/sdk` 1.6.0 (exact pin; 1.7.0 was hours old) — server-only Claude call that translates empty Spanish fields
+  on /admin saves (`lib/i18n/autotranslate.ts`). 0 KB to the browser; idle unless ANTHROPIC_API_KEY is set. Nov 9.
 - `scripts/local-db` (own package.json, NOT an app dependency, never installed by Vercel): `embedded-postgres`
   18.4.0-beta.17 + `pg` 8 — local Postgres for tests because the AI workspace can't reach Neon. 0 KB to the site.
 - `@playwright/test` 1.63 (dev only) — e2e booking-funnel tests across iPhone Safari / Android / desktop / Instagram UA.

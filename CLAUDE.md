@@ -276,3 +276,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   rebuilds the text from `WAIVER_VERSION` + language (never from the browser) and stores it + its SHA-256. Wording
   lives in `lib/waiver/text.ts`: any change = a new `WAIVER_VERSION` (`tests/unit/waiver.test.ts` pins the
   fingerprint). Signing updates `booking_consents.photos` (website or social = yes).
+- Spanish fills itself in on save (owner, Nov 9): the settings and bundle routes run `lib/i18n/spanish-autofill.ts`
+  before saving, so every EMPTY Spanish field gets its English pair translated (`lib/i18n/autotranslate.ts`, Claude,
+  only with `ANTHROPIC_API_KEY`; otherwise the English is copied). Never overwrite Spanish the owner typed, never make
+  a save fail because of translation, and only send owner-written marketing words (never baby/family data). A new
+  owner-editable text with a Spanish twin must be added to the autofill and to `i18n/publication-audit.ts`.
