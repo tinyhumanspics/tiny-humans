@@ -803,3 +803,108 @@ export const marketingSettings = pgTable("marketing_settings", {
   mailingAddress: text("mailing_address"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/* ---------------- shoots (/admin → Shoots, migration 0023) ---------------- */
+
+/**
+ * "What we always bring": sections the owners name and fill (Studio kit, Camera gear, Wardrobe, …), one item per line.
+ * The migration inserts the starting sections (lib/shoots/lists.ts); after that the owners own them.
+ */
+export const shootBringSections = pgTable("shoot_bring_sections", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().default(""),
+  items: jsonb("items").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  sort: integer("sort").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ShootBringSection = typeof shootBringSections.$inferSelect;
+
+/**
+ * A shoot's own notes. Booking shoots get a row on the owners' first save (until then everything comes from the
+ * booking); their date and time always come from the booking, so a reschedule moves the shoot. Shoots without a
+ * booking ("styled", e.g. a set test) keep their own day, start time and place. Deleting the booking deletes the row.
+ */
+export const shoots = pgTable(
+  "shoots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** "booking" | "styled" (no booking). */
+    kind: text("kind").notNull(),
+    bookingId: uuid("booking_id").unique().references(() => bookings.id, { onDelete: "cascade" }),
+    /** Styled shoots only (Miami day, "HH:MM", free text). */
+    date: date("date", { mode: "string" }),
+    startTime: text("start_time"),
+    place: text("place"),
+    /** null = from the booking ("The Morales family" / "Morales"). */
+    title: text("title"),
+    tabLabel: text("tab_label"),
+    /** "What the family asked for"; null = the booking's notes (prefill until the first edit). */
+    said: text("said"),
+    /** "Still to confirm" and "Bring extra", one line each. */
+    confirm: jsonb("confirm").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    bringExtra: jsonb("bring_extra").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("shoots_date_idx").on(t.date),
+    check("shoots_kind_check", sql`${t.kind} in ('booking', 'styled')`),
+    check(
+      "shoots_kind_fields_check",
+      sql`(${t.kind} = 'booking' and ${t.bookingId} is not null) or (${t.kind} = 'styled' and ${t.bookingId} is null and ${t.date} is not null)`,
+    ),
+  ],
+);
+
+export type Shoot = typeof shoots.$inferSelect;
+
+/**
+ * Inspo (the family's + ours) and BTS-on-phones ideas of a shoot: a photo or video (Vercel Blob, never linked from
+ * public pages), a link (Instagram, TikTok, …) or text only, each with one "What's the shot?" caption.
+ */
+export const shootInspo = pgTable(
+  "shoot_inspo",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    shootId: uuid("shoot_id").notNull().references(() => shoots.id, { onDelete: "cascade" }),
+    /** "inspo" | "bts" */
+    group: text("group").notNull(),
+    /** "image" | "video" | "link" | "note" */
+    type: text("type").notNull(),
+    blobUrl: text("blob_url"),
+    blobPathname: text("blob_pathname"),
+    contentType: text("content_type"),
+    bytes: integer("bytes"),
+    width: integer("width"),
+    height: integer("height"),
+    linkUrl: text("link_url"),
+    /** "Instagram", "TikTok", … or the site's host name. */
+    platform: text("platform"),
+    caption: text("caption").notNull().default(""),
+    sort: integer("sort").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("shoot_inspo_shoot_idx").on(t.shootId, t.group, t.sort),
+    check("shoot_inspo_group_check", sql`${t.group} in ('inspo', 'bts')`),
+    check("shoot_inspo_type_check", sql`${t.type} in ('image', 'video', 'link', 'note')`),
+    check(
+      "shoot_inspo_content_check",
+      sql`(${t.type} in ('image', 'video') and ${t.blobUrl} is not null and ${t.blobPathname} is not null) or (${t.type} = 'link' and ${t.linkUrl} is not null) or ${t.type} = 'note'`,
+    ),
+  ],
+);
+
+export type ShootInspo = typeof shootInspo.$inferSelect;
+
+/** Ticks on a day sheet (both phones see them): one row per ticked key (lib/shoots/ticks.ts) on a Miami day. */
+export const shootTicks = pgTable(
+  "shoot_ticks",
+  {
+    date: date("date", { mode: "string" }).notNull(),
+    key: text("key").notNull(),
+    tickedAt: timestamp("ticked_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.date, t.key] })],
+);
