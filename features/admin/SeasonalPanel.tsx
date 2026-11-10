@@ -44,7 +44,7 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
       return spanish && (!spanish.title.trim() || !spanish.description.trim());
     });
     if (incompleteSpanish) {
-      setNote({ kind: "error", text: `Complete both Spanish fields for ${incompleteSpanish.adminLabel}, or leave both blank.` });
+      setNote({ kind: "error", text: `Complete both Spanish fields for ${incompleteSpanish.adminLabel}, or leave both blank and they're filled in for you when you save.` });
       return;
     }
     setBusy(true);
@@ -92,7 +92,7 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
                 <span className={styles.label}>Short description</span>
                 <textarea className={cn(styles.input, styles.seasonalTextarea)} value={offer.description} maxLength={240} onChange={(event) => update(definition.id, "description", event.target.value)} />
               </label>
-              <p className={cn(styles.label, "chalk-soft")}>Spanish (optional until the Spanish site is published)</p>
+              <p className={cn(styles.label, "chalk-soft")}>Spanish (left blank = filled in for you when you save)</p>
               <label className={styles.ruleField}>
                 <span className={styles.label}>Spanish offer title</span>
                 <input className={styles.input} value={offer.spanish?.title ?? ""} maxLength={90} onChange={(event) => updateSpanish(definition.id, "title", event.target.value)} />

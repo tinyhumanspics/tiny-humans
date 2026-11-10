@@ -343,7 +343,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
       {features.length < 12 && <button type="button" className={styles.smallButton} onClick={() => { setFeatures((x) => [...x, ""]); setSpanishFeatures((x) => [...x, ""]); }}>+ Add inclusion</button>}
       <div className={styles.offerBox}>
         <h4 className={cn(styles.h3, "chalk")}>Spanish website copy</h4>
-        <p className={cn(styles.hintSmall, "chalk-soft")}>This stays hidden until the complete Spanish site is approved. Once you start it, translate every matching English field and included item before saving. Leave every Spanish field blank to keep the draft off.</p>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>Leave a Spanish field blank and it&apos;s filled in from the English when you save (translated automatically). Anything you type here yourself is kept.</p>
         <div className={styles.editorGrid}>
           <label className={cn(styles.label, "chalk-soft")}>Bundle name (Spanish)<input className={styles.input} value={spanishName} maxLength={60} onChange={(e) => setSpanishName(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Small label (Spanish){badge ? ` · English: ${badge}` : " · optional"}<input className={styles.input} value={spanishBadge} maxLength={24} onChange={(e) => setSpanishBadge(e.target.value)} /></label>

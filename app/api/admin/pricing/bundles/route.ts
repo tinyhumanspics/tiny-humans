@@ -5,6 +5,8 @@ import { isDatabaseConfigured } from "@/lib/db/client";
 import { log } from "@/lib/log";
 import { BundleInUseError, CATALOG_TAG, deleteBundle, getAdminCatalog, refreshCatalogSnapshot, saveBundle } from "@/lib/pricing/server";
 import { bundleInputSchema } from "@/lib/pricing/validation";
+import { toSpanish } from "@/lib/i18n/autotranslate";
+import { autofillBundleSpanish } from "@/lib/i18n/spanish-autofill";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +23,8 @@ const refresh = async () => {
 /** Owner only: create or update a bundle. */
 export async function POST(req: Request) {
   const g = await guard(); if (g) return g;
-  const p = bundleInputSchema.safeParse(await req.json().catch(() => null));
+  // empty Spanish fields get the Spanish of their English pair before the check (owner, Nov 9: no back and forth)
+  const p = bundleInputSchema.safeParse(await autofillBundleSpanish(await req.json().catch(() => null), toSpanish));
   if (!p.success) return NextResponse.json({ error: p.error.issues[0]?.message ?? "Check the bundle details." }, { status: 400 });
   try {
     await saveBundle(p.data);

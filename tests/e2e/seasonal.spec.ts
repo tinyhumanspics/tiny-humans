@@ -61,7 +61,7 @@ test("the owner can edit and enable seasonal landing offers", async ({ page }, t
   await page.getByLabel("Spanish short description").nth(1).fill("");
   await page.getByLabel("Last session date").nth(1).fill("2026-12-21");
   await page.getByRole("button", { name: "Save seasonal offers" }).click();
-  await expect(page.getByText("Complete both Spanish fields for Baby’s First Christmas, or leave both blank.")).toBeVisible();
+  await expect(page.getByText("Complete both Spanish fields for Baby’s First Christmas, or leave both blank and they're filled in for you when you save.")).toBeVisible();
   await page.getByLabel("Spanish short description").nth(1).fill("Una sesión especial para la primera Navidad de tu bebé.");
   await page.getByRole("button", { name: "Save seasonal offers" }).click();
 

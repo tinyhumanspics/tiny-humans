@@ -69,7 +69,7 @@ export default function MediaSlot({ name, groupLabel, custom, inherited, inherit
           )}
           <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (shown when a parent books this photo)" : "Photo title"}<input className={styles.input} value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Description for screen readers<input className={styles.input} value={alt} maxLength={160} onChange={(e) => setAlt(e.target.value)} /></label>
-          <p className={cn(styles.label, "chalk-soft")}>Spanish photo details (optional until the Spanish site is published)</p>
+          <p className={cn(styles.label, "chalk-soft")}>Spanish photo details (left blank = filled in for you when you save)</p>
           {captions && (
             <label className={cn(styles.label, "chalk-soft")}>
               Caption under the photo (Spanish{caption.trim() ? " · required when Spanish details are started" : " · optional"})
@@ -78,7 +78,7 @@ export default function MediaSlot({ name, groupLabel, custom, inherited, inherit
           )}
           <label className={cn(styles.label, "chalk-soft")}>{captions ? "Title (Spanish)" : "Photo title (Spanish)"}<input className={styles.input} value={spanishTitle} maxLength={60} onChange={(e) => setSpanishTitle(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Description for screen readers (Spanish)<input className={styles.input} value={spanishAlt} maxLength={160} onChange={(e) => setSpanishAlt(e.target.value)} /></label>
-          {spanishIncomplete && <p className={cn(styles.error, "chalk-soft")}>Complete the Spanish title and description{captions && caption.trim() ? ", plus the matching caption," : ""} or leave all Spanish fields blank.</p>}
+          {spanishIncomplete && <p className={cn(styles.error, "chalk-soft")}>Complete the Spanish title and description{captions && caption.trim() ? ", plus the matching caption," : ""} or leave all Spanish fields blank and they&apos;re filled in for you when you save.</p>}
           <button
             type="button"
             className={styles.smallButton}
