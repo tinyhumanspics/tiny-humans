@@ -21,6 +21,7 @@ import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
 import OfferLine from "@/features/booking/OfferLine";
 import NotBornYet from "@/features/booking/NotBornYet";
+import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
 import type { PublicReview } from "@/lib/reviews/public";
@@ -149,25 +150,8 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* Seasonal wrapper: owner-managed copy + real cutoff dates, visible only with its matching live theme. */}
-      {seasonalOffers.length > 0 && (
-        <section className={cn("container", styles.seasonal)} aria-labelledby="landing-seasonal">
-          <Reveal>
-            <p className={cn(styles.seasonalEyebrow, "chalk-soft")}>{t.seasonalOffers.eyebrow}</p>
-            <div className={styles.seasonalGrid}>
-              {seasonalOffers.map((offer, index) => (
-                <ChalkBox key={offer.id} className={styles.seasonalCard} seed={24 + index} wobble={2.4} strokeWidth={2.6} color="var(--sun-yellow)">
-                  <ChalkDoodle name="sparkle" size={30} color="var(--accent-2)" strokeWidth={3} className={styles.seasonalDoodle} grain={false} />
-                  <h2 id={index === 0 ? "landing-seasonal" : undefined} className={cn(styles.seasonalTitle, "chalk")}>{offer.title}</h2>
-                  <p className={cn(styles.seasonalDescription, "chalk-soft")}>{offer.description}</p>
-                  <p className={cn(styles.seasonalCutoff, "chalk-soft")}>{fill(t.seasonalOffers.cutoff, { date: formatLongDate(offer.cutoff, locale) })}</p>
-                  <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="outline" seed={26 + index}>{t.seasonalOffers.cta}</ChalkButton>
-                </ChalkBox>
-              ))}
-            </div>
-          </Reveal>
-        </section>
-      )}
+      {/* Seasonal offer boxes (/admin → Seasonal Landing), also on the home page: only while one is live. */}
+      <SeasonalOffers messages={t.seasonalOffers} promoMessages={bundleMessages.promo} locale={locale} />
 
       {/* 2. Trust strip */}
       <section className="container" aria-label={t.trustLabel}>

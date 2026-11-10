@@ -1,15 +1,18 @@
 import { emptyThemeMedia, mediaFromList, MEDIA_GROUPS, sectionsFromLegacy, type LegacyMedia, type MediaSection, type ThemeMedia } from "@/config/media";
-import { SEASONAL_OFFER_IDS, type SeasonalOfferId } from "@/config/seasonal";
+import { MAX_SEASONAL_OFFERS, SEASONAL_OFFER_DEFINITIONS, type SeasonalOfferId } from "@/config/seasonal";
 import { DEFAULT_THEME, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import en from "@/messages/en.json";
 import { isDateKey } from "@/lib/validation/date-key";
-import type { SeasonalOfferSettings, SiteSettings } from "./types";
+import type { SeasonalOffer, SeasonalOfferSettings, SiteSettings } from "./types";
 
-const DEFAULT_SEASONAL_OFFERS: Record<SeasonalOfferId, SeasonalOfferSettings> = {
+const DEFAULT_SEASONAL_COPY: Record<SeasonalOfferId, SeasonalOfferSettings> = {
   thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving, spanish: null },
   firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas, spanish: null },
 };
+const DEFAULT_SEASONAL_OFFERS: SeasonalOffer[] = SEASONAL_OFFER_DEFINITIONS.map((d) => ({ id: d.id, name: d.adminLabel, themeId: d.themeId, ...DEFAULT_SEASONAL_COPY[d.id] }));
+const BUILT_IN_OFFER_IDS = SEASONAL_OFFER_DEFINITIONS.map((d) => d.id as string);
+export const isBuiltInSeasonalOffer = (id: string) => BUILT_IN_OFFER_IDS.includes(id);
 
 const LEGACY_SEASONAL_TITLES: Partial<Record<SeasonalOfferId, readonly string[]>> = {
   thanksgiving: ["Baby's First Thanksgiving at Home"],
@@ -70,30 +73,51 @@ function parsePhotos(list: unknown[], allowDataUrls: boolean, setName: string): 
 }
 
 const isThemeId = (v: unknown): v is TinyHumansTheme => (THEME_IDS as string[]).includes(v as string);
-function parseSeasonalOffers(raw: unknown): Record<SeasonalOfferId, SeasonalOfferSettings> {
-  const source = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
-  return Object.fromEntries(
-    SEASONAL_OFFER_IDS.map((id) => {
-      const fallback = DEFAULT_SEASONAL_OFFERS[id];
-      const value = source[id] && typeof source[id] === "object" ? (source[id] as Record<string, unknown>) : null;
-      const savedTitle = value ? str(value.title, 90) : "";
-      const title = LEGACY_SEASONAL_TITLES[id]?.includes(savedTitle) ? fallback.title : savedTitle;
-      const description = value ? str(value.description, 240) : "";
-      const cutoff = value && isDateKey(value.cutoff) ? value.cutoff : "";
-      const rawSpanish = value?.spanish && typeof value.spanish === "object" ? (value.spanish as Record<string, unknown>) : null;
-      const spanishTitle = rawSpanish ? str(rawSpanish.title, 90) : "";
-      const spanishDescription = rawSpanish ? str(rawSpanish.description, 240) : "";
-      // Old/corrupt settings stay hidden instead of silently publishing hard-coded business copy.
-      const complete = Boolean(title && description && cutoff);
-      return [id, {
-        enabled: value?.enabled === true && complete,
-        title: title || fallback.title,
-        description: description || fallback.description,
-        cutoff: cutoff || fallback.cutoff,
-        spanish: spanishTitle && spanishDescription ? { title: spanishTitle, description: spanishDescription } : null,
-      }];
-    }),
-  ) as Record<SeasonalOfferId, SeasonalOfferSettings>;
+/** One offer's copy and dates. Old/corrupt saves stay hidden instead of silently publishing hard-coded copy. */
+function parseOfferCopy(value: Record<string, unknown> | null, fallback: SeasonalOfferSettings, legacyTitles: readonly string[] = []): SeasonalOfferSettings {
+  const savedTitle = value ? str(value.title, 90) : "";
+  const title = legacyTitles.includes(savedTitle) ? fallback.title : savedTitle;
+  const description = value ? str(value.description, 240) : "";
+  const cutoff = value && isDateKey(value.cutoff) ? value.cutoff : "";
+  const rawSpanish = value?.spanish && typeof value.spanish === "object" ? (value.spanish as Record<string, unknown>) : null;
+  const spanishTitle = rawSpanish ? str(rawSpanish.title, 90) : "";
+  const spanishDescription = rawSpanish ? str(rawSpanish.description, 240) : "";
+  const complete = Boolean(title && description && cutoff);
+  return {
+    enabled: value?.enabled === true && complete,
+    title: title || fallback.title,
+    description: description || fallback.description,
+    cutoff: cutoff || fallback.cutoff,
+    spanish: spanishTitle && spanishDescription ? { title: spanishTitle, description: spanishDescription } : null,
+  };
+}
+
+const isOfferTheme = (v: unknown): v is SeasonalOffer["themeId"] => v === "any" || isThemeId(v);
+
+/**
+ * The seasonal offers: the list saved since Nov 10 (`seasonalOfferList`, or `seasonalOffers` as a list from /admin),
+ * else the older { thanksgiving, firstChristmas } record. The two built-in offers are always there, first.
+ */
+function parseSeasonalOffers(rawList: unknown, rawLegacy: unknown): SeasonalOffer[] {
+  const list = Array.isArray(rawList) ? rawList : Array.isArray(rawLegacy) ? rawLegacy : null;
+  const legacy = !list && rawLegacy && typeof rawLegacy === "object" ? (rawLegacy as Record<string, unknown>) : {};
+  const builtIn = DEFAULT_SEASONAL_OFFERS.map((d) => {
+    const saved = list?.find((o) => o && typeof o === "object" && (o as Record<string, unknown>).id === d.id) as Record<string, unknown> | undefined;
+    const value = saved ?? (legacy[d.id] && typeof legacy[d.id] === "object" ? (legacy[d.id] as Record<string, unknown>) : null);
+    const themeId = saved && isOfferTheme(saved.themeId) ? saved.themeId : d.themeId;
+    return { id: d.id, name: d.name, themeId, ...parseOfferCopy(value, DEFAULT_SEASONAL_COPY[d.id as SeasonalOfferId], LEGACY_SEASONAL_TITLES[d.id as SeasonalOfferId]) };
+  });
+  const seen = new Set(BUILT_IN_OFFER_IDS);
+  const own: SeasonalOffer[] = [];
+  for (const raw of list ?? []) {
+    if (!raw || typeof raw !== "object") continue;
+    const o = raw as Record<string, unknown>;
+    const id = str(o.id, 40);
+    if (!/^offer-[a-z0-9-]{2,32}$/.test(id) || seen.has(id) || builtIn.length + own.length >= MAX_SEASONAL_OFFERS) continue;
+    seen.add(id);
+    own.push({ id, name: str(o.name, 40) || "Seasonal offer", themeId: isOfferTheme(o.themeId) ? o.themeId : "any", ...parseOfferCopy(o, { enabled: false, title: "", description: "", cutoff: "", spanish: null }) });
+  }
+  return [...builtIn, ...own];
 }
 
 function parseSlot(v: unknown, allowDataUrls: boolean, where: string): PortfolioPhoto | null {
@@ -196,7 +220,7 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
     themeId,
     spanishPublished: o.spanishPublished === true,
     media,
-    seasonalOffers: parseSeasonalOffers(o.seasonalOffers),
+    seasonalOffers: parseSeasonalOffers(o.seasonalOfferList, o.seasonalOffers),
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null,
   };
 }
@@ -230,5 +254,8 @@ export function storedSettings(s: SiteSettings): unknown {
       return [id, { ...m, groups, extra }];
     }),
   );
-  return { ...s, media };
+  // Seasonal offers: the full list, plus the older { thanksgiving, firstChristmas } record so a code revert keeps the
+  // built-in two exactly as saved.
+  const legacyOffers = Object.fromEntries(s.seasonalOffers.filter((o) => isBuiltInSeasonalOffer(o.id)).map(({ id, enabled, title, description, cutoff, spanish }) => [id, { enabled, title, description, cutoff, spanish }]));
+  return { ...s, media, seasonalOffers: legacyOffers, seasonalOfferList: s.seasonalOffers };
 }

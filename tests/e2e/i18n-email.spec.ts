@@ -118,10 +118,7 @@ test("Spanish publication blocks owner copy gaps instead of leaking English", as
   const settings = {
     ...defaultSettings,
     media: { default: media },
-    seasonalOffers: {
-      ...defaultSettings.seasonalOffers,
-      thanksgiving: { ...defaultSettings.seasonalOffers.thanksgiving, enabled: true, spanish: null },
-    },
+    seasonalOffers: defaultSettings.seasonalOffers.map((o) => (o.id === "thanksgiving" ? { ...o, enabled: true, spanish: null } : o)),
   };
   expect(spanishOwnerCopyIssues(settings).sort()).toEqual([
     "Spanish captions for uploaded gallery photos",

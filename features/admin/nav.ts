@@ -10,7 +10,7 @@ export const ADMIN_NAV: { id: AdminSection; label: string; href: string; blurb: 
   { id: "availability", label: "Availability", href: "/admin/availability", blurb: "Weekly hours, booking rules, special dates, time blocks." },
   { id: "pricing", label: "Pricing & Promotions", href: "/admin/pricing", blurb: "Bundles, prices, special offers and discount codes." },
   { id: "quotes", label: "Quotes", href: "/admin/quotes", blurb: "A family's ZIP code or address: every bundle's price with travel, ready to send." },
-  { id: "seasonal", label: "Seasonal Landing", href: "/admin/seasonal", blurb: "Baby’s First Thanksgiving and Baby’s First Christmas offers and cutoff dates." },
+  { id: "seasonal", label: "Seasonal Landing", href: "/admin/seasonal", blurb: "Seasonal offer boxes on the ad page and the home page: Thanksgiving, Christmas and your own." },
   { id: "photos", label: "Photos / Media", href: "/admin/photos", blurb: "The pictures on the website, by section and theme." },
   { id: "theme", label: "Theme", href: "/admin/theme", blurb: "Which seasonal theme visitors see." },
   { id: "settings", label: "Settings", href: "/admin/settings", blurb: "Spanish publication, account and connections." },

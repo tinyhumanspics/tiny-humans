@@ -9,7 +9,16 @@ export interface SeasonalOfferDefinition {
   themeId: TinyHumansTheme;
 }
 
-/** Structure is code; the owner-editable copy, dates and on/off state live in site settings. */
+/** Theme an offer shows with: one theme, or "any" (every theme, while it's switched on and before its last day). */
+export type SeasonalOfferTheme = TinyHumansTheme | "any";
+
+/** Owner-added offers (Valentine's Day, Mother's Day, …): at most this many in total, built-ins included. */
+export const MAX_SEASONAL_OFFERS = 12;
+
+/**
+ * The two built-in offers (always listed; the owner can switch them off but not delete them). Owner-added ones live
+ * only in site settings. The copy, dates, theme and on/off state of every offer live in site settings.
+ */
 export const SEASONAL_OFFER_DEFINITIONS: readonly SeasonalOfferDefinition[] = [
   { id: "thanksgiving", adminLabel: "Baby’s First Thanksgiving", themeId: "thanksgiving" },
   { id: "firstChristmas", adminLabel: "Baby’s First Christmas", themeId: "christmas" },

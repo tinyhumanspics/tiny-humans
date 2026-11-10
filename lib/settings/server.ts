@@ -40,8 +40,9 @@ const readCached = unstable_cache(
       return defaultSettings;
     }
   },
-  // v2: "Little moments" sections. A new key, so this code never reads a cached copy in the older shape.
-  ["site-settings-v2"],
+  // v2: "Little moments" sections; v3: seasonal offers as a list (Nov 10). A new key, so this code never reads a
+  // cached copy in the older shape.
+  ["site-settings-v3"],
   { tags: [SETTINGS_TAG] },
 );
 

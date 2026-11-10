@@ -47,7 +47,8 @@ describe("Spanish fill-in: which words", () => {
 describe("Spanish fill-in: settings (photos, prompt boxes, seasonal offers)", () => {
   test("a new photo, a prompt box and an offer get Spanish; Spanish typed by hand is kept", async () => {
     const s = settingsWith([photo(), photo({ id: "mine", title: "Basket nap", alt: "Baby in a basket", caption: "First week", spanish: { title: "Mi título", alt: "Mi descripción" } })]);
-    s.seasonalOffers.firstChristmas = { ...s.seasonalOffers.firstChristmas, enabled: true, spanish: null };
+    s.seasonalOffers = s.seasonalOffers.map((o) => (o.id === "firstChristmas" ? { ...o, enabled: true, spanish: null } : o));
+    const christmas = (x: typeof s) => x.seasonalOffers.find((o) => o.id === "firstChristmas")!;
     expect(spanishOwnerCopyIssues(s).length).toBeGreaterThan(0);
 
     const { settings, filled } = await autofillSettingsSpanish(s, fake);
@@ -56,12 +57,12 @@ describe("Spanish fill-in: settings (photos, prompt boxes, seasonal offers)", ()
     expect(first.spanish).toEqual({ title: "C225", alt: "ES:Baby asleep in a basket", caption: undefined });
     expect(second.spanish).toEqual({ title: "Mi título", alt: "Mi descripción", caption: "ES:First week" });
     expect(settings.media[theme]!.sections![0].spanish).toEqual({ title: "ES:Book your session", text: "ES:We bring the studio to you." });
-    expect(settings.seasonalOffers.firstChristmas.spanish?.title).toBe(`ES:${s.seasonalOffers.firstChristmas.title}`);
+    expect(christmas(settings).spanish?.title).toBe(`ES:${christmas(s).title}`);
     expect(filled).toBeGreaterThan(0);
     // nothing left that would hide the Spanish site
     expect(spanishOwnerCopyIssues(settings)).toEqual([]);
     // the input isn't changed (the route saves the returned copy)
-    expect(s.seasonalOffers.firstChristmas.spanish).toBeNull();
+    expect(christmas(s).spanish).toBeNull();
   });
 
   test("everything already in Spanish: nothing is sent to translate", async () => {

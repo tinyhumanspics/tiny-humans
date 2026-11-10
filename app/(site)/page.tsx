@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Hero from "@/features/home/Hero";
 import Portfolio from "@/features/home/Portfolio";
+import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import Reviews from "@/features/reviews/Reviews";
 import { getPublicReviews } from "@/lib/reviews/server";
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, pageMetadata } from "@/lib/seo/metadata";
@@ -18,7 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-/** Home: hero + portfolio feed + the reviews picked in /admin. Booking lives on /book. */
+/** Home: hero, the live seasonal offer boxes (/admin → Seasonal Landing), portfolio feed, the reviews picked in /admin. */
 export default async function HomePage() {
   const reviews = await getPublicReviews();
   return (
@@ -26,6 +27,7 @@ export default async function HomePage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd()) }} />
       <main id="top">
         <Hero messages={en.home.hero} locale="en" />
+        <SeasonalOffers messages={en.landing.seasonalOffers} promoMessages={en.bundlesPage.promo} locale="en" />
         <Portfolio messages={en.home.portfolio} locale="en" />
         {reviews.length > 0 && <Reviews reviews={reviews} messages={en.reviewsSection} placement="home" />}
       </main>
