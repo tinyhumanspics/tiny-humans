@@ -250,7 +250,9 @@ index.ts for client components; never submit a booking on production (block /api
       Research: Drizzle 0.45 `jsonb().$type<>()`, nullable `unique()` FK with `onDelete: "cascade"` (Postgres allows
       many NULLs under a unique constraint, so styled shoots need no booking); NOAA solar calculator formulas
       https://gml.noaa.gov/grad/solcalc/calcdetails.html. Blob private access + client uploads: research in slice 4.
-      `[?]` **Owner step (Neon dev branch, before slice 2's click-through):** console.neon.tech → project → Branches →
+      `[x]` **Done by the owner Nov 9** on Neon branch `shoots-test`: ran twice, both "succeeded", check query = the 3
+      sections (9 / 10 / 6 items). Production `main`: not yet (only with the owner's OK, at slice 8).
+      Owner step as given (Neon dev branch, before slice 2's click-through): console.neon.tech → project → Branches →
       Create branch `shoots-test` from `main` → SQL Editor with **branch `shoots-test` selected** → paste all of
       `drizzle/0023_shoots.sql` → Run → expect success; then `select name, jsonb_array_length(items) from
       shoot_bring_sections order by sort;` → Studio kit 9, Camera gear 10, Wardrobe (Adri and Alo) 6. Running the
