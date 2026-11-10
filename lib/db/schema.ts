@@ -804,7 +804,7 @@ export const marketingSettings = pgTable("marketing_settings", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-/* ---------------- shoots (/admin → Shoots, migration 0023) ---------------- */
+/* ---------------- shoots (/admin → Shoots, migration 0024) ---------------- */
 
 /**
  * "What we always bring": sections the owners name and fill (Studio kit, Camera gear, Wardrobe, …), one item per line.
@@ -908,3 +908,54 @@ export const shootTicks = pgTable(
   },
   (t) => [primaryKey({ columns: [t.date, t.key] })],
 );
+/* ---------------- photo and video release (/admin → Leads, migration 0023) ---------------- */
+
+/**
+ * Photo and video releases parents sign on the iPad (owner, Nov 9). The business's record of permission, so it is
+ * never deleted by app code and survives a deleted lead (`booking_id` becomes null; the snapshots stay). A signed row
+ * never changes: "Sign again" inserts a new row and marks the old one superseded; a family taking permission back
+ * marks it revoked. One active ("signed") release per booking (partial unique index).
+ */
+export const photoWaivers = pgTable(
+  "photo_waivers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    /** Snapshots at signing (the booking may be deleted later). */
+    bookingReference: text("booking_reference").notNull(),
+    familyName: text("family_name").notNull(),
+    children: jsonb("children").$type<{ name: string | null; age: string }[]>().notNull(),
+    sessionDate: date("session_date", { mode: "string" }),
+    /** lib/waiver/text.ts WAIVER_VERSION and the language it was read in. */
+    version: text("version").notNull(),
+    language: text("language").notNull(),
+    /** Exactly what the parent saw (headings, paragraphs, choice labels) and its SHA-256. */
+    textSnapshot: jsonb("text_snapshot").$type<Record<string, unknown>>().notNull(),
+    textSha256: text("text_sha256").notNull(),
+    /** { website, social, ads, bts, personal } */
+    uses: jsonb("uses").$type<Record<string, boolean>>().notNull(),
+    firstNameOk: boolean("first_name_ok").notNull(),
+    signerName: text("signer_name").notNull(),
+    /** "parent" | "guardian" */
+    relationship: text("relationship").notNull(),
+    /** The drawn signature: a PNG (base64, ≤ 100 KB), checked on the server. */
+    signaturePng: text("signature_png").notNull(),
+    signedAt: timestamp("signed_at", { withTimezone: true }).notNull().defaultNow(),
+    userAgent: text("user_agent"),
+    /** "signed" | "superseded" | "revoked" */
+    status: text("status").notNull().default("signed"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    revokeNote: text("revoke_note"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("photo_waivers_booking_idx").on(t.bookingId),
+    index("photo_waivers_reference_idx").on(t.bookingReference),
+    uniqueIndex("photo_waivers_one_signed_idx").on(t.bookingId).where(sql`status = 'signed'`),
+    check("photo_waivers_language_check", sql`${t.language} in ('en', 'es')`),
+    check("photo_waivers_relationship_check", sql`${t.relationship} in ('parent', 'guardian')`),
+    check("photo_waivers_status_check", sql`${t.status} in ('signed', 'superseded', 'revoked')`),
+  ],
+);
+
+export type PhotoWaiver = typeof photoWaivers.$inferSelect;

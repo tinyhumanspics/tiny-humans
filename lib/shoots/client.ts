@@ -6,7 +6,7 @@ export class ShootsApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
-    /** True until migration 0023 has run: the page shows "Run the shoots migration". */
+    /** True until migration 0024 has run: the page shows "Run the shoots migration". */
     readonly notReady = false,
   ) {
     super(message);

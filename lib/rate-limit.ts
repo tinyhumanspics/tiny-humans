@@ -47,6 +47,8 @@ export const RULES = {
   passkeyLogin: { limit: 20, windowSec: 900 },
   // owner area → Shoots: autosave, ticks, and the day sheet checking for the other phone's ticks every ~10 s
   adminShoots: { limit: 600, windowSec: 600 },
+  // owner area → Leads → photo and video release (open, sign, see a signed copy)
+  adminWaiver: { limit: 60, windowSec: 600 },
 } as const;
 export type RuleName = keyof typeof RULES;
 

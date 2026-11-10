@@ -238,8 +238,9 @@ index.ts for client components; never submit a booking on production (block /api
       Leads → Waiver signature → opened in Spanish (booking locale) → English → signed → lead + Photo use updated;
       DB row checked; a direct SQL edit refused by the trigger; sign again → superseded + consent private; "Keep their
       photos private" → revoked (un-revoke refused); lead deleted → both releases kept, `booking_id` null, copy says so.
-      Migration numbering: main's Shoots migration is also 0023 (`0023_shoots`, only on Neon `shoots-test`); whichever
-      ships second is renumbered 0024 (journal + snapshot regenerated).
+      Migration numbering: the waiver shipped first as 0023, so Shoots is now **`drizzle/0024_shoots.sql`** (renumbered Nov 9
+      when main merged the live waiver; same SQL the owner ran on Neon `shoots-test`, journal + snapshot regenerated:
+      drizzle-kit's diff from the waiver snapshot was exactly the 4 Shoots tables). Older notes saying 0023_shoots = 0024.
       `[?]` Before real families sign (spec §10): (1) a Florida lawyer reviews the wording (minors' images in paid ads);
       (2) the legal business name if Tiny Humans is an LLC; (3) Alondra checks the Spanish (waiver + privacy);
       (4) owner OKs the privacy wording; (5) run `0023_photo_waivers.sql` on Neon `shoots-test`, then production;

@@ -252,8 +252,8 @@ describe("shoots: sunset and starting lists", () => {
     expect(sunsetOn("2026-06-21")).toBe("20:15");
   });
 
-  test("migration 0023 inserts exactly lib/shoots/lists.ts", () => {
-    const sql = readFileSync("drizzle/0023_shoots.sql", "utf8");
+  test("migration 0024 inserts exactly lib/shoots/lists.ts", () => {
+    const sql = readFileSync("drizzle/0024_shoots.sql", "utf8");
     const rows = [...sql.matchAll(/\t\('((?:[^']|'')*)', '((?:[^']|'')*)', (\d+)\)/g)].map((m) => ({
       name: m[1].replace(/''/g, "'"),
       items: JSON.parse(m[2].replace(/''/g, "'")) as string[],

@@ -1,5 +1,5 @@
 {
-  "id": "630ef6f2-e9f6-479c-b6ad-617deed870e3",
+  "id": "61652eb3-bf64-4650-a995-0304122f241f",
   "prevId": "52928e8d-04ea-4a7f-bca0-7aec2c06c1f5",
   "version": "7",
   "dialect": "postgresql",
@@ -3171,6 +3171,223 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.photo_waivers": {
+      "name": "photo_waivers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "booking_id": {
+          "name": "booking_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "booking_reference": {
+          "name": "booking_reference",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "family_name": {
+          "name": "family_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "children": {
+          "name": "children",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session_date": {
+          "name": "session_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "version": {
+          "name": "version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "language": {
+          "name": "language",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text_snapshot": {
+          "name": "text_snapshot",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text_sha256": {
+          "name": "text_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uses": {
+          "name": "uses",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "first_name_ok": {
+          "name": "first_name_ok",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signer_name": {
+          "name": "signer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relationship": {
+          "name": "relationship",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signature_png": {
+          "name": "signature_png",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "signed_at": {
+          "name": "signed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "user_agent": {
+          "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'signed'"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revoke_note": {
+          "name": "revoke_note",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "photo_waivers_booking_idx": {
+          "name": "photo_waivers_booking_idx",
+          "columns": [
+            {
+              "expression": "booking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "photo_waivers_reference_idx": {
+          "name": "photo_waivers_reference_idx",
+          "columns": [
+            {
+              "expression": "booking_reference",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "photo_waivers_one_signed_idx": {
+          "name": "photo_waivers_one_signed_idx",
+          "columns": [
+            {
+              "expression": "booking_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "status = 'signed'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "photo_waivers_booking_id_bookings_id_fk": {
+          "name": "photo_waivers_booking_id_bookings_id_fk",
+          "tableFrom": "photo_waivers",
+          "tableTo": "bookings",
+          "columnsFrom": [
+            "booking_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "photo_waivers_language_check": {
+          "name": "photo_waivers_language_check",
+          "value": "\"photo_waivers\".\"language\" in ('en', 'es')"
+        },
+        "photo_waivers_relationship_check": {
+          "name": "photo_waivers_relationship_check",
+          "value": "\"photo_waivers\".\"relationship\" in ('parent', 'guardian')"
+        },
+        "photo_waivers_status_check": {
+          "name": "photo_waivers_status_check",
+          "value": "\"photo_waivers\".\"status\" in ('signed', 'superseded', 'revoked')"
+        }
+      },
+      "isRLSEnabled": false
+    },
     "public.reviews": {
       "name": "reviews",
       "schema": "",
@@ -3266,399 +3483,6 @@
         "reviews_rating_check": {
           "name": "reviews_rating_check",
           "value": "\"reviews\".\"rating\" between 1 and 5"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.shoot_bring_sections": {
-      "name": "shoot_bring_sections",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "name": {
-          "name": "name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "items": {
-          "name": "items",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "sort": {
-          "name": "sort",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.shoot_inspo": {
-      "name": "shoot_inspo",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "shoot_id": {
-          "name": "shoot_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "group": {
-          "name": "group",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "blob_url": {
-          "name": "blob_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "blob_pathname": {
-          "name": "blob_pathname",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "content_type": {
-          "name": "content_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bytes": {
-          "name": "bytes",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "width": {
-          "name": "width",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "height": {
-          "name": "height",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "link_url": {
-          "name": "link_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "platform": {
-          "name": "platform",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "caption": {
-          "name": "caption",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "''"
-        },
-        "sort": {
-          "name": "sort",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "shoot_inspo_shoot_idx": {
-          "name": "shoot_inspo_shoot_idx",
-          "columns": [
-            {
-              "expression": "shoot_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "group",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "sort",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "shoot_inspo_shoot_id_shoots_id_fk": {
-          "name": "shoot_inspo_shoot_id_shoots_id_fk",
-          "tableFrom": "shoot_inspo",
-          "tableTo": "shoots",
-          "columnsFrom": [
-            "shoot_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "shoot_inspo_group_check": {
-          "name": "shoot_inspo_group_check",
-          "value": "\"shoot_inspo\".\"group\" in ('inspo', 'bts')"
-        },
-        "shoot_inspo_type_check": {
-          "name": "shoot_inspo_type_check",
-          "value": "\"shoot_inspo\".\"type\" in ('image', 'video', 'link', 'note')"
-        },
-        "shoot_inspo_content_check": {
-          "name": "shoot_inspo_content_check",
-          "value": "(\"shoot_inspo\".\"type\" in ('image', 'video') and \"shoot_inspo\".\"blob_url\" is not null and \"shoot_inspo\".\"blob_pathname\" is not null) or (\"shoot_inspo\".\"type\" = 'link' and \"shoot_inspo\".\"link_url\" is not null) or \"shoot_inspo\".\"type\" = 'note'"
-        }
-      },
-      "isRLSEnabled": false
-    },
-    "public.shoot_ticks": {
-      "name": "shoot_ticks",
-      "schema": "",
-      "columns": {
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "key": {
-          "name": "key",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "ticked_at": {
-          "name": "ticked_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "shoot_ticks_date_key_pk": {
-          "name": "shoot_ticks_date_key_pk",
-          "columns": [
-            "date",
-            "key"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.shoots": {
-      "name": "shoots",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "kind": {
-          "name": "kind",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "booking_id": {
-          "name": "booking_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "date": {
-          "name": "date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "place": {
-          "name": "place",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "title": {
-          "name": "title",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "tab_label": {
-          "name": "tab_label",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "said": {
-          "name": "said",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "confirm": {
-          "name": "confirm",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "bring_extra": {
-          "name": "bring_extra",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'[]'::jsonb"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "shoots_date_idx": {
-          "name": "shoots_date_idx",
-          "columns": [
-            {
-              "expression": "date",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "shoots_booking_id_bookings_id_fk": {
-          "name": "shoots_booking_id_bookings_id_fk",
-          "tableFrom": "shoots",
-          "tableTo": "bookings",
-          "columnsFrom": [
-            "booking_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "shoots_booking_id_unique": {
-          "name": "shoots_booking_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "booking_id"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {
-        "shoots_kind_check": {
-          "name": "shoots_kind_check",
-          "value": "\"shoots\".\"kind\" in ('booking', 'styled')"
-        },
-        "shoots_kind_fields_check": {
-          "name": "shoots_kind_fields_check",
-          "value": "(\"shoots\".\"kind\" = 'booking' and \"shoots\".\"booking_id\" is not null) or (\"shoots\".\"kind\" = 'styled' and \"shoots\".\"booking_id\" is null and \"shoots\".\"date\" is not null)"
         }
       },
       "isRLSEnabled": false

@@ -130,7 +130,7 @@ test("+ Shoot without a booking: title, day, start, place → its folder", async
 test("before the migration runs, Shoots says so", async ({ page }) => {
   await page.route("**/api/admin/shoots?*", (route) => route.fulfill({ status: 503, json: { error: "Run the shoots migration", notReady: true } }));
   await page.goto("/admin/shoots");
-  await expect(page.getByRole("alert").filter({ hasText: "isn't set up" })).toContainText("Run the shoots migration (drizzle/0023_shoots.sql)");
+  await expect(page.getByRole("alert").filter({ hasText: "isn't set up" })).toContainText("Run the shoots migration (drizzle/0024_shoots.sql)");
 });
 
 test("What we always bring: rename, fill, add a section, remove with two taps; saves by itself", async ({ page }) => {

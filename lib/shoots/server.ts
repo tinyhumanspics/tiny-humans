@@ -19,10 +19,10 @@ import { byStart, shootDetail, shootSummary, type ShootRow } from "./view";
  * delete leaves a row to retry instead of a file nobody can find.
  */
 
-/** Migration 0023 hasn't run (or there's no database): the Shoots pages say "Run the shoots migration". */
+/** Migration 0024 hasn't run (or there's no database): the Shoots pages say "Run the shoots migration". */
 export class ShootsNotReadyError extends Error {
   constructor() {
-    super("Run the shoots migration (drizzle/0023_shoots.sql) in Neon.");
+    super("Run the shoots migration (drizzle/0024_shoots.sql) in Neon.");
   }
 }
 export class ShootNotFoundError extends Error {

@@ -1,7 +1,7 @@
 /**
  * "What we always bring": the starting sections (the template's draft, owner Nov 9: "the owners edit them on What we
- * always bring"). Migration 0023 inserts exactly these; after that the owners add, rename, fill and remove sections
- * in /admin. tests/unit/shoots.test.ts keeps drizzle/0023_shoots.sql equal to this list.
+ * always bring"). Migration 0024 inserts exactly these; after that the owners add, rename, fill and remove sections
+ * in /admin. tests/unit/shoots.test.ts keeps drizzle/0024_shoots.sql equal to this list.
  */
 export interface BringSectionDraft {
   name: string;
