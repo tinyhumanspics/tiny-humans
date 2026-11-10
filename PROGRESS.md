@@ -204,6 +204,47 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [~] **Photo and video release (waiver) on Leads (owner, Nov 9: "I need to create a waiver for parents … not on the
+      shoots side but on the leads of every client, we need to have access to see it later"; spec v3.3 §10 + the
+      template's kiosk) — built Nov 9 on branch `feat/photo-waiver` (from `origin/main` = live, so it can ship without
+      Shoots; worktree in the session scratchpad), NOT pushed.** Leads: "Waiver signature" (not cancelled, none
+      signed) → `/admin/waiver/[reference]`; signed → "See signed waiver" → `/admin/waiver/signed/[id]`; a line "Photo
+      waiver signed ✓ {date} · Website, IG + FB"; Photo use row = "Waiver signed {date}: {uses}"; "Sign the waiver
+      again (replaces this one)" in details; "Waiver saved for TH-…" after "Next →". Pages in route group
+      `app/(kiosk)` (no site shell / admin menu / Meta Pixel). Signing screen = template: Español/English (starts in
+      the booking's language), "For Adri & Alo: Cancel" (two taps), cream paper, 5 uses + "Yes to all", first-name
+      question (only when a baby name exists), promises, fine print, full name, Parent/Legal guardian, "I agree",
+      finger signature (pointer events, redraws on rotation, 900 px PNG), Done says what's missing / "Done: keep our
+      photos private"; thank-you "Thank you, {first name}!" + "Next →". Signed copy: ✓/✗, signature, Miami time,
+      version, language, text fingerprint, print/PDF CSS, notes when taken back / replaced / lead deleted.
+      Data: `photo_waivers` (migration `0023_photo_waivers.sql`, idempotent): snapshots (reference, parent name,
+      children, date), version + language + the exact text (rebuilt on the server, never from the browser) + SHA-256,
+      uses, first-name OK, signer, relationship, signature PNG (checked: real PNG, ≤ 100 KB, sane size), user agent,
+      status signed/superseded/revoked; FK `ON DELETE SET NULL` (kept as the business's record); one active per
+      booking (partial unique index); a TRIGGER refuses any change to what was signed and any un-revoke. Signing also
+      sets `booking_consents.photos` = website or social. "Keep their photos private" in Leads revokes the active
+      release (`revokeWaiverForBooking`). API: `GET|POST /api/admin/waiver`, `GET /api/admin/waiver/[id]` (no
+      PATCH/PUT/DELETE: 405), `adminWaiver` rate limit. Wording: `lib/waiver/text.ts` "Photo and video release v1
+      (draft, Nov 2026)", phone/email from `config/site.ts`; a unit test pins its fingerprint (edit = new version).
+      Privacy policy (EN + ES, dated Nov 9): "Photos of your family" = the spec's wording; the Meta sentence replaced
+      ("…never includes your baby's name, age or notes. Photos or videos … in our ads … only if you said yes to ads in
+      the photo release you signed."); plus what we keep when you sign (name, parent/guardian, signature, choices,
+      when) and that signed releases are kept even after a booking is deleted (my additions: they describe what the
+      code saves; owner to confirm). CLAUDE.md/AGENTS.md: waiver gotcha + the children's-privacy rule clarified.
+      Checks (branch): strict tsc, lint 0, 99 units (10 new), full e2e 129 passed / 114 skipped / 0 failed incl.
+      `admin-waiver.spec.ts` (iPad: no menu/footer, Done explains what's missing, sign with a drawn signature → POST
+      body + valid PNG, thank-you focused, Next → Leads note, axe; Español + guardian + nothing ticked; two-tap
+      cancel; signed copy ✓/✗ + axe; Leads buttons + Photo use row). Real run on `scripts/local-db` (iPad gen 7):
+      Leads → Waiver signature → opened in Spanish (booking locale) → English → signed → lead + Photo use updated;
+      DB row checked; a direct SQL edit refused by the trigger; sign again → superseded + consent private; "Keep their
+      photos private" → revoked (un-revoke refused); lead deleted → both releases kept, `booking_id` null, copy says so.
+      Migration numbering: main's Shoots migration is also 0023 (`0023_shoots`, only on Neon `shoots-test`); whichever
+      ships second is renumbered 0024 (journal + snapshot regenerated).
+      `[?]` Before real families sign (spec §10): (1) a Florida lawyer reviews the wording (minors' images in paid ads);
+      (2) the legal business name if Tiny Humans is an LLC; (3) Alondra checks the Spanish (waiver + privacy);
+      (4) owner OKs the privacy wording; (5) run `0023_photo_waivers.sql` on Neon `shoots-test`, then production;
+      (6) then push `feat/photo-waiver` (fast-forward onto main) and test one signature on production.
+      Not built (spec "optional, owner OK first"): emailing the family a copy; a "signed waiver with ads ✓" filter.
 - [~] **Shoots section in /admin (owner, Nov 9: spec `docs/shoots/SHOOTS-SPEC.md` v3.1 + `docs/shoots/shoots-template.html`
       as the look-and-feel reference only; "one slice at a time, starting with slice 1"; no push, no production
       migration and no video uploads without the owner's OK in chat).** Every booking gets a shoot folder (family info,
