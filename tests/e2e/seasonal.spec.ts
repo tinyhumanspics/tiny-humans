@@ -30,10 +30,10 @@ test("older settings drop Christmas Cards and keep the two remaining offers", ()
       firstChristmas: { enabled: true, title: "Baby's First Christmas at Home", description: "First Christmas description", cutoff: "2026-12-21" },
     },
   });
-  expect(parsed.seasonalOffers.map((o) => o.id)).toEqual(["thanksgiving", "firstChristmas"]);
+  expect(parsed.seasonalOffers.map((o) => o.id)).toEqual(["thanksgiving", "firstChristmas", "valentines"]);
   expect(byId(parsed, "thanksgiving").title).toBe("Baby’s First Thanksgiving");
   expect(byId(parsed, "firstChristmas").title).toBe("Baby’s First Christmas");
-  expect(parsed.seasonalOffers.every((offer) => offer.enabled === true)).toBe(true);
+  expect(parsed.seasonalOffers.filter((offer) => offer.id !== "valentines").every((offer) => offer.enabled === true)).toBe(true);
   expect(parsed.spanishPublished).toBe(false);
   expect(parseSettings({ ...parsed, spanishPublished: true }).spanishPublished).toBe(true);
 });
@@ -67,7 +67,7 @@ test("the owner can edit and enable seasonal landing offers", async ({ page }, t
   await page.getByRole("button", { name: "Save seasonal offers" }).click();
 
   await expect(page.getByText(/Seasonal offers saved/)).toBeVisible();
-  expect(saved.seasonalOffers.map((o) => o.id)).toEqual(["thanksgiving", "firstChristmas"]);
+  expect(saved.seasonalOffers.map((o) => o.id)).toEqual(["thanksgiving", "firstChristmas", "valentines"]);
   expect(byId(saved, "firstChristmas").title).toBe("Baby’s First Christmas");
   expect(byId(saved, "firstChristmas").spanish).toEqual({ title: "La primera Navidad de tu bebé", description: "Una sesión especial para la primera Navidad de tu bebé." });
   expect(byId(saved, "firstChristmas").cutoff).toBe("2026-12-21");
@@ -75,13 +75,13 @@ test("the owner can edit and enable seasonal landing offers", async ({ page }, t
   // the owner adds their own offer (Valentine's Day, any theme), and can delete it again
   await page.getByRole("button", { name: "+ Add another offer" }).click();
   await page.getByLabel("Name (only you see it)").fill("Valentine's Day");
-  await page.getByLabel("Offer title", { exact: true }).nth(2).fill("Show love to your tiny human");
-  await page.getByRole("textbox", { name: /^Short description/ }).nth(2).fill("A sweet at-home session all February.");
-  await page.getByLabel("Last session date").nth(2).fill("2027-02-28");
-  await page.getByLabel("Show offer").nth(2).check();
+  await page.getByLabel("Offer title", { exact: true }).nth(3).fill("Show love to your tiny human");
+  await page.getByRole("textbox", { name: /^Short description/ }).nth(3).fill("A sweet at-home session all February.");
+  await page.getByLabel("Last session date").nth(3).fill("2027-02-28");
+  await page.getByLabel("Show offer").nth(3).check();
   await page.getByRole("button", { name: "Save seasonal offers" }).click();
   await expect(page.getByText(/Seasonal offers saved/)).toBeVisible();
-  const own = saved.seasonalOffers[2];
+  const own = saved.seasonalOffers[3];
   expect(own).toMatchObject({ name: "Valentine's Day", themeId: "any", enabled: true, title: "Show love to your tiny human", cutoff: "2027-02-28" });
   expect(own.id).toMatch(/^offer-/);
   await expect(page.getByRole("button", { name: "Delete this offer" })).toHaveCount(1);

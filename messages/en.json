@@ -797,6 +797,11 @@
           "title": "Baby’s First Christmas",
           "description": "A cozy keepsake session for your baby's first Christmas.",
           "cutoff": "2026-12-21"
+        },
+        "valentines": {
+          "title": "Show love to your tiny human",
+          "description": "A sweet at-home session all February, for babies and their favorite people.",
+          "cutoff": "2027-02-28"
         }
       }
     }

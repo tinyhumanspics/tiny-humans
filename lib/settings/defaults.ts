@@ -9,6 +9,7 @@ import type { SeasonalOffer, SeasonalOfferSettings, SiteSettings } from "./types
 const DEFAULT_SEASONAL_COPY: Record<SeasonalOfferId, SeasonalOfferSettings> = {
   thanksgiving: { enabled: false, ...en.landing.seasonalOffers.defaults.thanksgiving, spanish: null },
   firstChristmas: { enabled: false, ...en.landing.seasonalOffers.defaults.firstChristmas, spanish: null },
+  valentines: { enabled: false, ...en.landing.seasonalOffers.defaults.valentines, spanish: null },
 };
 const DEFAULT_SEASONAL_OFFERS: SeasonalOffer[] = SEASONAL_OFFER_DEFINITIONS.map((d) => ({ id: d.id, name: d.adminLabel, themeId: d.themeId, ...DEFAULT_SEASONAL_COPY[d.id] }));
 const BUILT_IN_OFFER_IDS = SEASONAL_OFFER_DEFINITIONS.map((d) => d.id as string);

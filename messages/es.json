@@ -196,6 +196,11 @@
           "title": "La primera Navidad de tu bebé en casa",
           "description": "Una acogedora sesión de recuerdo para la primera Navidad de tu bebé.",
           "cutoff": "2026-12-21"
+        },
+        "valentines": {
+          "title": "Muestra amor a tu pequeño",
+          "description": "Una sesión tierna en casa todo febrero, para tu bebé y sus personas favoritas.",
+          "cutoff": "2027-02-28"
         }
       }
     }

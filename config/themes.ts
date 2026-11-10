@@ -4,17 +4,18 @@ import { defaultLogoDrawing } from "./logo/default-drawing";
 import { christmasLogoDrawing } from "./logo/christmas-drawing";
 import { thanksgivingLogoDrawing } from "./logo/thanksgiving-drawing";
 import { newYearLogoDrawing } from "./logo/new-year-drawing";
+import { valentinesLogoDrawing } from "./logo/valentines-drawing";
 
 /**
  * Seasonal theme system.
  * One website, one source of truth. The live theme is chosen by the
  * owner in /admin (saved server-side). DEFAULT_THEME is used until then.
  */
-export type TinyHumansTheme = "default" | "thanksgiving" | "christmas" | "newYear";
+export type TinyHumansTheme = "default" | "thanksgiving" | "christmas" | "newYear" | "valentines";
 
 export const DEFAULT_THEME: TinyHumansTheme = "default";
 
-export const THEME_IDS: TinyHumansTheme[] = ["default", "thanksgiving", "christmas", "newYear"];
+export const THEME_IDS: TinyHumansTheme[] = ["default", "thanksgiving", "christmas", "newYear", "valentines"];
 
 export interface ThemeColors {
   chalkboard: string;
@@ -325,6 +326,63 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         { main: ["firework", "accent"], accents: [["star", "sun"], ["confetti", "accent2"]] },
         { main: ["balloon", "accent3"], accents: [["star", "sun"], ["sparkle", "white"]] },
         { main: ["partyHat", "accent"], accents: [["firework", "accent2"], ["confetti", "accent"]] },
+      ],
+    },
+  },
+  valentines: {
+    id: "valentines",
+    label: "Valentine's",
+    buttonLabel: "Valentine's Theme",
+    // Raspberry board (owner's pick, Nov 10: option A). Small text is lightened just enough to read 4.5:1+ on it
+    // (tests/unit/contrast.test.ts); the red is only for drawings.
+    colors: {
+      ...board,
+      chalkboard: "#7a2648",
+      chalkboardDark: "#571b33",
+      chalkboardLight: "#95345a",
+      chalkMuted: "#e2cfd6",
+      cloudBlue: "#a9dcff",
+      chalkError: "#ffc4cc",
+      accent: "#ff9cbc",
+      accent2: "#ff6b81",
+      accent3: "#ffd3df",
+    },
+    // the Original logo with little chalk hearts around it (decor layer)
+    logo: logo(
+      {
+        sun: "/brand/default/sun.webp",
+        rays: "/brand/default/rays.webp",
+        cloud: "/brand/default/cloud.webp",
+        decor: "/brand/valentines/decor.webp",
+        text: "/brand/default/text.webp",
+      },
+      valentinesLogoDrawing,
+    ),
+    decorations: {
+      heading: { portfolio: "heart", bundles: "twoHearts", book: "heartArrow" },
+      hero: ["heartArrow", "rose"],
+      cards: ["heart", "twoHearts", "rose"],
+      cta: ["heart", "loveLetter"],
+      scatter: [
+        { shape: "heart", color: "accent2", side: "left", top: 22, inset: 2.5, size: 52, rotate: -14 },
+        { shape: "rose", color: "accent", side: "left", top: 56, inset: 4, size: 46, rotate: 10 },
+        { shape: "xo", color: "accent3", side: "left", top: 82, inset: 2, size: 40, rotate: -4 },
+        { shape: "loveLetter", color: "accent3", side: "right", top: 28, inset: 3, size: 46, rotate: 8 },
+        { shape: "twoHearts", color: "accent", side: "right", top: 62, inset: 2.5, size: 52, rotate: -8 },
+        { shape: "heartArrow", color: "accent2", side: "right", top: 87, inset: 4.5, size: 42, rotate: 12 },
+      ],
+      board: boardFrom([
+        ["heart", "accent2"],
+        ["rose", "accent"],
+        ["sparkle", "sun"],
+        ["twoHearts", "accent"],
+        ["loveLetter", "accent3"],
+        ["xo", "white"],
+      ]),
+      scenes: [
+        { main: ["heartArrow", "accent2"], accents: [["heart", "accent"], ["sparkle", "sun"]] },
+        { main: ["loveLetter", "accent3"], accents: [["twoHearts", "accent"], ["xo", "white"]] },
+        { main: ["rose", "accent"], accents: [["heart", "accent2"], ["sparkle", "accent3"]] },
       ],
     },
   },
