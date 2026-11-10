@@ -204,10 +204,15 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
-- [~] **Photo and video release (waiver) on Leads (owner, Nov 9: "I need to create a waiver for parents … not on the
-      shoots side but on the leads of every client, we need to have access to see it later"; spec v3.3 §10 + the
-      template's kiosk) — built Nov 9 on branch `feat/photo-waiver` (from `origin/main` = live, so it can ship without
-      Shoots; worktree in the session scratchpad), NOT pushed.** Leads: "Waiver signature" (not cancelled, none
+- [x] **Photo and video release (waiver) on Leads — LIVE Nov 9 (`34e7b30`; owner: "I need both to go live", ran
+      `0023_photo_waivers.sql` on Neon production `main` himself, "Done").** (owner, Nov 9: "I need to create a waiver for
+      parents … not on the shoots side but on the leads of every client, we need to have access to see it later"; spec
+      v3.3 §10 + the template's kiosk.) Built on branch `feat/photo-waiver` from `origin/main`, pushed as a fast-forward
+      (no Shoots work rode along); merged into local main afterwards (`eed61ef`). Production check: Vercel success; 11
+      pages 200 incl. both waiver pages; signed out: waiver APIs 401, POST without Origin 403, kiosk says "Sign in…"
+      with no site menu/footer/Meta requests, `noindex`; /privacy shows the new text + "Last updated November 9, 2026";
+      home, /book (30 days), /privacy: no page errors. No test signature on production (it would be a permanent fake
+      record on a real lead): the owner's check = open a lead → Waiver signature → Cancel twice. Leads: "Waiver signature" (not cancelled, none
       signed) → `/admin/waiver/[reference]`; signed → "See signed waiver" → `/admin/waiver/signed/[id]`; a line "Photo
       waiver signed ✓ {date} · Website, IG + FB"; Photo use row = "Waiver signed {date}: {uses}"; "Sign the waiver
       again (replaces this one)" in details; "Waiver saved for TH-…" after "Next →". Pages in route group
@@ -241,10 +246,9 @@ index.ts for client components; never submit a booking on production (block /api
       Migration numbering: the waiver shipped first as 0023, so Shoots is now **`drizzle/0024_shoots.sql`** (renumbered Nov 9
       when main merged the live waiver; same SQL the owner ran on Neon `shoots-test`, journal + snapshot regenerated:
       drizzle-kit's diff from the waiver snapshot was exactly the 4 Shoots tables). Older notes saying 0023_shoots = 0024.
-      `[?]` Before real families sign (spec §10): (1) a Florida lawyer reviews the wording (minors' images in paid ads);
-      (2) the legal business name if Tiny Humans is an LLC; (3) Alondra checks the Spanish (waiver + privacy);
-      (4) owner OKs the privacy wording; (5) run `0023_photo_waivers.sql` on Neon `shoots-test`, then production;
-      (6) then push `feat/photo-waiver` (fast-forward onto main) and test one signature on production.
+      `[?]` Still open (owner chose to go live with the draft, Nov 9): (1) a Florida lawyer reviews the wording (minors'
+      images in paid ads); (2) the legal business name if Tiny Humans is an LLC; (3) Alondra checks the Spanish (waiver +
+      privacy). Any wording change = new `WAIVER_VERSION`; signatures so far keep "v1 (draft, Nov 2026)".
       Not built (spec "optional, owner OK first"): emailing the family a copy; a "signed waiver with ads ✓" filter.
 - [~] **Shoots section in /admin (owner, Nov 9: spec `docs/shoots/SHOOTS-SPEC.md` v3.1 + `docs/shoots/shoots-template.html`
       as the look-and-feel reference only; "one slice at a time, starting with slice 1"; no push, no production
