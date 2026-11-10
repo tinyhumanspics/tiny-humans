@@ -281,3 +281,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   only with `ANTHROPIC_API_KEY`; otherwise the English is copied). Never overwrite Spanish the owner typed, never make
   a save fail because of translation, and only send owner-written marketing words (never baby/family data). A new
   owner-editable text with a Spanish twin must be added to the autofill and to `i18n/publication-audit.ts`.
+- Shoots (`/admin/shoots`, `lib/shoots/`, `features/shoots/`, migration 0024_shoots): booking shoots take date/time from
+  the booking (no copy), tick keys use the stable shoot key `b-<reference>`, ticks sync by polling every 10 s. Shoot
+  photos go to the PUBLIC Blob store under `shoots/<shoot id>/…` with random suffixes (private access needs a separate
+  private store): show them only in /admin with `<img>` (never next/image or public pages), delete files BEFORE rows
+  (`removeShootFiles`, only "shoots/" paths), and the lead delete route removes them first. Video uploads stay off until
+  the owner approves the Blob cost. Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).

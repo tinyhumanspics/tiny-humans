@@ -54,7 +54,12 @@ freeze on `main` the day before launch except fixes.
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Oct 16: launched Oct 15; Phases 0–8 and 10 done; next Phase 9; CSP check ~Oct 19)
+## ▶ NEXT STEPS (Nov 10: Shoots + photo waiver + Spanish fill-in live; next Phase 9; CSP enforce still open)
+**Nov 9–10 (Claude Code), all live and smoke-tested, main = `1797530`:** Unfinished bookings open on 7 days (`50a6279`);
+Next.js 16.4.5 security patch (`d65ff56`); npm audit fixes (`c73b158`); photo & video waiver on Leads + privacy policy
+EN/ES (`34e7b30`, migration 0023_photo_waivers run by the owner); Shoots slices 1–5 + Spanish fill-in (`cd8bb2f`,
+migration 0024_shoots run by the owner). Details under Owner requests. Next: the owner's feedback from real use, then
+Phase 9. Open owner items are listed under Open owner questions (Nov 10).
 **Oct 17 — Stripe webhook (BUG-17, FIXED same day):** every live delivery got 400 "Invalid signature" and Stripe
 disabled the endpoint. The owner copied the signing secret into Vercel, redeployed and re-enabled it; resends now get
 200 Delivered. Code hardening `2db4a7e` logs mismatches.
@@ -183,24 +188,22 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Oct 16): main = 1021aac + handoff docs, live and smoke-tested. LAUNCHED Oct 15. Phase 10 done: /admin dashboard
-(sessions coming up, chalk SVG charts, GET /api/admin/dashboard), phone pass (Leads Call/Text/Email/Directions,
-Pricing layout, 26 px check boxes), native AdminDialog for confirmations, admin e2e tests. Also Oct 15: arrival note in
-confirmation email / day-before reminder / confirmation screen, privacy sentence for Vercel Analytics, live-site guard
-(built-in prices refused when VERCEL_ENV=production). /admin keeps the chalk design (owner: no light/dark mode).
-Not on main yet: nothing.
+State (Nov 10): main = 1797530, live and smoke-tested. Shipped Nov 9–10: Next.js 16.4.5 security patch; npm audit fixes
+(zod 4.6.7 + override, undici); photo & video waiver on Leads (iPad signing screen in app/(kiosk), signed copy, Photo use,
+privacy policy EN+ES; migration 0023_photo_waivers run in production); Shoots in /admin (Shoot days, What we always
+bring, folders with photo uploads/links/notes, day sheet with ticks shared by both phones; migration 0024_shoots run in
+production); Spanish fills itself in on /admin saves (Claude when ANTHROPIC_API_KEY is set, else English copied);
+Unfinished bookings open on 7 days. Not on main yet: nothing.
 
-Next: Phase 9 (Tailwind v4 + tokens), the last phase. Slice 1: read the current Tailwind v4 + Next 16 docs (note
-links), rebuild the Phase 8 parity checks as scripts/parity/* (method in CLAUDE.md → Tests; only scripts/css-ties.mjs
-exists), then one component per slice. Tailwind v4 uses cascade layers: unlayered CSS Modules/globals beat layered
-utilities. The site is live with paying families: small verified slices only.
-Time-sensitive: ~Oct 19 read Vercel `csp` warnings, then enforce the CSP; DST ends Nov 1 (check slots/reminders);
-Thanksgiving last sessions Nov 23; First Christmas Dec 21.
-Waiting on the owner: photo descriptions "IMG 7378" / "IMG 6087" (doing it); Search Console + Business Profile (steps
-sent Oct 15); /portfolio; Terms review.
-Watch out: never git stash/switch in the iCloud folder (scratchpad worktree + cp -Rc node_modules; link node_modules
-with ln -sfn); stage exact existing paths; moving files can reorder Turbopack CSS (scripts/css-ties.mjs); no barrel
-index.ts for client components; never submit a booking on production (block /api/booking/create in checks).
+Next: wait for the owner's feedback from real use of Shoots and the waiver; otherwise Phase 9 (Tailwind v4 + tokens), slice 1.
+Time-sensitive: Baby's First Thanksgiving cutoff Nov 23, Baby's First Christmas Dec 21; CSP report-only → enforce is still open.
+Waiting on the owner: ANTHROPIC_API_KEY in Vercel for real translations; video uploads in Shoots (Blob cost OK);
+waiver wording reviewed by a Florida lawyer + legal business name (LLC?) + Alondra's Spanish check; OK to delete 3 iCloud
+" 2" duplicates (app/(admin)/admin/shoots/bring/page 2.tsx, …/folder/[id]/page 2.tsx, …/inspo/[inspoId]/route 2.ts);
+turn Spanish on in /admin → Settings once its list is empty; mailing address for Unfinished bookings emails.
+Watch out: shoot photos live in the PUBLIC Blob store under random paths, shown only in /admin with <img> (never
+next/image); a signed waiver can never be edited (DB trigger) and survives a deleted lead; the 3 iCloud duplicates are
+untracked: never stage them.
 ```
 
 ## Owner requests (outside the original brief)
@@ -835,7 +838,9 @@ index.ts for client components; never submit a booking on production (block /api
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
-- **Now:** Phase 1g done (owner, Oct 12); **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
+- **Nov 10:** launched site + Shoots, photo waiver on Leads and the Spanish fill-in are live (see NEXT STEPS). Phase 9
+  is the last planned phase; CSP enforce and an optional VoiceOver pass remain from Phase 6.
+- **Oct 16:** Phase 1g done (owner, Oct 12); **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
   the backlog). Phase 3 implementation is complete: the paired catalogs and gated `/es` tree cover customer emails,
   the public/customer journey, seasonal offers, photos, prompts, SEO alternates and locale-aware customer links. The
   owner published Spanish Oct 10 (`/admin/settings` can hide it again).
@@ -1654,10 +1659,16 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Nov 10 (after Shoots + waiver went live):** (1) add `ANTHROPIC_API_KEY` in Vercel (Production) for real Spanish
+  translations (small cost per save with new text; without it the English is copied); (2) video uploads in Shoots: OK
+  the Blob storage/transfer cost? (3) waiver: Florida lawyer review, legal business name if an LLC, Alondra checks the
+  Spanish (waiver + privacy); (4) OK to delete 3 identical iCloud " 2" copies of Shoots files (untracked); (5) optional
+  later: a PRIVATE Vercel Blob store for shoot photos (today: public store, random addresses, /admin only); (6) turn
+  Spanish on in /admin → Settings → Spanish once its list of missing items is empty.
 - **Unfinished bookings (Nov 3):** ~~approve the wording + screenshots~~ (approved Nov 3); ~~run migration 0022 in Neon~~ (owner, Nov 3); get a mailing address
   (USPS PO Box, a UPS Store-type private mailbox or a virtual mailbox; CAN-SPAM) and save it in /admin → Unfinished
   bookings before the first follow-up. Not legal advice: a lawyer can confirm the footer if the list grows.
-- **Next.js security patch (seen Oct 22):** `npm audit` flags next 16.0.0–16.4.0 (we run 16.4.0) as critical: remote code
+- ~~**Next.js security patch (seen Oct 22):**~~ **Done: 16.4.5 live Nov 9 (`d65ff56`).** `npm audit` flags next 16.0.0–16.4.0 (we run 16.4.0) as critical: remote code
   execution in the Image Optimization API with SVGs (GHSA-2464-fhr4-w9xw), Server Actions denial of service
   (GHSA-p3m5-59mp-jv5r), remote code execution in `use cache` functions returning typed arrays (GHSA-673q-mjm6-r5xr).
   Fixed in 16.4.2. Local `next build` also stops once per run with a "SecurityFatalError" notice (retry continues).
