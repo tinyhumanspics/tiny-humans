@@ -80,7 +80,7 @@ export interface AdminApi {
   bookDueDate(input: { id: string; date: string; start: string; babyAge: string; babyName?: string }): Promise<DueList & { booked: string }>;
   cancelDueDate(id: string, refund: boolean): Promise<DueList & { refunded: boolean; refundError?: string }>;
   /* quotes (owner only): every bundle's price for a ZIP code */
-  getQuote(zip: string, babies: number, family: number): Promise<QuoteResult>;
+  getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */
   getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
   saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
@@ -160,7 +160,7 @@ const httpApi: AdminApi = {
   listDueDates: async () => json(await fetch("/api/admin/due-dates", { cache: "no-store" })),
   bookDueDate: async (input) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "book", ...input }) })),
   cancelDueDate: async (id, refund) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "cancel", id, refund }) })),
-  getQuote: async (zip, babies, family) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family) })}`, { cache: "no-store" })),
+  getQuote: async (zip, babies, family, percent = 0) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family), percent: String(percent) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
   },

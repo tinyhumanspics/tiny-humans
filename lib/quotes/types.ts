@@ -8,7 +8,10 @@ export interface QuoteLine {
   /** The bundle price used today (the special offer when one runs), before add-ons and travel. */
   bundleCents: number;
   regularCents: number;
+  /** "Thanksgiving offer", or "10% off" when the owner's % off is the saving used. */
   offerLabel: string | null;
+  /** Which saving the bundle price uses: the running special offer, the owner's % off, or none (only one counts). */
+  saving: "offer" | "percent" | null;
   /** Twins/triplets and extra family members (never reduced by an offer). */
   addons: AddonLine[];
   /** 0 unless the ZIP code's travel status is "fee". */
@@ -24,6 +27,8 @@ export interface QuoteResult {
   zip: string;
   babies: number;
   family: number;
+  /** The owner's % off for this quote (0 = none). Like a discount code: only the bigger saving counts. */
+  percent: number;
   /** The home base distances are measured from (null = travel fees not set up). */
   baseZip: string | null;
   travel: TravelQuote;

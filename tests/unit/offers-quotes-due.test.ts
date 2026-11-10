@@ -3,7 +3,7 @@ import { activeOffer, computeQuote, offerPercent, percentOffCents } from "@/lib/
 import { promoLine, promoSummary } from "@/lib/pricing/promo";
 import { offerForAllSchema } from "@/lib/pricing/validation";
 import { zipFromText, type QuoteLine } from "@/lib/quotes/types";
-import { quoteMessage } from "@/lib/quotes/message";
+import { quoteMessage, quotePercentTerms, quoteSaving } from "@/lib/quotes/message";
 import { addMonthsToKey, dueWindow } from "@/lib/due-date/types";
 import { dueRequestSchema } from "@/lib/due-date/validation";
 import { withAddons } from "@/lib/booking/extra-babies";
@@ -104,7 +104,7 @@ describe("Quotes: the ZIP code in a pasted address", () => {
 
 describe("Quotes: the message to send", () => {
   const travel = (status: TravelQuote["status"], feeCents = 0): TravelQuote => ({ status, miles: 40, feeCents, freeMiles: 20, perMileCents: 100, maxMiles: 250 });
-  const line = (over: Partial<QuoteLine>): QuoteLine => ({ bundleId: "lm", name: "Little Moments", bundleCents: 14900, regularCents: 14900, offerLabel: null, addons: [], travelCents: 0, totalCents: 14900, depositCents: 5000, unavailable: null, ...over });
+  const line = (over: Partial<QuoteLine>): QuoteLine => ({ bundleId: "lm", name: "Little Moments", bundleCents: 14900, regularCents: 14900, offerLabel: null, saving: null, addons: [], travelCents: 0, totalCents: 14900, depositCents: 5000, unavailable: null, ...over });
 
   test("offer + travel fee + deposit", () => {
     const text = quoteMessage(
@@ -138,6 +138,40 @@ describe("Quotes: the message to send", () => {
     expect(text).toContain("• Little Moments: $224 ($149 + $75 por gemelos)");
     expect(text).toContain("Sin cargo de viaje para tu zona.");
     expect(text).toContain("Nada que pagar hoy: pagas después de tu sesión.");
+  });
+});
+
+describe("Quotes: the owner's % off", () => {
+  test("priced like a % discount code on the bundle only; twins and travel stay full price", () => {
+    const b = three[0];
+    const q = withAddons(computeQuote(b, "2026-11-10", quotePercentTerms(10)), b, 2);
+    expect(q).toMatchObject({ finalCents: 13410, addonsCents: 7500, totalCents: 20910, pricingType: "discount" });
+    expect(quoteSaving(q, 10, en.quoteMessage.percentOff)).toEqual({ saving: "percent", label: "10% off" });
+    expect(quoteSaving(q, 10, es.quoteMessage.percentOff).label).toBe("10% de descuento");
+    expect(quotePercentTerms(0)).toBeNull();
+  });
+
+  test("never stacks with a special offer: the bigger saving is used", () => {
+    const offer = pct(three[0], 15); // Thanksgiving 15% = $126.65
+    const smaller = computeQuote(offer, "2026-11-10", quotePercentTerms(10));
+    expect(smaller.finalCents).toBe(12665);
+    expect(quoteSaving(smaller, 10, en.quoteMessage.percentOff)).toEqual({ saving: "offer", label: "Thanksgiving offer" });
+    const bigger = computeQuote(offer, "2026-11-10", quotePercentTerms(20));
+    expect(bigger.finalCents).toBe(11920);
+    expect(quoteSaving(bigger, 20, en.quoteMessage.percentOff)).toEqual({ saving: "percent", label: "20% off" });
+  });
+
+  test("the message names the % off", () => {
+    const text = quoteMessage(
+      { zip: "33139", lines: [{ bundleId: "lm", name: "Little Moments", bundleCents: 13410, regularCents: 14900, offerLabel: "10% off", saving: "percent", addons: [], travelCents: 0, totalCents: 13410, depositCents: 5000, unavailable: null }], travel: { status: "free", miles: 3, feeCents: 0, freeMiles: 30, perMileCents: 100, maxMiles: 250 }, offerLine: null, deposit: { cents: 5000, varies: false }, link: "L" },
+      en.quoteMessage,
+    );
+    expect(text).toContain("• Little Moments: $134.10 (10% off, regular $149)");
+    const travel = quoteMessage(
+      { zip: "33326", lines: [{ bundleId: "lm", name: "Little Moments", bundleCents: 13410, regularCents: 14900, offerLabel: "10% de descuento", saving: "percent", addons: [], travelCents: 100, totalCents: 13510, depositCents: 5000, unavailable: null }], travel: { status: "fee", miles: 31, feeCents: 100, freeMiles: 30, perMileCents: 100, maxMiles: 250 }, offerLine: null, deposit: { cents: 5000, varies: false }, link: "L" },
+      es.quoteMessage,
+    );
+    expect(travel).toContain("• Little Moments: $135.10 ($134.10 con 10% de descuento + $1 de cargo de viaje)");
   });
 });
 

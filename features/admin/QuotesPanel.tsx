@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { AdminApi } from "@/lib/admin/client";
 import { formatMoney } from "@/lib/pricing/engine";
 import { EXTRA_BABY_KIND } from "@/lib/booking/extra-babies";
@@ -48,25 +48,55 @@ export default function QuotesPanel({ api }: { api: AdminApi }) {
   const [language, setLanguage] = useState<"en" | "es">("en");
   const [message, setMessage] = useState("");
   const [copied, setCopied] = useState(false);
+  // the owner's % off for this quote (blank = none): priced like a % discount code, so only the bigger saving counts
+  const [percent, setPercent] = useState("");
   const zip = zipFromText(where);
+  // only the newest request may show its prices (typing 1, then 10 sends two)
+  const latest = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const run = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!zip) return setError("Add the ZIP code (5 digits). If you pasted an address, it needs its ZIP code.");
-    const people = Number(family);
-    if (!Number.isInteger(people) || people < 0 || people > MAX_FAMILY_MEMBERS) return setError(`Family members: a number from 0 to ${MAX_FAMILY_MEMBERS}.`);
+  const check = (values: { babies: number; family: string; percent: string }): { people: number; pct: number } | string => {
+    if (!zip) return "Add the ZIP code (5 digits). If you pasted an address, it needs its ZIP code.";
+    const people = Number(values.family);
+    if (!Number.isInteger(people) || people < 0 || people > MAX_FAMILY_MEMBERS) return `Family members: a number from 0 to ${MAX_FAMILY_MEMBERS}.`;
+    const pct = values.percent.trim() === "" ? 0 : Number(values.percent);
+    if (!Number.isInteger(pct) || pct < 0 || pct > 90) return "% off: a whole number from 1 to 90 (or leave it empty).";
+    return { people, pct };
+  };
+
+  const load = async (values: { babies: number; family: string; percent: string }) => {
+    const ok = check(values);
+    if (typeof ok === "string") return setError(ok);
+    const request = ++latest.current;
     setBusy(true);
     setError(null);
     setCopied(false);
     try {
-      const q = await api.getQuote(zip, babies, people);
+      const q = await api.getQuote(zip!, values.babies, ok.people, ok.pct);
+      if (request !== latest.current) return;
       setQuote(q);
       setMessage(q.messages[language]);
     } catch (err) {
-      setError(errText(err, "Couldn't work out the prices. Please try again."));
+      if (request === latest.current) setError(errText(err, "Couldn't work out the prices. Please try again."));
     } finally {
-      setBusy(false);
+      if (request === latest.current) setBusy(false);
     }
+  };
+
+  const run = (e: React.FormEvent) => {
+    e.preventDefault();
+    void load({ babies, family, percent });
+  };
+
+  // once prices are showing, changing the % off, babies or family members updates them by itself
+  const change = (next: Partial<{ babies: number; family: string; percent: string }>) => {
+    const values = { babies, family, percent, ...next };
+    if (next.babies !== undefined) setBabies(next.babies);
+    if (next.family !== undefined) setFamily(next.family);
+    if (next.percent !== undefined) setPercent(next.percent);
+    if (!quote) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => void load(values), 350);
   };
 
   const pickLanguage = (next: "en" | "es") => {
@@ -99,7 +129,7 @@ export default function QuotesPanel({ api }: { api: AdminApi }) {
         </label>
         <label className={cn(styles.label, "chalk-soft")}>
           Babies
-          <select className={styles.input} value={babies} onChange={(e) => setBabies(Number(e.target.value))}>
+          <select className={styles.input} value={babies} onChange={(e) => change({ babies: Number(e.target.value) })}>
             <option value={1}>1 baby</option>
             <option value={2}>Twins</option>
             <option value={3}>Triplets</option>
@@ -107,7 +137,11 @@ export default function QuotesPanel({ api }: { api: AdminApi }) {
         </label>
         <label className={cn(styles.label, "chalk-soft")}>
           Family members besides the {babies === 1 ? "baby" : "babies"}
-          <input className={cn(styles.input, styles.timeInput)} type="number" min={0} max={MAX_FAMILY_MEMBERS} step={1} value={family} onChange={(e) => setFamily(e.target.value)} />
+          <input className={cn(styles.input, styles.timeInput)} type="number" min={0} max={MAX_FAMILY_MEMBERS} step={1} value={family} onChange={(e) => change({ family: e.target.value })} />
+        </label>
+        <label className={cn(styles.label, "chalk-soft")}>
+          % off (optional)
+          <input className={cn(styles.input, styles.timeInput)} type="number" min={1} max={90} step={1} value={percent} placeholder="10" onChange={(e) => change({ percent: e.target.value })} />
         </label>
         <ChalkButton type="submit" variant="solid" disabled={busy} seed={961}>{busy ? "Working it out…" : "Get prices"}</ChalkButton>
       </form>
@@ -115,11 +149,16 @@ export default function QuotesPanel({ api }: { api: AdminApi }) {
         {zip ? `ZIP code ${zip}. ` : ""}Only the ZIP code is used; the address stays on this screen. Family members count only on family bundles ({FAMILY_INCLUDED_PEOPLE} people
         included, counting the baby).
       </p>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>
+        % off takes that percent off each bundle (twins, extra family members and travel stay full price). Only one saving counts, like on the website: if a
+        special offer is running, the bigger saving is used. To give a family this price when they book online, make a discount code with the same % in
+        Pricing &amp; Promotions → Discount Codes.
+      </p>
       {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
 
       {quote && note && (
         <div className={styles.availBlock} aria-live="polite">
-          <h3 className={cn(styles.h3, "chalk")}>ZIP code {quote.zip}</h3>
+          <h3 className={cn(styles.h3, "chalk")}>{`ZIP code ${quote.zip}${quote.percent ? ` · ${quote.percent}% off` : ""}`}</h3>
           <p className={cn(note.warn ? styles.bannerError : styles.banner, "chalk-soft")}>{note.text}</p>
           <div className={styles.tableWrap}>
             <table className={styles.codeTable}>

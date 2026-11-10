@@ -248,11 +248,13 @@
     }
   },
   "quoteMessage": {
+    "percentOff": "{percent}% de descuento",
     "intro": "¡Hola! Estos son nuestros precios para una sesión en tu hogar (código postal {zip}):",
     "line": "• {bundle}: {total}",
     "lineParts": "• {bundle}: {total} ({parts})",
     "offerOnly": "{offer}, precio regular {regular}",
     "offer": "{offer} {price}",
+    "withPercent": "{price} con {offer}",
     "twins": "{price} por gemelos",
     "triplets": "{price} por trillizos",
     "extraPerson": "{price} por 1 familiar adicional",

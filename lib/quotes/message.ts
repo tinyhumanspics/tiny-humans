@@ -1,10 +1,20 @@
 import type en from "@/messages/en.json";
-import { formatMoney } from "@/lib/pricing/engine";
+import { formatMoney, type CodeTerms, type PriceQuote } from "@/lib/pricing/engine";
 import { EXTRA_BABY_KIND } from "@/lib/booking/extra-babies";
 import type { TravelQuote } from "@/lib/travel/types";
 import type { QuoteLine } from "./types";
 
 type Copy = typeof en.quoteMessage;
+
+/** The owner's "% off" on a quote, priced like a percentage discount code (so it never stacks with a special offer). */
+export const quotePercentTerms = (percent: number): CodeTerms | null => (percent > 0 ? { code: `${percent}%`, type: "percent", value: percent } : null);
+
+/** Which saving a quoted bundle price uses, and its label ("Thanksgiving offer" / "10% off"). */
+export function quoteSaving(q: PriceQuote, percent: number, percentLabel: string): { saving: "offer" | "percent" | null; label: string | null } {
+  if (q.pricingType === "discount") return { saving: "percent", label: percentLabel.replace("{percent}", String(percent)) };
+  if (q.pricingType === "offer") return { saving: "offer", label: q.offerLabel };
+  return { saving: null, label: null };
+}
 const fill = (template: string, values: Record<string, string>) => template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
 /**
@@ -26,7 +36,8 @@ export function quoteMessage(input: { zip: string; lines: QuoteLine[]; travel: T
       if (!extras.length && !travel.length) {
         return offer ? fill(copy.lineParts, { bundle: l.name, total, parts: fill(copy.offerOnly, { offer, regular: formatMoney(l.regularCents) }) }) : fill(copy.line, { bundle: l.name, total });
       }
-      const first = offer ? fill(copy.offer, { offer, price: formatMoney(l.bundleCents) }) : formatMoney(l.bundleCents);
+      // "Thanksgiving offer $134.10", but "$134.10 with 10% off" (never "10% off $134.10", which reads as 10% off of it)
+      const first = offer ? fill(l.saving === "percent" ? copy.withPercent : copy.offer, { offer, price: formatMoney(l.bundleCents) }) : formatMoney(l.bundleCents);
       return fill(copy.lineParts, { bundle: l.name, total, parts: [first, ...extras, ...travel].join(" + ") });
     });
   const notes = [

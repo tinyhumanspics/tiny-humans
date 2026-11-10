@@ -16,7 +16,7 @@ import { getAdminCatalog } from "@/lib/pricing/server";
 import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
-import { quoteMessage } from "./message";
+import { quoteMessage, quotePercentTerms, quoteSaving } from "./message";
 import type { QuoteLine, QuoteResult } from "./types";
 
 /** The same bundle in Spanish (owner-saved copy), for the Spanish message. */
@@ -31,7 +31,7 @@ const inSpanish = (b: AdminBundle): Bundle => ({
  * form uses (special offer, twins/triplets, extra family members, travel fee, deposit). Only the ZIP code and the
  * counts come in: the family's address never leaves the owner's screen.
  */
-export async function buildQuote(zip: string, babies: number, family: number): Promise<QuoteResult> {
+export async function buildQuote(zip: string, babies: number, family: number, percent = 0): Promise<QuoteResult> {
   const [catalog, travelSettings, deposits, spanish] = await Promise.all([
     getAdminCatalog(),
     getTravelSettings(),
@@ -43,7 +43,7 @@ export async function buildQuote(zip: string, babies: number, family: number): P
   const travelCents = travel.status === "fee" ? travel.feeCents : 0;
   const active = catalog.filter((b) => b.active !== false);
 
-  const lineFor = (b: Bundle): QuoteLine => {
+  const lineFor = (b: Bundle, percentLabel: string): QuoteLine => {
     const people = asksFamily(b) ? family : 0;
     const limit = familyLimit(b, babies);
     const unavailable =
@@ -52,14 +52,17 @@ export async function buildQuote(zip: string, babies: number, family: number): P
         : people > limit
           ? `Takes up to ${limit} family members besides the ${babies === 1 ? "baby" : "babies"}.`
           : null;
-    const quote = withAddons(computeQuote(b, today), b, unavailable ? 1 : babies, unavailable ? 0 : people);
+    // the owner's % off counts like a discount code: the bigger of it and a running special offer, never both
+    const quote = withAddons(computeQuote(b, today, quotePercentTerms(percent)), b, unavailable ? 1 : babies, unavailable ? 0 : people);
+    const { saving, label } = quoteSaving(quote, percent, percentLabel);
     const totalCents = quote.totalCents + travelCents;
     return {
       bundleId: b.id,
       name: b.name,
       bundleCents: quote.finalCents,
       regularCents: quote.regularCents,
-      offerLabel: quote.offerLabel,
+      offerLabel: label,
+      saving,
       addons: quote.addons,
       travelCents,
       totalCents,
@@ -68,11 +71,14 @@ export async function buildQuote(zip: string, babies: number, family: number): P
     };
   };
 
-  const lines = active.map(lineFor);
-  const linesEs = active.map((b) => lineFor(inSpanish(b))).map((l, i) => ({ ...l, unavailable: lines[i].unavailable }));
+  const lines = active.map((b) => lineFor(b, en.quoteMessage.percentOff));
+  const linesEs = active.map((b) => lineFor(inSpanish(b), es.quoteMessage.percentOff)).map((l, i) => ({ ...l, unavailable: lines[i].unavailable }));
+  // the website's offer line only when a quoted price actually uses that offer
+  const usesOffer = lines.some((l) => !l.unavailable && l.saving === "offer");
   const bookable = lines.filter((l) => !l.unavailable && l.depositCents !== null).map((l) => l.depositCents!);
   const deposit = bookable.length ? { cents: Math.min(...bookable), varies: new Set(bookable).size > 1 } : null;
   const offerLine = (bundles: Bundle[], locale: "en" | "es") => {
+    if (!usesOffer) return null;
     const summary = promoSummary(bundles, today);
     const copy = (locale === "es" ? es : en).bundlesPage.promo;
     const list = (names: string[]) => new Intl.ListFormat(locale, { type: "conjunction" }).format(names);
@@ -84,6 +90,7 @@ export async function buildQuote(zip: string, babies: number, family: number): P
     zip,
     babies,
     family,
+    percent,
     baseZip: travelSettings?.baseZip ?? null,
     travel,
     today,

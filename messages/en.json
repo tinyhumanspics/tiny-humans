@@ -80,11 +80,13 @@
     }
   },
   "quoteMessage": {
+    "percentOff": "{percent}% off",
     "intro": "Hi! Here are our prices for a session at your home (ZIP code {zip}):",
     "line": "• {bundle}: {total}",
     "lineParts": "• {bundle}: {total} ({parts})",
     "offerOnly": "{offer}, regular {regular}",
     "offer": "{offer} {price}",
+    "withPercent": "{price} with {offer}",
     "twins": "{price} for twins",
     "triplets": "{price} for triplets",
     "extraPerson": "{price} for 1 extra family member",
