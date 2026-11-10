@@ -204,7 +204,7 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
-- [~] **Spanish fills itself in (owner, Nov 9: "from now on… I attach a new picture, just automatically fill out the
+- [x] **Spanish fills itself in — LIVE Nov 10 (`cd8bb2f`, English copied until ANTHROPIC_API_KEY is added) (owner, Nov 9: "from now on… I attach a new picture, just automatically fill out the
       page for the Spanish… if I need to change something specific, I will do it myself") — built Nov 9, local, not
       pushed.** Why /es "gets stuck": `getSpanishPublication()` hides ALL of /es while any photo lacks a Spanish
       title/description (+ caption), any prompt box or enabled seasonal offer lacks Spanish, or any active bundle lacks
@@ -224,7 +224,10 @@ index.ts for client components; never submit a booking on production (block /api
       wording; full e2e green. `[?]` Owner: (1) for real translations, create an API key at console.anthropic.com and
       add `ANTHROPIC_API_KEY` in Vercel (Production) — costs a fraction of a cent per save that has new text; (2) turn
       Spanish on in /admin → Settings → Spanish once the list there is empty.
-- [~] **Shoots slices 4 + 5 done Nov 9 (local, not pushed; owner: "just build whatever it's missing").** Slice 4: photo
+- [x] **Shoots (slices 1–5) LIVE Nov 10 (`cd8bb2f`; owner ran `0024_shoots.sql` on Neon production, "Done").** Production
+      check: Vercel success; 14 pages 200 incl. /admin/shoots, /bring, a day sheet, a folder, the waiver; signed out every
+      Shoots API 401, POST without Origin 403; real Chromium iPhone 14 + 1440: home, /book (30 days), ad page,
+      /admin/shoots (sign-in shown), no page errors. Slices 4 + 5 (owner: "just build whatever it's missing"): Slice 4: photo
       uploads in the folder (`InspoDrop`: drop zone + "tap to choose", `preparePhoto` shrinks to 2000 px, one by one with
       "Uploading 2 of 5…", videos turned away with "paste a link"), `POST /api/admin/shoots/[id]/inspo/photo` (owner,
       rate limit, PHOTO_TYPES + signature + 4 MB, Blob `shoots/<shoot id>/<group>-<random>.jpg`, the file is removed
