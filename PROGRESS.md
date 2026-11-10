@@ -197,13 +197,9 @@ Unfinished bookings open on 7 days. Not on main yet: nothing.
 
 Next: wait for the owner's feedback from real use of Shoots and the waiver; otherwise Phase 9 (Tailwind v4 + tokens), slice 1.
 Time-sensitive: Baby's First Thanksgiving cutoff Nov 23, Baby's First Christmas Dec 21; CSP report-only → enforce is still open.
-Waiting on the owner: ANTHROPIC_API_KEY in Vercel for real translations; video uploads in Shoots (Blob cost OK);
-waiver wording reviewed by a Florida lawyer + legal business name (LLC?) + Alondra's Spanish check; OK to delete 3 iCloud
-" 2" duplicates (app/(admin)/admin/shoots/bring/page 2.tsx, …/folder/[id]/page 2.tsx, …/inspo/[inspoId]/route 2.ts);
-turn Spanish on in /admin → Settings once its list is empty; mailing address for Unfinished bookings emails.
+Waiting on the owner: ANTHROPIC_API_KEY in Vercel for real translations; waiver wording reviewed by a Florida lawyer + legal business name (LLC?) + Alondra's Spanish check; turn Spanish on in /admin → Settings once its list is empty; mailing address for Unfinished bookings emails.
 Watch out: shoot photos live in the PUBLIC Blob store under random paths, shown only in /admin with <img> (never
-next/image); a signed waiver can never be edited (DB trigger) and survives a deleted lead; the 3 iCloud duplicates are
-untracked: never stage them.
+next/image); videos are links only (owner); a signed waiver can never be edited (DB trigger) and survives a deleted lead.
 ```
 
 ## Owner requests (outside the original brief)
@@ -255,8 +251,8 @@ untracked: never stage them.
       JPEG/video/bad group refused before upload, remove → file deleted, lead cleanup → rest deleted); real two-phone
       run (iPhone 14 ×2): Adri's ticks showed on Alo's phone after 9 s, reload kept them, clear emptied both; local
       upload without Blob → "Photo storage isn't connected yet."; css-ties 0 incl. the day sheet; full e2e green.
-      Left: video uploads (spec §5/§6: owner OK for Blob cost first); owner review on his phone; go-live = run
-      `drizzle/0024_shoots.sql` on Neon production, then push main.
+      Videos: **no uploads, links only (owner, Nov 10: "we won't upload videos, we will just add the link")**; a link card
+      opens the link in a new tab (Instagram/TikTok open their app on the iPhone).
 - [x] **Photo and video release (waiver) on Leads — LIVE Nov 9 (`34e7b30`; owner: "I need both to go live", ran
       `0023_photo_waivers.sql` on Neon production `main` himself, "Done").** (owner, Nov 9: "I need to create a waiver for
       parents … not on the shoots side but on the leads of every client, we need to have access to see it later"; spec
@@ -1660,9 +1656,9 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
 
 ## Open owner questions
 - **Nov 10 (after Shoots + waiver went live):** (1) add `ANTHROPIC_API_KEY` in Vercel (Production) for real Spanish
-  translations (small cost per save with new text; without it the English is copied); (2) video uploads in Shoots: OK
-  the Blob storage/transfer cost? (3) waiver: Florida lawyer review, legal business name if an LLC, Alondra checks the
-  Spanish (waiver + privacy); (4) OK to delete 3 identical iCloud " 2" copies of Shoots files (untracked); (5) optional
+  translations (small cost per save with new text; without it the English is copied); (2) ~~video uploads~~ no: links only
+  (owner, Nov 10) (3) waiver: Florida lawyer review, legal business name if an LLC, Alondra checks the
+  Spanish (waiver + privacy); (4) ~~iCloud duplicates~~ deleted Nov 10 (owner OK: 3 code copies, 13 empty folders, 27 local-db copies, 1 test output); (5) optional
   later: a PRIVATE Vercel Blob store for shoot photos (today: public store, random addresses, /admin only); (6) turn
   Spanish on in /admin → Settings → Spanish once its list of missing items is empty.
 - **Unfinished bookings (Nov 3):** ~~approve the wording + screenshots~~ (approved Nov 3); ~~run migration 0022 in Neon~~ (owner, Nov 3); get a mailing address

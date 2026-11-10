@@ -285,5 +285,5 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   the booking (no copy), tick keys use the stable shoot key `b-<reference>`, ticks sync by polling every 10 s. Shoot
   photos go to the PUBLIC Blob store under `shoots/<shoot id>/…` with random suffixes (private access needs a separate
   private store): show them only in /admin with `<img>` (never next/image or public pages), delete files BEFORE rows
-  (`removeShootFiles`, only "shoots/" paths), and the lead delete route removes them first. Video uploads stay off until
-  the owner approves the Blob cost. Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).
+  (`removeShootFiles`, only "shoots/" paths), and the lead delete route removes them first. No video uploads (owner, Nov
+  10: videos are added as links, which open Instagram/TikTok/YouTube). Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).
