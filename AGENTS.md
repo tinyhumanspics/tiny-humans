@@ -320,7 +320,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   written from the offers themselves and disappears with them; no offers = pages exactly as before.
 - Quotes (/admin/quotes, `lib/quotes/`): a family's ZIP code (read from a pasted address in the browser; the address is
   never sent) → every active bundle priced with the booking form's own functions (offer, twins, extra people, travel,
-  deposit) + a ready-to-send EN/ES message. Owner-only GET `/api/admin/quote`.
+  deposit) + a ready-to-send EN/ES message. Optional owner "% off" (`&percent=`) is priced like a % discount code
+  (`quotePercentTerms`): only the bigger of it and a running offer counts. Owner-only GET `/api/admin/quote`.
 - "Not born yet" (owner, Nov 10; migration 0026, table `due_date_reservations`): /due-date reserves a bundle with a due
   date (today to 9 months ahead, `dueWindow`), keeps today's bundle price (offer included) and takes the deposit on
   Stripe (`metadata.kind = "due_deposit"`, the id in `metadata.booking_id` is the RESERVATION's; `handleStripeEvent`
