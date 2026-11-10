@@ -204,6 +204,69 @@ index.ts for client components; never submit a booking on production (block /api
 ```
 
 ## Owner requests (outside the original brief)
+- [~] **Shoots section in /admin (owner, Nov 9: spec `docs/shoots/SHOOTS-SPEC.md` v3.1 + `docs/shoots/shoots-template.html`
+      as the look-and-feel reference only; "one slice at a time, starting with slice 1"; no push, no production
+      migration and no video uploads without the owner's OK in chat).** Every booking gets a shoot folder (family info,
+      what they asked for, inspo + BTS-on-phones ideas, each with "What's the shot?" and a tick at the shoot); a day
+      sheet per date (Who's on camera, Still to confirm, each family, What to bring); "What we always bring" sections
+      the owners edit. No timeline/setups/times. Rebuilt as Next.js pages + API routes + Neon tables (never the
+      template's code or localStorage).
+      Plan (spec §8): **1** schema + migration `0023_shoots` + `lib/shoots` server functions + unit tests → owner
+      runs the migration on a **Neon dev branch**; **2** nav + Shoot days + What we always bring + Leads "Open shoot
+      folder"; **3** folder (links, text items, captions, notes); **4** photo uploads (Vercel Blob) + cleanup on remove
+      and lead delete; **5** day sheet + ticks sync + lightbox + sunset + What to bring; **6** video uploads only after
+      the owner approves Blob cost; **7** full checks (typecheck, lint, units, Playwright mock flow, axe, iPhone 14 +
+      1440 screenshots, css-ties); **8** owner review on his phone → push + production migration only with his OK.
+      Slice 1 decisions (Nov 9, Claude Code):
+      - New tables only (`shoots`, `shoot_inspo`, `shoot_bring_sections`, `shoot_ticks`); existing tables unchanged.
+        `shoots.booking_id` is unique + `ON DELETE CASCADE`, so deleting a lead removes its shoot rows (its Blob files
+        are deleted first, slice 4).
+      - A booking shoot's **date and time always come from the booking** (no copy on `shoots`), so a reschedule moves
+        the shoot with nothing to sync. `date` / `start_time` / `place` are only for shoots without a booking.
+      - Tick keys use a stable shoot key: `b-<booking reference>` for booking shoots (also before their row exists),
+        the uuid for shoots without a booking, so ticks never get lost when a booking's row is created later.
+      - "What we always bring" defaults (Studio kit, Camera gear, Wardrobe (Adri and Alo), from the template draft)
+        are inserted **by the migration**, not on the first page load as the spec says: seeding on load would bring
+        them back if the owners ever removed every section. A unit test keeps the SQL and `lib/shoots/lists.ts` equal.
+      - Bundle facts come from the booking's own snapshot (`package_inclusions`, session start/end), not today's
+        catalog, so editing a bundle in /admin never changes past shoots.
+      - Pure logic (`from-bookings.ts`, `ticks.ts`, `links.ts`, `sunset.ts`, `validation.ts`, `lists.ts`) is separate
+        from the server-only database code (`server.ts`, `booking-source.ts`) so it can be unit tested; only
+        `from-bookings.ts` + `booking-source.ts` know about Tiny Humans bookings (spec §9 AdrocMedia option).
+        `view.ts` merges a booking + its row into the folder/day-sheet view.
+      - Files (slice 4) are deleted through a `removeFiles` callback **before** their rows (a failed Blob delete
+        leaves a row to retry, never an orphaned file); `removeBookingShootFiles()` is what Leads' delete will call.
+      **Slice 1 done Nov 9 (local, not pushed):** schema (4 tables) + `drizzle/0023_shoots.sql` (idempotent, FKs
+      inline, seed only while `shoot_bring_sections` is empty) + `lib/shoots/*` + `tests/unit/shoots.test.ts`
+      (17 tests: booking adapter, twins/unnamed babies, backdrop check, platform detection + link cleanup, tick keys
+      vs the API's key pattern, What to bring order, line parsing, real dates, NOAA sunset 17:31 on Nov 16, migration
+      seed = `lists.ts`, no non-idempotent DDL). Checked against `scripts/local-db`: the migration ran twice (3
+      sections, not 6); a scratchpad integration run of `server.ts` (6 tests: list skips cancelled bookings; first
+      save creates one row; a booking's day can't be edited; link/note/caption/sort; file paths handed to
+      `removeFiles` before deletes; an item's tick goes with it; styled shoot + day sheet + What to bring + ticks +
+      clear; a reschedule moves the shoot with its inspo; sections add/rename/fill/remove; renamed tables →
+      `ShootsNotReadyError`, lead-delete cleanup still fine). Found + fixed there: a malformed saved list broke the
+      day sheet (now read as empty). Gates: strict tsc, lint 0, 110 unit tests, build. No new dependency.
+      Research: Drizzle 0.45 `jsonb().$type<>()`, nullable `unique()` FK with `onDelete: "cascade"` (Postgres allows
+      many NULLs under a unique constraint, so styled shoots need no booking); NOAA solar calculator formulas
+      https://gml.noaa.gov/grad/solcalc/calcdetails.html. Blob private access + client uploads: research in slice 4.
+      `[?]` **Owner step (Neon dev branch, before slice 2's click-through):** console.neon.tech → project → Branches →
+      Create branch `shoots-test` from `main` → SQL Editor with **branch `shoots-test` selected** → paste all of
+      `drizzle/0023_shoots.sql` → Run → expect success; then `select name, jsonb_array_length(items) from
+      shoot_bring_sections order by sort;` → Studio kit 9, Camera gear 10, Wardrobe (Adri and Alo) 6. Running the
+      file a second time must also succeed with the same 3 rows. Production `main` only after the owner's OK.
+      `[?]` Owner: commit `docs/shoots/` (spec + template) to the public repo, or keep it local? (untracked for now;
+      the template's sample families are made up.)
+- [x] **Travel fee everywhere (owner, Nov 9: "whenever I change the price for the miles … it changes … on the FAQ,
+      also on the landing page, and everywhere").** Already connected: one database row (/admin → Availability →
+      Travel fee) is read on every request by the ad page FAQ (en + es), the Terms (en + es), the booking form's ZIP
+      line and the booking's server-side fee; pages are dynamic (`no-store`), so a save shows up at once. Checked on
+      `scripts/local-db` + a local production server: saving 30 free / $1 / 250 → then 40 / $1.50 / 200 changed the
+      FAQ, the Terms and West Palm Beach's fee ($45 → $52) right away. Emails show each booking's own fee (what was
+      charged), on purpose. Guard: `tests/unit/travel-copy.test.ts` fails if any customer text types a mileage or a
+      per-mile price instead of using the /admin numbers. Not tied to the numbers: the words "anywhere from Miami to
+      Orlando" (ad page hero, trust strip, area list, meta descriptions, About meta); Orlando is ~232–236 estimated
+      road miles, so a "farthest distance" under ~236 would make them wrong (told the owner).
 - [x] **Reviews on the website — owner OK Nov 5 ("Approve, please publish it"; screenshots + local click-through)** (owner, Nov 5: "I click on
       add to website but where does it add it to? … I do not see anywhere"; the /admin button only saved a flag, no page
       read it. Owner: show them on both the home page and the ad page; "Please go ahead").
