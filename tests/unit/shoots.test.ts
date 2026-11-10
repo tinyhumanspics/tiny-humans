@@ -37,6 +37,7 @@ const booking = (over: Partial<BookingSource> = {}): BookingSource => ({
   babyName: "Sofia",
   babyAge: "Newborn (0–2 weeks)",
   babies: [],
+  family: [],
   backdropPicks: ["cream"],
   addons: [],
   pick: { id: "basket-nap", title: "Basket nap", src: "/portfolio/basket-nap.jpg" },
@@ -58,6 +59,7 @@ const item = (id: string, group: "inspo" | "bts", sort = 0): InspoItem => ({
   linkUrl: null,
   platform: null,
   caption: "",
+  who: [],
   sort,
 });
 
@@ -91,14 +93,14 @@ describe("shoots: what a booking feeds in", () => {
       booking({
         packageName: "Our Family Story",
         packageInclusions: ["Up to 3 hours", "Baby + parents + siblings", "3 setups"],
-        babies: [{ name: "Ava", age: "Newborn (0–2 weeks)" }, { name: " ", age: "Newborn (0–2 weeks)" }],
+        babies: [{ name: "Ava", age: "Newborn (0–2 weeks)", gender: "girl" }, { name: " ", age: "Newborn (0–2 weeks)" }],
         backdropPicks: ["burgundy", "retired-backdrop"],
         sessionEnd: new Date("2026-11-16T17:30:00.000Z"),
       }),
     );
     expect(f.babies).toEqual([
-      { name: "Ava", age: "Newborn (0–2 weeks)" },
-      { name: null, age: "Newborn (0–2 weeks)" },
+      { name: "Ava", age: "Newborn (0–2 weeks)", gender: "girl" },
+      { name: null, age: "Newborn (0–2 weeks)", gender: null },
     ]);
     expect(f.backdrops.map((b) => b.id)).toEqual(["burgundy"]);
     expect(f.siblings).toBe(true);
@@ -113,8 +115,8 @@ describe("shoots: what a booking feeds in", () => {
     expect(familyTitles("Maria Morales")).toEqual({ title: "The Morales family", tabLabel: "Morales" });
     expect(familyTitles("Maria")).toEqual({ title: "Maria's family", tabLabel: "Maria" });
     expect(familyTitles("  ")).toEqual({ title: "The family", tabLabel: "Family" });
-    expect(inspoTitleOf({ babies: [{ name: "Ava", age: "x" }, { name: "Mila", age: "x" }] })).toBe("Inspo for Ava and Mila");
-    expect(inspoTitleOf({ babies: [{ name: null, age: "x" }] })).toBe("Inspo for the baby");
+    expect(inspoTitleOf({ babies: [{ name: "Ava", age: "x", gender: null }, { name: "Mila", age: "x", gender: null }] })).toBe("Inspo for Ava and Mila");
+    expect(inspoTitleOf({ babies: [{ name: null, age: "x", gender: null }] })).toBe("Inspo for the baby");
     expect(inspoTitleOf(null)).toBe("Inspo for the set");
     expect(whoLineOf(null)).toBe("No baby: just the set");
     expect(hoursLabel(60)).toBe("1 h");

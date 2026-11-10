@@ -41,7 +41,11 @@ export function bookingPricingRows(p: PriceQuote, bundle: Pick<Bundle, "offer">,
     );
   }
   rows.push([labels.bundleTotal, formatMoney(p.finalCents)]);
-  p.addons.forEach((addon) => rows.push([addon.quantity === 1 ? labels.extraBaby : labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]));
+  p.addons.forEach((addon) => {
+    const one = addon.quantity === 1;
+    const label = addon.kind === "extra_person" ? (one ? labels.extraPerson : labels.extraPeople) : one ? labels.extraBaby : labels.extraBabies;
+    rows.push([label, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]);
+  });
   if (p.addonsCents > 0) rows.push([labels.sessionTotalBeforeTravel, formatMoney(p.totalCents)]);
   return rows;
 }

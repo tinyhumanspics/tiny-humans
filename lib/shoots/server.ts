@@ -79,6 +79,7 @@ const itemOf = (r: InspoRow): InspoItem => ({
   linkUrl: r.linkUrl,
   platform: r.platform,
   caption: r.caption,
+  who: r.who ?? [],
   sort: r.sort,
 });
 
@@ -291,10 +292,10 @@ export async function addInspoFile(
   });
 }
 
-/** "What's the shot?" / "What's the idea?" */
-export async function updateInspo(id: string, patch: { caption: string }): Promise<InspoItem> {
+/** "What's the shot?" / "What's the idea?", and who's in it (keys checked by the route; at most 9). */
+export async function updateInspo(id: string, patch: { caption?: string; who?: string[] }): Promise<InspoItem> {
   return guard(async () => {
-    const [updated] = await getDb().update(shootInspo).set({ caption: patch.caption }).where(eq(shootInspo.id, id)).returning();
+    const [updated] = await getDb().update(shootInspo).set(patch).where(eq(shootInspo.id, id)).returning();
     if (!updated) throw new ShootNotFoundError("That item was already removed.");
     return itemOf(updated);
   });

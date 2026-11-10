@@ -11,6 +11,7 @@ import { travelFeeValue } from "@/lib/travel/format";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
+import { asksFamily, cleanFamily, familyLabel } from "@/lib/booking/family";
 import { fill } from "@/lib/email/messages";
 import InspirationThumb from "@/features/booking/InspirationThumb";
 import type { AppLocale } from "@/i18n/config";
@@ -22,7 +23,7 @@ import { cn } from "@/lib/cn";
 
 /** Step 4: everything the family chose, the price (calculated by the server), an optional code and the deposit. */
 export default function ReviewStep({ flow, locale, messages }: { flow: BookingFlow; locale: AppLocale; messages: typeof en.bookingFlow }) {
-  const { state, bundle, selection, quote, setQuote, appliedCode, setAppliedCode, provider, addon, bundleCents, beforeTravelCents, travel, travelFee, depositOffer, depositCents, deposit, totalCents, inspiration, setups, backdrops, goTo } = flow;
+  const { state, bundle, selection, quote, setQuote, appliedCode, setAppliedCode, provider, addon, personAddon, bundleCents, beforeTravelCents, travel, travelFee, depositOffer, depositCents, deposit, totalCents, inspiration, setups, backdrops, goTo } = flow;
   return (
     <>
       {bundle && state.date && state.slot && (
@@ -35,7 +36,8 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
               : ([
                   [messages.review.labels.bundleTotal, formatMoney(bundleCents)],
                   ...(addon ? [[addon.quantity === 1 ? messages.review.labels.extraBaby : messages.review.labels.extraBabies, `${addon.quantity} × ${formatMoney(addon.unitPriceCents)} = ${formatMoney(addon.totalCents)}`]] : []),
-                  ...(addon ? [[messages.review.labels.sessionTotalBeforeTravel, formatMoney(beforeTravelCents)]] : []),
+                  ...(personAddon ? [[personAddon.quantity === 1 ? messages.review.labels.extraPerson : messages.review.labels.extraPeople, `${personAddon.quantity} × ${formatMoney(personAddon.unitPriceCents)} = ${formatMoney(personAddon.totalCents)}`]] : []),
+                  ...(addon || personAddon ? [[messages.review.labels.sessionTotalBeforeTravel, formatMoney(beforeTravelCents)]] : []),
                 ] as [string, string][])
             ).map(([label, value]) => ({ label, value, step: -1 })),
             ...(travelFee > 0
@@ -59,6 +61,7 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
             { label: messages.review.labels.email, value: state.contact.email, step: STEP.details },
             { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.details },
             { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: bookingBabiesLabel(state.babies, messages.details), step: STEP.details },
+            ...(asksFamily(bundle) && cleanFamily(state.family).length ? [{ label: messages.review.labels.family, value: familyLabel(cleanFamily(state.family), messages.details.family.roles), step: STEP.details }] : []),
             ...(state.contact.notes.trim() ? [{ label: messages.review.labels.notes, value: state.contact.notes.trim(), step: STEP.details }] : []),
             { label: setups > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, value: backdrops.length ? backdropNames(backdrops, messages.details.backdrops.names, messages.review.and) : messages.review.labels.backdropNone, step: STEP.details },
             { label: messages.review.labels.texts, value: state.consents.sms ? messages.review.labels.textsYes : messages.review.labels.textsNo, step: STEP.details },

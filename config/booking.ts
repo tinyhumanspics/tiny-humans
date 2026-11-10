@@ -17,6 +17,19 @@ export type BabyGender = (typeof babyGenders)[number];
 export const isBabyGender = (value: unknown): value is BabyGender => babyGenders.some((gender) => gender === value);
 
 /**
+ * Who else is in the photos, on bundles that include the family (owner, Nov 10: Our Family Story, "up to 5 people",
+ * counting the baby; each with their role, names optional; each person over that is an owner-priced add-on like an
+ * extra baby). Stored as these codes; the words live in messages/ (owner side: lib/booking/family.ts).
+ */
+export const familyRoles = ["mom", "dad", "sister", "brother", "grandma", "grandpa", "aunt", "uncle", "cousin", "other"] as const;
+export type FamilyRole = (typeof familyRoles)[number];
+export const isFamilyRole = (value: unknown): value is FamilyRole => familyRoles.some((role) => role === value);
+/** People a family bundle includes, babies counted (owner, Nov 10: "it does include the baby"). */
+export const FAMILY_INCLUDED_PEOPLE = 5;
+/** The most family members one booking can list (included + extra); the database allows positions 0–13. */
+export const MAX_FAMILY_MEMBERS = 14;
+
+/**
  * Fixed booking settings. The *changeable* rules (weekly hours, notice,
  * booking window, buffer, special dates, time blocks) are managed by the
  * owner in /admin > Availability and stored in Neon; the defaults below are

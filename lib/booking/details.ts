@@ -13,7 +13,7 @@ import { accessFor } from "./access";
 import { backdropsFor } from "./backdrops";
 import type { BookingDetails } from "./templates";
 import type { SessionAddress } from "./types";
-import { addonsFor, babiesFor } from "./addons";
+import { addonsFor, babiesFor, familyFor } from "./addons";
 import type { AddonLine, BookingBaby } from "./extra-babies";
 
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
@@ -61,7 +61,7 @@ export function addressOf(line: string, accessNotes?: string): SessionAddress {
  * gate notes, backdrops, deposit): the same rows as when it was booked.
  */
 export async function detailsFromRow(row: Booking): Promise<BookingDetails> {
-  const [catalog, [consent], [access], [picks], deposit, inspirationTitle, babiesByBooking, addonsByBooking] = await Promise.all([
+  const [catalog, [consent], [access], [picks], deposit, inspirationTitle, babiesByBooking, addonsByBooking, familyByBooking] = await Promise.all([
     getCatalog().catch(() => [] as Bundle[]),
     getDb().select().from(bookingConsents).where(eq(bookingConsents.bookingId, row.id)).limit(1).catch(() => []),
     accessFor([row.id]),
@@ -70,6 +70,7 @@ export async function detailsFromRow(row: Booking): Promise<BookingDetails> {
     row.inspirationPhotoId ? photoTitle(row.inspirationPhotoId) : Promise.resolve(undefined),
     babiesFor([row.id]),
     addonsFor([row.id]),
+    familyFor([row.id]),
   ]);
   const babies: BookingBaby[] = babiesByBooking.get(row.id) ?? [{ name: row.babyName ?? undefined, age: row.babyAge }];
   const addons = addonsByBooking.get(row.id) ?? [];
@@ -82,6 +83,7 @@ export async function detailsFromRow(row: Booking): Promise<BookingDetails> {
     end: localTime(row.sessionEnd, row.timezone),
     contact: { parentName: row.parentName, email: row.email, phone: row.phone, babyName: row.babyName ?? undefined, babyAge: row.babyAge, notes: row.notes ?? undefined },
     babies,
+    family: familyByBooking.get(row.id) ?? [],
     address: addressOf(row.locationAddress, access?.notes),
     location: row.locationAddress,
     inspirationTitle,

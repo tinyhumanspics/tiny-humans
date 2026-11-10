@@ -63,6 +63,7 @@ export async function getCatalog(): Promise<Bundle[]> {
   }
   return rows.map((r) => {
     const extra = addons.find((a) => a.bundleId === r.id && a.kind === "extra_baby");
+    const person = addons.find((a) => a.bundleId === r.id && a.kind === "extra_person");
     return ({
     id: r.id,
     name: r.name,
@@ -81,6 +82,7 @@ export async function getCatalog(): Promise<Bundle[]> {
     sortOrder: r.sortOrder,
     offer: r.offerEnabled || r.offerPriceCents != null ? { enabled: r.offerEnabled, price: (r.offerPriceCents ?? 0) / 100, label: r.offerLabel, endsOn: r.offerEndsOn } : null,
     extraBaby: extra ? { active: extra.active, price: extra.unitPriceCents / 100, extraMinutes: extra.extraMinutes, extraPhotos: extra.extraPhotos, maxBabies: extra.maxQuantity + 1 } : null,
+    extraPerson: person ? { active: person.active, price: person.unitPriceCents / 100, maxExtra: person.maxQuantity } : null,
   });
   });
 }
@@ -244,6 +246,8 @@ export async function saveBundle(input: BundleInput): Promise<string> {
   const { id: _omit, ...update } = values;
   void _omit;
   const extraBaby = input.extraBaby;
+  // family bundles only: the per-person charge over the included people (no extra time or photos)
+  const extraPerson = input.extraPerson;
   const spanish = input.spanish;
   await db.batch([
     db.insert(bundlesTable).values(values).onConflictDoUpdate({ target: bundlesTable.id, set: update }),
@@ -253,6 +257,14 @@ export async function saveBundle(input: BundleInput): Promise<string> {
       .insert(bundleAddons)
       .values({ bundleId: id, kind: "extra_baby", name: "Extra baby", active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() })
       .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraBaby.active, unitPriceCents: toCents(extraBaby.price), extraMinutes: extraBaby.extraMinutes, extraPhotos: extraBaby.extraPhotos, maxQuantity: extraBaby.maxBabies - 1, updatedAt: new Date() } }),
+    ...(extraPerson
+      ? [
+          db
+            .insert(bundleAddons)
+            .values({ bundleId: id, kind: "extra_person", name: "Extra family member", active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), extraMinutes: 0, extraPhotos: 0, maxQuantity: extraPerson.maxExtra, sortOrder: 1, updatedAt: new Date() })
+            .onConflictDoUpdate({ target: [bundleAddons.bundleId, bundleAddons.kind], set: { active: extraPerson.active, unitPriceCents: toCents(extraPerson.price), maxQuantity: extraPerson.maxExtra, updatedAt: new Date() } }),
+        ]
+      : []),
     db
       .delete(bundleInclusionTranslations)
       .where(and(eq(bundleInclusionTranslations.bundleId, id), eq(bundleInclusionTranslations.locale, "es"))),

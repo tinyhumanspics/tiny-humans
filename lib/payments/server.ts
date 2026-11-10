@@ -8,6 +8,7 @@ import { AFTER_KINDS, findByEmailLink, nextCharge } from "@/lib/booking/after-se
 import { depositOf, depositPaidCents } from "@/lib/deposit/server";
 import { depositPageExpired, depositPaid } from "@/lib/deposit/flow";
 import { formatMoney } from "@/lib/pricing/engine";
+import { addonsFor } from "@/lib/booking/addons";
 import { bookingDeposits, type BookingDeposit } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { verifyPayLink } from "./link";
@@ -82,8 +83,13 @@ export async function openPayment(row: Booking | null, now = new Date()): Promis
     const addonsCents = row.addonsTotalCents ?? 0;
     const travelCents = row.travelFeeCents ?? 0;
     const paidDeposit = depositPaidCents(deposit);
+    // one line per add-on (twins/triplets, extra family members); bookings without saved lines keep one add-on line
+    const saved = addonsCents > 0 ? ((await addonsFor([row.id])).get(row.id) ?? []) : [];
+    const perLine = saved.length > 0 && saved.reduce((sum, a) => sum + a.totalCents, 0) === addonsCents;
     const extraLines = [
-      ...(addonsCents > 0 ? [{ name: messages.deposit.stripe.extraBabies, amountCents: addonsCents }] : []),
+      ...(perLine
+        ? saved.map((a) => ({ name: a.kind === "extra_person" ? messages.deposit.stripe.extraPeople : messages.deposit.stripe.extraBabies, amountCents: a.totalCents }))
+        : addonsCents > 0 ? [{ name: messages.deposit.stripe.extraBabies, amountCents: addonsCents }] : []),
       ...(travelCents > 0 ? [{ name: fill(messages.bookingFlow.details.travel.stripeLine, { miles: String(row.travelMiles ?? "") }), amountCents: travelCents }] : []),
     ];
     const extrasCents = extraLines.reduce((sum, line) => sum + line.amountCents, 0);

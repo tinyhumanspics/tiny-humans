@@ -45,8 +45,8 @@ export class HttpBookingClient implements BookingClient {
     }).then((r) => r.booking);
   }
 
-  quote(bundleId: string, code?: string, email?: string, babyCount = 1): Promise<PriceQuote> {
-    return call<{ quote: PriceQuote }>("/api/booking/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ bundleId, code, email, babyCount }) }).then((r) => r.quote);
+  quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0): Promise<PriceQuote> {
+    return call<{ quote: PriceQuote }>("/api/booking/quote", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ bundleId, code, email, babyCount, familyCount }) }).then((r) => r.quote);
   }
 
   getCancellation(token: string): Promise<CancellationSummary> {

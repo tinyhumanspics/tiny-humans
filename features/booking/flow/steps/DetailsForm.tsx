@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { site } from "@/config/site";
-import { babyAgeOptions, babyGenders } from "@/config/booking";
+import { babyAgeOptions, babyGenders, FAMILY_INCLUDED_PEOPLE, familyRoles } from "@/config/booking";
+import { extraPeopleCount } from "@/lib/booking/extra-babies";
 import type { Bundle } from "@/lib/pricing/types";
 import { formatMoney, toCents } from "@/lib/pricing/engine";
 import type { BookingConsents } from "@/lib/booking";
 import { includesSiblings } from "@/lib/booking/bundle-traits";
+import { asksFamily } from "@/lib/booking/family";
 import { fill } from "@/lib/email/messages";
 import BackdropPicker from "@/features/booking/backdrops/BackdropPicker";
 import type en from "@/messages/en.json";
-import type { BabyDraft, ContactDraft, ContactErrors } from "../booking-state";
+import type { BabyDraft, ContactDraft, ContactErrors, FamilyDraft } from "../booking-state";
 import styles from "../Booking.module.css";
 import { cn } from "@/lib/cn";
 
@@ -61,6 +63,98 @@ function ExtraBabiesPicker({ bundle, count, checking, onChange, messages }: { bu
   );
 }
 
+/* ---------------- who else is in the photos (bundles that include the family) ---------------- */
+
+function FamilyMembers({ family, errors, onChange, onAdd, onRemove, bundle, babyCount, max, messages }: {
+  family: FamilyDraft[];
+  errors: string[];
+  bundle: Bundle;
+  babyCount: number;
+  /** The most family members this bundle takes with this many babies (included + extra). */
+  max: number;
+  onChange: (index: number, field: keyof FamilyDraft, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  messages: typeof en.bookingFlow.details;
+}) {
+  const m = messages.family;
+  const addRef = useRef<HTMLButtonElement>(null);
+  // 5 people included, babies counted; each person over that is the bundle's extra-person price
+  const extra = bundle.extraPerson?.active ? bundle.extraPerson : null;
+  const price = extra ? formatMoney(toCents(extra.price)) : "";
+  const extras = extra ? extraPeopleCount(babyCount, family.length) : 0;
+  const extrasTotal = extra ? formatMoney(toCents(extra.price) * extras) : "";
+  return (
+    <fieldset className={cn(styles.fieldset, styles.fieldWide, styles.familyForm)} aria-describedby="family-hint">
+      <legend className={cn(styles.label, "chalk-soft")}>{m.title}</legend>
+      <p id="family-hint" className={cn(styles.optional, styles.flush, "chalk-soft")}>
+        {fill(m.hint, { included: String(FAMILY_INCLUDED_PEOPLE) })}
+        {extra ? ` ${fill(m.extraPrice, { price })}` : ""}
+      </p>
+      <ol className={styles.familyList}>
+        {family.map((member, index) => {
+          const roleId = `field-family-${index}-role`;
+          const nameId = `field-family-${index}-name`;
+          const errorId = `${roleId}-error`;
+          const number = String(index + 1);
+          return (
+            <li key={index} className={styles.familyRow}>
+              <div className={styles.familyHead}>
+                <p className={cn(styles.babyTitle, "chalk-soft")}>{fill(m.member, { number })}</p>
+                {family.length > 1 && (
+                  <button
+                    type="button"
+                    className={cn(styles.familyRemove, "chalk-soft")}
+                    aria-label={fill(m.removeLabel, { number })}
+                    onClick={() => {
+                      onRemove(index);
+                      requestAnimationFrame(() => addRef.current?.focus());
+                    }}
+                  >
+                    {m.remove}
+                  </button>
+                )}
+              </div>
+              <div className={styles.familyFields}>
+                <div className={styles.field}>
+                  <label htmlFor={roleId} className={cn(styles.label, "chalk-soft")}>{m.role}</label>
+                  <select id={roleId} className={styles.input} value={member.role} onChange={(e) => onChange(index, "role", e.target.value)} aria-invalid={Boolean(errors[index])} aria-describedby={errors[index] ? errorId : undefined} required>
+                    <option value="">{m.chooseRole}</option>
+                    {familyRoles.map((role) => <option key={role} value={role}>{m.roles[role]}</option>)}
+                  </select>
+                  {errors[index] && <p id={errorId} className={cn(styles.fieldError, "chalk-soft")}>{errors[index]}</p>}
+                </div>
+                <div className={styles.field}>
+                  <label htmlFor={nameId} className={cn(styles.label, "chalk-soft")}>{m.name}<span className={styles.optional}>{messages.optional}</span></label>
+                  <input id={nameId} className={styles.input} value={member.name} maxLength={60} autoComplete="off" onChange={(e) => onChange(index, "name", e.target.value)} />
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <p className={cn(styles.familyExtra, "chalk-soft")} role="status">
+        {extras > 0 ? (extras === 1 ? fill(m.extraOne, { total: extrasTotal }) : fill(m.extraMany, { count: String(extras), total: extrasTotal })) : ""}
+      </p>
+      {family.length < max ? (
+        <button
+          ref={addRef}
+          type="button"
+          className={cn(styles.familyAdd, "chalk-soft")}
+          onClick={() => {
+            onAdd();
+            requestAnimationFrame(() => document.getElementById(`field-family-${family.length}-role`)?.focus());
+          }}
+        >
+          {m.add}
+        </button>
+      ) : (
+        <p className={cn(styles.optional, styles.flush, "chalk-soft")}>{m.full}</p>
+      )}
+    </fieldset>
+  );
+}
+
 /* ---------------- details form ---------------- */
 
 export default function DetailsForm({
@@ -70,6 +164,13 @@ export default function DetailsForm({
   babies,
   babyErrors,
   onBabyChange,
+  family,
+  maxFamily,
+  babyCount,
+  familyErrors,
+  onFamilyChange,
+  onFamilyAdd,
+  onFamilyRemove,
   bundle,
   checkingBabyCount,
   onBabyCountChange,
@@ -95,6 +196,15 @@ export default function DetailsForm({
   babies: BabyDraft[];
   babyErrors: string[];
   onBabyChange: (index: number, field: keyof BabyDraft, value: string) => void;
+  /** Who else is in the photos: shown only on bundles that include the family. */
+  family: FamilyDraft[];
+  /** The most family members this bundle takes with the current babies. */
+  maxFamily: number;
+  babyCount: number;
+  familyErrors: string[];
+  onFamilyChange: (index: number, field: keyof FamilyDraft, value: string) => void;
+  onFamilyAdd: () => void;
+  onFamilyRemove: (index: number) => void;
   bundle: Bundle;
   checkingBabyCount: boolean;
   onBabyCountChange: (count: number) => void;
@@ -245,6 +355,7 @@ export default function DetailsForm({
           </p>
         )}
       </fieldset>
+      {asksFamily(bundle) && <FamilyMembers family={family} errors={familyErrors} onChange={onFamilyChange} onAdd={onFamilyAdd} onRemove={onFamilyRemove} bundle={bundle} babyCount={babyCount} max={maxFamily} messages={messages} />}
       <div className={cn(styles.field, styles.fieldWide)}>
         <label htmlFor="field-notes" className={cn(styles.label, "chalk-soft")}>
           {messages.notes.label}<span className={styles.optional}>{messages.optional}</span>

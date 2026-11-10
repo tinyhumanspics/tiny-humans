@@ -643,6 +643,7 @@ async function resultOf(row: Booking): Promise<BookingResult> {
     request: {
       bundleId: row.packageId,
       babies: details.babies,
+      family: details.family,
       slot: { id: `${details.date}T${details.start}`, date: details.date, start: details.start, end: details.end, label: formatTimeLabel(details.start) },
       contact: details.contact,
       address: details.address,

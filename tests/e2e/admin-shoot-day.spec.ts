@@ -14,7 +14,7 @@ const JPEG = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP////////////////////
 // a 3×4 cream picture as the uploaded photo's address (no network needed)
 const PHOTO_SRC = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#efe3cc"/></svg>');
 
-const item = (over: Partial<InspoItem>): InspoItem => ({ id: "11111111-1111-4111-8111-111111111111", group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: "", sort: 0, ...over });
+const item = (over: Partial<InspoItem>): InspoItem => ({ id: "11111111-1111-4111-8111-111111111111", group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: "", who: [], sort: 0, ...over });
 const PHOTO1 = item({ id: "aaaaaaaa-1111-4111-8111-111111111111", type: "image", mediaUrl: PHOTO_SRC, caption: "Basket nap, sleepy curl" });
 const PHOTO2 = item({ id: "bbbbbbbb-1111-4111-8111-111111111111", type: "image", mediaUrl: PHOTO_SRC, caption: "Toes close-up", sort: 1 });
 const IDEA = item({ id: "cccccccc-1111-4111-8111-111111111111", group: "bts", caption: "Camera-back reveal" });
@@ -26,7 +26,7 @@ const morales: ShootDetail = {
   booking: {
     bookingId: "0b6f5a3e-1111-4222-8333-944455556666", reference: "TH-20261103-4821", status: "confirmed", date: DATE, start: "09:00", end: "11:00",
     durationMinutes: 120, parentName: "Maria Morales", defaultTitle: "The Morales family", defaultTabLabel: "Morales", bundleName: "Our Little Story",
-    backdropsAllowed: 2, people: "Baby only", siblings: false, babies: [{ name: "Sofia", age: "Newborn (0–2 weeks)" }],
+    backdropsAllowed: 2, people: "Baby only", siblings: false, babies: [{ name: "Sofia", age: "Newborn (0–2 weeks)", gender: null }], family: [],
     backdrops: [{ id: "cream", name: "Cream", color: "#efe3cc" }], addons: [], pick: null, notes: null,
     address: "1500 Bay Rd, Miami Beach, FL 33139", city: "Miami Beach", mapUrl: "https://www.google.com/maps/search/?api=1&query=1500%20Bay%20Rd", deposit: null,
   },

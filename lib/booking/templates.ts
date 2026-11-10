@@ -6,6 +6,7 @@ import type { BookingDepositInfo } from "@/lib/deposit/types";
 import type { DepositOutcome } from "@/lib/deposit/refund";
 import { backdropNames } from "./backdrop-names";
 import { babiesLabel, type BookingBaby } from "./extra-babies";
+import { familyLabel, type FamilyMember } from "./family";
 
 /** Data used by the calendar event and the confirmation email. */
 export interface BookingDetails {
@@ -17,6 +18,8 @@ export interface BookingDetails {
   contact: BookingContact;
   /** Every baby in the session (one to three). */
   babies: BookingBaby[];
+  /** Who else is in the photos (bundles that include the family); empty or missing otherwise. */
+  family?: FamilyMember[];
   address: SessionAddress;
   inspirationTitle?: string;
   /** Price actually booked. */
@@ -176,6 +179,7 @@ export function eventBodyHtml(d: BookingDetails): string {
     ["Email", d.contact.email],
     ["Phone", d.contact.phone],
     [d.babies.length > 1 ? "Babies" : "Baby", babiesLabel(d.babies)],
+    ["Family in the photos", d.family?.length ? familyLabel(d.family) : undefined],
     ["Address", d.location ?? formatAddress(d.address)],
     [ACCESS_LABEL, d.address.accessNotes],
     ["Backdrop", d.backdrops?.length ? backdropNames(d.backdrops) : "Not chosen yet"],

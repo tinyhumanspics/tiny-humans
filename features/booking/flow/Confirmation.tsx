@@ -23,6 +23,7 @@ import { cn } from "@/lib/cn";
 import InspirationThumb from "@/features/booking/InspirationThumb";
 import styles from "./Booking.module.css";
 import { babyNames } from "@/lib/booking/extra-babies";
+import { cleanFamily, familyLabel } from "@/lib/booking/family";
 import type { EmailLocale } from "@/lib/email";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
@@ -69,6 +70,7 @@ export default function Confirmation({
     [messages.confirmation.labels.time, fill(messages.review.timeRange, { start: formatTimeLabel(r.slot.start, locale), end: formatTimeLabel(r.slot.end, locale), zone: messages.time.zone })],
     [messages.confirmation.labels.location, formatAddress(r.address, messages.review.unit)],
     [babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, bookingBabiesLabel(babies, messages.details)],
+    ...(cleanFamily(r.family).length ? [[messages.review.labels.family, familyLabel(cleanFamily(r.family), messages.details.family.roles)] as [string, string]] : []),
     ...(r.backdrops?.length ? [[r.backdrops.length > 1 ? messages.review.labels.backdrops : messages.review.labels.backdrop, backdropNames(r.backdrops, messages.details.backdrops.names, messages.review.and)] as [string, string]] : []),
     ...priceRows,
     ...(travelFee > 0 && price
@@ -173,7 +175,7 @@ function MockPreviews({ result, locale, messages }: { result: BookingResult; loc
     const pricing = result.pricing!;
     const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
     const mail = await bookingConfirmationEmail(
-      { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }], address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
+      { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }], family: cleanFamily(r.family), address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
       { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline", locale },
     );
     setPreview({ html: mail.html, locale });

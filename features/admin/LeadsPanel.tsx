@@ -17,6 +17,7 @@ import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import { babiesLabel } from "@/lib/booking/extra-babies";
+import { familyLabel } from "@/lib/booking/family";
 import { PUBLIC_REVIEWS_MAX } from "@/lib/reviews/public";
 import { usesSummary } from "@/lib/waiver/text";
 
@@ -270,6 +271,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ...((pr.addonsCents > 0 || lead.travel?.feeCents) ? [["Total due", formatMoney(pr.totalCents + (lead.travel?.feeCents ?? 0))] as [string, string]] : []),
     ...depositRows(lead),
     [lead.babies && lead.babies.length > 1 ? "Babies" : "Baby", babiesLabel(lead.babies ?? [{ name: lead.babyName ?? undefined, age: lead.babyAge }])],
+    ...(lead.family?.length ? [["Family in the photos", familyLabel(lead.family)] as [string, string]] : []),
     ["Full address", lead.address],
     [ACCESS_LABEL, lead.access || "None"],
     ...(lead.backdrops !== undefined
@@ -321,7 +323,8 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
       </p>
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
-        {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""} · At home in {city}
+        {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""}
+        {lead.family?.length ? ` · +${lead.family.length} family` : ""} · At home in {city}
       </p>
       <p className={styles.contactActions}>
         <a className={styles.smallButton} href={telHref(lead.phone)} aria-label={`Call ${lead.parentName}`}>Call</a>

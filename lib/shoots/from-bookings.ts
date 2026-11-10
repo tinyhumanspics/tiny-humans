@@ -2,6 +2,7 @@ import { BACKDROPS, setupsOf } from "@/config/backdrops";
 import { includesSiblings } from "@/lib/booking/bundle-traits";
 import en from "@/messages/en.json";
 import { mapsHref } from "./links";
+import { familyLabel, type FamilyMember } from "@/lib/booking/family";
 import type { ShootAddon, ShootBaby, ShootBookingFacts, ShootBookingStatus, ShootDeposit } from "./types";
 
 /**
@@ -23,7 +24,9 @@ export interface BookingSource {
   babyName: string | null;
   babyAge: string;
   /** booking_babies rows (twins/triplets); empty for older bookings, which only have the first baby. */
-  babies: { name?: string | null; age: string }[];
+  babies: { name?: string | null; age: string; gender?: "boy" | "girl" | null }[];
+  /** booking_family_members rows (bundles that include the family). */
+  family: FamilyMember[];
   backdropPicks: string[];
   addons: ShootAddon[];
   pick: { id: string; title: string; src: string } | null;
@@ -76,8 +79,8 @@ export function bookingFacts(b: BookingSource): ShootBookingFacts {
   const inclusions = b.packageInclusions ?? [];
   const { title, tabLabel } = familyTitles(b.parentName);
   const babies: ShootBaby[] = b.babies.length
-    ? b.babies.map((x) => ({ name: x.name?.trim() || null, age: x.age }))
-    : [{ name: b.babyName?.trim() || null, age: b.babyAge }];
+    ? b.babies.map((x) => ({ name: x.name?.trim() || null, age: x.age, gender: x.gender ?? null }))
+    : [{ name: b.babyName?.trim() || null, age: b.babyAge, gender: null }];
   const known = new Map<string, (typeof BACKDROPS)[number]>(BACKDROPS.map((x) => [x.id, x]));
   const backdrops = b.backdropPicks.flatMap((id) => {
     const bd = known.get(id);
@@ -99,6 +102,7 @@ export function bookingFacts(b: BookingSource): ShootBookingFacts {
     people: peopleOf(inclusions),
     siblings: includesSiblings({ people: "", features: inclusions }),
     babies,
+    family: b.family,
     backdrops,
     addons: b.addons,
     pick: b.pick,
@@ -130,11 +134,15 @@ export function inspoTitleOf(facts: Pick<ShootBookingFacts, "babies"> | null): s
 
 const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** Who's on camera: "Sofia, newborn (0–2 weeks)", twins joined with "and", plus ", with parents and siblings". */
-export function whoLineOf(facts: Pick<ShootBookingFacts, "babies" | "siblings"> | null): string {
+/**
+ * Who's on camera: "Sofia, newborn (0–2 weeks)", twins joined with "and", then the family as listed
+ * (", with Mom, Dad, Brother (Leo)") or, when the bundle includes them but nobody was listed, ", with parents and siblings".
+ */
+export function whoLineOf(facts: (Pick<ShootBookingFacts, "babies" | "siblings"> & { family?: FamilyMember[] }) | null): string {
   if (!facts) return "No baby: just the set";
   const babies = facts.babies.map((b, i) => `${b.name || (facts.babies.length > 1 ? `Baby ${i + 1}` : "Baby")}, ${lowerFirst(b.age)}`);
-  return joinNames(babies) + (facts.siblings ? ", with parents and siblings" : "");
+  const family = facts.family?.length ? `, with ${familyLabel(facts.family)}` : facts.siblings ? ", with parents and siblings" : "";
+  return joinNames(babies) + family;
 }
 
 /** Lines the booking adds to "Still to confirm" by itself: backdrops the family hasn't picked yet. */

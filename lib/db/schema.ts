@@ -622,6 +622,28 @@ export const bookingBabyGenders = pgTable(
 );
 
 /**
+ * Who else is in the photos (migration 0025): family members listed on bundles that include the family, in the order
+ * the parent added them. Best effort like the other per-booking extras: a database without the table only loses these.
+ * Parent-typed names: never sent to Meta or analytics.
+ */
+export const bookingFamilyMembers = pgTable(
+  "booking_family_members",
+  {
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    position: smallint("position").notNull(),
+    /** config/booking.ts familyRoles */
+    role: text("role").notNull(),
+    name: text("name"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bookingId, t.position] }),
+    check("booking_family_members_position_check", sql`${t.position} between 0 and 13`),
+    check("booking_family_members_role_check", sql`${t.role} in ('mom', 'dad', 'sister', 'brother', 'grandma', 'grandpa', 'aunt', 'uncle', 'cousin', 'other')`),
+  ],
+);
+
+/**
  * Each bundle's deposit (/admin → Pricing & Promotions → Deposits). A bundle without a row uses the default ($50,
  * DEFAULT_DEPOSIT_CENTS). New bookings only: each booking keeps the amount it paid (booking_deposits).
  */
@@ -882,6 +904,8 @@ export const shootInspo = pgTable(
     /** "Instagram", "TikTok", … or the site's host name. */
     platform: text("platform"),
     caption: text("caption").notNull().default(""),
+    /** Who's in the shot (migration 0025): "all", "baby:<n>" and "fam:<n>" keys of the booking's people (lib/shoots/people.ts). */
+    who: text("who").array().notNull().default(sql`'{}'::text[]`),
     sort: integer("sort").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },

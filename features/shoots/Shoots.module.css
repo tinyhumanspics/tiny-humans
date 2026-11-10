@@ -234,3 +234,21 @@ a.linkVis:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset:
 .tick:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
 .clearRow { margin-top: 22px; }
 
+
+/* twins and family shoots (owner, Nov 10): who's in each shot */
+.whoPick { display: grid; gap: 4px; margin: 2px 0 4px; }
+.whoLabel { margin: 0; font-size: 0.95rem; color: var(--chalk-muted); }
+.whoChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.whoChip {
+  min-height: 36px; padding: 2px 10px; border: 1.5px solid var(--chalk-faint); border-radius: 18px;
+  background: transparent; color: var(--chalk-white); font-family: var(--font-hand); font-size: 1rem; cursor: pointer;
+}
+.whoChip:hover { border-color: color-mix(in srgb, var(--chalk-white) 60%, transparent); }
+.whoChip[aria-pressed="true"] { border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 14%, transparent); color: var(--sun-yellow); }
+.whoChip:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 2px; }
+.people { display: flex; flex-wrap: wrap; gap: 6px 8px; margin: 10px 0 0; padding: 0; list-style: none; }
+.people li { padding: 2px 10px; border-radius: 8px; border: 1.5px solid var(--chalk-faint); font-size: 1rem; color: var(--chalk-muted); }
+.people li b { font-weight: 400; color: var(--chalk-white); }
+.whoSection { margin-top: 14px; }
+.whoH { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.2rem; color: var(--sun-yellow); }
+.whoDetail { margin: 0; font-size: 0.95rem; color: var(--chalk-muted); }

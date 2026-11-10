@@ -3,7 +3,7 @@ import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { formatAddress, totalDueCents, type BookingDetails } from "@/lib/booking/templates";
 import { paymentDue, prepGuideItems } from "@/lib/email/payment";
-import { customerBabiesLabel, customerBabyNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
+import { customerBabiesLabel, customerBabyNames, customerFamilyLabel, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import { emailImageSet, type EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
 import { renderHtml, textLines } from "@/lib/email/render";
@@ -95,6 +95,7 @@ export function BookingConfirmation({
           [m.common.time, time],
           [m.common.location, location],
           [d.babies.length > 1 ? m.common.babies : m.common.baby, customerBabiesLabel(d.babies, locale)],
+          ...(d.family?.length ? [[m.common.family, customerFamilyLabel(d.family, locale)] as [string, string]] : []),
           ...customerPricingRows(d.pricing, locale),
           ...travelRows(d, locale),
         ]}
@@ -149,6 +150,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     `${m.common.time}: ${time}`,
     `${m.common.location}: ${location}`,
     `${d.babies.length > 1 ? m.common.babies : m.common.baby}: ${customerBabiesLabel(d.babies, locale)}`,
+    ...(d.family?.length ? [`${m.common.family}: ${customerFamilyLabel(d.family, locale)}`] : []),
     ...customerPricingRows(d.pricing, locale).map(([k, v]) => `${k}: ${v}`),
     ...travelRows(d, locale).map(([k, v]) => `${k}: ${v}`),
     "",

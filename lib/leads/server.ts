@@ -20,7 +20,8 @@ import { log } from "@/lib/log";
 import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
 import { duplicateBookingsFor } from "./duplicates";
-import { addonsFor, babiesFor } from "@/lib/booking/addons";
+import { addonsFor, babiesFor, familyFor } from "@/lib/booking/addons";
+import type { FamilyMember } from "@/lib/booking/family";
 import { waiversForBookings } from "@/lib/waiver/server";
 import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
@@ -44,6 +45,7 @@ interface Extras {
   /** Delivery problems Resend reported for these families' addresses. */
   emailEvents: EmailEvent[];
   babies: Map<string, BookingBaby[]>;
+  family: Map<string, FamilyMember[]>;
   addons: Map<string, AddonLine[]>;
   /** Photo and video releases (best effort: none before migration 0023). */
   waivers: Map<string, WaiverSummary>;
@@ -51,7 +53,7 @@ interface Extras {
   noticeHours: number;
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48 };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48 };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -63,7 +65,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, waivers, noticeHours] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -74,11 +76,12 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     depositsFor(bookingIds),
     emailEventsFor(rows),
     babiesFor(bookingIds),
+    familyFor(bookingIds),
     addonsFor(bookingIds),
     waiversForBookings(bookingIds),
     getNoticeHoursSetting().catch(() => 48),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, addons, waivers, noticeHours };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -143,6 +146,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     babyName: r.babyName,
     babyAge: r.babyAge,
     babies: x.babies.get(r.id) ?? [{ name: r.babyName ?? undefined, age: r.babyAge }],
+    family: x.family.get(r.id) ?? [],
     bundleId: r.packageId,
     bundleName: r.packageName,
     pricing: (({ bundleId: _b, bundleName: _n, offerEndsOn: _e, note: _x, ...p }) => p)(snapshotOf(r, x.addons.get(r.id))),

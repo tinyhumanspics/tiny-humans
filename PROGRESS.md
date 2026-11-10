@@ -203,6 +203,19 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [ ] **Family members + twins on shoot day — built Nov 10 on branch `feat/family-members`, preview sent, NOT pushed**
+      (owner: "on the booking page only for the family story… how many family members… the role mom, dad, sister,
+      brother… cousin, grandma… only up to 5 people, and their names is optional"; "on the shoot day… info for David,
+      info for the other baby… on different sections"; "all together, whole family, single, mom and dad, dad and
+      brother… different ideas for different shots"; "let me see it before you actually push it"). Booking form section,
+      review/confirmation/emails/Outlook/Leads lines, shoot folder people + "Who's in it?" chips, day sheet sections by
+      who. Checks: tsc, lint, 140 units, new e2e (family booking on 3 browsers, folder + day sheet), real local booking
+      in Outlook mode (local DB + fake Graph/Resend). Owner answers (Nov 10): (1) "it does include the baby… if there is
+      an extra family member charge an extra $75 just like the extra baby" → 5 people included counting babies, each
+      extra person = `extra_person` add-on ($75, up to 5 extra, editable in Pricing; 0025 seeds it for Our Family
+      Story and widens `bundle_addons_kind_check`, a database-only rule found on the local DB); (2) Privacy Policy lines
+      approved ("yes add it"); (3) owner runs `drizzle/0025_family.sql` in Neon, then push. Owner edits the Family Story
+      description ("up to 5 people") and keeps "siblings" in its list.
 - [x] **Owner menu on the left — Nov 10 (owner: "put those on the left side instead of sliding left and right… with the
       option for me to hide it"; preview approved: "I like the new menu, so run it").** `features/admin/AdminMenu.tsx`:
       computer (≥ 900 px) = sticky column beside the page, "« Hide" folds it away (remembered on that device) and

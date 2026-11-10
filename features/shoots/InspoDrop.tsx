@@ -6,6 +6,7 @@ import { preparePhoto } from "@/lib/admin/client";
 import { cn } from "@/lib/cn";
 import { shootsApi } from "@/lib/shoots/client";
 import { normalizeLink, platformOf } from "@/lib/shoots/links";
+import { picksWho, toggleWho, WHO_ALL, type ShootPerson } from "@/lib/shoots/people";
 import type { InspoGroup, InspoItem } from "@/lib/shoots/types";
 import InspoLightbox from "./InspoLightbox";
 import { saveText, useAutosave } from "./useAutosave";
@@ -30,12 +31,15 @@ export default function InspoDrop({
   items,
   onAdd,
   onRemove,
+  people = [],
 }: {
   shootKey: string;
   group: InspoGroup;
   items: InspoItem[];
   onAdd: (item: InspoItem) => void;
   onRemove: (id: string) => void;
+  /** The booking's babies and family: shot ideas then say who's in them (twins, family shoots). */
+  people?: ShootPerson[];
 }) {
   const w = WORDS[group];
   const [link, setLink] = useState("");
@@ -185,7 +189,7 @@ export default function InspoDrop({
       ) : (
         <ul className={css.inspoGrid}>
           {items.map((item) => (
-            <InspoCard key={item.id} shootKey={shootKey} item={item} focus={focusId === item.id} onRemove={onRemove} onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))} />
+            <InspoCard key={item.id} shootKey={shootKey} item={item} focus={focusId === item.id} onRemove={onRemove} onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))} people={group === "inspo" && picksWho(people) ? people : null} />
           ))}
         </ul>
       )}
@@ -225,7 +229,7 @@ export function InspoTile({ item, onOpen, linkHint }: { item: InspoItem; onOpen:
   );
 }
 
-function InspoCard({ shootKey, item, focus, onRemove, onOpen }: { shootKey: string; item: InspoItem; focus: boolean; onRemove: (id: string) => void; onOpen: () => void }) {
+function InspoCard({ shootKey, item, focus, onRemove, onOpen, people }: { shootKey: string; item: InspoItem; focus: boolean; onRemove: (id: string) => void; onOpen: () => void; people: ShootPerson[] | null }) {
   const w = WORDS[item.group];
   const [caption, setCaption] = useState(item.caption);
   const [removing, setRemoving] = useState(false);
@@ -281,11 +285,52 @@ function InspoCard({ shootKey, item, focus, onRemove, onOpen }: { shootKey: stri
       <p className={cn(css.cardStatus, autosave.state.kind === "error" ? css.formError : "", "chalk-soft")} role="status">
         {status === "Saved" ? "" : status}
       </p>
+      {people && <WhoPicker shootKey={shootKey} item={item} people={people} />}
       <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={remove} disabled={removing}>
         {removing ? "Removing…" : twoTap.confirming ? "Tap again to remove" : "Remove"}
         <span className={styles.visuallyHidden}> ({what})</span>
       </button>
       {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
     </li>
+  );
+}
+
+/**
+ * "Who's in it?" on a shot idea (owner, Nov 10: twins → each baby and both; family → everyone, mom and dad, dad and
+ * brother…). Each tap saves; the day sheet groups the shots by who's in them.
+ */
+function WhoPicker({ shootKey, item, people }: { shootKey: string; item: InspoItem; people: ShootPerson[] }) {
+  const [who, setWho] = useState<string[]>(item.who);
+  const [error, setError] = useState(false);
+  const latest = useRef(0);
+  const labelId = `who-${item.id}`;
+  const tap = async (key: string) => {
+    const before = who;
+    const next = toggleWho(who, key, people);
+    setWho(next);
+    setError(false);
+    const call = ++latest.current;
+    try {
+      await shootsApi.saveWho(shootKey, item.id, next);
+    } catch {
+      // only the last tap's answer counts
+      if (call !== latest.current) return;
+      setWho(before);
+      setError(true);
+    }
+  };
+  const chips = [{ key: WHO_ALL, label: "Everyone" }, ...people];
+  return (
+    <div className={css.whoPick}>
+      <p id={labelId} className={cn(css.whoLabel, "chalk-soft")}>Who&apos;s in it?</p>
+      <div className={css.whoChips} role="group" aria-labelledby={labelId}>
+        {chips.map((p) => (
+          <button key={p.key} type="button" className={css.whoChip} aria-pressed={who.includes(p.key)} onClick={() => void tap(p.key)}>
+            {p.label}
+          </button>
+        ))}
+      </div>
+      {error && <p className={cn(css.cardStatus, css.formError, "chalk-soft")} role="alert">Couldn&apos;t save who&apos;s in it. Tap again.</p>}
+    </div>
   );
 }

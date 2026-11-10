@@ -15,6 +15,8 @@ import type { BookingTravel } from "@/lib/travel/types";
 import type { AppLocale } from "@/i18n/config";
 import type { BookingBaby } from "./extra-babies";
 export type { BookingBaby } from "./extra-babies";
+import type { FamilyMember } from "./family";
+export type { FamilyMember } from "./family";
 export type { PriceQuote };
 
 /** Calendar date in the studio's time zone, formatted YYYY-MM-DD. */
@@ -78,6 +80,8 @@ export interface BookingRequest {
   locale?: AppLocale;
   /** Every baby in the session. Older clients omit this and use the first baby in `contact`. */
   babies?: BookingBaby[];
+  /** Who else is in the photos (bundles that include the family): role + optional name, at most 5. */
+  family?: FamilyMember[];
   address: SessionAddress;
   slot: TimeSlot;
   contact: BookingContact;
@@ -171,7 +175,7 @@ export interface BookingClient {
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
   createBooking(request: BookingRequest): Promise<BookingResult>;
   /** Price for a bundle (optionally with a code). Always calculated server-side for real bookings. */
-  quote(bundleId: string, code?: string, email?: string, babyCount?: number): Promise<PriceQuote>;
+  quote(bundleId: string, code?: string, email?: string, babyCount?: number, familyCount?: number): Promise<PriceQuote>;
   /** Customer cancel link: look up the booking behind a token. */
   getCancellation(token: string): Promise<CancellationSummary>;
   /** Customer cancel link: cancel with a required reason. */

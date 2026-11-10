@@ -81,7 +81,14 @@ export const newInspoSchema = z.discriminatedUnion("type", [
 ]);
 export type NewInspo = z.infer<typeof newInspoSchema>;
 
-export const inspoPatchSchema = z.object({ caption }).strict();
+/** A caption, who's in the shot ("all", "baby:0"… "fam:4"), or both. */
+export const inspoPatchSchema = z
+  .object({
+    caption: caption.optional(),
+    who: z.array(z.string().regex(/^(all|baby:[0-2]|fam:[0-4])$/, "Pick people from this booking.")).max(9).optional(),
+  })
+  .strict()
+  .refine((p) => p.caption !== undefined || p.who !== undefined, "Nothing to save.");
 
 /** What we always bring: a new section, or a section's name/items/order. */
 export const newBringSectionSchema = z.object({ name: line(LIST_LIMITS.nameLength).optional().default("") }).strict();

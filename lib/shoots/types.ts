@@ -1,4 +1,5 @@
 /** /admin → Shoots: what the owner pages and API routes exchange (spec: docs/shoots/SHOOTS-SPEC.md). */
+import type { FamilyMember } from "@/lib/booking/family";
 
 export type ShootKind = "booking" | "styled";
 export type InspoGroup = "inspo" | "bts";
@@ -20,12 +21,16 @@ export interface InspoItem {
   platform: string | null;
   /** "What's the shot?" / "What's the idea?" */
   caption: string;
+  /** Who's in the shot (lib/shoots/people.ts keys: "all", "baby:0", "fam:1"…); empty = not picked. */
+  who: string[];
   sort: number;
 }
 
 export interface ShootBaby {
   name: string | null;
   age: string;
+  /** Only when the parent picked one. */
+  gender: "boy" | "girl" | null;
 }
 
 export interface ShootBackdrop {
@@ -66,6 +71,8 @@ export interface ShootBookingFacts {
   people: string | null;
   siblings: boolean;
   babies: ShootBaby[];
+  /** Who else is in the photos, as the parent listed them (bundles that include the family). */
+  family: FamilyMember[];
   backdrops: ShootBackdrop[];
   addons: ShootAddon[];
   /** The site photo they picked while booking. */

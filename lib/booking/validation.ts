@@ -1,5 +1,5 @@
 import { z } from "@/lib/validation/zod";
-import { babyAgeOptions, babyGenders } from "@/config/booking";
+import { babyAgeOptions, babyGenders, familyRoles, MAX_FAMILY_MEMBERS } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
@@ -32,6 +32,16 @@ export const bookingRequestSchema = z.object({
     )
     .min(1)
     .max(3)
+    .optional(),
+  // who else is in the photos (bundles that include the family; ignored for the others on the server)
+  family: z
+    .array(
+      z.object({
+        role: z.enum(familyRoles, { message: "Choose who each family member is." }),
+        name: text(60).optional().transform((v) => v || undefined),
+      }),
+    )
+    .max(MAX_FAMILY_MEMBERS, `Add up to ${MAX_FAMILY_MEMBERS} family members.`)
     .optional(),
   slot: z.object({ date: dateKey, start: hhmm }, { message: "Pick a day and time." }).passthrough(),
   contact: z.object({

@@ -8,6 +8,7 @@ import { clock, dayParts, plural } from "@/lib/shoots/format";
 import { inspoKey, progressOf } from "@/lib/shoots/ticks";
 import type { BringLine, InspoGroup, InspoItem, ShootDetail } from "@/lib/shoots/types";
 import { InspoTile } from "./InspoDrop";
+import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
 import InspoLightbox, { type LightboxPhoto } from "./InspoLightbox";
 import NotReady from "./NotReady";
 import { useDayTicks } from "./useDayTicks";
@@ -204,6 +205,26 @@ function ShootBlock({
   const mapUrl = b?.mapUrl ?? (s.place ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.place)}` : null);
   const group = (g: InspoGroup) => s.inspo.filter((i) => i.group === g);
   const count = (g: InspoGroup) => progressOf(group(g).map((i) => inspoKey(i.id)), group(g).map((i) => inspoKey(i.id)).filter(isTicked));
+  // twins and family shoots: everyone listed, and the shots in sections by who's in them
+  const people = peopleOf(b);
+  const sectionsFor = (items: InspoItem[]) => (picksWho(people) && items.some((i) => i.who.length) ? groupByWho(items, people) : null);
+  const shotCards = (items: InspoItem[], photos: LightboxPhoto[]) => (
+    <ul className={css.shotGrid}>
+      {items.map((item) => {
+        const key = inspoKey(item.id);
+        const done = isTicked(key);
+        return (
+          <li key={item.id} className={cn(css.shotCard, done ? css.shotDone : "")}>
+            <InspoTile item={item} linkHint="Open the link" onOpen={() => onView(photos, Math.max(0, photos.findIndex((x) => x.id === item.id)), true)} />
+            <button type="button" className={css.phTick} aria-pressed={done} onClick={() => toggle(key)}>
+              <span className={styles.visuallyHidden}>Done: {item.caption || "this one"}</span>
+            </button>
+            <p className={cn(css.cap, "chalk-soft")}>{item.caption || "No description yet"}</p>
+          </li>
+        );
+      })}
+    </ul>
+  );
 
   return (
     <section id={sectionId(s.key)} data-tabsec className={css.session} aria-labelledby={`${sectionId(s.key)}-t`}>
@@ -233,6 +254,16 @@ function ShootBlock({
           ))}
         </p>
       )}
+      {picksWho(people) && (
+        <ul className={css.people} aria-label="Who's in the photos">
+          {people.map((p) => (
+            <li key={p.key}>
+              <b>{p.label}</b>
+              {p.detail ? ` · ${p.detail}` : ""}
+            </li>
+          ))}
+        </ul>
+      )}
       {(s.said || b?.pick) && (
         <div className={css.note}>
           <h3 className={cn(css.noteH, "chalk-soft")}>{s.kind === "styled" ? "The idea" : "What the family asked for"}</h3>
@@ -251,7 +282,9 @@ function ShootBlock({
       )}
 
       {(["inspo", "bts"] as const).map((g) => {
-        const items = group(g);
+        const sections = g === "inspo" ? sectionsFor(group(g)) : null;
+        // photos open in the order they're shown (by section when there are sections)
+        const items = sections ? sections.flatMap((x) => x.items) : group(g);
         const c = count(g);
         const photos = items.filter(isPhoto).map((i) => ({ id: i.id, src: i.mediaUrl!, caption: i.caption }));
         return (
@@ -262,21 +295,20 @@ function ShootBlock({
             {items.length ? (
               <>
                 {g === "inspo" && <p className={cn(css.help, "chalk-soft")}>Tap a photo to see it big. Tap its check once you have the shot.</p>}
-                <ul className={css.shotGrid}>
-                  {items.map((item) => {
-                    const key = inspoKey(item.id);
-                    const done = isTicked(key);
-                    return (
-                      <li key={item.id} className={cn(css.shotCard, done ? css.shotDone : "")}>
-                        <InspoTile item={item} linkHint="Open the link" onOpen={() => onView(photos, Math.max(0, photos.findIndex((x) => x.id === item.id)), true)} />
-                        <button type="button" className={css.phTick} aria-pressed={done} onClick={() => toggle(key)}>
-                          <span className={styles.visuallyHidden}>Done: {item.caption || "this one"}</span>
-                        </button>
-                        <p className={cn(css.cap, "chalk-soft")}>{item.caption || "No description yet"}</p>
-                      </li>
-                    );
-                  })}
-                </ul>
+                {sections
+                  ? sections.map((x) => {
+                      const done = x.items.filter((i) => isTicked(inspoKey(i.id))).length;
+                      return (
+                        <div key={x.key || "none"} className={css.whoSection}>
+                          <h4 className={css.whoH}>
+                            {x.label} <span className={cn(css.orderCount, "chalk-soft")}>{done}/{x.items.length}</span>
+                          </h4>
+                          {x.detail && <p className={cn(css.whoDetail, "chalk-soft")}>{x.detail}</p>}
+                          {shotCards(x.items, photos)}
+                        </div>
+                      );
+                    })
+                  : shotCards(items, photos)}
               </>
             ) : g === "inspo" ? (
               <p className={cn(css.empty, "chalk-soft")}>

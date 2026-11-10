@@ -9,7 +9,8 @@ import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
 import { formatLongDate } from "@/lib/booking/dates";
 import { todayInZone } from "@/lib/booking/timezone";
-import { bookingRules } from "@/config/booking";
+import { bookingRules, FAMILY_INCLUDED_PEOPLE } from "@/config/booking";
+import { asksFamily } from "@/lib/booking/family";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { DEFAULT_DEPOSIT_CENTS } from "@/lib/deposit/types";
 import styles from "./Admin.module.css";
@@ -59,6 +60,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
                       {" · "}{b.duration}
                       {b.offer?.enabled && !offer ? " · offer ended (regular price shown)" : ""}
                     </p>
+                    {b.extraPerson?.active && <p className={cn(styles.hintSmall, "chalk-soft")}>Extra family members: +{formatMoney(toCents(b.extraPerson.price))} per person over {FAMILY_INCLUDED_PEOPLE} (babies count) · up to {b.extraPerson.maxExtra} extra</p>}
                     {b.extraBaby?.active && <p className={cn(styles.hintSmall, "chalk-soft")}>Twins/triplets: +{formatMoney(toCents(b.extraBaby.price))}, +{b.extraBaby.extraMinutes} min and +{b.extraBaby.extraPhotos} photos per extra baby · max {b.extraBaby.maxBabies} babies</p>}
                     <p className={cn(styles.hintSmall, "chalk-soft")}>Spanish website copy: {b.spanish ? "ready for review" : "not added yet"}</p>
                   </div>
@@ -286,6 +288,11 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   const [extraBabyMinutes, setExtraBabyMinutes] = useState(String(bundle?.extraBaby?.extraMinutes ?? 30));
   const [extraBabyPhotos, setExtraBabyPhotos] = useState(String(bundle?.extraBaby?.extraPhotos ?? 5));
   const [maxBabies, setMaxBabies] = useState(String(bundle?.extraBaby?.maxBabies ?? 3));
+  const [extraPersonOn, setExtraPersonOn] = useState(bundle?.extraPerson?.active ?? true);
+  const [extraPersonPrice, setExtraPersonPrice] = useState(String(bundle?.extraPerson?.price ?? 75));
+  const [maxExtraPeople, setMaxExtraPeople] = useState(String(bundle?.extraPerson?.maxExtra ?? 5));
+  // the family charge is shown for bundles that include siblings (the ones whose booking asks who's in the photos)
+  const familyBundle = asksFamily({ people: "", features }) || Boolean(bundle?.extraPerson);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const move = (i: number, d: number) => {
@@ -311,6 +318,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         offer: offerOn || offerPrice ? { enabled: offerOn, price: Number(offerPrice) || 0, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
         spanish: spanishStarted ? spanish : null,
         extraBaby: { active: extraBabyOn, price: Number(extraBabyPrice), extraMinutes: Number(extraBabyMinutes), extraPhotos: Number(extraBabyPhotos), maxBabies: Number(maxBabies) },
+        ...(familyBundle ? { extraPerson: { active: extraPersonOn, price: Number(extraPersonPrice), maxExtra: Number(maxExtraPeople) } } : {}),
       });
     } catch (e) {
       setErr(errText(e, "Couldn't save."));
@@ -375,6 +383,18 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         )}
         <p className={cn(styles.hintSmall, "chalk-soft")}>The extra-baby charge stays full price even when the bundle has a special offer or discount code. Changes apply to new bookings only.</p>
       </div>
+      {familyBundle && (
+        <div className={styles.offerBox}>
+          <label className={styles.toggle}><input type="checkbox" checked={extraPersonOn} onChange={(e) => setExtraPersonOn(e.target.checked)} /><span className="chalk-soft">Charge for extra family members</span></label>
+          {extraPersonOn && (
+            <div className={styles.editorGrid}>
+              <label className={cn(styles.label, "chalk-soft")}>Per extra person ($)<input className={styles.input} type="number" min={0} step="0.01" value={extraPersonPrice} onChange={(e) => setExtraPersonPrice(e.target.value)} /></label>
+              <label className={cn(styles.label, "chalk-soft")}>Most extra people<input className={styles.input} type="number" min={1} max={9} step={1} value={maxExtraPeople} onChange={(e) => setMaxExtraPeople(e.target.value)} /></label>
+            </div>
+          )}
+          <p className={cn(styles.hintSmall, "chalk-soft")}>This bundle includes {FAMILY_INCLUDED_PEOPLE} people, counting the baby (twins count as two). Each person over that is charged this, full price even with a special offer or discount code. Turned off, families can list only {FAMILY_INCLUDED_PEOPLE} people. Changes apply to new bookings only.</p>
+        </div>
+      )}
       <div className={styles.offerBox}>
         <label className={styles.toggle}><input type="checkbox" checked={offerOn} onChange={(e) => setOfferOn(e.target.checked)} /><span className="chalk-soft">Enable Special Offer</span></label>
         {offerOn && (

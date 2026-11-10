@@ -20,6 +20,7 @@ const item = (over: Partial<InspoItem>): InspoItem => ({
   linkUrl: null,
   platform: null,
   caption: "",
+  who: [],
   sort: 0,
   ...over,
 });
@@ -54,7 +55,8 @@ const MORALES: ShootDetail = {
     backdropsAllowed: 2,
     people: "Baby only",
     siblings: false,
-    babies: [{ name: "Sofia", age: "Newborn (0–2 weeks)" }],
+    babies: [{ name: "Sofia", age: "Newborn (0–2 weeks)", gender: null }],
+    family: [],
     backdrops: [{ id: "cream", name: "Cream", color: "#efe3cc" }, { id: "wooden", name: "Wooden", color: "#9a6a42" }],
     addons: [{ name: "Extra baby", quantity: 1, extraMinutes: 30 }],
     pick: { id: "basket-nap", title: "Basket nap", src: "/portfolio/basket-nap.jpg" },

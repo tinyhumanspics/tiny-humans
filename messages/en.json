@@ -131,6 +131,8 @@
       "editedPhotos": "{count} edited photos",
       "extraBaby": "Extra baby",
       "extraBabies": "Extra babies",
+      "extraPerson": "Extra family member",
+      "extraPeople": "Extra family members",
       "durationMinutes": "Up to {minutes} minutes",
       "durationHour": "Up to 1 hour",
       "durationHours": "Up to {hours} hours",
@@ -167,6 +169,24 @@
         "ageOptions": ["Newborn (0–2 weeks)", "2–6 weeks", "6 weeks – 3 months", "3–6 months", "6–12 months", "1–2 years", "Not born yet"],
         "gender": "Gender",
         "genders": { "boy": "Boy", "girl": "Girl" }
+      },
+      "family": {
+        "title": "Who else is in the photos?",
+        "hint": "Your bundle includes up to {included} people in total, counting your baby. Names are optional.",
+        "extraPrice": "Each extra person is +{price}.",
+        "extraOne": "1 extra person: +{total}",
+        "extraMany": "{count} extra people: +{total}",
+        "overLimit": "This bundle doesn't have room for this person. Please remove them.",
+        "member": "Family member {number}",
+        "role": "Who is this?",
+        "chooseRole": "Choose one",
+        "roleError": "Choose who this is, or remove them.",
+        "name": "Name",
+        "add": "+ Add a family member",
+        "remove": "Remove",
+        "removeLabel": "Remove family member {number}",
+        "full": "That's the most this bundle allows.",
+        "roles": { "mom": "Mom", "dad": "Dad", "sister": "Sister", "brother": "Brother", "grandma": "Grandma", "grandpa": "Grandpa", "aunt": "Aunt", "uncle": "Uncle", "cousin": "Cousin", "other": "Other family member" }
       },
       "extraBabies": {
         "one": "1 baby",
@@ -241,6 +261,8 @@
         "bundleTotal": "Bundle total",
         "extraBaby": "Extra baby",
         "extraBabies": "Extra babies",
+        "extraPerson": "Extra family member",
+        "extraPeople": "Extra family members",
         "sessionTotalBeforeTravel": "Session total before travel",
         "travelFee": "Travel fee",
         "total": "Total",
@@ -256,6 +278,7 @@
         "phone": "Phone",
         "baby": "Baby",
         "babies": "Babies",
+        "family": "Family in the photos",
         "notes": "Notes",
         "backdrop": "Backdrop",
         "backdrops": "Backdrops",
@@ -706,8 +729,12 @@
       "sessionTotalBeforeTravel": "Session total before travel",
       "extraBaby": "Extra baby",
       "extraBabies": "Extra babies",
+      "extraPerson": "Extra family member",
+      "extraPeople": "Extra family members",
       "babyNumber": "Baby {number}",
       "genders": { "boy": "Boy", "girl": "Girl" },
+      "family": "Family in the photos",
+      "roles": { "mom": "Mom", "dad": "Dad", "sister": "Sister", "brother": "Brother", "grandma": "Grandma", "grandpa": "Grandpa", "aunt": "Aunt", "uncle": "Uncle", "cousin": "Cousin", "other": "Family member" },
       "and": "and",
       "ages": {
         "Newborn (0–2 weeks)": "Newborn (0–2 weeks)",
@@ -1219,7 +1246,8 @@
       "balanceProduct": "Tiny Humans · {bundle} (after your {deposit} deposit)",
       "linkDescription": "Deposit for your session {reference} on {date}. Counts toward your {total} total.",
       "balanceDescription": "Session {reference} on {date}.",
-      "extraBabies": "Twins/triplets add-on"
+      "extraBabies": "Twins/triplets add-on",
+      "extraPeople": "Extra family members"
     },
     "landing": {
       "metaDescription": {
@@ -1270,7 +1298,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "November 9, 2026",
+      "lastUpdated": "November 10, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
@@ -1278,7 +1306,7 @@
           "heading": "Information we collect",
           "body": [
             "When you book a session, you give us:",
-            { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
+            { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "For family sessions, who else will be in the photos (for example Mom, Dad or a sibling) and their names, if you choose to share them", "The package, date and time you choose", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
             "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked, your ZIP code and how far you got, so we can follow up. We don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",
             "During your session we take photographs of your baby and, depending on your package, your family. If you sign our photo and video release at your session, we keep your name, whether you're the parent or legal guardian, your signature, the choices you made and when you signed, together with your booking.",
@@ -1303,7 +1331,7 @@
           "heading": "Advertising and measurement (Meta)",
           "body": [
             "We advertise on Facebook and Instagram. To measure how our ads work, we use the Meta Pixel on our website and the Meta Conversions API from our server, both provided by Meta Platforms, Inc.",
-            { "list": ["When you visit our website, the Meta Pixel may collect the pages you view, actions such as choosing a bundle or starting and completing a booking, and technical information such as your IP address and browser. It uses cookies (see below).", "When you complete a booking, we send Meta a booking event with the bundle and price, together with your email address, phone number, name, city, state and ZIP code in hashed (scrambled) form, plus your IP address and browser details, so Meta can match the booking to an ad and show our ads to people more likely to be interested.", "The information our website sends to Meta to measure our ads never includes your baby's name, age or notes. Photos or videos from your session appear in our ads on Facebook and Instagram only if you said yes to ads in the photo release you signed."] },
+            { "list": ["When you visit our website, the Meta Pixel may collect the pages you view, actions such as choosing a bundle or starting and completing a booking, and technical information such as your IP address and browser. It uses cookies (see below).", "When you complete a booking, we send Meta a booking event with the bundle and price, together with your email address, phone number, name, city, state and ZIP code in hashed (scrambled) form, plus your IP address and browser details, so Meta can match the booking to an ad and show our ads to people more likely to be interested.", "The information our website sends to Meta to measure our ads never includes your baby's name, age or notes, or the names of family members joining the session. Photos or videos from your session appear in our ads on Facebook and Instagram only if you said yes to ads in the photo release you signed."] },
             "Meta uses this information as described in its Privacy Policy (facebook.com/privacy/policy). You can control the ads you see in your Facebook and Instagram ad settings (facebook.com/adpreferences), and you can block or delete cookies in your browser settings."
           ]
         },

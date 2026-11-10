@@ -299,6 +299,8 @@
       "editedPhotos": "{count} fotos editadas",
       "extraBaby": "Bebé adicional",
       "extraBabies": "Bebés adicionales",
+      "extraPerson": "Familiar adicional",
+      "extraPeople": "Familiares adicionales",
       "durationMinutes": "Hasta {minutes} minutos",
       "durationHour": "Hasta 1 hora",
       "durationHours": "Hasta {hours} horas",
@@ -335,6 +337,24 @@
         "ageOptions": ["Recién nacido (0–2 semanas)", "2–6 semanas", "6 semanas–3 meses", "3–6 meses", "6–12 meses", "1–2 años", "Aún no ha nacido"],
         "gender": "Género",
         "genders": { "boy": "Niño", "girl": "Niña" }
+      },
+      "family": {
+        "title": "¿Quién más sale en las fotos?",
+        "hint": "Tu paquete incluye hasta {included} personas en total, contando a tu bebé. Los nombres son opcionales.",
+        "extraPrice": "Cada persona adicional cuesta +{price}.",
+        "extraOne": "1 persona adicional: +{total}",
+        "extraMany": "{count} personas adicionales: +{total}",
+        "overLimit": "Este paquete no tiene lugar para esta persona. Por favor, quítala.",
+        "member": "Familiar {number}",
+        "role": "¿Quién es?",
+        "chooseRole": "Elige uno",
+        "roleError": "Elige quién es, o quítalo.",
+        "name": "Nombre",
+        "add": "+ Agregar un familiar",
+        "remove": "Quitar",
+        "removeLabel": "Quitar el familiar {number}",
+        "full": "Es el máximo que permite este paquete.",
+        "roles": { "mom": "Mamá", "dad": "Papá", "sister": "Hermana", "brother": "Hermano", "grandma": "Abuela", "grandpa": "Abuelo", "aunt": "Tía", "uncle": "Tío", "cousin": "Primo o prima", "other": "Otro familiar" }
       },
       "extraBabies": {
         "one": "1 bebé",
@@ -409,6 +429,8 @@
         "bundleTotal": "Total del paquete",
         "extraBaby": "Bebé adicional",
         "extraBabies": "Bebés adicionales",
+        "extraPerson": "Familiar adicional",
+        "extraPeople": "Familiares adicionales",
         "sessionTotalBeforeTravel": "Total de la sesión antes del viaje",
         "travelFee": "Cargo de viaje",
         "total": "Total",
@@ -424,6 +446,7 @@
         "phone": "Teléfono",
         "baby": "Bebé",
         "babies": "Bebés",
+        "family": "Familia en las fotos",
         "notes": "Notas",
         "backdrop": "Fondo",
         "backdrops": "Fondos",
@@ -706,8 +729,12 @@
       "sessionTotalBeforeTravel": "Total de la sesión antes del viaje",
       "extraBaby": "Bebé adicional",
       "extraBabies": "Bebés adicionales",
+      "extraPerson": "Familiar adicional",
+      "extraPeople": "Familiares adicionales",
       "babyNumber": "Bebé {number}",
       "genders": { "boy": "Niño", "girl": "Niña" },
+      "family": "Familia en las fotos",
+      "roles": { "mom": "Mamá", "dad": "Papá", "sister": "Hermana", "brother": "Hermano", "grandma": "Abuela", "grandpa": "Abuelo", "aunt": "Tía", "uncle": "Tío", "cousin": "Primo o prima", "other": "Familiar" },
       "and": "y",
       "ages": {
         "Newborn (0–2 weeks)": "Recién nacido (0–2 semanas)",
@@ -1219,7 +1246,8 @@
       "balanceProduct": "Tiny Humans · {bundle} (después de tu depósito de {deposit})",
       "linkDescription": "Depósito para tu sesión {reference} del {date}. Se descuenta del total de {total}.",
       "balanceDescription": "Sesión {reference} del {date}.",
-      "extraBabies": "Cargo por gemelos o trillizos"
+      "extraBabies": "Cargo por gemelos o trillizos",
+      "extraPeople": "Familiares adicionales"
     },
     "landing": {
       "metaDescription": {
@@ -1270,7 +1298,7 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "9 de noviembre de 2026",
+      "lastUpdated": "10 de noviembre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
@@ -1278,7 +1306,7 @@
           "heading": "Información que recopilamos",
           "body": [
             "Cuando reservas una sesión, nos das:",
-            { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
+            { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "En las sesiones familiares, quién más saldrá en las fotos (por ejemplo, mamá, papá o un hermano) y sus nombres, si decides compartirlos", "El paquete, la fecha y la hora que eliges", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
             "Si empiezas una reserva y no la terminas, guardamos el nombre, el correo electrónico y el teléfono que escribiste, el paquete, la fecha y la hora que elegiste, tu código postal y hasta qué paso llegaste, para poder escribirte. No guardamos los datos de tu bebé de una reserva que no terminaste. También contamos cuántos visitantes llegan a cada paso del formulario de reserva, sin nombres, correos ni nada que te identifique.",
             "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia. Si firmas nuestra autorización de fotos y videos en tu sesión, guardamos tu nombre, si eres el padre, la madre o el tutor legal, tu firma, lo que elegiste y cuándo firmaste, junto con tu reserva.",
@@ -1303,7 +1331,7 @@
           "heading": "Publicidad y medición (Meta)",
           "body": [
             "Nos anunciamos en Facebook e Instagram. Para medir el funcionamiento de nuestros anuncios, usamos el píxel de Meta en nuestro sitio web y la API de conversiones de Meta desde nuestro servidor, ambos proporcionados por Meta Platforms, Inc.",
-            { "list": ["Cuando visitas nuestro sitio web, el píxel de Meta puede recopilar las páginas que ves, acciones como elegir un paquete o iniciar y completar una reserva, e información técnica como tu dirección IP y navegador. Utiliza cookies (consulta más abajo).", "Cuando completas una reserva, enviamos a Meta un evento de reserva con el paquete y el precio, junto con tu correo electrónico, número de teléfono, nombre, ciudad, estado y código postal en formato cifrado (hash), además de tu dirección IP y los datos de tu navegador. Esto permite que Meta relacione la reserva con un anuncio y muestre nuestros anuncios a personas con más probabilidades de estar interesadas.", "La información que nuestro sitio web envía a Meta para medir nuestros anuncios nunca incluye el nombre, la edad ni las notas de tu bebé. Las fotos o videos de tu sesión aparecen en nuestros anuncios de Facebook e Instagram solo si dijiste que sí a los anuncios en la autorización de fotos que firmaste."] },
+            { "list": ["Cuando visitas nuestro sitio web, el píxel de Meta puede recopilar las páginas que ves, acciones como elegir un paquete o iniciar y completar una reserva, e información técnica como tu dirección IP y navegador. Utiliza cookies (consulta más abajo).", "Cuando completas una reserva, enviamos a Meta un evento de reserva con el paquete y el precio, junto con tu correo electrónico, número de teléfono, nombre, ciudad, estado y código postal en formato cifrado (hash), además de tu dirección IP y los datos de tu navegador. Esto permite que Meta relacione la reserva con un anuncio y muestre nuestros anuncios a personas con más probabilidades de estar interesadas.", "La información que nuestro sitio web envía a Meta para medir nuestros anuncios nunca incluye el nombre, la edad ni las notas de tu bebé, ni los nombres de los familiares que participan en la sesión. Las fotos o videos de tu sesión aparecen en nuestros anuncios de Facebook e Instagram solo si dijiste que sí a los anuncios en la autorización de fotos que firmaste."] },
             "Meta utiliza esta información como se describe en su Política de privacidad (facebook.com/privacy/policy). Puedes controlar los anuncios que ves en la configuración de anuncios de Facebook e Instagram (facebook.com/adpreferences), y puedes bloquear o eliminar las cookies desde la configuración de tu navegador."
           ]
         },

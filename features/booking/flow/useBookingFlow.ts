@@ -17,12 +17,13 @@ import { consumeBookingScroll, scrollToBooking } from "@/lib/scroll/booking";
 import { trackBeginBooking, trackBooked } from "@/lib/tracking/client";
 import { countBookingStep, looksLikeEmail, saveBookingDraft } from "@/lib/unfinished/client";
 import type { ContactDraft } from "./booking-state";
-import { extraBabyLine, type BookingBaby } from "@/lib/booking/extra-babies";
+import { extraBabyLine, extraPersonLine, familyLimit, type BookingBaby } from "@/lib/booking/extra-babies";
+import { asksFamily, type FamilyMember } from "@/lib/booking/family";
 import { BOOKING_LANGUAGE_SWITCH_EVENT, consumeBookingLanguageDraft, saveBookingLanguageDraft } from "@/lib/booking/language-draft";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import { useBookingSelection } from "./BookingSelectionContext";
-import { apiErrorMessage, initialState, isLanguageDraftPayload, newRequestId, reducer, validateContact, type LanguageDraftPayload, type State } from "./booking-state";
+import { apiErrorMessage, emptyFamilyMember, initialState, isLanguageDraftPayload, newRequestId, reducer, validateContact, type LanguageDraftPayload, type State } from "./booking-state";
 
 /**
  * The booking form's state and actions: availability, travel estimate, deposit, discount quote, the language-switch
@@ -123,6 +124,10 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   const { getBundle, today } = useCatalog();
   const bundle = getBundle(state.bundleId);
   const addon = bundle ? extraBabyLine(bundle, state.babies.length) : null;
+  // family bundles: people listed (with a role) and the charge for anyone over the included ones
+  const familyCount = bundle && asksFamily(bundle) ? state.family.filter((m) => m.role).length : 0;
+  const personAddon = bundle ? extraPersonLine(bundle, state.babies.length, familyCount) : null;
+  const maxFamily = bundle ? familyLimit(bundle, state.babies.length) : 0;
   // review-step price: always calculated by the server (the browser only displays it)
   const [quote, setQuote] = useState<PriceQuote | null>(null);
   // travel fee estimate for the ZIP code (the server recalculates it when booking)
@@ -161,12 +166,14 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     const restoredState: State = {
       ...draft.state,
       babies: draft.state.babies.map((baby) => ({ ...baby, gender: baby.gender ?? "" })),
+      family: draft.state.family ?? [emptyFamilyMember()],
       bundleId,
       status: "editing",
       result: null,
       stepError: null,
       fieldErrors: {},
       babyErrors: [],
+      familyErrors: [],
     };
     const restoredMonth = new Date(`${draft.month}-01T12:00:00`);
     let active = true;
@@ -198,6 +205,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
           stepError: null,
           fieldErrors: {},
           babyErrors: [],
+          familyErrors: [],
         },
         backdrops,
         month: `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, "0")}`,
@@ -260,21 +268,21 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
       .catch(() => undefined);
   }, [bundleId]);
   const bundleCents = bundle ? quote?.finalCents ?? activeOffer(bundle, today)?.cents ?? toCents(bundle.price) : 0;
-  const beforeTravelCents = quote?.totalCents ?? bundleCents + (addon?.totalCents ?? 0);
+  const beforeTravelCents = quote?.totalCents ?? bundleCents + (addon?.totalCents ?? 0) + (personAddon?.totalCents ?? 0);
   const totalCents = beforeTravelCents + travelFee;
   const depositCents = depositOffer?.amountCents ? Math.min(depositOffer.amountCents, totalCents) : 0;
   const deposit = formatMoney(depositCents);
   useEffect(() => {
     if (state.step !== STEP.review || !state.bundleId) return;
     provider
-      .quote(state.bundleId, appliedCode ?? undefined, appliedCode ? state.contact.email.trim() || undefined : undefined, state.babies.length)
+      .quote(state.bundleId, appliedCode ?? undefined, appliedCode ? state.contact.email.trim() || undefined : undefined, state.babies.length, familyCount)
       .then(setQuote)
       .catch(() => {
         setQuote(null);
         if (appliedCode) setAppliedCode(null);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.step, state.bundleId, state.babies.length]);
+  }, [state.step, state.bundleId, state.babies.length, familyCount]);
 
   // conversion tracking: the visitor started booking this bundle
   useEffect(() => {
@@ -336,13 +344,22 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
       case STEP.details: {
         const errors = validateContact(state.contact, messages.details);
         const babyErrors = state.babies.map((baby) => (baby.age ? "" : messages.details.baby.ageError));
+        // who else is in the photos: each listed person needs a role (or is removed), and fits this bundle
+        const familyErrors = bundle && asksFamily(bundle)
+          ? state.family.map((m, i) => (i >= maxFamily ? messages.details.family.overLimit : m.role ? "" : messages.details.family.roleError))
+          : [];
         const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
         if (tooFar && !errors.zip) errors.zip = tooFar.text;
-        if (Object.keys(errors).length || babyErrors.some(Boolean)) {
-          dispatch({ type: "fieldErrors", errors, babyErrors });
+        if (Object.keys(errors).length || babyErrors.some(Boolean) || familyErrors.some(Boolean)) {
+          dispatch({ type: "fieldErrors", errors, babyErrors, familyErrors });
           const first = Object.keys(errors)[0];
           const firstBaby = babyErrors.findIndex(Boolean);
-          requestAnimationFrame(() => (first ? document.getElementById(`field-${first}`) : document.getElementById(firstBaby === 0 ? "field-babyAge" : `field-baby-${firstBaby}-age`))?.focus());
+          const target = first
+            ? `field-${first}`
+            : firstBaby >= 0
+              ? firstBaby === 0 ? "field-babyAge" : `field-baby-${firstBaby}-age`
+              : `field-family-${familyErrors.findIndex(Boolean)}-role`;
+          requestAnimationFrame(() => document.getElementById(target)?.focus());
           return;
         }
         break;
@@ -357,10 +374,14 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     try {
       const c = state.contact;
       const babies: BookingBaby[] = state.babies.map((baby) => ({ name: baby.name.trim() || undefined, age: baby.age, gender: baby.gender || undefined }));
+      const family: FamilyMember[] | undefined = bundle && asksFamily(bundle)
+        ? state.family.flatMap((m) => (m.role ? [{ role: m.role, name: m.name.trim() || undefined }] : []))
+        : undefined;
       const request = {
         bundleId: state.bundleId,
         locale,
         babies,
+        family,
         slot: state.slot,
         inspirationPhotoId: inspiration?.id,
         discountCode: appliedCode ?? undefined,
@@ -433,7 +454,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   return {
     state, dispatch, provider, router, selection, headingRef, panelRef,
     hp, setHp, days, loadingDays, studioToday, month, setMonth,
-    inspiration, bundle, today, addon, quote, setQuote, zip, travel, travelChecking, travelFee,
+    inspiration, bundle, today, addon, personAddon, maxFamily, quote, setQuote, zip, travel, travelChecking, travelFee,
     backdrops, setBackdrops, setups, appliedCode, setAppliedCode, checkingBabyCount, changeBabyCount,
     depositOffer, redirecting, bundleCents, beforeTravelCents, totalCents, depositCents, deposit,
     goTo, goBack, next, submit, daySlots, onContactBlur,

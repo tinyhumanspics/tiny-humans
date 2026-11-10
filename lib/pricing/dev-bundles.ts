@@ -48,5 +48,6 @@ export const devBundles: Bundle[] = [
     locationNote: "We bring the studio to your home",
     cta: "Choose Our Family Story",
     extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
+    extraPerson: { active: true, price: 75, maxExtra: 5 },
   },
 ];

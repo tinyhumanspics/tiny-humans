@@ -1,5 +1,6 @@
 import { BACKDROPS } from "@/config/backdrops";
 import type { BookingBaby } from "@/lib/booking/extra-babies";
+import { familyLabel, type FamilyMember } from "@/lib/booking/family";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import { formatMoney } from "@/lib/pricing/engine";
 import { site } from "@/config/site";
@@ -14,7 +15,8 @@ export function customerPricingRows(p: PriceQuote, locale: EmailLocale): [string
   rows.push([m.bundleTotal, formatMoney(p.finalCents)]);
   p.addons.forEach((a) => {
     // Keep the booked English snapshot name exactly as it was; translate the known customer-facing add-on in Spanish.
-    const name = locale === "en" ? a.name : a.quantity === 1 ? m.extraBaby : m.extraBabies;
+    const one = a.quantity === 1;
+    const name = locale === "en" ? a.name : a.kind === "extra_person" ? (one ? m.extraPerson : m.extraPeople) : one ? m.extraBaby : m.extraBabies;
     rows.push([name, `${a.quantity} × ${formatMoney(a.unitPriceCents)} = ${formatMoney(a.totalCents)}`]);
   });
   if (p.addonsCents > 0) rows.push([m.sessionTotalBeforeTravel, formatMoney(p.totalCents)]);
@@ -27,6 +29,11 @@ export function customerBabiesLabel(babies: BookingBaby[], locale: EmailLocale):
   return babies
     .map((baby, index) => `${baby.name?.trim() || fill(m.babyNumber, { number: String(index + 1) })} (${baby.gender ? `${m.genders[baby.gender]}, ` : ""}${ages[baby.age] ?? baby.age})`)
     .join(", ");
+}
+
+/** "Mom (Ana), Dad, Brother (Leo)" in the booking's language. */
+export function customerFamilyLabel(members: FamilyMember[], locale: EmailLocale): string {
+  return familyLabel(members, emailMessages(locale).common.roles);
 }
 
 export function customerBabyNames(babies: BookingBaby[], locale: EmailLocale): string | null {

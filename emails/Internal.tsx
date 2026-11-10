@@ -6,6 +6,7 @@ import { backdropNames } from "@/lib/booking/backdrop-names";
 import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
 import { babiesLabel } from "@/lib/booking/extra-babies";
+import { familyLabel } from "@/lib/booking/family";
 
 /* Emails to the studio (English only: they go to the owner, not to families). */
 
@@ -21,6 +22,7 @@ export async function internalNewBookingEmail(d: BookingDetails, createdAt: Date
     ["Customer email", d.contact.email],
     ["Customer phone", d.contact.phone],
     [d.babies.length > 1 ? "Babies" : "Baby", babiesLabel(d.babies)],
+    ...(d.family?.length ? [["Family in the photos", familyLabel(d.family)] as [string, string]] : []),
     ["Bundle", d.bundle.name],
     ["Pricing", d.pricing.pricingType === "offer" ? `Special offer (${d.pricing.offerLabel})` : d.pricing.pricingType === "discount" ? `Discount code ${d.pricing.discountCode}` : "Regular price"],
     ...(d.pricing.pricingType === "regular" ? [["Regular price", formatMoney(d.pricing.regularCents)] as [string, string]] : []),

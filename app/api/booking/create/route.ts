@@ -42,6 +42,7 @@ export async function POST(req: Request) {
       bundleId: r.bundleId,
       locale: r.locale,
       babies: r.babies,
+      family: r.family,
       slot: { id: `${r.slot.date}T${r.slot.start}`, date: r.slot.date, start: r.slot.start, end: "", label: formatTimeLabel(r.slot.start) },
       contact: r.contact,
       address: r.address,

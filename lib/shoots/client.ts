@@ -43,6 +43,8 @@ export const shootsApi = {
     (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "note", group, caption: "" }) })).item,
   saveCaption: async (key: string, id: string, caption: string) =>
     (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ caption }) })).item,
+  saveWho: async (key: string, id: string, who: string[]) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ who }) })).item,
   removeInspo: (key: string, id: string) => call<void>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "DELETE" }),
   /** One photo, already shrunk in the browser (preparePhoto). */
   uploadPhoto: async (key: string, group: InspoGroup, photo: { blob: Blob; width: number; height: number }) => {

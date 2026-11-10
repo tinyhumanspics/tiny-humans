@@ -361,6 +361,18 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .extraBabiesGrid { display: grid; gap: 14px; }
 @media (min-width: 720px) { .extraBabiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .error { margin-top: 18px; font-family: var(--font-chalk); font-size: 1.15rem; }
+/* who else is in the photos (bundles that include the family) */
+.familyForm { display: grid; gap: 10px; }
+.familyList { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+@media (min-width: 720px) { .familyList { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.familyRow { display: grid; gap: 8px; padding: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 9px; }
+.familyHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
+.familyFields { display: grid; gap: 10px; }
+.familyRemove, .familyAdd { min-height: 44px; padding: 2px 6px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.1rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; }
+.familyAdd { justify-self: start; font-size: 1.25rem; }
+/* stays in the page (empty) so screen readers hear the extra charge when it appears */
+.familyExtra { margin: 0; color: var(--sun-yellow); font-size: 1.15rem; }
+.familyRemove:hover, .familyRemove:focus-visible, .familyAdd:hover, .familyAdd:focus-visible { color: var(--sun-yellow); }
 
 /* ---------- review ---------- */
 .review { margin: 0; display: grid; gap: 0; }

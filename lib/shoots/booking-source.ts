@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { portfolio } from "@/config/portfolio";
-import { addonsFor, babiesFor } from "@/lib/booking/addons";
+import { addonsFor, babiesFor, familyFor } from "@/lib/booking/addons";
 import { backdropsFor } from "@/lib/booking/backdrops";
 import { addressOf } from "@/lib/booking/details";
 import { getDb } from "@/lib/db/client";
@@ -34,12 +34,13 @@ async function sitePhotos(): Promise<SitePhoto[]> {
 async function factsOf(rows: Booking[]): Promise<ShootBookingFacts[]> {
   if (!rows.length) return [];
   const ids = rows.map((r) => r.id);
-  const [backdrops, babies, addons, deposits, photos] = await Promise.all([
+  const [backdrops, babies, addons, deposits, photos, family] = await Promise.all([
     backdropsFor(ids),
     babiesFor(ids),
     addonsFor(ids),
     depositsFor(ids),
     rows.some((r) => r.inspirationPhotoId) ? sitePhotos() : Promise.resolve([] as SitePhoto[]),
+    familyFor(ids),
   ]);
   const picksOf = new Map(backdrops.map((b) => [b.bookingId, b.picks]));
   const depositOf = new Map(deposits.map((d) => [d.bookingId, d]));
@@ -60,6 +61,7 @@ async function factsOf(rows: Booking[]): Promise<ShootBookingFacts[]> {
       babyName: r.babyName,
       babyAge: r.babyAge,
       babies: babies.get(r.id) ?? [],
+      family: family.get(r.id) ?? [],
       backdropPicks: picksOf.get(r.id) ?? [],
       addons: (addons.get(r.id) ?? []).map((a) => ({ name: a.name, quantity: a.quantity, extraMinutes: a.extraMinutes })),
       pick: photo ? { id: photo.id, title: photo.title?.trim() || "Their pick", src: photo.src } : null,

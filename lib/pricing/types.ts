@@ -27,6 +27,8 @@ export interface Bundle {
   offer?: BundleOffer | null;
   /** Twins/triplets option, owner-editable per bundle. One unit = one baby after the first. */
   extraBaby?: ExtraBabyAddon | null;
+  /** Family bundles: each person over the included ones (babies counted), owner-editable like extraBaby. */
+  extraPerson?: ExtraPersonAddon | null;
 }
 
 /** Owner-editable customer copy for one translated bundle. Prices and other booking facts stay on Bundle. */
@@ -51,6 +53,14 @@ export interface ExtraBabyAddon {
   extraPhotos: number;
   /** Maximum babies in one session (1 + the stored add-on quantity). */
   maxBabies: number;
+}
+
+export interface ExtraPersonAddon {
+  active: boolean;
+  /** Dollars per person over the bundle's included people; never reduced by a bundle offer or discount code. */
+  price: number;
+  /** The most extra people one booking can add (1–9). */
+  maxExtra: number;
 }
 
 export interface BundleOffer {

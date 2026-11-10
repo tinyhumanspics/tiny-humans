@@ -33,7 +33,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
   const flow = useBookingFlow(bundleId, locale, messages);
   const {
     state, dispatch, router, selection, headingRef, panelRef, hp, setHp, days, loadingDays, studioToday, month, setMonth,
-    inspiration, bundle, today, addon, zip, travel, travelChecking, backdrops, setBackdrops, setups, checkingBabyCount,
+    inspiration, bundle, today, addon, personAddon, maxFamily, zip, travel, travelChecking, backdrops, setBackdrops, setups, checkingBabyCount,
     changeBabyCount, depositOffer, redirecting, depositCents, deposit, goTo, goBack, next, submit, daySlots,
   } = flow;
 
@@ -53,6 +53,7 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                 </span>
                 {depositOffer?.amountCents ? <span className={styles.bundleMeta}>{fill(messages.summary.deposit, { deposit: formatMoney(depositOffer.amountCents) })}</span> : null}
                 {addon && <span className={styles.bundleMeta}>{addon.quantity === 1 ? messages.summary.extraBaby : messages.summary.extraBabies}: +{formatMoney(addon.totalCents)} · {fill(messages.summary.totalDuration, { duration: flowDurationLabel(sessionMinutes(bundle, state.babies.length), messages.summary) })} · {fill(messages.summary.editedPhotos, { count: addPhotos(bundle.photos, addon.extraPhotos) })}</span>}
+                {personAddon && <span className={styles.bundleMeta}>{personAddon.quantity === 1 ? messages.summary.extraPerson : messages.summary.extraPeople}: +{formatMoney(personAddon.totalCents)}</span>}
               </p>
               {inspiration && (
                 <p className={cn(styles.summaryPhoto, "chalk-soft")}>
@@ -119,6 +120,13 @@ export default function Booking({ bundleId, locale = "en", messages }: { bundleI
                       babies={state.babies}
                       babyErrors={state.babyErrors}
                       onBabyChange={(index, field, value) => dispatch({ type: "baby", index, field, value })}
+                      family={state.family}
+                      maxFamily={maxFamily}
+                      babyCount={state.babies.length}
+                      familyErrors={state.familyErrors}
+                      onFamilyChange={(index, field, value) => dispatch({ type: "family", index, field, value })}
+                      onFamilyAdd={() => dispatch({ type: "familyAdd" })}
+                      onFamilyRemove={(index) => dispatch({ type: "familyRemove", index })}
                       bundle={bundle!}
                       checkingBabyCount={checkingBabyCount}
                       onBabyCountChange={changeBabyCount}

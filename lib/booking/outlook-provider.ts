@@ -37,8 +37,9 @@ import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
 import { heldForSameFamily, openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
-import { addPhotos, extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
-import { saveBookingAddons } from "./addons";
+import { addPhotos, extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
+import { saveBookingAddons, saveBookingFamily } from "./addons";
+import { asksFamily, cleanFamily } from "./family";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
 
 const ACTIVE = ne(bookings.status, "cancelled");
@@ -121,6 +122,9 @@ export class OutlookBookingProvider implements BookingProvider {
     const addon = extraBabyLine(bundle, babies.length);
     if (babies.length > 1 && !addon) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count anymore. Please choose again.");
     const durationMinutes = sessionMinutes(bundle, babies.length);
+    // who else is in the photos: only on bundles that include the family (people over the included ones are priced below)
+    const family = asksFamily(bundle) ? cleanFamily(request.family) : [];
+    if (family.length > familyLimit(bundle, babies.length)) throw new BookingError("invalid_request", "That's more family members than this bundle includes. Please remove one.");
     const tz = bookingRules.timeZone;
     const { calendarUser } = microsoftConfig();
     const date = request.slot.date;
@@ -173,7 +177,7 @@ export class OutlookBookingProvider implements BookingProvider {
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
-    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length);
+    const { quote: pricing, codeId } = await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length, family.length);
     let usage: { usageId: string; release: () => Promise<void> } | null = null;
     if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
     const releaseUsage = () => usage?.release().catch(() => undefined);
@@ -251,7 +255,8 @@ export class OutlookBookingProvider implements BookingProvider {
     await saveBookingTerms(row.id, noticeHours, addPhotos(bundle.photos, addon?.extraPhotos ?? 0), row.bookingReference);
     await saveAccessNotes(row.id, request.address.accessNotes, row.bookingReference);
     await saveBookingBackdrops(row.id, backdrops, row.bookingReference);
-    await saveBookingAddons(row.id, babies, addon, row.bookingReference);
+    await saveBookingAddons(row.id, babies, pricing.addons, row.bookingReference);
+    await saveBookingFamily(row.id, family, row.bookingReference);
     // Optional permissions (best effort; they're also in the event + studio email).
     if (request.consents) {
       const at = request.consents.sms || request.consents.photos ? new Date() : null;
@@ -268,7 +273,7 @@ export class OutlookBookingProvider implements BookingProvider {
     let deposit: BookingDetails["deposit"];
     if (depositCents > 0) {
       const opened = await openDeposit(row, depositCents, noticeHours);
-      if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
+      if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
       deposit = { amountCents: depositCents, status: "unpaid" };
     }
 
@@ -281,6 +286,7 @@ export class OutlookBookingProvider implements BookingProvider {
       end,
       contact: request.contact,
       babies,
+      family,
       address: request.address,
       inspirationTitle: request.inspirationPhotoId ? await photoTitle(request.inspirationPhotoId) : undefined,
       consents: request.consents,
@@ -299,23 +305,25 @@ export class OutlookBookingProvider implements BookingProvider {
       await releaseUsage();
       throw err;
     }
-    return { id: row.bookingReference, status: "confirmed", request: { ...request, slot }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: noticeHours, deposit };
+    return { id: row.bookingReference, status: "confirmed", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), emailSent, pricing, travel, rescheduleNoticeHours: noticeHours, deposit };
   }
 
   /** Server-side price for a bundle (+ optional code, re-validated here). Never trusts the browser. */
-  private async priceFor(bundleId: string, code: string | undefined, email: string | undefined, babyCount = 1): Promise<{ quote: PriceQuote; codeId: string | null }> {
+  private async priceFor(bundleId: string, code: string | undefined, email: string | undefined, babyCount = 1, familyCount = 0): Promise<{ quote: PriceQuote; codeId: string | null }> {
     const bundle = (await getCatalog()).find((b) => b.id === bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const today = todayInZone(bookingRules.timeZone);
     if (babyCount > 1 && !extraBabyLine(bundle, babyCount)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
-    if (!code?.trim()) return { quote: withExtraBabies(computeQuote(bundle, today), bundle, babyCount), codeId: null };
+    const family = asksFamily(bundle) ? familyCount : 0;
+    if (family > familyLimit(bundle, babyCount)) throw new BookingError("invalid_request", "That's more family members than this bundle includes. Please remove one.");
+    if (!code?.trim()) return { quote: withAddons(computeQuote(bundle, today), bundle, babyCount, family), codeId: null };
     const check = await validateCode(code, bundleId, email);
     if (!check.ok) throw new BookingError("invalid_request", check.message);
-    return { quote: withExtraBabies(computeQuote(bundle, today, check.terms), bundle, babyCount), codeId: check.codeId };
+    return { quote: withAddons(computeQuote(bundle, today, check.terms), bundle, babyCount, family), codeId: check.codeId };
   }
 
-  async quote(bundleId: string, code?: string, email?: string, babyCount = 1): Promise<PriceQuote> {
-    return (await this.priceFor(bundleId, code, email, babyCount)).quote;
+  async quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0): Promise<PriceQuote> {
+    return (await this.priceFor(bundleId, code, email, babyCount, familyCount)).quote;
   }
 
   async cancelBooking(reference: string, opts?: CancelOptions): Promise<void> {

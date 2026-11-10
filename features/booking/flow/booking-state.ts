@@ -1,4 +1,4 @@
-import { bookingSteps, isBabyGender, STEP, type BabyGender } from "@/config/booking";
+import { bookingSteps, isBabyGender, isFamilyRole, MAX_FAMILY_MEMBERS, STEP, type BabyGender, type FamilyRole } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { BookingApiError, type BookingConsents, type BookingResult, type DateKey, type TimeSlot } from "@/lib/booking";
 import { isFloridaZip } from "@/lib/travel/types";
@@ -25,12 +25,17 @@ export interface ContactDraft {
 export type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
 /** gender "" = not picked (it's optional). */
 export type BabyDraft = { name: string; age: string; gender: "" | BabyGender };
+/** Who else is in the photos (bundles that include the family); role "" = not picked yet. */
+export type FamilyDraft = { role: "" | FamilyRole; name: string };
+export const emptyFamilyMember = (): FamilyDraft => ({ role: "", name: "" });
 
 export interface State {
   step: number;
   maxStep: number;
   bundleId: string | null;
   babies: BabyDraft[];
+  /** Asked only on bundles that include the family (lib/booking/family.ts asksFamily); one empty row to start. */
+  family: FamilyDraft[];
   date: DateKey | null;
   slot: TimeSlot | null;
   contact: ContactDraft;
@@ -39,6 +44,7 @@ export interface State {
   stepError: string | null;
   fieldErrors: ContactErrors;
   babyErrors: string[];
+  familyErrors: string[];
   status: "editing" | "submitting" | "done";
   result: BookingResult | null;
 }
@@ -59,6 +65,7 @@ export const initialState: State = {
   maxStep: STEP.date,
   bundleId: null,
   babies: [{ name: "", age: "", gender: "" }],
+  family: [emptyFamilyMember()],
   date: null,
   slot: null,
   contact: emptyContact,
@@ -66,6 +73,7 @@ export const initialState: State = {
   stepError: null,
   fieldErrors: {},
   babyErrors: [],
+  familyErrors: [],
   status: "editing",
   result: null,
 };
@@ -94,6 +102,8 @@ export function isLanguageDraftPayload(value: unknown, bundleId: string): value 
     && babies.length <= 3
     // gender is missing from drafts saved before it existed (Oct 17)
     && babies.every((baby) => isRecord(baby) && typeof baby.name === "string" && typeof baby.age === "string" && (baby.gender === undefined || baby.gender === "" || isBabyGender(baby.gender)))
+    // family is missing from drafts saved before it existed (Nov 10)
+    && (state.family === undefined || (Array.isArray(state.family) && state.family.length >= 1 && state.family.length <= MAX_FAMILY_MEMBERS && state.family.every((m) => isRecord(m) && typeof m.name === "string" && (m.role === "" || isFamilyRole(m.role)))))
     && isRecord(contact)
     && Object.keys(emptyContact).every((key) => typeof contact[key] === "string")
     && isRecord(consents)
@@ -130,12 +140,15 @@ export type Action =
   | { type: "contact"; field: keyof ContactDraft; value: string }
   | { type: "babyCount"; count: number; slot?: TimeSlot | null }
   | { type: "baby"; index: number; field: keyof BabyDraft; value: string }
+  | { type: "family"; index: number; field: keyof FamilyDraft; value: string }
+  | { type: "familyAdd" }
+  | { type: "familyRemove"; index: number }
   | { type: "consent"; field: keyof BookingConsents; value: boolean }
   | { type: "go"; step: number }
   | { type: "next" }
   | { type: "back" }
   | { type: "stepError"; message: string }
-  | { type: "fieldErrors"; errors: ContactErrors; babyErrors?: string[] }
+  | { type: "fieldErrors"; errors: ContactErrors; babyErrors?: string[]; familyErrors?: string[] }
   | { type: "submitting" }
   | { type: "done"; result: BookingResult }
   | { type: "submitFailed"; message: string }
@@ -165,20 +178,32 @@ export function reducer(state: State, action: Action): State {
       babyErrors[action.index] = "";
       return { ...state, babies, babyErrors };
     }
+    case "family": {
+      const family = state.family.map((m, i) => (i === action.index ? { ...m, [action.field]: action.value } : m));
+      const familyErrors = [...state.familyErrors];
+      familyErrors[action.index] = "";
+      return { ...state, family, familyErrors };
+    }
+    case "familyAdd":
+      return state.family.length >= MAX_FAMILY_MEMBERS ? state : { ...state, family: [...state.family, emptyFamilyMember()] };
+    case "familyRemove": {
+      if (state.family.length <= 1) return { ...state, family: [emptyFamilyMember()], familyErrors: [] };
+      return { ...state, family: state.family.filter((_, i) => i !== action.index), familyErrors: state.familyErrors.filter((_, i) => i !== action.index) };
+    }
     case "consent":
       return { ...state, consents: { ...state.consents, [action.field]: action.value } };
     case "go":
       return action.step <= state.maxStep ? { ...state, step: action.step, stepError: null } : state;
     case "next": {
       const step = Math.min(state.step + 1, bookingSteps.length - 1);
-      return { ...state, step, maxStep: Math.max(state.maxStep, step), stepError: null, fieldErrors: {}, babyErrors: [] };
+      return { ...state, step, maxStep: Math.max(state.maxStep, step), stepError: null, fieldErrors: {}, babyErrors: [], familyErrors: [] };
     }
     case "back":
       return { ...state, step: Math.max(0, state.step - 1), stepError: null };
     case "stepError":
       return { ...state, stepError: action.message };
     case "fieldErrors":
-      return { ...state, fieldErrors: action.errors, babyErrors: action.babyErrors ?? [] };
+      return { ...state, fieldErrors: action.errors, babyErrors: action.babyErrors ?? [], familyErrors: action.familyErrors ?? [] };
     case "submitting":
       return { ...state, status: "submitting", stepError: null };
     case "done":

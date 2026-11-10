@@ -10,6 +10,7 @@ import { shootsApi, ShootsApiError } from "@/lib/shoots/client";
 import { clock, shortDay } from "@/lib/shoots/format";
 import type { InspoItem, ShootDetail } from "@/lib/shoots/types";
 import InspoDrop from "./InspoDrop";
+import { peopleOf, picksWho } from "@/lib/shoots/people";
 import NotReady from "./NotReady";
 import { saveText, useAutosave } from "./useAutosave";
 import { useAutoHeight } from "./useAutoHeight";
@@ -54,6 +55,7 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
   const b = shoot.booking;
   const day = shortDay(shoot.date);
   const [bundleName, ...bundleRest] = (shoot.bundleLine ?? "").split(" · ");
+  const people = peopleOf(b);
 
   return (
     <div>
@@ -73,9 +75,10 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
               <b>{bundleName}</b> · {bundleRest.join(" · ")}
             </li>
           )}
-          {b?.babies.map((x, i) => (
-            <li key={i}>
-              <b>{x.name || (b.babies.length > 1 ? `Baby ${i + 1}` : "Baby")}</b> · {x.age}
+          {people.map((p) => (
+            <li key={p.key}>
+              <b>{p.label}</b>
+              {p.detail ? ` · ${p.detail}` : ""}
             </li>
           ))}
           {b?.people && <li>{b.people}</li>}
@@ -114,8 +117,10 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
         <div>
           <section aria-labelledby="inspo-title">
             <h2 id="inspo-title" className={cn(styles.h2, "chalk")}>{shoot.inspoTitle}</h2>
-            <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>What the family sends you, plus your own ideas. Say what each shot is.</p>
-            <InspoDrop shootKey={shoot.key} group="inspo" items={shoot.inspo.filter((i) => i.group === "inspo")} onAdd={added} onRemove={removed} />
+            <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>
+              What the family sends you, plus your own ideas. Say what each shot is{picksWho(people) ? " and who's in it: the day sheet groups them that way" : ""}.
+            </p>
+            <InspoDrop shootKey={shoot.key} group="inspo" items={shoot.inspo.filter((i) => i.group === "inspo")} onAdd={added} onRemove={removed} people={people} />
           </section>
           <section className={css.block} aria-labelledby="bts-title">
             <h2 id="bts-title" className={cn(styles.h2, "chalk")}>BTS on phones</h2>

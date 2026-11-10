@@ -1,5 +1,6 @@
 import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
+import type { FamilyMember } from "@/lib/booking/family";
 
 /** A booking as shown in /admin > Leads (no raw technical ids). */
 export type LeadStatus = "pending" | "confirmed" | "rescheduled" | "cancelled";
@@ -74,6 +75,8 @@ export interface Lead {
   babyName: string | null;
   babyAge: string;
   babies?: BookingBaby[];
+  /** Who else is in the photos (bundles that include the family). */
+  family?: FamilyMember[];
   bundleId: string;
   bundleName: string;
   /** Price snapshot from booking time (never recalculated). */

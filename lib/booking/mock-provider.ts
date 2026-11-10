@@ -24,7 +24,8 @@ import type {
   TimeSlot,
 } from "./types";
 import { addMinutes, formatTimeLabel } from "./dates";
-import { extraBabyLine, sessionMinutes, withExtraBabies, type BookingBaby } from "./extra-babies";
+import { extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
+import { asksFamily, cleanFamily } from "./family";
 
 /** Deterministic pseudo-random number in [0,1) for a string seed. */
 function seeded(seed: string): number {
@@ -57,15 +58,17 @@ export class MockBookingProvider implements BookingProvider {
     return (await this.pricing.bundles()).find((b) => b.id === id && b.active !== false);
   }
 
-  async quote(bundleId: string, code?: string, email?: string, babyCount = 1): Promise<PriceQuote> {
+  async quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0): Promise<PriceQuote> {
     const b = await this.bundle(bundleId);
     if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const today = todayInZone(bookingRules.timeZone);
     if (babyCount > 1 && !extraBabyLine(b, babyCount)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
-    if (!code?.trim()) return withExtraBabies(computeQuote(b, today), b, babyCount);
+    const family = asksFamily(b) ? familyCount : 0;
+    if (family > familyLimit(b, babyCount)) throw new BookingError("invalid_request", "That's more family members than this bundle includes. Please remove one.");
+    if (!code?.trim()) return withAddons(computeQuote(b, today), b, babyCount, family);
     const check = await this.pricing.validateCode(code, bundleId, email);
     if (!check.ok) throw new BookingError("invalid_request", check.message);
-    return withExtraBabies(computeQuote(b, today, check.terms), b, babyCount);
+    return withAddons(computeQuote(b, today, check.terms), b, babyCount, family);
   }
 
   async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
@@ -90,8 +93,9 @@ export class MockBookingProvider implements BookingProvider {
     const b = await this.bundle(request.bundleId);
     if (!b) throw new BookingError("invalid_request", "That bundle isn't available anymore. Please choose another one.");
     const babies: BookingBaby[] = request.babies?.length ? request.babies : [{ name: request.contact.babyName, age: request.contact.babyAge }];
-    const pricing = await this.quote(request.bundleId, request.discountCode, request.contact.email, babies.length);
-    request = { ...request, babies, slot: { ...request.slot, end: addMinutes(request.slot.start, sessionMinutes(b, babies.length)), label: formatTimeLabel(request.slot.start) } };
+    const family = asksFamily(b) ? cleanFamily(request.family) : [];
+    const pricing = await this.quote(request.bundleId, request.discountCode, request.contact.email, babies.length, family.length);
+    request = { ...request, babies, family, slot: { ...request.slot, end: addMinutes(request.slot.start, sessionMinutes(b, babies.length)), label: formatTimeLabel(request.slot.start) } };
     const token = randomToken();
     const result: BookingResult = {
       id: generateBookingReference(),
@@ -288,6 +292,7 @@ function mockLead(rec: MockRecord): Lead {
     babyName: r.contact.babyName ?? null,
     babyAge: r.contact.babyAge,
     babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }],
+    family: r.family ?? [],
     bundleId: r.bundleId,
     bundleName: p.bundleName,
     pricing: { regularCents: p.regularCents, offerCents: p.offerCents, offerLabel: p.offerLabel, discountCode: p.discountCode, discountCents: p.discountCents, finalCents: p.finalCents, addons: p.addons, addonsCents: p.addonsCents, totalCents: p.totalCents, pricingType: p.pricingType },

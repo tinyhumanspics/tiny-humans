@@ -36,6 +36,8 @@ export const bundleInputSchema = z
       extraPhotos: z.number().int().min(0).max(100),
       maxBabies: z.number().int().min(2).max(3),
     }),
+    /** Family bundles: price per person over the included ones, and how many extra people one booking can add. */
+    extraPerson: z.object({ active: z.boolean(), price: money, maxExtra: z.number().int().min(1).max(9) }).optional(),
   })
   .refine((b) => !b.offer?.enabled || (b.offer.price > 0 && b.offer.price < b.price), "The offer price must be lower than the regular price.")
   .refine((b) => !b.offer?.enabled || Boolean(b.offer.endsOn), "Add the date the offer ends.")

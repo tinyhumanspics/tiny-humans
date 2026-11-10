@@ -294,3 +294,13 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   private store): show them only in /admin with `<img>` (never next/image or public pages), delete files BEFORE rows
   (`removeShootFiles`, only "shoots/" paths), and the lead delete route removes them first. No video uploads (owner, Nov
   10: videos are added as links, which open Instagram/TikTok/YouTube). Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).
+- Family members + who's in each shot (owner, Nov 10; migration 0025_family): bundles whose people/features mention
+  siblings (`asksFamily()`, today Our Family Story) ask "Who else is in the photos?" (`config/booking.ts` familyRoles;
+  role required, name optional). FAMILY_INCLUDED_PEOPLE = 5 counting the babies; each person over that is the bundle's
+  `extra_person` add-on (`bundle_addons`, /admin → Pricing, $75, max extra 1–9; `extraPersonLine`/`familyLimit`/`withAddons`
+  in `lib/booking/extra-babies.ts`), priced on the server like the extra baby (quote sends `familyCount`; booking_addons
+  keeps one row per kind; the Stripe page lists each add-on). Saved best effort in `booking_family_members`
+  (`saveBookingFamily`/`familyFor` in `lib/booking/addons.ts`) and shown in review, confirmation, both emails, the Outlook
+  event, Leads and Shoots. Shot ideas keep `shoot_inspo.who` keys ("all", "baby:<n>", "fam:<n>"; `lib/shoots/people.ts`);
+  that column is in the Drizzle schema, so 0025 must run in production BEFORE the code deploys. Family names are parent
+  data: never to Meta/analytics, never in the unfinished-booking draft.
