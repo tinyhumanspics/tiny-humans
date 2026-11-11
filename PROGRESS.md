@@ -1771,7 +1771,7 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
   "I don't see anything"; the owner then found it); (3) recheck on a phone that the offer sticker shows with its card on
   reload (fixed Nov 10, `1d745cd`); (4) Feb 1: switch the theme to Valentine's in /admin → Theme and set the "Show love
   to your tiny human" box to the Valentine's theme in Seasonal Landing; switch back Mar 1.
-- **Nov 10 (after Shoots + waiver went live):** (1) add `ANTHROPIC_API_KEY` in Vercel (Production) for real Spanish
+- **Nov 10 (after Shoots + waiver went live):** (1) ~~add `ANTHROPIC_API_KEY` in Vercel (Production)~~ **added by the owner Nov 11** (redeployed the same day) for real Spanish
   translations (small cost per save with new text; without it the English is copied); (2) ~~video uploads~~ no: links only
   (owner, Nov 10) (3) waiver: Florida lawyer review, legal business name if an LLC, Alondra checks the
   Spanish (waiver + privacy); (4) ~~iCloud duplicates~~ deleted Nov 10 (owner OK: 3 code copies, 13 empty folders, 27 local-db copies, 1 test output); (5) optional
