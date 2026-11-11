@@ -461,6 +461,29 @@ export const bookingDeposits = pgTable(
 
 export type BookingDeposit = typeof bookingDeposits.$inferSelect;
 
+/* ---------------- trip days (owner, Nov 10) ---------------- */
+
+/**
+ * Trip-day rules (/admin → Availability → Travel): one row (id 1). Without the row (or the table) the owner's Nov 10
+ * choices apply (lib/booking/trips.ts DEFAULT_TRIP_SETTINGS), so bookings never depend on it.
+ */
+export const tripSettingsTable = pgTable(
+  "trip_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    enabled: boolean("enabled").notNull().default(true),
+    tripMiles: integer("trip_miles").notNull().default(60),
+    sameTripMiles: integer("same_trip_miles").notNull().default(30),
+    nextDayUntil: text("next_day_until").notNull().default("12:00"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("trip_settings_single_row", sql`${t.id} = 1`),
+    check("trip_settings_miles_check", sql`${t.tripMiles} between 10 and 1000 and ${t.sameTripMiles} between 1 and 200`),
+    check("trip_settings_time_check", sql`${t.nextDayUntil} ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'`),
+  ],
+);
+
 /* ---------------- due-date reservations ("Not born yet", owner Nov 10) ---------------- */
 
 /**

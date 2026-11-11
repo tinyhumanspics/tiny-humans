@@ -496,6 +496,7 @@
       "network": "We couldn't connect. Check your connection and try again.",
       "rateLimited": "Too many tries. Please wait a few minutes.",
       "slotTaken": "That time was just booked. Please pick another time.",
+      "tripDay": "That day we're photographing in another area, so it isn't open for your home. Please pick another day, or text us at {phone} and we'll find one.",
       "inProgress": "We're still saving your booking. One moment, please.",
       "date": "Pick a day on the calendar.",
       "time": "Pick a time to continue.",

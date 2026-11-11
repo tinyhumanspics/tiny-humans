@@ -9,7 +9,7 @@ const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time");
 const text = (max: number) => z.string().trim().max(max);
 
 export const availabilityQuerySchema = z
-  .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), babyCount: z.coerce.number().int().min(1).max(3).default(1), from: dateKey, to: dateKey })
+  .object({ bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64), babyCount: z.coerce.number().int().min(1).max(3).default(1), from: dateKey, to: dateKey, zip: z.string().trim().regex(/^\d{5}$/).optional() })
   .refine((q) => q.from <= q.to, "from must be before to")
   .refine((q) => (daysBetweenDateKeys(q.from, q.to) ?? Infinity) <= 62, "Range too long");
 

@@ -196,14 +196,14 @@ function BookSession({ api, row, today, onBooked }: { api: AdminApi; row: DueRes
   useEffect(() => {
     if (!date) return;
     let live = true;
-    fetch(`/api/booking/availability?${new URLSearchParams({ bundle: row.bundleId, babies: String(row.babyCount), from: date, to: date })}`, { cache: "no-store" })
+    fetch(`/api/booking/availability?${new URLSearchParams({ bundle: row.bundleId, babies: String(row.babyCount), from: date, to: date, zip: row.zip })}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error("Couldn't load open times."))))
       .then((j: { days: DayAvailability[] }) => live && setSlots(j.days.find((d) => d.date === date)?.slots.map((s) => s.start) ?? []))
       .catch((e) => live && (setSlots([]), setErr(errText(e, "Couldn't load open times."))));
     return () => {
       live = false;
     };
-  }, [date, row.bundleId, row.babyCount]);
+  }, [date, row.bundleId, row.babyCount, row.zip]);
 
   const book = async () => {
     if (!date || !start) return setErr("Pick a day and an open time.");

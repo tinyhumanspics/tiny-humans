@@ -6,6 +6,7 @@ import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayImpact,
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { Dashboard } from "@/lib/admin/dashboard-types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
+import type { TripSettings } from "@/lib/booking/trips";
 import type { DepositSettings } from "@/lib/deposit/types";
 import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
@@ -43,6 +44,9 @@ export interface AdminApi {
   deleteBlock(id: string): Promise<AvailabilityRules>;
   /** Travel fee settings (null = not saved yet, fees off) + example fees. */
   getTravel(): Promise<{ settings: TravelSettings | null; examples: TravelExample[]; databaseConfigured: boolean }>;
+  /** Trip days: a far session takes the whole day (Availability → Travel). */
+  getTrips(): Promise<{ settings: TripSettings }>;
+  saveTrips(s: TripSettings): Promise<{ settings: TripSettings }>;
   saveTravel(s: TravelSettings): Promise<{ settings: TravelSettings | null; examples: TravelExample[] }>;
   /** Deposits on/off + each bundle's amount (null = the database or its table isn't there). `stripeReady`: Stripe can take them. */
   getDeposit(): Promise<{ settings: DepositSettings | null; stripeReady: boolean; databaseConfigured: boolean }>;
@@ -143,6 +147,8 @@ const httpApi: AdminApi = {
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
   getTravel: async () => json(await fetch("/api/admin/travel", { cache: "no-store" })),
+  getTrips: async () => json(await fetch("/api/admin/trips", { cache: "no-store" })),
+  saveTrips: async (s) => json(await fetch("/api/admin/trips", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   saveTravel: async (s) => json(await fetch("/api/admin/travel", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   getDeposit: async () => json(await fetch("/api/admin/deposit", { cache: "no-store" })),
   saveDeposit: async (s) => json(await fetch("/api/admin/deposit", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),

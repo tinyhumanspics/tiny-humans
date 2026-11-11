@@ -44,6 +44,8 @@ export interface AvailabilityQuery {
   /** Inclusive range. */
   from: DateKey;
   to: DateKey;
+  /** The family's home ZIP code: trip days (lib/booking/trips.ts) open or close days for it. */
+  zip?: string;
 }
 
 export interface BookingContact {

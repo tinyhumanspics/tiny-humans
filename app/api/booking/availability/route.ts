@@ -16,6 +16,8 @@ export async function GET(req: Request) {
     babyCount: url.searchParams.get("babies") ?? 1,
     from: url.searchParams.get("from"),
     to: url.searchParams.get("to"),
+    // the family's ZIP code (trip days); optional so older open pages keep working
+    zip: url.searchParams.get("zip") || undefined,
   });
   if (!parsed.success) return NextResponse.json({ error: "Please choose a bundle, baby count and a valid date range.", code: "invalid_request" }, { status: 400 });
   try {

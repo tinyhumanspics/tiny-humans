@@ -669,6 +669,7 @@
       "network": "No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.",
       "rateLimited": "Demasiados intentos. Espera unos minutos.",
       "slotTaken": "Ese horario acaba de reservarse. Elige otro horario.",
+      "tripDay": "Ese día estamos fotografiando en otra zona, así que no está disponible para tu hogar. Elige otro día, o escríbenos al {phone} y buscamos uno.",
       "inProgress": "Todavía estamos guardando tu reserva. Un momento, por favor.",
       "date": "Elige un día en el calendario.",
       "time": "Elige una hora para continuar.",

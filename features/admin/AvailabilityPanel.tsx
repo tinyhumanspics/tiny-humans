@@ -62,6 +62,7 @@ export default function AvailabilityPanel({ api }: { api: AdminApi }) {
           <SpecialDates rules={rules} api={api} onSaved={setRules} />
           <TimeBlocks rules={rules} api={api} onSaved={setRules} />
           <TravelFees api={api} />
+          <TripDays api={api} />
         </>
       )}
     </section>
@@ -698,3 +699,75 @@ function TravelFees({ api }: { api: AdminApi }) {
     </div>
   );
 }
+
+/* ---------------- trip days (owner, Nov 10) ---------------- */
+
+/** A far session (e.g. Orlando) takes the whole day; only families near it share that day; the next morning stays free. */
+function TripDays({ api }: { api: AdminApi }) {
+  const [form, setForm] = useState({ enabled: true, tripMiles: "60", sameTripMiles: "30", nextDayUntil: "12:00" });
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<Note>(null);
+
+  useEffect(() => {
+    api
+      .getTrips()
+      .then(({ settings: s }) => setForm({ enabled: s.enabled, tripMiles: String(s.tripMiles), sameTripMiles: String(s.sameTripMiles), nextDayUntil: s.nextDayUntil }))
+      .catch((e) => setNote({ kind: "error", text: errText(e, "Couldn't load the trip-day settings.") }));
+  }, [api]);
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault();
+    const tripMiles = Number(form.tripMiles);
+    const sameTripMiles = Number(form.sameTripMiles);
+    if (!Number.isInteger(tripMiles) || tripMiles < 10 || !Number.isInteger(sameTripMiles) || sameTripMiles < 1) return setNote({ kind: "error", text: "Fill in both distances in whole miles." });
+    setBusy(true);
+    try {
+      await api.saveTrips({ enabled: form.enabled, tripMiles, sameTripMiles, nextDayUntil: form.nextDayUntil });
+      setNote({ kind: "ok", text: form.enabled ? "Trip days saved. The booking calendar uses them right away." : "Trip days are off: every day works as before." });
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={styles.availBlock}>
+      <h3 className={cn(styles.h3, "chalk-soft")}>Trip days</h3>
+      <p className={cn(styles.muted, "chalk-soft")}>
+        A session farther than the trip distance (for example Orlando) takes the whole day: that day only families within the same-trip distance of it can book,
+        families close to home can&apos;t, and a far family can&apos;t pick a day that already has sessions close to home. The next morning stays free until the time
+        below (the drive back). Closer sessions work as before, with your buffer between them.
+      </p>
+      <form onSubmit={save} className={styles.availForm} noValidate>
+        <label className={styles.toggle}>
+          <input type="checkbox" checked={form.enabled} onChange={(e) => (setForm((f) => ({ ...f, enabled: e.target.checked })), setNote(null))} />
+          <span className="chalk-soft">Use trip days</span>
+        </label>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="trip-miles">Trip distance (miles from home base)</label>
+          <input id="trip-miles" className={cn(styles.input, styles.timeInput)} type="number" min={10} max={1000} value={form.tripMiles} onChange={(e) => (setForm((f) => ({ ...f, tripMiles: e.target.value })), setNote(null))} />
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Farther than this = a trip day.</p>
+        </div>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="trip-near">Same trip (miles from that session)</label>
+          <input id="trip-near" className={cn(styles.input, styles.timeInput)} type="number" min={1} max={200} value={form.sameTripMiles} onChange={(e) => (setForm((f) => ({ ...f, sameTripMiles: e.target.value })), setNote(null))} />
+          <p className={cn(styles.hintSmall, "chalk-soft")}>Families this close can book the same trip day.</p>
+        </div>
+        <div className={styles.ruleField}>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor="trip-next">Next day opens at</label>
+          <input id="trip-next" className={cn(styles.input, styles.timeInput)} type="time" step={1800} value={form.nextDayUntil} onChange={(e) => (setForm((f) => ({ ...f, nextDayUntil: e.target.value })), setNote(null))} />
+        </div>
+        <ChalkButton type="submit" variant="outline" disabled={busy} seed={885}>
+          {busy ? "Saving…" : "Save trip days"}
+        </ChalkButton>
+      </form>
+      {note && (
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
+

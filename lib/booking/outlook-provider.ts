@@ -12,6 +12,7 @@ import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
+import { applyTrips, tripConflict, tripContext, visitorForZip } from "./trips-server";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
 import { addMinutes, formatTimeLabel } from "./dates";
@@ -109,8 +110,9 @@ export class OutlookBookingProvider implements BookingProvider {
       /* outside a request (scripts) */
     }
     try {
-      const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
-      return availabilityForRange(query.from, query.to, minutes, busy, rules);
+      const [rules, busy, trips, visitor] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to), tripContext(query.from, query.to), visitorForZip(query.zip)]);
+      // trip days (owner, Nov 10): a far day only for families near it, the morning after kept free
+      return applyTrips(availabilityForRange(query.from, query.to, minutes, busy, rules), visitor, trips);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }
@@ -185,6 +187,10 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     if (!slotsForDay(date, durationMinutes, busy, rules).some((s) => s.start === start)) {
       throw new BookingError("slot_unavailable", friendly.slotTaken);
+    }
+    // 2a. Trip days: this home's distance against the day's other sessions (Orlando vs Miami Beach on one day)
+    if (tripConflict(date, start, await visitorForZip(request.address.zip), await tripContext(date, date))) {
+      throw new BookingError("slot_unavailable", fill((request.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }));
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.

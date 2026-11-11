@@ -1,4 +1,8 @@
 import "server-only";
+import { applyTrips, tripConflict, tripContext, visitorForBooking } from "./trips-server";
+import { fill } from "@/lib/email/messages";
+import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 import { and, asc, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { site } from "@/config/site";
@@ -82,8 +86,9 @@ export async function rescheduleAvailability(own: Booking, from: string, to: str
   // the booking keeps its own session length (even if the bundle changes later)
   const minutes = Math.round((own.sessionEnd.getTime() - own.sessionStart.getTime()) / 60_000);
   try {
-    const [rules, busy] = await Promise.all([getAvailabilityRules(), busyExcluding(own, from, to)]);
-    return availabilityForRange(from, to, minutes, busy, rules);
+    const [rules, busy, trips] = await Promise.all([getAvailabilityRules(), busyExcluding(own, from, to), tripContext(from, to, own.id)]);
+    // trip days: the booking's own home against the other sessions (it never blocks itself)
+    return applyTrips(availabilityForRange(from, to, minutes, busy, rules), visitorForBooking(own), trips);
   } catch (err) {
     log.error("booking.reschedule", "Availability failed", { error: err as Error, reference: own.bookingReference });
     if (err instanceof GraphError || err instanceof GraphAuthError) throw new BookingError("calendar_unavailable", friendly.calendar);
@@ -125,6 +130,9 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     throw new BookingError("calendar_unavailable", friendly.calendar);
   }
   if (!slotsForDay(slot.date, minutes, busy, rules).some((s) => s.start === slot.start)) throw new BookingError("slot_unavailable", friendly.rescheduleTaken);
+  if (tripConflict(slot.date, slot.start, visitorForBooking(row), await tripContext(slot.date, slot.date, row.id))) {
+    throw new BookingError("slot_unavailable", fill((row.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }));
+  }
 
   const graphTz = bookingRules.graphTimeZone;
   const oldDate = row.sessionDate;

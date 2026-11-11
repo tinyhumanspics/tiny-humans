@@ -34,6 +34,7 @@ export class HttpBookingClient implements BookingClient {
 
   getAvailability(q: AvailabilityQuery): Promise<DayAvailability[]> {
     const params = new URLSearchParams({ bundle: q.bundleId, babies: String(q.babyCount ?? 1), from: q.from, to: q.to });
+    if (q.zip && /^\d{5}$/.test(q.zip)) params.set("zip", q.zip);
     return call<{ days: DayAvailability[] }>(`/api/booking/availability?${params}`).then((r) => r.days);
   }
 
