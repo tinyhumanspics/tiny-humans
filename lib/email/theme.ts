@@ -42,6 +42,16 @@ export function emailTheme(themeId: string | null | undefined): EmailTheme {
   };
 }
 
+/**
+ * The theme's writing color at an opacity, for dashed rules and frames: the off-white chalk on the dark boards
+ * (rgba(244,242,234,…), as before) and dark raspberry on Valentine's light pink, so the lines show on every board.
+ */
+export function chalkAlpha(t: EmailTheme, alpha: number): string {
+  const hex = t.chalk.replace("#", "");
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export function emailImages(themeId: TinyHumansTheme) {
   return EMAIL_IMAGES[themeId] ?? EMAIL_IMAGES.default;
 }

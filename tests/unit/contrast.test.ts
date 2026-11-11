@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { themes } from "@/config/themes";
+import { chalkAlpha, emailTheme } from "@/lib/email/theme";
 
 /** WCAG 2.x contrast ratio of two #rrggbb colors. */
 function contrast(a: string, b: string): number {
@@ -43,4 +44,13 @@ describe("theme text contrast on the chalkboard (WCAG 1.4.3, 4.5:1)", () => {
       expect(contrast(mix(c.chalkWhite, c.chalkboard, lighter?.star ?? 0.5), c.chalkboard)).toBeGreaterThanOrEqual(3);
     });
   }
+});
+
+describe("email dashed lines and frames follow the theme's writing color", () => {
+  test("dark boards keep the off-white chalk line (emails unchanged)", () => {
+    for (const id of ["default", "thanksgiving", "christmas", "newYear"]) expect(chalkAlpha(emailTheme(id), 0.22)).toBe("rgba(244,242,234,0.22)");
+  });
+  test("Valentine's light pink draws them in its dark raspberry", () => {
+    expect(chalkAlpha(emailTheme("valentines"), 0.35)).toBe("rgba(79,20,48,0.35)");
+  });
 });

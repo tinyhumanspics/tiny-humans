@@ -3,7 +3,7 @@ import { Head, Html, Img, Preview } from "react-email";
 import { site } from "@/config/site";
 import type { EmailImageSet } from "@/lib/email/images";
 import { emailMessages, fill, type EmailLocale } from "@/lib/email/messages";
-import type { EmailTheme } from "@/lib/email/theme";
+import { chalkAlpha, type EmailTheme } from "@/lib/email/theme";
 import { BODY_FONT } from "./blocks";
 
 // Our colors are fixed: dark-mode email apps (Gmail apps, Apple Mail) must show them as designed, never repaint them.
@@ -45,7 +45,7 @@ export function ChalkLayout({ theme: t, images, locale, preheader, marketing, ch
         <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0} bgcolor={t.boardDark} style={{ background: t.boardDark }}>
           <tr>
             <td align="center" style={{ padding: "24px 10px" }}>
-              <table role="presentation" width="600" cellPadding="0" cellSpacing="0" border={0} bgcolor={t.board} style={{ width: "100%", maxWidth: 600, background: t.board, border: "2px dashed rgba(244,242,234,0.35)", borderRadius: 14 }}>
+              <table role="presentation" width="600" cellPadding="0" cellSpacing="0" border={0} bgcolor={t.board} style={{ width: "100%", maxWidth: 600, background: t.board, border: `2px dashed ${chalkAlpha(t, 0.35)}`, borderRadius: 14 }}>
                 <tr>
                   <td style={{ padding: "10px 0 0" }}>{strip}</td>
                 </tr>
@@ -59,7 +59,7 @@ export function ChalkLayout({ theme: t, images, locale, preheader, marketing, ch
                   <td className="th-pad" style={{ padding: "22px 36px 8px" }}>
                     <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
                       <tr>
-                        <td style={{ borderTop: "2px dashed rgba(244,242,234,0.25)", fontSize: 0, lineHeight: 0 }}>{" "}</td>
+                        <td style={{ borderTop: `2px dashed ${chalkAlpha(t, 0.25)}`, fontSize: 0, lineHeight: 0 }}>{" "}</td>
                       </tr>
                     </table>
                     <p style={{ ...footerText, margin: "14px 0 4px" }}>{fill(m.footer, { location: site.location })}</p>

@@ -1,11 +1,15 @@
-// Valentine's theme artwork (owner, Nov 10): the logo's heart layer (public/brand/valentines/decor.webp, on the
-// Original logo's 1012 x 896 canvas), the email logo (440 px, on the board color) and the email chalk strip
-// (1200 x 96), all with the site's own chalk texture. Also prints the intro animation's heart strokes
-// (config/logo/valentines-drawing.ts). Usage from the repo root: node scripts/theme-assets-valentines.mjs <out dir>
+// Valentine's theme artwork (owner, Nov 10: light pink board with dark raspberry "chalk"): the logo's heart layer
+// (public/brand/valentines/decor.webp, on the Original logo's 1012 x 896 canvas), the "Tiny Humans" lettering in
+// dark raspberry (public/brand/valentines/text.webp: the Original lettering's shape and grain, recolored), the email
+// logo (440 px, on the board color) and the email chalk strip (1200 x 96), all with the site's own chalk texture.
+// Also prints the intro animation's heart strokes (config/logo/valentines-drawing.ts).
+// Usage from the repo root: node scripts/theme-assets-valentines.mjs <out dir>
 // The two email JPEGs go into lib/email/assets.ts as base64 (EMAIL_IMAGES.valentines). Uses sharp (installed by Next).
 import fs from "node:fs";
 import sharp from "sharp";
 const out = process.argv[2];
+const BOARD = "#f9dbe5"; // config/themes.ts valentines chalkboard
+const INK = { r: 0x4f, g: 0x14, b: 0x30 }; // valentines chalkWhite (#4f1430)
 const HEART = "M24 40 C14 32 6 26 6.5 17 C7 10 14 6.5 19 9 C21.5 10.3 23 12.5 24 15 C25.3 12 27.5 9.5 31 8.5 C37 7 42.5 11.5 41.5 18.5 C40.5 26 33 32 24.5 40.5";
 const W = 1012, H = 896;
 const hearts = [
@@ -34,11 +38,17 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   const decor = await sharp(raw).composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
   fs.mkdirSync("public/brand/valentines", { recursive: true });
   await sharp(decor).webp({ quality: 86, alphaQuality: 90 }).toFile("public/brand/valentines/decor.webp");
-  // preview + email logo: Original layers + hearts on the raspberry board, 440 px wide
+  // the lettering in dark raspberry: the Original's alpha (shape + chalk grain) filled with the ink color
+  const text = sharp("public/brand/default/text.webp");
+  const { width: tw, height: th } = await text.metadata();
+  const alpha = await text.clone().extractChannel("alpha").toBuffer();
+  const ink = await sharp({ create: { width: tw, height: th, channels: 3, background: INK } }).joinChannel(alpha).webp({ quality: 88, alphaQuality: 92 }).toBuffer();
+  fs.writeFileSync("public/brand/valentines/text.webp", ink);
+  // preview + email logo: Original layers + hearts + the raspberry lettering on the light pink board, 440 px wide
   const layers = ["rays", "sun", "cloud"].map((k) => ({ input: `public/brand/default/${k}.webp` }));
-  const full = await sharp({ create: { width: W, height: H, channels: 4, background: "#7a2648" } }).composite([...layers, { input: decor }, { input: "public/brand/default/text.webp" }]).png().toBuffer();
+  const full = await sharp({ create: { width: W, height: H, channels: 4, background: BOARD } }).composite([...layers, { input: decor }, { input: ink }]).png().toBuffer();
   await sharp(full).toFile(out + "/valentines-logo-full.png");
-  const logo = await sharp(full).resize(440).jpeg({ quality: 84, mozjpeg: true }).toBuffer();
+  const logo = await sharp(full).resize(440).jpeg({ quality: 86, mozjpeg: true }).toBuffer();
   fs.writeFileSync(out + "/tiny-humans-logo-valentines.jpg", logo);
   // the chalk strip under the email header: Valentine drawings on the board color, 1200 x 96
   const shapes = {
@@ -49,7 +59,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
     loveLetter: ["M7 13 L41 13 L41 36 L7 36 Z", "M7.5 14 L24 25 L40.5 14", "M24 33 C20 30 17.5 26 17.8 22.8 C18 20.5 20.5 19.4 22.3 20.4 C23.2 20.9 23.7 21.6 24 22.5 C24.4 21.5 25.2 20.7 26.4 20.3 C28.6 19.7 30.6 21.3 30.2 23.8 C29.8 26.3 27.3 28.2 24 31"],
     heartArrow: [HEART, "M5 39 L43 9", "M43 9 L36.5 9.8 M43 9 L42.2 15.5", "M5 39 L4 33.5 M5 39 L10.5 40"],
   };
-  const row = [["heart", "#ff6b81", -12], ["rose", "#ff9cbc", 8], ["xo", "#ffd3df", -4], ["loveLetter", "#ffd3df", 6], ["twoHearts", "#ff9cbc", -6], ["heartArrow", "#ff6b81", 10], ["heart", "#ff9cbc", 12], ["xo", "#ffd3df", 4], ["rose", "#ff6b81", -8], ["twoHearts", "#ffd3df", 6]];
+  // drawing colors = the theme's accents (accent2, accent, accent3), dark enough to show on the light board
+  const row = [["heart", "#e0435f", -12], ["rose", "#d6336c", 8], ["xo", "#b0457a", -4], ["loveLetter", "#b0457a", 6], ["twoHearts", "#d6336c", -6], ["heartArrow", "#e0435f", 10], ["heart", "#d6336c", 12], ["xo", "#b0457a", 4], ["rose", "#e0435f", -8], ["twoHearts", "#b0457a", 6]];
   const strip = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="96" viewBox="0 0 1200 96">${row.map(([n, c, r], i) => {
     const x = 20 + i * 117 + (i % 2 ? 14 : 0), y = i % 2 ? 30 : 16;
     return `<g transform="translate(${x} ${y}) rotate(${r} 24 24)" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${shapes[n].map((d) => `<path d="${d}"/>`).join("")}</g>`;
@@ -57,10 +68,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   const tile2 = await sharp("public/textures/chalk-mask.webp").resize(96, 96).png().toBuffer();
   const mask2 = await sharp({ create: { width: 1200, height: 96, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } }).composite([{ input: tile2, tile: true }]).png().toBuffer();
   const doodles = await sharp(await sharp(Buffer.from(strip)).png().toBuffer()).composite([{ input: mask2, blend: "dest-in" }]).png().toBuffer();
-  const stripJpg = await sharp({ create: { width: 1200, height: 96, channels: 4, background: "#7a2648" } }).composite([{ input: doodles }]).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+  const stripJpg = await sharp({ create: { width: 1200, height: 96, channels: 4, background: BOARD } }).composite([{ input: doodles }]).jpeg({ quality: 84, mozjpeg: true }).toBuffer();
   fs.writeFileSync(out + "/tiny-humans-chalk-valentines.jpg", stripJpg);
   const m = await sharp(logo).metadata();
-  console.log("decor", fs.statSync("public/brand/valentines/decor.webp").size, "logo", m.width, m.height, logo.length, "strip", stripJpg.length);
+  console.log("decor", fs.statSync("public/brand/valentines/decor.webp").size, "text", ink.length, "logo", m.width, m.height, logo.length, "strip", stripJpg.length);
   // the intro animation: one zigzag stroke over each heart (reveals the decor layer before the lettering)
   const strokes = hearts.map((h, i) => {
     const half = h.s * 0.62, x0 = Math.max(0, h.x - half), x1 = Math.min(W, h.x + half), y0 = Math.max(0, h.y - half), y1 = Math.min(H, h.y + half);

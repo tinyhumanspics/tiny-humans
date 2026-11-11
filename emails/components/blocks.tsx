@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { Img } from "react-email";
-import type { EmailTheme } from "@/lib/email/theme";
+import { chalkAlpha, type EmailTheme } from "@/lib/email/theme";
 import type { EmailSwatch } from "./backdrops";
 
 /**
@@ -9,7 +9,7 @@ import type { EmailSwatch } from "./backdrops";
  */
 export const CHALK_FONT = "'Schoolbell','Chalkboard SE','Segoe Print','Comic Sans MS',cursive";
 export const BODY_FONT = "Arial,Helvetica,sans-serif";
-const ROW_RULE = "1px dashed rgba(244,242,234,0.22)";
+const rowRule = (t: EmailTheme) => `1px dashed ${chalkAlpha(t, 0.22)}`;
 
 /** "a\nb" → a<br>b */
 function lines(value: string): ReactNode {
@@ -59,10 +59,10 @@ export function Details({ theme: t, rows }: { theme: EmailTheme; rows: [string, 
         <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0} style={{ borderTop: `2px dashed ${t.blue}`, borderBottom: `2px dashed ${t.blue}` }}>
           {rows.map(([label, value], i) => (
             <tr key={label}>
-              <td valign="top" style={{ padding: "9px 10px 9px 0", width: 130, fontFamily: BODY_FONT, fontSize: 13, color: t.muted, borderTop: i ? ROW_RULE : undefined }}>
+              <td valign="top" style={{ padding: "9px 10px 9px 0", width: 130, fontFamily: BODY_FONT, fontSize: 13, color: t.muted, borderTop: i ? rowRule(t) : undefined }}>
                 {label}
               </td>
-              <td valign="top" style={{ padding: "9px 0", fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.35, color: t.chalk, borderTop: i ? ROW_RULE : undefined }}>
+              <td valign="top" style={{ padding: "9px 0", fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.35, color: t.chalk, borderTop: i ? rowRule(t) : undefined }}>
                 {lines(value)}
               </td>
             </tr>
@@ -157,7 +157,7 @@ export function Swatches({ theme: t, title, text, swatches }: { theme: EmailThem
   // Rows of 3 keep the swatches legible on phones; a short last row expands so it stays centered.
   const rows: EmailSwatch[][] = [];
   swatches.forEach((s, i) => (i % 3 ? rows[rows.length - 1].push(s) : rows.push([s])));
-  const box = { width: 72, height: 72, border: "2px solid rgba(244,242,234,0.7)", borderRadius: 12 };
+  const box = { width: 72, height: 72, border: `2px solid ${chalkAlpha(t, 0.7)}`, borderRadius: 12 };
   return (
     <tr>
       <td className="th-pad" align="center" style={{ padding: "22px 36px 0" }}>
