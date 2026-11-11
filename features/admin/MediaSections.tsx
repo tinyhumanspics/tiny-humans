@@ -362,6 +362,16 @@ function BoxEditor({ titleId, section, index, busy, boxesOn, picture, onSave, on
         </>
       )}
       {incomplete && <p className={cn(styles.error, "chalk-soft")}>Write the title and the text to show the box.</p>}
+      {(section.prompt || section.title || section.text) && (
+        <p className={cn(styles.hintSmall, "chalk-soft")}>
+          Switched off, the box keeps its words for later.{" "}
+          <button type="button" className={cn(styles.linkButton, styles.dangerText, "chalk-soft")} disabled={busy}
+            onClick={() => onSave({ prompt: false, title: "", text: "", spanish: null })}>
+            Remove this box
+          </button>{" "}
+          switches it off and deletes its words.
+        </p>
+      )}
       <div className={styles.photoBar}>
         <button type="button" className={styles.smallButton} onClick={onClose} disabled={busy}>Close</button>
         <button type="button" className={cn(styles.smallButton, styles.primarySmall)} disabled={busy || incomplete}

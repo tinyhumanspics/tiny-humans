@@ -108,6 +108,12 @@ test("the owner adds, fills, orders and deletes Little moments sections", async 
   expect(sections()[0]).toMatchObject({ prompt: false, title: "Love this one?" });
   await expect(section(page, 1).getByText("Box: off for this section")).toBeVisible();
 
+  // removing a box switches it off and deletes its words (owner, Nov 11: "activate, deactivate or remove")
+  await section(page, 2).getByRole("button", { name: "Edit section 2 box" }).click();
+  await dialog(page).getByRole("button", { name: "Remove this box" }).click();
+  await saved(page, "Section 2: the box is switched off.");
+  expect(sections()[1]).toMatchObject({ prompt: false, title: "", text: "", spanish: null });
+
   await section(page, 3).getByRole("button", { name: "Delete section 3" }).click();
   const confirm = page.getByRole("alertdialog");
   await expect(confirm).toContainText("Its 2 pictures and its box disappear from the website.");
