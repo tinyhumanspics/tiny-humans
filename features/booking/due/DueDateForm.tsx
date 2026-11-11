@@ -211,7 +211,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   )}
                   <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.you}</p>
                   {field("parentName", t.name, { autoComplete: "name" })}
-                  {field("email", t.email, { type: "email", autoComplete: "email", inputMode: "email", note: <>{saveNote[0]}<a href={localePath("/privacy", locale)} className={formStyles.inlineLink} target="_blank" rel="noopener">{bookingMessages.details.saveNotePrivacy}</a>{saveNote[1]}</> })}
+                  {field("email", t.email, { type: "email", autoComplete: "email", inputMode: "email" })}
                   {field("phone", t.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
                   <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.address}</p>
                   <div className={cn(formStyles.fieldWide, formStyles.streetRow)}>
@@ -240,6 +240,12 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   </div>
                 )}
                 {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
+                {/* owner, Nov 11: by the Reserve button, not under the email box (people hesitated there) */}
+                <p id="due-save-note" className={cn(formStyles.optional, formStyles.fieldNote, "chalk-soft")}>
+                  {saveNote[0]}
+                  <a href={localePath("/privacy", locale)} className={formStyles.inlineLink} target="_blank" rel="noopener">{bookingMessages.details.saveNotePrivacy}</a>
+                  {saveNote[1]}
+                </p>
                 <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={82} className={styles.submit}>
                   {busy === "redirecting" ? t.redirecting : busy ? t.submitting : depositCents > 0 ? fill(t.submitDeposit, { deposit }) : t.submit}
                 </ChalkButton>

@@ -429,7 +429,7 @@
       "honeypot": "Deja este campo vacío",
       "parentName": "Nombre del padre, madre o tutor",
       "email": "Correo electrónico",
-      "saveNote": "Guardamos tu nombre, correo y teléfono mientras escribes, para poder escribirte si no terminas la reserva. Consulta nuestra {privacy}.",
+      "saveNote": "Lo que escribas aquí puede usarse para contactarte sobre tu sesión. Consulta nuestra {privacy}.",
       "saveNotePrivacy": "Política de privacidad",
       "phone": "Teléfono",
       "address": {

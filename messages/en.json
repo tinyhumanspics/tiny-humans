@@ -256,7 +256,7 @@
       "honeypot": "Leave this empty",
       "parentName": "Parent / guardian name",
       "email": "Email",
-      "saveNote": "We save your name, email and phone as you type, so we can follow up if you don't finish booking. See our {privacy}.",
+      "saveNote": "Anything you type here may be used to contact you about your session. See our {privacy}.",
       "saveNotePrivacy": "Privacy Policy",
       "phone": "Phone",
       "address": {

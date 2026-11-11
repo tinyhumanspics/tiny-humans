@@ -314,7 +314,7 @@ export default function DetailsForm({
         <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
       </div>
       {field("parentName", messages.parentName, { autoComplete: "name" })}
-      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email", note: <>{saveNote[0]}<a href={privacyHref} className={styles.inlineLink} target="_blank" rel="noopener">{messages.saveNotePrivacy}</a>{saveNote[1]}</> })}
+      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email" })}
       {field("phone", messages.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
       <div className={cn(styles.fieldWide, styles.homeBlock)}>
         <p className={cn(styles.homeTitle, "chalk-soft")}>{messages.address.title}</p>
@@ -348,6 +348,12 @@ export default function DetailsForm({
           placeholder={messages.address.accessPlaceholder}
         />
       </div>
+      {/* owner, Nov 11: at the bottom of the step, by the button, not under the email box (people hesitated there) */}
+      <p id="booking-save-note" className={cn(styles.fieldWide, styles.optional, styles.fieldNote, "chalk-soft")}>
+        {saveNote[0]}
+        <a href={privacyHref} className={styles.inlineLink} target="_blank" rel="noopener">{messages.saveNotePrivacy}</a>
+        {saveNote[1]}
+      </p>
       </div>
     );
   }

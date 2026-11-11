@@ -27,9 +27,10 @@ test("the booking form saves the parent's contact details (never the baby's) and
   const { drafts, steps } = record(page);
   await page.goto("/book?bundle=little-moments");
 
-  // step 1 "About you" (owner, Nov 10): the note under the email box links to the Privacy Policy
-  await expect(page.getByText("We save your name, email and phone as you type", { exact: false })).toBeVisible();
-  await expect(page.locator("#field-email-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  // step 1 "About you": the note sits at the bottom of the step, not under the email box (owner, Nov 11)
+  await expect(page.locator("#booking-save-note")).toHaveText("Anything you type here may be used to contact you about your session. See our Privacy Policy.");
+  await expect(page.locator("#booking-save-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  await expect(page.locator("#field-email-note")).toHaveCount(0);
 
   await page.fill("#field-parentName", "Unfinished Test");
   await page.fill("#field-email", "unfinished.tes");
