@@ -54,7 +54,16 @@ freeze on `main` the day before launch except fixes.
       navigation works). Server time 0.25–0.8 s. Slow-4G + 4× CPU lab: landing text at 1.5 s; home/book text at ~3 s,
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
-## ▶ NEXT STEPS (Nov 10: Shoots + photo waiver + Spanish fill-in live; next Phase 9; CSP enforce still open)
+## ▶ NEXT STEPS (Nov 10 night: owner requests below all live; next = owner feedback, then Phase 9; CSP enforce still open)
+**Nov 10 (Claude Code, long session), all live and smoke-tested, main = `fb70ee1`:** % offers + one offer for all
+bundles + offer line, /admin Quotes (+ % off), "Not born yet" due-date reservations (migration 0026), seasonal offer
+boxes on home + owner-added offers, Valentine's theme (final color: the owner's pink #FFBBC1, off until Feb 1), offer
+sticker fix, "Not born yet?" strip on home + ad page, trip days + "About you" first booking order + step-one note
+(migration 0027), discount code categories (migration 0028). The owner ran 0026, 0027 and 0028 in Neon. Prices are
+$199 / $299 / $449 (owner, in /admin; no code holds prices). Details under Owner requests (newest first). Verified the
+same night on today's code: all customer + studio emails identical to before (214 rendered files), booking /
+reschedule / cancel / reminder / unfinished-booking emails sent through the real path (local fakes), due-date flow
+end to end.
 **Nov 9–10 (Claude Code), all live and smoke-tested, main = `1797530`:** Unfinished bookings open on 7 days (`50a6279`);
 Next.js 16.4.5 security patch (`d65ff56`); npm audit fixes (`c73b158`); photo & video waiver on Leads + privacy policy
 EN/ES (`34e7b30`, migration 0023_photo_waivers run by the owner); Shoots slices 1–5 + Spanish fill-in (`cd8bb2f`,
@@ -188,18 +197,21 @@ required owner translation later becomes incomplete, the runtime gate safely hid
 ```
 Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
 
-State (Nov 10): main = 1797530, live and smoke-tested. Shipped Nov 9–10: Next.js 16.4.5 security patch; npm audit fixes
-(zod 4.6.7 + override, undici); photo & video waiver on Leads (iPad signing screen in app/(kiosk), signed copy, Photo use,
-privacy policy EN+ES; migration 0023_photo_waivers run in production); Shoots in /admin (Shoot days, What we always
-bring, folders with photo uploads/links/notes, day sheet with ticks shared by both phones; migration 0024_shoots run in
-production); Spanish fills itself in on /admin saves (Claude when ANTHROPIC_API_KEY is set, else English copied);
-Unfinished bookings open on 7 days. Not on main yet: nothing.
+State (Nov 10 night): main = fb70ee1, live and smoke-tested. Shipped Nov 10: % offers + offer for all bundles + offer
+line; /admin Quotes (+ % off); "Not born yet" due-date reservations (0026); seasonal offer boxes on home + owner offers;
+Valentine's theme in the owner's pink #FFBBC1 (off until Feb 1); trip days + "About you" first booking order + step-one
+note (0027); discount code categories (0028). The owner ran 0026–0028. Prices $199 / $299 / $449 live (from /admin).
+Not on main yet: nothing.
 
-Next: wait for the owner's feedback from real use of Shoots and the waiver; otherwise Phase 9 (Tailwind v4 + tokens), slice 1.
-Time-sensitive: Baby's First Thanksgiving cutoff Nov 23, Baby's First Christmas Dec 21; CSP report-only → enforce is still open.
-Waiting on the owner: ANTHROPIC_API_KEY in Vercel for real translations; waiver wording reviewed by a Florida lawyer + legal business name (LLC?) + Alondra's Spanish check; turn Spanish on in /admin → Settings once its list is empty; mailing address for Unfinished bookings emails.
-Watch out: shoot photos live in the PUBLIC Blob store under random paths, shown only in /admin with <img> (never
-next/image); videos are links only (owner); a signed waiver can never be edited (DB trigger) and survives a deleted lead.
+Next: wait for the owner's feedback from real use (new booking order, trip days, code categories); otherwise Phase 9
+(Tailwind v4 + tokens), slice 1.
+Time-sensitive: Thanksgiving bundle offer + Baby's First Thanksgiving end Nov 23; Baby's First Christmas Dec 21;
+Valentine's theme on Feb 1 → off Mar 1 (owner switches it); CSP report-only → enforce still open.
+Waiting on the owner: optional extras listed under Open owner questions (Nov 10 night); ANTHROPIC_API_KEY in Vercel;
+waiver lawyer review; mailing address for "What stopped you?" emails if not saved yet.
+Watch out: the booking form now starts with step "you" (STEP in config/booking.ts) and the calendar only loads after
+it; trip days need the travel-fee base ZIP (no travel settings = no trip days); code categories live in their own
+table (best effort); Valentine's is a LIGHT board with dark writing: check new colors with tests/unit/contrast.test.ts.
 ```
 
 ## Owner requests (outside the original brief)
@@ -926,6 +938,8 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
   lightbox), its own metadata, and the header "Portfolio" link pointing to `/portfolio` instead of `/#portfolio`.
 
 ## Status
+- **Nov 10 night:** a day of owner requests shipped (see NEXT STEPS). Booking form order is now About you → day → time
+  → details → review; trip days are on (60 / 30 miles, next day from 12 PM). Phase 9 is still the last planned phase.
 - **Nov 10:** launched site + Shoots, photo waiver on Leads and the Spanish fill-in are live (see NEXT STEPS). Phase 9
   is the last planned phase; CSP enforce and an optional VoiceOver pass remain from Phase 6.
 - **Oct 16:** Phase 1g done (owner, Oct 12); **Phase 2, Phase 4 and Phase 5 are complete** (the optional Today view stays in
@@ -1747,6 +1761,11 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Nov 10 night:** (1) optional: show the code category in the studio "New booking" email, or a Dashboard count by
+  category (offered, no answer); (2) optional: an always-visible "Category" column in the codes list (offered after
+  "I don't see anything"; the owner then found it); (3) recheck on a phone that the offer sticker shows with its card on
+  reload (fixed Nov 10, `1d745cd`); (4) Feb 1: switch the theme to Valentine's in /admin → Theme and set the "Show love
+  to your tiny human" box to the Valentine's theme in Seasonal Landing; switch back Mar 1.
 - **Nov 10 (after Shoots + waiver went live):** (1) add `ANTHROPIC_API_KEY` in Vercel (Production) for real Spanish
   translations (small cost per save with new text; without it the English is copied); (2) ~~video uploads~~ no: links only
   (owner, Nov 10) (3) waiver: Florida lawyer review, legal business name if an LLC, Alondra checks the
