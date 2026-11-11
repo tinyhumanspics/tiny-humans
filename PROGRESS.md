@@ -203,6 +203,18 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Trip days + "About you" first — LIVE Nov 10 (migration 0027 only needed to save the Trip days box)**. Owner
+  asked (Nov 10): Orlando (about 4 hours away) takes its own day unless 2–3 families there share it; check distances
+  between bookings automatically. Owner answers: trip = more than 60 miles; the 2-hour buffer already covers mid
+  distances; same trip within 30 miles; ask name, email and address first, then the day/time, then the rest; the next
+  day opens at 12 PM. Preview approved ("push it") after confirming unfinished bookings still work. Checked with
+  `scripts/local-db` + fake Outlook: an Orlando (32801) booking on Nov 16 closed that day for Miami, Tampa and unknown
+  ZIPs, kept it open for Winter Park/Kissimmee, opened Nov 17 from 12:00; a Miami 9:00 session closed that day and the
+  day before for Orlando; create refuses with the trip message. A family that filled only step one shows in
+  Unfinished bookings and got "What stopped you?". Owner also asked for a note above the form on step one ("Fill in
+  your details first. On the next step you'll see the days and times…"). Prices: the owner raised the bundles to
+  $200 / $300 / $449 in /admin (Nov 10); no customer text hardcodes a price (live pages checked); the local-db seed
+  now mirrors them.
 - [x] **Seasonal offers on the home page too, owner-added offers, offer line in the box, smaller discounted price —
   LIVE Nov 10**. Owner asked: the seasonal box (e.g. Baby's First Thanksgiving) also on the home page, switched on from
   /admin → Seasonal Landing; a line in the box about the running discount; add more offers (e.g. Valentine's Day "Show

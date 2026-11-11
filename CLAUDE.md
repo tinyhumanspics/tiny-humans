@@ -348,3 +348,16 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   logo/strip come from `scripts/theme-assets-valentines.mjs` (the email JPEGs are base64 in `lib/email/assets.ts`). Built-in seasonal offer
   `valentines` ("Show love to your tiny human", last sessions Feb 28, off by default). The owner switches the theme in
   /admin → Theme on Feb 1 and back on Mar 1.
+- Booking order + trip days (owner, Nov 10; migration 0027_trip_settings): the steps are `you` (contact + home address)
+  → `date` → `time` → `details` (babies, family, notes, backdrops, permissions) → `review` (`STEP` in `config/booking.ts`;
+  `DetailsForm` `part`). Step one shows "Fill in your details first…" (`bookingFlow.firstStep`) under the baby-led note.
+  The calendar loads only after step one and sends the ZIP (`/api/booking/availability?zip=`). Trip days
+  (`lib/booking/trips.ts` pure + unit tested, `trips-server.ts`): a session more than `tripMiles` (60) road miles from the
+  travel-fee base ZIP takes its day: only families within `sameTripMiles` (30) of every trip session that day can book
+  it; a far family can't take a day with sessions near home or whose next morning (before `nextDayUntil`, 12:00) is
+  booked; the day after a trip opens at `nextDayUntil`. Miles come from `travelQuote` (no travel settings saved = miles
+  unknown = local, so no trip days). Enforced in availability, create (`tripConflict` → `slot_unavailable` with
+  `bookingFlow.errors.tripDay`) and reschedule. /admin → Availability → Trip days saves `trip_settings` (best effort:
+  no row or table = the defaults). Unfinished bookings: the draft is saved from step one (no date yet) and again on
+  reaching details (with date/time); funnel step "calendar" = the booking form opened ("Opened the booking form").
+  Older saved form drafts (`lib/booking/language-draft.ts` v1) are ignored.
