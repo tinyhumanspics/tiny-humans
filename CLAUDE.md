@@ -370,3 +370,12 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   saving a category explains the SQL. Shown in /admin → Pricing (label under the code + "Show" filter) and on leads
   ("Code category", looked up by the booking's code text, so it's the code's CURRENT category). Never sent to
   customers, emails or analytics, and never part of a price.
+- Photos / Media layout (owner, Nov 11: "a bit complicated to understand"): each part of the website is a `MediaFold`
+  (native <details>, closed by default, summary like "3 sections · 9 pictures · 3 boxes showing"); each picture is a
+  `MediaSlot` card (picture, source, tags, ONE "Edit" button) whose `PhotoEditor` dialog (AdminDialog) holds replace /
+  remove, the section tools (passed as children: move, use in the box, show on the ad page) and the words + Spanish;
+  a section's box is one line + "Edit box" (`BoxEditor` dialog). Spanish is never required in the owner area: empty
+  Spanish is filled at save (`lib/i18n/spanish-autofill.ts`) and "Fill in Spanish for me" (`features/admin/FillSpanish.tsx`,
+  also in Seasonal Landing) calls owner-only `/api/admin/translate` (same translator; GET = is ANTHROPIC_API_KEY set,
+  shown by `TranslationStatus`). `settings.portfolioBoxes` (settings cache key v4) false hides every "Book a memory like
+  this one" box (`withoutBoxes` in `liveMedia`) and the Spanish audit stops asking for their wording.
