@@ -86,7 +86,9 @@ test("the booking form saves the parent's contact details (never the baby's) and
 test("\"Not born yet?\" saves the parent's contact details too, labeled, never the due date (owner, Nov 11)", async ({ page }) => {
   const { drafts } = record(page);
   await page.goto("/due-date?bundle=our-little-story");
-  await expect(page.locator("#due-email-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  // the note sits by the Reserve button, not under the email box (owner, Nov 11)
+  await expect(page.locator("#due-save-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  await expect(page.locator("#due-email-note")).toHaveCount(0);
   await page.fill("#due-date", "2027-03-20");
   await page.fill("#due-notes", "Secret due-date note");
   await page.fill("#due-parentName", "Dana Due");

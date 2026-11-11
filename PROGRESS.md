@@ -215,6 +215,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Saved-details note moved off the email box — LIVE Nov 11 (owner: "You can push it but change the wording")**.
+  Owner: the note under the email box made people hesitant to type their email. It now sits at the bottom of booking
+  step one and of Not born yet, above the button, with the Privacy Policy link, in the owner's words: "We save your
+  contact information as you type, so we can follow up if you were not able to finish booking. See our Privacy
+  Policy." (Spanish to match.) The /book parity screenshots were updated for this (owner OK).
 - [x] **Deposit reminder shows it was sent — LIVE Nov 11 (owner: "Awesome push it please")**. Owner: after tapping
   "Email deposit reminder" nothing on the card changed (only a note at the top), so they couldn't tell it was sent.
   Now the button turns into "✓ Deposit reminder sent" with the count and last time, kept after a refresh, plus "Send

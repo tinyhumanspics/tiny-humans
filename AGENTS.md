@@ -270,7 +270,7 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   best effort: a missing table must never reach the form. The "What stopped you?" email is marketing (CAN-SPAM):
   ChalkLayout `marketing` footer (ad note, mailing address, unsubscribe) + `List-Unsubscribe` one-click headers; it
   can't be sent without the mailing address and never to `email_unsubscribes`. /unsubscribe needs a button press
-  (link scanners). Changing what's saved means changing the Privacy Policy and the note under the email box.
+  (link scanners). Changing what's saved means changing the Privacy Policy and the saved-details note (`bookingFlow.details.saveNote`, owner's wording, Nov 11: at the BOTTOM of booking step one and of Not born yet, above the button, never under the email box: people hesitated there).
 - Website reviews ("What families say", home after the photos + ad page section 7): `getPublicReviews()`
   (`lib/reviews/server.ts`, cache tag `reviews`) = the 6 newest reviews with `approved` AND `consent_public`. Anything
   that changes a review, its pick or deletes a lead calls `expireReviews()`. No picked reviews = no section (pages stay
