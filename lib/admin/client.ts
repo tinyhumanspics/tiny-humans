@@ -225,3 +225,18 @@ export async function preparePhoto(file: File, maxSide = 2000, quality = 0.86): 
     URL.revokeObjectURL(url);
   }
 }
+
+/** "Fill in Spanish for me" (owner, Nov 11): is automatic translation on (ANTHROPIC_API_KEY in Vercel)? */
+export async function translationStatus(): Promise<boolean> {
+  const res = await fetch("/api/admin/translate", { cache: "no-store" }).catch(() => null);
+  if (!res?.ok) return false;
+  return Boolean(((await res.json()) as { on?: boolean }).on);
+}
+
+/** The owner's English website words → Spanish (same order). `on: false` = translation is off (the English comes back). */
+export async function translateToSpanish(texts: string[]): Promise<{ on: boolean; spanish: string[] }> {
+  const res = await fetch("/api/admin/translate", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ texts }) });
+  const data = (await res.json().catch(() => ({}))) as { on?: boolean; spanish?: string[]; error?: string };
+  if (!res.ok || !Array.isArray(data.spanish)) throw new Error(data.error ?? "Couldn't translate just now.");
+  return { on: Boolean(data.on), spanish: data.spanish };
+}

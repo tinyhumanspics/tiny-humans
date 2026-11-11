@@ -39,7 +39,7 @@ test("older settings drop Christmas Cards and keep the two remaining offers", ()
 });
 
 test("the owner can edit and enable seasonal landing offers", async ({ page }, testInfo) => {
-  const initial: SiteSettings = { themeId: "christmas", spanishPublished: false, media: {}, seasonalOffers, updatedAt: null };
+  const initial: SiteSettings = { themeId: "christmas", spanishPublished: false, media: {}, seasonalOffers, portfolioBoxes: true, updatedAt: null };
   let saved: SiteSettings = initial;
 
   await page.route("**/api/admin/session", (route) => route.fulfill({ json: { authenticated: true, authConfigured: true, storageConfigured: true } }));

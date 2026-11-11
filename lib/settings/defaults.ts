@@ -25,6 +25,7 @@ export const defaultSettings: SiteSettings = {
   spanishPublished: false,
   media: {},
   seasonalOffers: DEFAULT_SEASONAL_OFFERS,
+  portfolioBoxes: true,
   updatedAt: null,
 };
 
@@ -222,6 +223,7 @@ export function parseSettings(input: unknown, { allowDataUrls = false } = {}): S
     spanishPublished: o.spanishPublished === true,
     media,
     seasonalOffers: parseSeasonalOffers(o.seasonalOfferList, o.seasonalOffers),
+    portfolioBoxes: o.portfolioBoxes !== false,
     updatedAt: typeof o.updatedAt === "string" ? o.updatedAt : null,
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { fallbackMediaFor, feedPhotos, resolveMedia, type ResolvedMedia } from "@/config/media";
+import { fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type ResolvedMedia } from "@/config/media";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
@@ -72,7 +72,9 @@ export function useSiteSettings(): Ctx {
 
 /** Pictures for the theme visitors see (empty slots show the Default theme's picture). */
 export function liveMedia(s: SiteSettings, locale: AppLocale = "en"): ResolvedMedia {
-  return resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media), locale);
+  const media = resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media), locale);
+  // the owner's "Show the boxes" switch (Photos / Media): off hides every "Book a memory like this one" box
+  return s.portfolioBoxes === false ? withoutBoxes(media) : media;
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {

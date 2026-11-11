@@ -12,7 +12,7 @@ export function spanishOwnerCopyIssues(settings: SiteSettings): string[] {
 
   for (const media of Object.values(settings.media)) {
     for (const section of media?.sections ?? []) {
-      if (section.prompt && (!section.spanish?.title.trim() || !section.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
+      if (settings.portfolioBoxes !== false && section.prompt && (!section.spanish?.title.trim() || !section.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
     }
   }
 

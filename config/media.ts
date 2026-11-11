@@ -211,6 +211,9 @@ export function photographersEmailPhoto(all: Partial<Record<string, ThemeMedia>>
   return own?.email?.[0] ?? base?.email?.[0] ?? own?.about?.[0] ?? base?.about?.[0] ?? null;
 }
 
+/** The owner's "Show the boxes" switch off (Photos / Media): the same pictures, no "Book a memory like this one" boxes. */
+export const withoutBoxes = (r: ResolvedMedia): ResolvedMedia => ({ ...r, sections: r.sections.map((s) => ({ ...s, prompt: null })) });
+
 /** Photos in feed order (for the lightbox and inspiration links). */
 export const feedPhotos = (r: ResolvedMedia) => r.sections.flatMap((s) => s.photos);
 

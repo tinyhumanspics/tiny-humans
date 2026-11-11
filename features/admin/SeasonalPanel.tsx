@@ -9,6 +9,7 @@ import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { cn } from "@/lib/cn";
 import styles from "./Admin.module.css";
+import { FillSpanishButton, TranslationStatus } from "./FillSpanish";
 
 type Note = { kind: "ok" | "error"; text: string } | null;
 const themeName = (id: SeasonalOfferTheme) => (id === "any" ? "Any theme" : `${themes[id].label} theme`);
@@ -83,6 +84,7 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
         by itself after its last session date. When a bundle special offer is running, the box also shows its line (for example &ldquo;Thanksgiving
         offer: 10% off every bundle&rdquo;).
       </p>
+      <TranslationStatus />
       <p className={cn(styles.hintSmall, "chalk-soft")}>Changing these settings does not change bundle prices or discounts: set those in Pricing &amp; Promotions.</p>
 
       <div className={styles.seasonalAdminGrid}>
@@ -128,6 +130,8 @@ export default function SeasonalPanel({ settings, onSave }: { settings: SiteSett
                 <textarea className={cn(styles.input, styles.seasonalTextarea)} value={offer.description} maxLength={240} onChange={(event) => update(offer.id, "description", event.target.value)} />
               </label>
               <p className={cn(styles.label, "chalk-soft")}>Spanish (left blank = filled in for you when you save)</p>
+              <FillSpanishButton english={[offer.title, offer.description]}
+                onFill={([title, description]) => setDraft((current) => current.map((o) => (o.id === offer.id ? { ...o, spanish: { title, description } } : o)))} />
               <label className={styles.ruleField}>
                 <span className={styles.label}>Spanish offer title</span>
                 <input className={styles.input} value={offer.spanish?.title ?? ""} maxLength={90} onChange={(event) => updateSpanish(offer.id, "title", event.target.value)} />

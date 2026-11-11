@@ -479,3 +479,40 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 .dueHead:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 4px; border-radius: 6px; }
 .dueMeta { display: block; }
 .quoteMessageField { display: grid; gap: 6px; margin: 8px 0 10px; }
+
+/* ---------- Photos / Media, simpler layout (owner, Nov 11) ---------- */
+/* each part of the website folds to one line: name + summary; open it to see the pictures */
+.mediaFold { padding: 0; }
+.mediaFoldHead { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 14px 16px; border-radius: 12px; }
+.mediaFoldHead::-webkit-details-marker { display: none; }
+.mediaFoldHead::before { content: "▸"; color: var(--sun-yellow); font-size: 1.1rem; transition: transform 0.15s ease; }
+.mediaFold[open] > .mediaFoldHead::before { transform: rotate(90deg); }
+.mediaFoldHead:hover .mediaFoldTitle, .mediaFoldHead:focus-visible .mediaFoldTitle { color: var(--sun-yellow); }
+.mediaFoldHead:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 2px; }
+.mediaFoldTitle { display: inline; }
+.mediaFoldSummary { color: var(--chalk-muted); font-size: 1rem; }
+.mediaFoldBody { padding: 0 16px 16px; }
+.mediaFoldBody > .hintSmall:first-child { margin-top: 0; }
+/* small tags on a picture card */
+.slotTags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { padding: 1px 9px; border: 1.5px solid var(--sun-yellow); border-radius: 999px; color: var(--sun-yellow); font-size: 0.88rem; line-height: 1.5; }
+/* the Edit dialog (pictures and boxes): wider than a confirmation, calm border */
+.dialog:has(.photoEditor) { width: min(640px, calc(100% - 24px)); border-color: color-mix(in srgb, var(--cloud-blue) 70%, transparent); }
+.photoEditor { display: grid; gap: 10px; }
+.photoEditor > .h3 { margin: 0; }
+.photoEditorTop { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+.photoEditorThumb { position: relative; width: 150px; aspect-ratio: 4 / 5; flex: none; border-radius: 8px; overflow: hidden; border: 2px solid color-mix(in srgb, var(--chalk-white) 30%, transparent); }
+.photoEditorButtons { display: grid; gap: 8px; justify-items: start; }
+.photoEditorButtons .hintSmall { margin: 0; }
+.photoEditorTools { display: grid; gap: 8px; padding: 10px 12px; border: 1.5px dashed color-mix(in srgb, var(--chalk-white) 22%, transparent); border-radius: 10px; }
+.photoEditorTools .label { margin: 0; }
+.photoEditorHead { margin: 6px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.25rem; color: var(--sun-yellow); }
+.primarySmall { border-color: var(--sun-yellow); color: var(--sun-yellow); }
+/* "Fill in Spanish for me" + the translation line at the top */
+.fillSpanish { display: grid; gap: 6px; justify-items: start; }
+.translateOn, .translateOff { margin: 10px 0 0; padding: 8px 12px; border-radius: 10px; font-size: 1rem; }
+.translateOn { border: 1.5px dashed color-mix(in srgb, var(--cloud-blue) 70%, transparent); color: var(--chalk-white); }
+.translateOff { border: 1.5px dashed var(--sun-yellow); color: var(--chalk-white); }
+/* a section's box: one line + "Edit box" */
+.boxSummary { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.boxSummaryText { margin: 0; color: var(--chalk-white); }

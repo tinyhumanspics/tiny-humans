@@ -36,6 +36,11 @@ export interface SiteSettings {
   media: Partial<Record<TinyHumansTheme, ThemeMedia>>;
   /** Seasonal offer boxes (built-in two first, then the owner's own), edited in /admin → Seasonal Landing. */
   seasonalOffers: SeasonalOffer[];
+  /**
+   * The "Book a memory like this one" boxes in the home page's "Little moments" (owner, Nov 11): false hides every box
+   * in every theme; each section keeps its own on/off and wording for when this is switched back on. Old saves = true.
+   */
+  portfolioBoxes: boolean;
   updatedAt: string | null;
 }
 

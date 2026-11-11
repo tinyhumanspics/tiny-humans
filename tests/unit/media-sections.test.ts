@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildFeedFromMedia, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, type MediaSection } from "@/config/media";
+import { buildFeedFromMedia, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type MediaSection } from "@/config/media";
 import { portfolio, type PortfolioPhoto } from "@/config/portfolio";
 import { defaultSettings, parseSettings, SettingsInputError, storedSettings } from "@/lib/settings/defaults";
 import { spanishOwnerCopyIssues } from "@/i18n/publication-audit";
@@ -121,6 +121,23 @@ describe("sections", () => {
     const r = resolveMedia(media([section("a", [photo(1), photo(2, false)], { spanish: null }), section("b", photos(3, 3))]), undefined, "es");
     expect(r.sections[0]).toEqual({ photos: [{ ...photo(1), ...photo(1).spanish }], prompt: null });
     expect(r.sections[1].prompt).toMatchObject({ title: "b título", text: "b texto" });
+  });
+
+  test("the site-wide boxes switch (owner, Nov 11): off hides every box but keeps the pictures and each section's wording", () => {
+    // older saves have no switch: the boxes stay on
+    expect(parseSettings({ themeId: "default", media: {} }).portfolioBoxes).toBe(true);
+    expect(parseSettings({ themeId: "default", media: {}, portfolioBoxes: false }).portfolioBoxes).toBe(false);
+    expect((storedSettings({ ...defaultSettings, portfolioBoxes: false }) as { portfolioBoxes: boolean }).portfolioBoxes).toBe(false);
+    const list = [section("a", photos(1, 3)), section("b", photos(4, 3))];
+    const r = resolveMedia(media(list));
+    expect(buildFeedFromMedia(r).filter((b) => b.type === "cta")).toHaveLength(2);
+    const off = withoutBoxes(r);
+    expect(buildFeedFromMedia(off).filter((b) => b.type === "cta")).toHaveLength(0);
+    expect(feedPhotos(off)).toEqual(feedPhotos(r));
+    // with the boxes off, their Spanish wording isn't needed to publish Spanish
+    const issues = (s: Partial<SiteSettings>) => spanishOwnerCopyIssues({ ...defaultSettings, media: { default: media([section("a", photos(1, 3), { spanish: null })]) }, ...s } as SiteSettings);
+    expect(issues({})).toEqual(["Spanish gallery prompt copy"]);
+    expect(issues({ portfolioBoxes: false })).toEqual([]);
   });
 
   test("an open box without Spanish wording hides the Spanish site; a closed one doesn't", () => {
