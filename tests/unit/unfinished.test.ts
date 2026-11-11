@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";
 import { periodOf } from "@/lib/unfinished/period";
-import { draftStage, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "@/lib/unfinished/summary";
+import { draftStage, dueDraftStage, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "@/lib/unfinished/summary";
 import { looksLikeEmail } from "@/lib/unfinished/client";
 
 const at = (iso: string) => new Date(iso);
@@ -109,5 +109,15 @@ describe("'What stopped you?' email", () => {
     const noName = await unfinishedFollowUpEmail({ parentName: "", bundleName: null }, opts);
     expect(noName.subject).toBe("Did something stop you?");
     expect(noName.text).toContain("started booking a session");
+  });
+});
+
+describe("unfinished bookings from \"Not born yet?\" (owner, Nov 11)", () => {
+  test("a due-date reservation: hidden while its deposit page is open or once reserved; shown when the deposit ran out", () => {
+    expect(dueDraftStage("pending")).toBe("booked");
+    expect(dueDraftStage("reserved")).toBe("booked");
+    expect(dueDraftStage("scheduled")).toBe("booked");
+    expect(dueDraftStage("expired")).toBe("deposit");
+    expect(dueDraftStage("cancelled")).toBe("cancelled");
   });
 });

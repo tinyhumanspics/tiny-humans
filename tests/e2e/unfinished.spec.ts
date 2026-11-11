@@ -82,6 +82,28 @@ test("the booking form saves the parent's contact details (never the baby's) and
   expect(steps).toEqual(["calendar", "date", "time", "details"]);
 });
 
+test("\"Not born yet?\" saves the parent's contact details too, labeled, never the due date (owner, Nov 11)", async ({ page }) => {
+  const { drafts } = record(page);
+  await page.goto("/due-date?bundle=our-little-story");
+  await expect(page.locator("#due-email-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
+  await page.fill("#due-date", "2027-03-20");
+  await page.fill("#due-notes", "Secret due-date note");
+  await page.fill("#due-parentName", "Dana Due");
+  await page.fill("#due-email", "dana.due@example.com");
+  await page.locator("#due-phone").focus();
+  await expect.poll(() => drafts.length).toBe(1);
+  expect(drafts[0]).toMatchObject({ email: "dana.due@example.com", parentName: "Dana Due", bundleId: "our-little-story", step: "details", form: "due_date", locale: "en" });
+  await page.fill("#due-phone", "3055550122");
+  await page.fill("#due-zip", "33139");
+  await page.locator("#due-street").focus();
+  await page.fill("#due-street", "1500 Bay Rd");
+  await page.locator("#due-city").focus();
+  await expect.poll(() => drafts.at(-1)?.zip).toBe("33139");
+  expect(drafts.at(-1)).toMatchObject({ phone: "3055550122", form: "due_date" });
+  // nothing about the baby or the pregnancy leaves the form before reserving
+  expect(JSON.stringify(drafts)).not.toMatch(/2027-03-20|Secret due-date note|dueDate|babyCount|notes/);
+});
+
 test("fixing a typo'd email replaces the earlier one", async ({ page }) => {
   const { drafts } = record(page);
   await page.goto("/book?bundle=little-moments");
@@ -161,6 +183,7 @@ const data = (over: Partial<UnfinishedData> = {}): UnfinishedData => ({
       start: "10:00",
       zip: "32801",
       travelFeeCents: 25100,
+      form: "booking",
       stage: "review",
       locale: "en",
       source: "Meta ads",
@@ -221,4 +244,39 @@ test("/admin → Unfinished bookings: step counts, answers, and the email only o
   await page.getByLabel("From").selectOption("Meta ads");
   await page.getByRole("button", { name: "Last 30 days" }).click();
   await expect.poll(() => periods.at(-1)).toBe("30|Meta ads");
+});
+
+test("/admin → Unfinished bookings: a family from \"Not born yet?\" is labeled, with where to find the reservation", async ({ page }) => {
+  await signedInAdmin(page);
+  const dueFamily: UnfinishedData["items"][number] = {
+    id: "7a2e3d4c-2222-4333-8444-a55566667777",
+    email: "dana@example.com",
+    parentName: "Dana Due",
+    phone: "3055550122",
+    bundleName: "Our Little Story",
+    sessionDate: null,
+    start: null,
+    zip: "33139",
+    travelFeeCents: 0,
+    form: "due_date",
+    stage: "deposit",
+    locale: "en",
+    source: "Direct",
+    campaign: null,
+    attempts: 1,
+    firstSeen: "2026-11-03T16:00:00.000Z",
+    lastSeen: "2026-11-03T16:02:00.000Z",
+    reference: "TH-D-20261103-1234",
+    followUp: null,
+    unsubscribed: false,
+    feedback: null,
+  };
+  await page.route("**/api/admin/unfinished?*", (route) => route.fulfill({ json: data({ items: [...data().items, dueFamily] }) }));
+  await page.goto("/admin/unfinished");
+  const dana = page.locator("li", { hasText: "Dana Due" });
+  await expect(dana.getByText("Not born yet · due-date form")).toBeVisible();
+  await expect(dana.getByText("Didn't pay the deposit")).toBeVisible();
+  await expect(dana.getByText("TH-D-20261103-1234 (under Leads → Due dates, deposit not paid)", { exact: false })).toBeVisible();
+  // the booking-form family has no label
+  await expect(page.locator("li", { hasText: "Maria Lopez" }).getByText("Not born yet · due-date form")).toHaveCount(0);
 });

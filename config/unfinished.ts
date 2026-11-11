@@ -17,6 +17,10 @@ export const FUNNEL_STEPS = ["calendar", "date", "time", "details", "booked"] as
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 export const isFunnelStep = (value: unknown): value is FunnelStep => FUNNEL_STEPS.some((step) => step === value);
 
+/** Which form a draft came from (owner, Nov 11): the booking form, or "Not born yet?" (/due-date). */
+export const DRAFT_FORMS = ["booking", "due_date"] as const;
+export type DraftForm = (typeof DRAFT_FORMS)[number];
+
 /** How far an unfinished booking got: contact details typed (any step before review), or the review page. */
 export const DRAFT_STEPS = ["details", "review"] as const;
 export type DraftStep = (typeof DRAFT_STEPS)[number];

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { bookingRules, scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import { unfinishedRules, type DraftStep, type FeedbackReason, type FunnelStep } from "@/config/unfinished";
@@ -9,7 +9,7 @@ import { BookingError } from "@/lib/booking/errors";
 import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "@/lib/booking/cancel-token";
 import { addDaysKey, todayInZone } from "@/lib/booking/timezone";
 import { getDb, isDatabaseConfigured } from "@/lib/db/client";
-import { bookingDrafts, bookings, emailUnsubscribes, funnelCounts, marketingSettings, type BookingDraft } from "@/lib/db/schema";
+import { bookingDraftForms, bookingDrafts, bookings, dueDateReservations, emailUnsubscribes, funnelCounts, marketingSettings, type BookingDraft } from "@/lib/db/schema";
 import { isMissingTable } from "@/lib/deposit/server";
 import { unfinishedFollowUpEmail } from "@/lib/email";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
@@ -19,7 +19,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import { decodeAttribution, sourceLabel } from "@/lib/tracking/attribution";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
-import { draftStage, emailKey, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "./summary";
+import { draftStage, dueDraftStage, emailKey, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "./summary";
 import type { FollowUpResult, UnfinishedData, UnfinishedItem } from "./types";
 
 /**
@@ -53,6 +53,19 @@ export interface DraftInput {
   locale: AppLocale;
   /** An email saved a moment ago on the same form that they then corrected: removed if it's still fresh. */
   replaces?: string;
+  /** "Not born yet?" (/due-date); left out on the booking form. */
+  form?: "due_date";
+}
+
+/** Which form this draft came from now (only "due_date" is stored). Best effort: no table (0029) = no label. */
+async function saveDraftForm(draftId: string, form: "due_date" | undefined): Promise<void> {
+  try {
+    const db = getDb();
+    if (form) await db.insert(bookingDraftForms).values({ draftId, form, updatedAt: new Date() }).onConflictDoUpdate({ target: bookingDraftForms.draftId, set: { form, updatedAt: new Date() } });
+    else await db.delete(bookingDraftForms).where(eq(bookingDraftForms.draftId, draftId));
+  } catch (err) {
+    if (!isMissingTable(err)) log.error("unfinished.form", "Draft form label not saved", { error: err as Error });
+  }
 }
 
 /** Saves what the family has typed so far (POST /api/booking/draft). Best effort: never throws. */
@@ -87,11 +100,13 @@ export async function saveDraft(input: DraftInput, sourceCookie: string | undefi
     }
     const [existing] = await db.select().from(bookingDrafts).where(eq(bookingDrafts.emailKey, key)).limit(1);
     if (!existing) {
-      await db
+      const [row] = await db
         .insert(bookingDrafts)
         .values({ ...fields, emailKey: key, step: input.step, source: attribution ? sourceLabel(attribution) : null, campaign: attribution?.utmCampaign ?? null, createdAt: now })
         // two saves at once (typing fast): the second one just updates
-        .onConflictDoUpdate({ target: bookingDrafts.emailKey, set: { ...fields } });
+        .onConflictDoUpdate({ target: bookingDrafts.emailKey, set: { ...fields } })
+        .returning({ id: bookingDrafts.id });
+      if (row) await saveDraftForm(row.id, input.form);
       return;
     }
     const merge = mergeDraft(existing, { step: input.step, at: now });
@@ -110,6 +125,7 @@ export async function saveDraft(input: DraftInput, sourceCookie: string | undefi
         campaign: existing.campaign ?? attribution?.utmCampaign ?? null,
       })
       .where(eq(bookingDrafts.id, existing.id));
+    await saveDraftForm(existing.id, input.form);
   } catch (err) {
     skipIfMissing(err, "unfinished.save");
   }
@@ -150,14 +166,34 @@ async function loadItems(): Promise<{ items: UnfinishedItem[]; bookedLater: numb
     .leftJoin(emailUnsubscribes, eq(emailUnsubscribes.emailKey, bookingDrafts.emailKey))
     .orderBy(desc(bookingDrafts.updatedAt))
     .limit(1000);
+  // best effort: the "Not born yet?" labels (0029) and the due-date reservations a draft turned into (0026)
+  const [forms, reservations] = await Promise.all([
+    getDb()
+      .select({ draftId: bookingDraftForms.draftId, form: bookingDraftForms.form })
+      .from(bookingDraftForms)
+      .then((r) => new Map(r.map((x) => [x.draftId, x.form])))
+      .catch(() => new Map<string, string>()),
+    (async () => {
+      const refs = rows.flatMap(({ draft, status }) => (draft.bookedReference && !status ? [draft.bookedReference] : []));
+      if (!refs.length) return new Map<string, string>();
+      return getDb()
+        .select({ reference: dueDateReservations.reference, status: dueDateReservations.status })
+        .from(dueDateReservations)
+        .where(inArray(dueDateReservations.reference, refs))
+        .then((r) => new Map(r.map((x) => [x.reference, x.status])))
+        .catch(() => new Map<string, string>());
+    })(),
+  ]);
   const items: UnfinishedItem[] = [];
   let bookedLater = 0;
   for (const { draft: d, status, cancellationReason, unsubscribed } of rows) {
-    const stage = draftStage(d.step, d.bookedReference && status ? { status, cancellationReason } : null);
+    const reservation = d.bookedReference && !status ? reservations.get(d.bookedReference) : undefined;
+    const stage = reservation ? dueDraftStage(reservation) : draftStage(d.step, d.bookedReference && status ? { status, cancellationReason } : null);
     if (stage === "booked") bookedLater++;
     if (stage === "booked" || stage === "cancelled") continue;
     items.push({
       id: d.id,
+      form: forms.get(d.id) === "due_date" ? "due_date" : "booking",
       email: d.email,
       parentName: d.parentName,
       phone: d.phone,
@@ -261,7 +297,8 @@ export async function sendFollowUp(id: string): Promise<void> {
         themeId,
         locale: item.locale,
         feedbackUrl: feedbackUrl(token.token, item.locale),
-        bookUrl: `${base()}${claimed.bundleId ? scheduleHref(claimed.bundleId, null, item.locale) : localePath("/bundles", item.locale)}`,
+        // "Finish booking": back to the form they used ("Not born yet?" or the bundle's calendar)
+        bookUrl: `${base()}${item.form === "due_date" ? localePath("/due-date", item.locale) : claimed.bundleId ? scheduleHref(claimed.bundleId, null, item.locale) : localePath("/bundles", item.locale)}`,
         unsubscribeUrl: unsubscribeUrl(token.token, item.locale),
         mailingAddress: address,
       },

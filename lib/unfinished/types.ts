@@ -1,4 +1,4 @@
-import type { DraftStep, FeedbackReason, FunnelStep } from "@/config/unfinished";
+import type { DraftStep, FeedbackReason, FunnelStep, DraftForm } from "@/config/unfinished";
 import type { AppLocale } from "@/i18n/config";
 
 /**
@@ -10,6 +10,8 @@ export type UnfinishedStage = DraftStep | "deposit";
 /** One family in /admin → Unfinished bookings. */
 export interface UnfinishedItem {
   id: string;
+  /** Where they typed it: the booking form, or "Not born yet?" (due-date reservation). */
+  form: DraftForm;
   email: string;
   parentName: string | null;
   phone: string | null;

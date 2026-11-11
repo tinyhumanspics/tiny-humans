@@ -21,6 +21,8 @@ const schema = z.object({
   step: z.enum(DRAFT_STEPS),
   locale: z.enum(locales),
   replaces: z.string().trim().max(254).email().optional(),
+  // "Not born yet?" (/due-date): labels the draft in /admin → Unfinished bookings
+  form: z.literal("due_date").optional(),
 });
 
 /**

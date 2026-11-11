@@ -39,6 +39,8 @@ export interface DraftPayload {
   zip?: string;
   step: DraftStep;
   locale: AppLocale;
+  /** "Not born yet?" (/due-date); left out on the booking form. */
+  form?: "due_date";
   /** An email saved earlier on this form that they then corrected (the typo'd one is removed). */
   replaces?: string;
 }

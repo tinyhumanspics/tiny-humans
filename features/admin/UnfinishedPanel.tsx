@@ -271,7 +271,8 @@ function Family({ item, canSend, busy, onSend, onDelete }: { item: UnfinishedIte
       <div className={styles.leadHead}>
         <span className={cn(styles.leadName, "chalk-soft")}>{name}</span>
         <span className={styles.leadPills}>
-          <span className={styles.statusPill}>{STAGE_LABEL[item.stage]}</span>
+          <span className={styles.statusPill}>{item.form === "due_date" && item.stage !== "deposit" ? "Stopped before reserving" : STAGE_LABEL[item.stage]}</span>
+          {item.form === "due_date" && <span className={cn(styles.statusPill, styles.duePill)}>Not born yet · due-date form</span>}
           {item.feedback && <span className={cn(styles.statusPill, styles.paidPill)}>Answered</span>}
           {item.unsubscribed && <span className={cn(styles.statusPill, styles.unpaidPill)}>Unsubscribed</span>}
         </span>
@@ -289,7 +290,7 @@ function Family({ item, canSend, busy, onSend, onDelete }: { item: UnfinishedIte
         Last on the form {when(item.lastSeen)}
         {item.attempts > 1 ? ` · ${item.attempts} visits` : ""} · Source: <b>{item.source ?? "Not tracked"}</b>
         {item.campaign ? ` · ${item.campaign}` : ""}
-        {item.reference ? ` · ${item.reference} (under Leads, cancelled)` : ""}
+        {item.reference ? ` · ${item.reference} (${item.form === "due_date" ? "under Leads → Due dates, deposit not paid" : "under Leads, cancelled"})` : ""}
       </p>
       <p className={styles.contactActions}>
         {item.phone && <a className={styles.smallButton} href={telHref(item.phone)} aria-label={`Call ${name}`}>Call</a>}

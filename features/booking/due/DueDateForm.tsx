@@ -16,6 +16,8 @@ import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
 import { travelHint } from "@/lib/travel/format";
 import type { TravelQuote } from "@/lib/travel/types";
 import { dueWindow, type DueCreateResult } from "@/lib/due-date/types";
+import { looksLikeEmail, saveBookingDraft } from "@/lib/unfinished/client";
+import { localePath } from "@/i18n/path";
 import formStyles from "../flow/Booking.module.css";
 import styles from "./DueDate.module.css";
 import { cn } from "@/lib/cn";
@@ -49,6 +51,33 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
   useEffect(() => {
     openedAt.current = Date.now();
   }, []);
+
+  // /admin → Unfinished bookings (owner, Nov 11): the parent's contact details, saved when they leave a contact box,
+  // labeled "Not born yet". Never the due date, the babies or the notes. Same rules as the booking form.
+  const savedEmail = useRef<string | null>(null);
+  const lastDraft = useRef("");
+  const saveDraft = () => {
+    const email = contact.email.trim();
+    if (!looksLikeEmail(email)) return;
+    const zipCode = contact.zip.trim().slice(0, 5);
+    const draft = {
+      email,
+      parentName: contact.parentName.trim() || undefined,
+      phone: contact.phone.trim() || undefined,
+      bundleId: bundleId || "none",
+      zip: /^\d{5}$/.test(zipCode) ? zipCode : undefined,
+      step: "details" as const,
+      locale,
+      form: "due_date" as const,
+      replaces: savedEmail.current && savedEmail.current.toLowerCase() !== email.toLowerCase() ? savedEmail.current : undefined,
+    };
+    const key = JSON.stringify(draft);
+    if (key === lastDraft.current) return;
+    lastDraft.current = key;
+    savedEmail.current = email;
+    saveBookingDraft(draft);
+  };
+  const saveNote = bookingMessages.details.saveNote.split("{privacy}");
 
   const range = dueWindow(today);
   const last = formatLongDate(range.to, locale).replace(/^[^,]+, /, "");
@@ -117,10 +146,13 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     }
   };
 
-  const field = (name: Field, label: string, opts: { type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "numeric"; optional?: boolean; wide?: boolean } = {}) => (
+  const field = (name: Field, label: string, opts: { type?: string; autoComplete?: string; inputMode?: "tel" | "email" | "numeric"; optional?: boolean; wide?: boolean; note?: React.ReactNode } = {}) => (
     <div className={cn(formStyles.field, opts.wide && formStyles.fieldWide)}>
       <label htmlFor={`due-${name}`} className={cn(formStyles.label, "chalk-soft")}>{label}</label>
-      <input id={`due-${name}`} className={formStyles.input} type={opts.type ?? "text"} autoComplete={opts.autoComplete} inputMode={opts.inputMode} value={contact[name]} onChange={(e) => set(name, e.target.value)} required={!opts.optional} />
+      <input id={`due-${name}`} className={formStyles.input} type={opts.type ?? "text"} autoComplete={opts.autoComplete} inputMode={opts.inputMode} value={contact[name]} onChange={(e) => set(name, e.target.value)} required={!opts.optional}
+        aria-describedby={opts.note ? `due-${name}-note` : undefined}
+        onBlur={name === "parentName" || name === "email" || name === "phone" || name === "zip" ? saveDraft : undefined} />
+      {opts.note && <p id={`due-${name}-note`} className={cn(formStyles.optional, formStyles.fieldNote, "chalk-soft")}>{opts.note}</p>}
     </div>
   );
 
@@ -179,7 +211,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   )}
                   <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.you}</p>
                   {field("parentName", t.name, { autoComplete: "name" })}
-                  {field("email", t.email, { type: "email", autoComplete: "email", inputMode: "email" })}
+                  {field("email", t.email, { type: "email", autoComplete: "email", inputMode: "email", note: <>{saveNote[0]}<a href={localePath("/privacy", locale)} className={formStyles.inlineLink} target="_blank" rel="noopener">{bookingMessages.details.saveNotePrivacy}</a>{saveNote[1]}</> })}
                   {field("phone", t.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
                   <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.address}</p>
                   <div className={cn(formStyles.fieldWide, formStyles.streetRow)}>

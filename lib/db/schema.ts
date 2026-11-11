@@ -896,6 +896,21 @@ export const bookingDrafts = pgTable(
   ],
 );
 
+/**
+ * Which form an unfinished booking came from (owner, Nov 11; migration 0029): only "due_date" ("Not born yet?",
+ * /due-date) gets a row; no row = the booking form. Its own table, read and written best effort, so the drafts keep
+ * saving before the migration.
+ */
+export const bookingDraftForms = pgTable(
+  "booking_draft_forms",
+  {
+    draftId: uuid("draft_id").primaryKey().references(() => bookingDrafts.id, { onDelete: "cascade" }),
+    form: text("form").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("booking_draft_forms_form_check", sql`${t.form} in ('due_date')`)],
+);
+
 export type BookingDraft = typeof bookingDrafts.$inferSelect;
 
 /** Emails that asked for no more marketing emails (lower-cased). Checked before every follow-up. */

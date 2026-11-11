@@ -516,3 +516,6 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 /* a section's box: one line + "Edit box" */
 .boxSummary { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .boxSummaryText { margin: 0; color: var(--chalk-white); }
+
+/* Unfinished bookings: drafts from "Not born yet?" (owner, Nov 11) */
+.duePill { border-color: var(--cloud-blue); color: var(--cloud-blue); }

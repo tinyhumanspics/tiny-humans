@@ -18,6 +18,17 @@ export function draftStage(step: string, booking: { status: string; cancellation
   return DEPOSIT_RELEASED.test(booking.cancellationReason ?? "") ? "deposit" : "cancelled";
 }
 
+/**
+ * Where a draft stands after its family pressed "Reserve" on "Not born yet?" (owner, Nov 11): the reservation is the
+ * booking. Waiting on its deposit page = still in progress (hidden, like a booking waiting on its deposit); the page ran
+ * out unpaid = "deposit"; cancelled by the owner = "cancelled"; reserved / scheduled = "booked".
+ */
+export function dueDraftStage(status: string): UnfinishedStage | "booked" | "cancelled" {
+  if (status === "expired") return "deposit";
+  if (status === "cancelled") return "cancelled";
+  return "booked";
+}
+
 export interface DraftActivity {
   step: DraftStep;
   at: Date;

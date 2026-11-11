@@ -29,6 +29,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { dueWindow, type DueCreateResult, type DueReservationRow, type DueSummary } from "./types";
 import type { DueRequest } from "./validation";
+import { markDraftBooked } from "@/lib/unfinished/server";
 
 const base = () => site.url.replace(/\/$/, "");
 const missingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
@@ -133,6 +134,8 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
     }
   }
   if (!row) throw new BookingError("server_error", t.server);
+  // Unfinished bookings: this family's "Not born yet?" draft is now a reservation (best effort, never throws)
+  await markDraftBooked(row.email, row.reference);
 
   if (depositCents > 0) {
     const url = await openDuePage(row);
