@@ -869,6 +869,23 @@ export const dueDepositReminders = pgTable("due_deposit_reminders", {
   lastSentAt: timestamp("last_sent_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * "Not born yet" choices (owner, Nov 11): the backdrops picked while reserving (none = "Not sure yet") and the discount
+ * code they entered, with its terms kept so it comes off their session even if the code changes later. Own table,
+ * read best effort (migration 0032); a code is only accepted once it exists. No FK to the code: deleting a code keeps
+ * the family's terms. `usage_id` = the code use claimed once the spot is reserved (deposit paid).
+ */
+export const dueReservationExtras = pgTable("due_reservation_extras", {
+  reservationId: uuid("reservation_id").primaryKey().references(() => dueDateReservations.id, { onDelete: "cascade" }),
+  backdrops: jsonb("backdrops").$type<string[]>().notNull().default([]),
+  discountCode: text("discount_code"),
+  discountType: text("discount_type"),
+  discountValue: integer("discount_value"),
+  codeId: uuid("code_id"),
+  usageId: uuid("usage_id"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const bookingDrafts = pgTable(
   "booking_drafts",
   {

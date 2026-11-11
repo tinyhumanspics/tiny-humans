@@ -274,6 +274,9 @@ export async function internalDueReservedEmail(p: {
   travelMiles: number | null;
   scheduleUrl: string;
   leadsUrl: string;
+  /** Discount code entered while reserving (owner, Nov 11) and what it takes off. */
+  code?: { code: string; offCents: number } | null;
+  backdrops?: string[];
 }): Promise<RenderedEmail> {
   const first = firstName(p.parentName);
   const price = p.bundlePriceCents < p.regularPriceCents ? `${formatMoney(p.bundlePriceCents)} (${p.offerLabel ?? "offer"}, regular ${formatMoney(p.regularPriceCents)}), kept for them` : `${formatMoney(p.bundlePriceCents)}, kept for them`;
@@ -285,6 +288,8 @@ export async function internalDueReservedEmail(p: {
     ["Babies expected", p.babyCount === 1 ? "1" : p.babyCount === 2 ? "Twins" : "Triplets"],
     ["Price", price],
     ["Deposit", deposit],
+    ...(p.code ? [["Discount code", `${p.code.code}: ${formatMoney(p.code.offCents)} off (applied when they book their session)`] as [string, string]] : []),
+    ...(p.backdrops?.length ? [["Backdrops", backdropNames(p.backdrops)] as [string, string]] : []),
     ["Customer name", p.parentName],
     ["Email", p.email],
     ["Phone", p.phone],

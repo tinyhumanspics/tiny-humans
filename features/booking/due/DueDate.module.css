@@ -42,3 +42,19 @@
 .done { display: grid; gap: 14px; justify-items: center; text-align: center; padding: clamp(22px, 4vw, 36px); }
 .doneTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.9rem, 5vw, 2.6rem); color: var(--chalk-white); }
 .doneText { margin: 0; max-width: 32em; color: var(--chalk-white); font-size: 1.15rem; line-height: 1.45; }
+
+/* three steps (owner, Nov 11): details → backdrops (or "Not sure yet") → review with a discount code, then the deposit */
+.stepOf { margin: 0 0 6px; font-size: 1rem; color: var(--chalk-muted); }
+.stepBody { display: grid; gap: 14px; }
+.stepBody h2 { margin: 0; }
+.stepBody h2:focus { outline: none; }
+.stepActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 6px; }
+.stepActions .submit { margin-left: auto; }
+.review { display: grid; gap: 8px; margin: 0; padding: 12px 14px; border-radius: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 30%, transparent); }
+.review div { display: grid; grid-template-columns: minmax(110px, 30%) 1fr; gap: 10px; }
+.review dt { color: var(--chalk-muted); }
+.review dd { margin: 0; color: var(--chalk-white); }
+@media (max-width: 520px) {
+  .review div { grid-template-columns: 1fr; gap: 2px; }
+  .stepActions .submit { margin-left: 0; }
+}

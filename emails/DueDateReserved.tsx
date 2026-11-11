@@ -20,6 +20,8 @@ export interface DueReservedDetails {
   /** 0 = no deposit paid (deposits off, or Stripe was down). */
   depositPaidCents: number;
   babyCount: number;
+  /** The discount code they entered (owner, Nov 11): what it takes off the regular price. */
+  code?: { code: string; offCents: number } | null;
 }
 
 interface Options {
@@ -39,7 +41,9 @@ const lines = (d: DueReservedDetails, locale: EmailLocale) => {
     x,
     title: fill(x.title, { name: d.parentName.split(" ")[0] }),
     intro: fill(x.intro, { bundle: d.bundleName, date: formatLongDate(d.dueDate, locale) }),
-    kept: offer ? fill(x.keptOffer, { price, offer, regular: formatMoney(d.regularPriceCents) }) : fill(x.kept, { price }),
+    kept: d.code
+      ? fill(x.keptCode, { price: formatMoney(d.regularPriceCents - d.code.offCents), code: d.code.code, regular: formatMoney(d.regularPriceCents) })
+      : offer ? fill(x.keptOffer, { price, offer, regular: formatMoney(d.regularPriceCents) }) : fill(x.kept, { price }),
     deposit: d.depositPaidCents ? fill(x.depositPaid, { deposit: formatMoney(d.depositPaidCents) }) : null,
     orText: fill(x.orText, { phone: site.contact.phone }),
     reference: fill(x.reference, { reference: d.reference }),

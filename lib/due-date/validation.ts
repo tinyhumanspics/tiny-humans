@@ -1,5 +1,6 @@
 import { z } from "@/lib/validation/zod";
 import { isDateKey } from "@/lib/validation/date-key";
+import { BACKDROP_IDS } from "@/config/backdrops";
 
 const text = (max: number) => z.string().trim().max(max);
 
@@ -21,6 +22,11 @@ export const dueRequestSchema = z.object({
     city: text(100).min(2, "Add the city."),
     zip: z.string().trim().regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code."),
   }),
+  // the backdrops they picked (none = "Not sure yet") and a discount code (checked on the server; owner, Nov 11)
+  backdrops: z.array(z.enum(BACKDROP_IDS)).max(3).optional(),
+  discountCode: z.string().trim().max(40).optional().transform((v) => v || undefined),
+  /** Step one only: check the details (bundle, due date, address) without reserving anything. */
+  check: z.boolean().optional(),
   requestId: z.string().trim().min(8).max(100).optional(),
   // spam signals (never stored)
   hp: z.string().max(200).optional(),

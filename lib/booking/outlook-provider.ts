@@ -7,7 +7,7 @@ import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
 import { getDb, isDatabaseConfigured, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
 import { bookingConsents, bookings, type Booking, type DueDateReservation } from "@/lib/db/schema";
-import { carryDueDeposit, claimDue, dueById, dueByToken, finishDue, keptPriceBundle, releaseDue } from "@/lib/due-date/server";
+import { carryDueDeposit, claimDue, dueById, dueByToken, dueExtrasOf, finishDue, keptPriceBundle, releaseDue } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
@@ -173,8 +173,10 @@ export class OutlookBookingProvider implements BookingProvider {
     if (quote.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
     if (quote.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
     const travel = bookingTravelOf(quote);
-    // optional backdrop picks: one per setup of the bundle
-    const backdrops = request.backdrops?.slice(0, setupsOf([bundle.setups, ...bundle.features]));
+    // a reservation's choices (owner, Nov 11): its kept discount code and the backdrops picked while reserving
+    const dueExtras = due ? await dueExtrasOf(due.id) : null;
+    // optional backdrop picks: one per setup of the bundle (a reservation's picks when the form sent none)
+    const backdrops = (request.backdrops?.length ? request.backdrops : dueExtras?.backdrops)?.slice(0, setupsOf([bundle.setups, ...bundle.features]));
 
     // 2. Re-check availability against the live calendar (first freeing times whose deposit page ran out).
     await sweepDeposits();
@@ -195,7 +197,7 @@ export class OutlookBookingProvider implements BookingProvider {
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
     const { quote: pricing, codeId } = due
-      ? { quote: withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone)), bundle, babies.length, family.length), codeId: null }
+      ? { quote: withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone), dueExtras?.code), bundle, babies.length, family.length), codeId: null }
       : await this.priceFor(bundle.id, request.discountCode, request.contact.email, babies.length, family.length);
     let usage: { usageId: string; release: () => Promise<void> } | null = null;
     if (pricing.pricingType === "discount" && codeId) usage = await claimCode(codeId, request.contact.email);
@@ -273,6 +275,8 @@ export class OutlookBookingProvider implements BookingProvider {
       throw new BookingError("server_error", friendly.server);
     }
     if (usage) await attachUsage(usage.usageId, row.id);
+    // the reservation's code use (claimed when its deposit was paid) now belongs to this booking
+    if (dueExtras?.usageId) await attachUsage(dueExtras.usageId, row.id);
     // the reservation's paid deposit becomes this booking's (the balance, Leads and refunds count it)
     if (due) await carryDueDeposit(due, row.id).catch((err) => log.error("booking.db", "Due-date deposit not carried over", { reference: row.bookingReference, error: err as Error }));
 
@@ -358,7 +362,7 @@ export class OutlookBookingProvider implements BookingProvider {
       const bundle = (await getCatalog()).find((b) => b.id === bundleId);
       if (bundle) {
         const family = asksFamily(bundle) ? familyCount : 0;
-        return withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone)), bundle, babyCount, family);
+        return withAddons(computeQuote(keptPriceBundle(due, bundle), todayInZone(bookingRules.timeZone), (await dueExtrasOf(due.id))?.code), bundle, babyCount, family);
       }
     }
     return (await this.priceFor(bundleId, code, email, babyCount, familyCount)).quote;

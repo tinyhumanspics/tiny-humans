@@ -36,6 +36,10 @@ export interface DueSummary {
   offerLabel: string | null;
   /** The deposit already paid (0 = none). */
   depositPaidCents: number;
+  /** Backdrops picked while reserving (the booking form starts with them); [] = not sure yet. */
+  backdrops?: string[];
+  /** The discount code they entered (applied to their session when they book). */
+  discountCode?: string | null;
   contact: { parentName: string; email: string; phone: string; street: string; unit: string; city: string; zip: string };
 }
 
@@ -67,6 +71,10 @@ export interface DueReservationRow {
   booking: { reference: string; date: string; start: string } | null;
   /** The family's link to pick their session (works while it's reserved). */
   scheduleUrl: string | null;
+  /** Backdrops picked while reserving ([] = not sure yet). */
+  backdrops: string[];
+  /** Discount code entered while reserving and what it takes off the bundle (null = none). */
+  discount: { code: string; offCents: number } | null;
 }
 
 /** POST /api/due-date answer: reserved now (no deposit), or the Stripe page for the deposit. */

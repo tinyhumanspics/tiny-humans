@@ -168,7 +168,8 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   const travelChecking = zipReady && travelEst?.zip !== zip;
   const travelFee = travel?.status === "fee" ? travel.feeCents : 0;
   // optional backdrop picks, one per setup of the bundle
-  const [backdrops, setBackdrops] = useState<string[]>([]);
+  // a "Not born yet" reservation's picks start the form (owner, Nov 11); the family can still change them
+  const [backdrops, setBackdrops] = useState<string[]>(() => due?.summary.backdrops ?? []);
   const setups = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const restoredLanguageDraft = useRef(false);

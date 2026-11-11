@@ -390,7 +390,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
         {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""}
         {lead.family?.length ? ` · +${lead.family.length} family` : ""} · At home in {city}
       </p>
-      {onReminded && <DepositReminder lead={lead} api={api} onSent={onReminded} />}
+      {onReminded && <DepositReminder lead={lead} api={api} onSent={onReminded} onDelete={() => setConfirmDelete(true)} />}
       <p className={styles.contactActions}>
         <a className={styles.smallButton} href={telHref(lead.phone)} aria-label={`Call ${lead.parentName}`}>Call</a>
         <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>

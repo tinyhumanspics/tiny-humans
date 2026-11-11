@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { AdminApi, DueList } from "@/lib/admin/client";
 import type { DueReservationRow } from "@/lib/due-date/types";
+import { backdropName } from "@/lib/booking/backdrop-names";
 import type { DayAvailability } from "@/lib/booking/types";
 import { babyAgeOptions, bookingRules } from "@/config/booking";
 import { daysBetweenDateKeys } from "@/lib/validation/date-key";
@@ -124,6 +125,9 @@ export default function DueDatesPanel({ api, onCount }: { api: AdminApi; onCount
                         ["Reservation", r.reference],
                         ["Price kept", r.bundlePriceCents < r.regularPriceCents ? `${formatMoney(r.bundlePriceCents)} (${r.offerLabel ?? "offer"}, regular ${formatMoney(r.regularPriceCents)})` : formatMoney(r.bundlePriceCents)],
                         ["Deposit", depositOf(r)],
+                        // chosen while reserving (owner, Nov 11)
+                        ...(r.discount ? [["Discount code", `${r.discount.code}: ${formatMoney(r.discount.offCents)} off (applied when they book their session)`]] : []),
+                        ["Backdrops", r.backdrops.length ? r.backdrops.map((id) => backdropName(id)).join(", ") : "Not sure yet"],
                         ["Email", r.email],
                         ["Phone", r.phone],
                         ["Home", r.address],

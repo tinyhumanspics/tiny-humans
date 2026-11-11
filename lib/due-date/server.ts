@@ -10,7 +10,7 @@ import { extraBabyLine } from "@/lib/booking/extra-babies";
 import { generateBookingReference } from "@/lib/booking/reference";
 import { todayInZone } from "@/lib/booking/timezone";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
-import { bookingDeposits, bookings, dueDateReservations, dueDepositReminders, type DueDateReservation } from "@/lib/db/schema";
+import { bookingDeposits, bookings, discountCodeUsage, discountCodes, dueDateReservations, dueDepositReminders, dueReservationExtras, type DueDateReservation } from "@/lib/db/schema";
 import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
 import { dueDepositReminderEmail, dueReservedEmail, internalDueReservedEmail } from "@/lib/email";
@@ -18,9 +18,10 @@ import { fill } from "@/lib/email/messages";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
 import { dueReturnPath, verifyDueReturn } from "@/lib/payments/link";
-import { createCheckoutSession, createRefund, getCheckoutSession, isStripeConfigured, StripeError, type CheckoutSession } from "@/lib/payments/stripe";
-import { computeQuote, formatMoney } from "@/lib/pricing/engine";
-import { getCatalog } from "@/lib/pricing/server";
+import { createCheckoutSession, createRefund, expireCheckoutSession, getCheckoutSession, isStripeConfigured, StripeError, type CheckoutSession } from "@/lib/payments/stripe";
+import { codeDiscountCents, computeQuote, formatMoney, type CodeTerms } from "@/lib/pricing/engine";
+import { claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
+import { setupsOf } from "@/config/backdrops";
 import type { Bundle } from "@/lib/pricing/types";
 import { getSiteSettings } from "@/lib/settings/server";
 import { travelQuote } from "@/lib/travel/distance";
@@ -66,6 +67,23 @@ function reference(): string {
 }
 
 /** New reservation from the "Not born yet" form. Throws BookingError with a message the family can read. */
+/**
+ * Step one of the form (owner, Nov 11: backdrops and the code come next): the same checks as reserving (bundle, babies,
+ * due date window, Florida and distance), without the database and without saving anything.
+ */
+export async function checkDueRequest(r: DueRequest): Promise<void> {
+  const messages = r.locale === "es" ? es : en;
+  const t = messages.dueDate.errors;
+  const bundle = (await getCatalog()).find((b) => b.id === r.bundleId && b.active !== false);
+  if (!bundle) throw new BookingError("invalid_request", t.bundle);
+  if (r.babyCount > 1 && !extraBabyLine(bundle, r.babyCount)) throw new BookingError("invalid_request", t.babies);
+  const window = dueWindow(todayInZone(bookingRules.timeZone));
+  if (r.dueDate < window.from || r.dueDate > window.to) throw new BookingError("invalid_request", t.window);
+  const travel = travelQuote(r.address.zip, await getTravelSettings());
+  if (travel.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
+  if (travel.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
+}
+
 export async function createDueReservation(r: DueRequest): Promise<DueCreateResult> {
   if (!isDatabaseConfigured()) throw new BookingError("server_error", "Reservations need the database. Please text us and we'll reserve your spot.");
   const messages = r.locale === "es" ? es : en;
@@ -88,8 +106,24 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
   if (travel.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
   if (travel.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
   const pricing = computeQuote(bundle, today);
+  // A discount code (owner, Nov 11): checked like on the booking form; kept only when it beats the running offer
+  // (one saving per booking). The deposit stays the same; the code comes off what they pay after the session.
+  let code: { terms: CodeTerms; codeId: string } | null = null;
+  if (r.discountCode) {
+    const check = await validateCode(r.discountCode, bundle.id, r.contact.email);
+    if (!check.ok) throw new BookingError("invalid_request", check.message);
+    if (computeQuote(bundle, today, check.terms).pricingType === "discount") code = { terms: check.terms, codeId: check.codeId };
+  }
+  const backdrops = [...new Set(r.backdrops ?? [])].slice(0, setupsOf([bundle.setups, ...bundle.features]));
+  // the choices live in their own table: a code needs it (never silently dropped), backdrops are best effort
+  const extrasReady = code || backdrops.length ? await db.select({ id: dueReservationExtras.reservationId }).from(dueReservationExtras).limit(1).then(() => true, () => false) : true;
+  if (code && !extrasReady) {
+    log.error("due.db", "due_reservation_extras is missing: run drizzle/0032_due_reservation_extras.sql");
+    throw new BookingError("server_error", t.server);
+  }
   const travelCents = travel.status === "fee" ? travel.feeCents : 0;
-  const depositCents = depositCentsFor(pricing.finalCents + travelCents, bundle.id, await getDepositSettings());
+  const totalCents = (code ? computeQuote(bundle, today, code.terms).finalCents : pricing.finalCents) + travelCents;
+  const depositCents = depositCentsFor(totalCents, bundle.id, await getDepositSettings());
   const id = crypto.randomUUID();
   const token = dueTokenFor(id);
   if (!token) throw new BookingError("server_error", t.server);
@@ -135,6 +169,20 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
     }
   }
   if (!row) throw new BookingError("server_error", t.server);
+  if ((code || backdrops.length) && extrasReady) {
+    const saved = await db
+      .insert(dueReservationExtras)
+      .values({ reservationId: row.id, backdrops, discountCode: code?.terms.code ?? null, discountType: code?.terms.type ?? null, discountValue: code?.terms.value ?? null, codeId: code?.codeId ?? null })
+      .then(() => true)
+      .catch((err) => {
+        log.error("due.db", "Reservation choices not saved", { reference: row!.reference, error: safe(err) });
+        return false;
+      });
+    if (code && !saved) {
+      await db.delete(dueDateReservations).where(eq(dueDateReservations.id, row.id)).catch(() => undefined);
+      throw new BookingError("server_error", t.server);
+    }
+  }
   // Unfinished bookings: this family's "Not born yet?" draft is now a reservation (best effort, never throws)
   await markDraftBooked(row.email, row.reference);
 
@@ -144,6 +192,7 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
     // Stripe not reachable: reserved without the deposit (flagged in /admin; the studio follows up), like bookings
     [row] = await db.update(dueDateReservations).set({ status: "reserved", depositStatus: "unpaid", updatedAt: new Date() }).where(eq(dueDateReservations.id, row.id)).returning();
   }
+  await claimDueCode(row);
   await sendDueEmails(row);
   return { reference: row.reference, status: "reserved", donePath: dueReturnPath(row.reference, row.locale) ?? undefined };
 }
@@ -198,6 +247,7 @@ export async function dueDepositPaid(id: string, session: Pick<CheckoutSession, 
     .returning();
   if (!row) return;
   log.info("due", "Due-date deposit paid", { reference: row.reference });
+  await claimDueCode(row);
   await sendDueEmails(row);
 }
 
@@ -252,8 +302,10 @@ export async function dueById(id: string): Promise<DueDateReservation | null> {
 }
 
 /** What the booking form shows and fills in for a schedule link. */
-export function dueSummaryOf(row: DueDateReservation): DueSummary {
+export function dueSummaryOf(row: DueDateReservation, extras?: DueExtras | null): DueSummary {
   return {
+    backdrops: extras?.backdrops ?? [],
+    discountCode: extras?.code?.code ?? null,
     reference: row.reference,
     bundleId: row.packageId,
     bundleName: row.packageName,
@@ -310,6 +362,8 @@ export async function finishDue(id: string, bookingId: string): Promise<void> {
 async function sendDueEmails(row: DueDateReservation): Promise<void> {
   const scheduleUrl = scheduleUrlFor(row);
   if (!scheduleUrl) return;
+  const extras = await dueExtrasOf(row.id);
+  const code = extras?.code ? { code: extras.code.code, offCents: codeDiscountCents(row.regularPriceCents, extras.code) } : null;
   const themeId = await getSiteSettings()
     .then((s) => s.themeId)
     .catch(() => "default");
@@ -323,6 +377,7 @@ async function sendDueEmails(row: DueDateReservation): Promise<void> {
     offerLabel: row.offerLabel,
     depositPaidCents: row.depositStatus === "paid" ? row.depositCents : 0,
     babyCount: row.babyCount,
+    code,
   };
   try {
     const mail = await dueReservedEmail(details, { themeId, scheduleUrl, locale: row.locale });
@@ -331,7 +386,7 @@ async function sendDueEmails(row: DueDateReservation): Promise<void> {
     log.error("due", "'Spot reserved' email not sent", { reference: row.reference, code: err instanceof EmailSendError ? err.code : "send_failed" });
   }
   try {
-    const mail = await internalDueReservedEmail({ ...details, email: row.email, phone: row.phone, address: [row.street, row.unit, row.city, row.zip].filter(Boolean).join(", "), notes: row.notes, depositStatus: row.depositStatus, depositCents: row.depositCents, travelFeeCents: row.travelFeeCents, travelMiles: row.travelMiles, scheduleUrl, leadsUrl: `${base()}/admin/leads?view=due` });
+    const mail = await internalDueReservedEmail({ ...details, email: row.email, phone: row.phone, address: [row.street, row.unit, row.city, row.zip].filter(Boolean).join(", "), notes: row.notes, depositStatus: row.depositStatus, depositCents: row.depositCents, travelFeeCents: row.travelFeeCents, travelMiles: row.travelMiles, scheduleUrl, leadsUrl: `${base()}/admin/leads?view=due`, backdrops: extras?.backdrops });
     await sendEmail({ scope: "resend.internal", from: emailConfig().internalFrom, to: emailConfig().notify, subject: mail.subject, html: mail.html, text: mail.text, replyTo: row.email, idempotencyKey: `due-reserved-studio/${row.reference}`, reference: row.reference });
   } catch (err) {
     log.error("due", "Studio 'due-date reservation' email not sent", { reference: row.reference, code: err instanceof EmailSendError ? err.code : "send_failed" });
@@ -350,6 +405,7 @@ export async function listDueReservations(): Promise<DueReservationRow[] | null>
     const rows = await db.select().from(dueDateReservations).orderBy(desc(dueDateReservations.createdAt)).limit(300);
     const ids = rows.map((r) => r.bookingId).filter((x): x is string => Boolean(x));
     const booked = ids.length ? await db.select({ id: bookings.id, reference: bookings.bookingReference, date: bookings.sessionDate, start: bookings.sessionStart, tz: bookings.timezone }).from(bookings).where(inArray(bookings.id, ids)) : [];
+    const extras = await dueExtrasFor(rows.map((r) => r.id));
     const open = (s: string) => (s === "reserved" || s === "scheduling" || s === "pending" ? 0 : 1);
     return rows
       .map((r) => {
@@ -379,6 +435,11 @@ export async function listDueReservations(): Promise<DueReservationRow[] | null>
           createdAt: r.createdAt.toISOString(),
           booking: b ? { reference: b.reference, date: b.date, start: localTime(b.start, b.tz) } : null,
           scheduleUrl: r.status === "reserved" ? scheduleUrlFor(r) : null,
+          backdrops: extras.get(r.id)?.backdrops ?? [],
+          discount: (() => {
+            const c = extras.get(r.id)?.code;
+            return c ? { code: c.code, offCents: codeDiscountCents(r.regularPriceCents, c) } : null;
+          })(),
         };
       })
       .sort((a, b) => open(a.status) - open(b.status) || (open(a.status) === 0 ? a.dueDate.localeCompare(b.dueDate) : b.createdAt.localeCompare(a.createdAt)));
@@ -398,6 +459,7 @@ export async function cancelDueReservation(id: string, refund: boolean): Promise
     .where(and(eq(dueDateReservations.id, id), inArray(dueDateReservations.status, ["pending", "reserved", "expired"])))
     .returning();
   if (!row) throw new BookingError("invalid_request", "This reservation can't be cancelled (already booked or cancelled).");
+  await releaseDueCode(row.id);
   if (!refund || row.depositStatus !== "paid") return { refunded: false };
   if (!row.stripePaymentIntent) return { refunded: false, refundError: "No Stripe payment found: refund it in Stripe." };
   try {
@@ -551,4 +613,83 @@ export async function remindDueDeposit(id: string): Promise<{ counted: boolean }
       if (!missingTable(err)) log.error("due.db", "Deposit reminder not counted", { reference: row.reference, error: safe(err) });
       return { counted: false };
     });
+}
+
+/** What a reservation chose (owner, Nov 11): backdrops and a discount code with its kept terms. */
+export interface DueExtras {
+  backdrops: string[];
+  code: CodeTerms | null;
+  codeId: string | null;
+  usageId: string | null;
+}
+
+/** The reservations' choices (best effort: none before migration 0032). */
+export async function dueExtrasFor(ids: string[]): Promise<Map<string, DueExtras>> {
+  const out = new Map<string, DueExtras>();
+  if (!ids.length || !isDatabaseConfigured()) return out;
+  try {
+    const rows = await getDb().select().from(dueReservationExtras).where(inArray(dueReservationExtras.reservationId, ids));
+    for (const x of rows) {
+      const type = x.discountType === "percent" || x.discountType === "fixed" ? x.discountType : null;
+      const code: CodeTerms | null = x.discountCode && type && x.discountValue != null ? { code: x.discountCode, type, value: x.discountValue } : null;
+      out.set(x.reservationId, { backdrops: x.backdrops ?? [], code, codeId: x.codeId, usageId: x.usageId });
+    }
+  } catch (err) {
+    if (!missingTable(err)) log.error("due.db", "Reservation choices not loaded", { error: safe(err) });
+  }
+  return out;
+}
+
+export const dueExtrasOf = async (id: string) => (await dueExtrasFor([id])).get(id) ?? null;
+
+/**
+ * The spot is reserved (deposit paid, or none needed): its code counts as used now, once. A code that was maxed out
+ * meanwhile is still honored (the family saw it applied); that's logged. Best effort.
+ */
+async function claimDueCode(row: DueDateReservation): Promise<void> {
+  const x = await dueExtrasOf(row.id);
+  if (!x?.codeId || x.usageId) return;
+  try {
+    const usage = await claimCode(x.codeId, row.email);
+    await getDb().update(dueReservationExtras).set({ usageId: usage.usageId, updatedAt: new Date() }).where(eq(dueReservationExtras.reservationId, row.id));
+  } catch (err) {
+    log.warn("due", "Code use not counted (the code is still honored)", { reference: row.reference, code: err instanceof BookingError ? err.code : undefined });
+  }
+}
+
+/** A reservation cancelled or deleted: its code use is given back (best effort). */
+async function releaseDueCode(id: string): Promise<void> {
+  const x = await dueExtrasOf(id);
+  if (!x?.usageId) return;
+  const db = getDb();
+  try {
+    const freed = await db.delete(discountCodeUsage).where(eq(discountCodeUsage.id, x.usageId)).returning({ codeId: discountCodeUsage.codeId });
+    for (const u of freed) await db.update(discountCodes).set({ usesCount: sql`greatest(${discountCodes.usesCount} - 1, 0)` }).where(eq(discountCodes.id, u.codeId));
+    await db.update(dueReservationExtras).set({ usageId: null, updatedAt: new Date() }).where(eq(dueReservationExtras.reservationId, id));
+  } catch (err) {
+    log.error("due.db", "Code use not given back", { error: safe(err) });
+  }
+}
+
+/**
+ * /admin → Leads → Not paid → Delete (owner, Nov 11: test reservations): removes a reservation whose deposit isn't paid
+ * and that has no booking. An open Stripe page is closed first (paid at the last second = refused: it's real now).
+ */
+export async function deleteDueReservation(id: string): Promise<void> {
+  const db = getDb();
+  const [row] = await db.select().from(dueDateReservations).where(eq(dueDateReservations.id, id)).limit(1);
+  if (!row) return;
+  if (row.bookingId || row.status === "scheduling" || row.status === "scheduled") throw new BookingError("invalid_request", "This reservation already has a booking: delete the booking in Leads instead.");
+  if (row.depositStatus === "paid") throw new BookingError("invalid_request", "This deposit is paid: cancel it (and refund it) under Due dates instead.");
+  if (row.stripeSessionId) {
+    let session = await getCheckoutSession(row.stripeSessionId).catch(() => null);
+    if (session?.status === "open") session = await expireCheckoutSession(session.id).catch(() => getCheckoutSession(row.stripeSessionId!).catch(() => null));
+    if (session?.payment_status === "paid") {
+      await dueDepositPaid(row.id, session);
+      throw new BookingError("invalid_request", "Stripe says this deposit was just paid, so the spot is reserved now. Refresh the page.");
+    }
+  }
+  await releaseDueCode(row.id);
+  await db.delete(dueDateReservations).where(eq(dueDateReservations.id, row.id));
+  log.info("due", "Reservation deleted from /admin", { reference: row.reference });
 }

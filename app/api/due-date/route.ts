@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { BookingError } from "@/lib/booking/errors";
-import { createDueReservation } from "@/lib/due-date/server";
+import { checkDueRequest, createDueReservation } from "@/lib/due-date/server";
 import { dueRequestSchema } from "@/lib/due-date/validation";
 import { log } from "@/lib/log";
 import { allow, clientIp } from "@/lib/rate-limit";
@@ -28,6 +28,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: t.spam, code: "invalid_request" }, { status: 400 });
   }
   try {
+    // step one only checks the details (nothing is saved)
+    if (r.check) {
+      await checkDueRequest(r);
+      return NextResponse.json({ checked: true });
+    }
     return NextResponse.json(await createDueReservation(r), { status: 201 });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });

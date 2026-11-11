@@ -18,6 +18,12 @@ import type { TravelQuote } from "@/lib/travel/types";
 import { dueWindow, type DueCreateResult } from "@/lib/due-date/types";
 import { looksLikeEmail, saveBookingDraft } from "@/lib/unfinished/client";
 import { localePath } from "@/i18n/path";
+import { setupsOf } from "@/config/backdrops";
+import BackdropPicker from "@/features/booking/backdrops/BackdropPicker";
+import { DiscountField } from "@/features/booking/flow/steps/ReviewStep";
+import { HttpBookingClient } from "@/lib/booking/http-client";
+import { backdropName } from "@/lib/booking/backdrop-names";
+import type { PriceQuote } from "@/lib/pricing/engine";
 import formStyles from "../flow/Booking.module.css";
 import styles from "./DueDate.module.css";
 import { cn } from "@/lib/cn";
@@ -29,9 +35,10 @@ const elapsedSince = (start: number) => Date.now() - start;
 const empty: Record<Field, string> = { parentName: "", email: "", phone: "", street: "", unit: "", city: "", zip: "", notes: "" };
 
 /**
- * "Not born yet?" (/due-date): the family picks a bundle, their due date (today to 9 months ahead) and leaves their
- * contact details and home address. With deposits on they pay it on Stripe; then "Your spot is reserved", and an email
- * with the link to pick their session when the baby arrives.
+ * "Not born yet?" (/due-date), three steps (owner, Nov 11): 1) bundle, due date (today to 9 months ahead), contact
+ * details and home address ("Reserve my spot" checks them on the server); 2) backdrops, or "Not sure yet" to skip;
+ * 3) review with an optional discount code (it comes off the session; the deposit stays the same), then the deposit
+ * on Stripe. Then "Your spot is reserved", and an email with the link to pick their session when the baby arrives.
  */
 export default function DueDateForm({ locale, messages, bookingMessages, pausedMessages }: { locale: AppLocale; messages: typeof en.dueDate; bookingMessages: typeof en.bookingFlow; pausedMessages: typeof en.bundlesPage.paused }) {
   const t = messages.page;
@@ -46,6 +53,10 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"saving" | "redirecting" | null>(null);
   const [travel, setTravel] = useState<{ zip: string; quote: TravelQuote | null } | null>(null);
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [backdrops, setBackdrops] = useState<string[]>([]);
+  const [code, setCode] = useState<{ applied: string; quote: PriceQuote } | null>(null);
+  const stepTitle = useRef<HTMLHeadingElement>(null);
   const openedAt = useRef(0);
   const requestId = useRef<string | null>(null);
   useEffect(() => {
@@ -104,6 +115,39 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
   const depositCents = bundle ? Math.min(depositFor(bundle.id) ?? 0, priceCents + travelCents) : 0;
   const deposit = formatMoney(depositCents);
 
+  const setups = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
+  const codeCents = code?.quote.pricingType === "discount" ? code.quote.finalCents : null;
+  const stepTop = useRef<HTMLParagraphElement>(null);
+  const shownStep = useRef(step);
+  // a new step: to its top, and its heading gets focus (screen readers hear where they are)
+  useEffect(() => {
+    if (shownStep.current === step) return;
+    shownStep.current = step;
+    stepTop.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    stepTitle.current?.focus({ preventScroll: true });
+  }, [step]);
+  const go = (next: 1 | 2 | 3) => {
+    setStep(next);
+    setError(null);
+  };
+  const chooseBundle = (id: string) => {
+    setBundleId(id);
+    setError(null);
+    // a code and backdrops belong to one bundle
+    setCode(null);
+    setBackdrops([]);
+  };
+  const payload = () => ({
+    bundleId,
+    locale,
+    babyCount: Math.min(babyCount, maxBabies),
+    dueDate,
+    contact: { parentName: contact.parentName.trim(), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim() || undefined },
+    address: { street: contact.street.trim(), unit: contact.unit.trim() || undefined, city: contact.city.trim(), zip: contact.zip.trim() },
+    hp: hp || undefined,
+    elapsedMs: elapsedSince(openedAt.current),
+  });
+
   const set = (field: Field, value: string) => {
     setContact((c) => ({ ...c, [field]: value }));
     setError(null);
@@ -114,26 +158,22 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     if (!bundle) return setError(t.pickBundle);
     if (!dueDate || dueDate < range.from || dueDate > range.to) return setError(fill(t.pickDate, { last }));
     if (zipNote?.blocking) return setError(zipNote.text);
+    if (step === 2) return go(3);
     setBusy("saving");
     setError(null);
     try {
+      // step 1 only checks the details on the server (nothing is reserved yet)
       const res = await fetch("/api/due-date", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          bundleId: bundle.id,
-          locale,
-          babyCount: Math.min(babyCount, maxBabies),
-          dueDate,
-          contact: { parentName: contact.parentName.trim(), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim() || undefined },
-          address: { street: contact.street.trim(), unit: contact.unit.trim() || undefined, city: contact.city.trim(), zip: contact.zip.trim() },
-          requestId: (requestId.current ??= crypto.randomUUID()),
-          hp: hp || undefined,
-          elapsedMs: elapsedSince(openedAt.current),
-        }),
+        body: JSON.stringify(step === 1 ? { ...payload(), check: true } : { ...payload(), backdrops, discountCode: code?.applied, requestId: (requestId.current ??= crypto.randomUUID()) }),
       });
-      const body = (await res.json().catch(() => null)) as (DueCreateResult & { error?: string }) | null;
+      const body = (await res.json().catch(() => null)) as (DueCreateResult & { error?: string; checked?: boolean }) | null;
       if (!res.ok || !body) throw new Error(body?.error || messages.errors.server);
+      if (step === 1) {
+        setBusy(null);
+        return go(2);
+      }
       if (body.depositUrl) {
         setBusy("redirecting");
         window.location.assign(body.depositUrl);
@@ -172,6 +212,9 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   <input id="due-leave-empty" name="due-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
                 </div>
 
+                <p ref={stepTop} className={cn(styles.stepOf, "chalk-soft")}>{fill(t.stepOf, { n: String(step), name: step === 1 ? t.stepDetails : step === 2 ? t.stepBackdrops : t.stepReview })}</p>
+                {step === 1 && (
+                <>
                 <fieldset className={styles.group}>
                   <legend className={cn(styles.legend, "chalk")}>{t.bundle}</legend>
                   <div className={styles.bundles}>
@@ -179,7 +222,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                       const o = activeOffer(b, today);
                       return (
                         <label key={b.id} className={cn(styles.bundle, b.id === bundleId && styles.bundleOn)}>
-                          <input type="radio" name="due-bundle" value={b.id} checked={b.id === bundleId} onChange={() => (setBundleId(b.id), setError(null))} className={styles.radio} />
+                          <input type="radio" name="due-bundle" value={b.id} checked={b.id === bundleId} onChange={() => chooseBundle(b.id)} className={styles.radio} />
                           <span className={cn(styles.bundleName, "chalk")}>{b.name}</span>
                           <span className={cn(styles.bundlePrice, "chalk-soft")}>
                             {o ? <><s>{formatMoney(toCents(b.price))}</s> <b>{formatMoney(o.cents)}</b> · {o.label}</> : formatMoney(toCents(b.price))}
@@ -247,8 +290,71 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   {saveNote[1]}
                 </p>
                 <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={82} className={styles.submit}>
-                  {busy === "redirecting" ? t.redirecting : busy ? t.submitting : depositCents > 0 ? fill(t.submitDeposit, { deposit }) : t.submit}
+                  {busy ? t.checking : t.submit}
                 </ChalkButton>
+                </>
+                )}
+
+                {step === 2 && bundle && (
+                  <div className={styles.stepBody}>
+                    <h2 ref={stepTitle} tabIndex={-1} className={cn(styles.legend, "chalk")}>{setups > 1 ? bookingMessages.details.backdrops.titleMany : bookingMessages.details.backdrops.title}</h2>
+                    <p className={cn(formStyles.optional, "chalk-soft")}>{setups > 1 ? fill(t.backdropsHintMany, { n: String(setups) }) : t.backdropsHint}</p>
+                    <BackdropPicker max={setups} value={backdrops} onChange={setBackdrops} label={setups > 1 ? bookingMessages.details.backdrops.titleMany : bookingMessages.details.backdrops.title} names={bookingMessages.details.backdrops.names} />
+                    {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
+                    <div className={styles.stepActions}>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(1)}>{t.back}</button>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => (setBackdrops([]), go(3))}>{t.skipBackdrops}</button>
+                      <ChalkButton type="submit" variant="solid" seed={83} className={styles.submit} disabled={!backdrops.length}>{t.toReview}</ChalkButton>
+                    </div>
+                  </div>
+                )}
+
+                {step === 3 && bundle && (
+                  <div className={styles.stepBody}>
+                    <h2 ref={stepTitle} tabIndex={-1} className={cn(styles.legend, "chalk")}>{t.reviewTitle}</h2>
+                    <dl className={cn(styles.review, "chalk-soft")}>
+                      <div><dt>{t.bundle}</dt><dd>{bundle.name}{babyCount > 1 ? ` · ${babyCount === 2 ? t.twins : t.triplets}` : ""}</dd></div>
+                      <div><dt>{t.dueDate}</dt><dd>{formatLongDate(dueDate, locale)}</dd></div>
+                      <div>
+                        <dt>{t.reviewBackdrops}</dt>
+                        <dd>
+                          {backdrops.length ? backdrops.map((id) => backdropName(id, bookingMessages.details.backdrops.names)).join(", ") : t.noBackdrops}{" "}
+                          <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(2)}>{t.change}</button>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>{t.reviewPrice}</dt>
+                        <dd>
+                          {codeCents !== null && code
+                            ? fill(t.codePrice, { price: formatMoney(codeCents), code: code.applied, regular: formatMoney(code.quote.regularCents) })
+                            : offer ? fill(t.priceOffer, { offer: offer.label, price: formatMoney(offer.cents), regular: formatMoney(toCents(bundle.price)) }) : fill(t.price, { price: formatMoney(priceCents) })}
+                        </dd>
+                      </div>
+                    </dl>
+                    <DiscountField
+                      applied={code?.applied ?? null}
+                      offerLabel={offer?.label ?? ""}
+                      messages={bookingMessages.review.discount}
+                      onApply={async (raw) => {
+                        const q = await new HttpBookingClient().quote(bundle.id, raw, contact.email.trim(), Math.min(babyCount, maxBabies));
+                        setCode(q.pricingType === "discount" && q.discountCode ? { applied: q.discountCode, quote: q } : null);
+                        return q;
+                      }}
+                      onRemove={async () => setCode(null)}
+                    />
+                    <p className={cn(formStyles.optional, "chalk-soft")}>{depositCents > 0 ? fill(t.codeHint, { deposit }) : t.codeHintNoDeposit}</p>
+                    <div className={cn(styles.summary, "chalk-soft")}>
+                      <p>{depositCents > 0 ? fill(t.depositNote, { deposit }) : t.noDepositNote}</p>
+                    </div>
+                    {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
+                    <div className={styles.stepActions}>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(2)}>{t.back}</button>
+                      <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={84} className={styles.submit}>
+                        {busy === "redirecting" ? t.redirecting : busy ? t.submitting : depositCents > 0 ? fill(t.submitDeposit, { deposit }) : t.submit}
+                      </ChalkButton>
+                    </div>
+                  </div>
+                )}
               </form>
             </ChalkBox>
 

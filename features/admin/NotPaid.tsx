@@ -6,6 +6,7 @@ import { formatLongDate } from "@/lib/booking/dates";
 import type { Lead, NotPaidDue } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { cn } from "@/lib/cn";
+import AdminDialog from "./AdminDialog";
 import { smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 
@@ -22,7 +23,7 @@ export const NOT_PAID_INTRO =
  * The reminder button (owner, Nov 11: "change the pill so I can see it was sent"): "Email deposit reminder" until one
  * is sent, then a "✓ Deposit reminder sent" pill with how many and when, and "Send again" for a deliberate resend.
  */
-function ReminderControls({ name, sent, failed, busy, onSend, before }: { name: string; sent: { count: number; at: string | null } | null; failed: string | null; busy: boolean; onSend: () => void; before?: ReactNode }) {
+function ReminderControls({ name, sent, failed, busy, onSend, before, after }: { name: string; sent: { count: number; at: string | null } | null; failed: string | null; busy: boolean; onSend: () => void; before?: ReactNode; after?: ReactNode }) {
   return (
     <>
       <p className={styles.contactActions}>
@@ -39,6 +40,7 @@ function ReminderControls({ name, sent, failed, busy, onSend, before }: { name: 
             {busy ? "Sending…" : "Email deposit reminder"}
           </button>
         )}
+        {after}
       </p>
       {sent && <p className={cn(styles.hintSmall, "chalk-soft")}>{sent.count > 1 ? `Sent ${sent.count} times` : "Sent once"}{sent.at ? ` · last ${when(sent.at)}` : ""}</p>}
       {!sent && failed && <p className={cn(styles.error, "chalk-soft")}>The last reminder didn&apos;t send ({failed}). Try again.</p>}
@@ -54,7 +56,7 @@ function sentState(saved: { count: number; at: string | null } | null, sentNow: 
 }
 
 /** On a booking's card in Not paid: why it's unpaid, what the reminder does, and the reminder button. */
-export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminApi; onSent: () => void }) {
+export function DepositReminder({ lead, api, onSent, onDelete }: { lead: Lead; api: AdminApi; onSent: () => void; onDelete?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sentNow, setSentNow] = useState<string | null>(null);
@@ -90,7 +92,14 @@ export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminA
     <div className={styles.reminderBox}>
       <p className={cn(styles.leadLine, "chalk-soft")}>{why}</p>
       <p className={cn(styles.hintSmall, "chalk-soft")}>{how}</p>
-      <ReminderControls name={lead.parentName} sent={sentState(saved, sentNow)} failed={r?.last.status === "failed" ? (r.last.error ?? "error") : null} busy={busy} onSend={send} />
+      <ReminderControls
+        name={lead.parentName}
+        sent={sentState(saved, sentNow)}
+        failed={r?.last.status === "failed" ? (r.last.error ?? "error") : null}
+        busy={busy}
+        onSend={send}
+        after={onDelete && <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={onDelete} aria-label={`Delete ${lead.parentName}`}>Delete</button>}
+      />
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
     </div>
   );
@@ -122,7 +131,23 @@ function DueCard({ row, api, onSent }: { row: NotPaidDue; api: AdminApi; onSent:
   const [err, setErr] = useState<string | null>(null);
   const [sentNow, setSentNow] = useState<string | null>(null);
   const [notCounted, setNotCounted] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
   const amount = formatMoney(row.depositCents);
+  const doDelete = async () => {
+    setDeleting(true);
+    setDeleteErr(null);
+    try {
+      await api.deleteDueDate(row.id);
+      setConfirmDelete(false);
+      onSent();
+    } catch (e) {
+      setDeleteErr(errText(e));
+    } finally {
+      setDeleting(false);
+    }
+  };
   const send = async () => {
     setBusy(true);
     setErr(null);
@@ -168,10 +193,25 @@ function DueCard({ row, api, onSent }: { row: NotPaidDue; api: AdminApi; onSent:
               <a className={styles.smallButton} href={smsHref(row.phone, "")} aria-label={`Text ${row.parentName}`}>Text</a>
             </>
           }
+          after={<button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={() => setConfirmDelete(true)} aria-label={`Delete ${row.parentName}`}>Delete</button>}
         />
         {notCounted && <p className={cn(styles.hintSmall, "chalk-soft")}>Sent. To keep this count after a refresh, run the Not paid SQL in Neon (drizzle/0031_due_deposit_reminders.sql).</p>}
         {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
       </div>
+      {confirmDelete && (
+        <AdminDialog labelledBy={`due-del-t-${row.id}`} describedBy={`due-del-d-${row.id}`} onClose={() => setConfirmDelete(false)} busy={deleting}>
+          <h3 id={`due-del-t-${row.id}`} className={cn(styles.h3, "chalk")}>Delete this reservation permanently?</h3>
+          <p id={`due-del-d-${row.id}`} className={cn(styles.muted, "chalk-soft")}>
+            {row.parentName} ({row.reference}) is removed from Not paid and Due dates. This can&apos;t be undone and no email is sent.
+            {row.why === "pending" ? " Its Stripe payment page is closed first, so it can't be paid anymore." : ""}
+          </p>
+          {deleteErr && <p className={cn(styles.error, "chalk-soft")} role="alert">{deleteErr}</p>}
+          <div className={styles.photoBar}>
+            <button type="button" className={styles.smallButton} onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</button>
+            <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={doDelete} disabled={deleting}>{deleting ? "Deleting…" : "Delete Permanently"}</button>
+          </div>
+        </AdminDialog>
+      )}
     </li>
   );
 }

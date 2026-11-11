@@ -127,3 +127,17 @@ test("Email deposit reminder: the button turns into “✓ Deposit reminder sent
   await expect(camila.getByRole("status")).toHaveText("✓ Deposit reminder sent");
   expect(sent.due).toEqual([{ action: "remind", id: DUE.id }]);
 });
+
+test("Delete in Not paid: a Not born yet reservation (after confirming) and a booking's Delete opens the same dialog (owner, Nov 11)", async ({ page }) => {
+  const sent = await fake(page);
+  await page.goto("/admin/leads");
+  await page.getByRole("button", { name: "Not paid (3)" }).click();
+  await page.getByRole("button", { name: "Delete Camila Reyes" }).click();
+  const dialog = page.getByRole("alertdialog", { name: "Delete this reservation permanently?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Delete Permanently" }).click();
+  await expect.poll(() => sent.due).toEqual([{ action: "delete", id: DUE.id }]);
+  await expect(dialog).toBeHidden();
+  await page.getByRole("button", { name: "Delete Ana Held" }).click();
+  await expect(page.getByRole("alertdialog", { name: "Delete this lead permanently?" })).toBeVisible();
+});

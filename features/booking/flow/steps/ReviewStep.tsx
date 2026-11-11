@@ -154,7 +154,8 @@ function Review({ rows, onEdit, messages }: { rows: ReviewRow[]; onEdit: (step: 
 
 /* ---------------- optional discount code (review step) ---------------- */
 
-function DiscountField({ applied, onApply, onRemove, messages, offerLabel }: { applied: string | null; onApply: (code: string) => Promise<PriceQuote>; onRemove: () => Promise<void>; messages: typeof en.bookingFlow.review.discount; offerLabel: string }) {
+/** Also on "Not born yet" (owner, Nov 11): the same field before the deposit. */
+export function DiscountField({ applied, onApply, onRemove, messages, offerLabel }: { applied: string | null; onApply: (code: string) => Promise<PriceQuote>; onRemove: () => Promise<void>; messages: typeof en.bookingFlow.review.discount; offerLabel: string }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<{ kind: "ok" | "info" | "error"; text: string } | null>(null);
