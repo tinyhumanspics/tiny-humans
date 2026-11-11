@@ -215,6 +215,9 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Shoots: done days folded — LIVE Nov 11 (owner: "push it")**. Owner asked: once a shoot day has passed (ticked or
+  not), show it small: the day, the family and the time, plus "Open day sheet"; tap to see everything. Done days are
+  now one slim row each (`DoneDayCard` in `features/shoots/ShootsList.tsx`, native <details>); Coming up unchanged.
 - [x] **Simpler Photos & Media + boxes switch + automatic Spanish — LIVE Nov 11 (owner: "push it")**. Each box can be switched on/off (wording kept) or removed ("Remove this box" deletes its words); one switch hides every box. Owner asked: a switch
   to hide the "Book a memory like this one" boxes; Photos & Media "a bit complicated to understand"; "automated
   translation on pictures and the seasonal landing, I have to be translating myself". Built: folded parts, one Edit
