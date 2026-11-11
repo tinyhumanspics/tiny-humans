@@ -215,6 +215,12 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Leads Completed + waiver copy by email + "Full name" — LIVE Nov 11 (owner: "go ahead and push it"; migration
+  0030 for Completed)**. Owner asked: a Completed tab and a tap-to-mark pill before the status (past clients for email
+  marketing); "Your name" → "Full name" on Not born yet; parents get their signed waiver by email right away. Checked
+  with `scripts/local-db` + fake Resend: a waiver signed on the iPad screen produced the parent's email; marking the
+  lead Completed moved it (Confirmed 4 → 3, Completed 1). Owner also asked that the waiver be saved on the lead: it is
+  (Leads → Photo use + "See signed waiver" → Print or save as PDF).
 - [x] **Unfinished bookings include "Not born yet?" — LIVE Nov 11 (owner: "go ahead and push it"; migration 0029 for the
   label)**. Owner asked: track families who start reserving with their due date but don't finish, labeled by where they
   came from, so they can get "What stopped you?". Checked with `scripts/local-db` + fake Stripe/Resend: a family that

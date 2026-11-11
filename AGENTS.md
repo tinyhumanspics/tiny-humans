@@ -384,3 +384,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   in `booking_draft_forms` (best effort: no table = no label). Pressing Reserve marks the draft booked with the
   reservation's TH-D reference; `dueDraftStage` hides it while the deposit page is open or once reserved, shows
   "Didn't pay the deposit" when it expired. "What stopped you?" sends due-date families back to /due-date.
+- Leads → Completed (owner, Nov 11; migration 0030_booking_completions): the owner taps the "Completed" pill before a
+  confirmed/rescheduled lead's status (`/api/admin/leads/complete`); the lead moves from its status tab to Completed
+  (All still lists it). Its own table, read best effort; the booking's status never changes, so payment links, gallery
+  emails and reviews keep working. Counts subtract completed leads from their status.
+- Signed waiver → parent's copy by email (owner, Nov 11): `POST /api/admin/waiver` saves the signature, then
+  `after(() => sendWaiverCopy(id))` emails the booking's address the stored snapshot (`emails/WaiverCopy.tsx`: a cream
+  "paper" card, ✓/✗ choices, the signature as an inline CID image, time, version, record id) in the signed language.
+  Best effort: an email problem never touches the signed record. The PDF is the signed copy's "Print or save as PDF".
