@@ -31,6 +31,7 @@ async function pickFirstOpenDay(page: import("@playwright/test").Page, open: () 
 const ABOUT = { parentName: "José Muñoz", email: "jose.test@example.com", phone: "(305) 555-0142", street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" };
 async function fillAboutYou(page: import("@playwright/test").Page, about: Record<string, string> = ABOUT) {
   await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
+  await expect(page.getByText("Fill in your details first. On the next step you'll see the days and times we have open for you.")).toBeVisible();
   for (const [field, value] of Object.entries(about)) await page.fill(`#field-${field}`, value);
 }
 const toCalendar = (page: import("@playwright/test").Page) => page.getByRole("button", { name: /Next: Date/ }).click();

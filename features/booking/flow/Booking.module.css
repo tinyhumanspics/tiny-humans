@@ -520,6 +520,18 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 }
 .babyLedIcon { flex: none; }
 
+/* step one only: "Fill in your details first…" between the baby-led note and the form. It starts below the note's
+   bottom margin: that gap holds one of the note's chalk drawings (config/themes.ts boardFrom "note"), never on words. */
+.firstStepNote {
+  margin: 0 0 clamp(18px, 3vw, 24px);
+  padding-top: 10px; /* adds to the note's bottom margin (margins would merge) */
+  max-width: 760px;
+  font-family: var(--font-chalk);
+  font-size: clamp(1.15rem, 3.4vw, 1.3rem);
+  line-height: 1.35;
+  color: var(--sun-yellow);
+}
+
 .babyLedCompact {
   display: flex;
   gap: 10px;
