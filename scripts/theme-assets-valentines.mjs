@@ -1,4 +1,4 @@
-// Valentine's theme artwork (owner, Nov 11: pink board #f7a0aa with deep wine "chalk"): the logo's heart layer
+// Valentine's theme artwork (owner, Nov 11: Soft Cream board #fff5e1 with deep wine "chalk"): the logo's heart layer
 // (public/brand/valentines/decor.webp, on the Original logo's 1012 x 896 canvas), the "Tiny Humans" lettering in
 // deep wine (public/brand/valentines/text.webp: the Original lettering's shape and grain, recolored), the email
 // logo (440 px, on the board color) and the email chalk strip (1200 x 96), all with the site's own chalk texture.
@@ -8,19 +8,19 @@
 import fs from "node:fs";
 import sharp from "sharp";
 const out = process.argv[2];
-const BOARD = "#f7a0aa"; // config/themes.ts valentines chalkboard
+const BOARD = "#fff5e1"; // config/themes.ts valentines chalkboard
 const INK = { r: 0x3d, g: 0x0a, b: 0x1c }; // valentines chalkWhite (#3d0a1c)
 const HEART = "M24 40 C14 32 6 26 6.5 17 C7 10 14 6.5 19 9 C21.5 10.3 23 12.5 24 15 C25.3 12 27.5 9.5 31 8.5 C37 7 42.5 11.5 41.5 18.5 C40.5 26 33 32 24.5 40.5";
 const W = 1012, H = 896;
-// crimson, raspberry and white, so the hearts show on the pink board
+// crimson, raspberry and pink (#f7a0aa), so the hearts show on the cream board
 const hearts = [
   { x: 100, y: 118, s: 150, r: -16, c: "#b3123c" },
-  { x: 868, y: 118, s: 165, r: 14, c: "#ffffff" },
+  { x: 868, y: 118, s: 165, r: 14, c: "#f7a0aa" },
   { x: 722, y: 46, s: 70, r: -10, c: "#d6336c" },
-  { x: 300, y: 42, s: 58, r: 8, c: "#ffffff" },
+  { x: 300, y: 42, s: 58, r: 8, c: "#f7a0aa" },
   { x: 976, y: 300, s: 58, r: 18, c: "#b3123c" },
   { x: 62, y: 560, s: 82, r: -12, c: "#d6336c" },
-  { x: 966, y: 596, s: 64, r: 10, c: "#ffffff" },
+  { x: 966, y: 596, s: 64, r: 10, c: "#f7a0aa" },
 ];
 function heartSvg(h, i) {
   const k = h.s / 48;

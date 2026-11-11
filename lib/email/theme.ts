@@ -24,7 +24,7 @@ const EMAIL_BOARD_DARK: Record<TinyHumansTheme, string> = {
   thanksgiving: "#663318",
   christmas: "#5a2423",
   newYear: "#101a31",
-  valentines: "#ee8f9a",
+  valentines: "#f6e6c8",
 };
 
 export function emailTheme(themeId: string | null | undefined): EmailTheme {
