@@ -493,7 +493,7 @@ export async function notPaidDue(): Promise<NotPaidDue[]> {
  * their own reservation page, which opens a Stripe page for the deposit (open a day; nothing is held meanwhile). An
  * expired reservation is waiting on its deposit again. The reminder is counted (best effort).
  */
-export async function remindDueDeposit(id: string): Promise<void> {
+export async function remindDueDeposit(id: string): Promise<{ counted: boolean }> {
   const db = getDb();
   let [row] = await db.select().from(dueDateReservations).where(eq(dueDateReservations.id, id)).limit(1);
   if (!row) throw new BookingError("invalid_request", "That reservation isn't here anymore. Refresh the page.");
@@ -541,11 +541,14 @@ export async function remindDueDeposit(id: string): Promise<void> {
     throw new BookingError("server_error", `The email wasn't sent (${code}). Please try again.`);
   }
   log.info("due", "Deposit reminder emailed", { reference: row.reference });
-  await db
+  // counted best effort: before migration 0031 the email still goes out, and Leads says the count isn't kept
+  return db
     .insert(dueDepositReminders)
     .values({ reservationId: row.id })
     .onConflictDoUpdate({ target: dueDepositReminders.reservationId, set: { count: sql`${dueDepositReminders.count} + 1`, lastSentAt: new Date() } })
+    .then(() => ({ counted: true }))
     .catch((err) => {
       if (!missingTable(err)) log.error("due.db", "Deposit reminder not counted", { reference: row.reference, error: safe(err) });
+      return { counted: false };
     });
 }

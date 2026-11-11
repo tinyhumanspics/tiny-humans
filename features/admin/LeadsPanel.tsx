@@ -191,9 +191,9 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     setSavedNote(lead.completedAt ? `${lead.parentName} moved to Completed.` : `${lead.parentName} moved back to ${STATUS_LABEL[lead.status]}.`);
   };
 
-  // a deposit reminder went out: reload so the card shows it (and anyone who paid meanwhile leaves the list)
-  const onReminded = (note: string) => {
-    setSavedNote(note);
+  // a deposit reminder went out: the card's button turns into "✓ Deposit reminder sent"; reload so the count and
+  // anyone who paid meanwhile are up to date (no note at the top: owner, Nov 11)
+  const onReminded = () => {
     void load(filter);
   };
 
@@ -255,7 +255,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   );
 }
 
-function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDeleted, onReminded }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onCompleted: (l: Lead) => void; onDeleted: () => void; onReminded?: (note: string) => void }) {
+function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDeleted, onReminded }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onCompleted: (l: Lead) => void; onDeleted: () => void; onReminded?: () => void }) {
   const { photos } = useSiteSettings();
   const [completing, setCompleting] = useState(false);
   const [completeErr, setCompleteErr] = useState<string | null>(null);
@@ -390,7 +390,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
         {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""}
         {lead.family?.length ? ` · +${lead.family.length} family` : ""} · At home in {city}
       </p>
-      {onReminded && <DepositReminder lead={lead} api={api} onSent={(_, note) => onReminded(note)} />}
+      {onReminded && <DepositReminder lead={lead} api={api} onSent={onReminded} />}
       <p className={styles.contactActions}>
         <a className={styles.smallButton} href={telHref(lead.phone)} aria-label={`Call ${lead.parentName}`}>Call</a>
         <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>

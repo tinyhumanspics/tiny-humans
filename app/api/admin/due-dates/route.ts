@@ -61,8 +61,8 @@ export async function POST(req: Request) {
   const input = p.data;
   try {
     if (input.action === "remind") {
-      await remindDueDeposit(input.id);
-      return NextResponse.json({ ok: true });
+      const { counted } = await remindDueDeposit(input.id);
+      return NextResponse.json({ ok: true, counted });
     }
     if (input.action === "cancel") {
       const result = await cancelDueReservation(input.id, input.refund);

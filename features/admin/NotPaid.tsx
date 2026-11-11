@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AdminApi } from "@/lib/admin/client";
 import { formatLongDate } from "@/lib/booking/dates";
 import type { Lead, NotPaidDue } from "@/lib/leads/types";
@@ -13,16 +13,51 @@ import styles from "./Admin.module.css";
 
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "America/New_York" }).format(new Date(iso)) : "");
 const clock = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { timeStyle: "short", timeZone: "America/New_York" }).format(new Date(iso)) : "");
-const times = (n: number) => (n === 1 ? "1 reminder" : `${n} reminders`);
 const errText = (e: unknown) => (e instanceof Error ? e.message : "Couldn't send it. Please try again.");
 
 export const NOT_PAID_INTRO =
-  "Families who haven't paid their deposit yet. “Email deposit reminder” sends them a link to pay it: everything they filled in stays saved, and each reminder is noted here.";
+  "Families who haven't paid their deposit yet. “Email deposit reminder” sends them a link to pay it: everything they filled in stays saved, and the button turns into “✓ Deposit reminder sent” so you know.";
 
-/** On a booking's card in Not paid: why it's unpaid, the reminder button and the reminders sent so far. */
-export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminApi; onSent: (lead: Lead, note: string) => void }) {
+/**
+ * The reminder button (owner, Nov 11: "change the pill so I can see it was sent"): "Email deposit reminder" until one
+ * is sent, then a "✓ Deposit reminder sent" pill with how many and when, and "Send again" for a deliberate resend.
+ */
+function ReminderControls({ name, sent, failed, busy, onSend, before }: { name: string; sent: { count: number; at: string | null } | null; failed: string | null; busy: boolean; onSend: () => void; before?: ReactNode }) {
+  return (
+    <>
+      <p className={styles.contactActions}>
+        {before}
+        {sent ? (
+          <>
+            <span className={cn(styles.statusPill, styles.reminderSent)} role="status">✓ Deposit reminder sent</span>
+            <button type="button" className={styles.smallButton} disabled={busy} onClick={onSend} aria-label={`Send the deposit reminder again to ${name}`}>
+              {busy ? "Sending…" : "Send again"}
+            </button>
+          </>
+        ) : (
+          <button type="button" className={styles.smallButton} disabled={busy} onClick={onSend} aria-label={`Email deposit reminder to ${name}`}>
+            {busy ? "Sending…" : "Email deposit reminder"}
+          </button>
+        )}
+      </p>
+      {sent && <p className={cn(styles.hintSmall, "chalk-soft")}>{sent.count > 1 ? `Sent ${sent.count} times` : "Sent once"}{sent.at ? ` · last ${when(sent.at)}` : ""}</p>}
+      {!sent && failed && <p className={cn(styles.error, "chalk-soft")}>The last reminder didn&apos;t send ({failed}). Try again.</p>}
+    </>
+  );
+}
+
+/** What the screen shows as sent: the saved reminders, plus one sent from here just now (shown even before the list reloads). */
+function sentState(saved: { count: number; at: string | null } | null, sentNow: string | null) {
+  if (!sentNow) return saved;
+  const at = saved?.at && saved.at > sentNow ? saved.at : sentNow;
+  return { count: Math.max(saved?.count ?? 0, 1), at };
+}
+
+/** On a booking's card in Not paid: why it's unpaid, what the reminder does, and the reminder button. */
+export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminApi; onSent: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [sentNow, setSentNow] = useState<string | null>(null);
   const d = lead.deposit;
   if (!d) return null;
   const amount = formatMoney(d.amountCents);
@@ -39,8 +74,10 @@ export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminA
     setBusy(true);
     setErr(null);
     try {
-      const updated = kind === "stripeDown" ? await api.emailPaymentLink(lead.reference) : await api.depositLink(lead.reference, true);
-      onSent(updated, `Deposit reminder emailed to ${lead.parentName} (${lead.email}).`);
+      if (kind === "stripeDown") await api.emailPaymentLink(lead.reference);
+      else await api.depositLink(lead.reference, true);
+      setSentNow(new Date().toISOString());
+      onSent();
     } catch (e) {
       setErr(errText(e));
     } finally {
@@ -48,17 +85,12 @@ export function DepositReminder({ lead, api, onSent }: { lead: Lead; api: AdminA
     }
   };
   const r = d.reminders;
+  const saved = r && r.last.status !== "failed" ? { count: r.count, at: r.last.at } : null;
   return (
     <div className={styles.reminderBox}>
       <p className={cn(styles.leadLine, "chalk-soft")}>{why}</p>
-      <p className={cn(styles.hintSmall, "chalk-soft")}>
-        {r ? `${times(r.count)} sent · last ${r.last.status === "failed" ? `one failed (${r.last.error ?? "error"})` : when(r.last.at)}.` : "No reminder sent yet."} {how}
-      </p>
-      <p className={styles.contactActions}>
-        <button type="button" className={styles.smallButton} disabled={busy} onClick={send} aria-label={`Email deposit reminder to ${lead.parentName}`}>
-          {busy ? "Sending…" : "Email deposit reminder"}
-        </button>
-      </p>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>{how}</p>
+      <ReminderControls name={lead.parentName} sent={sentState(saved, sentNow)} failed={r?.last.status === "failed" ? (r.last.error ?? "error") : null} busy={busy} onSend={send} />
       {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
     </div>
   );
@@ -71,7 +103,7 @@ const DUE_WHY: Record<NotPaidDue["why"], string> = {
 };
 
 /** The "Not born yet" families missing the deposit, under the bookings in Not paid. */
-export function NotPaidDueList({ rows, api, onSent }: { rows: NotPaidDue[]; api: AdminApi; onSent: (note: string) => void }) {
+export function NotPaidDueList({ rows, api, onSent }: { rows: NotPaidDue[]; api: AdminApi; onSent: () => void }) {
   if (!rows.length) return null;
   return (
     <>
@@ -85,16 +117,20 @@ export function NotPaidDueList({ rows, api, onSent }: { rows: NotPaidDue[]; api:
   );
 }
 
-function DueCard({ row, api, onSent }: { row: NotPaidDue; api: AdminApi; onSent: (note: string) => void }) {
+function DueCard({ row, api, onSent }: { row: NotPaidDue; api: AdminApi; onSent: () => void }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [sentNow, setSentNow] = useState<string | null>(null);
+  const [notCounted, setNotCounted] = useState(false);
   const amount = formatMoney(row.depositCents);
   const send = async () => {
     setBusy(true);
     setErr(null);
     try {
-      await api.remindDueDeposit(row.id);
-      onSent(`Deposit reminder emailed to ${row.parentName} (${row.email}).`);
+      const res = await api.remindDueDeposit(row.id);
+      setSentNow(new Date().toISOString());
+      setNotCounted(res.counted === false);
+      onSent();
     } catch (e) {
       setErr(errText(e));
     } finally {
@@ -119,16 +155,21 @@ function DueCard({ row, api, onSent }: { row: NotPaidDue; api: AdminApi; onSent:
       </p>
       <div className={styles.reminderBox}>
         <p className={cn(styles.leadLine, "chalk-soft")}>{DUE_WHY[row.why]}</p>
-        <p className={cn(styles.hintSmall, "chalk-soft")}>
-          {r ? `${times(r.count)} sent · last ${when(r.lastAt)}.` : "No reminder sent yet."} The reminder emails them a link to pay the {amount} deposit (open for a day) and keeps their reservation and price.
-        </p>
-        <p className={styles.contactActions}>
-          <a className={styles.smallButton} href={telHref(row.phone)} aria-label={`Call ${row.parentName}`}>Call</a>
-          <a className={styles.smallButton} href={smsHref(row.phone, "")} aria-label={`Text ${row.parentName}`}>Text</a>
-          <button type="button" className={styles.smallButton} disabled={busy} onClick={send} aria-label={`Email deposit reminder to ${row.parentName}`}>
-            {busy ? "Sending…" : "Email deposit reminder"}
-          </button>
-        </p>
+        <p className={cn(styles.hintSmall, "chalk-soft")}>The reminder emails them a link to pay the {amount} deposit (open for a day) and keeps their reservation and price.</p>
+        <ReminderControls
+          name={row.parentName}
+          sent={sentState(r ? { count: r.count, at: r.lastAt } : null, sentNow)}
+          failed={null}
+          busy={busy}
+          onSend={send}
+          before={
+            <>
+              <a className={styles.smallButton} href={telHref(row.phone)} aria-label={`Call ${row.parentName}`}>Call</a>
+              <a className={styles.smallButton} href={smsHref(row.phone, "")} aria-label={`Text ${row.parentName}`}>Text</a>
+            </>
+          }
+        />
+        {notCounted && <p className={cn(styles.hintSmall, "chalk-soft")}>Sent. To keep this count after a refresh, run the Not paid SQL in Neon (drizzle/0031_due_deposit_reminders.sql).</p>}
         {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
       </div>
     </li>

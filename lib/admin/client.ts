@@ -86,7 +86,7 @@ export interface AdminApi {
   bookDueDate(input: { id: string; date: string; start: string; babyAge: string; babyName?: string }): Promise<DueList & { booked: string }>;
   cancelDueDate(id: string, refund: boolean): Promise<DueList & { refunded: boolean; refundError?: string }>;
   /** Leads → Not paid: email a "Not born yet" family the link to pay their missing deposit. */
-  remindDueDeposit(id: string): Promise<{ ok: true }>;
+  remindDueDeposit(id: string): Promise<{ ok: true; counted?: boolean }>;
   /* quotes (owner only): every bundle's price for a ZIP code */
   getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */

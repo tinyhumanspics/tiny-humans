@@ -269,6 +269,7 @@
 .reminderBox { margin: 10px 0 0; padding: 10px 14px; border: 1.5px dashed color-mix(in srgb, var(--chalk-error) 60%, transparent); border-radius: 12px; }
 .reminderBox .contactActions { margin-bottom: 0; }
 .notPaidGroup { margin: 26px 0 10px; }
+.reminderSent { display: inline-flex; align-items: center; min-height: 44px; color: var(--chalkboard-dark); background: var(--sun-yellow); border-color: var(--sun-yellow); }
 .duplicatePill { color: var(--sun-yellow); border-style: dashed; }
 .status_cancelled { color: var(--chalk-error); }
 .duplicateNote { margin: 2px 0; color: var(--sun-yellow); font-size: 1.02rem; }

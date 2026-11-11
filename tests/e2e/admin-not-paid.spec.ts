@@ -71,8 +71,9 @@ async function fake(page: Page) {
     });
   });
   await page.route("**/api/admin/leads/deposit-link", (route) => {
-    sent.depositLink.push(route.request().postDataJSON());
-    return route.fulfill({ json: { lead: RELEASED } });
+    const body = route.request().postDataJSON() as { reference: string };
+    sent.depositLink.push(body);
+    return route.fulfill({ json: { lead: body.reference === HELD.reference ? HELD : RELEASED } });
   });
   return sent;
 }
@@ -88,26 +89,41 @@ test("Not paid lists only the families missing the deposit, bookings and Not bor
   await expect(page.getByText("Families who haven't paid their deposit yet.", { exact: false })).toBeVisible();
   await expect(page.getByText("Waiting for the $50 deposit: their time is held until 12:30 PM.")).toBeVisible();
   await expect(page.getByText("Didn't pay the $50 deposit in time, so their time was released.")).toBeVisible();
-  await expect(page.getByText("1 reminder sent · last Nov 10, 2026, 3:05 PM", { exact: false })).toBeVisible();
+  // Bea already got one: her card shows the sent pill and "Send again" instead of the first button
+  const bea = page.getByRole("listitem").filter({ hasText: "Bea Released" });
+  await expect(bea.getByRole("status")).toHaveText("✓ Deposit reminder sent");
+  await expect(bea.getByText("Sent once · last Nov 10, 2026, 3:05 PM")).toBeVisible();
+  await expect(bea.getByRole("button", { name: "Send the deposit reminder again to Bea Released" })).toHaveText("Send again");
   await expect(page.getByRole("heading", { name: "Not born yet (1)" })).toBeVisible();
   const due = page.getByRole("list", { name: "Not born yet, deposit not paid" }).getByRole("listitem");
   await expect(due).toHaveCount(1);
   await expect(due.getByText("$50 deposit not paid")).toBeVisible();
   await expect(due.getByText("The payment page ran out before they paid.")).toBeVisible();
-  await expect(page.getByRole("button", { name: /Email deposit reminder to/ })).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Email deposit reminder to/ })).toHaveCount(2);
   await page.evaluate(() => document.fonts.ready);
   const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
   expect(scan.violations).toEqual([]);
 });
 
-test("Email deposit reminder: a booking holds its time again and emails the link; a Not born yet family gets theirs", async ({ page }) => {
+test("Email deposit reminder: the button turns into “✓ Deposit reminder sent” (owner, Nov 11), and Send again resends", async ({ page }) => {
   const sent = await fake(page);
   await page.goto("/admin/leads");
   await page.getByRole("button", { name: "Not paid (3)" }).click();
-  await page.getByRole("button", { name: "Email deposit reminder to Bea Released" }).click();
-  await expect(page.getByText("Deposit reminder emailed to Bea Released (bea@example.com).")).toBeVisible();
-  expect(sent.depositLink).toEqual([{ reference: RELEASED.reference, email: true }]);
-  await page.getByRole("button", { name: "Email deposit reminder to Camila Reyes" }).click();
-  await expect(page.getByText("Deposit reminder emailed to Camila Reyes (camila@example.com).")).toBeVisible();
+  const ana = page.getByRole("listitem").filter({ hasText: "Ana Held" });
+  await ana.getByRole("button", { name: "Email deposit reminder to Ana Held" }).click();
+  await expect(ana.getByRole("status")).toHaveText("✓ Deposit reminder sent");
+  await expect(ana.getByText(/^Sent once · last /)).toBeVisible();
+  await expect(ana.getByRole("button", { name: "Email deposit reminder to Ana Held" })).toHaveCount(0);
+  // no note at the top of the page any more: the card itself says it
+  await expect(page.getByText("Deposit reminder emailed to", { exact: false })).toHaveCount(0);
+  expect(sent.depositLink).toEqual([{ reference: HELD.reference, email: true }]);
+  // a deliberate second reminder
+  await page.getByRole("button", { name: "Send the deposit reminder again to Bea Released" }).click();
+  await expect.poll(() => sent.depositLink.length).toBe(2);
+  expect(sent.depositLink[1]).toEqual({ reference: RELEASED.reference, email: true });
+
+  const camila = page.getByRole("list", { name: "Not born yet, deposit not paid" }).getByRole("listitem");
+  await camila.getByRole("button", { name: "Email deposit reminder to Camila Reyes" }).click();
+  await expect(camila.getByRole("status")).toHaveText("✓ Deposit reminder sent");
   expect(sent.due).toEqual([{ action: "remind", id: DUE.id }]);
 });
