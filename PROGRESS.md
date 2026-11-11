@@ -213,6 +213,10 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
   seasonal offer `valentines`, last sessions Feb 28, off by default) and the drawings. Checked with a test-only switch
   (never committed): intro draws the hearts before the lettering, home/bundles/booking pages, a Valentine's email; every
   text color passes the contrast test (lowest 4.7:1).
+  **Changed to light pink (owner, Nov 10, after a side-by-side preview: "change it to light pink and make sure emails
+  also change")**: light pink board with dark raspberry writing (logo lettering recolored, prices, buttons, helper
+  texts), emails on the same pink with raspberry dashed lines and frames (Original-theme emails byte-identical; all 12
+  customer emails rendered and checked in pink). Still switched off until the owner picks it on Feb 1.
 - [x] **% offers, offer line, Quotes, "Not born yet" — LIVE Nov 10 (`4d9684c`; migration 0026 run by the owner first)**.
   Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
   "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin

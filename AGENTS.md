@@ -338,10 +338,13 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   built-in two (settings cache key `site-settings-v3`). `features/seasonal/SeasonalOffers.tsx` draws them on the ad page
   AND the home page (after the hero), with the running bundle offer line inside the box. The bundle card's discounted
   price is 0.82em of a regular price (owner, Nov 10).
-- Valentine's theme (owner, Nov 10; Raspberry board, option A of the preview): theme id `valentines`, the Original logo
-  layers + a heart `decor` layer (`public/brand/valentines/decor.webp`; intro strokes in
-  `config/logo/valentines-drawing.ts`, lettering 0.3 s later), drawings `heartArrow`/`loveLetter`/`rose`/`twoHearts`/`xo`,
-  pink offer sticker (`html[data-theme="valentines"]`). Its artwork and email logo/strip come from
-  `scripts/theme-assets-valentines.mjs` (the email JPEGs are base64 in `lib/email/assets.ts`). Built-in seasonal offer
+- Valentine's theme (owner, Nov 10; changed the same day from Raspberry to LIGHT PINK): theme id `valentines`, the only
+  light board, so its "chalk" is dark raspberry (`chalkWhite` #4f1430 = the writing, `sunYellow` #a3154a = highlights
+  and buttons); anything drawn in a fixed off-white disappears on it, so use the theme variables (emails: `chalkAlpha()`
+  in `lib/email/theme.ts` for dashed lines and frames). The Original logo layers + a heart `decor` layer
+  (`public/brand/valentines/decor.webp`; intro strokes in `config/logo/valentines-drawing.ts`, lettering 0.3 s later)
+  + its own dark lettering (`public/brand/valentines/text.webp`), drawings `heartArrow`/`loveLetter`/`rose`/`twoHearts`/
+  `xo`. The thanksgiving placeholder/star overrides also apply to it (contrast test `LIGHTER`). Its artwork and email
+  logo/strip come from `scripts/theme-assets-valentines.mjs` (the email JPEGs are base64 in `lib/email/assets.ts`). Built-in seasonal offer
   `valentines` ("Show love to your tiny human", last sessions Feb 28, off by default). The owner switches the theme in
   /admin → Theme on Feb 1 and back on Mar 1.
