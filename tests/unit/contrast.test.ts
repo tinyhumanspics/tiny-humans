@@ -23,7 +23,7 @@ function mix(a: string, b: string, p: number): string {
  *  Valentine's pink board (#ffbbc1, dark writing): 70% hints and 60% empty stars too. */
 const LIGHTER: Partial<Record<string, { cutoffWhite: boolean; hint: number; star: number }>> = {
   thanksgiving: { cutoffWhite: true, hint: 0.7, star: 0.6 },
-  valentines: { cutoffWhite: false, hint: 0.7, star: 0.6 },
+  valentines: { cutoffWhite: false, hint: 0.85, star: 0.6 },
 };
 
 describe("theme text contrast on the chalkboard (WCAG 1.4.3, 4.5:1)", () => {

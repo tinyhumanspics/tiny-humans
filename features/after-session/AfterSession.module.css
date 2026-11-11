@@ -14,7 +14,8 @@
 }
 .textarea { min-height: 130px; resize: vertical; }
 .input::placeholder, .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); opacity: 1; }
-:global(html[data-theme="thanksgiving"]) .input::placeholder, :global(html[data-theme="thanksgiving"]) .textarea::placeholder, :global(html[data-theme="valentines"]) .input::placeholder, :global(html[data-theme="valentines"]) .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
+:global(html[data-theme="thanksgiving"]) .input::placeholder, :global(html[data-theme="thanksgiving"]) .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
+:global(html[data-theme="valentines"]) .input::placeholder, :global(html[data-theme="valentines"]) .textarea::placeholder { color: color-mix(in srgb, var(--chalk-white) 85%, transparent); }
 .input:focus-visible, .textarea:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
 .input[aria-invalid="true"], .textarea[aria-invalid="true"] { border-color: var(--chalk-error); }
 .error { margin: 8px 0 0; color: var(--chalk-error); font-size: 1.05rem; }

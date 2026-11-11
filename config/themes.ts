@@ -333,18 +333,18 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "valentines",
     label: "Valentine's",
     buttonLabel: "Valentine's Theme",
-    // Pink board #ffbbc1 (owner, Nov 10: their own color) with deep wine "chalk": a light board, so its text colors are
+    // Pink board #f7a0aa (owner, Nov 11: their #ffbbc1, a bit darker) with deep wine "chalk": a light board, so its text colors are
     // dark (chalkWhite = the writing, sunYellow = the crimson highlight/buttons). Every text color reads 4.5:1+
     // (contrast test). Drawings and photo pins: raspberry, crimson and plum.
     colors: {
       ...board,
-      chalkboard: "#ffbbc1",
-      chalkboardDark: "#f7a9b1",
-      chalkboardLight: "#ffd3d7",
+      chalkboard: "#f7a0aa",
+      chalkboardDark: "#ee8f9a",
+      chalkboardLight: "#fdb6bd",
       chalkWhite: "#3d0a1c",
       chalkMuted: "#5e1730",
-      sunYellow: "#921038",
-      cloudBlue: "#1f4f80",
+      sunYellow: "#780b2e",
+      cloudBlue: "#173d6b",
       chalkError: "#8c0d24",
       accent: "#d6336c",
       accent2: "#b3123c",

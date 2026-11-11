@@ -1,4 +1,4 @@
-// Valentine's theme artwork (owner, Nov 10: pink board #ffbbc1 with deep wine "chalk"): the logo's heart layer
+// Valentine's theme artwork (owner, Nov 11: pink board #f7a0aa with deep wine "chalk"): the logo's heart layer
 // (public/brand/valentines/decor.webp, on the Original logo's 1012 x 896 canvas), the "Tiny Humans" lettering in
 // deep wine (public/brand/valentines/text.webp: the Original lettering's shape and grain, recolored), the email
 // logo (440 px, on the board color) and the email chalk strip (1200 x 96), all with the site's own chalk texture.
@@ -8,7 +8,7 @@
 import fs from "node:fs";
 import sharp from "sharp";
 const out = process.argv[2];
-const BOARD = "#ffbbc1"; // config/themes.ts valentines chalkboard
+const BOARD = "#f7a0aa"; // config/themes.ts valentines chalkboard
 const INK = { r: 0x3d, g: 0x0a, b: 0x1c }; // valentines chalkWhite (#3d0a1c)
 const HEART = "M24 40 C14 32 6 26 6.5 17 C7 10 14 6.5 19 9 C21.5 10.3 23 12.5 24 15 C25.3 12 27.5 9.5 31 8.5 C37 7 42.5 11.5 41.5 18.5 C40.5 26 33 32 24.5 40.5";
 const W = 1012, H = 896;
