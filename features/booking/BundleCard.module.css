@@ -110,8 +110,6 @@
   -webkit-mask-composite: xor; mask-composite: exclude;
 }
 .wasPrice { font-size: 0.55em; color: var(--chalk-muted); text-decoration-thickness: 3px; text-decoration-color: color-mix(in srgb, var(--chalk-white) 75%, transparent); }
-/* Valentine's: the offer sticker in pink, as in the approved design (owner, Nov 10); raspberry text on it reads 4.9:1 */
-:global(html[data-theme="valentines"]) .offerSticker { background: var(--accent); }
 /* a little smaller than a regular price (owner, Nov 10: "$134.10" with cents read too big next to the chalk) */
 .offerPrice { color: var(--sun-yellow); font-size: 0.82em; }
 .offerEnds { margin: -6px 0 6px; font-size: 1.02rem; color: var(--cloud-blue); }

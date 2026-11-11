@@ -333,19 +333,21 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "valentines",
     label: "Valentine's",
     buttonLabel: "Valentine's Theme",
-    // Raspberry board (owner's pick, Nov 10: option A). Small text is lightened just enough to read 4.5:1+ on it
-    // (tests/unit/contrast.test.ts); the red is only for drawings.
+    // Light pink board (owner, Nov 10) with dark raspberry "chalk": the one light theme, so its text colors are dark
+    // (chalkWhite = the writing, sunYellow = the highlight/buttons). Every text color reads 4.5:1+ (contrast test).
     colors: {
       ...board,
-      chalkboard: "#7a2648",
-      chalkboardDark: "#571b33",
-      chalkboardLight: "#95345a",
-      chalkMuted: "#e2cfd6",
-      cloudBlue: "#a9dcff",
-      chalkError: "#ffc4cc",
-      accent: "#ff9cbc",
-      accent2: "#ff6b81",
-      accent3: "#ffd3df",
+      chalkboard: "#f9dbe5",
+      chalkboardDark: "#f1c6d5",
+      chalkboardLight: "#fdeef3",
+      chalkWhite: "#4f1430",
+      chalkMuted: "#6e2d4a",
+      sunYellow: "#a3154a",
+      cloudBlue: "#245a8c",
+      chalkError: "#9b1029",
+      accent: "#d6336c",
+      accent2: "#e0435f",
+      accent3: "#b0457a",
     },
     // the Original logo with little chalk hearts around it (decor layer)
     logo: logo(
@@ -354,7 +356,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         rays: "/brand/default/rays.webp",
         cloud: "/brand/default/cloud.webp",
         decor: "/brand/valentines/decor.webp",
-        text: "/brand/default/text.webp",
+        text: "/brand/valentines/text.webp",
       },
       valentinesLogoDrawing,
     ),
