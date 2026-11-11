@@ -4,7 +4,7 @@ import type { LeadList } from "@/lib/leads/types";
 
 const list = (all: number): LeadList => ({
   leads: [],
-  counts: { all, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0 },
+  counts: { all, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, not_paid: 0 },
   total: 0,
   money: { paidThisMonthCents: 0, unpaidCount: 0 },
 });
@@ -44,7 +44,7 @@ test("Completed: tap the pill before the status and the lead moves to Completed 
     const done = Boolean(completedAt);
     const leads = status === "completed" ? (done ? [lead] : []) : status === "confirmed" ? (done ? [] : [lead]) : status === "all" ? [lead] : [];
     return route.fulfill({
-      json: { leads, counts: { all: 1, pending: 0, confirmed: done ? 0 : 1, rescheduled: 0, cancelled: 0, completed: done ? 1 : 0 }, total: leads.length, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList,
+      json: { leads, counts: { all: 1, pending: 0, confirmed: done ? 0 : 1, rescheduled: 0, cancelled: 0, completed: done ? 1 : 0, not_paid: 0 }, total: leads.length, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList,
     });
   });
   await page.route("**/api/admin/leads/complete", (route) => {

@@ -23,6 +23,11 @@ export interface LeadDeposit {
   link: string | null;
   /** The last "Finish booking" email sent from /admin. */
   linkEmail: SentEmail | null;
+  /**
+   * Deposit reminders emailed from /admin (the "Finish booking" email, or the payment link when Stripe was down):
+   * how many, and the last one. Null = none yet.
+   */
+  reminders: { count: number; last: SentEmail } | null;
 }
 
 export interface EmailStatus {
@@ -122,14 +127,36 @@ export interface Lead {
   createdAt: string;
 }
 
-/** The Leads sections: every active lead, one status, or the owner's "Completed" (owner, Nov 11). */
-export type LeadFilter = "all" | LeadStatus | "completed";
+/**
+ * The Leads sections: every active lead, one status, the owner's "Completed", or "Not paid" (families missing the
+ * deposit; owner, Nov 11).
+ */
+export type LeadFilter = "all" | LeadStatus | "completed" | "not_paid";
+
+/** A "Not born yet" reservation whose deposit isn't paid (Leads → Not paid, next to the bookings). */
+export interface NotPaidDue {
+  id: string;
+  reference: string;
+  parentName: string;
+  email: string;
+  phone: string;
+  bundleName: string;
+  dueDate: string;
+  depositCents: number;
+  /** pending = still at the Stripe page; expired = the page ran out; unpaid = reserved while Stripe was down. */
+  why: "pending" | "expired" | "unpaid";
+  createdAt: string;
+  /** Deposit reminders emailed from /admin (null = none yet, or not known before migration 0031). */
+  reminders: { count: number; lastAt: string } | null;
+}
 
 export interface LeadList {
   leads: Lead[];
   /** Counts across ALL leads (not just this page). */
   counts: Record<LeadFilter, number>;
   total: number;
+  /** "Not paid" list only: the "Not born yet" families missing the deposit (counted in counts.not_paid too). */
+  notPaidDue?: NotPaidDue[];
   /** Dashboard money numbers ("all" list only; null if the payments table isn't there). */
   money?: { paidThisMonthCents: number; unpaidCount: number } | null;
 }

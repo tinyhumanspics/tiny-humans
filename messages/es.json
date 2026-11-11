@@ -823,7 +823,19 @@
       "button": "Elegir la fecha de mi sesión",
       "buttonText": "Elige la fecha de tu sesión: {url}",
       "orText": "¿Prefieres que lo hagamos nosotros? Escríbenos al {phone} y la reservamos por ti.",
-      "reference": "Reserva {reference}"
+      "reference": "Reserva {reference}",
+      "reminder": {
+        "subject": "Termina de reservar tu lugar en Tiny Humans",
+        "preheader": "Paga el depósito de {deposit} para reservar {bundle} con tu fecha de parto.",
+        "eyebrow": "Casi reservado",
+        "title": "Tu lugar está casi reservado, {name}",
+        "intro": "Empezaste a reservar {bundle} con tu fecha de parto, {date}. Paga el depósito de {deposit} para reservar tu lugar.",
+        "saved": "Tus datos están guardados, así que solo toma un minuto. Tu precio: {price}.",
+        "button": "Pagar el depósito de {deposit}",
+        "buttonText": "Paga el depósito: {url}",
+        "open": "Esta página de pago se mantiene abierta por un día. El depósito es parte de tu total; el resto se paga después de tu sesión.",
+        "help": "¿Hubo algún problema con el pago? Responde a este correo y te ayudaremos."
+      }
     },
     "waiverCopy": {
       "subject": "Tu autorización de fotos y videos firmada",

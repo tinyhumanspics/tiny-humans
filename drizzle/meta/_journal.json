@@ -218,6 +218,13 @@
       "when": 1794378818690,
       "tag": "0030_booking_completions",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1794411755230,
+      "tag": "0031_due_deposit_reminders",
+      "breakpoints": true
     }
   ]
 }

@@ -858,6 +858,17 @@ export const bookingCompletions = pgTable("booking_completions", {
   completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * Deposit reminders the owner emailed a "Not born yet" family from Leads → Not paid (owner, Nov 11). Its own table,
+ * read and written best effort, so reminders still send before migration 0031 runs (bookings keep theirs in
+ * booking_emails: kind deposit_link / payment_link).
+ */
+export const dueDepositReminders = pgTable("due_deposit_reminders", {
+  reservationId: uuid("reservation_id").primaryKey().references(() => dueDateReservations.id, { onDelete: "cascade" }),
+  count: integer("count").notNull().default(1),
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const bookingDrafts = pgTable(
   "booking_drafts",
   {

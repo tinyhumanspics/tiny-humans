@@ -18,3 +18,4 @@ export { depositLinkEmail } from "@/emails/DepositLink";
 export { dayClosedEmail } from "@/emails/DayClosed";
 export { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";
 export { dueReservedEmail } from "@/emails/DueDateReserved";
+export { dueDepositReminderEmail } from "@/emails/DueDepositReminder";

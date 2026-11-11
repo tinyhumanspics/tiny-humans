@@ -13,6 +13,7 @@ import { findPhoto, useSiteSettings } from "@/components/providers/SiteSettingsP
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/features/booking/RescheduleFlow";
 import DueDatesPanel from "./DueDatesPanel";
+import { DepositReminder, NOT_PAID_INTRO, NotPaidDueList } from "./NotPaid";
 import { smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
@@ -29,6 +30,8 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "rescheduled", label: "Rescheduled", alwaysShow: true },
   // past clients the owner marked done (owner, Nov 11: "for email marketing")
   { id: "completed", label: "Completed", alwaysShow: true },
+  // families missing the deposit, with a reminder button (owner, Nov 11)
+  { id: "not_paid", label: "Not paid", alwaysShow: true },
   { id: "cancelled", label: "Cancelled", alwaysShow: true },
 ];
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
@@ -188,6 +191,12 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     setSavedNote(lead.completedAt ? `${lead.parentName} moved to Completed.` : `${lead.parentName} moved back to ${STATUS_LABEL[lead.status]}.`);
   };
 
+  // a deposit reminder went out: reload so the card shows it (and anyone who paid meanwhile leaves the list)
+  const onReminded = (note: string) => {
+    setSavedNote(note);
+    void load(filter);
+  };
+
   const onCancelled = (lead: Lead) => {
     // refresh counts + list so the cancellation shows immediately
     void load(filter);
@@ -221,13 +230,20 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
 
       {savedNote && <p className={cn(styles.ok, "chalk-soft")} role="status">{savedNote}</p>}
       {error && <p className={cn(styles.bannerError, "chalk-soft")} role="alert">{error}</p>}
-      {data && data.leads.length === 0 && !loading && <p className={cn(styles.hintSmall, "chalk-soft")}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>}
+      {filter === "not_paid" && <p className={cn(styles.hintSmall, "chalk-soft")}>{NOT_PAID_INTRO}</p>}
+      {data && data.leads.length === 0 && !loading && (filter === "not_paid" ? (
+        !data.notPaidDue?.length && <p className={cn(styles.hintSmall, "chalk-soft")}>Everyone has paid their deposit.</p>
+      ) : (
+        <p className={cn(styles.hintSmall, "chalk-soft")}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>
+      ))}
 
       <ul className={styles.leadList}>
         {data?.leads.map((lead) => (
-          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onCompleted={onCompleted} onDeleted={onDeleted} />
+          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onCompleted={onCompleted} onDeleted={onDeleted}
+            onReminded={filter === "not_paid" ? onReminded : undefined} />
         ))}
       </ul>
+      {filter === "not_paid" && data?.notPaidDue && <NotPaidDueList rows={data.notPaidDue} api={api} onSent={onReminded} />}
       {data && data.leads.length < data.total && (
         <button type="button" className={styles.smallButton} onClick={() => load(filter, data.leads.length)} disabled={loading}>
           Show more
@@ -239,7 +255,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   );
 }
 
-function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDeleted }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onCompleted: (l: Lead) => void; onDeleted: () => void }) {
+function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDeleted, onReminded }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onCompleted: (l: Lead) => void; onDeleted: () => void; onReminded?: (note: string) => void }) {
   const { photos } = useSiteSettings();
   const [completing, setCompleting] = useState(false);
   const [completeErr, setCompleteErr] = useState<string | null>(null);
@@ -374,6 +390,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
         {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""}
         {lead.family?.length ? ` · +${lead.family.length} family` : ""} · At home in {city}
       </p>
+      {onReminded && <DepositReminder lead={lead} api={api} onSent={(_, note) => onReminded(note)} />}
       <p className={styles.contactActions}>
         <a className={styles.smallButton} href={telHref(lead.phone)} aria-label={`Call ${lead.parentName}`}>Call</a>
         <a className={styles.smallButton} href={smsHref(lead.phone, "")} aria-label={`Text ${lead.parentName}`}>Text</a>

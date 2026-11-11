@@ -823,7 +823,19 @@
       "button": "Pick my session date",
       "buttonText": "Pick your session date: {url}",
       "orText": "Prefer that we do it? Text us at {phone} and we'll book it for you.",
-      "reference": "Reservation {reference}"
+      "reference": "Reservation {reference}",
+      "reminder": {
+        "subject": "Finish reserving your Tiny Humans spot",
+        "preheader": "Pay the {deposit} deposit to reserve {bundle} for your due date.",
+        "eyebrow": "Almost reserved",
+        "title": "Your spot is almost reserved, {name}",
+        "intro": "You started reserving {bundle} with your due date, {date}. Pay the {deposit} deposit to reserve your spot.",
+        "saved": "Your details are saved, so it only takes a minute. Your price: {price}.",
+        "button": "Pay the {deposit} deposit",
+        "buttonText": "Pay the deposit: {url}",
+        "open": "This payment page stays open for one day. The deposit is part of your total; the rest is paid after your session.",
+        "help": "Something went wrong with the payment? Just reply to this email and we'll help."
+      }
     },
     "waiverCopy": {
       "subject": "Your signed photo and video release",

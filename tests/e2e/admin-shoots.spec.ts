@@ -205,7 +205,7 @@ test("What we always bring: a failed save keeps the text and retries", async ({ 
 
 test("Leads: Open shoot folder on bookings that aren't cancelled", async ({ page }) => {
   const cancelled = { ...noDepositLead, reference: "TH-20261008-GONE", parentName: "Cancelled Family", status: "cancelled" as const };
-  const list: LeadList = { leads: [noDepositLead, cancelled], counts: { all: 2, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 1, completed: 0 }, total: 2, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
+  const list: LeadList = { leads: [noDepositLead, cancelled], counts: { all: 2, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 0 }, total: 2, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
   await page.goto("/admin/leads");
   const open = page.getByRole("link", { name: "Open shoot folder" });

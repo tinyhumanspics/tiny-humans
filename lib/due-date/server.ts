@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac } from "crypto";
-import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { bookingRules, scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import { hashCancelToken, looksLikeCancelToken } from "@/lib/booking/cancel-token";
@@ -10,10 +10,10 @@ import { extraBabyLine } from "@/lib/booking/extra-babies";
 import { generateBookingReference } from "@/lib/booking/reference";
 import { todayInZone } from "@/lib/booking/timezone";
 import { getDb, isDatabaseConfigured, isUniqueViolation } from "@/lib/db/client";
-import { bookingDeposits, bookings, dueDateReservations, type DueDateReservation } from "@/lib/db/schema";
+import { bookingDeposits, bookings, dueDateReservations, dueDepositReminders, type DueDateReservation } from "@/lib/db/schema";
 import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
-import { dueReservedEmail, internalDueReservedEmail } from "@/lib/email";
+import { dueDepositReminderEmail, dueReservedEmail, internalDueReservedEmail } from "@/lib/email";
 import { fill } from "@/lib/email/messages";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
@@ -30,6 +30,7 @@ import es from "@/messages/es.json";
 import { dueWindow, type DueCreateResult, type DueReservationRow, type DueSummary } from "./types";
 import type { DueRequest } from "./validation";
 import { markDraftBooked } from "@/lib/unfinished/server";
+import type { NotPaidDue } from "@/lib/leads/types";
 
 const base = () => site.url.replace(/\/$/, "");
 const missingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
@@ -148,7 +149,7 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
 }
 
 /** The Stripe page for the deposit (open 24 hours: nothing is held meanwhile). Null when Stripe can't. */
-async function openDuePage(row: DueDateReservation): Promise<string | null> {
+async function openDuePage(row: DueDateReservation, idempotencyKey = `due-deposit/${row.id}`): Promise<string | null> {
   const back = dueReturnPath(row.reference, row.locale);
   if (!back || !isStripeConfigured()) {
     log.error("due", "Deposit is on, but Stripe or ADMIN_SESSION_SECRET is missing: reserved without it", { reference: row.reference });
@@ -165,7 +166,7 @@ async function openDuePage(row: DueDateReservation): Promise<string | null> {
       bookingId: row.id,
       successUrl: `${base()}${back}&paid=1`,
       cancelUrl: `${base()}${back}`,
-      idempotencyKey: `due-deposit/${row.id}`,
+      idempotencyKey,
       kind: "due_deposit",
       expiresAt: Math.floor(Date.now() / 1000) + 23 * 3600,
       submitMessage: messages.dueDate.stripe.message,
@@ -193,7 +194,7 @@ export async function dueDepositPaid(id: string, session: Pick<CheckoutSession, 
   const [row] = await getDb()
     .update(dueDateReservations)
     .set({ status: "reserved", depositStatus: "paid", stripeSessionId: session.id, stripePaymentIntent: session.payment_intent, depositPaidAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(dueDateReservations.id, id), inArray(dueDateReservations.status, ["pending", "expired"])))
+    .where(and(eq(dueDateReservations.id, id), or(inArray(dueDateReservations.status, ["pending", "expired"]), and(eq(dueDateReservations.status, "reserved"), eq(dueDateReservations.depositStatus, "unpaid")))))
     .returning();
   if (!row) return;
   log.info("due", "Due-date deposit paid", { reference: row.reference });
@@ -213,14 +214,16 @@ export async function dueReturnState(referenceValue: string, signature: string):
   if (!verifyDueReturn(referenceValue, signature) || !isDatabaseConfigured()) return { state: "invalid" };
   let [row] = await getDb().select().from(dueDateReservations).where(eq(dueDateReservations.reference, referenceValue)).limit(1);
   if (!row) return { state: "invalid" };
-  if (row.status === "pending" && row.stripeSessionId) {
+  // reserved while Stripe was down: a deposit reminder from /admin opens its page (the spot stays reserved meanwhile)
+  const awaiting = row.status === "pending" || (row.status === "reserved" && row.depositStatus === "unpaid");
+  if (awaiting && row.stripeSessionId) {
     const session = await getCheckoutSession(row.stripeSessionId).catch(() => null);
     if (session?.payment_status === "paid") {
       await dueDepositPaid(row.id, session);
       [row] = await getDb().select().from(dueDateReservations).where(eq(dueDateReservations.id, row.id)).limit(1);
     } else if (session?.status === "open" && session.url) {
       return { state: "pending", row, payUrl: session.url };
-    } else if (session?.status === "expired") {
+    } else if (session?.status === "expired" && row.status === "pending") {
       await dueDepositExpired(row.id);
       return { state: "expired", row };
     }
@@ -416,4 +419,133 @@ export async function countWaitingDue(): Promise<number> {
   } catch {
     return 0;
   }
+}
+
+/** A reservation that still needs its deposit: at the Stripe page, the page ran out, or reserved while Stripe was down. */
+const missingDeposit = (r: Pick<DueDateReservation, "status" | "depositStatus" | "depositCents">) =>
+  r.depositCents > 0 &&
+  ((r.status === "pending" && r.depositStatus === "pending") || (r.status === "expired" && r.depositStatus === "expired") || (r.status === "reserved" && r.depositStatus === "unpaid"));
+
+/** Reminders already emailed (best effort: no table before migration 0031 = none known). */
+async function remindersFor(ids: string[]): Promise<Map<string, { count: number; lastAt: string }>> {
+  const out = new Map<string, { count: number; lastAt: string }>();
+  if (!ids.length) return out;
+  try {
+    const rows = await getDb().select().from(dueDepositReminders).where(inArray(dueDepositReminders.reservationId, ids));
+    for (const r of rows) out.set(r.reservationId, { count: r.count, lastAt: r.lastSentAt.toISOString() });
+  } catch (err) {
+    if (!missingTable(err)) log.error("due.db", "Deposit reminders not loaded", { error: safe(err) });
+  }
+  return out;
+}
+
+/**
+ * Leads → Not paid (owner, Nov 11): "Not born yet" families who haven't paid the deposit, newest first. A family who
+ * reserved again (or booked a session) since then has moved on and isn't listed. Best effort: [] without the table.
+ */
+export async function notPaidDue(): Promise<NotPaidDue[]> {
+  if (!isDatabaseConfigured()) return [];
+  try {
+    const db = getDb();
+    const rows = (
+      await db
+        .select()
+        .from(dueDateReservations)
+        .where(and(gt(dueDateReservations.depositCents, 0), inArray(dueDateReservations.depositStatus, ["pending", "expired", "unpaid"])))
+        .orderBy(desc(dueDateReservations.createdAt))
+        .limit(200)
+    ).filter(missingDeposit);
+    if (!rows.length) return [];
+    const emails = [...new Set(rows.map((r) => r.email.trim().toLowerCase()))];
+    const [laterDue, laterBookings] = await Promise.all([
+      db
+        .select({ email: dueDateReservations.email, createdAt: dueDateReservations.createdAt })
+        .from(dueDateReservations)
+        .where(and(inArray(sql`lower(${dueDateReservations.email})`, emails), inArray(dueDateReservations.status, ["reserved", "scheduling", "scheduled"]), ne(dueDateReservations.depositStatus, "unpaid"))),
+      db.select({ email: bookings.email, createdAt: bookings.createdAt }).from(bookings).where(and(inArray(sql`lower(${bookings.email})`, emails), ne(bookings.status, "cancelled"))),
+    ]);
+    const movedOn = (r: DueDateReservation) =>
+      [...laterDue, ...laterBookings].some((x) => x.email.trim().toLowerCase() === r.email.trim().toLowerCase() && x.createdAt.getTime() > r.createdAt.getTime());
+    const open = rows.filter((r) => !movedOn(r));
+    const sent = await remindersFor(open.map((r) => r.id));
+    return open.map((r) => ({
+      id: r.id,
+      reference: r.reference,
+      parentName: r.parentName,
+      email: r.email,
+      phone: r.phone,
+      bundleName: r.packageName,
+      dueDate: r.dueDate,
+      depositCents: r.depositCents,
+      why: r.depositStatus as NotPaidDue["why"],
+      createdAt: r.createdAt.toISOString(),
+      reminders: sent.get(r.id) ?? null,
+    }));
+  } catch (err) {
+    if (missingTable(err)) return [];
+    log.error("due.db", "Unpaid reservations not loaded", { error: safe(err) });
+    return [];
+  }
+}
+
+/**
+ * /admin → Leads → Not paid → "Email deposit reminder" (owner, Nov 11): their details stay saved; the email links to
+ * their own reservation page, which opens a Stripe page for the deposit (open a day; nothing is held meanwhile). An
+ * expired reservation is waiting on its deposit again. The reminder is counted (best effort).
+ */
+export async function remindDueDeposit(id: string): Promise<void> {
+  const db = getDb();
+  let [row] = await db.select().from(dueDateReservations).where(eq(dueDateReservations.id, id)).limit(1);
+  if (!row) throw new BookingError("invalid_request", "That reservation isn't here anymore. Refresh the page.");
+  if (!missingDeposit(row)) throw new BookingError("invalid_request", "This reservation's deposit isn't missing anymore. Refresh the page.");
+  if (!isStripeConfigured()) throw new BookingError("server_error", "Stripe isn't connected (STRIPE_SECRET_KEY is missing in Vercel).");
+  const back = dueReturnPath(row.reference, row.locale);
+  if (!back) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
+  let open = false;
+  if (row.stripeSessionId && row.status !== "expired") {
+    const session = await getCheckoutSession(row.stripeSessionId).catch(() => null);
+    if (session?.payment_status === "paid") {
+      await dueDepositPaid(row.id, session);
+      throw new BookingError("invalid_request", "Stripe says this deposit was just paid: the spot is reserved. Refresh the page.");
+    }
+    open = session?.status === "open";
+  }
+  if (!open) {
+    const wasExpired = row.status === "expired";
+    if (wasExpired) {
+      const [again] = await db
+        .update(dueDateReservations)
+        .set({ status: "pending", depositStatus: "pending", updatedAt: new Date() })
+        .where(and(eq(dueDateReservations.id, row.id), eq(dueDateReservations.status, "expired")))
+        .returning();
+      if (!again) throw new BookingError("invalid_request", "This reservation changed meanwhile. Refresh the page and try again.");
+      row = again;
+    }
+    if (!(await openDuePage(row, `due-deposit/${row.id}/${Date.now()}`))) {
+      if (wasExpired) await db.update(dueDateReservations).set({ status: "expired", depositStatus: "expired", updatedAt: new Date() }).where(eq(dueDateReservations.id, row.id)).catch(() => undefined);
+      throw new BookingError("server_error", "Stripe couldn't open a payment page just now. Please try again.");
+    }
+  }
+  const themeId = await getSiteSettings()
+    .then((s) => s.themeId)
+    .catch(() => "default");
+  const mail = await dueDepositReminderEmail(
+    { parentName: row.parentName, bundleName: row.packageName, dueDate: row.dueDate, amountCents: row.depositCents, bundlePriceCents: row.bundlePriceCents, offerLabel: row.bundlePriceCents < row.regularPriceCents ? row.offerLabel : null },
+    { themeId, payUrl: `${base()}${back}`, locale: row.locale },
+  );
+  try {
+    await sendEmail({ scope: "resend.due_deposit_reminder", to: row.email, subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments, replyTo: emailConfig().notify, idempotencyKey: `due-deposit-reminder/${row.reference}/${Date.now()}`, reference: row.reference });
+  } catch (err) {
+    const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    log.error("due", "Deposit reminder not sent", { reference: row.reference, code });
+    throw new BookingError("server_error", `The email wasn't sent (${code}). Please try again.`);
+  }
+  log.info("due", "Deposit reminder emailed", { reference: row.reference });
+  await db
+    .insert(dueDepositReminders)
+    .values({ reservationId: row.id })
+    .onConflictDoUpdate({ target: dueDepositReminders.reservationId, set: { count: sql`${dueDepositReminders.count} + 1`, lastSentAt: new Date() } })
+    .catch((err) => {
+      if (!missingTable(err)) log.error("due.db", "Deposit reminder not counted", { reference: row.reference, error: safe(err) });
+    });
 }

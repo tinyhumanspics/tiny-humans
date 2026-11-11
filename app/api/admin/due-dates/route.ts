@@ -6,7 +6,7 @@ import { formatTimeLabel } from "@/lib/booking/dates";
 import { BookingError } from "@/lib/booking/errors";
 import { getBookingProvider } from "@/lib/booking/server";
 import { isDatabaseConfigured } from "@/lib/db/client";
-import { cancelDueReservation, dueById, listDueReservations } from "@/lib/due-date/server";
+import { cancelDueReservation, dueById, listDueReservations, remindDueDeposit } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { isDateKey } from "@/lib/validation/date-key";
 
@@ -45,12 +45,14 @@ const body = z.discriminatedUnion("action", [
     babyName: z.string().trim().max(80).optional(),
   }),
   z.object({ action: z.literal("cancel"), id: z.string().uuid(), refund: z.boolean() }),
+  z.object({ action: z.literal("remind"), id: z.string().uuid() }),
 ]);
 
 /**
  * Owner only. "book": the owner picks the session for a reservation (the baby arrived and the family texted): a normal
  * booking with the kept price and no new deposit; the family gets the usual confirmation email.
  * "cancel": ends a reservation that has no booking yet, refunding its deposit on Stripe when asked.
+ * "remind" (Leads → Not paid): emails the family a link to pay the missing deposit; their details stay saved.
  */
 export async function POST(req: Request) {
   const g = await guard(); if (g) return g;
@@ -58,6 +60,10 @@ export async function POST(req: Request) {
   if (!p.success) return NextResponse.json({ error: p.error.issues[0]?.message ?? "Check the details." }, { status: 400 });
   const input = p.data;
   try {
+    if (input.action === "remind") {
+      await remindDueDeposit(input.id);
+      return NextResponse.json({ ok: true });
+    }
     if (input.action === "cancel") {
       const result = await cancelDueReservation(input.id, input.refund);
       return NextResponse.json({ ...(await list()), ...result });

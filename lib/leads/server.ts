@@ -23,6 +23,7 @@ import { duplicateBookingsFor } from "./duplicates";
 import { addonsFor, babiesFor, familyFor } from "@/lib/booking/addons";
 import type { FamilyMember } from "@/lib/booking/family";
 import { waiversForBookings } from "@/lib/waiver/server";
+import { notPaidDue } from "@/lib/due-date/server";
 import { categoriesForCodes } from "@/lib/pricing/server";
 import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
@@ -139,6 +140,9 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
   const notice = x.terms.find((t) => t.bookingId === r.id)?.noticeHours ?? x.noticeHours;
   const abandoned = x.emails.find((e) => e.bookingId === r.id && e.kind === "deposit_abandoned");
   const linkEmail = x.emails.find((e) => e.bookingId === r.id && e.kind === "deposit_link");
+  const payLink = x.emails.filter((e) => e.bookingId === r.id && e.kind === "payment_link").sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())[0];
+  // booked while Stripe was down: the payment link takes the deposit; otherwise the "Finish booking" email
+  const reminder = d.status === "unpaid" ? payLink : linkEmail;
   const held = r.status === "pending" && d.status === "pending" && Boolean(d.holdUntil && d.holdUntil.getTime() > Date.now());
   return {
     amountCents: d.amountCents,
@@ -151,6 +155,7 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
     abandonedEmail: sent(abandoned),
     link: held ? depositPageUrl(r) : null,
     linkEmail: sent(linkEmail),
+    reminders: reminder ? { count: reminder.attempts, last: sent(reminder)! } : null,
   };
 }
 
@@ -228,22 +233,42 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
 const STATUSES: LeadStatus[] = ["pending", "confirmed", "rescheduled", "cancelled"];
 
 /** Newest first. "all" = every NON-cancelled lead. Counts come from the database (all leads, not this page). */
+/**
+ * Leads → Not paid (owner, Nov 11): bookings still missing their deposit, so a reminder can still be sent: waiting at
+ * the Stripe page (time held), booked while Stripe was down (nothing paid yet), or released because the page ran out
+ * (only while the date is ahead, not cancelled by the owner, and the family hasn't booked again since).
+ */
+const notPaidWhere = (today: string) => sql`exists (
+  select 1 from ${bookingDeposits} d
+  where d.booking_id = ${bookings.id} and d.amount_cents > 0 and (
+    (d.status = 'pending' and ${bookings.status} = 'pending')
+    or (d.status = 'unpaid' and ${bookings.status} in ('confirmed', 'rescheduled')
+      and not exists (select 1 from ${bookingPayments} p where p.booking_id = ${bookings.id} and p.status = 'paid'))
+    or (d.status = 'expired' and ${bookings.status} = 'cancelled' and ${bookings.cancelledBy} is distinct from 'admin'
+      and ${bookings.sessionDate} >= ${today}
+      and not exists (select 1 from ${bookings} b2 where lower(b2.email) = lower(${bookings.email}) and b2.status <> 'cancelled' and b2.created_at > ${bookings.createdAt}))
+  ))`;
+
 export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Promise<LeadList> {
   const db = getDb();
   // "Completed" (owner, Nov 11): a marked lead moves out of its status section into Completed (All still lists it)
   const doneIds = [...(await completions()).keys()];
   const active = ne(bookings.status, "cancelled");
+  const notPaid = and(notPaidWhere(todayInZone(bookingRules.timeZone)), doneIds.length ? notInArray(bookings.id, doneIds) : undefined);
   const where =
     filter === "all" ? active
+    : filter === "not_paid" ? notPaid
     : filter === "completed" ? (doneIds.length ? and(active, inArray(bookings.id, doneIds)) : sql`false`)
     : filter !== "cancelled" && doneIds.length ? and(eq(bookings.status, filter), notInArray(bookings.id, doneIds))
     : eq(bookings.status, filter);
-  const [rows, grouped, groupedDone] = await Promise.all([
+  const [rows, grouped, groupedDone, [notPaidCount], due] = await Promise.all([
     db.select().from(bookings).where(where).orderBy(desc(bookings.createdAt)).limit(limit).offset(offset),
     db.select({ status: bookings.status, n: count() }).from(bookings).groupBy(bookings.status),
     doneIds.length ? db.select({ status: bookings.status, n: count() }).from(bookings).where(inArray(bookings.id, doneIds)).groupBy(bookings.status) : Promise.resolve([]),
+    db.select({ n: count() }).from(bookings).where(notPaid),
+    notPaidDue(),
   ]);
-  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0 } as Record<LeadFilter, number>;
+  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, not_paid: Number(notPaidCount?.n ?? 0) + due.length } as Record<LeadFilter, number>;
   for (const g of grouped) {
     counts[g.status as LeadStatus] = Number(g.n);
     if (g.status !== "cancelled") counts.all += Number(g.n);
@@ -261,7 +286,8 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     db.select({ reference: bookings.bookingReference, status: bookings.status, email: bookings.email, phone: bookings.phone }).from(bookings).where(ne(bookings.status, "cancelled")),
   ]);
   const duplicates = duplicateBookingsFor(rows.map((r) => ({ reference: r.bookingReference, status: r.status as LeadStatus, email: r.email, phone: r.phone })), activeContacts as Parameters<typeof duplicateBookingsFor>[1]);
-  return { leads: rows.map((r) => toLead(r, history, extras, duplicates.get(r.bookingReference))), counts, total: filter === "all" ? counts.all : counts[filter], money };
+  const total = filter === "all" ? counts.all : filter === "not_paid" ? Number(notPaidCount?.n ?? 0) : counts[filter];
+  return { leads: rows.map((r) => toLead(r, history, extras, duplicates.get(r.bookingReference))), counts, total, money, ...(filter === "not_paid" ? { notPaidDue: due } : {}) };
 }
 
 /** Dashboard: card payments (+ deposits kept) received this month (Miami time) and finished sessions still unpaid. */
@@ -322,7 +348,7 @@ export async function getLeadRow(reference: string): Promise<Booking | null> {
   return row ?? null;
 }
 
-export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || v === "completed" || STATUSES.includes(v as LeadStatus);
+export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || v === "completed" || v === "not_paid" || STATUSES.includes(v as LeadStatus);
 
 /**
  * Permanently delete a lead (admin cleanup, e.g. test bookings). Never leaves an
