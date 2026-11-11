@@ -446,6 +446,8 @@
 .codeTable td { padding: 8px; vertical-align: top; border-bottom: 1px dashed color-mix(in srgb, var(--chalk-white) 14%, transparent); }
 .codeName { font-family: var(--font-chalk); font-weight: 400; font-size: 1.15rem; letter-spacing: 0.04em; }
 .codeNote { display: block; color: var(--chalk-muted); font-size: 0.92rem; }
+.codeCategory { display: block; width: fit-content; margin: 3px 0 2px; padding: 0 8px; border: 1.5px solid var(--cloud-blue); border-radius: 999px; color: var(--cloud-blue); font-size: 0.9rem; }
+.codeFilter { display: inline-grid; gap: 4px; margin: 6px 0 0; max-width: 340px; }
 .codeActions { display: flex; flex-wrap: wrap; gap: 6px; }
 a.smallButton { text-decoration: none; display: inline-flex; align-items: center; }
 .slotThumbRound { aspect-ratio: 1; max-width: 180px; border-radius: 50%; }

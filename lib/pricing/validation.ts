@@ -83,6 +83,7 @@ export const codeInputSchema = z
     maxUses: z.number().int().positive().nullable().optional(),
     onePerEmail: z.boolean(),
     internalNote: z.string().trim().max(200).nullable().optional(),
+    category: z.string().trim().max(60, "Keep the category under 60 characters.").nullable().optional(),
   })
   .refine((c) => c.type !== "percent" || c.value <= 100, "A percentage can't be more than 100.");
 

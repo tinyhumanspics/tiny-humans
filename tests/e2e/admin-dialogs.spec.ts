@@ -43,7 +43,7 @@ test("confirmations close with Escape, Cancel or a click outside, and give focus
 });
 
 test("a pricing confirmation deletes only after Delete Permanently", async ({ page }) => {
-  const code: DiscountCode = { id: "c1", code: "SPRING10", type: "percent", value: 10, bundleIds: [], active: true, expiresOn: null, maxUses: null, onePerEmail: false, internalNote: null, usesCount: 0, createdAt: "2026-10-01T12:00:00.000Z" };
+  const code: DiscountCode = { id: "c1", code: "SPRING10", type: "percent", value: 10, bundleIds: [], active: true, expiresOn: null, maxUses: null, onePerEmail: false, internalNote: null, category: null, usesCount: 0, createdAt: "2026-10-01T12:00:00.000Z" };
   await page.route("**/api/admin/deposit", (route) => route.fulfill({ json: { settings: null, stripeReady: true, databaseConfigured: true } }));
   await page.route("**/api/admin/pricing", (route) => route.fulfill({ json: { bundles, codes: [code], databaseConfigured: true } }));
   const deleted: string[] = [];

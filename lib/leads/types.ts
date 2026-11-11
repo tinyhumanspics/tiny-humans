@@ -81,6 +81,8 @@ export interface Lead {
   bundleName: string;
   /** Price snapshot from booking time (never recalculated). */
   pricing: { regularCents: number; offerCents: number | null; offerLabel: string | null; discountCode: string | null; discountCents: number; finalCents: number; addons: AddonLine[]; addonsCents: number; totalCents: number; pricingType: "regular" | "offer" | "discount" };
+  /** The discount code's campaign category today ("Thanksgiving offer"…), owner-only; null = no code or no category. */
+  codeCategory: string | null;
   sessionDate: string;
   /** "HH:MM" local */
   start: string;

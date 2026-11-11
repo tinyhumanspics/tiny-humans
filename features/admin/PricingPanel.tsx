@@ -7,6 +7,7 @@ import type { AdminApi } from "@/lib/admin/client";
 import { activeOffer, formatMoney, MAX_OFFER_PERCENT, offerPercent, percentOffCents, toCents } from "@/lib/pricing/engine";
 import OfferForAll from "./OfferForAll";
 import type { DiscountCode } from "@/lib/pricing/types";
+import { cleanCodeCategory, codeCategoryOptions, filterByCategory, NO_CATEGORY } from "@/lib/pricing/code-categories";
 import type { BundleInput, CodeInput } from "@/lib/pricing/validation";
 import { formatLongDate } from "@/lib/booking/dates";
 import { todayInZone } from "@/lib/booking/timezone";
@@ -29,6 +30,8 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<AdminBundle | "new" | null>(null);
   const [editingCode, setEditingCode] = useState<DiscountCode | "new" | null>(null);
+  // codes list filter by campaign category ("" = all codes)
+  const [codeFilter, setCodeFilter] = useState("");
   const [note, setNote] = useState<Note>(null);
   const [confirm, setConfirm] = useState<{ title: string; text: string; action: () => Promise<void> } | null>(null);
   const today = todayInZone(bookingRules.timeZone);
@@ -98,17 +101,28 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
 
           <h2 className={cn(styles.h2, "chalk")}>Discount Codes</h2>
           <p className={cn(styles.muted, "chalk-soft")}>Customers can enter one code on the booking review step. Only one saving ever applies: if a bundle has a special offer, the better of the two is used.</p>
+          {codes.some((c) => c.category) && (
+            <label className={cn(styles.label, styles.codeFilter, "chalk-soft")}>Show
+              <select className={styles.input} value={codeFilter} onChange={(e) => setCodeFilter(e.target.value)}>
+                <option value="">All codes ({codes.length})</option>
+                {codeCategoryOptions(codes.map((c) => c.category)).filter((cat) => codes.some((c) => c.category?.toLowerCase() === cat.toLowerCase())).map((cat) => (
+                  <option key={cat} value={cat}>{cat} ({filterByCategory(codes, cat).length})</option>
+                ))}
+                {codes.some((c) => !c.category) && <option value={NO_CATEGORY}>No category ({filterByCategory(codes, NO_CATEGORY).length})</option>}
+              </select>
+            </label>
+          )}
           <div className={styles.tableWrap}>
             <table className={styles.codeTable}>
               <thead><tr><th>Code</th><th>Type</th><th>Value</th><th>Bundles</th><th>Usage</th><th>Expires</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
                 {codes.length === 0 && <tr><td colSpan={8} className="chalk-soft">No codes yet.</td></tr>}
-                {codes.map((c) => {
+                {filterByCategory(codes, codeFilter).map((c) => {
                   const expired = Boolean(c.expiresOn && today > c.expiresOn);
                   const full = c.maxUses != null && c.usesCount >= c.maxUses;
                   return (
                     <tr key={c.id}>
-                      <td><b className={styles.codeName}>{c.code}</b>{c.internalNote && <span className={styles.codeNote}>{c.internalNote}</span>}</td>
+                      <td><b className={styles.codeName}>{c.code}</b>{c.category && <span className={styles.codeCategory}>{c.category}</span>}{c.internalNote && <span className={styles.codeNote}>{c.internalNote}</span>}</td>
                       <td>{c.type === "percent" ? "Percentage" : "Fixed amount"}</td>
                       <td>{c.type === "percent" ? `${c.value}%` : `${formatMoney(toCents(c.value))} off`}</td>
                       <td>{c.bundleIds.map(nameOf).join(", ")}</td>
@@ -132,6 +146,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
               key={editingCode === "new" ? "new" : editingCode.id}
               code={editingCode === "new" ? null : editingCode}
               bundles={bundles}
+              categories={codeCategoryOptions(codes.map((c) => c.category))}
               onCancel={() => setEditingCode(null)}
               onSave={async (input) => { setCodes(await api.saveCode(input)); setEditingCode(null); setNote({ kind: "ok", text: `Code ${input.code.toUpperCase()} saved.` }); }}
             />
@@ -153,7 +168,9 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
   );
 }
 
-const toCodeInput = (c: DiscountCode): CodeInput => ({ id: c.id, code: c.code, type: c.type, value: c.value, bundleIds: c.bundleIds, active: c.active, expiresOn: c.expiresOn, maxUses: c.maxUses, onePerEmail: c.onePerEmail, internalNote: c.internalNote });
+const toCodeInput = (c: DiscountCode): CodeInput => ({ id: c.id, code: c.code, type: c.type, value: c.value, bundleIds: c.bundleIds, active: c.active, expiresOn: c.expiresOn, maxUses: c.maxUses, onePerEmail: c.onePerEmail, internalNote: c.internalNote, category: c.category });
+
+const OTHER_CATEGORY = "__other__";
 
 /** Deposits on/off and each bundle's amount (new bookings only). */
 function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
@@ -446,7 +463,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
   );
 }
 
-function CodeEditor({ code, bundles, onSave, onCancel }: { code: DiscountCode | null; bundles: Bundle[]; onSave: (c: CodeInput) => Promise<void>; onCancel: () => void }) {
+function CodeEditor({ code, bundles, categories, onSave, onCancel }: { code: DiscountCode | null; bundles: Bundle[]; categories: string[]; onSave: (c: CodeInput) => Promise<void>; onCancel: () => void }) {
   const [text, setText] = useState(code?.code ?? "");
   const [type, setType] = useState<"percent" | "fixed">(code?.type ?? "percent");
   const [value, setValue] = useState(code ? String(code.value) : "");
@@ -456,13 +473,17 @@ function CodeEditor({ code, bundles, onSave, onCancel }: { code: DiscountCode | 
   const [maxUses, setMaxUses] = useState(code?.maxUses ? String(code.maxUses) : "");
   const [onePer, setOnePer] = useState(code?.onePerEmail ?? false);
   const [noteText, setNoteText] = useState(code?.internalNote ?? "");
+  // campaign category: a preset, one used before, or "Other…" (typed)
+  const [category, setCategory] = useState(code?.category ?? "");
+  const [otherCategory, setOtherCategory] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const save = async () => {
     setBusy(true);
     setErr(null);
     try {
-      await onSave({ id: code?.id, code: text.trim(), type, value: Number(value), bundleIds: ids, active, expiresOn: expires || null, maxUses: maxUses ? Number(maxUses) : null, onePerEmail: onePer, internalNote: noteText.trim() || null } as CodeInput);
+      if (category === OTHER_CATEGORY && !cleanCodeCategory(otherCategory)) throw new Error("Type the category, or pick one from the list.");
+      await onSave({ id: code?.id, code: text.trim(), type, value: Number(value), bundleIds: ids, active, expiresOn: expires || null, maxUses: maxUses ? Number(maxUses) : null, onePerEmail: onePer, internalNote: noteText.trim() || null, category: cleanCodeCategory(category === OTHER_CATEGORY ? otherCategory : category) } as CodeInput);
     } catch (e) {
       setErr(errText(e, "Couldn't save."));
     } finally {
@@ -481,7 +502,18 @@ function CodeEditor({ code, bundles, onSave, onCancel }: { code: DiscountCode | 
         <label className={cn(styles.label, "chalk-soft")}>Expiration date (last day, optional)<input className={cn(styles.input, styles.timeInput)} type="date" value={expires} onChange={(e) => setExpires(e.target.value)} /></label>
         <label className={cn(styles.label, "chalk-soft")}>Maximum total uses (optional)<input className={styles.input} type="number" min={1} step={1} value={maxUses} onChange={(e) => setMaxUses(e.target.value)} /></label>
         <label className={cn(styles.label, "chalk-soft")}>Internal note (never shown to customers)<input className={styles.input} value={noteText} maxLength={200} placeholder="Friends and family only" onChange={(e) => setNoteText(e.target.value)} /></label>
+        <label className={cn(styles.label, "chalk-soft")}>Category (optional, only you see it)
+          <select className={styles.input} value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">No category</option>
+            {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+            <option value={OTHER_CATEGORY}>Other… (type your own)</option>
+          </select>
+        </label>
+        {category === OTHER_CATEGORY && (
+          <label className={cn(styles.label, "chalk-soft")}>Type the category<input className={styles.input} value={otherCategory} maxLength={60} placeholder="Mother's Day offer" onChange={(e) => setOtherCategory(e.target.value)} /></label>
+        )}
       </div>
+      <p className={cn(styles.hintSmall, "chalk-soft")}>The category tells you which campaign a booking came from (for example a Thanksgiving code used while the site still shows the Original theme). It shows here and on each lead that used the code.</p>
       <p className={cn(styles.label, "chalk-soft")}>Applies to</p>
       <div className={styles.checkGrid}>
         {bundles.map((b) => (

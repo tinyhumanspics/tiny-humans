@@ -283,7 +283,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
     ["Pricing type", pr.pricingType === "offer" ? "Special Offer" : pr.pricingType === "discount" ? "Discount Code" : "Regular"],
     ["Regular price", formatMoney(pr.regularCents)],
     ...(pr.pricingType === "offer" ? [["Offer", `${pr.offerLabel ?? "Special offer"}: ${formatMoney(pr.offerCents ?? pr.finalCents)}`] as [string, string]] : []),
-    ...(pr.pricingType === "discount" ? [["Discount code", pr.discountCode ?? ""] as [string, string], ["Discount amount", formatMoney(pr.discountCents)] as [string, string]] : []),
+    ...(pr.pricingType === "discount" ? [["Discount code", pr.discountCode ?? ""] as [string, string], ...(lead.codeCategory ? [["Code category", lead.codeCategory] as [string, string]] : []), ["Discount amount", formatMoney(pr.discountCents)] as [string, string]] : []),
     ["Final bundle price", formatMoney(pr.finalCents)],
     ...pr.addons.map((a) => [a.name, `${a.quantity} × ${formatMoney(a.unitPriceCents)} = ${formatMoney(a.totalCents)}`] as [string, string]),
     ...(lead.travel ? [["Travel", travelOwnerLine(lead.travel)] as [string, string]] : []),

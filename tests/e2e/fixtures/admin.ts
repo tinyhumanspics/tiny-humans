@@ -34,6 +34,7 @@ export const noDepositLead: Lead = {
     totalCents: 14900,
     pricingType: "regular",
   },
+  codeCategory: null,
   sessionDate: "2026-11-10",
   start: "10:00",
   end: "11:00",

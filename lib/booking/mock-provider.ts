@@ -298,6 +298,7 @@ function mockLead(rec: MockRecord): Lead {
     bundleId: r.bundleId,
     bundleName: p.bundleName,
     pricing: { regularCents: p.regularCents, offerCents: p.offerCents, offerLabel: p.offerLabel, discountCode: p.discountCode, discountCents: p.discountCents, finalCents: p.finalCents, addons: p.addons, addonsCents: p.addonsCents, totalCents: p.totalCents, pricingType: p.pricingType },
+    codeCategory: null,
     sessionDate: r.slot.date,
     start: r.slot.start,
     end: r.slot.end,

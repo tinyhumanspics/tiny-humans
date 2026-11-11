@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, eq, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { AdminBundle, Bundle } from "@/lib/pricing/types";
 import { defaultLocale, type AppLocale } from "@/i18n/config";
 import { builtInCatalog, isLiveSite } from "./catalog";
@@ -15,9 +15,11 @@ import {
   bundlesTable,
   discountCodeBundles,
   discountCodes,
+  discountCodeCategories,
   discountCodeUsage,
 } from "@/lib/db/schema";
 import { log } from "@/lib/log";
+import { cleanCodeCategory } from "./code-categories";
 import { BookingError } from "@/lib/booking/errors";
 import { todayInZone } from "@/lib/booking/timezone";
 import { durationLabel, percentOffCents, toCents } from "./engine";
@@ -352,10 +354,38 @@ export async function deleteBundle(id: string): Promise<void> {
 
 /* ---------------- discount codes ---------------- */
 
+/** Each code's category by code id (best effort: none before migration 0028). */
+async function codeCategories(): Promise<Map<string, string>> {
+  try {
+    const rows = await getDb().select().from(discountCodeCategories);
+    return new Map(rows.map((r) => [r.codeId, r.category]));
+  } catch (err) {
+    if (!missingTable(err)) log.error("admin.pricing", "Code categories not loaded", { error: err as Error });
+    return new Map();
+  }
+}
+
+/** Leads: the current category of each code used (upper-case code → category). Best effort, never throws. */
+export async function categoriesForCodes(codes: string[]): Promise<Map<string, string>> {
+  const wanted = [...new Set(codes.map((c) => c.trim().toUpperCase()).filter(Boolean))];
+  if (!wanted.length || !isDatabaseConfigured()) return new Map();
+  try {
+    const rows = await getDb()
+      .select({ code: discountCodes.code, category: discountCodeCategories.category })
+      .from(discountCodeCategories)
+      .innerJoin(discountCodes, eq(discountCodes.id, discountCodeCategories.codeId))
+      .where(inArray(discountCodes.code, wanted));
+    return new Map(rows.map((r) => [r.code, r.category]));
+  } catch (err) {
+    if (!missingTable(err)) log.error("leads", "Code categories not loaded", { error: err as Error });
+    return new Map();
+  }
+}
+
 export async function listCodes(): Promise<DiscountCode[]> {
   if (!isDatabaseConfigured()) return [];
   const db = getDb();
-  const [rows, links] = await Promise.all([db.select().from(discountCodes).orderBy(asc(discountCodes.createdAt)), db.select().from(discountCodeBundles)]);
+  const [rows, links, categories] = await Promise.all([db.select().from(discountCodes).orderBy(asc(discountCodes.createdAt)), db.select().from(discountCodeBundles), codeCategories()]);
   return rows.map((r) => ({
     id: r.id,
     code: r.code,
@@ -367,6 +397,7 @@ export async function listCodes(): Promise<DiscountCode[]> {
     maxUses: r.maxUses,
     onePerEmail: r.onePerEmail,
     internalNote: r.internalNote,
+    category: categories.get(r.id) ?? null,
     usesCount: r.usesCount,
     createdAt: r.createdAt.toISOString(),
   }));
@@ -394,7 +425,21 @@ export async function saveCode(input: CodeInput): Promise<string> {
     throw err;
   }
   await db.batch([db.delete(discountCodeBundles).where(eq(discountCodeBundles.codeId, id!)), db.insert(discountCodeBundles).values(input.bundleIds.map((bundleId) => ({ codeId: id!, bundleId })))] as never);
+  await saveCodeCategory(id!, input.category);
   return id!;
+}
+
+/** The code's category (none = removed). Its own table: the code itself is already saved when this runs. */
+async function saveCodeCategory(codeId: string, raw: string | null | undefined): Promise<void> {
+  const category = cleanCodeCategory(raw);
+  const db = getDb();
+  try {
+    if (!category) await db.delete(discountCodeCategories).where(eq(discountCodeCategories.codeId, codeId));
+    else await db.insert(discountCodeCategories).values({ codeId, category, updatedAt: new Date() }).onConflictDoUpdate({ target: discountCodeCategories.codeId, set: { category, updatedAt: new Date() } });
+  } catch (err) {
+    if (!missingTable(err)) throw err;
+    if (category) throw new BookingError("invalid_request", "The code was saved, but not its category: run drizzle/0028_code_categories.sql in Neon first.");
+  }
 }
 
 /** Removes the code. Bookings keep their own copy of the code and amount, so history is untouched. */

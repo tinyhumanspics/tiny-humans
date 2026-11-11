@@ -769,6 +769,20 @@ export const discountCodes = pgTable(
   ],
 );
 
+/**
+ * A discount code's campaign category (owner, Nov 10; migration 0028): "Thanksgiving offer", "Christmas offer", … or the
+ * owner's own words. Its own table, read and written best effort, so codes and checkout work before the migration.
+ */
+export const discountCodeCategories = pgTable(
+  "discount_code_categories",
+  {
+    codeId: uuid("code_id").primaryKey().references(() => discountCodes.id, { onDelete: "cascade" }),
+    category: text("category").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("discount_code_categories_length_check", sql`char_length(${t.category}) between 1 and 60`)],
+);
+
 export const discountCodeBundles = pgTable(
   "discount_code_bundles",
   {

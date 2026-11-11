@@ -85,6 +85,8 @@ export interface DiscountCode {
   maxUses: number | null;
   onePerEmail: boolean;
   internalNote: string | null;
+  /** Campaign category ("Thanksgiving offer", the owner's own words…), owner-only. Null = none. */
+  category: string | null;
   usesCount: number;
   createdAt: string;
 }
