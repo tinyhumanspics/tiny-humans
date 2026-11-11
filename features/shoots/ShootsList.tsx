@@ -63,7 +63,7 @@ export default function ShootsList() {
           {done.length > 0 && (
             <section className={css.block} aria-labelledby="shoots-done">
               <h2 id="shoots-done" className={cn(styles.h2, "chalk")}>Done</h2>
-              <DayGrid days={done} />
+              <DayGrid days={done} done />
             </section>
           )}
         </>
@@ -72,19 +72,16 @@ export default function ShootsList() {
   );
 }
 
-function DayGrid({ days }: { days: ShootDay[] }) {
+function DayGrid({ days, done = false }: { days: ShootDay[]; done?: boolean }) {
   return (
-    <ul className={css.dayGrid}>
-      {days.map((d) => (
-        <DayCard key={d.date} day={d} />
-      ))}
+    <ul className={cn(css.dayGrid, done && css.doneGrid)}>
+      {days.map((d) => (done ? <DoneDayCard key={d.date} day={d} /> : <DayCard key={d.date} day={d} />))}
     </ul>
   );
 }
 
 function DayCard({ day }: { day: ShootDay }) {
   const p = dayParts(day.date);
-  const pct = day.total ? Math.round((day.ticked / day.total) * 100) : 0;
   const href = `/admin/shoots/${day.date}`;
   return (
     <li className={cn(css.card, css.dayCard)}>
@@ -93,6 +90,51 @@ function DayCard({ day }: { day: ShootDay }) {
           {p.weekday}, <span className={css.dayDate}>{p.month} {p.day}</span>
         </Link>
       </h3>
+      <DayDetails day={day} />
+      <p className={css.cardCta}>
+        <Link href={href} className={styles.smallButton}>
+          Open day sheet →
+        </Link>
+      </p>
+    </li>
+  );
+}
+
+/**
+ * A day that's over, folded to one slim row (owner, Nov 11: done days "covering a lot of space"): the day, each shoot's
+ * time and family, and "Open day sheet"; tapping the row shows the rest (ticks, folders, inspo counts).
+ */
+function DoneDayCard({ day }: { day: ShootDay }) {
+  const p = dayParts(day.date);
+  return (
+    <li className={cn(css.card, css.doneCard)}>
+      <details className={css.doneFold}>
+        <summary className={css.doneHead}>
+          <h3 className={css.doneDay}>
+            {p.weekday}, <span className={css.dayDate}>{p.month} {p.day}</span>
+          </h3>
+          <span className={css.doneShoots}>
+            {day.shoots.map((s) => (
+              <span key={s.key}>
+                <span className={css.time}>{clock(s.start)}</span> {s.title}
+              </span>
+            ))}
+          </span>
+        </summary>
+        <DayDetails day={day} />
+      </details>
+      <Link href={`/admin/shoots/${day.date}`} className={cn(styles.smallButton, css.doneCta)}>
+        Open day sheet →
+      </Link>
+    </li>
+  );
+}
+
+/** A day's count, sunset, ticks and its shoots (links to their folders). */
+function DayDetails({ day }: { day: ShootDay }) {
+  const pct = day.total ? Math.round((day.ticked / day.total) * 100) : 0;
+  return (
+    <>
       <p className={cn(css.meta, "chalk-soft")}>
         {plural(day.shoots.length, "shoot", "shoots")}
         {day.sunset ? ` · sunset ${clock(day.sunset)}` : ""}
@@ -123,12 +165,7 @@ function DayCard({ day }: { day: ShootDay }) {
           );
         })}
       </ul>
-      <p className={css.cardCta}>
-        <Link href={href} className={styles.smallButton}>
-          Open day sheet →
-        </Link>
-      </p>
-    </li>
+    </>
   );
 }
 

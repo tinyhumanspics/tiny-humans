@@ -87,7 +87,15 @@ test("Shoot days: menu entry after Leads, coming up / done cards, links to folde
   await expect(upcoming.getByRole("link", { name: /The Patel family/ })).toContainText("No inspo yet");
   await expect(upcoming.getByRole("link", { name: "Open day sheet →" })).toHaveAttribute("href", `/admin/shoots/${soon}`);
 
+  // done days are folded to one slim row (owner, Nov 11): the day, each shoot's time and title, "Open day sheet"
   const done = page.getByRole("region", { name: "Done" });
+  const dp = dayParts(past);
+  await expect(done.locator("summary")).toContainText("First Christmas set test");
+  await expect(done.locator("summary")).toContainText("9:00");
+  await expect(done.getByText("29 of 29 ticked")).toBeHidden();
+  await expect(done.getByRole("link", { name: "Open day sheet →" })).toHaveAttribute("href", `/admin/shoots/${past}`);
+  // a tap on the row shows the rest
+  await done.getByRole("heading", { name: `${dp.weekday}, ${dp.month} ${dp.day}` }).click();
   await expect(done.getByRole("link", { name: /First Christmas set test/ })).toContainText("No booking");
   await expect(done.getByText("29 of 29 ticked")).toBeVisible();
 
