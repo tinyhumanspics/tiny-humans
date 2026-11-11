@@ -203,6 +203,15 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Discount code categories — LIVE Nov 10 (migration 0028 for saving categories)**. Owner asked: in Pricing &
+  Promotions, give each code a category (presets Christmas / Thanksgiving / Happy Valentine's offer, or "Other" typed),
+  so a code advertised early (e.g. Thanksgiving while the site still shows the Original theme) shows which campaign a
+  booking came from. Preview approved ("push it"). Checked with `scripts/local-db`: create/edit/filter, a booking with
+  GIFT15 shows "Code category: Thanksgiving offer" on its lead, customer and studio emails don't mention it, and with
+  the table missing codes/checkout/leads still work and saving a category explains the SQL. Offered (no answer yet):
+  the category in the studio "New booking" email or a Dashboard count by category. Also checked Nov 10: "Not born yet"
+  end to end on the live code (9-month limit, deposit, schedule link through the new booking order, owner "Book their
+  session").
 - [x] **Trip days + "About you" first — LIVE Nov 10 (migration 0027 only needed to save the Trip days box)**. Owner
   asked (Nov 10): Orlando (about 4 hours away) takes its own day unless 2–3 families there share it; check distances
   between bookings automatically. Owner answers: trip = more than 60 miles; the 2-hour buffer already covers mid

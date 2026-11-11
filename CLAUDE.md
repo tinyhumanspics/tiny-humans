@@ -362,3 +362,10 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   no row or table = the defaults). Unfinished bookings: the draft is saved from step one (no date yet) and again on
   reaching details (with date/time); funnel step "calendar" = the booking form opened ("Opened the booking form").
   Older saved form drafts (`lib/booking/language-draft.ts` v1) are ignored.
+- Discount code categories (owner, Nov 10; migration 0028_code_categories): an optional owner-only campaign label per
+  code ("Thanksgiving offer", "Christmas offer", "Happy Valentine's offer" presets in `lib/pricing/code-categories.ts`,
+  or "Other…" typed; typed ones join the list). Its own table `discount_code_categories` (code_id → category), read
+  and written best effort like the per-booking extras: before the migration codes, checkout and leads work and only
+  saving a category explains the SQL. Shown in /admin → Pricing (label under the code + "Show" filter) and on leads
+  ("Code category", looked up by the booking's code text, so it's the code's CURRENT category). Never sent to
+  customers, emails or analytics, and never part of a price.
