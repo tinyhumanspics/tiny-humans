@@ -222,8 +222,9 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
   day before for Orlando; create refuses with the trip message. A family that filled only step one shows in
   Unfinished bookings and got "What stopped you?". Owner also asked for a note above the form on step one ("Fill in
   your details first. On the next step you'll see the days and times…"). Prices: the owner raised the bundles to
-  $200 / $300 / $449 in /admin (Nov 10); no customer text hardcodes a price (live pages checked); the local-db seed
-  now mirrors them.
+  $200 / $300 / $449 in /admin (Nov 10), then set them to $199 / $299 / $449 the same night; no customer text
+  hardcodes a price (every live EN/ES page checked: only those prices, the offer prices, the $50 deposit and the
+  $1.25/mile travel fee); the local-db seed mirrors them.
 - [x] **Seasonal offers on the home page too, owner-added offers, offer line in the box, smaller discounted price —
   LIVE Nov 10**. Owner asked: the seasonal box (e.g. Baby's First Thanksgiving) also on the home page, switched on from
   /admin → Seasonal Landing; a line in the box about the running discount; add more offers (e.g. Valentine's Day "Show

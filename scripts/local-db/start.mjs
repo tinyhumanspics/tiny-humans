@@ -55,8 +55,8 @@ for (const { tag } of journal.entries) {
 // --- seed: mirror production's live bundles (first run only) ---
 if (fresh || reset) {
   await pool.query(`
-    update bundles set regular_price_cents = 20000, duration_minutes = 60, duration_label = 'Up to 1 hour', photos_label = '8' where id = 'little-moments';
-    update bundles set regular_price_cents = 30000, duration_minutes = 120, duration_label = 'Up to 2 hours', photos_label = '20', badge = 'Most loved' where id = 'our-little-story';
+    update bundles set regular_price_cents = 19900, duration_minutes = 60, duration_label = 'Up to 1 hour', photos_label = '8' where id = 'little-moments';
+    update bundles set regular_price_cents = 29900, duration_minutes = 120, duration_label = 'Up to 2 hours', photos_label = '20', badge = 'Most loved' where id = 'our-little-story';
     update bundles set name = 'Our Family Story', regular_price_cents = 44900, duration_minutes = 180, duration_label = 'Up to 3 hours', photos_label = '35' where id = 'forever-little';
     delete from bundle_inclusions;
     insert into bundle_inclusions (bundle_id, position, text) values
