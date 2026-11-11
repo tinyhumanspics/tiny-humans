@@ -222,8 +222,18 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
   families the 4 unpaid ones were listed (paid / came-back-and-paid ones not); a released booking's reminder held the
   time again and sent "Finish booking"; an expired reservation's reminder reopened it, the family paid from the email
   link and left the list. Kept as previewed: 30-minute hold, reservation's saved price.
+- [x] **"✓ Signed waiver" + "Sign a new waiver" in Leads, a family release for Our Family Story, and the parent's
+  online copy — LIVE Nov 11 (owner: "This is great, you can push it"; no migration)**. Owner explained: once the parent
+  taps Done, "Waiver signature" should become "Signed waiver" (the saved copy, PDF), with "Sign a new waiver" next to
+  it; the parent gets a copy they can go back to; Our Family Story needs its own release covering the whole family.
+  Checked with `scripts/local-db` + fake Resend: an Our Family Story booking showed "Family waiver signature", the iPad
+  showed the family release ("Also in the photos: Carlos (Dad), Leo (Brother), Grandma"), Leads switched to
+  "✓ Signed family waiver", the email carried the copy link, the page opened on a phone, a tampered link was refused.
+  Family wording approved by the owner with the preview (still marked draft until their lawyer reviews it, like v1).
 - [ ] **Signed waiver inside each shoot folder** — built and previewed Nov 11 (branch `feat/shoot-waiver`, not pushed):
-  owner wants to explain how they want it first, then see it again before pushing.
+  on hold (the owner wanted it in Leads, now live). Ask before reviving it.
+- [ ] Open owner questions (Nov 11): an automatic email for "Not born yet" families whose deposit page ran out (bookings
+  already get "Your date isn't confirmed yet" automatically)?
 - [x] **Leads Completed + waiver copy by email + "Full name" — LIVE Nov 11 (owner: "go ahead and push it"; migration
   0030 for Completed)**. Owner asked: a Completed tab and a tap-to-mark pill before the status (past clients for email
   marketing); "Your name" → "Full name" on Not born yet; parents get their signed waiver by email right away. Checked

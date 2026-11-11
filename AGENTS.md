@@ -392,6 +392,15 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   `after(() => sendWaiverCopy(id))` emails the booking's address the stored snapshot (`emails/WaiverCopy.tsx`: a cream
   "paper" card, ✓/✗ choices, the signature as an inline CID image, time, version, record id) in the signed language.
   Best effort: an email problem never touches the signed record. The PDF is the signed copy's "Print or save as PDF".
+- Waivers in Leads + family release + parent's online copy (owner, Nov 11; no migration): once a release is signed,
+  "Waiver signature" becomes "✓ Signed waiver" (the signed copy) next to "Sign a new waiver". Bundles that include the
+  family (`asksFamily`, today Our Family Story) get the FAMILY release (`FAMILY_WAIVER_VERSION`, `waiverWords(lang,
+  "family")`: same choices/promises, own title, intro, fine print, "Also in the photos" from booking_family_members,
+  first names of everyone); `waiverKindFor()` decides it on the server (bundle gone → family members listed), the
+  stored version says which one was signed (`waiverKindOf`), the baby snapshot is byte-for-byte unchanged, and each
+  release's wording is pinned by its own fingerprint test. The parent's email has "See or print your copy" →
+  `/waiver?w=<id>&s=<HMAC>` (`waiverCopyUrl`, ADMIN_SESSION_SECRET, purpose waiver-copy:v1; in the (kiosk) group: no
+  shell, no Pixel; in NO_INTRO_PATHS), showing the stored snapshot in the signed language with Print or save as PDF.
 - Leads → Not paid (owner, Nov 11; migration 0031_due_deposit_reminders): families missing the deposit only.
   Bookings (`notPaidWhere` in `lib/leads/server.ts`): deposit pending while the time is held, unpaid (Stripe was down,
   no paid `booking_payments`), or expired + released while the date is ahead, not cancelled by the owner and no newer
