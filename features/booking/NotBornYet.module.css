@@ -4,10 +4,12 @@
 .doodle { position: absolute; top: 14px; right: 18px; transform: rotate(10deg); }
 .title { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.7rem, 4.6vw, 2.2rem); color: var(--chalk-white); }
 .text { margin: 0; max-width: 30em; color: var(--chalk-muted); font-size: 1.15rem; line-height: 1.4; }
-.button { margin-top: 6px; }
+/* .box: more specific than ChalkButton's own margin, so it doesn't depend on CSS file order (scripts/css-ties.mjs) */
+.box .button { margin-top: 6px; }
 
-/* the short version near the top of the home page and the ad page: heart, line, button in one row (stacked on phones) */
-.stripSection { margin-top: clamp(24px, 5vw, 40px); }
+/* the short version near the top of the home page and the ad page: heart, line, button in one row (stacked on phones).
+   section.: more specific than the global .container margin, so file order doesn't decide it */
+section.stripSection { margin-top: clamp(24px, 5vw, 40px); }
 .strip { display: grid; gap: 12px 20px; align-items: center; justify-items: center; text-align: center; max-width: 920px; margin: 0 auto; padding: 18px clamp(16px, 3vw, 28px); }
 @media (min-width: 760px) { .strip { grid-template-columns: auto minmax(0, 1fr) auto; justify-items: start; text-align: left; } }
 .stripDoodle { transform: rotate(-8deg); }
