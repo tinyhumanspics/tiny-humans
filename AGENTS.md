@@ -392,3 +392,13 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   `after(() => sendWaiverCopy(id))` emails the booking's address the stored snapshot (`emails/WaiverCopy.tsx`: a cream
   "paper" card, ✓/✗ choices, the signature as an inline CID image, time, version, record id) in the signed language.
   Best effort: an email problem never touches the signed record. The PDF is the signed copy's "Print or save as PDF".
+- Leads → Not paid (owner, Nov 11; migration 0031_due_deposit_reminders): families missing the deposit only.
+  Bookings (`notPaidWhere` in `lib/leads/server.ts`): deposit pending while the time is held, unpaid (Stripe was down,
+  no paid `booking_payments`), or expired + released while the date is ahead, not cancelled by the owner and no newer
+  active booking with the same email. Plus "Not born yet" reservations (`notPaidDue()` in `lib/due-date/server.ts`):
+  pending / expired / reserved-while-Stripe-was-down, minus families who reserved again (paid) or booked since.
+  "Email deposit reminder": bookings reuse `ownerDepositLink` (released time held again 30 min if free; "Finish
+  booking" email, counted in `booking_emails.attempts`) or the payment link when unpaid; reservations use
+  `remindDueDeposit` (expired → pending, new Stripe page open a day, `emails/DueDepositReminder.tsx` EN/ES linking to
+  their signed /due-date/done page; count in `due_deposit_reminders`, best effort). A reminder keeps the reservation's
+  saved price (owner OK). `dueDepositPaid` also accepts reserved + unpaid; `dueReturnState` shows Pay for those.

@@ -215,6 +215,15 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Leads "Not paid" + deposit reminders — LIVE Nov 11 (owner: "1 & 2 can be pushed"; migration 0031 only for the
+  Not born yet reminder count)**. Owner asked: confirm "Not born yet" moms pay the $50 deposit (yes: same deposit
+  setting as bookings, spot reserved only once paid); a Not Paid pill listing only families missing the deposit; an
+  email reminder to pay while their details stay saved. Checked with `scripts/local-db` + fake Stripe/Resend: of 8 test
+  families the 4 unpaid ones were listed (paid / came-back-and-paid ones not); a released booking's reminder held the
+  time again and sent "Finish booking"; an expired reservation's reminder reopened it, the family paid from the email
+  link and left the list. Kept as previewed: 30-minute hold, reservation's saved price.
+- [ ] **Signed waiver inside each shoot folder** — built and previewed Nov 11 (branch `feat/shoot-waiver`, not pushed):
+  owner wants to explain how they want it first, then see it again before pushing.
 - [x] **Leads Completed + waiver copy by email + "Full name" — LIVE Nov 11 (owner: "go ahead and push it"; migration
   0030 for Completed)**. Owner asked: a Completed tab and a tap-to-mark pill before the status (past clients for email
   marketing); "Your name" → "Full name" on Not born yet; parents get their signed waiver by email right away. Checked
