@@ -28,7 +28,7 @@ test("the booking form saves the parent's contact details (never the baby's) and
   await page.goto("/book?bundle=little-moments");
 
   // step 1 "About you": the note sits at the bottom of the step, not under the email box (owner, Nov 11)
-  await expect(page.locator("#booking-save-note")).toHaveText("Anything you type here may be used to contact you about your session. See our Privacy Policy.");
+  await expect(page.locator("#booking-save-note")).toHaveText("We save your contact information as you type, so we can follow up if you were not able to finish booking. See our Privacy Policy.");
   await expect(page.locator("#booking-save-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
   await expect(page.locator("#field-email-note")).toHaveCount(0);
 
