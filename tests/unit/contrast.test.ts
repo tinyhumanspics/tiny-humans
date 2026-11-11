@@ -20,7 +20,7 @@ function mix(a: string, b: string, p: number): string {
 }
 
 /** Theme CSS (html[data-theme=…]): Thanksgiving's orange board: white cutoff line, 70% hints, 60% empty stars;
- *  Valentine's light pink board (dark writing): 70% hints and 60% empty stars too. */
+ *  Valentine's pink board (#ffbbc1, dark writing): 70% hints and 60% empty stars too. */
 const LIGHTER: Partial<Record<string, { cutoffWhite: boolean; hint: number; star: number }>> = {
   thanksgiving: { cutoffWhite: true, hint: 0.7, star: 0.6 },
   valentines: { cutoffWhite: false, hint: 0.7, star: 0.6 },
@@ -50,7 +50,7 @@ describe("email dashed lines and frames follow the theme's writing color", () =>
   test("dark boards keep the off-white chalk line (emails unchanged)", () => {
     for (const id of ["default", "thanksgiving", "christmas", "newYear"]) expect(chalkAlpha(emailTheme(id), 0.22)).toBe("rgba(244,242,234,0.22)");
   });
-  test("Valentine's light pink draws them in its dark raspberry", () => {
-    expect(chalkAlpha(emailTheme("valentines"), 0.35)).toBe("rgba(79,20,48,0.35)");
+  test("Valentine's pink draws them in its deep wine", () => {
+    expect(chalkAlpha(emailTheme("valentines"), 0.35)).toBe("rgba(61,10,28,0.35)");
   });
 });

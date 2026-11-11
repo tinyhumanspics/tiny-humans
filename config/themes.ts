@@ -333,21 +333,22 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "valentines",
     label: "Valentine's",
     buttonLabel: "Valentine's Theme",
-    // Light pink board (owner, Nov 10) with dark raspberry "chalk": the one light theme, so its text colors are dark
-    // (chalkWhite = the writing, sunYellow = the highlight/buttons). Every text color reads 4.5:1+ (contrast test).
+    // Pink board #ffbbc1 (owner, Nov 10: their own color) with deep wine "chalk": a light board, so its text colors are
+    // dark (chalkWhite = the writing, sunYellow = the crimson highlight/buttons). Every text color reads 4.5:1+
+    // (contrast test). Drawings and photo pins: raspberry, crimson and plum.
     colors: {
       ...board,
-      chalkboard: "#f9dbe5",
-      chalkboardDark: "#f1c6d5",
-      chalkboardLight: "#fdeef3",
-      chalkWhite: "#4f1430",
-      chalkMuted: "#6e2d4a",
-      sunYellow: "#a3154a",
-      cloudBlue: "#245a8c",
-      chalkError: "#9b1029",
+      chalkboard: "#ffbbc1",
+      chalkboardDark: "#f7a9b1",
+      chalkboardLight: "#ffd3d7",
+      chalkWhite: "#3d0a1c",
+      chalkMuted: "#5e1730",
+      sunYellow: "#921038",
+      cloudBlue: "#1f4f80",
+      chalkError: "#8c0d24",
       accent: "#d6336c",
-      accent2: "#e0435f",
-      accent3: "#b0457a",
+      accent2: "#b3123c",
+      accent3: "#7a1f4a",
     },
     // the Original logo with little chalk hearts around it (decor layer)
     logo: logo(

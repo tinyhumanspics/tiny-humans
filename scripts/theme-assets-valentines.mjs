@@ -1,6 +1,6 @@
-// Valentine's theme artwork (owner, Nov 10: light pink board with dark raspberry "chalk"): the logo's heart layer
+// Valentine's theme artwork (owner, Nov 10: pink board #ffbbc1 with deep wine "chalk"): the logo's heart layer
 // (public/brand/valentines/decor.webp, on the Original logo's 1012 x 896 canvas), the "Tiny Humans" lettering in
-// dark raspberry (public/brand/valentines/text.webp: the Original lettering's shape and grain, recolored), the email
+// deep wine (public/brand/valentines/text.webp: the Original lettering's shape and grain, recolored), the email
 // logo (440 px, on the board color) and the email chalk strip (1200 x 96), all with the site's own chalk texture.
 // Also prints the intro animation's heart strokes (config/logo/valentines-drawing.ts).
 // Usage from the repo root: node scripts/theme-assets-valentines.mjs <out dir>
@@ -8,18 +8,19 @@
 import fs from "node:fs";
 import sharp from "sharp";
 const out = process.argv[2];
-const BOARD = "#f9dbe5"; // config/themes.ts valentines chalkboard
-const INK = { r: 0x4f, g: 0x14, b: 0x30 }; // valentines chalkWhite (#4f1430)
+const BOARD = "#ffbbc1"; // config/themes.ts valentines chalkboard
+const INK = { r: 0x3d, g: 0x0a, b: 0x1c }; // valentines chalkWhite (#3d0a1c)
 const HEART = "M24 40 C14 32 6 26 6.5 17 C7 10 14 6.5 19 9 C21.5 10.3 23 12.5 24 15 C25.3 12 27.5 9.5 31 8.5 C37 7 42.5 11.5 41.5 18.5 C40.5 26 33 32 24.5 40.5";
 const W = 1012, H = 896;
+// crimson, raspberry and white, so the hearts show on the pink board
 const hearts = [
-  { x: 100, y: 118, s: 150, r: -16, c: "#ff4f6d" },
-  { x: 868, y: 118, s: 165, r: 14, c: "#ff8fb3" },
-  { x: 722, y: 46, s: 70, r: -10, c: "#ff4f6d" },
-  { x: 300, y: 42, s: 58, r: 8, c: "#ffb3cb" },
-  { x: 976, y: 300, s: 58, r: 18, c: "#ffc2d4" },
-  { x: 62, y: 560, s: 82, r: -12, c: "#ff8fb3" },
-  { x: 966, y: 596, s: 64, r: 10, c: "#ff4f6d" },
+  { x: 100, y: 118, s: 150, r: -16, c: "#b3123c" },
+  { x: 868, y: 118, s: 165, r: 14, c: "#ffffff" },
+  { x: 722, y: 46, s: 70, r: -10, c: "#d6336c" },
+  { x: 300, y: 42, s: 58, r: 8, c: "#ffffff" },
+  { x: 976, y: 300, s: 58, r: 18, c: "#b3123c" },
+  { x: 62, y: 560, s: 82, r: -12, c: "#d6336c" },
+  { x: 966, y: 596, s: 64, r: 10, c: "#ffffff" },
 ];
 function heartSvg(h, i) {
   const k = h.s / 48;
@@ -38,13 +39,13 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   const decor = await sharp(raw).composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
   fs.mkdirSync("public/brand/valentines", { recursive: true });
   await sharp(decor).webp({ quality: 86, alphaQuality: 90 }).toFile("public/brand/valentines/decor.webp");
-  // the lettering in dark raspberry: the Original's alpha (shape + chalk grain) filled with the ink color
+  // the lettering in deep wine: the Original's alpha (shape + chalk grain) filled with the ink color
   const text = sharp("public/brand/default/text.webp");
   const { width: tw, height: th } = await text.metadata();
   const alpha = await text.clone().extractChannel("alpha").toBuffer();
   const ink = await sharp({ create: { width: tw, height: th, channels: 3, background: INK } }).joinChannel(alpha).webp({ quality: 88, alphaQuality: 92 }).toBuffer();
   fs.writeFileSync("public/brand/valentines/text.webp", ink);
-  // preview + email logo: Original layers + hearts + the raspberry lettering on the light pink board, 440 px wide
+  // preview + email logo: Original layers + hearts + the wine lettering on the pink board, 440 px wide
   const layers = ["rays", "sun", "cloud"].map((k) => ({ input: `public/brand/default/${k}.webp` }));
   const full = await sharp({ create: { width: W, height: H, channels: 4, background: BOARD } }).composite([...layers, { input: decor }, { input: ink }]).png().toBuffer();
   await sharp(full).toFile(out + "/valentines-logo-full.png");
@@ -59,8 +60,8 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
     loveLetter: ["M7 13 L41 13 L41 36 L7 36 Z", "M7.5 14 L24 25 L40.5 14", "M24 33 C20 30 17.5 26 17.8 22.8 C18 20.5 20.5 19.4 22.3 20.4 C23.2 20.9 23.7 21.6 24 22.5 C24.4 21.5 25.2 20.7 26.4 20.3 C28.6 19.7 30.6 21.3 30.2 23.8 C29.8 26.3 27.3 28.2 24 31"],
     heartArrow: [HEART, "M5 39 L43 9", "M43 9 L36.5 9.8 M43 9 L42.2 15.5", "M5 39 L4 33.5 M5 39 L10.5 40"],
   };
-  // drawing colors = the theme's accents (accent2, accent, accent3), dark enough to show on the light board
-  const row = [["heart", "#e0435f", -12], ["rose", "#d6336c", 8], ["xo", "#b0457a", -4], ["loveLetter", "#b0457a", 6], ["twoHearts", "#d6336c", -6], ["heartArrow", "#e0435f", 10], ["heart", "#d6336c", 12], ["xo", "#b0457a", 4], ["rose", "#e0435f", -8], ["twoHearts", "#b0457a", 6]];
+  // drawing colors = the theme's accents (accent2 crimson, accent raspberry, accent3 plum) on the pink board
+  const row = [["heart", "#b3123c", -12], ["rose", "#d6336c", 8], ["xo", "#7a1f4a", -4], ["loveLetter", "#7a1f4a", 6], ["twoHearts", "#d6336c", -6], ["heartArrow", "#b3123c", 10], ["heart", "#d6336c", 12], ["xo", "#7a1f4a", 4], ["rose", "#b3123c", -8], ["twoHearts", "#7a1f4a", 6]];
   const strip = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="96" viewBox="0 0 1200 96">${row.map(([n, c, r], i) => {
     const x = 20 + i * 117 + (i % 2 ? 14 : 0), y = i % 2 ? 30 : 16;
     return `<g transform="translate(${x} ${y}) rotate(${r} 24 24)" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">${shapes[n].map((d) => `<path d="${d}"/>`).join("")}</g>`;

@@ -24,7 +24,7 @@ const EMAIL_BOARD_DARK: Record<TinyHumansTheme, string> = {
   thanksgiving: "#663318",
   christmas: "#5a2423",
   newYear: "#101a31",
-  valentines: "#efc0d0",
+  valentines: "#f7a9b1",
 };
 
 export function emailTheme(themeId: string | null | undefined): EmailTheme {
@@ -44,7 +44,7 @@ export function emailTheme(themeId: string | null | undefined): EmailTheme {
 
 /**
  * The theme's writing color at an opacity, for dashed rules and frames: the off-white chalk on the dark boards
- * (rgba(244,242,234,…), as before) and dark raspberry on Valentine's light pink, so the lines show on every board.
+ * (rgba(244,242,234,…), as before) and deep wine on Valentine's pink, so the lines show on every board.
  */
 export function chalkAlpha(t: EmailTheme, alpha: number): string {
   const hex = t.chalk.replace("#", "");
