@@ -65,6 +65,7 @@ async function fakeWaiver(page: Page, context: WaiverContext = CONTEXT) {
 
 async function sign(page: Page, label = "Sign here with your finger") {
   const pad = page.getByRole("img", { name: label });
+  await pad.scrollIntoViewIfNeeded();
   const box = (await pad.boundingBox())!;
   await page.mouse.move(box.x + 40, box.y + 120);
   await page.mouse.down();
@@ -197,9 +198,9 @@ test("the signed copy: ✓/✗ on every choice, the signature, when, version and
 });
 
 test("Leads: Waiver signature until signed, then ✓ Signed waiver + Sign a new waiver (owner, Nov 11)", async ({ page }) => {
-  const signedLead = { ...noDepositLead, reference: "TH-20261008-SIGN", parentName: "Signed Family", waiver: { ...SIGNED } };
+  const signedLead = { ...noDepositLead, reference: "TH-20261008-SIGN", parentName: "Paula Signed", waiver: { ...SIGNED } };
   const familyLead = { ...noDepositLead, reference: "TH-20261008-FAMS", parentName: "Family Story", bundleName: "Our Family Story", waiverKind: "family" as const };
-  const familySigned = { ...noDepositLead, reference: "TH-20261008-FAMD", parentName: "Family Signed", waiverKind: "family" as const, waiver: { ...SIGNED, id: "6e7f8091-1111-4222-8333-944455556666", kind: "family" as const } };
+  const familySigned = { ...noDepositLead, reference: "TH-20261008-FAMD", parentName: "Rosa Familia", waiverKind: "family" as const, waiver: { ...SIGNED, id: "6e7f8091-1111-4222-8333-944455556666", kind: "family" as const } };
   const cancelled = { ...noDepositLead, reference: "TH-20261008-GONE", parentName: "Cancelled Family", status: "cancelled" as const };
   const list: LeadList = { leads: [noDepositLead, signedLead, familyLead, familySigned, cancelled], counts: { all: 5, pending: 0, confirmed: 4, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 0 }, total: 5, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
@@ -210,11 +211,11 @@ test("Leads: Waiver signature until signed, then ✓ Signed waiver + Sign a new 
   await expect(page.getByRole("link", { name: "Waiver signature", exact: true })).toHaveAttribute("href", "/admin/waiver/TH-20261008-TEST");
   await expect(page.getByRole("link", { name: "Family waiver signature" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-FAMS");
   // signed: the button becomes "✓ Signed waiver" (the signed copy), with "Sign a new waiver" next to it
-  const signed = page.getByRole("listitem").filter({ hasText: "Signed Family" });
+  const signed = page.getByRole("listitem").filter({ hasText: "Paula Signed" });
   await expect(signed.getByRole("link", { name: "✓ Signed waiver" })).toHaveAttribute("href", `/admin/waiver/signed/${SIGNED.id}`);
   await expect(signed.getByRole("link", { name: "Sign a new waiver" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-SIGN");
   await expect(signed.getByText("Photo waiver signed ✓", { exact: false })).toContainText("Website, IG + FB, BTS videos");
-  const fam = page.getByRole("listitem").filter({ hasText: "Family Signed" });
+  const fam = page.getByRole("listitem").filter({ hasText: "Rosa Familia" });
   await expect(fam.getByRole("link", { name: "✓ Signed family waiver" })).toBeVisible();
   await expect(fam.getByText("Family photo waiver signed ✓", { exact: false })).toBeVisible();
 
