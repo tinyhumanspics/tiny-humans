@@ -825,6 +825,18 @@
       "orText": "Prefer that we do it? Text us at {phone} and we'll book it for you.",
       "reference": "Reservation {reference}"
     },
+    "waiverCopy": {
+      "subject": "Your signed photo and video release",
+      "preheader": "A copy of what you signed today, for your records.",
+      "eyebrow": "Your signed copy",
+      "intro": "Thank you, {name}! Here's a copy of the photo and video release you just signed. Keep it for your records.",
+      "yes": "✓ Yes",
+      "no": "✗ No",
+      "signatureAlt": "Signature of {name}",
+      "when": "Signed on {day} at {time} (Miami time)",
+      "record": "Version {version} · Record {id} · Booking {reference}",
+      "change": "Want to change a choice? Text us at {phone} or email {email}."
+    },
     "layout": {
       "logoAlt": "Tiny Humans",
       "footer": "Tiny Humans · Newborn & baby photography in {location}. We bring the studio to you.",

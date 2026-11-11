@@ -5,6 +5,9 @@ import { babiesFor } from "@/lib/booking/addons";
 import { getDb, isDatabaseConfigured, isUndefinedTable } from "@/lib/db/client";
 import { bookingConsents, bookings, photoWaivers, type Booking, type PhotoWaiver } from "@/lib/db/schema";
 import { log } from "@/lib/log";
+import { waiverCopyEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/email/resend";
+import { getSiteSettings } from "@/lib/settings/server";
 import { waiverFacts } from "./facts";
 import { photosConsentOf, waiverSnapshot, WAIVER_USES, type WaiverLanguage, type WaiverSnapshot, type WaiverUses } from "./text";
 import type { SignedWaiver, WaiverChild, WaiverContext, WaiverSummary } from "./types";
@@ -185,5 +188,39 @@ export async function revokeWaiverForBooking(bookingId: string, note: string): P
       .where(and(eq(photoWaivers.bookingId, bookingId), eq(photoWaivers.status, "signed")));
   } catch (err) {
     if (!isUndefinedTable(err)) throw err;
+  }
+}
+
+/**
+ * The parent's copy of the release, emailed the moment they sign (owner, Nov 11): the exact words they signed, their
+ * choices, signature and time, in the language they signed in, to the booking's email. Best effort: an email problem
+ * never touches the signed record (it's sent after the iPad shows Done).
+ */
+export async function sendWaiverCopy(id: string): Promise<void> {
+  let reference: string | undefined;
+  try {
+    const w = await getSignedWaiver(id);
+    if (!w || w.status !== "signed") return;
+    reference = w.reference;
+    const row = await bookingByReference(w.reference);
+    if (!row?.email) return;
+    const themeId = await getSiteSettings().then((s) => s.themeId).catch(() => "default");
+    const mail = await waiverCopyEmail(
+      {
+        reference: w.reference,
+        signerName: w.signerName,
+        relationship: w.relationship,
+        signedAt: w.signedAt,
+        uses: w.uses,
+        firstNameOk: w.firstNameOk,
+        snapshot: w.snapshot,
+        sha256: w.sha256,
+        signaturePng: w.signature.replace(/^data:image\/png;base64,/, ""),
+      },
+      { themeId },
+    );
+    await sendEmail({ scope: "resend.waiver_copy", to: row.email, subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments, reference: w.reference, idempotencyKey: `waiver-copy-${id}` });
+  } catch (err) {
+    log.error("waiver.copy", "Signed copy email not sent", { error: err as Error, reference });
   }
 }

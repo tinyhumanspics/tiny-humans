@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { NO_STORE, waiverError, waiverGuard } from "@/lib/waiver/route";
-import { signWaiver, waiverContext } from "@/lib/waiver/server";
+import { sendWaiverCopy, signWaiver, waiverContext } from "@/lib/waiver/server";
 import { referenceSchema, signSchema } from "@/lib/waiver/validation";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +27,10 @@ export async function POST(req: Request) {
   const parsed = signSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Please check the form." }, { status: 400, headers: NO_STORE });
   try {
-    return NextResponse.json({ saved: await signWaiver(parsed.data, req.headers.get("user-agent")) }, { status: 201, headers: NO_STORE });
+    const saved = await signWaiver(parsed.data, req.headers.get("user-agent"));
+    // the parent's copy by email, right after the iPad shows Done (owner, Nov 11)
+    after(() => sendWaiverCopy(saved.id));
+    return NextResponse.json({ saved }, { status: 201, headers: NO_STORE });
   } catch (err) {
     return waiverError(err, "sign");
   }

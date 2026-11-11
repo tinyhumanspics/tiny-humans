@@ -825,6 +825,18 @@
       "orText": "¿Prefieres que lo hagamos nosotros? Escríbenos al {phone} y la reservamos por ti.",
       "reference": "Reserva {reference}"
     },
+    "waiverCopy": {
+      "subject": "Tu autorización de fotos y videos firmada",
+      "preheader": "Una copia de lo que firmaste hoy, para tus archivos.",
+      "eyebrow": "Tu copia firmada",
+      "intro": "¡Gracias, {name}! Aquí tienes una copia de la autorización de fotos y videos que acabas de firmar. Guárdala para tus archivos.",
+      "yes": "✓ Sí",
+      "no": "✗ No",
+      "signatureAlt": "Firma de {name}",
+      "when": "Firmado el {day} a las {time} (hora de Miami)",
+      "record": "Versión {version} · Registro {id} · Reserva {reference}",
+      "change": "¿Quieres cambiar alguna opción? Escríbenos al {phone} o a {email}."
+    },
     "layout": {
       "logoAlt": "Tiny Humans",
       "footer": "Tiny Humans · Fotografía de recién nacidos y bebés en {location}. Llevamos el estudio hasta ti.",

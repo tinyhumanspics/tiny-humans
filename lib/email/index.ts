@@ -3,6 +3,7 @@
  * Add new templates (reminders, after-session emails, ...) in /emails, composing emails/components.
  */
 export { bookingConfirmationEmail } from "@/emails/BookingConfirmation";
+export { waiverCopyEmail } from "@/emails/WaiverCopy";
 export { bookingCancellationEmail } from "@/emails/BookingCancellation";
 export { bookingRescheduledEmail } from "@/emails/BookingRescheduled";
 export { internalNewBookingEmail, internalCancellationEmail, internalRescheduleEmail, internalNewReviewEmail, internalBackdropEmail, internalEmailProblemEmail, internalDepositUnpaidEmail, internalDueReservedEmail } from "@/emails/Internal";
