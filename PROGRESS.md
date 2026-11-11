@@ -55,6 +55,13 @@ freeze on `main` the day before launch except fixes.
       the "LCP" there is the chalk logo finishing its intro (by design, not changed).
 
 ## ▶ NEXT STEPS (Nov 10 night: owner requests below all live; next = owner feedback, then Phase 9; CSP enforce still open)
+**Nov 11 (Claude Code), all live and smoke-tested, main = `7311a20`:** Valentine's soft cream, Photos & Media redesign +
+auto-translate, Shoots done days folded, unfinished "Not born yet" drafts (0029), Leads Completed (0030) + "Full name" +
+emailed waiver copy, Leads Not paid + deposit reminders (0031) with the "✓ Deposit reminder sent" pill, "✓ Signed
+waiver" + family release for Our Family Story + the parent's online copy, saved-details note moved to the bottom of
+the forms. **The owner ran 0029, 0030 and 0031 in Neon (Nov 11).** Parked: the waiver inside each shoot folder (branch
+`feat/shoot-waiver`). Open question: an automatic email for "Not born yet" families whose deposit page ran out.
+
 **Nov 10 (Claude Code, long session), all live and smoke-tested, main = `fb70ee1`:** % offers + one offer for all
 bundles + offer line, /admin Quotes (+ % off), "Not born yet" due-date reservations (migration 0026), seasonal offer
 boxes on home + owner-added offers, Valentine's theme (final color: the owner's pink #FFBBC1, off until Feb 1), offer
