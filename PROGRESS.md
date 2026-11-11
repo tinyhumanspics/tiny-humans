@@ -215,6 +215,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Unfinished bookings include "Not born yet?" — LIVE Nov 11 (owner: "go ahead and push it"; migration 0029 for the
+  label)**. Owner asked: track families who start reserving with their due date but don't finish, labeled by where they
+  came from, so they can get "What stopped you?". Checked with `scripts/local-db` + fake Stripe/Resend: a family that
+  typed and left shows "Stopped before reserving" + "Not born yet · due-date form"; one whose deposit page expired
+  shows "Didn't pay the deposit" with its TH-D reference; the follow-up email's button opens /due-date.
 - [x] **Shoots: done days folded — LIVE Nov 11 (owner: "push it")**. Owner asked: once a shoot day has passed (ticked or
   not), show it small: the day, the family and the time, plus "Open day sheet"; tap to see everything. Done days are
   now one slim row each (`DoneDayCard` in `features/shoots/ShootsList.tsx`, native <details>); Coming up unchanged.

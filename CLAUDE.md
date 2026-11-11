@@ -379,3 +379,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   also in Seasonal Landing) calls owner-only `/api/admin/translate` (same translator; GET = is ANTHROPIC_API_KEY set,
   shown by `TranslationStatus`). `settings.portfolioBoxes` (settings cache key v4) false hides every "Book a memory like
   this one" box (`withoutBoxes` in `liveMedia`) and the Spanish audit stops asking for their wording.
+- Unfinished bookings from "Not born yet?" (owner, Nov 11; migration 0029_draft_forms): /due-date saves the parent's
+  contact draft on blur like the booking form (`form: "due_date"`, never the due date, babies or notes) and labels it
+  in `booking_draft_forms` (best effort: no table = no label). Pressing Reserve marks the draft booked with the
+  reservation's TH-D reference; `dueDraftStage` hides it while the deposit page is open or once reserved, shows
+  "Didn't pay the deposit" when it expired. "What stopped you?" sends due-date families back to /due-date.
