@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import type { LeadList } from "@/lib/leads/types";
 import { waiverFacts } from "@/lib/waiver/facts";
-import { waiverSnapshot, WAIVER_VERSION } from "@/lib/waiver/text";
+import { FAMILY_WAIVER_VERSION, waiverSnapshot, WAIVER_VERSION } from "@/lib/waiver/text";
 import type { SignedWaiver, WaiverContext } from "@/lib/waiver/types";
 import { decodeSignature } from "@/lib/waiver/validation";
 import { noDepositLead, signedInAdmin } from "./fixtures/admin";
@@ -21,6 +21,8 @@ const CONTEXT: WaiverContext = {
   sessionDate: "2026-11-16",
   locale: "en",
   signed: null,
+  kind: "baby",
+  family: [],
 };
 
 const SIGNED: SignedWaiver = {
@@ -33,6 +35,7 @@ const SIGNED: SignedWaiver = {
   firstNameOk: true,
   language: "en",
   revokedAt: null,
+  kind: "baby",
   reference: REF,
   familyName: "Maria Morales",
   children: CONTEXT.children,
@@ -123,6 +126,28 @@ test("the parent reads, chooses, signs and taps Done; the owners tap Next back t
   await expect(page.getByText(`Waiver saved for ${REF}. It's on the lead under Photo use.`)).toBeVisible();
 });
 
+test("Our Family Story gets the family release: everyone in the photos, their first names, its own version (owner, Nov 11)", async ({ page }) => {
+  await page.setViewportSize(IPAD);
+  const posted = await fakeWaiver(page, { ...CONTEXT, kind: "family", family: [{ role: "mom", name: "Maria" }, { role: "brother", name: "Leo" }, { role: "grandma" }] });
+  await page.goto(`/admin/waiver/${REF}`);
+  await expect(page.getByRole("heading", { name: "Family photo and video release", level: 1 })).toBeVisible();
+  await expect(page.getByText("Your little one: Sofia · Also in the photos: Maria (Mom), Leo (Brother), Grandma · The Morales family · Mon, Nov 16")).toBeVisible();
+  await expect(page.getByText("For the other people in the photos, I confirm that each adult agreed to this release", { exact: false })).toBeVisible();
+  await page.getByLabel("Our website and online portfolio (tinyhumans.photography)").check();
+  await page.getByLabel("OK to use first names in captions (Sofia, Maria and Leo)").check();
+  await page.getByLabel("Your full name").fill("Maria Morales");
+  await page.getByLabel("I've read this and I agree.").check();
+  await sign(page);
+  await page.getByRole("button", { name: "Done", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Thank you, Maria!" })).toBeFocused();
+  expect(posted[0]).toMatchObject({ version: FAMILY_WAIVER_VERSION, firstNameOk: true, uses: { website: true, social: false, ads: false, bts: false, personal: false } });
+  // Spanish too
+  await page.goto(`/admin/waiver/${REF}`);
+  await page.getByRole("button", { name: "Español" }).click();
+  await expect(page.getByRole("heading", { name: "Autorización de fotos y videos familiares", level: 1 })).toBeVisible();
+  await expect(page.getByText("Tu pequeño: Sofia · También en las fotos: Maria (Mamá), Leo (Hermano), Abuela · Familia Morales", { exact: false })).toBeVisible();
+});
+
 test("Español: the whole form switches; nothing ticked keeps photos private", async ({ page }) => {
   await page.setViewportSize({ width: 1180, height: 820 });
   const posted = await fakeWaiver(page);
@@ -171,20 +196,31 @@ test("the signed copy: ✓/✗ on every choice, the signature, when, version and
   expect(scan.violations).toEqual([]);
 });
 
-test("Leads: Waiver signature until signed, then See signed waiver and the Photo use row", async ({ page }) => {
+test("Leads: Waiver signature until signed, then ✓ Signed waiver + Sign a new waiver (owner, Nov 11)", async ({ page }) => {
   const signedLead = { ...noDepositLead, reference: "TH-20261008-SIGN", parentName: "Signed Family", waiver: { ...SIGNED } };
+  const familyLead = { ...noDepositLead, reference: "TH-20261008-FAMS", parentName: "Family Story", bundleName: "Our Family Story", waiverKind: "family" as const };
+  const familySigned = { ...noDepositLead, reference: "TH-20261008-FAMD", parentName: "Family Signed", waiverKind: "family" as const, waiver: { ...SIGNED, id: "6e7f8091-1111-4222-8333-944455556666", kind: "family" as const } };
   const cancelled = { ...noDepositLead, reference: "TH-20261008-GONE", parentName: "Cancelled Family", status: "cancelled" as const };
-  const list: LeadList = { leads: [noDepositLead, signedLead, cancelled], counts: { all: 3, pending: 0, confirmed: 2, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 0 }, total: 3, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
+  const list: LeadList = { leads: [noDepositLead, signedLead, familyLead, familySigned, cancelled], counts: { all: 5, pending: 0, confirmed: 4, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 0 }, total: 5, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
   await page.goto("/admin/leads");
 
-  await expect(page.getByRole("link", { name: "Waiver signature" })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Waiver signature" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-TEST");
-  await expect(page.getByRole("link", { name: "See signed waiver" })).toHaveAttribute("href", `/admin/waiver/signed/${SIGNED.id}`);
-  await expect(page.getByText("Photo waiver signed ✓", { exact: false })).toContainText("Website, IG + FB, BTS videos");
+  // not signed yet: "Waiver signature" (Our Family Story: "Family waiver signature"); none on a cancelled booking
+  await expect(page.getByRole("link", { name: "Waiver signature", exact: true })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Waiver signature", exact: true })).toHaveAttribute("href", "/admin/waiver/TH-20261008-TEST");
+  await expect(page.getByRole("link", { name: "Family waiver signature" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-FAMS");
+  // signed: the button becomes "✓ Signed waiver" (the signed copy), with "Sign a new waiver" next to it
+  const signed = page.getByRole("listitem").filter({ hasText: "Signed Family" });
+  await expect(signed.getByRole("link", { name: "✓ Signed waiver" })).toHaveAttribute("href", `/admin/waiver/signed/${SIGNED.id}`);
+  await expect(signed.getByRole("link", { name: "Sign a new waiver" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-SIGN");
+  await expect(signed.getByText("Photo waiver signed ✓", { exact: false })).toContainText("Website, IG + FB, BTS videos");
+  const fam = page.getByRole("listitem").filter({ hasText: "Family Signed" });
+  await expect(fam.getByRole("link", { name: "✓ Signed family waiver" })).toBeVisible();
+  await expect(fam.getByText("Family photo waiver signed ✓", { exact: false })).toBeVisible();
 
-  const card = page.getByRole("listitem").filter({ hasText: "Signed Family" });
-  await card.getByRole("button", { name: "View details" }).click();
-  await expect(card.getByText(/Waiver signed .*: Website, IG \+ FB, BTS videos · first name OK/)).toBeVisible();
-  await expect(card.getByRole("link", { name: "Sign the waiver again (replaces this one)" })).toHaveAttribute("href", "/admin/waiver/TH-20261008-SIGN");
+  await signed.getByRole("button", { name: "View details" }).click();
+  await expect(signed.getByText(/Waiver signed .*: Website, IG \+ FB, BTS videos · first name OK/)).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
+  expect(scan.violations).toEqual([]);
 });

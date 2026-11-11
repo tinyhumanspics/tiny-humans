@@ -120,6 +120,8 @@
 }
 .smallButton:hover:not(:disabled) { border-color: var(--sun-yellow); color: var(--sun-yellow); }
 .smallButton:disabled { opacity: 0.35; cursor: default; }
+/* Leads: the release is signed (owner, Nov 11) */
+.signedWaiver { border-color: var(--sun-yellow); color: var(--sun-yellow); }
 .smallButton:focus-within { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
 .danger:hover:not(:disabled) { border-color: var(--chalk-error); color: var(--chalk-error); }
 

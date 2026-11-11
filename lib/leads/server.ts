@@ -21,10 +21,10 @@ import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
 import { duplicateBookingsFor } from "./duplicates";
 import { addonsFor, babiesFor, familyFor } from "@/lib/booking/addons";
-import type { FamilyMember } from "@/lib/booking/family";
+import { asksFamily, type FamilyMember } from "@/lib/booking/family";
 import { waiversForBookings } from "@/lib/waiver/server";
 import { notPaidDue } from "@/lib/due-date/server";
-import { categoriesForCodes } from "@/lib/pricing/server";
+import { categoriesForCodes, getCatalog } from "@/lib/pricing/server";
 import type { WaiverSummary } from "@/lib/waiver/types";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 
@@ -57,6 +57,8 @@ interface Extras {
   codeCategories: Map<string, string>;
   /** Leads the owner marked "Completed" → when (best effort: none before migration 0030). */
   completions: Map<string, Date>;
+  /** Bundle id → it includes the family (Our Family Story): those bookings get the family photo release. */
+  familyBundles: Map<string, boolean>;
 }
 
 /** Leads marked "Completed" (owner, Nov 11): booking id → when. Best effort: none before migration 0030. */
@@ -72,7 +74,7 @@ async function completions(bookingIds?: string[]): Promise<Map<string, Date>> {
   }
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map() };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map(), familyBundles: new Map() };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -84,7 +86,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done, catalog] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -101,8 +103,10 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     getNoticeHoursSetting().catch(() => 48),
     categoriesForCodes(rows.map((r) => r.discountCode ?? "")),
     completions(bookingIds),
+    getCatalog().catch(() => []),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done };
+  const familyBundles = new Map(catalog.map((b) => [b.id, asksFamily(b)]));
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done, familyBundles };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -201,6 +205,8 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     deposit: leadDepositOf(r, x),
     emailProblems: problemsOf(r, x.emailEvents).map((e) => ({ kind: e.type as EmailProblem, at: e.occurredAt.toISOString(), email: emailNameOf(e.category), detail: e.detail })),
     waiver: x.waivers.get(r.id) ?? null,
+    // same rule as the signing screen (lib/waiver/server.ts → waiverKindFor)
+    waiverKind: (x.familyBundles.get(r.packageId) ?? (x.family.get(r.id)?.length ?? 0) > 0) ? "family" : "baby",
     consents: (({ sms, smsAt, photos, photosAt }) => ({ sms, smsAt: iso(smsAt), photos, photosAt: iso(photosAt) }))(x.consents.find((c) => c.bookingId === r.id) ?? { sms: false, smsAt: null, photos: false, photosAt: null }),
     cancellation:
       r.status === "cancelled"

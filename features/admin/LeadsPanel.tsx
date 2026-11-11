@@ -399,10 +399,20 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
         {lead.status !== "cancelled" && (
           <Link className={styles.smallButton} href={`/admin/shoots/folder/b-${lead.reference}`}>Open shoot folder</Link>
         )}
+        {/* owner, Nov 11: once signed, "Waiver signature" becomes "✓ Signed waiver" (the signed copy, print or PDF) + "Sign a new waiver" */}
         {lead.waiver?.status === "signed" ? (
-          <Link className={styles.smallButton} href={`/admin/waiver/signed/${lead.waiver.id}`}>See signed waiver</Link>
+          <>
+            <Link className={cn(styles.smallButton, styles.signedWaiver)} href={`/admin/waiver/signed/${lead.waiver.id}`}>
+              ✓ Signed {lead.waiver.kind === "family" ? "family " : ""}waiver
+            </Link>
+            {lead.status !== "cancelled" && <Link className={styles.smallButton} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>Sign a new waiver</Link>}
+          </>
         ) : (
-          lead.status !== "cancelled" && <Link className={styles.smallButton} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>Waiver signature</Link>
+          lead.status !== "cancelled" && (
+            <Link className={styles.smallButton} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>
+              {lead.waiverKind === "family" ? "Family waiver signature" : "Waiver signature"}
+            </Link>
+          )
         )}
       </p>
       <WaiverLine lead={lead} />
@@ -451,12 +461,10 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
           {lead.after && <DepositLinkPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
-          {lead.waiver && lead.status !== "cancelled" && (
+          {/* signing again is the "Sign a new waiver" button up top; a release they took back stays readable here */}
+          {lead.waiver && lead.waiver.status !== "signed" && (
             <p className={styles.contactActions}>
-              <Link className={cn(styles.linkButton, "chalk-soft")} href={`/admin/waiver/${encodeURIComponent(lead.reference)}`}>
-                {lead.waiver.status === "signed" ? "Sign the waiver again (replaces this one)" : "Sign a new waiver"}
-              </Link>
-              {lead.waiver.status !== "signed" && <Link className={cn(styles.linkButton, "chalk-soft")} href={`/admin/waiver/signed/${lead.waiver.id}`}>See the old waiver</Link>}
+              <Link className={cn(styles.linkButton, "chalk-soft")} href={`/admin/waiver/signed/${lead.waiver.id}`}>See the old waiver</Link>
             </p>
           )}
           {lead.status !== "cancelled" && moving && (
@@ -679,7 +687,7 @@ function WaiverLine({ lead }: { lead: Lead }) {
   if (!w) return null;
   return (
     <p className={cn(styles.leadMeta, "chalk-soft")}>
-      {w.status === "signed" ? `Photo waiver signed ✓ ${when(w.signedAt)} · ${usesSummary(w.uses)}` : `Photo waiver taken back ${when(w.revokedAt)}: keep their photos private`}
+      {w.kind === "family" ? "Family photo" : "Photo"} waiver {w.status === "signed" ? `signed ✓ ${when(w.signedAt)} · ${usesSummary(w.uses)}` : `taken back ${when(w.revokedAt)}: keep their photos private`}
     </p>
   );
 }

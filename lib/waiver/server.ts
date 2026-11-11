@@ -1,15 +1,18 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
-import { babiesFor } from "@/lib/booking/addons";
+import { babiesFor, familyFor } from "@/lib/booking/addons";
+import { asksFamily, type FamilyMember } from "@/lib/booking/family";
+import { getCatalog } from "@/lib/pricing/server";
 import { getDb, isDatabaseConfigured, isUndefinedTable } from "@/lib/db/client";
 import { bookingConsents, bookings, photoWaivers, type Booking, type PhotoWaiver } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { waiverCopyEmail } from "@/lib/email";
 import { sendEmail } from "@/lib/email/resend";
 import { getSiteSettings } from "@/lib/settings/server";
+import { waiverCopyUrl } from "@/lib/payments/link";
 import { waiverFacts } from "./facts";
-import { photosConsentOf, waiverSnapshot, WAIVER_USES, type WaiverLanguage, type WaiverSnapshot, type WaiverUses } from "./text";
+import { photosConsentOf, waiverKindOf, waiverSnapshot, waiverVersionFor, WAIVER_USES, type WaiverKind, type WaiverLanguage, type WaiverSnapshot, type WaiverUses } from "./text";
 import type { SignedWaiver, WaiverChild, WaiverContext, WaiverSummary } from "./types";
 import { decodeSignature, type SignInput } from "./validation";
 
@@ -48,7 +51,19 @@ const summaryOf = (w: PhotoWaiver): WaiverSummary => ({
   firstNameOk: w.firstNameOk,
   language: w.language as WaiverLanguage,
   revokedAt: w.revokedAt ? w.revokedAt.toISOString() : null,
+  kind: waiverKindOf(w.version),
 });
+
+/**
+ * Which release a booking gets (owner, Nov 11): the family one when its bundle includes the family (Our Family Story:
+ * the same test as the booking form's "Who else is in the photos?"), else the baby one. A bundle that's gone from the
+ * catalog falls back to whether the parent listed family members.
+ */
+export async function waiverKindFor(row: Pick<Booking, "id" | "packageId">): Promise<{ kind: WaiverKind; family: FamilyMember[] }> {
+  const [bundles, family] = await Promise.all([getCatalog().catch(() => []), familyFor([row.id]).then((m) => m.get(row.id) ?? []).catch(() => [] as FamilyMember[])]);
+  const bundle = bundles.find((b) => b.id === row.packageId);
+  return { kind: (bundle ? asksFamily(bundle) : family.length > 0) ? "family" : "baby", family };
+}
 
 async function bookingByReference(reference: string): Promise<Booking | null> {
   const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
@@ -70,7 +85,7 @@ export async function waiverContext(reference: string): Promise<WaiverContext> {
   return guard(async () => {
     const row = await bookingByReference(reference);
     if (!row) throw new WaiverNotFoundError("That booking doesn't exist.");
-    const [children, active] = await Promise.all([childrenOf(row), activeFor(row.id)]);
+    const [children, active, release] = await Promise.all([childrenOf(row), activeFor(row.id), waiverKindFor(row)]);
     return {
       reference: row.bookingReference,
       status: row.status,
@@ -79,6 +94,8 @@ export async function waiverContext(reference: string): Promise<WaiverContext> {
       sessionDate: row.sessionDate,
       locale: row.locale === "es" ? "es" : "en",
       signed: active ? summaryOf(active) : null,
+      kind: release.kind,
+      family: release.family,
     };
   });
 }
@@ -95,8 +112,10 @@ export async function signWaiver(input: SignInput, userAgent: string | null): Pr
     if (row.status === "cancelled") throw new WaiverInputError("This booking was cancelled, so it can't get a photo release.");
     const signature = decodeSignature(input.signature);
     if (!signature) throw new WaiverInputError("Please sign again.");
-    const children = await childrenOf(row);
-    const snapshot = waiverSnapshot(input.language, waiverFacts({ parentName: row.parentName, children, sessionDate: row.sessionDate }, input.language));
+    const [children, release] = await Promise.all([childrenOf(row), waiverKindFor(row)]);
+    // the screen showed the release for this booking's bundle; if the bundle changed meanwhile, start again
+    if (input.version !== waiverVersionFor(release.kind)) throw new WaiverInputError("This form was updated. Please close it and start again.");
+    const snapshot = waiverSnapshot(input.language, waiverFacts({ parentName: row.parentName, children, sessionDate: row.sessionDate, kind: release.kind, family: release.family }, input.language), release.kind);
     const textSha256 = createHash("sha256").update(JSON.stringify(snapshot)).digest("hex");
     const now = new Date();
     const photos = photosConsentOf(input.uses);
@@ -216,6 +235,7 @@ export async function sendWaiverCopy(id: string): Promise<void> {
         snapshot: w.snapshot,
         sha256: w.sha256,
         signaturePng: w.signature.replace(/^data:image\/png;base64,/, ""),
+        copyUrl: waiverCopyUrl(id),
       },
       { themeId },
     );

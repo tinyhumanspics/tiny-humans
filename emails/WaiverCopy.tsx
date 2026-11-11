@@ -7,7 +7,7 @@ import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { EmailAttachment, ImageMode, RenderedEmail } from "@/lib/email/types";
 import { WAIVER_USES, type WaiverSnapshot, type WaiverUses } from "@/lib/waiver/text";
-import { BODY_FONT, CHALK_FONT, Heading, Paragraph } from "./components/blocks";
+import { BODY_FONT, CHALK_FONT, ChalkButton, Heading, Paragraph } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 /** What the parent signed (lib/waiver/server.ts → getSignedWaiver). */
@@ -24,6 +24,8 @@ export interface WaiverCopyDetails {
   sha256: string;
   /** The signature, PNG base64 (no data: prefix). */
   signaturePng: string;
+  /** Their own copy on the website (print or save as PDF); null without ADMIN_SESSION_SECRET. */
+  copyUrl?: string | null;
 }
 
 interface Options {
@@ -83,6 +85,7 @@ export function WaiverCopy({ details: d, theme: t, images, locale, signatureSrc 
       <Paragraph theme={t} align="center">
         {intro}
       </Paragraph>
+      {d.copyUrl && <ChalkButton theme={t} label={x.button} href={d.copyUrl} variant="solid" />}
       <tr>
         <td className="th-pad" style={{ padding: "18px 36px 0" }}>
           <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0} bgcolor={PAPER.bg} style={{ background: PAPER.bg, borderRadius: 10, border: `1px solid ${PAPER.line}` }}>
@@ -141,6 +144,7 @@ export async function waiverCopyEmail(d: WaiverCopyDetails, opts: Options): Prom
   const html = await renderHtml(<WaiverCopy details={d} theme={theme} images={images} locale={locale} signatureSrc={signatureSrc} />);
   const text = textLines([
     intro,
+    ...(d.copyUrl ? [fill(x.buttonText, { url: d.copyUrl })] : []),
     "",
     s.title,
     s.facts,

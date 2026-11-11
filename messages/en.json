@@ -847,7 +847,9 @@
       "signatureAlt": "Signature of {name}",
       "when": "Signed on {day} at {time} (Miami time)",
       "record": "Version {version} · Record {id} · Booking {reference}",
-      "change": "Want to change a choice? Text us at {phone} or email {email}."
+      "change": "Want to change a choice? Text us at {phone} or email {email}.",
+      "button": "See or print your copy",
+      "buttonText": "Your copy online (print or save as PDF): {url}"
     },
     "layout": {
       "logoAlt": "Tiny Humans",
@@ -1614,5 +1616,16 @@
         }
       ]
     }
+  },
+  "waiverPage": {
+    "title": "Your signed copy",
+    "lead": "This is the photo and video release you signed with Tiny Humans. Keep this link to see it again any time.",
+    "print": "Print or save as PDF",
+    "signed": "Signed on {day} at {time} (Miami time)",
+    "record": "Version {version} · Record {id} · Booking {reference}",
+    "revoked": "You took this permission back on {day}: we don't use these photos in anything new.",
+    "superseded": "You signed a newer release after this one, so this one no longer applies.",
+    "invalid": "This link isn't valid. Text us at {phone} or email {email} and we'll send you your copy.",
+    "change": "Want to change a choice? Text us at {phone} or email {email}."
   }
 }

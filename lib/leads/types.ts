@@ -1,4 +1,5 @@
 import type { WaiverSummary } from "@/lib/waiver/types";
+import type { WaiverKind } from "@/lib/waiver/text";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 import type { FamilyMember } from "@/lib/booking/family";
 
@@ -119,6 +120,8 @@ export interface Lead {
   consents?: { sms: boolean; smsAt: string | null; photos: boolean; photosAt: string | null };
   /** The photo and video release signed on the iPad (latest active one, else the latest taken back); null = none. */
   waiver?: WaiverSummary | null;
+  /** The release this booking gets: "family" for Our Family Story (owner, Nov 11), else "baby". */
+  waiverKind?: WaiverKind;
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;

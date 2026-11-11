@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { waiverFacts } from "@/lib/waiver/facts";
 import { waiverApi, WaiverApiError } from "@/lib/waiver/client";
-import { fillWords, waiverSnapshot, waiverWords, WAIVER_USES, WAIVER_VERSION, type WaiverLanguage, type WaiverUse, type WaiverUses } from "@/lib/waiver/text";
+import { fillWords, waiverSnapshot, waiverVersionFor, waiverWords, WAIVER_USES, type WaiverLanguage, type WaiverUse, type WaiverUses } from "@/lib/waiver/text";
 import type { WaiverContext } from "@/lib/waiver/types";
 import SignaturePad, { type SignaturePadHandle } from "./SignaturePad";
 import WaiverPaper from "./WaiverPaper";
@@ -66,7 +66,8 @@ export default function WaiverKiosk({ reference }: { reference: string }) {
   }, [done]);
 
   const words = waiverWords(lang);
-  const snapshot = useMemo(() => (ctx ? waiverSnapshot(lang, waiverFacts(ctx, lang)) : null), [ctx, lang]);
+  // Our Family Story gets the family release (owner, Nov 11); the server rebuilds the same words when saving
+  const snapshot = useMemo(() => (ctx ? waiverSnapshot(lang, waiverFacts(ctx, lang), ctx.kind) : null), [ctx, lang]);
   const back = "/admin/leads";
 
   if (problem || !ctx || !snapshot) {
@@ -143,7 +144,7 @@ export default function WaiverKiosk({ reference }: { reference: string }) {
     try {
       await waiverApi.sign({
         reference: ctx.reference,
-        version: WAIVER_VERSION,
+        version: waiverVersionFor(ctx.kind),
         language: lang,
         uses,
         firstNameOk: snapshot.firstName ? firstNameOk : false,

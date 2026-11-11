@@ -46,3 +46,20 @@ export function dueReturnPath(reference: string, locale: AppLocale = "en"): stri
 }
 
 export const verifyDueReturn = (reference: string, signature: string) => verify("due-return:v1", reference, signature);
+
+/**
+ * The parent's own copy of their signed photo and video release (owner, Nov 11): /waiver?w=<release id>&s=<signature>,
+ * linked from the copy we email when they sign. Signed like the links above (its own purpose), so nobody can open
+ * another family's release; it never expires.
+ */
+export function waiverCopyUrl(id: string): string | null {
+  if (!secret()) return null;
+  return `${site.url.replace(/\/$/, "")}/waiver?${new URLSearchParams({ w: id, s: signFor("waiver-copy:v1", id) })}`;
+}
+
+export function verifyWaiverCopy(id: string, signature: string): boolean {
+  if (!secret() || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(id) || !/^[A-Za-z0-9_-]{22}$/.test(signature)) return false;
+  const a = Buffer.from(signFor("waiver-copy:v1", id));
+  const b = Buffer.from(signature);
+  return a.length === b.length && timingSafeEqual(a, b);
+}

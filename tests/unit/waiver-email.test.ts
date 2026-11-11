@@ -36,4 +36,16 @@ describe("the parent's copy of the photo and video release (owner, Nov 11)", () 
     expect(mail.text).toContain("✓ Sí");
     expect(mail.text).toContain("hora de Miami");
   });
+
+  test("a button to their own copy on the website (print or save as PDF), when the link can be made (owner, Nov 11)", async () => {
+    const copyUrl = "https://www.tinyhumans.photography/waiver?w=5d6e7f80-1111-4222-8333-944455556666&s=abcdefghijklmnopqrstuv";
+    const mail = await waiverCopyEmail({ ...details("en"), copyUrl }, { themeId: "default" });
+    expect(mail.html).toContain("See or print your copy");
+    expect(mail.html).toContain(`href="${copyUrl.replace("&", "&amp;")}"`);
+    expect(mail.text).toContain(`Your copy online (print or save as PDF): ${copyUrl}`);
+    const es = await waiverCopyEmail({ ...details("es"), copyUrl }, { themeId: "default" });
+    expect(es.html).toContain("Ver o imprimir tu copia");
+    const none = await waiverCopyEmail(details("en"), { themeId: "default" });
+    expect(none.html).not.toContain("See or print your copy");
+  });
 });

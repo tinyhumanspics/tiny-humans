@@ -1,4 +1,5 @@
-import type { WaiverLanguage, WaiverSnapshot, WaiverUses } from "./text";
+import type { FamilyMember } from "@/lib/booking/family";
+import type { WaiverKind, WaiverLanguage, WaiverSnapshot, WaiverUses } from "./text";
 
 /** /admin → Leads → photo and video release: what the pages and API routes exchange. */
 
@@ -18,6 +19,8 @@ export interface WaiverSummary {
   firstNameOk: boolean;
   language: WaiverLanguage;
   revokedAt: string | null;
+  /** Which release was signed: the baby one, or the family one (Our Family Story). */
+  kind: WaiverKind;
 }
 
 /** What the signing screen needs to know about the booking. */
@@ -31,6 +34,10 @@ export interface WaiverContext {
   locale: WaiverLanguage;
   /** The active release, if one was signed already ("Sign again" replaces it). */
   signed: WaiverSummary | null;
+  /** The release this booking gets: "family" for bundles that include the family (Our Family Story). */
+  kind: WaiverKind;
+  /** Family release: who else the parent listed when booking (parent data: never to analytics). */
+  family: FamilyMember[];
 }
 
 /** A signed release as the owners see it ("See signed waiver"). */

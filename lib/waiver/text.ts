@@ -12,6 +12,17 @@ import { site } from "@/config/site";
  */
 export const WAIVER_VERSION = "Photo and video release v1 (draft, Nov 2026)";
 
+/**
+ * Our Family Story (owner, Nov 11): bundles that include the family get the family release, which also covers the
+ * parents, siblings and relatives in the photos. Same choices and promises; its own version (same DRAFT note).
+ */
+export const FAMILY_WAIVER_VERSION = "Family photo and video release v1 (draft, Nov 2026)";
+
+export type WaiverKind = "baby" | "family";
+export const waiverVersionFor = (kind: WaiverKind) => (kind === "family" ? FAMILY_WAIVER_VERSION : WAIVER_VERSION);
+/** Which release a stored version is (anything that isn't the family one is the baby release). */
+export const waiverKindOf = (version: string): WaiverKind => (version === FAMILY_WAIVER_VERSION ? "family" : "baby");
+
 export const WAIVER_USES = ["website", "social", "ads", "bts", "personal"] as const;
 export type WaiverUse = (typeof WAIVER_USES)[number];
 export type WaiverLanguage = "en" | "es";
@@ -128,11 +139,36 @@ const ES: WaiverWords = {
   signedIn: "Firmado en español",
 };
 
+/** The family release: only these words differ from the baby release (owner, Nov 11; DRAFT like the rest). */
+const FAMILY_EN = {
+  title: "Family photo and video release",
+  intro:
+    "Thank you for having us in your home! We'd love to share some of today's family photos and videos so other families can see our work. This form asks your permission for the photos of your baby and of everyone in your family photos. Please read it, choose what you're OK with, and sign at the bottom.",
+  everyone: "Also in the photos",
+  nameH: "First names",
+  firstName: "OK to use first names in captions ({baby})",
+  fine:
+    "I am the parent or legal guardian of the child or children named above, and I am 18 or older. I give Tiny Humans permission to use photos and videos taken at this family session, of my child or children, of me and of my family, only in the places I ticked above, without payment, until I take this permission back. For the other people in the photos, I confirm that each adult agreed to this release, and that each child's parent or legal guardian did too. I can take it back at any time for future use, as described above. I agree to sign electronically, and my electronic signature counts the same as a handwritten one. Florida law applies.",
+};
+
+const FAMILY_ES: typeof FAMILY_EN = {
+  title: "Autorización de fotos y videos familiares",
+  intro:
+    "¡Gracias por recibirnos en tu casa! Nos encantaría compartir algunas fotos y videos familiares de hoy para que otras familias conozcan nuestro trabajo. Este formulario te pide permiso para las fotos de tu bebé y de todos los que aparecen en tus fotos familiares. Por favor léelo, elige con qué estás de acuerdo y firma al final.",
+  everyone: "También en las fotos",
+  nameH: "Nombres",
+  firstName: "Está bien usar los primeros nombres en los textos ({baby})",
+  fine:
+    "Soy el padre, la madre o el tutor legal del niño o los niños nombrados arriba, y tengo 18 años o más. Doy permiso a Tiny Humans para usar fotos y videos tomados en esta sesión familiar, de mi niño o mis niños, de mí y de mi familia, solo en los lugares que marqué arriba, sin pago, hasta que retire este permiso. Sobre las demás personas en las fotos, confirmo que cada adulto aceptó esta autorización, y que el padre, la madre o el tutor legal de cada niño también la aceptó. Puedo retirarlo en cualquier momento para usos futuros, como se describe arriba. Acepto firmar electrónicamente, y mi firma electrónica vale lo mismo que una firma a mano. Se aplican las leyes de Florida.",
+};
+
 const fill = (text: string, values: Record<string, string>) => text.replace(/\{(\w+)\}/g, (m, k: string) => values[k] ?? m);
 
-/** The words for one language, with the studio's phone and email filled in. */
-export function waiverWords(lang: WaiverLanguage): WaiverWords {
-  const w = lang === "es" ? ES : EN;
+/** The words for one language (and release), with the studio's phone and email filled in. */
+export function waiverWords(lang: WaiverLanguage, kind: WaiverKind = "baby"): WaiverWords {
+  const base = lang === "es" ? ES : EN;
+  const fam = lang === "es" ? FAMILY_ES : FAMILY_EN;
+  const w = kind === "family" ? { ...base, title: fam.title, intro: fam.intro, nameH: fam.nameH, firstName: fam.firstName, fine: fam.fine } : base;
   const contact = { phone: site.contact.phone, email: site.contact.email ?? "" };
   return { ...w, promises: w.promises.map((p) => fill(p, contact)) };
 }
@@ -146,24 +182,31 @@ export interface WaiverFacts {
   babyNames: string | null;
   /** "Mon Nov 16" style line, already in the signing language. */
   dateLabel: string;
+  /** Family release only: who else the parent listed ("Maria (Mom), Leo (Brother)"); null = nobody listed. */
+  everyone?: string | null;
+  /** Family release only: every first name given (babies first), for the captions choice; null = none. */
+  firstNames?: string | null;
 }
 
 /**
  * Exactly what the parent reads, as data: stored with the signature (`text_snapshot`) and hashed, so a signed copy
  * always shows the words it was signed with, even after the wording changes.
  */
-export function waiverSnapshot(lang: WaiverLanguage, facts: WaiverFacts) {
-  const w = waiverWords(lang);
+export function waiverSnapshot(lang: WaiverLanguage, facts: WaiverFacts, kind: WaiverKind = "baby") {
+  const w = waiverWords(lang, kind);
+  const family = kind === "family";
+  const everyone = family && facts.everyone ? ` · ${(lang === "es" ? FAMILY_ES : FAMILY_EN).everyone}: ${facts.everyone}` : "";
+  const names = family ? (facts.firstNames ?? null) : facts.babyNames;
   return {
-    version: WAIVER_VERSION,
+    version: waiverVersionFor(kind),
     language: lang,
     title: w.title,
     intro: w.intro,
-    facts: `${w.babiesLabel}: ${facts.babyNames ?? "—"} · ${facts.familyName} · ${facts.dateLabel}`,
+    facts: `${w.babiesLabel}: ${facts.babyNames ?? "—"}${everyone} · ${facts.familyName} · ${facts.dateLabel}`,
     whereHeading: w.whereH,
     uses: WAIVER_USES.map((key) => ({ key, label: w.uses[key] })),
     noneHint: w.noneHint,
-    firstName: facts.babyNames ? { heading: w.nameH, label: fill(w.firstName, { baby: facts.babyNames }) } : null,
+    firstName: names ? { heading: w.nameH, label: fill(w.firstName, { baby: names }) } : null,
     promisesHeading: w.promiseH,
     promises: w.promises,
     fineHeading: w.fineH,

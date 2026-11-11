@@ -1,5 +1,5 @@
 import { z } from "@/lib/validation/zod";
-import { WAIVER_VERSION } from "./text";
+import { FAMILY_WAIVER_VERSION, WAIVER_VERSION } from "./text";
 
 /** The signature PNG: what the browser sends must really be a small PNG of a sensible size. */
 export const SIGNATURE_MAX_BYTES = 100_000;
@@ -33,7 +33,7 @@ const reference = z.string().trim().regex(/^TH-\d{8}-[A-Z0-9]{4,8}$/, "That book
 export const signSchema = z
   .object({
     reference,
-    version: z.string().refine((v) => v === WAIVER_VERSION, "This form was updated. Please close it and start again."),
+    version: z.string().refine((v) => v === WAIVER_VERSION || v === FAMILY_WAIVER_VERSION, "This form was updated. Please close it and start again."),
     language: z.enum(["en", "es"]),
     uses: z.object({ website: z.boolean(), social: z.boolean(), ads: z.boolean(), bts: z.boolean(), personal: z.boolean() }).strict(),
     firstNameOk: z.boolean(),

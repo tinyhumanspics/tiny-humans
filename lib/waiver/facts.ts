@@ -1,4 +1,6 @@
-import type { WaiverFacts, WaiverLanguage } from "./text";
+import type { FamilyRole } from "@/config/booking";
+import type { FamilyMember } from "@/lib/booking/family";
+import type { WaiverFacts, WaiverKind, WaiverLanguage } from "./text";
 import type { WaiverChild } from "./types";
 
 /** The line at the top of the release ("Sofia · The Morales family · Mon, Nov 16"), in the signing language. Pure. */
@@ -32,6 +34,24 @@ export function sessionDayLabel(date: string, lang: WaiverLanguage): string {
   return new Intl.DateTimeFormat(lang === "es" ? "es-US" : "en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-export function waiverFacts(ctx: { parentName: string; children: WaiverChild[]; sessionDate: string }, lang: WaiverLanguage): WaiverFacts {
-  return { familyName: familyLabel(ctx.parentName, lang), babyNames: childNames(ctx.children, lang), dateLabel: sessionDayLabel(ctx.sessionDate, lang) };
+/** The family words of the release (same as the customer emails' `emails.common.roles`). */
+const ROLES: Record<WaiverLanguage, Record<FamilyRole, string>> = {
+  en: { mom: "Mom", dad: "Dad", sister: "Sister", brother: "Brother", grandma: "Grandma", grandpa: "Grandpa", aunt: "Aunt", uncle: "Uncle", cousin: "Cousin", other: "Family member" },
+  es: { mom: "Mamá", dad: "Papá", sister: "Hermana", brother: "Hermano", grandma: "Abuela", grandpa: "Abuelo", aunt: "Tía", uncle: "Tío", cousin: "Primo o prima", other: "Familiar" },
+};
+
+/** "Maria (Mom), Leo (Brother)" / "Mamá, Leo (Hermano)"; null when the parent listed nobody. */
+export function everyoneLine(family: FamilyMember[], lang: WaiverLanguage): string | null {
+  if (!family.length) return null;
+  return family.map((m) => (m.name?.trim() ? `${m.name.trim()} (${ROLES[lang][m.role]})` : ROLES[lang][m.role])).join(", ");
+}
+
+const joinNames = (names: string[], lang: WaiverLanguage) => (names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} ${lang === "es" ? "y" : "and"} ${names.at(-1)}`);
+
+export function waiverFacts(ctx: { parentName: string; children: WaiverChild[]; sessionDate: string; kind?: WaiverKind; family?: FamilyMember[] }, lang: WaiverLanguage): WaiverFacts {
+  const base = { familyName: familyLabel(ctx.parentName, lang), babyNames: childNames(ctx.children, lang), dateLabel: sessionDayLabel(ctx.sessionDate, lang) };
+  if (ctx.kind !== "family") return base;
+  const family = ctx.family ?? [];
+  const names = [...ctx.children.map((c) => c.name?.trim()), ...family.map((m) => m.name?.trim())].filter((n): n is string => Boolean(n));
+  return { ...base, everyone: everyoneLine(family, lang), firstNames: names.length ? joinNames(names, lang) : null };
 }

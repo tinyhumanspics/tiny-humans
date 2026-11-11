@@ -42,12 +42,13 @@ export default function WaiverPaper({ snapshot, choices, firstName, you }: { sna
 }
 
 /** A choice on the signed copy: ✓ for yes, ✗ for no (with the words, so it reads without the marks). */
-export function Mark({ on, children }: { on: boolean; children: ReactNode }) {
+export function Mark({ on, children, lang = "en" }: { on: boolean; children: ReactNode; lang?: "en" | "es" }) {
+  const [yes, no] = lang === "es" ? ["Sí: ", "No: "] : ["Yes: ", "No: "];
   return (
     <li className={on ? css.choiceOn : css.choiceOff}>
       <span className={css.mark} aria-hidden="true">{on ? "✓" : "✗"}</span>
       <span>
-        <span className={css.srOnly}>{on ? "Yes: " : "No: "}</span>
+        <span className={css.srOnly}>{on ? yes : no}</span>
         {children}
       </span>
     </li>

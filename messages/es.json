@@ -847,7 +847,9 @@
       "signatureAlt": "Firma de {name}",
       "when": "Firmado el {day} a las {time} (hora de Miami)",
       "record": "Versión {version} · Registro {id} · Reserva {reference}",
-      "change": "¿Quieres cambiar alguna opción? Escríbenos al {phone} o a {email}."
+      "change": "¿Quieres cambiar alguna opción? Escríbenos al {phone} o a {email}.",
+      "button": "Ver o imprimir tu copia",
+      "buttonText": "Tu copia en línea (para imprimir o guardar como PDF): {url}"
     },
     "layout": {
       "logoAlt": "Tiny Humans",
@@ -1616,5 +1618,16 @@
         }
       ]
     }
+  },
+  "waiverPage": {
+    "title": "Tu copia firmada",
+    "lead": "Esta es la autorización de fotos y videos que firmaste con Tiny Humans. Guarda este enlace para verla cuando quieras.",
+    "print": "Imprimir o guardar como PDF",
+    "signed": "Firmado el {day} a las {time} (hora de Miami)",
+    "record": "Versión {version} · Registro {id} · Reserva {reference}",
+    "revoked": "Retiraste este permiso el {day}: no usamos estas fotos en nada nuevo.",
+    "superseded": "Firmaste una autorización más nueva después de esta, así que esta ya no aplica.",
+    "invalid": "Este enlace no es válido. Escríbenos al {phone} o a {email} y te enviamos tu copia.",
+    "change": "¿Quieres cambiar alguna opción? Escríbenos al {phone} o a {email}."
   }
 }
