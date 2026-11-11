@@ -222,6 +222,13 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Not born yet in 3 steps (backdrops + discount code) and Delete in Not paid — LIVE Nov 11 (owner: "I love it go
+  ahead and push it"; migration 0032 needed for codes)**. Owner asked: delete test entries from Not paid; after
+  "Reserve my spot", pick backdrops like a regular bundle or skip ("Not sure yet"); enter a discount code before the
+  $50 (deposit stays $50, the % comes off the final bill). Checked with `scripts/local-db` + fake Stripe/Resend/Graph:
+  SAVE10 on Our Little Story → reserved at $269.10, $50 paid, booked from the email link → booking SAVE10 −$29.90,
+  final $269.10, deposit carried, backdrops Pink + Cream, code use counted once and moved to the booking; studio email
+  lists code + backdrops; a test reservation deleted from Not paid closed its Stripe page.
 - [x] **Saved-details note moved off the email box — LIVE Nov 11 (owner: "You can push it but change the wording")**.
   Owner: the note under the email box made people hesitant to type their email. It now sits at the bottom of booking
   step one and of Not born yet, above the button, with the Privacy Policy link, in the owner's words: "We save your

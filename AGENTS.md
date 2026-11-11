@@ -414,3 +414,15 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   The button itself shows it was sent (owner, Nov 11: no note at the top): "✓ Deposit reminder sent" pill + "Sent N
   times · last …" (from `deposit.reminders` / `notPaidDue().reminders`, plus a just-sent local state) and "Send again".
   `remindDueDeposit` returns `{ counted }`: false (no 0031 table) = sent but not counted, and the card says so.
+- Not born yet in three steps (owner, Nov 11; migration 0032_due_reservation_extras): 1) details, "Reserve my spot"
+  = `POST /api/due-date` with `check: true` (`checkDueRequest`: bundle, babies, window, Florida/distance; no database,
+  nothing saved); 2) backdrops (`BackdropPicker`, one per setup) or "Not sure yet" (skip); 3) review + the booking
+  form's `DiscountField` (quote API), then the deposit. `createDueReservation` validates the code like bookings and
+  keeps it only when it beats the running offer; `due_reservation_extras` stores backdrops + the code's TERMS (so it is
+  honored later even if the code changes) + `code_id`/`usage_id`. A code is refused (never silently dropped) when the
+  table is missing. The code use is claimed when the spot is reserved (`claimDueCode`: deposit paid / none needed),
+  given back on cancel/delete (`releaseDueCode`), and attached to the booking made from the reservation, which is
+  priced `computeQuote(keptPriceBundle(due), today, extras.code)`; its backdrops start the booking form
+  (`DueSummary.backdrops`) and fill the booking when the request has none (/admin "Book their session"). The deposit
+  stays the bundle's deposit; the code comes off the balance. Leads → Not paid → Delete: bookings reuse the lead
+  delete dialog; reservations `deleteDueReservation` (unpaid, no booking; closes an open Stripe page first).
