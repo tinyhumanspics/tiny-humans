@@ -55,16 +55,16 @@ for (const { tag } of journal.entries) {
 // --- seed: mirror production's live bundles (first run only) ---
 if (fresh || reset) {
   await pool.query(`
-    update bundles set regular_price_cents = 14900, duration_minutes = 60, duration_label = 'Up to 1 hour', photos_label = '8' where id = 'little-moments';
-    update bundles set regular_price_cents = 24900, duration_minutes = 120, duration_label = 'Up to 2 hours', photos_label = '20', badge = 'Most loved' where id = 'our-little-story';
-    update bundles set name = 'Our Family Story', regular_price_cents = 39900, duration_minutes = 180, duration_label = 'Up to 3 hours', photos_label = '35' where id = 'forever-little';
+    update bundles set regular_price_cents = 20000, duration_minutes = 60, duration_label = 'Up to 1 hour', photos_label = '8' where id = 'little-moments';
+    update bundles set regular_price_cents = 30000, duration_minutes = 120, duration_label = 'Up to 2 hours', photos_label = '20', badge = 'Most loved' where id = 'our-little-story';
+    update bundles set name = 'Our Family Story', regular_price_cents = 44900, duration_minutes = 180, duration_label = 'Up to 3 hours', photos_label = '35' where id = 'forever-little';
     delete from bundle_inclusions;
     insert into bundle_inclusions (bundle_id, position, text) values
       ('little-moments', 0, 'Up to 1 hour'), ('little-moments', 1, 'Baby only'), ('little-moments', 2, '1 setup'), ('little-moments', 3, '8 edited digital photos'),
       ('our-little-story', 0, 'Up to 2 hours'), ('our-little-story', 1, 'Baby only'), ('our-little-story', 2, '2 setups'), ('our-little-story', 3, '20 edited digital photos'),
       ('forever-little', 0, 'Up to 3 hours'), ('forever-little', 1, 'Baby + parents + siblings'), ('forever-little', 2, '3 setups'), ('forever-little', 3, '35 edited digital photos');
   `);
-  console.log("seeded bundles (mirror of production, 2026-10-06)");
+  console.log("seeded bundles (mirror of production prices, 2026-11-10)");
 }
 
 // --- Neon HTTP shim: POST /sql {query, params} | {queries: [...]} -> {fields, rows, command, rowCount} ---
