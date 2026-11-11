@@ -338,10 +338,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   built-in two (settings cache key `site-settings-v3`). `features/seasonal/SeasonalOffers.tsx` draws them on the ad page
   AND the home page (after the hero), with the running bundle offer line inside the box. The bundle card's discounted
   price is 0.82em of a regular price (owner, Nov 10).
-- Valentine's theme (owner, Nov 10; changed the same day from Raspberry to LIGHT PINK): theme id `valentines`, the only
-  light board, so its "chalk" is dark raspberry (`chalkWhite` #4f1430 = the writing, `sunYellow` #a3154a = highlights
-  and buttons); anything drawn in a fixed off-white disappears on it, so use the theme variables (emails: `chalkAlpha()`
-  in `lib/email/theme.ts` for dashed lines and frames). The Original logo layers + a heart `decor` layer
+- Valentine's theme (owner, Nov 10; after Raspberry, light pink and coral previews the owner chose PINK #ffbbc1):
+  theme id `valentines`, the only light board, so its "chalk" is deep wine (`chalkWhite` #3d0a1c = the writing,
+  `sunYellow` #921038 = crimson highlights and buttons, whose text is `chalkboardDark`); anything drawn in a fixed
+  off-white disappears on it, so use the theme variables (emails: `chalkAlpha()` in `lib/email/theme.ts` for dashed
+  lines and frames). Check new colors with the contrast test before showing the owner. The Original logo layers + a heart `decor` layer
   (`public/brand/valentines/decor.webp`; intro strokes in `config/logo/valentines-drawing.ts`, lettering 0.3 s later)
   + its own dark lettering (`public/brand/valentines/text.webp`), drawings `heartArrow`/`loveLetter`/`rose`/`twoHearts`/
   `xo`. The thanksgiving placeholder/star overrides also apply to it (contrast test `LIGHTER`). Its artwork and email

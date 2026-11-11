@@ -229,6 +229,9 @@ next/image); videos are links only (owner); a signed waiver can never be edited 
   also change")**: light pink board with dark raspberry writing (logo lettering recolored, prices, buttons, helper
   texts), emails on the same pink with raspberry dashed lines and frames (Original-theme emails byte-identical; all 12
   customer emails rendered and checked in pink). Still switched off until the owner picks it on Feb 1.
+  **Final color: the owner's pink #FFBBC1 (Nov 10, after a coral #FF6F77 preview they didn't like)**: deep wine
+  writing (#3d0a1c), crimson highlights/buttons (#921038), logo hearts crimson/raspberry/white, drawings raspberry,
+  crimson and plum; emails on the same pink. Every text color passes the contrast test (lowest 4.8:1).
 - [x] **% offers, offer line, Quotes, "Not born yet" — LIVE Nov 10 (`4d9684c`; migration 0026 run by the owner first)**.
   Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
   "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin
