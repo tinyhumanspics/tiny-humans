@@ -9,15 +9,15 @@ export type FeedbackReason = (typeof FEEDBACK_REASONS)[number];
 export const isFeedbackReason = (value: unknown): value is FeedbackReason => FEEDBACK_REASONS.some((reason) => reason === value);
 
 /**
- * Booking form steps counted without names or emails (once per bundle per browser session): the calendar opened
- * (what Meta counts as "InitiateCheckout"), a date picked (time step shown), a time picked (details step shown),
- * the details filled (review step shown), booked.
+ * Booking form steps counted without names or emails (once per bundle per browser session): the booking form opened
+ * ("calendar": its first screen was the calendar until Nov 10, now "About you"; what Meta counts as "InitiateCheckout"),
+ * a date picked (time step shown), a time picked (details step shown), the details filled (review step shown), booked.
  */
 export const FUNNEL_STEPS = ["calendar", "date", "time", "details", "booked"] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 export const isFunnelStep = (value: unknown): value is FunnelStep => FUNNEL_STEPS.some((step) => step === value);
 
-/** How far an unfinished booking got: typing on the details page, or the review page. */
+/** How far an unfinished booking got: contact details typed (any step before review), or the review page. */
 export const DRAFT_STEPS = ["details", "review"] as const;
 export type DraftStep = (typeof DRAFT_STEPS)[number];
 

@@ -16,7 +16,7 @@ import { cn } from "@/lib/cn";
 const when = (iso: string | null) => (iso ? new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso)) : "");
 
 const STEP_LABEL: Record<FunnelStep, string> = {
-  calendar: "Opened the calendar (what Meta counts as a checkout)",
+  calendar: "Opened the booking form (what Meta counts as a checkout)",
   date: "Picked a date",
   time: "Picked a time",
   details: "Filled in their details",
@@ -24,7 +24,7 @@ const STEP_LABEL: Record<FunnelStep, string> = {
 };
 
 const STAGE_LABEL: Record<UnfinishedStage, string> = {
-  details: "Stopped on the details page",
+  details: "Stopped before the review page",
   review: "Stopped on the review page",
   deposit: "Didn't pay the deposit",
 };

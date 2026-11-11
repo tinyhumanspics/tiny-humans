@@ -73,8 +73,8 @@ export interface LanguageDraftPayload {
 const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
 
 export const initialState: State = {
-  step: STEP.date,
-  maxStep: STEP.date,
+  step: STEP.you,
+  maxStep: STEP.you,
   bundleId: null,
   babies: [{ name: "", age: "", gender: "" }],
   family: [],
@@ -104,7 +104,7 @@ export function isLanguageDraftPayload(value: unknown, bundleId: string): value 
   return (
     state.bundleId === bundleId
     && Number.isInteger(step)
-    && step >= STEP.date
+    && step >= STEP.you
     && step < bookingSteps.length
     && Number.isInteger(maxStep)
     && maxStep >= step

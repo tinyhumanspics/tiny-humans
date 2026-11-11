@@ -4,7 +4,7 @@ const STORAGE_KEY = "th_booking_language_draft";
 const MAX_AGE_MS = 2 * 60 * 1000;
 
 interface StoredDraft<T> {
-  version: 1;
+  version: 2;
   savedAt: number;
   targetPath: string;
   bundleId: string;
@@ -15,7 +15,7 @@ type DraftStorage = Pick<Storage, "getItem" | "removeItem" | "setItem">;
 
 /** Keep an in-progress booking in this tab just long enough for a full EN/ES page load. */
 export function saveBookingLanguageDraft<T>(storage: DraftStorage, targetPath: string, bundleId: string, payload: T, now = Date.now()): void {
-  const draft: StoredDraft<T> = { version: 1, savedAt: now, targetPath, bundleId, payload };
+  const draft: StoredDraft<T> = { version: 2, savedAt: now, targetPath, bundleId, payload };
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(draft));
   } catch {
@@ -36,7 +36,7 @@ export function consumeBookingLanguageDraft<T>(storage: DraftStorage, targetPath
   try {
     const draft = JSON.parse(raw) as Partial<StoredDraft<T>>;
     if (
-      draft.version !== 1
+      draft.version !== 2
       || typeof draft.savedAt !== "number"
       || now - draft.savedAt < 0
       || now - draft.savedAt > MAX_AGE_MS

@@ -15,14 +15,22 @@ test("a box's picture is picked when a parent taps it and stays through the book
   await expect(page).toHaveURL(new RegExp(`/bundles\\?inspiration=${picture.id}$`));
   await expect(page.getByText(`You picked “${picture.title}”`)).toBeVisible();
 
-  const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
   await page.getByRole("link", { name: /Choose Little Moments/i }).click();
   await expect(page).toHaveURL(new RegExp(`/book\\?bundle=little-moments&inspiration=${picture.id}$`));
-  await loaded;
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
   // every booking step shows the picked picture at the top
   await expect(page.getByText("Inspired by", { exact: true })).toBeVisible();
   await expect(page.getByText(picture.title, { exact: false }).first()).toBeVisible();
+  // step 1: about you (owner, Nov 10), then the calendar
+  await page.fill("#field-parentName", "Role Model Test");
+  await page.fill("#field-email", "role.model@example.com");
+  await page.fill("#field-phone", "3055550199");
+  await page.fill("#field-street", "1500 Bay Rd");
+  await page.fill("#field-city", "Miami Beach");
+  await page.fill("#field-zip", "33139");
+  const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
+  await page.getByRole("button", { name: /Next: Date/ }).click();
+  await loaded;
+  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
 
   const openDay = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
   if (!(await openDay.count())) {
@@ -35,12 +43,6 @@ test("a box's picture is picked when a parent taps it and stays through the book
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
   await expect(page.getByText("Inspired by", { exact: true })).toBeVisible();
-  await page.fill("#field-parentName", "Role Model Test");
-  await page.fill("#field-email", "role.model@example.com");
-  await page.fill("#field-phone", "3055550199");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect(page.locator("dl").getByText(picture.title, { exact: true })).toBeVisible();

@@ -79,14 +79,15 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   // availability is per bundle and baby count: an answer for a count the family has since changed is dropped
   const availabilityFor = useRef("");
   const loadMonth = useCallback(
-    async (m: Date, bundleId: string, babyCount: number) => {
-      const key = `${bundleId}:${babyCount}`;
+    async (m: Date, bundleId: string, babyCount: number, zip: string) => {
+      const key = `${bundleId}:${babyCount}:${zip}`;
       availabilityFor.current = key;
       setLoadingDays(true);
       try {
         const from = toDateKey(new Date(m.getFullYear(), m.getMonth(), 1));
         const to = toDateKey(new Date(m.getFullYear(), m.getMonth() + 1, 0));
-        const result = await provider.getAvailability({ bundleId, babyCount, from, to });
+        // the home's ZIP code: trip days open or close days for it (lib/booking/trips.ts)
+        const result = await provider.getAvailability({ bundleId, babyCount, from, to, zip: zip || undefined });
         if (availabilityFor.current !== key) return;
         setDays((prev) => {
           const next = { ...prev };
@@ -106,12 +107,19 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     [messages, provider, dispatch, setDays],
   );
 
+  // the calendar follows the home's ZIP code (step one): a new ZIP code starts a fresh calendar
+  const calendarZip = /^\d{5}/.test(state.contact.zip.trim()) ? state.contact.zip.trim().slice(0, 5) : "";
+  const shownZip = useRef(calendarZip);
   useEffect(() => {
     if (state.step >= STEP.date && state.bundleId) {
+      if (shownZip.current !== calendarZip) {
+        shownZip.current = calendarZip;
+        setDays({}); // the open days belong to the old ZIP code
+      }
       // eslint-disable-next-line react-hooks/set-state-in-effect -- loads what is on screen (fine per react.dev)
-      void loadMonth(month, state.bundleId, state.babies.length);
+      void loadMonth(month, state.bundleId, state.babies.length, calendarZip);
     }
-  }, [state.step, state.bundleId, state.babies.length, month, loadMonth]);
+  }, [state.step, state.bundleId, state.babies.length, month, loadMonth, calendarZip]);
 
   // move focus to the step heading on step changes (not on first load)
   useEffect(() => {
@@ -248,7 +256,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     try {
       let nextSlot = state.slot;
       if (state.date && state.slot) {
-        const [day] = await provider.getAvailability({ bundleId: state.bundleId, babyCount: nextCount, from: state.date, to: state.date });
+        const [day] = await provider.getAvailability({ bundleId: state.bundleId, babyCount: nextCount, from: state.date, to: state.date, zip: calendarZip || undefined });
         nextSlot = day?.slots.find((slot) => slot.start === state.slot?.start) ?? null;
       }
       setQuote(null);
@@ -299,10 +307,11 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle?.id]);
 
-  // /admin step counts (no names or emails): which screen each visit reached; "Book my session" is counted by the server
+  // /admin step counts (no names or emails): which screen each visit reached; "Book my session" is counted by the server.
+  // "calendar" = the booking form opened (its first screen; "About you" since Nov 10, the calendar before).
   useEffect(() => {
     if (!bundle || state.status === "done") return;
-    const reached = { [STEP.date]: "calendar", [STEP.time]: "date", [STEP.details]: "time", [STEP.review]: "details" } as const;
+    const reached = { [STEP.you]: "calendar", [STEP.time]: "date", [STEP.details]: "time", [STEP.review]: "details" } as const;
     const step = reached[state.step as keyof typeof reached];
     if (step) countBookingStep(step, bundle.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -339,6 +348,8 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   };
   useEffect(() => {
     if (state.step === STEP.review) saveDraft("review");
+    // contact details come first (Nov 10): save again with the day and time they picked
+    else if (state.step === STEP.details) saveDraft("details");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step]);
 
@@ -350,24 +361,30 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
       case STEP.time:
         if (!state.slot) return dispatch({ type: "stepError", message: messages.errors.time });
         break;
-      case STEP.details: {
+      case STEP.you: {
+        // who they are and where home is: the ZIP code decides which days work (trip days) and the travel fee
         const errors = validateContact(state.contact, messages.details);
+        const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
+        if (tooFar && !errors.zip) errors.zip = tooFar.text;
+        if (Object.keys(errors).length) {
+          dispatch({ type: "fieldErrors", errors, babyErrors: [], familyErrors: [] });
+          const first = Object.keys(errors)[0];
+          requestAnimationFrame(() => document.getElementById(`field-${first}`)?.focus());
+          return;
+        }
+        saveDraft("details");
+        break;
+      }
+      case STEP.details: {
         const babyErrors = state.babies.map((baby) => (baby.age ? "" : messages.details.baby.ageError));
         // who else is in the photos: optional; only people past this bundle's maximum (e.g. after choosing twins) stop it
         const familyErrors = bundle && asksFamily(bundle)
           ? state.family.map((m, i) => (i >= maxFamily && (m.role || m.name.trim()) ? messages.details.family.overLimit : ""))
           : [];
-        const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
-        if (tooFar && !errors.zip) errors.zip = tooFar.text;
-        if (Object.keys(errors).length || babyErrors.some(Boolean) || familyErrors.some(Boolean)) {
-          dispatch({ type: "fieldErrors", errors, babyErrors, familyErrors });
-          const first = Object.keys(errors)[0];
+        if (babyErrors.some(Boolean) || familyErrors.some(Boolean)) {
+          dispatch({ type: "fieldErrors", errors: {}, babyErrors, familyErrors });
           const firstBaby = babyErrors.findIndex(Boolean);
-          const target = first
-            ? `field-${first}`
-            : firstBaby >= 0
-              ? firstBaby === 0 ? "field-babyAge" : `field-baby-${firstBaby}-age`
-              : `field-family-${familyErrors.findIndex(Boolean)}-role`;
+          const target = firstBaby >= 0 ? (firstBaby === 0 ? "field-babyAge" : `field-baby-${firstBaby}-age`) : `field-family-${familyErrors.findIndex(Boolean)}-role`;
           requestAnimationFrame(() => document.getElementById(target)?.focus());
           return;
         }

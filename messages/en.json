@@ -191,6 +191,7 @@
       "subtitle": "Pick a day and time, and we'll bring the studio to your door. It takes about two minutes."
     },
     "steps": [
+      { "id": "you", "label": "You", "title": "About you" },
       { "id": "date", "label": "Date", "title": "Pick a day" },
       { "id": "time", "label": "Time", "title": "Pick a time" },
       { "id": "details", "label": "Details", "title": "Tell us about your family" },

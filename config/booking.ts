@@ -74,7 +74,9 @@ export const bookingSettings = {
 };
 
 /** The bundle is chosen on the bundles page, so booking starts at the calendar. */
+// Your details first (owner, Nov 10): the home's ZIP code decides which days work (trip days, lib/booking/trips.ts)
 export const bookingSteps = [
+  { id: "you" },
   { id: "date" },
   { id: "time" },
   { id: "details" },
@@ -84,7 +86,7 @@ export const bookingSteps = [
 export type BookingStepId = (typeof bookingSteps)[number]["id"];
 
 /** Step positions by name, so the flow can change without renumbering. */
-export const STEP = { date: 0, time: 1, details: 2, review: 3 } as const;
+export const STEP = { you: 0, date: 1, time: 2, details: 3, review: 4 } as const;
 
 /** Link to the booking calendar for a bundle (keeps the inspiration photo). */
 export function scheduleHref(bundleId: string, inspirationId?: string | null, locale: AppLocale = "en"): string {

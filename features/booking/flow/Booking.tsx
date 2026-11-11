@@ -119,8 +119,9 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
                     <TimeStep date={state.date} slots={daySlots} selectedId={state.slot?.id} onSelect={(slot) => dispatch({ type: "slot", slot })} locale={locale} messages={messages.time} />
                   )}
 
-                  {state.step === STEP.details && (
+                  {(state.step === STEP.you || state.step === STEP.details) && (
                     <DetailsForm
+                      part={state.step === STEP.you ? "you" : "session"}
                       contact={state.contact}
                       errors={state.fieldErrors}
                       onChange={(field, value) => dispatch({ type: "contact", field, value })}

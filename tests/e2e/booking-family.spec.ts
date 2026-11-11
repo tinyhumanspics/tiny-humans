@@ -6,8 +6,16 @@ const availableDay = (page: import("@playwright/test").Page) =>
   page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
 
 async function openDetails(page: import("@playwright/test").Page) {
-  const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
   await page.goto("/book?bundle=forever-little");
+  // step 1: about you (owner, Nov 10), then the calendar
+  await page.fill("#field-parentName", "Ana Morales");
+  await page.fill("#field-email", "ana.family@example.com");
+  await page.fill("#field-phone", "(305) 555-0177");
+  await page.fill("#field-street", "1500 Bay Rd");
+  await page.fill("#field-city", "Miami Beach");
+  await page.fill("#field-zip", "33139");
+  const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
+  await page.getByRole("button", { name: /Next: Date/ }).click();
   await loaded;
   await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
   if (!(await availableDay(page).count())) {
@@ -20,16 +28,11 @@ async function openDetails(page: import("@playwright/test").Page) {
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
-  await expect(page.locator("#field-parentName")).toBeVisible();
+  await expect(page.locator("#field-babyAge")).toBeVisible();
 }
 
+/** The one required detail on the details step (contact details were step 1). */
 async function fillContact(page: import("@playwright/test").Page) {
-  await page.fill("#field-parentName", "Ana Morales");
-  await page.fill("#field-email", "ana.family@example.com");
-  await page.fill("#field-phone", "(305) 555-0177");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
   await page.selectOption("#field-babyAge", { index: 1 });
 }
 

@@ -25,23 +25,9 @@ function record(page: Page) {
 
 test("the booking form saves the parent's contact details (never the baby's) and counts each step once", async ({ page }) => {
   const { drafts, steps } = record(page);
-  const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
   await page.goto("/book?bundle=little-moments");
-  await loaded;
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
-  let day = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
-  if (!(await day.count())) {
-    const next = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
-    await page.getByRole("button", { name: "Next month" }).click();
-    await next;
-    day = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
-  }
-  await day.click();
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
 
-  // the note under the email box links to the Privacy Policy
+  // step 1 "About you" (owner, Nov 10): the note under the email box links to the Privacy Policy
   await expect(page.getByText("We save your name, email and phone as you type", { exact: false })).toBeVisible();
   await expect(page.locator("#field-email-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
 
@@ -55,24 +41,41 @@ test("the booking form saves the parent's contact details (never the baby's) and
   await page.locator("#field-phone").focus();
   await expect.poll(() => drafts.length).toBe(1);
   expect(drafts[0]).toMatchObject({ email: "unfinished.test@example.com", parentName: "Unfinished Test", bundleId: "little-moments", step: "details", locale: "en" });
-  expect(drafts[0].date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  expect(drafts[0].start).toMatch(/^\d{2}:\d{2}$/);
+  expect(drafts[0].date, "no day picked yet").toBeUndefined();
 
   await page.fill("#field-phone", "3055550199");
   await page.fill("#field-street", "1500 Bay Rd");
   await page.fill("#field-city", "Miami Beach");
   await page.fill("#field-zip", "33139");
+  const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
+  await page.getByRole("button", { name: /Next: Date/ }).click();
+  await loaded;
+  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  let day = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
+  if (!(await day.count())) {
+    const next = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
+    await page.getByRole("button", { name: "Next month" }).click();
+    await next;
+    day = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
+  }
+  await day.click();
+  await page.getByRole("button", { name: /Next: Time/ }).click();
+  await page.locator('label[for^="time-"]').first().click();
+  await page.getByRole("button", { name: /Next: Details/ }).click();
+  // saved again with the day and time they picked
+  await expect.poll(() => drafts.at(-1)?.start).toMatch(/^\d{2}:\d{2}$/);
+  expect(drafts.at(-1)).toMatchObject({ phone: "3055550199", zip: "33139", step: "details" });
+  expect(drafts.at(-1)!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+
   await page.locator("#field-babyName").focus();
   await page.fill("#field-babyName", "Baby Secret");
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect.poll(() => drafts.at(-1)?.step).toBe("review");
-  const last = drafts.at(-1)!;
-  expect(last).toMatchObject({ phone: "3055550199", zip: "33139" });
   // children's privacy: nothing about the baby leaves the form before booking
   expect(JSON.stringify(drafts)).not.toMatch(/Baby Secret|babyName|babyAge|Newborn/);
 
-  // going back and forth doesn't count a step twice
+  // going back and forth doesn't count a step twice ("calendar" = the booking form opened)
   await page.getByRole("button", { name: /Back/ }).first().click();
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect.poll(() => steps.length).toBe(4);
@@ -81,20 +84,7 @@ test("the booking form saves the parent's contact details (never the baby's) and
 
 test("fixing a typo'd email replaces the earlier one", async ({ page }) => {
   const { drafts } = record(page);
-  const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
   await page.goto("/book?bundle=little-moments");
-  await loaded;
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
-  const day = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
-  if (!(await day.count())) {
-    const next = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
-    await page.getByRole("button", { name: "Next month" }).click();
-    await next;
-  }
-  await page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first().click();
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
   await page.fill("#field-email", "ana@gmial.com");
   await page.locator("#field-phone").focus();
   await expect.poll(() => drafts.length).toBe(1);
@@ -209,7 +199,7 @@ test("/admin → Unfinished bookings: step counts, answers, and the email only o
   // opens on the last 7 days (owner, Nov 6)
   await expect(page.getByRole("button", { name: "Last 7 days" })).toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => periods[0]).toBe("7|");
-  await expect(page.getByText("Opened the calendar (what Meta counts as a checkout)")).toBeVisible();
+  await expect(page.getByText("Opened the booking form (what Meta counts as a checkout)")).toBeVisible();
   await expect(page.getByText("2 · 17%")).toBeVisible();
   await expect(page.getByText("Maria Lopez")).toBeVisible();
   await expect(page.getByText("picked Monday, November 16, 2026, 10:00 AM", { exact: false })).toBeVisible();

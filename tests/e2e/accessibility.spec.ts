@@ -95,8 +95,22 @@ test.describe("manual accessibility regression checks", () => {
       }
       throw new Error(`Not reachable with Tab: ${target}`);
     };
-    const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
     await page.goto("/book?bundle=little-moments");
+    // step 1: about you (owner, Nov 10), then the calendar for that address
+    for (const [field, value] of [
+      ["#field-parentName", "Kim Keyboard"],
+      ["#field-email", "kim.keyboard@example.com"],
+      ["#field-phone", "(305) 555-0142"],
+      ["#field-street", "1500 Bay Rd"],
+      ["#field-city", "Miami Beach"],
+      ["#field-zip", "33139"],
+    ]) {
+      await tabTo(page.locator(field));
+      await page.keyboard.type(value);
+    }
+    const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
+    await tabTo(page.getByRole("button", { name: /Next: Date/ }));
+    await page.keyboard.press("Enter");
     await loaded;
     await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
     const openDay = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
@@ -112,17 +126,6 @@ test.describe("manual accessibility regression checks", () => {
     await page.keyboard.press("Space");
     await tabTo(page.getByRole("button", { name: /Next: Details/ }));
     await page.keyboard.press("Enter");
-    for (const [field, value] of [
-      ["#field-parentName", "Kim Keyboard"],
-      ["#field-email", "kim.keyboard@example.com"],
-      ["#field-phone", "(305) 555-0142"],
-      ["#field-street", "1500 Bay Rd"],
-      ["#field-city", "Miami Beach"],
-      ["#field-zip", "33139"],
-    ]) {
-      await tabTo(page.locator(field));
-      await page.keyboard.type(value);
-    }
     await tabTo(page.locator("#field-babyAge"));
     await page.keyboard.type("Newborn"); // type-ahead picks the option (arrow keys open the menu on macOS)
     await tabTo(page.getByRole("button", { name: /Next: Review/ }));

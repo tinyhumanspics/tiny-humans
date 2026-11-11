@@ -26,32 +26,34 @@ async function pickFirstOpenDay(page: import("@playwright/test").Page, open: () 
   await (farAhead ? page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').last() : availableDay(page)).click();
 }
 
+/** Step 1 "About you" (owner, Nov 10): contact details and the home address come first, so the calendar only offers
+ *  days that work for that address (trip days). The calendar loads when they press "Next: Date". */
+const ABOUT = { parentName: "José Muñoz", email: "jose.test@example.com", phone: "(305) 555-0142", street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" };
+async function fillAboutYou(page: import("@playwright/test").Page, about: Record<string, string> = ABOUT) {
+  await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
+  for (const [field, value] of Object.entries(about)) await page.fill(`#field-${field}`, value);
+}
+const toCalendar = (page: import("@playwright/test").Page) => page.getByRole("button", { name: /Next: Date/ }).click();
+
 async function bookLittleMoments(page: import("@playwright/test").Page, { farAhead = false } = {}) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource/.test(m.text()) && errors.push(m.text()));
 
   await page.goto("/bundles?utm_source=facebook&utm_medium=paid_social&fbclid=TEST");
-  await pickFirstOpenDay(page, async () => {
-    await page.getByRole("link", { name: /Choose Little Moments/i }).click();
-    await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
-  }, { farAhead });
+  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
+  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
+  await fillAboutYou(page, { ...ABOUT, unit: "1204", access: "Gate code 4821, guest parking on level 2" });
+  await pickFirstOpenDay(page, () => toCalendar(page), { farAhead });
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await expect(page.getByText(/Miami time/).first()).toBeVisible();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
-  await expect(page.locator("#field-parentName")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us about your family" })).toBeVisible();
+  await expect(page.locator("#field-parentName")).toHaveCount(0);
   // Little Moments is baby only: its notes example never mentions siblings
   await expect(page.locator("#field-notes")).toHaveAttribute("placeholder", /feeding and nap/);
 
-  await page.fill("#field-parentName", "José Muñoz");
-  await page.fill("#field-email", "jose.test@example.com");
-  await page.fill("#field-phone", "(305) 555-0142");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-unit", "1204");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
-  await page.fill("#field-access", "Gate code 4821, guest parking on level 2");
   await page.selectOption("#field-babyAge", { index: 1 });
   // optional gender: tapping the picked one again clears it
   const girl = page.getByRole("button", { name: "Girl", exact: true });
@@ -96,7 +98,9 @@ test("a family can book a session (mock provider)", async ({ page }, testInfo) =
 });
 
 test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
-  await pickFirstOpenDay(page, () => page.goto("/book?bundle=little-moments"));
+  await page.goto("/book?bundle=little-moments");
+  await fillAboutYou(page, { ...ABOUT, parentName: "Twins Test", email: "twins.test@example.com", phone: "3055550142" });
+  await pickFirstOpenDay(page, () => toCalendar(page));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   const time = page.locator('label[for^="time-"]').first();
   await expect(time.getByText(/until/)).toBeVisible();
@@ -116,12 +120,6 @@ test("twins add full-price time and photos to any bundle", async ({ page }, test
   await expect(page.getByText(/Each extra baby adds \$75, 30 minutes and 5 edited photos/)).toBeVisible();
   await expect(page.getByText(/Up to 90 minutes total · 13 edited photos/)).toBeVisible();
 
-  await page.fill("#field-parentName", "Twins Test");
-  await page.fill("#field-email", "twins.test@example.com");
-  await page.fill("#field-phone", "3055550142");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
   await page.fill("#field-babyName", "Luna");
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.fill("#field-baby-1-name", "Mia");
@@ -148,11 +146,12 @@ test("a longer twins or triplets session keeps details and asks for another time
   });
 
   await page.goto("/book?bundle=little-moments");
+  await fillAboutYou(page, { ...ABOUT, parentName: "Saved Parent" });
+  await toCalendar(page);
   await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
-  await page.fill("#field-parentName", "Saved Parent");
   await page.fill("#field-babyName", "Luna");
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
@@ -162,20 +161,21 @@ test("a longer twins or triplets session keeps details and asks for another time
   await expect(page.getByRole("heading", { name: "Pick a time" })).toBeVisible();
   await page.locator('label[for^="time-"]').click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
-  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
   await expect(page.locator("#field-babyName")).toHaveValue("Luna");
   await expect(page.getByText("Baby 3", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Step 1, You/ }).click();
+  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
 });
 
 test("a full language-page reload keeps the booking step, details and backdrop picks", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the session-transfer mechanism used by EN/ES.");
-  await pickFirstOpenDay(page, () => page.goto("/book?bundle=our-little-story"));
+  await page.goto("/book?bundle=our-little-story");
+  await fillAboutYou(page, { ...ABOUT, parentName: "Saved Parent", email: "saved.parent@example.com" });
+  await pickFirstOpenDay(page, () => toCalendar(page));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
   await page.getByRole("button", { name: /Next: Details/ }).click();
 
-  await page.fill("#field-parentName", "Saved Parent");
-  await page.fill("#field-email", "saved.parent@example.com");
   await page.getByRole("button", { name: "Cream", exact: true }).click();
   await page.getByRole("button", { name: "Wooden", exact: true }).click();
   await expect(page.getByText(/one for each of your 2 setups/i)).toBeVisible();
@@ -188,10 +188,11 @@ test("a full language-page reload keeps the booking step, details and backdrop p
   await page.reload();
 
   await expect(page.getByRole("heading", { name: "Tell us about your family" })).toBeVisible();
-  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
-  await expect(page.locator("#field-email")).toHaveValue("saved.parent@example.com");
   await expect(page.getByRole("button", { name: "Cream", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "Wooden", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: /Step 1, You/ }).click();
+  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
+  await expect(page.locator("#field-email")).toHaveValue("saved.parent@example.com");
 });
 
 test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
@@ -259,20 +260,11 @@ test("booking works in the Instagram in-app browser", async ({ browser }, testIn
 });
 
 test("a ZIP code outside Florida can't be booked", async ({ page }) => {
-  await pickFirstOpenDay(page, () => page.goto("/book?bundle=little-moments"));
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
-  await page.fill("#field-parentName", "Ana Test");
-  await page.fill("#field-email", "ana.test@example.com");
-  await page.fill("#field-phone", "(305) 555-0142");
-  await page.fill("#field-street", "100 Peachtree St");
-  await page.fill("#field-city", "Atlanta");
-  await page.fill("#field-zip", "30303");
-  await page.selectOption("#field-babyAge", { index: 1 });
-  await page.getByRole("button", { name: /Next: Review/ }).click();
+  await page.goto("/book?bundle=little-moments");
+  await fillAboutYou(page, { ...ABOUT, parentName: "Ana Test", email: "ana.test@example.com", street: "100 Peachtree St", city: "Atlanta", zip: "30303" });
+  await toCalendar(page);
   await expect(page.getByText("We only come to homes in Florida. Please check the ZIP code.")).toBeVisible();
-  await expect(page.getByText("Check everything")).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Pick a day" })).toHaveCount(0);
 });
 
 test("the landing page and legal pages load", async ({ page }) => {
@@ -311,7 +303,7 @@ test("/book without a bundle: the bundle picked earlier this visit, otherwise th
   await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
   await page.goto("/book");
   await expect(page).toHaveURL(/\/book\?bundle=little-moments$/);
-  await expect(page.getByRole("button", { name: /Next: Time/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Next: Date/ })).toBeVisible();
 });
 
 test("unknown pages show the chalkboard 404", async ({ page }) => {

@@ -364,6 +364,7 @@
       "subtitle": "Elige un día y una hora, y llevaremos el estudio a tu puerta. Solo toma unos dos minutos."
     },
     "steps": [
+      { "id": "you", "label": "Tú", "title": "Sobre ti" },
       { "id": "date", "label": "Fecha", "title": "Elige un día" },
       { "id": "time", "label": "Hora", "title": "Elige una hora" },
       { "id": "details", "label": "Detalles", "title": "Cuéntanos sobre tu familia" },

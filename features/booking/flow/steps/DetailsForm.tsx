@@ -160,6 +160,7 @@ function FamilyMembers({ family, errors, onChange, onAdd, onRemove, bundle, baby
 /* ---------------- details form ---------------- */
 
 export default function DetailsForm({
+  part,
   contact,
   errors,
   onChange,
@@ -216,6 +217,8 @@ export default function DetailsForm({
   onHp: (v: string) => void;
   /** Travel fee line under the ZIP box. */
   zipNote: { text: string; blocking: boolean } | null;
+  /** "you": the parent and the home (step one); "session": babies, family, notes, backdrops, permissions. */
+  part: "you" | "session";
   backdrops: string[];
   onBackdrops: (picks: string[]) => void;
   /** Backdrops they can pick (one per setup). */
@@ -302,9 +305,10 @@ export default function DetailsForm({
     );
   };
 
-  return (
-    <div className={styles.form}>
-      {/* Honeypot: hidden from people and screen readers; automated form-fillers tend to fill it. */}
+  if (part === "you") {
+    return (
+      <div className={styles.form}>
+        {/* Honeypot: hidden from people and screen readers; automated form-fillers tend to fill it. */}
       <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
         <label htmlFor="th-leave-empty">{messages.honeypot}</label>
         <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
@@ -344,6 +348,12 @@ export default function DetailsForm({
           placeholder={messages.address.accessPlaceholder}
         />
       </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.form}>
       <fieldset className={cn(styles.fieldset, styles.fieldWide, styles.babiesForm)}>
         <legend className={cn(styles.label, "chalk-soft")}>{babies.length > 1 ? messages.baby.many : messages.baby.one}</legend>
         <div className={styles.babiesGrid}>
