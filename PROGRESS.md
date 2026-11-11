@@ -215,6 +215,10 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Deposit reminder shows it was sent — LIVE Nov 11 (owner: "Awesome push it please")**. Owner: after tapping
+  "Email deposit reminder" nothing on the card changed (only a note at the top), so they couldn't tell it was sent.
+  Now the button turns into "✓ Deposit reminder sent" with the count and last time, kept after a refresh, plus "Send
+  again". Not born yet counts need SQL 0031 (asked the owner to run it; unconfirmed).
 - [x] **Leads "Not paid" + deposit reminders — LIVE Nov 11 (owner: "1 & 2 can be pushed"; migration 0031 only for the
   Not born yet reminder count)**. Owner asked: confirm "Not born yet" moms pay the $50 deposit (yes: same deposit
   setting as bookings, spot reserved only once paid); a Not Paid pill listing only families missing the deposit; an

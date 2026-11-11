@@ -411,3 +411,6 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   `remindDueDeposit` (expired → pending, new Stripe page open a day, `emails/DueDepositReminder.tsx` EN/ES linking to
   their signed /due-date/done page; count in `due_deposit_reminders`, best effort). A reminder keeps the reservation's
   saved price (owner OK). `dueDepositPaid` also accepts reserved + unpaid; `dueReturnState` shows Pay for those.
+  The button itself shows it was sent (owner, Nov 11: no note at the top): "✓ Deposit reminder sent" pill + "Sent N
+  times · last …" (from `deposit.reminders` / `notPaidDue().reminders`, plus a just-sent local state) and "Send again".
+  `remindDueDeposit` returns `{ counted }`: false (no 0031 table) = sent but not counted, and the card says so.
