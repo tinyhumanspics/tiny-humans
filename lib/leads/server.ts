@@ -1,15 +1,15 @@
 import "server-only";
-import { and, count, desc, eq, gte, inArray, lte, ne, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, lte, ne, notInArray, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb } from "@/lib/db/client";
-import { bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review } from "@/lib/db/schema";
+import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review } from "@/lib/db/schema";
 import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
 import { backdropsFor } from "@/lib/booking/backdrops";
 import { amountDueCents, nextCharge } from "@/lib/booking/after-session";
-import { depositPaidCents, depositsFor } from "@/lib/deposit/server";
+import { depositPaidCents, depositsFor, isMissingTable } from "@/lib/deposit/server";
 import { depositPageUrl } from "@/lib/deposit/flow";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
@@ -54,9 +54,24 @@ interface Extras {
   noticeHours: number;
   /** Discount code (upper case) → its category (best effort: none before migration 0028). */
   codeCategories: Map<string, string>;
+  /** Leads the owner marked "Completed" → when (best effort: none before migration 0030). */
+  completions: Map<string, Date>;
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map() };
+/** Leads marked "Completed" (owner, Nov 11): booking id → when. Best effort: none before migration 0030. */
+async function completions(bookingIds?: string[]): Promise<Map<string, Date>> {
+  if (bookingIds && !bookingIds.length) return new Map();
+  try {
+    const q = getDb().select().from(bookingCompletions);
+    const rows = await (bookingIds ? q.where(inArray(bookingCompletions.bookingId, bookingIds)) : q);
+    return new Map(rows.map((r) => [r.bookingId, r.completedAt]));
+  } catch (err) {
+    if (!isMissingTable(err)) log.error("leads", "Could not load completed leads", { error: err as Error });
+    return new Map();
+  }
+}
+
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map() };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -68,7 +83,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -84,8 +99,9 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     waiversForBookings(bookingIds),
     getNoticeHoursSetting().catch(() => 48),
     categoriesForCodes(rows.map((r) => r.discountCode ?? "")),
+    completions(bookingIds),
   ]);
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -155,6 +171,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     bundleName: r.packageName,
     pricing: (({ bundleId: _b, bundleName: _n, offerEndsOn: _e, note: _x, ...p }) => p)(snapshotOf(r, x.addons.get(r.id))),
     codeCategory: r.discountCode ? x.codeCategories.get(r.discountCode.trim().toUpperCase()) ?? null : null,
+    completedAt: x.completions.get(r.id)?.toISOString() ?? null,
     sessionDate: r.sessionDate,
     start: time(r.sessionStart, r.timezone),
     end: time(r.sessionEnd, r.timezone),
@@ -213,15 +230,28 @@ const STATUSES: LeadStatus[] = ["pending", "confirmed", "rescheduled", "cancelle
 /** Newest first. "all" = every NON-cancelled lead. Counts come from the database (all leads, not this page). */
 export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Promise<LeadList> {
   const db = getDb();
-  const where = filter === "all" ? ne(bookings.status, "cancelled") : eq(bookings.status, filter);
-  const [rows, grouped] = await Promise.all([
+  // "Completed" (owner, Nov 11): a marked lead moves out of its status section into Completed (All still lists it)
+  const doneIds = [...(await completions()).keys()];
+  const active = ne(bookings.status, "cancelled");
+  const where =
+    filter === "all" ? active
+    : filter === "completed" ? (doneIds.length ? and(active, inArray(bookings.id, doneIds)) : sql`false`)
+    : filter !== "cancelled" && doneIds.length ? and(eq(bookings.status, filter), notInArray(bookings.id, doneIds))
+    : eq(bookings.status, filter);
+  const [rows, grouped, groupedDone] = await Promise.all([
     db.select().from(bookings).where(where).orderBy(desc(bookings.createdAt)).limit(limit).offset(offset),
     db.select({ status: bookings.status, n: count() }).from(bookings).groupBy(bookings.status),
+    doneIds.length ? db.select({ status: bookings.status, n: count() }).from(bookings).where(inArray(bookings.id, doneIds)).groupBy(bookings.status) : Promise.resolve([]),
   ]);
-  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0 } as Record<LeadFilter, number>;
+  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0 } as Record<LeadFilter, number>;
   for (const g of grouped) {
     counts[g.status as LeadStatus] = Number(g.n);
     if (g.status !== "cancelled") counts.all += Number(g.n);
+  }
+  for (const g of groupedDone) {
+    if (g.status === "cancelled") continue;
+    counts[g.status as LeadStatus] -= Number(g.n);
+    counts.completed += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
   const [history, extras, money, activeContacts] = await Promise.all([
@@ -292,7 +322,7 @@ export async function getLeadRow(reference: string): Promise<Booking | null> {
   return row ?? null;
 }
 
-export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || STATUSES.includes(v as LeadStatus);
+export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || v === "completed" || STATUSES.includes(v as LeadStatus);
 
 /**
  * Permanently delete a lead (admin cleanup, e.g. test bookings). Never leaves an

@@ -27,6 +27,8 @@ const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "all", label: "All", alwaysShow: true },
   { id: "confirmed", label: "Confirmed", alwaysShow: true },
   { id: "rescheduled", label: "Rescheduled", alwaysShow: true },
+  // past clients the owner marked done (owner, Nov 11: "for email marketing")
+  { id: "completed", label: "Completed", alwaysShow: true },
   { id: "cancelled", label: "Cancelled", alwaysShow: true },
 ];
 const STATUS_LABEL: Record<Lead["status"], string> = { confirmed: "Confirmed", cancelled: "Cancelled", rescheduled: "Rescheduled", pending: "Pending" };
@@ -180,6 +182,12 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     void load(filter);
   };
 
+  // a lead marked "Completed" (or taken back) moves section: reload the list and counts
+  const onCompleted = (lead: Lead) => {
+    void load(filter);
+    setSavedNote(lead.completedAt ? `${lead.parentName} moved to Completed.` : `${lead.parentName} moved back to ${STATUS_LABEL[lead.status]}.`);
+  };
+
   const onCancelled = (lead: Lead) => {
     // refresh counts + list so the cancellation shows immediately
     void load(filter);
@@ -217,7 +225,7 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
 
       <ul className={styles.leadList}>
         {data?.leads.map((lead) => (
-          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onDeleted={onDeleted} />
+          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onCompleted={onCompleted} onDeleted={onDeleted} />
         ))}
       </ul>
       {data && data.leads.length < data.total && (
@@ -231,8 +239,22 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
   );
 }
 
-function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onDeleted: () => void }) {
+function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDeleted }: { lead: Lead; api: AdminApi; open: boolean; onToggle: () => void; onCancelled: (l: Lead) => void; onCompleted: (l: Lead) => void; onDeleted: () => void }) {
   const { photos } = useSiteSettings();
+  const [completing, setCompleting] = useState(false);
+  const [completeErr, setCompleteErr] = useState<string | null>(null);
+  const canComplete = lead.status === "confirmed" || lead.status === "rescheduled";
+  const toggleCompleted = async () => {
+    setCompleting(true);
+    setCompleteErr(null);
+    try {
+      onCompleted(await api.setCompleted(lead.reference, !lead.completedAt));
+    } catch (e) {
+      setCompleteErr(e instanceof Error ? e.message : "Couldn't save. Please try again.");
+    } finally {
+      setCompleting(false);
+    }
+  };
   const [cancelling, setCancelling] = useState(false);
   const [moving, setMoving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -330,12 +352,19 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onDeleted }: { lead:
       <div className={styles.leadHead}>
         <span className={cn(styles.leadName, "chalk-soft")}>{lead.parentName}</span>
         <span className={styles.leadPills}>
+          {canComplete && (
+            <button type="button" className={cn(styles.statusPill, styles.completePill, lead.completedAt ? styles.completePillOn : "")} aria-pressed={Boolean(lead.completedAt)} disabled={completing}
+              aria-label={`Completed: ${lead.parentName}`} title={lead.completedAt ? "Completed. Tap to move it back." : "Tap when the session is done: it moves to Completed."} onClick={toggleCompleted}>
+              {completing ? "Saving…" : lead.completedAt ? "✓ Completed" : "Completed"}
+            </button>
+          )}
           <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{statusLabel(lead)}</span>
           <PaidTag lead={lead} />
           {duplicate && <span className={cn(styles.statusPill, styles.duplicatePill)}>Possible duplicate</span>}
           {lead.emailProblems?.[0] && <span className={cn(styles.statusPill, styles.unpaidPill)}>{PROBLEM_TAG[lead.emailProblems[0].kind]}</span>}
         </span>
       </div>
+      {completeErr && <p className={cn(styles.error, "chalk-soft")} role="alert">{completeErr}</p>}
       <p className={cn(styles.leadLine, "chalk-soft")}>
         <b>{lead.bundleName}</b> · {formatMoney(lead.pricing.totalCents + (lead.travel?.feeCents ?? 0))}
         {lead.travel?.feeCents ? ` (incl. ${formatMoney(lead.travel.feeCents)} travel)` : ""} · {formatLongDate(lead.sessionDate)}, {formatTimeLabel(lead.start)}–{formatTimeLabel(lead.end)}

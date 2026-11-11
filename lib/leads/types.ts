@@ -117,10 +117,13 @@ export interface Lead {
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;
+  /** When the owner marked it "Completed" (it shows under Completed, not under its status); null = not marked. */
+  completedAt?: string | null;
   createdAt: string;
 }
 
-export type LeadFilter = "all" | LeadStatus;
+/** The Leads sections: every active lead, one status, or the owner's "Completed" (owner, Nov 11). */
+export type LeadFilter = "all" | LeadStatus | "completed";
 
 export interface LeadList {
   leads: Lead[];

@@ -67,6 +67,8 @@ export interface AdminApi {
   galleryDelivered(reference: string, galleryUrl?: string, downloadPin?: string): Promise<Lead>;
   setReviewApproved(reference: string, approved: boolean): Promise<Lead>;
   setConsent(reference: string, change: { sms?: boolean; photos?: boolean }): Promise<Lead>;
+  /** Mark a lead "Completed" (moves to Leads → Completed) or take it back. */
+  setCompleted(reference: string, completed: boolean): Promise<Lead>;
   emailPaymentLink(reference: string): Promise<Lead>;
   /** "Check with Stripe": asks Stripe whether this booking was paid (backup for a missed webhook). */
   checkPayment(reference: string): Promise<Lead>;
@@ -184,6 +186,8 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/gallery", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, galleryUrl, downloadPin }) }))).lead,
   setReviewApproved: async (reference, approved) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/review", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, approved }) }))).lead,
+  setCompleted: async (reference, completed) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/complete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, completed }) }))).lead,
   setConsent: async (reference, change) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/consent", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, ...change }) }))).lead,
   emailPaymentLink: async (reference) =>

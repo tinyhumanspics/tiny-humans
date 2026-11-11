@@ -7,7 +7,7 @@ const lead: Lead = {
   ...noDepositLead,
   after: { ...noDepositLead.after!, started: true, ended: true, sessionDone: { status: "sent", at: "2026-10-27T17:42:00.000Z", error: null } },
 };
-const list: LeadList = { leads: [lead], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
+const list: LeadList = { leads: [lead], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
 
 test("Gallery delivered sends the download PIN with the gallery link", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");

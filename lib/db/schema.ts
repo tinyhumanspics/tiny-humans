@@ -848,6 +848,16 @@ export const adminAuth = pgTable("admin_auth", {
  * `booked_reference`; the owner sends one "What stopped you?" email from /admin, whose link token (hash only) opens
  * /feedback and /unsubscribe. Migration 0022; until it runs, nothing is saved and bookings work as before.
  */
+/**
+ * Leads the owner marked "Completed" (owner, Nov 11: "for email marketing"): the session is done, the family is a past
+ * client. Its own table (migration 0030), read best effort; the booking's status doesn't change, so payment links,
+ * gallery emails and reviews keep working.
+ */
+export const bookingCompletions = pgTable("booking_completions", {
+  bookingId: uuid("booking_id").primaryKey().references(() => bookings.id, { onDelete: "cascade" }),
+  completedAt: timestamp("completed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const bookingDrafts = pgTable(
   "booking_drafts",
   {

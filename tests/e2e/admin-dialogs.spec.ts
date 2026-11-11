@@ -12,7 +12,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 });
 
 test("confirmations close with Escape, Cancel or a click outside, and give focus back", async ({ page }) => {
-  const list: LeadList = { leads: [noDepositLead], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
+  const list: LeadList = { leads: [noDepositLead], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
   let deleteCalls = 0;
   await page.route("**/api/admin/leads/delete", (route) => {
@@ -84,7 +84,7 @@ test("the dashboard shows sessions coming up, weekly bookings, shares and change
     emails: { days: 30, sent: 5, failed: 0, problems: 1 },
   };
   await page.route("**/api/admin/dashboard", (route) => route.fulfill({ json: dashboard }));
-  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 4, pending: 0, confirmed: 3, rescheduled: 1, cancelled: 1 }, total: 4, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
+  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 4, pending: 0, confirmed: 3, rescheduled: 1, cancelled: 1, completed: 0 }, total: 4, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
 
   await page.goto("/admin");
   const comingUp = page.getByRole("region", { name: "Coming up" });

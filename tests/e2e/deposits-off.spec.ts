@@ -37,7 +37,7 @@ test("a deposits-off lead is confirmed and keeps its permanent payment and email
   await signedInAdmin(page);
   const list: LeadList = {
     leads: [noDepositLead],
-    counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0 },
+    counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0 },
     total: 1,
     money: { paidThisMonthCents: 0, unpaidCount: 0 },
   };
