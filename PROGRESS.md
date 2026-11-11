@@ -256,6 +256,9 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
   crimson and plum; emails on the same pink. Every text color passes the contrast test (lowest 4.8:1).
   **Nov 11: a bit darker, #F7A0AA (owner picked option B of a 3-way preview: #FFBBC1 / #FBADB5 / #F7A0AA)**: highlights
   and buttons #780b2e, small notes #173d6b, form placeholders at 85% so every text still reads 4.5:1+.
+  **Nov 11, final: Soft Cream #FFF5E1 (owner's color, "it looks great")**: deep wine writing, raspberry highlights and
+  buttons (#a3154a), logo hearts crimson / raspberry / pink #f7a0aa (white hearts don't show on cream); every text
+  reads 6:1 or more. Emails on the same cream.
 - [x] **% offers, offer line, Quotes, "Not born yet" — LIVE Nov 10 (`4d9684c`; migration 0026 run by the owner first)**.
   Owner asked (Nov 10): (1) special offers as a percentage, one offer for every bundle at once; (2) a line under
   "Three simple packages…" about the running offer (owner: typed or preset, "find a way and explain"); (3) /admin

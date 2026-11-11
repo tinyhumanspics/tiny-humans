@@ -338,9 +338,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   built-in two (settings cache key `site-settings-v3`). `features/seasonal/SeasonalOffers.tsx` draws them on the ad page
   AND the home page (after the hero), with the running bundle offer line inside the box. The bundle card's discounted
   price is 0.82em of a regular price (owner, Nov 10).
-- Valentine's theme (owner, Nov 10–11; after Raspberry, light pink, coral and #ffbbc1 the owner chose PINK #f7a0aa):
-  theme id `valentines`, the only light board, so its "chalk" is deep wine (`chalkWhite` #3d0a1c = the writing,
-  `sunYellow` #780b2e = crimson highlights and buttons, whose text is `chalkboardDark`; form placeholders at 85%,
+- Valentine's theme (owner, Nov 10–11; after Raspberry, light pink, coral and two pinks the owner chose SOFT CREAM
+  #fff5e1): theme id `valentines`, the only light board, so its "chalk" is deep wine (`chalkWhite` #3d0a1c = the
+  writing, `sunYellow` #a3154a = raspberry highlights and buttons, whose text is `chalkboardDark`; form placeholders at 85%,
   `LIGHTER` in the contrast test); anything drawn in a fixed
   off-white disappears on it, so use the theme variables (emails: `chalkAlpha()` in `lib/email/theme.ts` for dashed
   lines and frames). Check new colors with the contrast test before showing the owner. The Original logo layers + a heart `decor` layer
