@@ -215,12 +215,14 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
-- [ ] **Simpler Photos & Media + boxes switch + automatic Spanish — preview sent Nov 11 (not live)**. Owner asked: a switch
+- [x] **Simpler Photos & Media + boxes switch + automatic Spanish — LIVE Nov 11 (owner: "push it")**. Each box can be switched on/off (wording kept) or removed ("Remove this box" deletes its words); one switch hides every box. Owner asked: a switch
   to hide the "Book a memory like this one" boxes; Photos & Media "a bit complicated to understand"; "automated
   translation on pictures and the seasonal landing, I have to be translating myself". Built: folded parts, one Edit
   button per picture (dialog), one-line boxes, the boxes switch, Spanish optional everywhere + "Fill in Spanish for me".
   Page length 7,000 → 1,400 px (laptop), 42,700 → 2,000 px (phone). Real translation needs ANTHROPIC_API_KEY in Vercel
   (owner; small cost per translation): without it the English is copied (likely why the owner translated by hand).
+  The owner added the key Nov 11 and confirmed a Seasonal Landing save came back translated. Spanish saved as copied
+  English before the key stays until saved again (offered: a one-click "translate what's still in English").
 - [x] **Discount code categories — LIVE Nov 10 (migration 0028 for saving categories)**. Owner asked: in Pricing &
   Promotions, give each code a category (presets Christmas / Thanksgiving / Happy Valentine's offer, or "Other" typed),
   so a code advertised early (e.g. Thanksgiving while the site still shows the Original theme) shows which campaign a
