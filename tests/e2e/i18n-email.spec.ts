@@ -123,7 +123,7 @@ test("Spanish publication blocks owner copy gaps instead of leaking English", as
   expect(spanishOwnerCopyIssues(settings).sort()).toEqual([
     "Spanish captions for uploaded gallery photos",
     "Spanish copy for enabled seasonal offers",
-    "Spanish gallery prompt copy",
+    // (no "Spanish gallery prompt copy": the gallery boxes are gone since Nov 11)
     "Spanish titles and descriptions for uploaded photos",
   ]);
   expect(resolveMedia(media, undefined, "es").title.some((photo) => photo.id === portfolio[0].id)).toBe(false);
