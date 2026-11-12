@@ -9,13 +9,23 @@ import type { SiteSettings } from "@/lib/settings/types";
 const { create } = vi.hoisted(() => ({ create: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("@anthropic-ai/sdk", () => {
-  class APIError extends Error {}
+  class APIError extends Error {
+    status?: number;
+  }
   class AuthenticationError extends APIError {}
   class RateLimitError extends APIError {}
+  class PermissionDeniedError extends APIError {}
+  class BadRequestError extends APIError {}
+  class NotFoundError extends APIError {}
+  class APIConnectionTimeoutError extends APIError {}
   class Anthropic {
     static APIError = APIError;
     static AuthenticationError = AuthenticationError;
     static RateLimitError = RateLimitError;
+    static PermissionDeniedError = PermissionDeniedError;
+    static BadRequestError = BadRequestError;
+    static NotFoundError = NotFoundError;
+    static APIConnectionTimeoutError = APIConnectionTimeoutError;
     beta = { messages: { create: (...args: unknown[]) => create(...args) } };
   }
   return { default: Anthropic };
@@ -134,5 +144,43 @@ describe("translator", () => {
     expect(await toSpanish(["Basket nap"])).toEqual(["Basket nap"]);
     create.mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({ translations: [] }) }] });
     expect(await toSpanish(["Basket nap"])).toEqual(["Basket nap"]);
+  });
+});
+
+describe("“Fill in Spanish for me” says why it couldn't translate (owner, Nov 11)", () => {
+  afterEach(() => {
+    create.mockReset();
+    delete process.env.ANTHROPIC_API_KEY;
+  });
+
+  test("strict: the reason in plain words instead of the English put back", async () => {
+    const { default: Anthropic } = await import("@anthropic-ai/sdk");
+    const { toSpanish, TranslationError } = await import("@/lib/i18n/autotranslate");
+    // the mocked SDK's error classes take just a message
+    const make = (C: unknown, message: string) => new (C as new (m: string) => Error)(message);
+    await expect(toSpanish(["Basket nap"], { strict: true })).rejects.toThrow("Automatic Spanish is off: ANTHROPIC_API_KEY isn't set in Vercel.");
+    process.env.ANTHROPIC_API_KEY = "sk-test";
+    const cases: [Error, string][] = [
+      [make(Anthropic.AuthenticationError, "invalid x-api-key"), "The translation key was refused."],
+      [make(Anthropic.BadRequestError, "Your credit balance is too low to access the Anthropic API."), "out of credits"],
+      [make(Anthropic.RateLimitError, "rate_limit_error"), "Too many translations right now."],
+      [make(Anthropic.APIConnectionTimeoutError, "Request timed out."), "took too long"],
+      [new Error("socket hang up"), "Couldn't reach the translation service."],
+    ];
+    for (const [err, words] of cases) {
+      create.mockRejectedValueOnce(err);
+      const result = toSpanish(["Basket nap"], { strict: true });
+      await expect(result).rejects.toBeInstanceOf(TranslationError);
+      create.mockRejectedValueOnce(err);
+      await expect(toSpanish(["Basket nap"], { strict: true })).rejects.toThrow(words);
+    }
+    create.mockResolvedValueOnce({ stop_reason: "refusal", content: [] });
+    await expect(toSpanish(["Basket nap"], { strict: true })).rejects.toThrow("The translator declined this text.");
+    // the save-time fill-in still never fails: it copies the English
+    create.mockRejectedValueOnce(make(Anthropic.AuthenticationError, "invalid x-api-key"));
+    expect(await toSpanish(["Basket nap"])).toEqual(["Basket nap"]);
+    // and a good answer works the same in both
+    create.mockResolvedValueOnce({ stop_reason: "end_turn", content: [{ type: "text", text: JSON.stringify({ translations: ["Siesta en la canasta"] }) }] });
+    expect(await toSpanish(["Basket nap"], { strict: true })).toEqual(["Siesta en la canasta"]);
   });
 });

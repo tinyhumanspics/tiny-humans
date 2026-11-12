@@ -380,7 +380,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   title is what parents see as their inspiration). No sections or boxes since Nov 11. Spanish is never required in the owner area: empty
   Spanish is filled at save (`lib/i18n/spanish-autofill.ts`) and "Fill in Spanish for me" (`features/admin/FillSpanish.tsx`,
   also in Seasonal Landing) calls owner-only `/api/admin/translate` (same translator; GET = is ANTHROPIC_API_KEY set,
-  shown by `TranslationStatus`). `settings.portfolioBoxes` (settings cache key v4) is kept in the file for a revert
+  shown by `TranslationStatus`; the button is strict: `toSpanish(texts, { strict: true })` throws a `TranslationError`
+  with the reason in plain words (key refused, out of credits, rate limit, timeout) instead of putting the English back;
+  the save-time fill-in still copies the English when it can't translate). `settings.portfolioBoxes` (settings cache key v4) is kept in the file for a revert
   but no longer used: the boxes are gone and the Spanish audit never asks for their wording.
 - Unfinished bookings from "Not born yet?" (owner, Nov 11; migration 0029_draft_forms): /due-date saves the parent's
   contact draft on blur like the booking form (`form: "due_date"`, never the due date, babies or notes) and labels it

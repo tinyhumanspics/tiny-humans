@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { isAdmin } from "@/lib/admin/auth";
-import { toSpanish, translationEnabled } from "@/lib/i18n/autotranslate";
+import { toSpanish, TranslationError, translationEnabled } from "@/lib/i18n/autotranslate";
 import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
+// a translation can take up to ~45 s (one retry included)
+export const maxDuration = 60;
 
 /**
  * Owner only: "Fill in Spanish for me" in Photos / Media and Seasonal Landing (owner, Nov 11: "I have to be
@@ -23,8 +25,10 @@ export async function POST(req: Request) {
   const parsed = body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Nothing to translate." }, { status: 400 });
   try {
-    return NextResponse.json({ on: translationEnabled(), spanish: await toSpanish(parsed.data.texts) }, { headers: { "cache-control": "no-store" } });
+    // strict: when it can't translate, the button says why (owner, Nov 11) instead of filling in the English
+    return NextResponse.json({ on: translationEnabled(), spanish: await toSpanish(parsed.data.texts, { strict: true }) }, { headers: { "cache-control": "no-store" } });
   } catch (err) {
+    if (err instanceof TranslationError) return NextResponse.json({ error: err.message }, { status: 502, headers: { "cache-control": "no-store" } });
     log.error("admin.translate", "Translation failed", { error: err as Error });
     return NextResponse.json({ error: "Couldn't translate just now. Leave the Spanish empty and it's filled in when you save." }, { status: 500 });
   }
