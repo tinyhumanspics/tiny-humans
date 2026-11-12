@@ -5,6 +5,9 @@ import { useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent, type Touch
 import { createPortal } from "react-dom";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
+import { bundlesHref } from "@/config/booking";
+import type { AppLocale } from "@/i18n/config";
 import styles from "./PortfolioLightbox.module.css";
 import { cn } from "@/lib/cn";
 import { fill } from "@/lib/email/messages";
@@ -16,9 +19,11 @@ interface Props {
   onChange: (index: number) => void;
   onClose: () => void;
   messages?: typeof en.home.portfolio.viewer;
+  /** With a locale, the viewer offers "Use this one as my inspiration" (the bundles, with this picture picked). */
+  locale?: AppLocale;
 }
 
-export default function PortfolioLightbox({ photos, index, onChange, onClose, messages = en.home.portfolio.viewer }: Props) {
+export default function PortfolioLightbox({ photos, index, onChange, onClose, messages = en.home.portfolio.viewer, locale }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const touchX = useRef<number | null>(null);
@@ -58,7 +63,7 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose, me
   // keep Tab inside the dialog
   const trapFocus = (e: ReactKeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "Tab" || !dialogRef.current) return;
-    const items = dialogRef.current.querySelectorAll<HTMLElement>("button");
+    const items = dialogRef.current.querySelectorAll<HTMLElement>("button, a[href]");
     const first = items[0];
     const last = items[items.length - 1];
     if (e.shiftKey && document.activeElement === first) {
@@ -114,6 +119,12 @@ export default function PortfolioLightbox({ photos, index, onChange, onClose, me
             {fill(messages.count, { current: String(index + 1), total: String(photos.length) })}
           </span>
         </figcaption>
+        {locale && (
+          // owner, Nov 11: families pick their inspo here (it shows on the booking, in Leads and in the shoot folder)
+          <ChalkButton href={bundlesHref(photo.id, locale)} variant="solid" seed={77} className={styles.useInspo}>
+            {messages.useInspiration}
+          </ChalkButton>
+        )}
       </figure>
 
       <button type="button" className={cn(styles.control, styles.prev)} onClick={prev} aria-label={messages.previous}>

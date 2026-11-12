@@ -1,28 +1,30 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { buildFeedFromMedia } from "@/config/media";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
 import PortfolioLightbox from "@/features/home/PortfolioLightbox";
-import PortfolioCta from "@/features/home/PortfolioCta";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import BoardScene from "@/components/chalk/BoardDoodles/BoardScene";
 import { fill } from "@/lib/email/messages";
 import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";
+import { cn } from "@/lib/cn";
 import styles from "./Portfolio.module.css";
 
 const tapes = ["yellow", undefined, "blue", undefined, "white", "yellow", undefined, "blue", undefined] as const;
 
-/** Home page feed: each section's photos, then its "Book a memory like this one" box (wording already in the page's language). */
+/**
+ * Home page "Little moments" (the Portfolio link): one gallery of every picture, 3 per row (owner, Nov 11: no "Book a
+ * memory like this one" boxes). A parent taps a picture to see it whole and can use it as the inspiration for their
+ * session (the viewer's button opens the bundles with it picked).
+ */
 export default function Portfolio({ messages = en.home.portfolio, locale = "en" }: { messages?: typeof en.home.portfolio; locale?: AppLocale }) {
   const id = "portfolio";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
-  const { photos: portfolio, media } = useSiteSettings();
-  const feed = buildFeedFromMedia(media);
+  const { photos: portfolio } = useSiteSettings();
 
   const close = () => {
     const i = openIndex;
@@ -30,51 +32,34 @@ export default function Portfolio({ messages = en.home.portfolio, locale = "en" 
     if (i !== null) triggers.current[i]?.focus({ preventScroll: true });
   };
 
-  // Each prompt's number (1, 2, …) and each photo group's index (0, 1, …), in feed order.
-  const blockNumbers: number[] = [];
-  let ctaTotal = 0;
-  let groupTotal = 0;
-  for (const block of feed) blockNumbers.push(block.type === "cta" ? ++ctaTotal : groupTotal++);
-
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
         <SectionHeading id={`${id}-title`} title={messages.title} subtitle={messages.subtitle} slot="portfolio" />
-        {feed.map((block, b) => {
-          if (block.type === "cta") {
-            const ctaCount = blockNumbers[b];
-            return <PortfolioCta key={`cta-${b}`} photo={block.photo} title={block.title} text={block.text} label={messages.ctaLabel} locale={locale} seed={700 + ctaCount} flip={ctaCount % 2 === 0} />;
-          }
-          const groupIndex = blockNumbers[b];
-          return (
-            <ul key={`group-${b}`} className={styles.grid} data-odd={block.photos.length % 2 === 1} data-short={block.photos.length % 3 !== 0}>
-              {block.photos.map((photo, j) => {
-                const i = portfolio.indexOf(photo);
-                return (
-                  <Reveal as="li" key={photo.id} className={styles.item} delay={j * 90}>
-                    <button
-                      ref={(el) => {
-                        triggers.current[i] = el;
-                      }}
-                      type="button"
-                      className={styles.trigger}
-                      onClick={() => setOpenIndex(i)}
-                      aria-label={fill(messages.openPhoto, { current: String(i + 1), total: String(portfolio.length), alt: photo.alt })}
-                    >
-                      <PinnedPhoto photo={photo} seed={100 + i} tape={tapes[i % tapes.length]} sizes="(min-width: 1024px) 360px, (min-width: 600px) 45vw, 92vw" />
-                    </button>
-                  </Reveal>
-                );
-              })}
-              {/* fills the empty spot left in two-column (and short) rows */}
-              <li className={styles.sceneCell} aria-hidden="true">
-                <BoardScene index={groupIndex} />
-              </li>
-            </ul>
-          );
-        })}
+        {portfolio.length > 0 && <p className={cn(styles.pickHint, "chalk-soft")}>{messages.pickHint}</p>}
+        <ul className={styles.grid} data-odd={portfolio.length % 2 === 1} data-short={portfolio.length % 3 !== 0}>
+          {portfolio.map((photo, i) => (
+            <Reveal as="li" key={photo.id} className={styles.item} delay={(i % 3) * 90}>
+              <button
+                ref={(el) => {
+                  triggers.current[i] = el;
+                }}
+                type="button"
+                className={styles.trigger}
+                onClick={() => setOpenIndex(i)}
+                aria-label={fill(messages.openPhoto, { current: String(i + 1), total: String(portfolio.length), alt: photo.alt })}
+              >
+                <PinnedPhoto photo={photo} seed={100 + i} tape={tapes[i % tapes.length]} sizes="(min-width: 1024px) 360px, (min-width: 600px) 45vw, 92vw" />
+              </button>
+            </Reveal>
+          ))}
+          {/* fills the empty spot left in two-column (and short) rows */}
+          <li className={styles.sceneCell} aria-hidden="true">
+            <BoardScene index={0} />
+          </li>
+        </ul>
       </div>
-      <PortfolioLightbox photos={portfolio} index={openIndex} onChange={setOpenIndex} onClose={close} messages={messages.viewer} />
+      <PortfolioLightbox photos={portfolio} index={openIndex} onChange={setOpenIndex} onClose={close} messages={messages.viewer} locale={locale} />
     </section>
   );
 }

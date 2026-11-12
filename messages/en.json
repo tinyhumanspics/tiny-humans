@@ -22,13 +22,15 @@
         { "title": "Want a moment like this?", "text": "Milestones grow fast. Let's catch this one." }
       ],
       "ctaLabel": "Book a memory like this one",
+      "pickHint": "Tap any picture to see it whole, and use it as the inspiration for your session.",
       "openPhoto": "Open photo {current} of {total}: {alt}",
       "viewer": {
         "label": "Photo viewer",
         "close": "Close photo viewer",
         "previous": "Previous photo",
         "next": "Next photo",
-        "count": "{current} of {total}"
+        "count": "{current} of {total}",
+        "useInspiration": "Use this one as my inspiration"
       }
     }
   },

@@ -22,13 +22,15 @@
         { "title": "¿Quieres un momento como este?", "text": "Cada etapa pasa rápido. Guardemos este momento." }
       ],
       "ctaLabel": "Reserva un recuerdo como este",
+      "pickHint": "Toca cualquier foto para verla completa y usarla como inspiración para tu sesión.",
       "openPhoto": "Abrir foto {current} de {total}: {alt}",
       "viewer": {
         "label": "Visor de fotos",
         "close": "Cerrar el visor de fotos",
         "previous": "Foto anterior",
         "next": "Foto siguiente",
-        "count": "{current} de {total}"
+        "count": "{current} de {total}",
+        "useInspiration": "Usar esta como mi inspiración"
       }
     }
   },

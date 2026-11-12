@@ -1,17 +1,22 @@
 import { expect, test } from "@playwright/test";
 import { BUILT_IN } from "@/config/media";
 
-test("a box's picture is picked when a parent taps it and stays through the booking (mock provider)", async ({ page }, testInfo) => {
+test("a parent opens a gallery picture, uses it as their inspiration, and it stays through the booking (owner, Nov 11)", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One full booking is enough; the other projects book in booking.spec.ts");
-  // built-in first section: its box shows the middle picture
-  const picture = BUILT_IN.sections[0].photos[1];
+  // the second picture of the one "Little moments" gallery (no boxes any more)
+  const picture = BUILT_IN.sections.flatMap((s) => s.photos)[1];
   let submitted: { inspirationPhotoId?: string } | undefined;
   page.on("request", (request) => {
     if (request.method() === "POST" && request.url().endsWith("/api/booking/create")) submitted = request.postDataJSON();
   });
 
   await page.goto("/");
-  await page.getByRole("link", { name: "Book a memory like this one" }).first().click();
+  await expect(page.getByText("Tap any picture to see it whole, and use it as the inspiration for your session.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Book a memory like this one" })).toHaveCount(0);
+  await page.getByRole("button", { name: new RegExp(`^Open photo 2 of \\d+: `) }).click();
+  const viewer = page.getByRole("dialog", { name: "Photo viewer" });
+  await expect(viewer.getByRole("img", { name: picture.alt })).toBeVisible();
+  await viewer.getByRole("link", { name: "Use this one as my inspiration" }).click();
   await expect(page).toHaveURL(new RegExp(`/bundles\\?inspiration=${picture.id}$`));
   await expect(page.getByText(`You picked “${picture.title}”`)).toBeVisible();
 

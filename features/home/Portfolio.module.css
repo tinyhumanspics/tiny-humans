@@ -48,3 +48,6 @@
 @media (min-width: 1024px) {
   .grid[data-short="true"] .sceneCell { display: flex; }
 }
+
+/* "Tap any picture…" under the heading (owner, Nov 11) */
+.pickHint { margin: -14px 0 30px; max-width: 60ch; font-size: 1.15rem; color: var(--sun-yellow); }

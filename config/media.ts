@@ -31,8 +31,8 @@ export const MEDIA_GROUPS = {
     slots: ["Meet your photographers"],
   },
   sections: {
-    label: "Little Moments Sections",
-    where: `The “${en.home.portfolio.title}” part of the home page, top to bottom. Each section shows its pictures in rows of 3, then (when switched on) the “${en.home.portfolio.ctaLabel}” box with one of its pictures.`,
+    label: "Little Moments",
+    where: `The “${en.home.portfolio.title}” gallery on the home page (the Portfolio link): every picture, in rows of 3, in this order. Families tap one to see it whole and can use it as the inspiration for their session.`,
     maxSections: 10,
     maxPhotos: 12,
     /** Pictures that can be picked for the ad landing page's gallery. */
@@ -213,6 +213,19 @@ export function photographersEmailPhoto(all: Partial<Record<string, ThemeMedia>>
 
 /** The owner's "Show the boxes" switch off (Photos / Media): the same pictures, no "Book a memory like this one" boxes. */
 export const withoutBoxes = (r: ResolvedMedia): ResolvedMedia => ({ ...r, sections: r.sections.map((s) => ({ ...s, prompt: null })) });
+
+/**
+ * "Little moments" is one list (owner, Nov 11), saved as sections of up to `maxPhotos` pictures with no box, so an
+ * older version of the site still reads it. Section ids are kept where they exist.
+ */
+export function chunkSections(photos: PortfolioPhoto[], previous: MediaSection[] = []): MediaSection[] {
+  const { maxPhotos } = MEDIA_GROUPS.sections;
+  const out: MediaSection[] = [];
+  for (let i = 0; i < photos.length; i += maxPhotos) {
+    out.push({ id: previous[out.length]?.id ?? `section-${out.length + 1}`, photos: photos.slice(i, i + maxPhotos), prompt: false, promptPhotoId: null, title: "", text: "", spanish: null });
+  }
+  return out;
+}
 
 /** Photos in feed order (for the lightbox and inspiration links). */
 export const feedPhotos = (r: ResolvedMedia) => r.sections.flatMap((s) => s.photos);

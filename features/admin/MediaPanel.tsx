@@ -120,19 +120,6 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
       <MediaSections media={media} base={base} themeId={themeId} isOriginal={themeId === "default"} themeLabel={label} baseLabel={baseLabel} spanishLive={settings.spanishPublished}
         busy={busy} setBusy={setBusy} saveMedia={saveMedia} toPhoto={toPhoto}
-        boxesOn={settings.portfolioBoxes !== false}
-        onBoxesChange={async (on) => {
-          setBusy("boxes");
-          setNote(null);
-          try {
-            await onSave({ ...settings, portfolioBoxes: on });
-            setNote({ kind: "ok", text: on ? "The boxes show on the home page again (in the sections that have their box switched on)." : "The boxes are hidden on the home page. Their wording is kept for when you switch them back on." });
-          } catch (e) {
-            setNote({ kind: "error", text: e instanceof Error ? e.message : "Couldn't save. Please try again." });
-          } finally {
-            setBusy(null);
-          }
-        }}
         fail={(err, fallback) => setNote({ kind: "error", text: err instanceof Error ? err.message : fallback })} />
 
       <FixedPlaceholderGroup

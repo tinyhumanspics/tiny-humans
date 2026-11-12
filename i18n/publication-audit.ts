@@ -10,11 +10,7 @@ export function spanishOwnerCopyIssues(settings: SiteSettings): string[] {
     if (photo.caption?.trim() && !photo.spanish?.caption?.trim()) issues.add("Spanish captions for uploaded gallery photos");
   }
 
-  for (const media of Object.values(settings.media)) {
-    for (const section of media?.sections ?? []) {
-      if (settings.portfolioBoxes !== false && section.prompt && (!section.spanish?.title.trim() || !section.spanish.text.trim())) issues.add("Spanish gallery prompt copy");
-    }
-  }
+  // (the "Book a memory like this one" boxes are gone since Nov 11, so their wording isn't needed)
 
   for (const offer of Object.values(settings.seasonalOffers)) {
     if (offer.enabled && (!offer.spanish?.title.trim() || !offer.spanish.description.trim())) issues.add("Spanish copy for enabled seasonal offers");

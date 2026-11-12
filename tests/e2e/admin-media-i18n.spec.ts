@@ -62,27 +62,4 @@ test("the owner can save Spanish photo details and box wording, or have it fille
     alt: "Recién nacido dormido envuelto suavemente",
     caption: "Primera semana",
   });
-
-  await page.locator("summary", { hasText: "Little Moments Sections" }).click();
-  await page.getByRole("button", { name: "Edit section 1 box" }).click();
-  const box = page.locator("dialog[open]");
-  await box.getByLabel("Section 1: Spanish box title").fill("¿Enmarcarías esta foto?");
-  await box.getByLabel("Section 1: Spanish box text").fill("Guarda un recuerdo así de tu bebé.");
-  if (visualCapture) await page.screenshot({ path: `.screenshots/admin-media-spanish/${testInfo.project.name}-prompt.png` });
-  await box.getByRole("button", { name: "Save box" }).click();
-  await expect(page.getByText("Section 1: box saved. It's live on the website now.")).toBeVisible();
-  expect(saved.media.default?.sections?.[0].spanish).toEqual({
-    title: "¿Enmarcarías esta foto?",
-    text: "Guarda un recuerdo así de tu bebé.",
-  });
-
-  // the button translates the English and puts it in the form before saving
-  await page.getByRole("button", { name: "Edit section 2 box" }).click();
-  const box2 = page.locator("dialog[open]");
-  await box2.getByRole("button", { name: "Fill in Spanish for me" }).click();
-  await expect(box2.getByLabel("Section 2: Spanish box title")).toHaveValue(/^ES: /);
-  await box2.getByRole("button", { name: "Save box" }).click();
-  await expect(page.getByText("Section 2: box saved.", { exact: false })).toBeVisible();
-  expect(translated.at(-1)).toEqual([saved.media.default!.sections![1].title, saved.media.default!.sections![1].text]);
-  expect(saved.media.default!.sections![1].spanish).toEqual({ title: `ES: ${saved.media.default!.sections![1].title}`, text: `ES: ${saved.media.default!.sections![1].text}` });
 });

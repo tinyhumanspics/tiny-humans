@@ -1,41 +1,29 @@
 "use client";
 
-import Image from "next/image";
 import { useState, type ChangeEvent } from "react";
-import { MEDIA_GROUPS, resolveMedia, sectionsFor, type MediaSection, type ThemeMedia } from "@/config/media";
+import { chunkSections, MEDIA_GROUPS, resolveMedia, sectionsFor, type ThemeMedia } from "@/config/media";
 import type { PortfolioPhoto } from "@/config/portfolio";
-import en from "@/messages/en.json";
 import AdminDialog from "./AdminDialog";
 import MediaSlot from "./MediaSlot";
 import MediaFold from "./MediaFold";
-import { FillSpanishButton } from "./FillSpanish";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
-type Draft = { sections: MediaSection[]; picks: string[] };
-type Confirm = { kind: "delete"; index: number } | { kind: "restart" } | null;
+type Draft = { photos: PortfolioPhoto[]; picks: string[] };
 
 const { maxSections, maxPhotos, landingPicks: maxPicks } = MEDIA_GROUPS.sections;
-const BOX = `“${en.home.portfolio.ctaLabel}” box`;
-const newSectionId = () => `section-${Math.random().toString(36).slice(2, 9)}`;
-const boxPhotoId = (s: MediaSection) => (s.photos.some((p) => p.id === s.promptPhotoId) ? s.promptPhotoId : s.photos[Math.min(1, s.photos.length - 1)]?.id);
-const sectionName = (s: MediaSection, i: number) => `Section ${i + 1}${s.title ? ` · “${s.title}”` : ""}`;
-/** Titles made from camera / export file names ("IMG 7378", "TinyHumans DSC09689 Vertical"): parents see this title while booking. */
+/** Pictures in "Little moments" (saved as sections of `maxPhotos` behind the scenes; see `chunkSections`). */
+const MAX = maxSections * maxPhotos;
+/** Titles made from camera / export file names ("IMG 7378", "TinyHumans DSC09689 Vertical"): parents see the title as their inspo. */
 const looksLikeFileName = (title: string) => /^(img|dsc|dscf|pxl|mvimg|screenshot|new photo)\b|^photo \d+$|\d{4,}|tinyhumans|_/i.test(title.trim());
 
-/** A picture's id changed (replaced) or it is gone (null): keep the box picture and the landing page picks pointing at it. */
-function swapPhotoId(d: Draft, oldId: string, newId: string | null) {
-  for (const s of d.sections) if (s.promptPhotoId === oldId) s.promptPhotoId = newId;
-  d.picks = newId ? d.picks.map((id) => (id === oldId ? newId : id)) : d.picks.filter((id) => id !== oldId);
-}
-
 /**
- * Photos / Media → "Little moments" sections for one theme: add, order and delete sections; add, replace, order and
- * remove their pictures; switch each section's box on or off, with its wording and picture; pick the ad landing page's
- * pictures. A theme other than Original shows the Original theme's sections until something changes here, then it
- * gets its own copy. Every change saves at once, like the rest of this page.
+ * Photos / Media → "Little moments" for one theme (owner, Nov 11: one list, no sections or boxes): add, replace, order
+ * and remove pictures, their words (English + Spanish; the title is what parents see when they use one as their
+ * inspiration) and which ones show on the ad page. A theme other than Original shows the Original theme's pictures
+ * until something changes here, then it gets its own copy. Every change saves at once, like the rest of this page.
  */
-export default function MediaSections({ media, base, themeId, isOriginal, themeLabel, baseLabel, spanishLive, busy, setBusy, fail, saveMedia, toPhoto, boxesOn, onBoxesChange, openByDefault = false }: {
+export default function MediaSections({ media, base, themeId, isOriginal, themeLabel, baseLabel, spanishLive, busy, setBusy, fail, saveMedia, toPhoto, openByDefault = false }: {
   media: ThemeMedia;
   /** The Original theme's pictures (undefined while editing the Original theme, or before it has any). */
   base?: ThemeMedia;
@@ -48,15 +36,13 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
   setBusy: (key: string | null) => void;
   fail: (err: unknown, fallback: string) => void;
   saveMedia: (next: ThemeMedia, key: string, okText: string) => Promise<void>;
-  /** The site-wide "Show the boxes" switch (every theme). */
-  boxesOn: boolean;
-  onBoxesChange: (on: boolean) => Promise<void>;
   /** Open this part when the page loads. */
   openByDefault?: boolean;
   toPhoto: (file: File, previous?: PortfolioPhoto | null) => Promise<PortfolioPhoto>;
 }) {
-  const [confirm, setConfirm] = useState<Confirm>(null);
+  const [confirmRestart, setConfirmRestart] = useState(false);
   const { sections, landingPicks } = sectionsFor(media, base);
+  const photos = sections.flatMap((s) => s.photos);
   const inheriting = !media.sections && !isOriginal;
   const builtIn = isOriginal && !media.sections;
   // what the ad landing page shows right now (the ticked pictures, else the first 6 that aren't title photos): the ticks match it
@@ -65,10 +51,10 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
   const landingFull = onLanding.size >= maxPicks;
 
   const edit = (key: string, okText: string, change: (d: Draft) => void) => {
-    const draft: Draft = { sections: JSON.parse(JSON.stringify(sections)), picks: [...landingPicks] };
+    const draft: Draft = { photos: [...photos], picks: [...landingPicks] };
     change(draft);
-    const copied = inheriting ? ` The ${themeLabel} theme now has its own sections (the ${baseLabel} theme didn't change).` : "";
-    return saveMedia({ ...media, sections: draft.sections, landingPicks: draft.picks }, key, `${okText}${copied}`);
+    const copied = inheriting ? ` The ${themeLabel} theme now has its own pictures (the ${baseLabel} theme didn't change).` : "";
+    return saveMedia({ ...media, sections: chunkSections(draft.photos, sections), landingPicks: draft.picks }, key, `${okText}${copied}`);
   };
 
   const withFiles = async (key: string, e: ChangeEvent<HTMLInputElement>, limit: number, handle: (files: File[]) => Promise<void>) => {
@@ -85,48 +71,24 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
   };
 
   const restart = async () => {
-    await saveMedia({ ...media, sections: null, landingPicks: [] }, "sections-restart", `The ${themeLabel} theme shows the ${baseLabel} theme's sections again.`);
-    setConfirm(null);
+    await saveMedia({ ...media, sections: null, landingPicks: [] }, "sections-restart", `The ${themeLabel} theme shows the ${baseLabel} theme's pictures again.`);
+    setConfirmRestart(false);
   };
 
-  const remove = async (index: number) => {
-    const s = sections[index];
-    await edit(`section-${s.id}`, `${sectionName(s, index)} deleted.`, (d) => {
-      for (const p of d.sections[index].photos) swapPhotoId(d, p.id, null);
-      d.sections.splice(index, 1);
-    });
-    setConfirm(null);
-  };
-
-  const deleting = confirm?.kind === "delete" ? sections[confirm.index] : null;
-
-  const photoCount = sections.reduce((n, s) => n + s.photos.length, 0);
-  const boxCount = sections.filter((s) => s.prompt && s.photos.length).length;
-  const summary = `${sections.length} section${sections.length === 1 ? "" : "s"} · ${photoCount} picture${photoCount === 1 ? "" : "s"} · ${boxesOn ? `${boxCount} box${boxCount === 1 ? "" : "es"} showing` : "boxes switched off"}`;
+  const summary = `${photos.length} picture${photos.length === 1 ? "" : "s"} · ${onLanding.size} on the ad page`;
 
   return (
     <MediaFold title={MEDIA_GROUPS.sections.label} summary={summary} open={openByDefault}
-      where={<>{MEDIA_GROUPS.sections.where} Up to {maxSections} sections with {maxPhotos} pictures each. Press <b>Edit</b> on a picture to replace it, move it, change its words or put it on the ad page.</>}>
-      <div className={styles.sectionNote}>
-        <label className={styles.toggle}>
-          <input type="checkbox" checked={boxesOn} disabled={busy !== null} onChange={(e) => void onBoxesChange(e.target.checked)} />
-          <span className="chalk-soft">Show the “{en.home.portfolio.ctaLabel}” boxes on the home page</span>
-        </label>
-        <p className={cn(styles.hintSmall, "chalk-soft")}>
-          {boxesOn
-            ? "On: each section below decides whether it shows its box."
-            : "Off: no box shows on the home page, in any theme. Each section keeps its wording and its own setting for when you switch this back on."}
-        </p>
-      </div>
+      where={<>{MEDIA_GROUPS.sections.where} Press <b>Edit</b> on a picture to replace it, move it, change its words (parents see its title as their inspiration) or put it on the ad page.</>}>
       {inheriting && (
         <p className={cn(styles.sectionNote, "chalk-soft")}>
-          The {themeLabel} theme uses the {baseLabel} theme&apos;s sections. Change anything below and the {themeLabel} theme gets its own copy; the {baseLabel} theme stays as it is.
+          The {themeLabel} theme uses the {baseLabel} theme&apos;s pictures. Change anything below and the {themeLabel} theme gets its own copy; the {baseLabel} theme stays as it is.
         </p>
       )}
       {!inheriting && !isOriginal && (
         <div className={styles.sectionRestart}>
-          <p className={cn(styles.hintSmall, "chalk-soft")}>The {themeLabel} theme has its own sections.</p>
-          <button type="button" className={styles.smallButton} onClick={() => setConfirm({ kind: "restart" })} disabled={busy !== null}>Start over from the {baseLabel} theme&apos;s sections</button>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>The {themeLabel} theme has its own pictures.</p>
+          <button type="button" className={styles.smallButton} onClick={() => setConfirmRestart(true)} disabled={busy !== null}>Start over from the {baseLabel} theme&apos;s pictures</button>
         </div>
       )}
       <p className={cn(styles.sectionNote, "chalk-soft")}>
@@ -145,246 +107,84 @@ export default function MediaSections({ media, base, themeId, isOriginal, themeL
         )}
       </p>
 
-      {sections.map((section, si) => {
-        const key = `section-${section.id}`;
-        const boxId = boxPhotoId(section);
-        return (
-          <section key={`${themeId}-${section.id}`} className={styles.sectionCard} aria-labelledby={`${key}-title`}>
-            <div className={styles.sectionHead}>
-              <h4 id={`${key}-title`} className={cn(styles.sectionTitle, "chalk")}>{sectionName(section, si)}</h4>
-              <div className={styles.sectionActions}>
-                <button type="button" className={styles.smallButton} disabled={si === 0 || busy !== null} aria-label={`Move section ${si + 1} up`}
-                  onClick={() => edit(key, `Section ${si + 1} moved up.`, (d) => d.sections.splice(si - 1, 0, ...d.sections.splice(si, 1)))}>↑</button>
-                <button type="button" className={styles.smallButton} disabled={si === sections.length - 1 || busy !== null} aria-label={`Move section ${si + 1} down`}
-                  onClick={() => edit(key, `Section ${si + 1} moved down.`, (d) => d.sections.splice(si + 1, 0, ...d.sections.splice(si, 1)))}>↓</button>
-                <button type="button" className={cn(styles.smallButton, styles.danger)} disabled={busy !== null} onClick={() => setConfirm({ kind: "delete", index: si })} aria-label={`Delete section ${si + 1}`}>Delete</button>
-              </div>
-            </div>
-            {!section.photos.length && <p className={cn(styles.hintSmall, "chalk-soft")}>No pictures yet: this section is hidden on the website until you add one.</p>}
-            <div className={styles.slotGrid}>
-              {section.photos.map((photo, pi) => {
-                const name = `Image ${pi + 1}`;
-                const photoKey = `${key}-${photo.id}`;
-                const shown = onLanding.has(photo.id);
-                const inBox = section.prompt && boxId === photo.id;
-                return (
-                  <MediaSlot key={`${themeId}-${photo.id}`} name={name} groupLabel={`Section ${si + 1}`} custom={photo} builtIn={null} busy={busy === photoKey} spanishLive={spanishLive}
-                    note={inheriting ? `Same as the ${baseLabel} theme` : photo.src.startsWith("/portfolio/") ? "Built-in picture" : undefined}
-                    tags={(inBox || shown) && (
-                      <>
-                        {inBox && <span className={styles.tag}>★ In the box</span>}
-                        {shown && <span className={styles.tag}>On the ad page</span>}
-                      </>
-                    )}
-                    onReplace={(e) => withFiles(photoKey, e, 1, async ([file]) => {
-                      const next = await toPhoto(file, photo);
-                      await edit(photoKey, `Section ${si + 1} · ${name} replaced.`, (d) => {
-                        d.sections[si].photos[pi] = next;
-                        swapPhotoId(d, photo.id, next.id);
-                      });
-                    })}
-                    onReset={() => edit(photoKey, `Section ${si + 1} · ${name} removed.`, (d) => {
-                      d.sections[si].photos.splice(pi, 1);
-                      swapPhotoId(d, photo.id, null);
-                    })}
-                    resetLabel="Remove from this section"
-                    onDetails={(p) => edit(photoKey, p.caption ? `Caption saved: “${p.caption}”.` : "Saved. No caption, so the photo fills the frame.", (d) => {
-                      d.sections[si].photos[pi] = p;
-                    })}>
-                    <p className={cn(styles.label, "chalk-soft")}>Place in the section</p>
-                    <div className={styles.slotTools}>
-                      <button type="button" className={styles.smallButton} disabled={pi === 0 || busy !== null} aria-label={`Move section ${si + 1} ${name} earlier`}
-                        onClick={() => edit(photoKey, `Section ${si + 1} · ${name} moved.`, (d) => d.sections[si].photos.splice(pi - 1, 0, ...d.sections[si].photos.splice(pi, 1)))}>← Earlier</button>
-                      <button type="button" className={styles.smallButton} disabled={pi === section.photos.length - 1 || busy !== null} aria-label={`Move section ${si + 1} ${name} later`}
-                        onClick={() => edit(photoKey, `Section ${si + 1} · ${name} moved.`, (d) => d.sections[si].photos.splice(pi + 1, 0, ...d.sections[si].photos.splice(pi, 1)))}>Later →</button>
-                    </div>
-                    {section.prompt && (inBox
-                      ? <p className={cn(styles.boxPick, "chalk-soft")}>★ This picture is in the section&apos;s box</p>
-                      : <button type="button" className={styles.smallButton} disabled={busy !== null}
-                          onClick={() => edit(photoKey, `Section ${si + 1}: the box now shows ${name}.`, (d) => { d.sections[si].promptPhotoId = photo.id; })}>Use this picture in the box</button>)}
-                    <label className={styles.toggle}>
-                      <input type="checkbox" checked={shown} disabled={busy !== null || (!shown && landingFull)} aria-label={`Section ${si + 1} ${name}: on the ad page`}
-                        onChange={(e) => {
-                          // the first change while it's automatic starts from the pictures showing now
-                          const showing = automatic ? [...onLanding] : landingPicks;
-                          const next = e.target.checked ? [...showing, photo.id] : showing.filter((id) => id !== photo.id);
-                          const ok = e.target.checked ? `${name} added to the ad page.`
-                            : next.length ? `${name} taken off the ad page.`
-                            : `${name} taken off the ad page. Nothing is chosen now, so it shows the first ${maxPicks} pictures automatically again.`;
-                          return edit(photoKey, ok, (d) => { d.picks = next; });
-                        }} />
-                      <span className="chalk-soft">Show on the ad page{automatic && shown ? " (picked automatically)" : ""}</span>
-                    </label>
-                  </MediaSlot>
-                );
+      {!photos.length && <p className={cn(styles.hintSmall, "chalk-soft")}>No pictures yet: the gallery is hidden on the website until you add one.</p>}
+      <div className={styles.slotGrid}>
+        {photos.map((photo, pi) => {
+          const name = `Image ${pi + 1}`;
+          const photoKey = `moments-${photo.id}`;
+          const shown = onLanding.has(photo.id);
+          return (
+            <MediaSlot key={`${themeId}-${photo.id}`} name={name} groupLabel={MEDIA_GROUPS.sections.label} custom={photo} builtIn={null} busy={busy === photoKey} spanishLive={spanishLive}
+              note={inheriting ? `Same as the ${baseLabel} theme` : photo.src.startsWith("/portfolio/") ? "Built-in picture" : undefined}
+              tags={shown && <span className={styles.tag}>On the ad page</span>}
+              onReplace={(e) => withFiles(photoKey, e, 1, async ([file]) => {
+                const next = await toPhoto(file, photo);
+                await edit(photoKey, `${name} replaced.`, (d) => {
+                  d.photos[pi] = next;
+                  d.picks = d.picks.map((id) => (id === photo.id ? next.id : id));
+                });
               })}
-              {section.photos.length < maxPhotos && (
-                <label className={cn(styles.addTile, "chalk-soft")}>
-                  <input type="file" accept="image/*" multiple className={styles.visuallyHidden} disabled={busy !== null} aria-label={`Add pictures to section ${si + 1}`}
-                    onChange={(e) => withFiles(`${key}-add`, e, maxPhotos - section.photos.length, async (files) => {
-                      const added: PortfolioPhoto[] = [];
-                      for (const f of files) added.push(await toPhoto(f));
-                      await edit(`${key}-add`, `${added.length} picture${added.length > 1 ? "s" : ""} added to section ${si + 1}.`, (d) => { d.sections[si].photos.push(...added); });
-                    })} />
-                  {busy === `${key}-add` ? "Adding…" : "+ Add pictures"}
-                </label>
+              onReset={() => edit(photoKey, `${name} removed.`, (d) => {
+                d.photos.splice(pi, 1);
+                d.picks = d.picks.filter((id) => id !== photo.id);
+              })}
+              resetLabel="Remove from the gallery"
+              onDetails={(p) => edit(photoKey, p.caption ? `Caption saved: “${p.caption}”.` : "Saved. No caption, so the photo fills the frame.", (d) => {
+                d.photos[pi] = p;
+              })}>
+              {looksLikeFileName(photo.title) && (
+                <p className={cn(styles.error, styles.slotWarning, "chalk-soft")}>“{photo.title}” looks like a file name. Give it a nicer title below: parents see it when they use this picture as their inspiration.</p>
               )}
-            </div>
-            <SectionBox key={`${themeId}-${section.id}-box`} section={section} index={si} busy={busy === `${key}-box`} boxesOn={boxesOn}
-              picture={section.photos.flatMap((photo, pi) => (photo.id === boxId ? [{ photo, name: `Image ${pi + 1}` }] : []))[0]}
-              onSave={(box) => edit(`${key}-box`, box.prompt ? `Section ${si + 1}: box saved.` : `Section ${si + 1}: the box is switched off.`, (d) => { Object.assign(d.sections[si], box); })} />
-          </section>
-        );
-      })}
+              <p className={cn(styles.label, "chalk-soft")}>Place in the gallery</p>
+              <div className={styles.slotTools}>
+                <button type="button" className={styles.smallButton} disabled={pi === 0 || busy !== null} aria-label={`Move ${name} earlier`}
+                  onClick={() => edit(photoKey, `${name} moved.`, (d) => d.photos.splice(pi - 1, 0, ...d.photos.splice(pi, 1)))}>← Earlier</button>
+                <button type="button" className={styles.smallButton} disabled={pi === photos.length - 1 || busy !== null} aria-label={`Move ${name} later`}
+                  onClick={() => edit(photoKey, `${name} moved.`, (d) => d.photos.splice(pi + 1, 0, ...d.photos.splice(pi, 1)))}>Later →</button>
+              </div>
+              <label className={styles.toggle}>
+                <input type="checkbox" checked={shown} disabled={busy !== null || (!shown && landingFull)} aria-label={`${name}: on the ad page`}
+                  onChange={(e) => {
+                    // the first change while it's automatic starts from the pictures showing now
+                    const showing = automatic ? [...onLanding] : landingPicks;
+                    const next = e.target.checked ? [...showing, photo.id] : showing.filter((id) => id !== photo.id);
+                    const ok = e.target.checked ? `${name} added to the ad page.`
+                      : next.length ? `${name} taken off the ad page.`
+                      : `${name} taken off the ad page. Nothing is chosen now, so it shows the first ${maxPicks} pictures automatically again.`;
+                    return edit(photoKey, ok, (d) => { d.picks = next; });
+                  }} />
+                <span className="chalk-soft">Show on the ad page{automatic && shown ? " (picked automatically)" : ""}</span>
+              </label>
+            </MediaSlot>
+          );
+        })}
+        {photos.length < MAX && (
+          <label className={cn(styles.addTile, "chalk-soft")}>
+            <input type="file" accept="image/*" multiple className={styles.visuallyHidden} disabled={busy !== null} aria-label="Add pictures to Little Moments"
+              onChange={(e) => withFiles("moments-add", e, MAX - photos.length, async (files) => {
+                const added: PortfolioPhoto[] = [];
+                for (const f of files) added.push(await toPhoto(f));
+                await edit("moments-add", `${added.length} picture${added.length > 1 ? "s" : ""} added at the end of the gallery.`, (d) => { d.photos.push(...added); });
+              })} />
+            {busy === "moments-add" ? "Adding…" : "+ Add pictures"}
+          </label>
+        )}
+      </div>
+      {photos.length >= MAX && <p className={cn(styles.hintSmall, "chalk-soft")}>That&apos;s the most pictures ({MAX}). Remove one to add another.</p>}
+      {builtIn && <p className={cn(styles.hintSmall, "chalk-soft")}>These are the built-in pictures until you change something.</p>}
 
-      {sections.length < maxSections ? (
-        <button type="button" className={cn(styles.addButton, styles.addSection)} disabled={busy !== null}
-          onClick={() => edit("section-add", "New section added at the bottom. Add pictures to show it on the website.", (d) => {
-            d.sections.push({ id: newSectionId(), photos: [], prompt: false, promptPhotoId: null, title: "", text: "", spanish: null });
-          })}>
-          {busy === "section-add" ? "Adding…" : "+ Add a section"}
-        </button>
-      ) : (
-        <p className={cn(styles.hintSmall, "chalk-soft")}>That&apos;s the most sections ({maxSections}). Delete one to add another.</p>
-      )}
-      {builtIn && <p className={cn(styles.hintSmall, "chalk-soft")}>These are the built-in sections until you change something.</p>}
-
-      {deleting && confirm?.kind === "delete" && (
-        <AdminDialog labelledBy="section-del-t" describedBy="section-del-d" onClose={() => setConfirm(null)} busy={busy !== null}>
-          <h3 id="section-del-t" className={cn(styles.h3, "chalk")}>Delete {sectionName(deleting, confirm.index)}?</h3>
-          <p id="section-del-d" className={cn(styles.muted, "chalk-soft")}>
-            {deleting.photos.length ? `Its ${deleting.photos.length} picture${deleting.photos.length > 1 ? "s" : ""}${deleting.prompt ? " and its box" : ""} disappear from the website. This can't be undone.` : "It has no pictures yet."}
+      {confirmRestart && (
+        <AdminDialog labelledBy="moments-restart-t" describedBy="moments-restart-d" onClose={() => setConfirmRestart(false)} busy={busy !== null}>
+          <h3 id="moments-restart-t" className={cn(styles.h3, "chalk")}>Start over from the {baseLabel} theme&apos;s pictures?</h3>
+          <p id="moments-restart-d" className={cn(styles.muted, "chalk-soft")}>
+            The {themeLabel} theme&apos;s own Little Moments pictures are deleted, and it shows the {baseLabel} theme&apos;s pictures again. This can&apos;t be undone.
           </p>
           <div className={styles.photoBar}>
-            <button type="button" className={styles.smallButton} onClick={() => setConfirm(null)} disabled={busy !== null}>Cancel</button>
-            <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={() => remove(confirm.index)} disabled={busy !== null}>{busy ? "Deleting…" : "Delete section"}</button>
-          </div>
-        </AdminDialog>
-      )}
-      {confirm?.kind === "restart" && (
-        <AdminDialog labelledBy="section-restart-t" describedBy="section-restart-d" onClose={() => setConfirm(null)} busy={busy !== null}>
-          <h3 id="section-restart-t" className={cn(styles.h3, "chalk")}>Start over from the {baseLabel} theme&apos;s sections?</h3>
-          <p id="section-restart-d" className={cn(styles.muted, "chalk-soft")}>
-            The {themeLabel} theme&apos;s own sections, pictures and box wording are deleted, and it shows the {baseLabel} theme&apos;s sections again. This can&apos;t be undone.
-          </p>
-          <div className={styles.photoBar}>
-            <button type="button" className={styles.smallButton} onClick={() => setConfirm(null)} disabled={busy !== null}>Cancel</button>
+            <button type="button" className={styles.smallButton} onClick={() => setConfirmRestart(false)} disabled={busy !== null}>Cancel</button>
             <button type="button" className={cn(styles.smallButton, styles.deleteBtn)} onClick={restart} disabled={busy !== null}>{busy ? "Saving…" : "Start over"}</button>
           </div>
         </AdminDialog>
       )}
     </MediaFold>
-  );
-}
-
-/** A section's box: one line (on/off and its title) and "Edit box", which opens its wording (Spanish filled in for the owner). */
-function SectionBox({ section, index, busy, boxesOn, picture, onSave }: {
-  section: MediaSection;
-  index: number;
-  busy: boolean;
-  /** The site-wide switch above: off hides every box, whatever this section says. */
-  boxesOn: boolean;
-  /** The picture in the box: the "role model" a parent books with after tapping it. */
-  picture?: { photo: PortfolioPhoto; name: string };
-  onSave: (box: Pick<MediaSection, "prompt" | "title" | "text" | "spanish">) => Promise<void>;
-}) {
-  const [open, setOpen] = useState(false);
-  const titleId = `box-${section.id}-t`;
-  const line = !section.prompt
-    ? "Box: off for this section"
-    : `Box: on · “${section.title}”${boxesOn ? "" : " (hidden: the boxes are switched off above)"}`;
-  return (
-    <div className={styles.boxSummary}>
-      <p className={cn(styles.boxSummaryText, "chalk-soft")}>{line}</p>
-      <button type="button" className={styles.smallButton} onClick={() => setOpen(true)} disabled={busy} aria-label={`Edit section ${index + 1} box`}>{busy ? "Saving…" : "Edit box"}</button>
-      {open && (
-        <AdminDialog labelledBy={titleId} onClose={() => setOpen(false)} busy={busy}>
-          <BoxEditor titleId={titleId} section={section} index={index} busy={busy} boxesOn={boxesOn} picture={picture} onClose={() => setOpen(false)}
-            onSave={async (box) => { await onSave(box); setOpen(false); }} />
-        </AdminDialog>
-      )}
-    </div>
-  );
-}
-
-function BoxEditor({ titleId, section, index, busy, boxesOn, picture, onSave, onClose }: {
-  titleId: string;
-  section: MediaSection;
-  index: number;
-  busy: boolean;
-  boxesOn: boolean;
-  picture?: { photo: PortfolioPhoto; name: string };
-  onSave: (box: Pick<MediaSection, "prompt" | "title" | "text" | "spanish">) => Promise<void>;
-  onClose: () => void;
-}) {
-  const [on, setOn] = useState(section.prompt);
-  const [title, setTitle] = useState(section.title);
-  const [text, setText] = useState(section.text);
-  const [spanishTitle, setSpanishTitle] = useState(section.spanish?.title ?? "");
-  const [spanishText, setSpanishText] = useState(section.spanish?.text ?? "");
-  const english = [title, text].map((v) => v.trim());
-  const spanish = [spanishTitle, spanishText].map((v) => v.trim());
-  const incomplete = on && english.some((v) => !v);
-  const label = `Section ${index + 1}`;
-  return (
-    <div className={styles.photoEditor}>
-      <h3 id={titleId} className={cn(styles.h3, "chalk")}>{label}: the {BOX}</h3>
-      {!boxesOn && <p className={cn(styles.hintSmall, "chalk-soft")}>The boxes are switched off for the whole home page right now. You can still prepare this one.</p>}
-      <label className={styles.toggle}>
-        <input type="checkbox" checked={on} onChange={(e) => setOn(e.target.checked)} />
-        <span className="chalk-soft">Show the box after this section&apos;s pictures</span>
-      </label>
-      {on && (
-        <>
-          {picture ? (
-            <div className={styles.rolePick}>
-              <Image src={picture.photo.src} alt="" width={picture.photo.width} height={picture.photo.height} sizes="112px" className={styles.rolePickThumb} unoptimized={picture.photo.src.startsWith("data:")} />
-              <div className={styles.rolePickText}>
-                <p className={cn(styles.hintSmall, "chalk-soft")}>
-                  The box shows {picture.name}. A parent who taps it books with <b>“{picture.photo.title}”</b>. To use another picture, open <b>Edit</b> on it and press “Use this picture in the box”.
-                </p>
-                {looksLikeFileName(picture.photo.title) && (
-                  <p className={cn(styles.error, styles.slotWarning, "chalk-soft")}>“{picture.photo.title}” looks like a file name. Give that picture a nicer title (Edit → Words): parents see it while they book.</p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <p className={cn(styles.hintSmall, "chalk-soft")}>Add a picture first: the box shows one of this section&apos;s pictures.</p>
-          )}
-          <h4 className={cn(styles.photoEditorHead, "chalk")}>Words</h4>
-          <input className={styles.input} value={title} maxLength={60} placeholder="Title, e.g. Love this one?" onChange={(e) => setTitle(e.target.value)} aria-label={`${label}: box title`} />
-          <input className={styles.input} value={text} maxLength={120} placeholder="Text, e.g. We'll plan your session around it." onChange={(e) => setText(e.target.value)} aria-label={`${label}: box text`} />
-          <h4 className={cn(styles.photoEditorHead, "chalk")}>Spanish</h4>
-          <p className={cn(styles.hintSmall, "chalk-soft")}>Leave these empty and they&apos;re filled in for you when you save. Change anything you like.</p>
-          <FillSpanishButton english={english} disabled={busy} onFill={([t, x]) => { setSpanishTitle(t); setSpanishText(x); }} />
-          <input className={styles.input} value={spanishTitle} maxLength={60} placeholder="Título (Spanish)" onChange={(e) => setSpanishTitle(e.target.value)} aria-label={`${label}: Spanish box title`} />
-          <input className={styles.input} value={spanishText} maxLength={120} placeholder="Texto (Spanish)" onChange={(e) => setSpanishText(e.target.value)} aria-label={`${label}: Spanish box text`} />
-        </>
-      )}
-      {incomplete && <p className={cn(styles.error, "chalk-soft")}>Write the title and the text to show the box.</p>}
-      {(section.prompt || section.title || section.text) && (
-        <p className={cn(styles.hintSmall, "chalk-soft")}>
-          Switched off, the box keeps its words for later.{" "}
-          <button type="button" className={cn(styles.linkButton, styles.dangerText, "chalk-soft")} disabled={busy}
-            onClick={() => onSave({ prompt: false, title: "", text: "", spanish: null })}>
-            Remove this box
-          </button>{" "}
-          switches it off and deletes its words.
-        </p>
-      )}
-      <div className={styles.photoBar}>
-        <button type="button" className={styles.smallButton} onClick={onClose} disabled={busy}>Close</button>
-        <button type="button" className={cn(styles.smallButton, styles.primarySmall)} disabled={busy || incomplete}
-          onClick={() => onSave({
-            prompt: on,
-            title: english[0],
-            text: english[1],
-            // empty Spanish is filled in when the settings are saved (lib/i18n/spanish-autofill.ts)
-            spanish: spanish[0] || spanish[1] ? { title: spanish[0], text: spanish[1] } : null,
-          })}>
-          {busy ? "Saving…" : "Save box"}
-        </button>
-      </div>
-    </div>
   );
 }

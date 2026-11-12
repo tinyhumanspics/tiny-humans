@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { buildFeedFromMedia, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type MediaSection } from "@/config/media";
+import { BUILT_IN, buildFeedFromMedia, chunkSections, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type MediaSection } from "@/config/media";
 import { portfolio, type PortfolioPhoto } from "@/config/portfolio";
 import { defaultSettings, parseSettings, SettingsInputError, storedSettings } from "@/lib/settings/defaults";
 import { spanishOwnerCopyIssues } from "@/i18n/publication-audit";
@@ -134,15 +134,15 @@ describe("sections", () => {
     const off = withoutBoxes(r);
     expect(buildFeedFromMedia(off).filter((b) => b.type === "cta")).toHaveLength(0);
     expect(feedPhotos(off)).toEqual(feedPhotos(r));
-    // with the boxes off, their Spanish wording isn't needed to publish Spanish
+    // the boxes are gone (owner, Nov 11): their Spanish wording is never needed to publish Spanish
     const issues = (s: Partial<SiteSettings>) => spanishOwnerCopyIssues({ ...defaultSettings, media: { default: media([section("a", photos(1, 3), { spanish: null })]) }, ...s } as SiteSettings);
-    expect(issues({})).toEqual(["Spanish gallery prompt copy"]);
+    expect(issues({})).toEqual([]);
     expect(issues({ portfolioBoxes: false })).toEqual([]);
   });
 
-  test("an open box without Spanish wording hides the Spanish site; a closed one doesn't", () => {
+  test("box wording never holds the Spanish site back (the boxes are gone since Nov 11)", () => {
     const issues = (list: MediaSection[]) => spanishOwnerCopyIssues({ ...defaultSettings, media: { default: media(list) } } as SiteSettings);
-    expect(issues([section("a", photos(1, 3), { spanish: null })])).toEqual(["Spanish gallery prompt copy"]);
+    expect(issues([section("a", photos(1, 3), { spanish: null })])).toEqual([]);
     expect(issues([section("a", photos(1, 3), { spanish: null, prompt: false })])).toEqual([]);
   });
 
@@ -169,5 +169,19 @@ describe("sections", () => {
     // a theme that follows the Original theme stays that way
     const following = parseSettings(JSON.parse(JSON.stringify(storedSettings(settingsWith({ default: { sections: [] }, christmas: { sections: null } })))));
     expect(following.media.christmas?.sections).toBeNull();
+  });
+});
+
+describe("one Little moments list (owner, Nov 11)", () => {
+  const photo = (n: number) => ({ ...BUILT_IN.sections[0].photos[0], id: `p${n}` });
+  test("saved as sections of up to 12 with no box, keeping the old section ids; the feed reads it back in order", () => {
+    const list = Array.from({ length: 27 }, (_, i) => photo(i + 1));
+    const previous = BUILT_IN.sections;
+    const sections = chunkSections(list, previous);
+    expect(sections.map((s) => s.photos.length)).toEqual([12, 12, 3]);
+    expect(sections.map((s) => s.id)).toEqual(previous.map((s) => s.id));
+    expect(sections.every((s) => s.prompt === false && s.promptPhotoId === null && s.spanish === null)).toBe(true);
+    expect(feedPhotos(resolveMedia({ ...emptyThemeMedia(), sections })).map((p) => p.id)).toEqual(list.map((p) => p.id));
+    expect(chunkSections([], previous)).toEqual([]);
   });
 });

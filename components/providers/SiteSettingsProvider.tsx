@@ -73,8 +73,8 @@ export function useSiteSettings(): Ctx {
 /** Pictures for the theme visitors see (empty slots show the Default theme's picture). */
 export function liveMedia(s: SiteSettings, locale: AppLocale = "en"): ResolvedMedia {
   const media = resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media), locale);
-  // the owner's "Show the boxes" switch (Photos / Media): off hides every "Book a memory like this one" box
-  return s.portfolioBoxes === false ? withoutBoxes(media) : media;
+  // one gallery, no "Book a memory like this one" boxes (owner, Nov 11): a parent taps any picture to use it as inspo
+  return withoutBoxes(media);
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {
