@@ -223,6 +223,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Not born yet: automatic follow-up when the $50 isn't paid — LIVE Nov 11 (owner: "Great, so let's push that")**.
+  Owner: after Pay → Back without paying they landed on an empty form and got no email. Now Back shows "Almost there"
+  + Pay the deposit; the payment page closes after 1 hour and the family gets one automatic "Finish reserving your
+  spot" email (its button opens their saved reservation; a fresh payment page from there). Checked with
+  `scripts/local-db` + fake Stripe/Resend, incl. one email only, paying from the email link, and the backup sweep.
 - [x] **Not born yet in 3 steps (backdrops + discount code) and Delete in Not paid — LIVE Nov 11 (owner: "I love it go
   ahead and push it"; the owner ran migration 0032 the same night)**. Owner asked: delete test entries from Not paid; after
   "Reserve my spot", pick backdrops like a regular bundle or skip ("Not sure yet"); enter a discount code before the

@@ -426,3 +426,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   (`DueSummary.backdrops`) and fill the booking when the request has none (/admin "Book their session"). The deposit
   stays the bundle's deposit; the code comes off the balance. Leads → Not paid → Delete: bookings reuse the lead
   delete dialog; reservations `deleteDueReservation` (unpaid, no booking; closes an open Stripe page first).
+- Not born yet unpaid follow-up (owner, Nov 11; no migration): the family's own payment page closes after 1 hour
+  (`openDuePage(..., hours = 1)`; the owner's reminder link stays open a day). Back from Stripe (Stripe's arrow =
+  cancel_url, or browser Back via the `th_due_return` sessionStorage path in `lib/due-date/return-path.ts`) shows
+  /due-date/done "Almost there" + "Pay the deposit" (`DuePayButton` → `POST /api/due-date/pay` → `payDueAgain`: a fresh
+  page for the saved reservation; `?new=1` on /due-date starts over). When a page closes unpaid, `dueDepositExpired`
+  sends the automatic "Finish reserving your spot" (`autoRemindDue`: once per reservation, claimed as the first row of
+  `due_deposit_reminders`, so none after an owner reminder; skipped if they reserved/booked again). Backstop for a
+  missed webhook: `sweepDueDeposits` (daily cron, opening Leads, after availability checks).
