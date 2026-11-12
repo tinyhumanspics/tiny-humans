@@ -60,6 +60,9 @@ export type NewStyledShoot = z.infer<typeof newStyledShootSchema>;
 const group = z.enum(["inspo", "bts"]);
 const caption = z.string().trim().max(500, "Keep it under 500 characters.");
 
+/** ?link= of the video player / cover routes: one pasted link, as saved. */
+export const videoLinkSchema = z.string().trim().min(1, "Which link?").max(MAX_LINK_LENGTH, "That link is too long.");
+
 /** A pasted link or a text-only item (photos and videos come through the upload routes). */
 export const newInspoSchema = z.discriminatedUnion("type", [
   z

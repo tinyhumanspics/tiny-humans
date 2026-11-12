@@ -118,6 +118,27 @@ export function isShortVideoLink(link: string): boolean {
 /** Plays inside the sheet (straight away, or once the server opened the short link). */
 export const playsHere = (link: string | null | undefined): link is string => Boolean(link && (playerOf(link) || isShortVideoLink(link)));
 
+/**
+ * Where a player's cover picture comes from, best first (owner, Nov 12: "at least the reel picture so I know which one
+ * it is"): Instagram's own /media/ address (a redirect to the post's picture; its CDN refuses other sites, so the
+ * server fetches it: lib/shoots/cover.ts) and YouTube's thumbnails. TikTok and Vimeo don't give one out: none.
+ */
+export function coverSources(player: Player): string[] {
+  const instagram = /^https:\/\/www\.instagram\.com\/(?:p|reel)\/([A-Za-z0-9_-]+)\/embed\/$/.exec(player.src);
+  if (instagram) return [`https://www.instagram.com/p/${instagram[1]}/media/?size=m`];
+  const youtube = /^https:\/\/www\.youtube-nocookie\.com\/embed\/([A-Za-z0-9_-]{11})\?/.exec(player.src);
+  if (youtube) return [`https://i.ytimg.com/vi/${youtube[1]}/hq720.jpg`, `https://i.ytimg.com/vi/${youtube[1]}/mqdefault.jpg`];
+  return [];
+}
+
+/** Worth asking for a cover picture: Instagram and YouTube links (also Instagram share links). */
+export function hasCover(link: string): boolean {
+  const player = playerOf(link);
+  if (player) return coverSources(player).length > 0;
+  const url = parse(link);
+  return Boolean(url && hostOf(url) === "instagram.com" && isShortVideoLink(link));
+}
+
 /** Where opening a short link may lead: the same apps, https, no user name or odd port. */
 export function hopAllowed(url: URL): boolean {
   return (

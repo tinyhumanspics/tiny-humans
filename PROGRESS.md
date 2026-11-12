@@ -223,6 +223,14 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Shoots: video cover pictures + photos and videos never mixed — LIVE Nov 12 (owner: "yes to push … make sure
+  that videos and pics are separated")**. Instagram Reels/posts and YouTube cards show the video's cover picture
+  (▶ in the middle, small app tag in the corner) through our server; TikTok gives none (▶ card). In the folder and on
+  the day sheet every list shows Photos, then Videos, then Ideas and links, each on its own rows with a small label.
+- [ ] **Shoots: the owner's own sections** (owner, Nov 12, sketch approved: "That is perfect"): "+ Add a section"
+  under Inspo and BTS (named, e.g. "Inspo for David · Outfit 2"), each with its own drop area + link box, "Move to"
+  on every card, removing a section moves its items back to the main one, day sheet blocks with their own counts.
+  Photos/videos separated inside every section. Needs a small migration (owner runs it in Neon).
 - [x] **Shoots: video links play inside the day sheet — LIVE Nov 12 (owner: "Let's do it then")**. Owner asked to
   play a pasted video "and stay in the tiny humans shoot day sheet" instead of opening Instagram. Instagram (posts,
   Reels, also /<account>/reel/…), TikTok (incl. vm.tiktok.com / tiktok.com/t short links, opened on the server),
@@ -2200,7 +2208,11 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   WebKit) https://developers.facebook.com/blog/post/2026/06/15/tokenless-access-to-meta-oembed-apis/ · YouTube embeds
   need a Referer (Error 153 with no-referrer/same-origin); our `strict-origin-when-cross-origin` is right; use
   youtube-nocookie https://til.simonwillison.net/youtube/fixing-153-embed · Instagram CDN images send
-  `Cross-Origin-Resource-Policy: same-origin` (can't be hotlinked in an <img>).
+  `Cross-Origin-Resource-Policy: same-origin` (can't be hotlinked in an <img>). Its cover comes from
+  `https://www.instagram.com/p/<code>/media/?size=m` (undocumented; a 302 to the CDN JPEG, ~40 KB 320 px, works
+  logged out from a plain server request on Nov 12; `/reel/<code>/media/` is a 404). YouTube: `i.ytimg.com/vi/<id>/
+  hq720.jpg` (not always there) then `mqdefault.jpg` (always, 16:9, CORP cross-origin). TikTok's 2026 oEmbed has no
+  thumbnail_url.
 
 ## Local test database
 **Oct 15:** the local sample bookings were shifted for the dashboard preview (session dates +7 days, booking dates spread

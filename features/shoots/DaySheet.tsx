@@ -8,6 +8,7 @@ import { clock, dayParts, plural } from "@/lib/shoots/format";
 import { inspoKey, progressOf } from "@/lib/shoots/ticks";
 import type { BringLine, InspoGroup, InspoItem, ShootDetail } from "@/lib/shoots/types";
 import { InspoTile } from "./InspoDrop";
+import { byKind, inShownOrder, KIND_LABEL } from "@/lib/shoots/kinds";
 import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
 import InspoLightbox, { type LightboxPhoto, viewerItems } from "./InspoLightbox";
 import NotReady from "./NotReady";
@@ -207,7 +208,17 @@ function ShootBlock({
   // twins and family shoots: everyone listed, and the shots in sections by who's in them
   const people = peopleOf(b);
   const sectionsFor = (items: InspoItem[]) => (picksWho(people) && items.some((i) => i.who.length) ? groupByWho(items, people) : null);
-  const shotCards = (items: InspoItem[], photos: LightboxPhoto[]) => (
+  // photos, then videos, then ideas and links, each on their own rows (owner, Nov 12: never mixed)
+  const shotCards = (items: InspoItem[], photos: LightboxPhoto[]) => {
+    const kinds = byKind(items);
+    return kinds.map((k) => (
+      <div key={k.kind}>
+        {kinds.length > 1 && <p className={cn(css.kindH, "chalk-soft")}>{KIND_LABEL[k.kind]}</p>}
+        {shotGrid(k.items, photos)}
+      </div>
+    ));
+  };
+  const shotGrid = (items: InspoItem[], photos: LightboxPhoto[]) => (
     <ul className={css.shotGrid}>
       {items.map((item) => {
         const key = inspoKey(item.id);
@@ -282,8 +293,8 @@ function ShootBlock({
 
       {(["inspo", "bts"] as const).map((g) => {
         const sections = g === "inspo" ? sectionsFor(group(g)) : null;
-        // photos and videos open in the order they're shown (by section when there are sections)
-        const items = sections ? sections.flatMap((x) => x.items) : group(g);
+        // photos and videos open in the order they're shown (by section when there are sections; photos before videos)
+        const items = sections ? sections.flatMap((x) => inShownOrder(x.items)) : inShownOrder(group(g));
         const c = count(g);
         const photos = viewerItems(items);
         return (

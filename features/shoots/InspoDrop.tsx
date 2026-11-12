@@ -6,7 +6,8 @@ import { preparePhoto } from "@/lib/admin/client";
 import { cn } from "@/lib/cn";
 import { shootsApi } from "@/lib/shoots/client";
 import { normalizeLink, platformOf } from "@/lib/shoots/links";
-import { playsHere } from "@/lib/shoots/players";
+import { byKind, inShownOrder, KIND_LABEL } from "@/lib/shoots/kinds";
+import { hasCover, playsHere } from "@/lib/shoots/players";
 import { picksWho, toggleWho, WHO_ALL, type ShootPerson } from "@/lib/shoots/people";
 import type { InspoGroup, InspoItem } from "@/lib/shoots/types";
 import InspoLightbox, { viewerItems } from "./InspoLightbox";
@@ -53,7 +54,8 @@ export default function InspoDrop({
   const linkRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const linkId = `link-${group}`;
-  const photos = viewerItems(items);
+  const photos = viewerItems(inShownOrder(items));
+  const kinds = byKind(items);
 
   const addFiles = async (list: FileList | File[]) => {
     const files = [...list];
@@ -189,11 +191,17 @@ export default function InspoDrop({
       {items.length === 0 ? (
         <p className={cn(styles.hintSmall, "chalk-soft")}>{w.empty}</p>
       ) : (
-        <ul className={css.inspoGrid}>
-          {items.map((item) => (
-            <InspoCard key={item.id} shootKey={shootKey} item={item} focus={focusId === item.id} onRemove={onRemove} onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))} people={group === "inspo" && picksWho(people) ? people : null} />
-          ))}
-        </ul>
+        // photos, then videos, then ideas and links: never mixed (owner, Nov 12)
+        kinds.map((k) => (
+          <div key={k.kind}>
+            {kinds.length > 1 && <p className={cn(css.kindH, "chalk-soft")}>{KIND_LABEL[k.kind]}</p>}
+            <ul className={css.inspoGrid}>
+              {k.items.map((item) => (
+                <InspoCard key={item.id} shootKey={shootKey} item={item} focus={focusId === item.id} onRemove={onRemove} onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))} people={group === "inspo" && picksWho(people) ? people : null} />
+              ))}
+            </ul>
+          </div>
+        ))
       )}
       {viewing !== null && viewing >= 0 && photos.length > 0 && (
         <InspoLightbox photos={photos} index={Math.min(viewing, photos.length - 1)} onIndex={setViewing} onClose={() => setViewing(null)} />
@@ -214,16 +222,7 @@ export function InspoTile({ item, onOpen, linkHint }: { item: InspoItem; onOpen:
       </button>
     );
   }
-  if (item.type === "link" && playsHere(item.linkUrl)) {
-    return (
-      <button type="button" className={cn(css.linkVis, css.playVis)} onClick={onOpen}>
-        <span className={css.playIcon} aria-hidden="true" />
-        {item.platform ?? "Video"}
-        <small>Play here</small>
-        <span className={styles.visuallyHidden}> ({item.caption || "this video"})</span>
-      </button>
-    );
-  }
+  if (item.type === "link" && playsHere(item.linkUrl)) return <PlayCard link={item.linkUrl} platform={item.platform ?? "Video"} caption={item.caption} onOpen={onOpen} />;
   if (item.type === "link" && item.linkUrl) {
     return (
       <a className={css.linkVis} href={item.linkUrl} target="_blank" rel="noopener noreferrer">
@@ -238,6 +237,34 @@ export function InspoTile({ item, onOpen, linkHint }: { item: InspoItem; onOpen:
       {w.tile}
       <small>no photo</small>
     </div>
+  );
+}
+
+/**
+ * A video link's card: ▶ + the app's name; Instagram and YouTube also show the video's cover picture (owner, Nov 12:
+ * "so I know which one it is"), fetched through our server. No picture (TikTok, private, the app said no) = the ▶ card.
+ */
+function PlayCard({ link, platform, caption, onOpen }: { link: string; platform: string; caption: string; onOpen: () => void }) {
+  const [cover, setCover] = useState<"loading" | "shown" | "none">(() => (hasCover(link) ? "loading" : "none"));
+  return (
+    <button type="button" className={cn(css.linkVis, css.playVis, cover === "shown" ? css.withCover : "")} onClick={onOpen}>
+      {cover !== "none" && (
+        // eslint-disable-next-line @next/next/no-img-element -- owner-only picture from our own route, never the public optimizer
+        <img
+          className={css.cover}
+          src={`/api/admin/shoots/cover?${new URLSearchParams({ link })}`}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          onLoad={() => setCover("shown")}
+          onError={() => setCover("none")}
+        />
+      )}
+      <span className={css.playIcon} aria-hidden="true" />
+      <span className={css.app}>{platform}</span>
+      <small>Play here</small>
+      <span className={styles.visuallyHidden}> ({caption || "this video"})</span>
+    </button>
   );
 }
 

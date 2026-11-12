@@ -186,6 +186,15 @@ test("videos play inside the sheet: Instagram, a TikTok short link, one that can
     players.push(route.request().url());
     return route.fulfill({ contentType: "text/html", body: '<!doctype html><html lang="en"><title>Player</title><p>Player</p></html>' });
   });
+  // cover pictures come from our own route (Instagram's picture server refuses other sites)
+  const covers: string[] = [];
+  await page.route("**/api/admin/shoots/cover?*", (route) => {
+    const link = new URL(route.request().url()).searchParams.get("link")!;
+    covers.push(link);
+    return link.includes("instagram.com")
+      ? route.fulfill({ contentType: "image/png", body: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=", "base64") })
+      : route.fulfill({ status: 404 });
+  });
   const asked: string[] = [];
   await page.route("**/api/admin/shoots/player?*", (route) => {
     const link = new URL(route.request().url()).searchParams.get("link")!;
@@ -198,6 +207,18 @@ test("videos play inside the sheet: Instagram, a TikTok short link, one that can
   // nothing loads from the apps until a video is tapped; a Pinterest pin still opens the link
   await expect(family.getByRole("link", { name: /Pinterest/ })).toHaveAttribute("href", PIN.linkUrl!);
   expect(players).toEqual([]);
+  // the Reel's card shows its cover picture; TikTok gives none, so its cards don't ask
+  const reelCover = family.getByRole("button", { name: "Instagram Play here (Sleepy reel)" }).locator("img");
+  await expect(reelCover).toBeVisible();
+  await expect.poll(() => reelCover.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  expect(covers).toEqual([REEL.linkUrl]);
+  await expect(family.getByRole("button", { name: "TikTok Play here (Swaddle twirl)" }).locator("img")).toHaveCount(0);
+  // photos on their own rows, then videos, then ideas and links (never mixed)
+  await expect(family.getByText(/^(Photos|Videos|Ideas and links)$/)).toHaveText(["Photos", "Videos", "Ideas and links"]);
+  const rows = family.getByRole("list").filter({ has: page.getByRole("button", { name: /^(See |\w+ Play here)/ }) });
+  await expect(rows.nth(0).getByRole("listitem")).toHaveCount(1);
+  await expect(rows.nth(0).getByRole("button", { name: "See Basket nap, sleepy curl big" })).toBeVisible();
+  await expect(rows.nth(1).getByRole("listitem")).toHaveCount(3);
 
   const opener = family.getByRole("button", { name: "Instagram Play here (Sleepy reel)" });
   await opener.click();

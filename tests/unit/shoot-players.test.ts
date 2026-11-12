@@ -1,7 +1,10 @@
 import { describe, expect, test, vi } from "vitest";
 import { contentSecurityPolicy } from "@/lib/security/csp";
+import { coverFor } from "@/lib/shoots/cover";
+import { byKind, inShownOrder, kindOf } from "@/lib/shoots/kinds";
+import type { InspoItem } from "@/lib/shoots/types";
 import { expandVideoLink } from "@/lib/shoots/expand-link";
-import { hopAllowed, isShortVideoLink, PLAYER_ORIGINS, playerOf, playsHere, startSeconds } from "@/lib/shoots/players";
+import { coverSources, hasCover, hopAllowed, isShortVideoLink, PLAYER_ORIGINS, playerOf, playsHere, startSeconds } from "@/lib/shoots/players";
 
 vi.mock("server-only", () => ({}));
 
@@ -101,5 +104,76 @@ describe("shoots: opening a short link", () => {
     expect(await expandVideoLink("https://www.instagram.com/reel/DLHx_WNoXoY/", fetcher as unknown as typeof fetch)).toEqual({ src: "https://www.instagram.com/reel/DLHx_WNoXoY/embed/", shape: "post" });
     expect(await expandVideoLink("https://example.com/a", fetcher as unknown as typeof fetch)).toBeNull();
     expect(fetcher).not.toHaveBeenCalled();
+  });
+});
+
+describe("shoots: a video's cover picture on its card (owner, Nov 12)", () => {
+  const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3, 0xff, 0xd9]);
+  const image = (type = "image/jpeg", body: BodyInit = JPEG) => new Response(body, { status: 200, headers: { "content-type": type } });
+  const redirect = (to: string) => new Response(null, { status: 302, headers: { location: to } });
+  const CDN = "https://scontent-xxc1-1.cdninstagram.com/v/t51/cover_n.jpg?stp=dst-jpg_p320x320&oe=6A1";
+
+  test("Instagram and YouTube have one; TikTok and Vimeo don't", () => {
+    expect(coverSources(playerOf("https://www.instagram.com/reel/DWowsEjjQlE/?igsh=x")!)).toEqual(["https://www.instagram.com/p/DWowsEjjQlE/media/?size=m"]);
+    expect(coverSources(playerOf("https://youtu.be/DLCLqMbBNbc")!)).toEqual(["https://i.ytimg.com/vi/DLCLqMbBNbc/hq720.jpg", "https://i.ytimg.com/vi/DLCLqMbBNbc/mqdefault.jpg"]);
+    expect(coverSources(playerOf("https://www.tiktok.com/@maria/video/7301234567890123456")!)).toEqual([]);
+    expect(hasCover("https://www.instagram.com/p/C08-b3uM0U9/")).toBe(true);
+    expect(hasCover("https://www.instagram.com/share/reel/BAabcdEFG")).toBe(true);
+    expect(hasCover("https://vm.tiktok.com/ZMh1abcDE/")).toBe(false);
+    expect(hasCover("https://vimeo.com/76979871")).toBe(false);
+    expect(hasCover("https://www.pinterest.com/pin/1/")).toBe(false);
+  });
+
+  test("Instagram: the post's /media/ address → its picture server → the JPEG", async () => {
+    const asked: string[] = [];
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => {
+      asked.push(String(input));
+      return asked.length === 1 ? redirect(CDN) : image();
+    });
+    const cover = await coverFor("https://www.instagram.com/reel/DWowsEjjQlE/", fetcher as unknown as typeof fetch);
+    expect(cover?.type).toBe("image/jpeg");
+    expect([...cover!.bytes]).toEqual([...JPEG]);
+    expect(asked).toEqual(["https://www.instagram.com/p/DWowsEjjQlE/media/?size=m", CDN]);
+  });
+
+  test("YouTube: the big thumbnail, or the medium one when there's no big one", async () => {
+    const fetcher = vi.fn(async (input: RequestInfo | URL) => (String(input).includes("hq720") ? new Response("nope", { status: 404 }) : image()));
+    expect((await coverFor("https://www.youtube.com/watch?v=DLCLqMbBNbc", fetcher as unknown as typeof fetch))?.type).toBe("image/jpeg");
+    expect(fetcher.mock.calls.map(([u]) => String(u))).toEqual(["https://i.ytimg.com/vi/DLCLqMbBNbc/hq720.jpg", "https://i.ytimg.com/vi/DLCLqMbBNbc/mqdefault.jpg"]);
+  });
+
+  test("no picture: a login page, an SVG, too big, another host, no answer, TikTok", async () => {
+    const run = (fetcher: (input: RequestInfo | URL) => Promise<Response>) => coverFor("https://www.instagram.com/p/C08-b3uM0U9/", fetcher as unknown as typeof fetch);
+    expect(await run(async (u) => (String(u).includes("/media/") ? redirect("https://www.instagram.com/accounts/login/") : new Response("<html>", { headers: { "content-type": "text/html" } })))).toBeNull();
+    expect(await run(async (u) => (String(u).includes("/media/") ? redirect(CDN) : image("image/svg+xml", "<svg/>")))).toBeNull();
+    expect(await run(async (u) => (String(u).includes("/media/") ? redirect(CDN) : image("image/jpeg", new Uint8Array(1_600_000))))).toBeNull();
+    const evil = vi.fn(async () => redirect("http://169.254.169.254/latest/meta-data"));
+    expect(await run(evil)).toBeNull();
+    expect(evil).toHaveBeenCalledTimes(1);
+    expect(await run(async () => { throw new Error("timeout"); })).toBeNull();
+    const never = vi.fn();
+    expect(await coverFor("https://www.tiktok.com/@maria/video/7301234567890123456", never as unknown as typeof fetch)).toBeNull();
+    expect(never).not.toHaveBeenCalled();
+  });
+});
+
+describe("shoots: photos and videos never mixed (owner, Nov 12)", () => {
+  const item = (id: string, over: Partial<InspoItem>): InspoItem => ({ id, group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: id, who: [], sort: 0, ...over });
+  const reel = item("reel", { type: "link", linkUrl: "https://www.instagram.com/reel/DWowsEjjQlE/" });
+  const photo1 = item("photo1", { type: "image", mediaUrl: "https://x.public.blob.vercel-storage.com/a.jpg" });
+  const pin = item("pin", { type: "link", linkUrl: "https://www.pinterest.com/pin/1/" });
+  const tiktok = item("tiktok", { type: "link", linkUrl: "https://vm.tiktok.com/ZMh1abcDE/" });
+  const note = item("note", {});
+  const photo2 = item("photo2", { type: "image", mediaUrl: "https://x.public.blob.vercel-storage.com/b.jpg" });
+
+  test("photos, then videos, then ideas and links; each keeps its order", () => {
+    expect([reel, photo1, pin, tiktok, note, photo2].map(kindOf)).toEqual(["video", "photo", "other", "video", "other", "photo"]);
+    expect(byKind([reel, photo1, pin, tiktok, note, photo2]).map((g) => [g.kind, g.items.map((i) => i.id)])).toEqual([
+      ["photo", ["photo1", "photo2"]],
+      ["video", ["reel", "tiktok"]],
+      ["other", ["pin", "note"]],
+    ]);
+    expect(inShownOrder([tiktok, photo2, reel]).map((i) => i.id)).toEqual(["photo2", "tiktok", "reel"]);
+    expect(byKind([])).toEqual([]);
   });
 });

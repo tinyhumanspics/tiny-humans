@@ -303,6 +303,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   `GET /api/admin/shoots/player?link=`). `InspoTile` shows ▶ "Play here" and the viewer (`InspoLightbox` +
   `InspoPlayer`) plays it; nothing loads from the apps before a tap. Player hosts are in the CSP `frame-src`
   (`PLAYER_ORIGINS`, unit-tested). Tests answer the players' addresses themselves (never reach Instagram/TikTok).
+  Cover pictures (owner, Nov 12): Instagram + YouTube only (`coverSources`; TikTok/Vimeo give none), fetched by the
+  owner-only `GET /api/admin/shoots/cover?link=` (`lib/shoots/cover.ts`: the apps' https hosts only, ≤ 1.5 MB
+  JPEG/PNG/WebP/AVIF, nothing stored, private 1-day browser cache) because Instagram's picture CDN sends
+  `Cross-Origin-Resource-Policy: same-origin`. No picture = the ▶ card. Every list of shots shows photos, then videos,
+  then ideas/links on separate rows, never mixed (`lib/shoots/kinds.ts`); the viewer follows that order.
 - Family members + who's in each shot (owner, Nov 10; migration 0025_family): bundles whose people/features mention
   siblings (`asksFamily()`, today Our Family Story) ask "Who else is in the photos?" (`config/booking.ts` familyRoles;
   all optional (owner, Nov 10): the list starts empty, an empty row is left out, a name without a role is kept as
