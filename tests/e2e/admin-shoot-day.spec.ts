@@ -171,6 +171,68 @@ test("lightbox: tap a photo, next, Mark as done, Escape; Clear all ticks takes t
   await expect(page.getByText("0 of 6 ticked")).toBeVisible();
 });
 
+test("videos play inside the sheet: Instagram, a TikTok short link, one that can't play; Mark as done; Escape", async ({ page }) => {
+  const REEL = item({ id: "eeeeeeee-1111-4111-8111-111111111111", type: "link", linkUrl: "https://www.instagram.com/reel/DLHx_WNoXoY/?igsh=abc", platform: "Instagram", caption: "Sleepy reel", sort: 1 });
+  const SHORT = item({ id: "ffffffff-1111-4111-8111-111111111111", type: "link", linkUrl: "https://vm.tiktok.com/ZMh1abcDE/", platform: "TikTok", caption: "Swaddle twirl", sort: 2 });
+  const GONE = item({ id: "abababab-1111-4111-8111-111111111111", type: "link", linkUrl: "https://vm.tiktok.com/ZMgone/", platform: "TikTok", caption: "Old one", sort: 3 });
+  const PIN = item({ id: "cdcdcdcd-1111-4111-8111-111111111111", type: "link", linkUrl: "https://www.pinterest.com/pin/99360735500167749/", platform: "Pinterest", caption: "Pin idea", sort: 4 });
+  const shoot = { ...morales, inspo: [PHOTO1, REEL, SHORT, GONE, PIN, IDEA], inspoCount: 5 };
+  const state = await fakeDay(page);
+  await page.unroute(`**/api/admin/shoots/day/${DATE}`);
+  await page.route(`**/api/admin/shoots/day/${DATE}`, (route) => route.fulfill({ json: { day: { ...SHEET, shoots: [shoot], ticks: [...state.ticks] } } }));
+  // the apps' players are answered here: a test never reaches Instagram or TikTok
+  const players: string[] = [];
+  await page.route(/^https:\/\/www\.(instagram|tiktok|youtube-nocookie)\.com\//, (route) => {
+    players.push(route.request().url());
+    return route.fulfill({ contentType: "text/html", body: '<!doctype html><html lang="en"><title>Player</title><p>Player</p></html>' });
+  });
+  const asked: string[] = [];
+  await page.route("**/api/admin/shoots/player?*", (route) => {
+    const link = new URL(route.request().url()).searchParams.get("link")!;
+    asked.push(link);
+    return route.fulfill({ json: { player: link.includes("gone") ? null : { src: "https://www.tiktok.com/player/v1/7301234567890123456?rel=0", shape: "tall" } } });
+  });
+  await page.goto(`/admin/shoots/${DATE}`);
+  const family = page.getByRole("region", { name: "The Morales family" });
+  await expect(family).toContainText("Tap a photo to see it big, or a video to play it here.");
+  // nothing loads from the apps until a video is tapped; a Pinterest pin still opens the link
+  await expect(family.getByRole("link", { name: /Pinterest/ })).toHaveAttribute("href", PIN.linkUrl!);
+  expect(players).toEqual([]);
+
+  const opener = family.getByRole("button", { name: "Instagram Play here (Sleepy reel)" });
+  await opener.click();
+  const box = page.getByRole("dialog");
+  await expect(box).toHaveAccessibleName("Sleepy reel");
+  await expect(box).toContainText("2 of 4");
+  const reel = box.frameLocator("iframe[title='Instagram video: Sleepy reel']");
+  await expect(reel.getByText("Player")).toBeVisible();
+  expect(players).toEqual(["https://www.instagram.com/reel/DLHx_WNoXoY/embed/"]);
+  const open = box.getByRole("link", { name: "Open in Instagram ↗ (opens a new tab)" });
+  await expect(open).toHaveAttribute("href", REEL.linkUrl!);
+  await expect(open).toHaveAttribute("target", "_blank");
+  await box.getByRole("button", { name: "Mark as done" }).click();
+  await expect.poll(() => state.posts).toEqual([{ key: inspoKey(REEL.id), on: true }]);
+
+  // a short TikTok link: the server finds the video first
+  await box.getByRole("button", { name: "Next →" }).click();
+  await expect(box.locator("iframe[title='TikTok video: Swaddle twirl']")).toHaveAttribute("src", "https://www.tiktok.com/player/v1/7301234567890123456?rel=0");
+  expect(asked).toEqual([SHORT.linkUrl]);
+  await box.getByRole("button", { name: "Next →" }).click();
+  await expect(box).toContainText("This video can't play here. It may be private or removed.");
+  await expect(box.getByRole("link", { name: "Open in TikTok ↗ (opens a new tab)" }).first()).toHaveAttribute("href", GONE.linkUrl!);
+  await expect(box.locator("iframe")).toHaveCount(0);
+  await box.getByRole("button", { name: "Next →" }).click();
+  await expect(box.getByRole("img", { name: "Basket nap, sleepy curl" })).toBeVisible();
+
+  await page.evaluate(() => document.fonts.ready);
+  const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
+  expect(scan.violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(opener).toBeFocused();
+  await expect(family.getByRole("button", { name: "Done: Sleepy reel" })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("folder: drop photos (shrunk, uploaded one by one), a video is turned away, tap a photo to see it big", async ({ page }) => {
   const folder: ShootDetail = { ...morales, inspo: [] };
   const uploads: { group: string; type: string; width: string }[] = [];

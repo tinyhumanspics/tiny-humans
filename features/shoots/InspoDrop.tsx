@@ -6,9 +6,10 @@ import { preparePhoto } from "@/lib/admin/client";
 import { cn } from "@/lib/cn";
 import { shootsApi } from "@/lib/shoots/client";
 import { normalizeLink, platformOf } from "@/lib/shoots/links";
+import { playsHere } from "@/lib/shoots/players";
 import { picksWho, toggleWho, WHO_ALL, type ShootPerson } from "@/lib/shoots/people";
 import type { InspoGroup, InspoItem } from "@/lib/shoots/types";
-import InspoLightbox from "./InspoLightbox";
+import InspoLightbox, { viewerItems } from "./InspoLightbox";
 import { saveText, useAutosave } from "./useAutosave";
 import { useTwoTap } from "./useTwoTap";
 import css from "./Shoots.module.css";
@@ -23,7 +24,8 @@ const isVisual = (i: InspoItem) => (i.type === "image" || i.type === "video") &&
 /**
  * One group of a shoot folder (the family's inspo, or our BTS-on-phones ideas): drop photos (or pick them on the
  * phone; shrunk to 2000 px before upload), paste a link, add a shot with no photo, then a card per item with
- * "What's the shot?" and Remove. Tap a photo to see it full screen. Videos: paste the link (owner, Nov 10: no video uploads).
+ * "What's the shot?" and Remove. Tap a photo to see it full screen. Videos: paste the link (owner, Nov 10: no video uploads);
+ * Instagram, TikTok, YouTube and Vimeo links play in the same viewer (owner, Nov 11).
  */
 export default function InspoDrop({
   shootKey,
@@ -51,7 +53,7 @@ export default function InspoDrop({
   const linkRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const linkId = `link-${group}`;
-  const photos = items.filter(isVisual).map((i) => ({ id: i.id, src: i.mediaUrl!, caption: i.caption }));
+  const photos = viewerItems(items);
 
   const addFiles = async (list: FileList | File[]) => {
     const files = [...list];
@@ -200,7 +202,7 @@ export default function InspoDrop({
   );
 }
 
-/** The picture part of a card: the photo (tap = full screen), the link, or "Shot idea · no photo". */
+/** The picture part of a card: the photo (tap = full screen), a video (tap = plays here), the link, or "Shot idea · no photo". */
 export function InspoTile({ item, onOpen, linkHint }: { item: InspoItem; onOpen: () => void; linkHint?: string }) {
   const w = WORDS[item.group];
   if (isVisual(item)) {
@@ -209,6 +211,16 @@ export function InspoTile({ item, onOpen, linkHint }: { item: InspoItem; onOpen:
         {/* eslint-disable-next-line @next/next/no-img-element -- owner-only photos: never through the public image optimizer */}
         <img src={item.mediaUrl!} alt="" loading="lazy" />
         <span className={styles.visuallyHidden}>See {item.caption || "this photo"} big</span>
+      </button>
+    );
+  }
+  if (item.type === "link" && playsHere(item.linkUrl)) {
+    return (
+      <button type="button" className={cn(css.linkVis, css.playVis)} onClick={onOpen}>
+        <span className={css.playIcon} aria-hidden="true" />
+        {item.platform ?? "Video"}
+        <small>Play here</small>
+        <span className={styles.visuallyHidden}> ({item.caption || "this video"})</span>
       </button>
     );
   }

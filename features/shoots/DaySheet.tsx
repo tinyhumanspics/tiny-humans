@@ -9,14 +9,13 @@ import { inspoKey, progressOf } from "@/lib/shoots/ticks";
 import type { BringLine, InspoGroup, InspoItem, ShootDetail } from "@/lib/shoots/types";
 import { InspoTile } from "./InspoDrop";
 import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
-import InspoLightbox, { type LightboxPhoto } from "./InspoLightbox";
+import InspoLightbox, { type LightboxPhoto, viewerItems } from "./InspoLightbox";
 import NotReady from "./NotReady";
 import { useDayTicks } from "./useDayTicks";
 import { useTwoTap } from "./useTwoTap";
 import css from "./Shoots.module.css";
 
 const sectionId = (key: string) => `s-${key.replace(/[^A-Za-z0-9_-]/g, "")}`;
-const isPhoto = (i: InspoItem) => (i.type === "image" || i.type === "video") && Boolean(i.mediaUrl);
 
 /**
  * /admin/shoots/[date]: the sheet for a shoot day, phone first (template: "Shoot day sheet"). Who's on camera,
@@ -283,10 +282,10 @@ function ShootBlock({
 
       {(["inspo", "bts"] as const).map((g) => {
         const sections = g === "inspo" ? sectionsFor(group(g)) : null;
-        // photos open in the order they're shown (by section when there are sections)
+        // photos and videos open in the order they're shown (by section when there are sections)
         const items = sections ? sections.flatMap((x) => x.items) : group(g);
         const c = count(g);
-        const photos = items.filter(isPhoto).map((i) => ({ id: i.id, src: i.mediaUrl!, caption: i.caption }));
+        const photos = viewerItems(items);
         return (
           <div key={g}>
             <h3 className={css.orderH}>
@@ -294,7 +293,7 @@ function ShootBlock({
             </h3>
             {items.length ? (
               <>
-                {g === "inspo" && <p className={cn(css.help, "chalk-soft")}>Tap a photo to see it big. Tap its check once you have the shot.</p>}
+                {g === "inspo" && <p className={cn(css.help, "chalk-soft")}>Tap a photo to see it big, or a video to play it here. Tap its check once you have the shot.</p>}
                 {sections
                   ? sections.map((x) => {
                       const done = x.items.filter((i) => isTicked(inspoKey(i.id))).length;

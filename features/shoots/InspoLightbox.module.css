@@ -13,10 +13,24 @@
 }
 .bottom { justify-content: center; padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
 .count { font-family: var(--font-chalk); color: var(--chalk-muted); font-size: 1.05rem; }
+.topEnd { display: flex; align-items: center; justify-content: flex-end; gap: 6px 12px; flex-wrap: wrap; margin-left: auto; }
+.open {
+  display: inline-flex; align-items: center; min-height: 48px; padding: 6px 4px; font-family: var(--font-chalk); font-size: 1.1rem;
+  color: var(--cloud-blue); text-decoration: underline; text-underline-offset: 3px;
+}
+.open:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
 
 .stage { margin: 0; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; justify-items: center; align-items: center; padding: 0 clamp(8px, 3vw, 24px); }
 .stage img { max-width: 100%; max-height: 100%; min-height: 0; object-fit: contain; border-radius: 8px; transition: opacity 0.2s; }
 .doneImage { opacity: 0.55; }
+
+/* a pasted video playing here (InspoPlayer): each app's own player, sized to the screen */
+.player { display: block; min-height: 0; max-width: 100%; max-height: 100%; border: 0; border-radius: 8px; background: #000; }
+.tall { height: 100%; width: auto; aspect-ratio: 9 / 16; }
+.wide { width: min(100%, 1100px); height: auto; aspect-ratio: 16 / 9; }
+.post { width: min(100%, 440px); height: 100%; background: #fff; }
+.playerNote { display: grid; justify-items: center; gap: 12px; max-width: 30em; margin: 0; text-align: center; font-size: 1.2rem; }
+.playerNote p { margin: 0; }
 .caption { margin: 10px 0 0; text-align: center; font-size: 1.2rem; max-width: 40em; }
 
 .close, .nav, .mark, .markOn {

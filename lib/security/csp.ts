@@ -20,7 +20,8 @@ export function contentSecurityPolicy({ dev = false, preview = false } = {}): st
     ["img-src", ["'self'", "data:", "blob:", "https://*.public.blob.vercel-storage.com", "https://www.facebook.com", ...vercelLive]],
     ["font-src", ["'self'", ...vercelLive]],
     ["connect-src", ["'self'", "https://www.facebook.com", "https://connect.facebook.net", ...vercelLive]],
-    ["frame-src", ["'self'", ...vercelLive]],
+    // /admin → Shoots plays pasted inspo videos in each app's own player (lib/shoots/players.ts PLAYER_ORIGINS)
+    ["frame-src", ["'self'", "https://www.youtube-nocookie.com", "https://www.instagram.com", "https://www.tiktok.com", "https://player.vimeo.com", ...vercelLive]],
     ["object-src", ["'none'"]],
     ["base-uri", ["'self'"]],
     ["form-action", ["'self'"]],

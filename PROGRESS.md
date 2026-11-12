@@ -223,6 +223,14 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Shoots: video links play inside the day sheet — LIVE Nov 12 (owner: "Let's do it then")**. Owner asked to
+  play a pasted video "and stay in the tiny humans shoot day sheet" instead of opening Instagram. Instagram (posts,
+  Reels, also /<account>/reel/…), TikTok (incl. vm.tiktok.com / tiktok.com/t short links, opened on the server),
+  YouTube (watch, youtu.be, Shorts, live, start time) and Vimeo links show a ▶ "Play here" card; tapping plays the
+  app's own embed player in the photo viewer (Previous/Next through photos + videos, Mark as done, "Open in … ↗").
+  Pinterest/Facebook/other links still open the link. Nothing loads from the apps until a tap. TikTok's player
+  refuses automated browsers, so only a real phone can check it (owner to try one). Next: cover pictures on the card
+  (owner, Nov 12: "at least the reel picture so I know which one it is").
 - [x] **One "Little moments" gallery with inspiration — LIVE Nov 11 (owner: "everything is approved… let's push it")**.
   Owner: drop the "Book a memory like this one" boxes and the sections; one gallery (3 per row, on the home page: the
   Portfolio link, not a separate page); a line asking families to pick one as their reference; tapping a picture shows
@@ -2184,6 +2192,15 @@ Severity: critical / high / medium / low. Found in Phase 0 unless noted.
   unsubscribe (bulk senders: `List-Unsubscribe` URL + `List-Unsubscribe-Post: List-Unsubscribe=One-Click`, RFC 8058,
   the POST returns 200): https://resend.com/docs/dashboard/emails/custom-headers ·
   https://resend.com/docs/dashboard/emails/add-unsubscribe-to-transactional-emails
+- **Inspo video players (Nov 12):** TikTok Embed Player `https://www.tiktok.com/player/v1/{post id}` (numeric id;
+  params controls/autoplay/loop/rel/description…; supports photo posts; oEmbed `https://www.tiktok.com/oembed?url=`
+  returns `embed_product_id`, no thumbnail) https://developers.tiktok.com/doc/embed-player/ · Meta oEmbed is tokenless
+  since 2026-06-15 (`graph.facebook.com/v25.0/instagram_oembed?url=`), fields html/provider/type/version/width only (no
+  thumbnail_url), 1,000 req/h, Reels supported; the `/p|reel/<code>/embed/` iframe plays Reels inline (tested Chromium +
+  WebKit) https://developers.facebook.com/blog/post/2026/06/15/tokenless-access-to-meta-oembed-apis/ · YouTube embeds
+  need a Referer (Error 153 with no-referrer/same-origin); our `strict-origin-when-cross-origin` is right; use
+  youtube-nocookie https://til.simonwillison.net/youtube/fixing-153-embed · Instagram CDN images send
+  `Cross-Origin-Resource-Policy: same-origin` (can't be hotlinked in an <img>).
 
 ## Local test database
 **Oct 15:** the local sample bookings were shifted for the dashboard preview (session dates +7 days, booking dates spread

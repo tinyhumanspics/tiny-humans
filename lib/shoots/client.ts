@@ -1,3 +1,4 @@
+import type { Player } from "./players";
 import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail } from "./types";
 
 /** Browser calls for /admin → Shoots (owner only; the routes check the session). */
@@ -55,6 +56,9 @@ export const shootsApi = {
     form.append("height", String(photo.height));
     return (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/photo`, { method: "POST", body: form })).item;
   },
+
+  /** A short share link's player (the server follows its redirect); null = open it in the app instead. */
+  player: async (link: string) => (await call<{ player: Player | null }>(`/api/admin/shoots/player?${new URLSearchParams({ link })}`)).player,
 
   day: async (date: string) => (await call<{ day: DaySheet }>(`/api/admin/shoots/day/${date}`)).day,
   tick: (date: string, key: string, on: boolean) => call<void>("/api/admin/shoots/ticks", { method: "POST", body: body({ date, key, on }) }),

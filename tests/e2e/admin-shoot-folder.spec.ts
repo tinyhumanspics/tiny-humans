@@ -75,7 +75,7 @@ const MORALES: ShootDetail = {
   bringExtra: [],
   inspo: [
     item({ caption: "Basket nap, sleepy curl" }),
-    item({ id: "22222222-2222-4222-8222-222222222222", group: "bts", type: "link", linkUrl: "https://www.instagram.com/reel/abc/", platform: "Instagram", caption: "Camera-back reveal" }),
+    item({ id: "22222222-2222-4222-8222-222222222222", group: "bts", type: "link", linkUrl: "https://www.instagram.com/reel/DLHx_WNoXoY/", platform: "Instagram", caption: "Camera-back reveal" }),
   ],
 };
 
@@ -144,15 +144,31 @@ test("a booking's folder: header facts, their pick, inspo and BTS cards", async 
 
   await expect(page.getByRole("heading", { name: "Inspo for Sofia", level: 2 })).toBeVisible();
   await expect(page.getByLabel("What's the shot?")).toHaveValue("Basket nap, sleepy curl");
-  const insta = page.getByRole("link", { name: /Instagram/ });
-  await expect(insta).toHaveAttribute("href", "https://www.instagram.com/reel/abc/");
-  await expect(insta).toHaveAttribute("target", "_blank");
+  // a video link plays inside the folder (the viewer); nothing loads from Instagram until it's tapped
+  const players: string[] = [];
+  await page.route("https://www.instagram.com/**", (route) => {
+    players.push(route.request().url());
+    return route.fulfill({ contentType: "text/html", body: '<!doctype html><html lang="en"><title>Player</title><p>Player</p></html>' });
+  });
+  const insta = page.getByRole("button", { name: "Instagram Play here (Camera-back reveal)" });
+  await expect(insta).toBeVisible();
   await expect(page.getByLabel("What's the idea?")).toHaveValue("Camera-back reveal");
   await expect(page.getByLabel("What the family asked for")).toHaveValue("Sofia sleeps best right after her 9:00 feed.");
 
   await page.evaluate(() => document.fonts.ready);
   const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
   expect(scan.violations).toEqual([]);
+
+  expect(players).toEqual([]);
+  await insta.click();
+  const box = page.getByRole("dialog", { name: "Camera-back reveal" });
+  await expect(box.frameLocator("iframe[title='Instagram video: Camera-back reveal']").getByText("Player")).toBeVisible();
+  expect(players).toEqual(["https://www.instagram.com/reel/DLHx_WNoXoY/embed/"]);
+  await expect(box.getByRole("link", { name: "Open in Instagram ↗ (opens a new tab)" })).toHaveAttribute("href", "https://www.instagram.com/reel/DLHx_WNoXoY/");
+  await expect(box.getByRole("button", { name: "Mark as done" })).toHaveCount(0);
+  await box.getByRole("button", { name: "Close" }).click();
+  await expect(box).toHaveCount(0);
+  await expect(insta).toBeFocused();
 });
 
 test("paste a link: a bad one is explained, a good one becomes a card", async ({ page }) => {
@@ -167,12 +183,12 @@ test("paste a link: a bad one is explained, a good one becomes a card", async ({
   await expect(field).toHaveAttribute("aria-invalid", "true");
   expect(sent.added).toEqual([]);
 
-  await field.fill("instagram.com/reel/xyz");
+  await field.fill("instagram.com/reel/DLHx_WNoXoY");
   await inspo.getByRole("button", { name: "Add", exact: true }).click();
   await expect(inspo.getByText("Instagram link added. Write what it is below.")).toBeVisible();
-  expect(sent.added).toEqual([{ type: "link", group: "inspo", url: "https://instagram.com/reel/xyz" }]);
+  expect(sent.added).toEqual([{ type: "link", group: "inspo", url: "https://instagram.com/reel/DLHx_WNoXoY" }]);
   await expect(field).toHaveValue("");
-  await expect(inspo.getByRole("link", { name: /Instagram/ })).toHaveCount(1);
+  await expect(inspo.getByRole("button", { name: /^Instagram Play here/ })).toHaveCount(1);
 });
 
 test("a BTS idea with no photo: caption saves by itself; Remove takes two taps", async ({ page }) => {
@@ -192,7 +208,7 @@ test("a BTS idea with no photo: caption saves by itself; Remove takes two taps",
   await expect(bts.getByRole("button", { name: /Tap again to remove \(Camera-back reveal\)/ })).toBeVisible();
   expect(sent.removed).toEqual([]);
   await bts.getByRole("button", { name: /Tap again to remove/ }).click();
-  await expect(bts.getByRole("link", { name: /Instagram/ })).toHaveCount(0);
+  await expect(bts.getByRole("button", { name: /^Instagram Play here/ })).toHaveCount(0);
   expect(sent.removed).toEqual(["22222222-2222-4222-8222-222222222222"]);
 });
 

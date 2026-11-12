@@ -297,6 +297,12 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   private store): show them only in /admin with `<img>` (never next/image or public pages), delete files BEFORE rows
   (`removeShootFiles`, only "shoots/" paths), and the lead delete route removes them first. No video uploads (owner, Nov
   10: videos are added as links, which open Instagram/TikTok/YouTube). Pure logic is unit tested; server code needs `scripts/local-db` (Blob faked).
+- Inspo videos (owner, Nov 12): `lib/shoots/players.ts` (pure) turns a pasted Instagram/TikTok/YouTube/Vimeo link into
+  the app's own embed player (`playerOf`); short share links (vm.tiktok.com, tiktok.com/t, instagram.com/share) are
+  followed on the server only to those apps' https hosts (`lib/shoots/expand-link.ts`, owner-only
+  `GET /api/admin/shoots/player?link=`). `InspoTile` shows ▶ "Play here" and the viewer (`InspoLightbox` +
+  `InspoPlayer`) plays it; nothing loads from the apps before a tap. Player hosts are in the CSP `frame-src`
+  (`PLAYER_ORIGINS`, unit-tested). Tests answer the players' addresses themselves (never reach Instagram/TikTok).
 - Family members + who's in each shot (owner, Nov 10; migration 0025_family): bundles whose people/features mention
   siblings (`asksFamily()`, today Our Family Story) ask "Who else is in the photos?" (`config/booking.ts` familyRoles;
   all optional (owner, Nov 10): the list starts empty, an empty row is left out, a name without a role is kept as
