@@ -59,7 +59,8 @@ freeze on `main` the day before launch except fixes.
 auto-translate, Shoots done days folded, unfinished "Not born yet" drafts (0029), Leads Completed (0030) + "Full name" +
 emailed waiver copy, Leads Not paid + deposit reminders (0031) with the "✓ Deposit reminder sent" pill, "✓ Signed
 waiver" + family release for Our Family Story + the parent's online copy, saved-details note moved to the bottom of
-the forms. **The owner ran 0029, 0030 and 0031 in Neon (Nov 11).** Parked: the waiver inside each shoot folder (branch
+the forms, Not born yet in 3 steps (backdrops + discount code, 0032) + Delete in Not paid. **The owner ran 0029, 0030, 0031
+and 0032 in Neon (Nov 11).** Parked: the waiver inside each shoot folder (branch
 `feat/shoot-waiver`). Open question: an automatic email for "Not born yet" families whose deposit page ran out.
 
 **Nov 10 (Claude Code, long session), all live and smoke-tested, main = `fb70ee1`:** % offers + one offer for all
@@ -223,7 +224,7 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 
 ## Owner requests (outside the original brief)
 - [x] **Not born yet in 3 steps (backdrops + discount code) and Delete in Not paid — LIVE Nov 11 (owner: "I love it go
-  ahead and push it"; migration 0032 needed for codes)**. Owner asked: delete test entries from Not paid; after
+  ahead and push it"; the owner ran migration 0032 the same night)**. Owner asked: delete test entries from Not paid; after
   "Reserve my spot", pick backdrops like a regular bundle or skip ("Not sure yet"); enter a discount code before the
   $50 (deposit stays $50, the % comes off the final bill). Checked with `scripts/local-db` + fake Stripe/Resend/Graph:
   SAVE10 on Our Little Story → reserved at $269.10, $50 paid, booked from the email link → booking SAVE10 −$29.90,
