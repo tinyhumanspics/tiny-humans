@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 type Ctx = { params: Promise<{ id: string; inspoId: string }> };
 
-/** Owner only: "What's the shot?" / "What's the idea?" */
+/** Owner only: "What's the shot?" / "What's the idea?", who's in it, or "Move to" another section. */
 export async function PATCH(req: Request, { params }: Ctx) {
   const blocked = await shootsGuard(req);
   if (blocked) return blocked;

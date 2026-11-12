@@ -308,6 +308,14 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   JPEG/PNG/WebP/AVIF, nothing stored, private 1-day browser cache) because Instagram's picture CDN sends
   `Cross-Origin-Resource-Policy: same-origin`. No picture = the ▶ card. Every list of shots shows photos, then videos,
   then ideas/links on separate rows, never mixed (`lib/shoots/kinds.ts`); the viewer follows that order.
+- Own sections in a shoot (owner, Nov 12; migration 0033_shoot_sections): "+ Add a section" under Inspo and BTS
+  ("Inspo for David · Section 2", renamable, max 12 per group), each with its own drop area/link box, "Move to" on every
+  card (PATCH inspo `{ sectionId }`), "Remove section" puts its shots back in the main list (FK ON DELETE SET NULL). The
+  `shoot_sections` table and `shoot_inspo.section_id` are database-only (raw SQL best effort in `lib/shoots/server.ts`,
+  like `who`; not in `lib/db/schema.ts`, so the 0033 snapshot equals 0032's): before 0033 runs everything works and
+  adding/moving answers "Sections need one database step first". `lib/shoots/sections.ts` (pure) splits a group into
+  main + sections (a shot whose section is gone shows in the main one); the day sheet draws one block per section with
+  its own count, photos/videos apart inside each. Verified on `scripts/local-db` with and without 0033.
 - Family members + who's in each shot (owner, Nov 10; migration 0025_family): bundles whose people/features mention
   siblings (`asksFamily()`, today Our Family Story) ask "Who else is in the photos?" (`config/booking.ts` familyRoles;
   all optional (owner, Nov 10): the list starts empty, an empty row is left out, a name without a role is kept as

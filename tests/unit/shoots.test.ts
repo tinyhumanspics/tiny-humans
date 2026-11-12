@@ -60,6 +60,7 @@ const item = (id: string, group: "inspo" | "bts", sort = 0): InspoItem => ({
   platform: null,
   caption: "",
   who: [],
+  sectionId: null,
   sort,
 });
 

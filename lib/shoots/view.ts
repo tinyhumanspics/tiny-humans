@@ -1,5 +1,5 @@
 import { autoConfirmOf, bookingKeyOf, bundleLine, inspoTitleOf, whoLineOf } from "./from-bookings";
-import type { InspoItem, ShootBookingFacts, ShootDetail, ShootSummary } from "./types";
+import type { InspoItem, ShootBookingFacts, ShootDetail, ShootSection, ShootSummary } from "./types";
 
 /** The owners' saved notes for a shoot (a `shoots` row); null fields fall back to the booking. */
 export interface ShootRow {
@@ -21,7 +21,7 @@ const orDefault = (value: string | null | undefined, fallback: string) => (value
  * A booking shoot (facts + its row once edited) or a shoot without a booking (row only) → its folder/day-sheet view.
  * Date and time always come from the booking, so a reschedule moves the shoot.
  */
-export function shootDetail(facts: ShootBookingFacts | null, row: ShootRow | null, inspo: InspoItem[]): ShootDetail {
+export function shootDetail(facts: ShootBookingFacts | null, row: ShootRow | null, inspo: InspoItem[], sections: ShootSection[] = []): ShootDetail {
   if (!facts && !row) throw new Error("shootDetail needs a booking or a row");
   const sorted = [...inspo].sort((a, b) => (a.group === b.group ? a.sort - b.sort : a.group === "inspo" ? -1 : 1));
   const counts = { inspoCount: sorted.filter((i) => i.group === "inspo").length, btsCount: sorted.filter((i) => i.group === "bts").length };
@@ -52,6 +52,7 @@ export function shootDetail(facts: ShootBookingFacts | null, row: ShootRow | nul
       autoConfirm: autoConfirmOf(facts),
       bringExtra,
       inspo: sorted,
+      sections,
     };
   }
   const r = row!;
@@ -79,6 +80,7 @@ export function shootDetail(facts: ShootBookingFacts | null, row: ShootRow | nul
     autoConfirm: [],
     bringExtra,
     inspo: sorted,
+    sections,
   };
 }
 

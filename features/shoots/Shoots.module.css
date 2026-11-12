@@ -285,6 +285,14 @@ a.linkVis:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset:
 .people li { padding: 2px 10px; border-radius: 8px; border: 1.5px solid var(--chalk-faint); font-size: 1rem; color: var(--chalk-muted); }
 .people li b { font-weight: 400; color: var(--chalk-white); }
 .whoSection { margin-top: 14px; }
+/* the owner's own sections inside Inspo / BTS (ShootFolder GroupSections) */
+.ownSection { margin-top: 22px; padding: 14px; border: 2px dashed color-mix(in srgb, var(--sun-yellow) 55%, transparent); border-radius: 14px 16px 13px 15px; }
+.ownTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.35rem; color: var(--chalk-white); overflow-wrap: anywhere; }
+.ownActions { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 2px 0 8px; }
+.renameRow { margin: 8px 0; }
+.addSectionRow { margin: 18px 0 0; }
+.moveRow { margin-top: 6px; }
+.moveSelect { width: 100%; min-height: 44px; margin-top: 2px; }
 /* "Photos" / "Videos" / "Ideas and links": each kind on its own rows (lib/shoots/kinds.ts) */
 .kindH { margin: 12px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1rem; letter-spacing: 0.03em; color: var(--chalk-muted); }
 .whoH { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.2rem; color: var(--sun-yellow); }

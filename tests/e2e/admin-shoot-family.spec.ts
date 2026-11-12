@@ -11,7 +11,7 @@ const KEY = "b-TH-20261104-5150";
 const API = `**/api/admin/shoots/${KEY}`;
 
 const item = (id: string, caption: string, who: string[], group: "inspo" | "bts" = "inspo"): InspoItem => ({
-  id, group, type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption, who, sort: 0,
+  id, group, type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption, who, sectionId: null, sort: 0,
 });
 
 const RIVERAS: ShootDetail = {
@@ -29,6 +29,7 @@ const RIVERAS: ShootDetail = {
   },
   inspoTitle: "Inspo for David and Mia", whoLine: "David, newborn (0–2 weeks) and Mia, newborn (0–2 weeks), with Mom (Ana), Dad, Brother (Leo)",
   said: "", saidFromBooking: false, confirm: [], autoConfirm: [], bringExtra: [],
+  sections: [],
   inspo: [
     item("aaaaaaaa-0000-4000-8000-000000000001", "Twins in the basket", ["baby:0", "baby:1"]),
     item("aaaaaaaa-0000-4000-8000-000000000002", "David close-up", ["baby:0"]),

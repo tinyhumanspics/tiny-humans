@@ -158,7 +158,7 @@ describe("shoots: a video's cover picture on its card (owner, Nov 12)", () => {
 });
 
 describe("shoots: photos and videos never mixed (owner, Nov 12)", () => {
-  const item = (id: string, over: Partial<InspoItem>): InspoItem => ({ id, group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: id, who: [], sort: 0, ...over });
+  const item = (id: string, over: Partial<InspoItem>): InspoItem => ({ id, group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: id, who: [], sectionId: null, sort: 0, ...over });
   const reel = item("reel", { type: "link", linkUrl: "https://www.instagram.com/reel/DWowsEjjQlE/" });
   const photo1 = item("photo1", { type: "image", mediaUrl: "https://x.public.blob.vercel-storage.com/a.jpg" });
   const pin = item("pin", { type: "link", linkUrl: "https://www.pinterest.com/pin/1/" });

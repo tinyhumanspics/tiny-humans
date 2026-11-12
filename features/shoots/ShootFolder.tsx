@@ -8,8 +8,9 @@ import styles from "@/features/admin/Admin.module.css";
 import { cn } from "@/lib/cn";
 import { shootsApi, ShootsApiError } from "@/lib/shoots/client";
 import { clock, shortDay } from "@/lib/shoots/format";
-import type { InspoItem, ShootDetail } from "@/lib/shoots/types";
-import InspoDrop from "./InspoDrop";
+import { groupTitle, MAX_SECTIONS_PER_GROUP, newSectionName, sectionBlocks } from "@/lib/shoots/sections";
+import type { InspoGroup, InspoItem, ShootDetail, ShootSection } from "@/lib/shoots/types";
+import InspoDrop, { type MoveTarget } from "./InspoDrop";
 import { peopleOf, picksWho } from "@/lib/shoots/people";
 import NotReady from "./NotReady";
 import { saveText, useAutosave } from "./useAutosave";
@@ -29,8 +30,20 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
       .catch((e: ShootsApiError) => setError(e));
   }, [shootKey]);
 
+  const [fresh, setFresh] = useState<string | null>(null);
   const added = useCallback((item: InspoItem) => setShoot((s) => (s ? { ...s, inspo: [...s.inspo, item] } : s)), []);
   const removed = useCallback((id: string) => setShoot((s) => (s ? { ...s, inspo: s.inspo.filter((i) => i.id !== id) } : s)), []);
+  const moved = useCallback((item: InspoItem) => setShoot((s) => (s ? { ...s, inspo: s.inspo.map((i) => (i.id === item.id ? item : i)) } : s)), []);
+  const sectionAdded = useCallback((section: ShootSection) => {
+    setFresh(section.id);
+    setShoot((s) => (s ? { ...s, sections: [...s.sections, section] } : s));
+  }, []);
+  const sectionRenamed = useCallback((section: ShootSection) => setShoot((s) => (s ? { ...s, sections: s.sections.map((x) => (x.id === section.id ? section : x)) } : s)), []);
+  // its shots go back to the main section, as on the server
+  const sectionRemoved = useCallback(
+    (id: string) => setShoot((s) => (s ? { ...s, sections: s.sections.filter((x) => x.id !== id), inspo: s.inspo.map((i) => (i.sectionId === id ? { ...i, sectionId: null } : i)) } : s)),
+    [],
+  );
 
   if (error?.notReady) {
     return (
@@ -120,18 +133,207 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
             <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>
               What the family sends you, plus your own ideas. Say what each shot is{picksWho(people) ? " and who's in it: the day sheet groups them that way" : ""}.
             </p>
-            <InspoDrop shootKey={shoot.key} group="inspo" items={shoot.inspo.filter((i) => i.group === "inspo")} onAdd={added} onRemove={removed} people={people} />
+            <GroupSections shoot={shoot} group="inspo" people={people} fresh={fresh} onAdd={added} onRemove={removed} onMoved={moved} onSectionAdded={sectionAdded} onSectionRenamed={sectionRenamed} onSectionRemoved={sectionRemoved} />
           </section>
           <section className={css.block} aria-labelledby="bts-title">
             <h2 id="bts-title" className={cn(styles.h2, "chalk")}>BTS on phones</h2>
             <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>Your own ideas for clips and phone photos for Instagram.</p>
-            <InspoDrop shootKey={shoot.key} group="bts" items={shoot.inspo.filter((i) => i.group === "bts")} onAdd={added} onRemove={removed} />
+            <GroupSections shoot={shoot} group="bts" people={[]} fresh={fresh} onAdd={added} onRemove={removed} onMoved={moved} onSectionAdded={sectionAdded} onSectionRenamed={sectionRenamed} onSectionRemoved={sectionRemoved} />
           </section>
         </div>
         <aside className={css.colSide} aria-label="Notes">
           <Notes shoot={shoot} />
         </aside>
       </div>
+    </div>
+  );
+}
+
+/**
+ * One group (Inspo or BTS): its main list, then the owner's own sections (owner, Nov 12: "Inspo for David · Section 2",
+ * another outfit or a Reel), each with its own drop area, then "+ Add a section". Every card can "Move to" another one.
+ */
+function GroupSections({
+  shoot,
+  group,
+  people,
+  fresh,
+  onAdd,
+  onRemove,
+  onMoved,
+  onSectionAdded,
+  onSectionRenamed,
+  onSectionRemoved,
+}: {
+  shoot: ShootDetail;
+  group: InspoGroup;
+  people: ReturnType<typeof peopleOf>;
+  fresh: string | null;
+  onAdd: (item: InspoItem) => void;
+  onRemove: (id: string) => void;
+  onMoved: (item: InspoItem) => void;
+  onSectionAdded: (section: ShootSection) => void;
+  onSectionRenamed: (section: ShootSection) => void;
+  onSectionRemoved: (id: string) => void;
+}) {
+  const blocks = sectionBlocks(group, shoot.inspo, shoot.sections, shoot.inspoTitle);
+  const targets: MoveTarget[] = blocks.map((b) => ({ id: b.id, name: b.title }));
+  const [main, ...own] = blocks;
+  const shared = { shootKey: shoot.key, group, onAdd, onRemove, people, moveTo: targets, onMoved };
+  return (
+    <>
+      <InspoDrop {...shared} items={main.items} />
+      {own.map((b) => (
+        <OwnSection key={b.id} section={shoot.sections.find((x) => x.id === b.id)!} count={b.items.length} mainTitle={main.title} shootKey={shoot.key} startEditing={fresh === b.id} onRenamed={onSectionRenamed} onRemoved={onSectionRemoved}>
+          <InspoDrop {...shared} items={b.items} sectionId={b.id} compact />
+        </OwnSection>
+      ))}
+      <AddSection shootKey={shoot.key} group={group} full={own.length >= MAX_SECTIONS_PER_GROUP} name={newSectionName(group, shoot.sections, shoot.inspoTitle)} title={groupTitle(group, shoot.inspoTitle)} onAdded={onSectionAdded} />
+    </>
+  );
+}
+
+/** One of the owner's sections: its name (Rename), Remove section (two taps; its shots go back to the main one). */
+function OwnSection({
+  section,
+  count,
+  mainTitle,
+  shootKey,
+  startEditing,
+  onRenamed,
+  onRemoved,
+  children,
+}: {
+  section: ShootSection;
+  count: number;
+  mainTitle: string;
+  shootKey: string;
+  startEditing: boolean;
+  onRenamed: (section: ShootSection) => void;
+  onRemoved: (id: string) => void;
+  children: React.ReactNode;
+}) {
+  const [editing, setEditing] = useState(startEditing);
+  const [name, setName] = useState(section.name);
+  const [busy, setBusy] = useState<"save" | "remove" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const twoTap = useTwoTap();
+  const titleId = `section-${section.id}`;
+  const inputId = `section-name-${section.id}`;
+
+  useEffect(() => {
+    if (!editing) return;
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, [editing]);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const next = name.trim();
+    if (!next) {
+      setError("Give the section a name.");
+      inputRef.current?.focus();
+      return;
+    }
+    setBusy("save");
+    setError(null);
+    try {
+      onRenamed(await shootsApi.renameShotSection(shootKey, section.id, next));
+      setEditing(false);
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const remove = () =>
+    twoTap.tap(async () => {
+      setBusy("remove");
+      setError(null);
+      try {
+        await shootsApi.deleteShotSection(shootKey, section.id);
+        onRemoved(section.id);
+      } catch (err) {
+        setError((err as Error).message);
+        setBusy(null);
+        twoTap.reset();
+      }
+    });
+
+  return (
+    <section className={css.ownSection} aria-labelledby={titleId}>
+      <h3 id={titleId} className={css.ownTitle}>{section.name}</h3>
+      {editing ? (
+        <form className={css.renameRow} onSubmit={save} noValidate>
+          <label className={cn(styles.label, "chalk-soft")} htmlFor={inputId}>Section name</label>
+          <div className={css.linkRow}>
+            <input ref={inputRef} id={inputId} className={styles.input} value={name} maxLength={80} onChange={(e) => setName(e.target.value)} />
+            <button type="submit" className={styles.smallButton} disabled={busy !== null}>{busy === "save" ? "Saving…" : "Save"}</button>
+          </div>
+          <button
+            type="button"
+            className={cn(styles.linkButton, "chalk-soft")}
+            onClick={() => {
+              setName(section.name);
+              setEditing(false);
+              setError(null);
+            }}
+          >
+            Cancel
+          </button>
+        </form>
+      ) : (
+        <p className={css.ownActions}>
+          <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => setEditing(true)}>
+            Rename<span className={styles.visuallyHidden}> {section.name}</span>
+          </button>
+          <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={remove} disabled={busy !== null}>
+            {busy === "remove"
+              ? "Removing…"
+              : twoTap.confirming
+                ? count
+                  ? `Tap again: its ${count === 1 ? "1 item moves" : `${count} items move`} to ${mainTitle}`
+                  : "Tap again to remove it"
+                : "Remove section"}
+            <span className={styles.visuallyHidden}> ({section.name})</span>
+          </button>
+        </p>
+      )}
+      {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
+      {children}
+    </section>
+  );
+}
+
+/** "+ Add a section": starts as "Inspo for David · Section 2" and opens its name to change it. */
+function AddSection({ shootKey, group, name, title, full, onAdded }: { shootKey: string; group: InspoGroup; name: string; title: string; full: boolean; onAdded: (section: ShootSection) => void }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (full) return <p className={cn(styles.hintSmall, css.addSectionRow, "chalk-soft")}>That&apos;s the most sections here ({MAX_SECTIONS_PER_GROUP}).</p>;
+  return (
+    <div className={css.addSectionRow}>
+      <button
+        type="button"
+        className={styles.smallButton}
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setError(null);
+          try {
+            onAdded(await shootsApi.addShotSection(shootKey, group, name));
+          } catch (err) {
+            setError((err as Error).message);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? "Adding…" : "+ Add a section"}
+        <span className={styles.visuallyHidden}> to {title}</span>
+      </button>
+      {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
     </div>
   );
 }

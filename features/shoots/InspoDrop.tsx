@@ -35,6 +35,10 @@ export default function InspoDrop({
   onAdd,
   onRemove,
   people = [],
+  sectionId = null,
+  moveTo = [],
+  onMoved,
+  compact = false,
 }: {
   shootKey: string;
   group: InspoGroup;
@@ -43,6 +47,13 @@ export default function InspoDrop({
   onRemove: (id: string) => void;
   /** The booking's babies and family: shot ideas then say who's in them (twins, family shoots). */
   people?: ShootPerson[];
+  /** The owner's section this list is (null = the group's main one): new photos and links go there. */
+  sectionId?: string | null;
+  /** Every section of this group (main first): each card gets "Move to" when there's more than one. */
+  moveTo?: MoveTarget[];
+  onMoved?: (item: InspoItem) => void;
+  /** A smaller drop area (BTS, the owner's sections). */
+  compact?: boolean;
 }) {
   const w = WORDS[group];
   const [link, setLink] = useState("");
@@ -53,7 +64,7 @@ export default function InspoDrop({
   const [viewing, setViewing] = useState<number | null>(null);
   const linkRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const linkId = `link-${group}`;
+  const linkId = `link-${group}${sectionId ? `-${sectionId}` : ""}`;
   const photos = viewerItems(inShownOrder(items));
   const kinds = byKind(items);
 
@@ -71,7 +82,7 @@ export default function InspoDrop({
     for (const [i, file] of pictures.entries()) {
       setMessage({ text: `Uploading ${i + 1} of ${pictures.length}…`, error: false });
       try {
-        const item = await shootsApi.uploadPhoto(shootKey, group, await preparePhoto(file));
+        const item = await shootsApi.uploadPhoto(shootKey, group, await preparePhoto(file), sectionId);
         onAdd(item);
         added += 1;
       } catch (err) {
@@ -106,7 +117,7 @@ export default function InspoDrop({
     }
     setBusy("link");
     try {
-      const item = await shootsApi.addLink(shootKey, group, url);
+      const item = await shootsApi.addLink(shootKey, group, url, sectionId);
       onAdd(item);
       setLink("");
       setMessage({ text: `${item.platform ?? "Link"} link added. Write what it is below.`, error: false });
@@ -121,7 +132,7 @@ export default function InspoDrop({
     setBusy("note");
     setMessage(null);
     try {
-      const item = await shootsApi.addNote(shootKey, group);
+      const item = await shootsApi.addNote(shootKey, group, sectionId);
       onAdd(item);
       setFocusId(item.id);
     } catch (err) {
@@ -135,7 +146,7 @@ export default function InspoDrop({
     <>
       <div className={cn(css.card, css.dropCard)}>
         <label
-          className={cn(css.dropZone, group === "bts" ? css.dropZoneSmall : "", over ? css.dropZoneOver : "")}
+          className={cn(css.dropZone, group === "bts" || compact ? css.dropZoneSmall : "", over ? css.dropZoneOver : "")}
           onDragEnter={(e) => {
             e.preventDefault();
             setOver(true);
@@ -197,7 +208,17 @@ export default function InspoDrop({
             {kinds.length > 1 && <p className={cn(css.kindH, "chalk-soft")}>{KIND_LABEL[k.kind]}</p>}
             <ul className={css.inspoGrid}>
               {k.items.map((item) => (
-                <InspoCard key={item.id} shootKey={shootKey} item={item} focus={focusId === item.id} onRemove={onRemove} onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))} people={group === "inspo" && picksWho(people) ? people : null} />
+                <InspoCard
+                  key={item.id}
+                  shootKey={shootKey}
+                  item={item}
+                  focus={focusId === item.id}
+                  onRemove={onRemove}
+                  onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))}
+                  people={group === "inspo" && picksWho(people) ? people : null}
+                  moveTo={moveTo.length > 1 && onMoved ? moveTo : null}
+                  onMoved={onMoved}
+                />
               ))}
             </ul>
           </div>
@@ -268,7 +289,30 @@ function PlayCard({ link, platform, caption, onOpen }: { link: string; platform:
   );
 }
 
-function InspoCard({ shootKey, item, focus, onRemove, onOpen, people }: { shootKey: string; item: InspoItem; focus: boolean; onRemove: (id: string) => void; onOpen: () => void; people: ShootPerson[] | null }) {
+export interface MoveTarget {
+  id: string | null;
+  name: string;
+}
+
+function InspoCard({
+  shootKey,
+  item,
+  focus,
+  onRemove,
+  onOpen,
+  people,
+  moveTo,
+  onMoved,
+}: {
+  shootKey: string;
+  item: InspoItem;
+  focus: boolean;
+  onRemove: (id: string) => void;
+  onOpen: () => void;
+  people: ShootPerson[] | null;
+  moveTo: MoveTarget[] | null;
+  onMoved?: (item: InspoItem) => void;
+}) {
   const w = WORDS[item.group];
   const [caption, setCaption] = useState(item.caption);
   const [removing, setRemoving] = useState(false);
@@ -325,6 +369,17 @@ function InspoCard({ shootKey, item, focus, onRemove, onOpen, people }: { shootK
         {status === "Saved" ? "" : status}
       </p>
       {people && <WhoPicker shootKey={shootKey} item={item} people={people} />}
+      {moveTo && onMoved && (
+        <MoveTo
+          shootKey={shootKey}
+          item={item}
+          targets={moveTo}
+          what={what}
+          beforeMove={() => autosave.flush()}
+          // the card moves to another list: it keeps what was just typed
+          onMoved={(moved) => onMoved({ ...moved, caption })}
+        />
+      )}
       <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={remove} disabled={removing}>
         {removing ? "Removing…" : twoTap.confirming ? "Tap again to remove" : "Remove"}
         <span className={styles.visuallyHidden}> ({what})</span>
@@ -370,6 +425,60 @@ function WhoPicker({ shootKey, item, people }: { shootKey: string; item: InspoIt
         ))}
       </div>
       {error && <p className={cn(css.cardStatus, css.formError, "chalk-soft")} role="alert">Couldn&apos;t save who&apos;s in it. Tap again.</p>}
+    </div>
+  );
+}
+
+/** "Move to": puts a card in another section of the same group (owner, Nov 12). */
+function MoveTo({
+  shootKey,
+  item,
+  targets,
+  what,
+  beforeMove,
+  onMoved,
+}: {
+  shootKey: string;
+  item: InspoItem;
+  targets: MoveTarget[];
+  what: string;
+  beforeMove: () => Promise<void>;
+  onMoved: (item: InspoItem) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const id = `move-${item.id}`;
+  const current = targets.some((t) => t.id === item.sectionId) ? (item.sectionId ?? "") : "";
+  return (
+    <div className={css.moveRow}>
+      <label className={cn(css.whoLabel, "chalk-soft")} htmlFor={id}>
+        Move to<span className={styles.visuallyHidden}> (section for {what})</span>
+      </label>
+      <select
+        id={id}
+        className={cn(styles.input, css.moveSelect)}
+        value={current}
+        disabled={busy}
+        onChange={async (e) => {
+          const to = e.target.value || null;
+          setBusy(true);
+          setError(null);
+          try {
+            await beforeMove().catch(() => undefined);
+            onMoved(await shootsApi.moveInspo(shootKey, item.id, to));
+          } catch (err) {
+            setError((err as Error).message);
+            setBusy(false);
+          }
+        }}
+      >
+        {targets.map((t) => (
+          <option key={t.id ?? "main"} value={t.id ?? ""}>
+            {t.name}
+          </option>
+        ))}
+      </select>
+      {error && <p className={cn(css.cardStatus, css.formError, "chalk-soft")} role="alert">{error}</p>}
     </div>
   );
 }

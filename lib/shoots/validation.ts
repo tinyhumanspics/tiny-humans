@@ -2,6 +2,7 @@ import { z } from "@/lib/validation/zod";
 import { BOOKING_KEY } from "./from-bookings";
 import { LIST_LIMITS, linesOf } from "./lists";
 import { MAX_LINK_LENGTH, normalizeLink } from "./links";
+import { SECTION_NAME_MAX } from "./sections";
 import { TICK_KEY } from "./ticks";
 
 /** What the Shoots API accepts (spec §6). Every owner route parses its input with these before touching the database. */
@@ -58,6 +59,8 @@ export const newStyledShootSchema = z
 export type NewStyledShoot = z.infer<typeof newStyledShootSchema>;
 
 const group = z.enum(["inspo", "bts"]);
+/** One of the owner's sections (lib/shoots/sections.ts); null / missing = the group's main section. */
+const sectionId = z.string().regex(UUID, "Pick a section from this shoot.").nullable().optional();
 const caption = z.string().trim().max(500, "Keep it under 500 characters.");
 
 /** ?link= of the video player / cover routes: one pasted link, as saved. */
@@ -78,9 +81,10 @@ export const newInspoSchema = z.discriminatedUnion("type", [
           return url ?? "";
         }),
       caption: caption.optional().default(""),
+      sectionId,
     })
     .strict(),
-  z.object({ type: z.literal("note"), group, caption }).strict(),
+  z.object({ type: z.literal("note"), group, caption, sectionId }).strict(),
 ]);
 export type NewInspo = z.infer<typeof newInspoSchema>;
 
@@ -89,9 +93,16 @@ export const inspoPatchSchema = z
   .object({
     caption: caption.optional(),
     who: z.array(z.string().regex(/^(all|baby:[0-2]|fam:[0-4])$/, "Pick people from this booking.")).max(9).optional(),
+    sectionId,
   })
   .strict()
-  .refine((p) => p.caption !== undefined || p.who !== undefined, "Nothing to save.");
+  .refine((p) => p.caption !== undefined || p.who !== undefined || p.sectionId !== undefined, "Nothing to save.");
+
+/** "+ Add a section" ({ group, name }) and renaming one ({ name }). */
+const sectionName = z.string().trim().min(1, "Give the section a name.").max(SECTION_NAME_MAX, `Keep the name under ${SECTION_NAME_MAX} characters.`);
+export const newSectionSchema = z.object({ group, name: sectionName }).strict();
+export const sectionPatchSchema = z.object({ name: sectionName }).strict();
+export const sectionIdSchema = z.string().regex(UUID, "Unknown section.");
 
 /** What we always bring: a new section, or a section's name/items/order. */
 export const newBringSectionSchema = z.object({ name: line(LIST_LIMITS.nameLength).optional().default("") }).strict();

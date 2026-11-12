@@ -6,10 +6,11 @@ import styles from "@/features/admin/Admin.module.css";
 import { cn } from "@/lib/cn";
 import { clock, dayParts, plural } from "@/lib/shoots/format";
 import { inspoKey, progressOf } from "@/lib/shoots/ticks";
-import type { BringLine, InspoGroup, InspoItem, ShootDetail } from "@/lib/shoots/types";
+import type { BringLine, InspoItem, ShootDetail } from "@/lib/shoots/types";
 import { InspoTile } from "./InspoDrop";
 import { byKind, inShownOrder, KIND_LABEL } from "@/lib/shoots/kinds";
 import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
+import { sectionBlocks } from "@/lib/shoots/sections";
 import InspoLightbox, { type LightboxPhoto, viewerItems } from "./InspoLightbox";
 import NotReady from "./NotReady";
 import { useDayTicks } from "./useDayTicks";
@@ -203,8 +204,6 @@ function ShootBlock({
 }) {
   const b = s.booking;
   const mapUrl = b?.mapUrl ?? (s.place ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.place)}` : null);
-  const group = (g: InspoGroup) => s.inspo.filter((i) => i.group === g);
-  const count = (g: InspoGroup) => progressOf(group(g).map((i) => inspoKey(i.id)), group(g).map((i) => inspoKey(i.id)).filter(isTicked));
   // twins and family shoots: everyone listed, and the shots in sections by who's in them
   const people = peopleOf(b);
   const sectionsFor = (items: InspoItem[]) => (picksWho(people) && items.some((i) => i.who.length) ? groupByWho(items, people) : null);
@@ -292,41 +291,58 @@ function ShootBlock({
       )}
 
       {(["inspo", "bts"] as const).map((g) => {
-        const sections = g === "inspo" ? sectionsFor(group(g)) : null;
-        // photos and videos open in the order they're shown (by section when there are sections; photos before videos)
-        const items = sections ? sections.flatMap((x) => inShownOrder(x.items)) : inShownOrder(group(g));
-        const c = count(g);
-        const photos = viewerItems(items);
+        // the group's main list, then the owner's own sections (owner, Nov 12), each with its own count
+        const blocks = sectionBlocks(g, s.inspo, s.sections, s.inspoTitle);
+        const whoSections = (items: InspoItem[]) => (g === "inspo" ? sectionsFor(items) : null);
+        // photos and videos open in the order they're shown: block by block, by who's in them, photos before videos
+        const ordered = blocks.flatMap((b) => {
+          const who = whoSections(b.items);
+          return who ? who.flatMap((x) => inShownOrder(x.items)) : inShownOrder(b.items);
+        });
+        const photos = viewerItems(ordered);
+        const own = blocks.length > 1;
+        const shown = blocks.filter((b, n) => n > 0 || b.items.length > 0 || !own);
         return (
           <div key={g}>
-            <h3 className={css.orderH}>
-              {g === "inspo" ? s.inspoTitle : "BTS on phones"} <span className={cn(css.orderCount, "chalk-soft")}>{c.ticked}/{c.total}</span>
-            </h3>
-            {items.length ? (
-              <>
-                {g === "inspo" && <p className={cn(css.help, "chalk-soft")}>Tap a photo to see it big, or a video to play it here. Tap its check once you have the shot.</p>}
-                {sections
-                  ? sections.map((x) => {
-                      const done = x.items.filter((i) => isTicked(inspoKey(i.id))).length;
-                      return (
-                        <div key={x.key || "none"} className={css.whoSection}>
-                          <h4 className={css.whoH}>
-                            {x.label} <span className={cn(css.orderCount, "chalk-soft")}>{done}/{x.items.length}</span>
-                          </h4>
-                          {x.detail && <p className={cn(css.whoDetail, "chalk-soft")}>{x.detail}</p>}
-                          {shotCards(x.items, photos)}
-                        </div>
-                      );
-                    })
-                  : shotCards(items, photos)}
-              </>
-            ) : g === "inspo" ? (
-              <p className={cn(css.empty, "chalk-soft")}>
-                No inspo yet. <Link href={`/admin/shoots/folder/${s.key}`}>Open the folder</Link> to drop in what the family sends.
-              </p>
-            ) : (
-              <p className={cn(styles.hintSmall, "chalk-soft")}>No BTS ideas for this shoot yet.</p>
-            )}
+            {shown.map((b, n) => {
+              const keys = b.items.map((i) => inspoKey(i.id));
+              const c = progressOf(keys, keys.filter(isTicked));
+              const who = whoSections(b.items);
+              return (
+                <div key={b.id ?? "main"}>
+                  <h3 className={css.orderH}>
+                    {b.title} <span className={cn(css.orderCount, "chalk-soft")}>{c.ticked}/{c.total}</span>
+                  </h3>
+                  {b.items.length ? (
+                    <>
+                      {g === "inspo" && n === 0 && <p className={cn(css.help, "chalk-soft")}>Tap a photo to see it big, or a video to play it here. Tap its check once you have the shot.</p>}
+                      {who
+                        ? who.map((x) => {
+                            const done = x.items.filter((i) => isTicked(inspoKey(i.id))).length;
+                            return (
+                              <div key={x.key || "none"} className={css.whoSection}>
+                                <h4 className={css.whoH}>
+                                  {x.label} <span className={cn(css.orderCount, "chalk-soft")}>{done}/{x.items.length}</span>
+                                </h4>
+                                {x.detail && <p className={cn(css.whoDetail, "chalk-soft")}>{x.detail}</p>}
+                                {shotCards(x.items, photos)}
+                              </div>
+                            );
+                          })
+                        : shotCards(b.items, photos)}
+                    </>
+                  ) : b.id ? (
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>Nothing in this section yet.</p>
+                  ) : g === "inspo" ? (
+                    <p className={cn(css.empty, "chalk-soft")}>
+                      No inspo yet. <Link href={`/admin/shoots/folder/${s.key}`}>Open the folder</Link> to drop in what the family sends.
+                    </p>
+                  ) : (
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>No BTS ideas for this shoot yet.</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         );
       })}

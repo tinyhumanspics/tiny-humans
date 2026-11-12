@@ -14,7 +14,7 @@ const JPEG = Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAP////////////////////
 // a 3×4 cream picture as the uploaded photo's address (no network needed)
 const PHOTO_SRC = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="400"><rect width="300" height="400" fill="#efe3cc"/></svg>');
 
-const item = (over: Partial<InspoItem>): InspoItem => ({ id: "11111111-1111-4111-8111-111111111111", group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: "", who: [], sort: 0, ...over });
+const item = (over: Partial<InspoItem>): InspoItem => ({ id: "11111111-1111-4111-8111-111111111111", group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: "", who: [], sectionId: null, sort: 0, ...over });
 const PHOTO1 = item({ id: "aaaaaaaa-1111-4111-8111-111111111111", type: "image", mediaUrl: PHOTO_SRC, caption: "Basket nap, sleepy curl" });
 const PHOTO2 = item({ id: "bbbbbbbb-1111-4111-8111-111111111111", type: "image", mediaUrl: PHOTO_SRC, caption: "Toes close-up", sort: 1 });
 const IDEA = item({ id: "cccccccc-1111-4111-8111-111111111111", group: "bts", caption: "Camera-back reveal" });
@@ -33,6 +33,7 @@ const morales: ShootDetail = {
   inspoTitle: "Inspo for Sofia", whoLine: "Sofia, newborn (0–2 weeks)", said: "Sofia sleeps best right after her 9:00 feed.", saidFromBooking: true,
   confirm: ["Leo (4) in a few?"], autoConfirm: ["Backdrops: 1 of 2 picked. The family picks the rest on their backdrop page."], bringExtra: ["Small stool for Leo"],
   inspo: [PHOTO1, PHOTO2, IDEA],
+  sections: [],
 };
 
 const SHEET: DaySheet = {
@@ -252,6 +253,49 @@ test("videos play inside the sheet: Instagram, a TikTok short link, one that can
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(opener).toBeFocused();
   await expect(family.getByRole("button", { name: "Done: Sleepy reel" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("own sections on the day sheet: each its own block and count, photos and videos apart inside", async ({ page }) => {
+  const OUTFIT = "5ec70000-1111-4111-8111-111111111111";
+  const REELS = "5ec70000-2222-4222-8222-222222222222";
+  const EMPTY = "5ec70000-3333-4333-8333-333333333333";
+  const inOutfitPhoto = item({ id: "abcd0001-1111-4111-8111-111111111111", type: "image", mediaUrl: PHOTO_SRC, caption: "Bunny hat", sectionId: OUTFIT });
+  const inOutfitReel = item({ id: "abcd0002-1111-4111-8111-111111111111", type: "link", linkUrl: "https://www.instagram.com/reel/DWowsEjjQlE/", platform: "Instagram", caption: "Hat reel", sectionId: OUTFIT, sort: -1 });
+  const btsReel = item({ id: "abcd0003-1111-4111-8111-111111111111", group: "bts", type: "link", linkUrl: "https://www.youtube.com/shorts/DLCLqMbBNbc", platform: "YouTube", caption: "Swaddle reel", sectionId: REELS });
+  const shoot: ShootDetail = {
+    ...morales,
+    inspo: [PHOTO1, inOutfitReel, inOutfitPhoto, IDEA, btsReel],
+    inspoCount: 3,
+    btsCount: 2,
+    sections: [
+      { id: OUTFIT, group: "inspo", name: "Inspo for Sofia · Outfit 2", sort: 0 },
+      { id: EMPTY, group: "inspo", name: "Inspo for Sofia · Section 3", sort: 1 },
+      { id: REELS, group: "bts", name: "BTS · Reel ideas", sort: 0 },
+    ],
+  };
+  const state = await fakeDay(page);
+  await page.unroute(`**/api/admin/shoots/day/${DATE}`);
+  await page.route(`**/api/admin/shoots/day/${DATE}`, (route) => route.fulfill({ json: { day: { ...SHEET, shoots: [shoot], ticks: [...state.ticks] } } }));
+  await page.route("**/api/admin/shoots/cover?*", (route) => route.fulfill({ status: 404 }));
+  await page.goto(`/admin/shoots/${DATE}`);
+  const family = page.getByRole("region", { name: "The Morales family" });
+  await expect(family.getByRole("heading", { level: 3 })).toHaveText(["What the family asked for", "Inspo for Sofia 0/1", "Inspo for Sofia · Outfit 2 0/2", "Inspo for Sofia · Section 3 0/0", "BTS on phones 0/1", "BTS · Reel ideas 0/1"]);
+  await expect(family).toContainText("Nothing in this section yet.");
+  // inside Outfit 2: the photo's row first, then the video's, even though the reel was saved first
+  await expect(family.getByText(/^(Photos|Videos|Ideas and links)$/)).toHaveText(["Photos", "Videos"]);
+
+  await family.getByRole("button", { name: "Done: Bunny hat" }).click();
+  await expect(family.getByRole("heading", { name: "Inspo for Sofia · Outfit 2 1/2" })).toBeVisible();
+  await expect(page.getByText("1 of 8 ticked")).toBeVisible();
+  // the viewer goes through the whole inspo in the order shown: main photo, then Outfit 2's photo, then its reel
+  await family.getByRole("button", { name: "See Bunny hat big" }).click();
+  const box = page.getByRole("dialog");
+  await expect(box).toContainText("2 of 3");
+  await page.keyboard.press("Escape");
+
+  await page.evaluate(() => document.fonts.ready);
+  const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
+  expect(scan.violations).toEqual([]);
 });
 
 test("folder: drop photos (shrunk, uploaded one by one), a video is turned away, tap a photo to see it big", async ({ page }) => {

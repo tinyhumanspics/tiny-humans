@@ -1,5 +1,5 @@
 import type { Player } from "./players";
-import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail } from "./types";
+import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail, ShootSection } from "./types";
 
 /** Browser calls for /admin → Shoots (owner only; the routes check the session). */
 
@@ -38,20 +38,29 @@ export const shootsApi = {
   saveShoot: async (key: string, patch: { said?: string; confirm?: string; bringExtra?: string }) =>
     (await call<{ shoot: ShootDetail }>(`/api/admin/shoots/${key}`, { method: "PATCH", body: body(patch) })).shoot,
   deleteShoot: (key: string) => call<void>(`/api/admin/shoots/${key}`, { method: "DELETE" }),
-  addLink: async (key: string, group: InspoGroup, url: string) =>
-    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "link", group, url }) })).item,
-  addNote: async (key: string, group: InspoGroup) =>
-    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "note", group, caption: "" }) })).item,
+  addLink: async (key: string, group: InspoGroup, url: string, sectionId: string | null = null) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "link", group, url, ...(sectionId ? { sectionId } : {}) }) })).item,
+  addNote: async (key: string, group: InspoGroup, sectionId: string | null = null) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo`, { method: "POST", body: body({ type: "note", group, caption: "", ...(sectionId ? { sectionId } : {}) }) })).item,
+  /** "Move to": another section of the same shoot and group (null = the main one). */
+  moveInspo: async (key: string, id: string, sectionId: string | null) =>
+    (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ sectionId }) })).item,
+  addShotSection: async (key: string, group: InspoGroup, name: string) =>
+    (await call<{ section: ShootSection }>(`/api/admin/shoots/${key}/sections`, { method: "POST", body: body({ group, name }) })).section,
+  renameShotSection: async (key: string, id: string, name: string) =>
+    (await call<{ section: ShootSection }>(`/api/admin/shoots/${key}/sections/${id}`, { method: "PATCH", body: body({ name }) })).section,
+  deleteShotSection: (key: string, id: string) => call<void>(`/api/admin/shoots/${key}/sections/${id}`, { method: "DELETE" }),
   saveCaption: async (key: string, id: string, caption: string) =>
     (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ caption }) })).item,
   saveWho: async (key: string, id: string, who: string[]) =>
     (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "PATCH", body: body({ who }) })).item,
   removeInspo: (key: string, id: string) => call<void>(`/api/admin/shoots/${key}/inspo/${id}`, { method: "DELETE" }),
   /** One photo, already shrunk in the browser (preparePhoto). */
-  uploadPhoto: async (key: string, group: InspoGroup, photo: { blob: Blob; width: number; height: number }) => {
+  uploadPhoto: async (key: string, group: InspoGroup, photo: { blob: Blob; width: number; height: number }, sectionId: string | null = null) => {
     const form = new FormData();
     form.append("file", photo.blob, "photo.jpg");
     form.append("group", group);
+    if (sectionId) form.append("section", sectionId);
     form.append("width", String(photo.width));
     form.append("height", String(photo.height));
     return (await call<{ item: InspoItem }>(`/api/admin/shoots/${key}/inspo/photo`, { method: "POST", body: form })).item;

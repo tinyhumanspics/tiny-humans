@@ -227,10 +227,12 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
   that videos and pics are separated")**. Instagram Reels/posts and YouTube cards show the video's cover picture
   (▶ in the middle, small app tag in the corner) through our server; TikTok gives none (▶ card). In the folder and on
   the day sheet every list shows Photos, then Videos, then Ideas and links, each on its own rows with a small label.
-- [ ] **Shoots: the owner's own sections** (owner, Nov 12, sketch approved: "That is perfect"): "+ Add a section"
-  under Inspo and BTS (named, e.g. "Inspo for David · Outfit 2"), each with its own drop area + link box, "Move to"
-  on every card, removing a section moves its items back to the main one, day sheet blocks with their own counts.
-  Photos/videos separated inside every section. Needs a small migration (owner runs it in Neon).
+- [x] **Shoots: the owner's own sections — LIVE Nov 12 (owner: sketch "That is perfect", "yes to push the previous 2";
+  migration 0033_shoot_sections for the owner to run in Neon)**: "+ Add a section" under Inspo and BTS (starts as
+  "Inspo for David · Section 2", opens its name to change), each with its own drop area + link box, "Move to" on every
+  card, "Remove section" (two taps) moves its items back to the main one, day sheet blocks with their own counts;
+  photos/videos separated inside every section. Until 0033 runs, Shoots works as before and "+ Add a section" says
+  the database step is needed. Checked against a real Postgres (scripts/local-db) with and without 0033.
 - [x] **Shoots: video links play inside the day sheet — LIVE Nov 12 (owner: "Let's do it then")**. Owner asked to
   play a pasted video "and stay in the tiny humans shoot day sheet" instead of opening Instagram. Instagram (posts,
   Reels, also /<account>/reel/…), TikTok (incl. vm.tiktok.com / tiktok.com/t short links, opened on the server),
@@ -1857,6 +1859,8 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Nov 12:** run `drizzle/0033_shoot_sections.sql` in the Neon SQL editor (own sections in Shoots; safe to run
+  twice). Until then Shoots works as before and "+ Add a section" says the step is needed.
 - **Nov 10 night:** (1) optional: show the code category in the studio "New booking" email, or a Dashboard count by
   category (offered, no answer); (2) optional: an always-visible "Category" column in the codes list (offered after
   "I don't see anything"; the owner then found it); (3) recheck on a phone that the offer sticker shows with its card on

@@ -23,6 +23,8 @@ export interface InspoItem {
   caption: string;
   /** Who's in the shot (lib/shoots/people.ts keys: "all", "baby:0", "fam:1"…); empty = not picked. */
   who: string[];
+  /** The owner's section it's in (lib/shoots/sections.ts); null = the group's main section. */
+  sectionId: string | null;
   sort: number;
 }
 
@@ -122,6 +124,16 @@ export interface ShootDetail extends ShootSummary {
   autoConfirm: string[];
   bringExtra: string[];
   inspo: InspoItem[];
+  /** The owner's own sections inside Inspo and BTS (owner, Nov 12), in order. */
+  sections: ShootSection[];
+}
+
+/** One of the owner's sections inside a shoot's Inspo or BTS, e.g. "Inspo for David · Outfit 2". */
+export interface ShootSection {
+  id: string;
+  group: InspoGroup;
+  name: string;
+  sort: number;
 }
 
 export interface BringSection {

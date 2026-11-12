@@ -7,9 +7,10 @@ import { bookingShootByReference, bookingShootsBetween, bookingShootsById } from
 import { referenceOfKey } from "./from-bookings";
 import { LIST_LIMITS } from "./lists";
 import { platformOf } from "./links";
+import { MAX_SECTIONS_PER_GROUP } from "./sections";
 import { sunsetOn } from "./sunset";
 import { bringLists, dayKeys, inspoKey, progressOf } from "./ticks";
-import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootBookingFacts, ShootDay, ShootDetail } from "./types";
+import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootBookingFacts, ShootDay, ShootDetail, ShootSection } from "./types";
 import type { BringSectionPatch, NewInspo, NewStyledShoot, ShootPatch } from "./validation";
 import { byStart, shootDetail, shootSummary, type ShootRow } from "./view";
 
@@ -69,7 +70,7 @@ const rowOf = (s: Shoot): ShootRow => ({
  * Photos/videos are shown from their Blob address for now; slice 4 decides between Blob's private access (then this
  * becomes an owner-only route) and a public address that is never linked from public pages.
  */
-const itemOf = (r: InspoRow, who: string[] = []): InspoItem => ({
+const itemOf = (r: InspoRow, who: string[] = [], sectionId: string | null = null): InspoItem => ({
   id: r.id,
   group: r.group as InspoGroup,
   type: r.type as InspoItem["type"],
@@ -81,6 +82,7 @@ const itemOf = (r: InspoRow, who: string[] = []): InspoItem => ({
   platform: r.platform,
   caption: r.caption,
   who,
+  sectionId,
   sort: r.sort,
 });
 
@@ -106,10 +108,127 @@ async function inspoOf(shootIds: string[]): Promise<Map<string, InspoItem[]>> {
   const out = new Map<string, InspoItem[]>();
   if (!shootIds.length) return out;
   const rows = await getDb().select().from(shootInspo).where(inArray(shootInspo.shootId, shootIds)).orderBy(asc(shootInspo.sort), asc(shootInspo.createdAt));
-  const who = await whoOf(rows.map((r) => r.id));
-  for (const r of rows) out.set(r.shootId, [...(out.get(r.shootId) ?? []), itemOf(r, who.get(r.id))]);
+  const [who, placed] = await Promise.all([whoOf(rows.map((r) => r.id)), sectionIdsOf(rows.map((r) => r.id))]);
+  for (const r of rows) out.set(r.shootId, [...(out.get(r.shootId) ?? []), itemOf(r, who.get(r.id), placed.get(r.id) ?? null)]);
   return out;
 }
+
+const SECTIONS_NOT_READY = "Sections need one database step first (migration 0033). Everything else works as before.";
+
+type SectionDbRow = { id: string; shoot_id: string; group: string; name: string; sort: number };
+const sectionOf = (r: SectionDbRow): ShootSection => ({ id: r.id, group: r.group as InspoGroup, name: r.name, sort: Number(r.sort) });
+const rowsOf = <T,>(res: unknown) => ((res as { rows?: T[] }).rows ?? []);
+
+/**
+ * The owner's sections of these shoots (migration 0033, a database-only table read best effort): before the step
+ * runs, every shoot simply has none.
+ */
+async function sectionsOf(shootIds: string[]): Promise<Map<string, ShootSection[]>> {
+  const out = new Map<string, ShootSection[]>();
+  if (!shootIds.length) return out;
+  try {
+    const res = await getDb().execute(sql`select "id", "shoot_id", "group", "name", "sort" from "shoot_sections" where "shoot_id" in ${shootIds} order by "sort", "created_at"`);
+    for (const r of rowsOf<SectionDbRow>(res)) out.set(r.shoot_id, [...(out.get(r.shoot_id) ?? []), sectionOf(r)]);
+  } catch (err) {
+    log.warn("shoots.db", "Sections not loaded (run migration 0033)", { error: err as Error });
+  }
+  return out;
+}
+
+/** Which section each shot is in (shoot_inspo.section_id, database-only like `who`); missing = the main one. */
+async function sectionIdsOf(ids: string[]): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (!ids.length) return out;
+  try {
+    const res = await getDb().execute(sql`select "id", "section_id" from "shoot_inspo" where "id" in ${ids} and "section_id" is not null`);
+    for (const r of rowsOf<{ id: string; section_id: string }>(res)) out.set(r.id, r.section_id);
+  } catch (err) {
+    log.warn("shoots.db", "Shot sections not loaded (run migration 0033)", { error: err as Error });
+  }
+  return out;
+}
+
+/** Runs a sections query; a database without migration 0033 gets the plain-English "run the step" message. */
+async function sectionsStep<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof ShootInputError || err instanceof ShootNotFoundError) throw err;
+    const code = (err as { code?: string; cause?: { code?: string } }).code ?? (err as { cause?: { code?: string } }).cause?.code;
+    if (code === "42P01" || code === "42703" || isUndefinedTable(err)) {
+      log.error("shoots.db", "Sections step missing (run migration 0033)", { error: err as Error });
+      throw new ShootInputError(SECTIONS_NOT_READY);
+    }
+    throw err;
+  }
+}
+
+/** "+ Add a section" under Inspo or BTS (at most 12 each). */
+export async function createSection(key: string, input: { group: InspoGroup; name: string }): Promise<ShootSection> {
+  return guard(async () => {
+    const row = await ensureRow(key);
+    return sectionsStep(async () => {
+      const db = getDb();
+      const [{ count, top }] = rowsOf<{ count: number; top: number | null }>(
+        await db.execute(sql`select count(*)::int as "count", max("sort") as "top" from "shoot_sections" where "shoot_id" = ${row.id} and "group" = ${input.group}`),
+      );
+      if (count >= MAX_SECTIONS_PER_GROUP) throw new ShootInputError(`This shoot already has ${MAX_SECTIONS_PER_GROUP} sections here.`);
+      const [created] = rowsOf<SectionDbRow>(
+        await db.execute(sql`insert into "shoot_sections" ("shoot_id", "group", "name", "sort") values (${row.id}, ${input.group}, ${input.name}, ${(top ?? -1) + 1}) returning "id", "shoot_id", "group", "name", "sort"`),
+      );
+      return sectionOf(created);
+    });
+  });
+}
+
+/** Renames a section of this shoot. */
+export async function renameSection(key: string, id: string, name: string): Promise<ShootSection> {
+  return guard(async () => {
+    const row = await ensureRow(key);
+    return sectionsStep(async () => {
+      const [updated] = rowsOf<SectionDbRow>(
+        await getDb().execute(sql`update "shoot_sections" set "name" = ${name} where "id" = ${id} and "shoot_id" = ${row.id} returning "id", "shoot_id", "group", "name", "sort"`),
+      );
+      if (!updated) throw new ShootNotFoundError("That section was already removed.");
+      return sectionOf(updated);
+    });
+  });
+}
+
+/** Removes a section; its shots go back to the main one (shoot_inspo.section_id ON DELETE SET NULL). */
+export async function deleteSection(key: string, id: string): Promise<void> {
+  return guard(async () => {
+    const row = await ensureRow(key);
+    await sectionsStep(() => getDb().execute(sql`delete from "shoot_sections" where "id" = ${id} and "shoot_id" = ${row.id}`));
+  });
+}
+
+/** A new shot's section must be one of this shoot's, in the same group (null = the main one). */
+async function checkSection(shootId: string, group: InspoGroup, sectionId: string | null): Promise<void> {
+  if (!sectionId) return;
+  const [found] = await sectionsStep(async () =>
+    rowsOf<{ id: string }>(await getDb().execute(sql`select "id" from "shoot_sections" where "id" = ${sectionId} and "shoot_id" = ${shootId} and "group" = ${group}`)),
+  );
+  if (!found) throw new ShootInputError("That section isn't in this shoot anymore. Refresh the page.");
+}
+
+/** Puts a just-added shot in its section (checked by checkSection first). */
+async function intoSection(itemId: string, sectionId: string | null): Promise<string | null> {
+  return sectionId ? sectionsStep(() => placeInSection(itemId, sectionId)) : null;
+}
+
+/** Puts a shot in one of its shoot's sections of the same group (null = the main one). */
+async function placeInSection(itemId: string, sectionId: string | null): Promise<string | null> {
+  const res = await getDb().execute(
+    sectionId === null
+      ? sql`update "shoot_inspo" set "section_id" = null where "id" = ${itemId} returning "section_id"`
+      : sql`update "shoot_inspo" i set "section_id" = s."id" from "shoot_sections" s where i."id" = ${itemId} and s."id" = ${sectionId} and s."shoot_id" = i."shoot_id" and s."group" = i."group" returning i."section_id"`,
+  );
+  const [moved] = rowsOf<{ section_id: string | null }>(res);
+  if (!moved) throw new ShootInputError("That section isn't in this shoot anymore. Refresh the page.");
+  return moved.section_id;
+}
+
 
 async function sectionsRaw(): Promise<BringSection[]> {
   const rows = await getDb().select().from(shootBringSections).orderBy(asc(shootBringSections.sort), asc(shootBringSections.updatedAt));
@@ -125,13 +244,14 @@ async function shootsBetween(from: string, to: string): Promise<ShootDetail[]> {
   ]);
   const bookingRows = facts.length ? await db.select().from(shoots).where(inArray(shoots.bookingId, facts.map((f) => f.bookingId))) : [];
   const rowByBooking = new Map(bookingRows.map((r) => [r.bookingId!, r]));
-  const inspo = await inspoOf([...bookingRows, ...styled].map((r) => r.id));
+  const ids = [...bookingRows, ...styled].map((r) => r.id);
+  const [inspo, sections] = await Promise.all([inspoOf(ids), sectionsOf(ids)]);
   return [
     ...facts.map((f) => {
       const row = rowByBooking.get(f.bookingId);
-      return shootDetail(f, row ? rowOf(row) : null, row ? (inspo.get(row.id) ?? []) : []);
+      return shootDetail(f, row ? rowOf(row) : null, row ? (inspo.get(row.id) ?? []) : [], row ? (sections.get(row.id) ?? []) : []);
     }),
-    ...styled.map((r) => shootDetail(null, rowOf(r), inspo.get(r.id) ?? [])),
+    ...styled.map((r) => shootDetail(null, rowOf(r), inspo.get(r.id) ?? [], sections.get(r.id) ?? [])),
   ];
 }
 
@@ -171,7 +291,9 @@ export async function getShoot(key: string): Promise<ShootDetail | null> {
       const facts = await bookingShootByReference(reference);
       if (!facts) return null;
       const [row] = await db.select().from(shoots).where(eq(shoots.bookingId, facts.bookingId)).limit(1);
-      return shootDetail(facts, row ? rowOf(row) : null, row ? ((await inspoOf([row.id])).get(row.id) ?? []) : []);
+      if (!row) return shootDetail(facts, null, []);
+      const [inspo, sections] = await Promise.all([inspoOf([row.id]), sectionsOf([row.id])]);
+      return shootDetail(facts, rowOf(row), inspo.get(row.id) ?? [], sections.get(row.id) ?? []);
     }
     const [row] = await db.select().from(shoots).where(eq(shoots.id, key)).limit(1);
     if (!row) return null;
@@ -180,7 +302,8 @@ export async function getShoot(key: string): Promise<ShootDetail | null> {
       facts = (await bookingShootsById([row.bookingId])).get(row.bookingId) ?? null;
       if (!facts) return null;
     }
-    return shootDetail(facts, rowOf(row), (await inspoOf([row.id])).get(row.id) ?? []);
+    const [inspo, sections] = await Promise.all([inspoOf([row.id]), sectionsOf([row.id])]);
+    return shootDetail(facts, rowOf(row), inspo.get(row.id) ?? [], sections.get(row.id) ?? []);
   });
 }
 
@@ -286,34 +409,36 @@ async function nextSort(shootId: string, group: InspoGroup): Promise<number> {
 export async function addInspo(key: string, input: NewInspo): Promise<InspoItem> {
   return guard(async () => {
     const row = await ensureRow(key);
+    await checkSection(row.id, input.group, input.sectionId ?? null);
     const sort = await nextSort(row.id, input.group);
     const values =
       input.type === "link"
         ? { shootId: row.id, group: input.group, type: "link", linkUrl: input.url, platform: platformOf(input.url), caption: input.caption, sort }
         : { shootId: row.id, group: input.group, type: "note", caption: input.caption, sort };
     const [created] = await getDb().insert(shootInspo).values(values).returning();
-    return itemOf(created);
+    return itemOf(created, [], await intoSection(created.id, input.sectionId ?? null));
   });
 }
 
 /** An uploaded photo or video (slice 4: the upload route checks the file, stores it in Blob, then calls this). */
 export async function addInspoFile(
   key: string,
-  file: { group: InspoGroup; type: "image" | "video"; blobUrl: string; blobPathname: string; contentType: string; bytes: number; width?: number | null; height?: number | null; caption?: string },
+  file: { group: InspoGroup; type: "image" | "video"; blobUrl: string; blobPathname: string; contentType: string; bytes: number; width?: number | null; height?: number | null; caption?: string; sectionId?: string | null },
 ): Promise<InspoItem> {
   return guard(async () => {
     const row = await ensureRow(key);
+    await checkSection(row.id, file.group, file.sectionId ?? null);
     const sort = await nextSort(row.id, file.group);
     const [created] = await getDb()
       .insert(shootInspo)
       .values({ shootId: row.id, group: file.group, type: file.type, blobUrl: file.blobUrl, blobPathname: file.blobPathname, contentType: file.contentType, bytes: file.bytes, width: file.width ?? null, height: file.height ?? null, caption: file.caption ?? "", sort })
       .returning();
-    return itemOf(created);
+    return itemOf(created, [], await intoSection(created.id, file.sectionId ?? null));
   });
 }
 
-/** "What's the shot?" / "What's the idea?", and who's in it (keys checked by the route; at most 9). */
-export async function updateInspo(id: string, patch: { caption?: string; who?: string[] }): Promise<InspoItem> {
+/** "What's the shot?" / "What's the idea?", who's in it (keys checked by the route; at most 9), and "Move to" a section. */
+export async function updateInspo(id: string, patch: { caption?: string; who?: string[]; sectionId?: string | null }): Promise<InspoItem> {
   return guard(async () => {
     const db = getDb();
     const [row] =
@@ -329,7 +454,9 @@ export async function updateInspo(id: string, patch: { caption?: string; who?: s
         throw new ShootInputError("Who's in it can't be saved yet: the database step for it hasn't run.");
       });
     }
-    return itemOf(row, (await whoOf([id])).get(id));
+    if (patch.sectionId !== undefined) await sectionsStep(() => placeInSection(id, patch.sectionId ?? null));
+    const [who, placed] = await Promise.all([whoOf([id]), sectionIdsOf([id])]);
+    return itemOf(row, who.get(id), placed.get(id) ?? null);
   });
 }
 

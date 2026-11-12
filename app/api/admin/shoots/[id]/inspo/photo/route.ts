@@ -5,7 +5,7 @@ import { matchesPhotoSignature, PHOTO_MAX_BYTES, PHOTO_REQUEST_MAX_BYTES, PHOTO_
 import { isStorageConfigured } from "@/lib/settings/server";
 import { NO_STORE, parsed, shootsError, shootsGuard } from "@/lib/shoots/route";
 import { addInspoFile, ensureShootRowId } from "@/lib/shoots/server";
-import { shootKeySchema } from "@/lib/shoots/validation";
+import { shootKeySchema, sectionIdSchema } from "@/lib/shoots/validation";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +35,10 @@ export async function POST(req: Request, { params }: Ctx) {
   const group = form?.get("group");
   if (!(file instanceof File)) return NextResponse.json({ error: "No photo received." }, { status: 400, headers: NO_STORE });
   if (group !== "inspo" && group !== "bts") return NextResponse.json({ error: "Pick Inspo or BTS." }, { status: 400, headers: NO_STORE });
+  // the owner's section it was dropped in (none = the main one)
+  const sectionField = form?.get("section");
+  const section = typeof sectionField === "string" && sectionField ? sectionIdSchema.safeParse(sectionField) : null;
+  if (section && !section.success) return NextResponse.json({ error: "Pick a section from this shoot." }, { status: 400, headers: NO_STORE });
   const ext = PHOTO_TYPES[file.type];
   if (!ext) return NextResponse.json({ error: "Use a JPG, PNG or WebP photo." }, { status: 400, headers: NO_STORE });
   if (file.size > PHOTO_MAX_BYTES) return NextResponse.json({ error: "That photo is too large (max 4 MB after resizing)." }, { status: 413, headers: NO_STORE });
@@ -56,6 +60,7 @@ export async function POST(req: Request, { params }: Ctx) {
       bytes: file.size,
       width: size(form!.get("width")),
       height: size(form!.get("height")),
+      sectionId: section?.data ?? null,
     });
     return NextResponse.json({ item }, { status: 201, headers: NO_STORE });
   } catch (err) {

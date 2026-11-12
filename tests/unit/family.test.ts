@@ -110,7 +110,7 @@ const babies: ShootBaby[] = [
   { name: null, age: "Newborn (0–2 weeks)", gender: null },
 ];
 const family = cleanFamily([{ role: "mom" }, { role: "dad" }, { role: "brother", name: "Leo" }, { role: "mom" }]);
-const item = (id: string, who: string[]): InspoItem => ({ id, group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: id, who, sort: 0 });
+const item = (id: string, who: string[]): InspoItem => ({ id, group: "inspo", type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption: id, who, sectionId: null, sort: 0 });
 
 describe("shoots: who's in each shot", () => {
   const people = peopleOf({ babies, family });

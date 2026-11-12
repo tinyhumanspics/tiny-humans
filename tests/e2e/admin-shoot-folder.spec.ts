@@ -21,6 +21,7 @@ const item = (over: Partial<InspoItem>): InspoItem => ({
   platform: null,
   caption: "",
   who: [],
+  sectionId: null,
   sort: 0,
   ...over,
 });
@@ -73,6 +74,7 @@ const MORALES: ShootDetail = {
   confirm: [],
   autoConfirm: [],
   bringExtra: [],
+  sections: [],
   inspo: [
     item({ caption: "Basket nap, sleepy curl" }),
     item({ id: "22222222-2222-4222-8222-222222222222", group: "bts", type: "link", linkUrl: "https://www.instagram.com/reel/DLHx_WNoXoY/", platform: "Instagram", caption: "Camera-back reveal" }),
@@ -189,6 +191,85 @@ test("paste a link: a bad one is explained, a good one becomes a card", async ({
   expect(sent.added).toEqual([{ type: "link", group: "inspo", url: "https://instagram.com/reel/DLHx_WNoXoY" }]);
   await expect(field).toHaveValue("");
   await expect(inspo.getByRole("button", { name: /^Instagram Play here/ })).toHaveCount(1);
+});
+
+test("own sections: add one (named), paste a link into it, Move to, remove it (its shots go back)", async ({ page }) => {
+  await fakeFolder(page);
+  const SEC = "5ec70000-1111-4111-8111-111111111111";
+  const sent = { sections: [] as unknown[], renames: [] as unknown[], removed: 0, added: [] as unknown[], moves: [] as { id: string; body: unknown }[] };
+  const byId = new Map(MORALES.inspo.map((i) => [i.id, i]));
+  await page.route(`${API}/sections`, (route) => {
+    const body = route.request().postDataJSON() as { group: "inspo" | "bts"; name: string };
+    sent.sections.push(body);
+    return route.fulfill({ status: 201, json: { section: { id: SEC, group: body.group, name: body.name, sort: 0 } } });
+  });
+  await page.route(`${API}/sections/*`, (route) => {
+    if (route.request().method() === "DELETE") {
+      sent.removed += 1;
+      return route.fulfill({ status: 204 });
+    }
+    const body = route.request().postDataJSON() as { name: string };
+    sent.renames.push(body);
+    return route.fulfill({ json: { section: { id: SEC, group: "inspo", name: body.name, sort: 0 } } });
+  });
+  await page.route(`${API}/inspo`, (route) => {
+    const body = route.request().postDataJSON() as { type: "link"; group: "inspo"; url: string; sectionId?: string };
+    sent.added.push(body);
+    const created = item({ id: "66666666-1111-4111-8111-111111111111", type: "link", linkUrl: body.url, platform: "Instagram", sectionId: body.sectionId ?? null });
+    byId.set(created.id, created);
+    return route.fulfill({ status: 201, json: { item: created } });
+  });
+  await page.route(`${API}/inspo/*`, (route) => {
+    const id = new URL(route.request().url()).pathname.split("/").pop()!;
+    const body = route.request().postDataJSON() as { sectionId?: string | null };
+    sent.moves.push({ id, body });
+    return route.fulfill({ json: { item: { ...byId.get(id)!, ...body } } });
+  });
+  await page.route("https://www.instagram.com/**", (route) => route.abort());
+  await page.route("**/api/admin/shoots/cover?*", (route) => route.fulfill({ status: 404 }));
+
+  await page.goto(`/admin/shoots/folder/${KEY}`);
+  const inspo = page.getByRole("region", { name: "Inspo for Sofia" });
+  await inspo.getByRole("button", { name: "+ Add a section to Inspo for Sofia" }).click();
+  expect(sent.sections).toEqual([{ group: "inspo", name: "Inspo for Sofia · Section 2" }]);
+  const name = inspo.getByLabel("Section name");
+  await expect(name).toBeFocused();
+  await expect(name).toHaveValue("Inspo for Sofia · Section 2");
+  await name.fill("Outfit 2");
+  await inspo.getByRole("button", { name: "Save", exact: true }).click();
+  expect(sent.renames).toEqual([{ name: "Outfit 2" }]);
+  const outfit = page.getByRole("region", { name: "Outfit 2" });
+  await expect(outfit.getByRole("heading", { name: "Outfit 2", level: 3 })).toBeVisible();
+  await expect(outfit).toContainText("Nothing here yet.");
+
+  // a link pasted in the section goes into it
+  await outfit.getByLabel("Or paste a link").fill("instagram.com/reel/DWowsEjjQlE");
+  await outfit.getByRole("button", { name: "Add", exact: true }).click();
+  await expect(outfit.getByRole("button", { name: /^Instagram Play here/ })).toBeVisible();
+  expect(sent.added).toEqual([{ type: "link", group: "inspo", url: "https://instagram.com/reel/DWowsEjjQlE", sectionId: SEC }]);
+
+  // Move to: the main list's shot goes into Outfit 2
+  const move = inspo.getByLabel("Move to (section for Basket nap, sleepy curl)");
+  await expect(move.locator("option")).toHaveText(["Inspo for Sofia", "Outfit 2"]);
+  await move.selectOption({ label: "Outfit 2" });
+  await expect(outfit.getByLabel("What's the shot?")).toHaveCount(2);
+  // the reel is a video, the moved shot an idea with no photo: videos come first
+  await expect(outfit.getByLabel("What's the shot?").nth(1)).toHaveValue("Basket nap, sleepy curl");
+  expect(sent.moves).toEqual([{ id: MORALES.inspo[0].id, body: { sectionId: SEC } }]);
+  // BTS has no sections: its card has no Move to
+  await expect(page.getByRole("region", { name: "BTS on phones" }).getByText("Move to")).toHaveCount(0);
+
+  await page.evaluate(() => document.fonts.ready);
+  const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
+  expect(scan.violations).toEqual([]);
+
+  // removing the section (two taps) puts its shots back in the main list
+  await outfit.getByRole("button", { name: "Remove section (Outfit 2)" }).click();
+  await outfit.getByRole("button", { name: "Tap again: its 2 items move to Inspo for Sofia (Outfit 2)" }).click();
+  await expect(page.getByRole("region", { name: "Outfit 2" })).toHaveCount(0);
+  expect(sent.removed).toBe(1);
+  await expect(inspo.getByLabel("What's the shot?")).toHaveCount(2);
+  await expect(inspo.getByText("Move to")).toHaveCount(0);
 });
 
 test("a BTS idea with no photo: caption saves by itself; Remove takes two taps", async ({ page }) => {

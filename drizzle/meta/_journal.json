@@ -232,6 +232,13 @@
       "when": 1794440549763,
       "tag": "0032_due_reservation_extras",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1794461375606,
+      "tag": "0033_shoot_sections",
+      "breakpoints": true
     }
   ]
 }
