@@ -7,7 +7,7 @@ import { computeQuote, type PriceQuote } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
 import { getDb, isDatabaseConfigured, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
 import { bookingConsents, bookings, type Booking, type DueDateReservation } from "@/lib/db/schema";
-import { carryDueDeposit, claimDue, dueById, dueByToken, dueExtrasOf, finishDue, keptPriceBundle, releaseDue } from "@/lib/due-date/server";
+import { carryDueDeposit, claimDue, dueById, dueByToken, dueExtrasOf, finishDue, keptPriceBundle, releaseDue, sweepDueDeposits } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
@@ -105,7 +105,7 @@ export class OutlookBookingProvider implements BookingProvider {
     const minutes = sessionMinutes(bundle, count);
     // deposit pages that ran out free their time (after this response, so it never slows the calendar down)
     try {
-      after(() => sweepDeposits().then(() => undefined));
+      after(() => sweepDeposits().then(() => sweepDueDeposits()).then(() => undefined));
     } catch {
       /* outside a request (scripts) */
     }

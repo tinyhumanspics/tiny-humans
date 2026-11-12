@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isDatabaseConfigured } from "@/lib/db/client";
 import { runReminders } from "@/lib/booking/reminders";
 import { sweepDeposits } from "@/lib/deposit/flow";
+import { sweepDueDeposits } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { purgeOldDrafts } from "@/lib/unfinished/server";
 
@@ -35,10 +36,12 @@ export async function GET(req: Request) {
     const dryRun = url.searchParams.get("dryRun") === "1";
     // backstop for missed Stripe webhooks: deposit pages that ran out, paid bookings not confirmed yet
     const deposits = dryRun ? undefined : await sweepDeposits(new Date(), 50);
+    // "Not born yet" payment pages that closed unpaid (the automatic email), if a webhook was missed
+    const dueDeposits = dryRun ? undefined : await sweepDueDeposits(new Date(), 50);
     const result = await runReminders({ secret, dryRun, now: at ? new Date(at) : undefined });
     // unfinished bookings older than the Privacy Policy's 12 months (best effort)
     const unfinishedDeleted = dryRun ? undefined : await purgeOldDrafts();
-    return NextResponse.json({ ...result, deposits, unfinishedDeleted }, { headers: NO_STORE });
+    return NextResponse.json({ ...result, deposits, dueDeposits, unfinishedDeleted }, { headers: NO_STORE });
   } catch (err) {
     log.error("reminders", "Reminder run failed", { error: err as Error });
     return NextResponse.json({ error: "Reminder run failed" }, { status: 500, headers: NO_STORE });

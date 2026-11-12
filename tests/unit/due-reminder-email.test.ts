@@ -26,4 +26,13 @@ describe("Leads → Not paid: the deposit reminder for a “Not born yet” fami
     expect(mail.text).toContain("Tu precio: $249 (Thanksgiving offer).");
     expect(mail.html).toContain("Pagar el depósito de $50");
   });
+
+  test("the automatic one (payment page closed unpaid): its button opens their reservation page, which works any time", async () => {
+    const mail = await dueDepositReminderEmail(details, { themeId: "default", payUrl, auto: true });
+    expect(mail.subject).toBe("Finish reserving your Tiny Humans spot");
+    expect(mail.text).toContain("Your spot is reserved once the deposit is paid. The button opens a secure payment page; it works any time.");
+    expect(mail.text).not.toContain("stays open for one day");
+    const es = await dueDepositReminderEmail(details, { themeId: "default", payUrl, auto: true, locale: "es" });
+    expect(es.text).toContain("Tu lugar queda reservado cuando pagas el depósito.");
+  });
 });

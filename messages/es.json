@@ -342,10 +342,13 @@
       "pendingTitle": "Ya casi",
       "pendingBody": "Tu depósito aún no está pagado, así que tu lugar todavía no está reservado.",
       "pay": "Pagar el depósito",
+      "paying": "Abriendo la página de pago…",
+      "payError": "No pudimos abrir la página de pago. Inténtalo de nuevo, o escríbenos y te ayudamos.",
       "checking": "Todavía estamos confirmando tu pago. Actualiza esta página en un minuto.",
-      "expiredTitle": "Esta reserva no se terminó",
-      "expiredBody": "La página de pago se cerró antes de pagar el depósito. Puedes reservar de nuevo cuando quieras.",
+      "expiredTitle": "Ya casi",
+      "expiredBody": "Tu depósito aún no está pagado, así que tu lugar aún no está reservado. Tus datos están guardados: págalo ahora y listo.",
       "again": "Reservar de nuevo",
+      "invalidTitle": "No pudimos abrir esta reserva",
       "invalid": "Este enlace no es válido. Revisa tu correo, o escríbenos y te ayudamos.",
       "bundles": "Ver los paquetes"
     },
@@ -853,6 +856,7 @@
         "button": "Pagar el depósito de {deposit}",
         "buttonText": "Paga el depósito: {url}",
         "open": "Esta página de pago se mantiene abierta por un día. El depósito es parte de tu total; el resto se paga después de tu sesión.",
+        "openAuto": "Tu lugar queda reservado cuando pagas el depósito. El botón abre una página de pago segura; funciona cuando quieras.",
         "help": "¿Hubo algún problema con el pago? Responde a este correo y te ayudaremos."
       }
     },

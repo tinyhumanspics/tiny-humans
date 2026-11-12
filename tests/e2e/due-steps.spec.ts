@@ -89,3 +89,24 @@ test("Not sure yet skips the backdrops; Back keeps what they typed; a wrong ZIP 
   expect(sent[0]).toMatchObject({ backdrops: [] });
   expect(sent[0].discountCode).toBeUndefined();
 });
+
+test("Back from Stripe without paying lands on their reservation page, not an empty form; Reserve again starts over (owner, Nov 11)", async ({ page }) => {
+  await page.route("**/api/due-date", async (route) => {
+    const body = route.request().postDataJSON() as Record<string, unknown>;
+    if (body.check) return route.continue();
+    // "Stripe" here is another page of the site; the reservation page is the signed done link
+    return route.fulfill({ status: 201, json: { reference: "TH-D-20261111-BACK", status: "pending", depositUrl: "/bundles", donePath: "/due-date/done?r=TH-D-20261111-BACK&k=sig" } });
+  });
+  await details(page);
+  await page.getByRole("button", { name: "Reserve my spot" }).click();
+  await page.getByRole("button", { name: "Not sure yet, I'll choose when I book my session" }).click();
+  await page.getByRole("button", { name: /Reserve my spot|Pay the .* deposit and reserve/ }).click();
+  await page.waitForURL("**/bundles");
+  await page.goBack();
+  await page.waitForURL("**/due-date/done?r=TH-D-20261111-BACK**");
+  // (here the fake reservation isn't a real one, so its page says the link isn't valid and forgets it; "Reserve
+  // again" starts a new form)
+  await expect(page.getByRole("link", { name: "Reserve again" })).toHaveAttribute("href", "/due-date?new=1");
+  await page.goto("/due-date?new=1");
+  await expect(page.getByText("Step 1 of 3 · Your details")).toBeVisible();
+});

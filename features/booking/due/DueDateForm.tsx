@@ -22,6 +22,7 @@ import { setupsOf } from "@/config/backdrops";
 import BackdropPicker from "@/features/booking/backdrops/BackdropPicker";
 import { DiscountField } from "@/features/booking/flow/steps/ReviewStep";
 import { HttpBookingClient } from "@/lib/booking/http-client";
+import { forgetDueReturn, pendingDueReturn, rememberDueReturn } from "@/lib/due-date/return-path";
 import { backdropName } from "@/lib/booking/backdrop-names";
 import type { PriceQuote } from "@/lib/pricing/engine";
 import formStyles from "../flow/Booking.module.css";
@@ -62,6 +63,20 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
   useEffect(() => {
     openedAt.current = Date.now();
   }, []);
+
+  // Back from Stripe without paying (or /due-date opened again in this tab): their reservation page with "Pay the
+  // deposit", not an empty form (owner, Nov 11). "Reserve again" links add ?new=1 to start over.
+  useEffect(() => {
+    if (params.get("new")) return forgetDueReturn();
+    const resume = () => {
+      const path = pendingDueReturn();
+      if (path) router.replace(path);
+    };
+    resume();
+    const onShow = (e: PageTransitionEvent) => e.persisted && resume();
+    window.addEventListener("pageshow", onShow);
+    return () => window.removeEventListener("pageshow", onShow);
+  }, [params, router]);
 
   // /admin → Unfinished bookings (owner, Nov 11): the parent's contact details, saved when they leave a contact box,
   // labeled "Not born yet". Never the due date, the babies or the notes. Same rules as the booking form.
@@ -176,6 +191,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
       }
       if (body.depositUrl) {
         setBusy("redirecting");
+        if (body.donePath) rememberDueReturn(body.donePath);
         window.location.assign(body.depositUrl);
         return;
       }

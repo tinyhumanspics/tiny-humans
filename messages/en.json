@@ -169,10 +169,13 @@
       "pendingTitle": "Almost there",
       "pendingBody": "Your deposit isn't paid yet, so your spot isn't reserved yet.",
       "pay": "Pay the deposit",
+      "paying": "Opening the payment page…",
+      "payError": "We couldn't open the payment page just now. Please try again, or text us and we'll help.",
       "checking": "We're still confirming your payment. Refresh this page in a minute.",
-      "expiredTitle": "This reservation wasn't finished",
-      "expiredBody": "The payment page closed before the deposit was paid. You can reserve again any time.",
+      "expiredTitle": "Almost there",
+      "expiredBody": "Your deposit isn't paid yet, so your spot isn't reserved yet. Your details are saved: pay it now and you're all set.",
       "again": "Reserve again",
+      "invalidTitle": "We couldn't open this reservation",
       "invalid": "This link isn't valid. Check your email, or text us and we'll help.",
       "bundles": "See the bundles"
     },
@@ -853,6 +856,7 @@
         "button": "Pay the {deposit} deposit",
         "buttonText": "Pay the deposit: {url}",
         "open": "This payment page stays open for one day. The deposit is part of your total; the rest is paid after your session.",
+        "openAuto": "Your spot is reserved once the deposit is paid. The button opens a secure payment page; it works any time.",
         "help": "Something went wrong with the payment? Just reply to this email and we'll help."
       }
     },

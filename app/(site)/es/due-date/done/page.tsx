@@ -21,9 +21,12 @@ export default async function DueDateDonePage({ searchParams }: { searchParams: 
         name={result.row?.parentName}
         payUrl={result.payUrl}
         paid={one(q.paid) === "1"}
-        againHref={`${localePath("/due-date", "es")}${result.row ? `?bundle=${encodeURIComponent(result.row.packageId)}` : ""}`}
+        againHref={`${localePath("/due-date", "es")}?${result.row ? `bundle=${encodeURIComponent(result.row.packageId)}&` : ""}new=1`}
         bundlesHref={bundlesHref(null, "es")}
         messages={messages.dueDate.done}
+        r={one(q.r)}
+        k={one(q.k)}
+        locale="es"
       />
     </main>
   );
