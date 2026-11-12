@@ -182,8 +182,11 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - Theme changes in /admin reach the site and every customer email at once (settings cache tag expired on save; emails
   read the active theme when sent). Photos are per theme; empty slots in non-default themes show the default
   ("Original") theme's picture (`config/media.ts` → `resolveMedia`).
-- Home "Little moments" = `ThemeMedia.sections` (`config/media.ts`): each section's pictures in rows of 3, then its
-  optional box; `null` = follow the Original theme (built-in for Original). `landingPicks` (max 6, else the first 6)
+- Home "Little moments" (the menu's Portfolio link; owner, Nov 11: ONE gallery, no "Book a memory like this one"
+  boxes, stays on the home page) = every picture of `ThemeMedia.sections`, flattened (`feedPhotos`), 3 per row; the
+  photo viewer's "Use this one as my inspiration" opens `bundlesHref(photo.id)` (the inspiration flow). /admin edits
+  one list and saves it as sections of ≤ `maxPhotos` with no box (`chunkSections`), so an older version still parses
+  it; `liveMedia` always applies `withoutBoxes`. `null` = follow the Original theme (built-in for Original). `landingPicks` (max 6, else the first 6)
   feed the landing gallery. Old saves (`groups`/`extra`) convert on read; `storedSettings()` also writes those old
   fields so a revert keeps the owner's pictures. Changing the settings shape: bump the `unstable_cache` key in
   `lib/settings/server.ts` (Vercel's data cache outlives deployments).
@@ -371,14 +374,14 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   ("Code category", looked up by the booking's code text, so it's the code's CURRENT category). Never sent to
   customers, emails or analytics, and never part of a price.
 - Photos / Media layout (owner, Nov 11: "a bit complicated to understand"): each part of the website is a `MediaFold`
-  (native <details>, closed by default, summary like "3 sections · 9 pictures · 3 boxes showing"); each picture is a
+  (native <details>, closed by default, summary like "9 pictures · 6 on the ad page"); each picture is a
   `MediaSlot` card (picture, source, tags, ONE "Edit" button) whose `PhotoEditor` dialog (AdminDialog) holds replace /
-  remove, the section tools (passed as children: move, use in the box, show on the ad page) and the words + Spanish;
-  a section's box is one line + "Edit box" (`BoxEditor` dialog). Spanish is never required in the owner area: empty
+  remove, the gallery tools (passed as children: earlier/later, show on the ad page) and the words + Spanish (the
+  title is what parents see as their inspiration). No sections or boxes since Nov 11. Spanish is never required in the owner area: empty
   Spanish is filled at save (`lib/i18n/spanish-autofill.ts`) and "Fill in Spanish for me" (`features/admin/FillSpanish.tsx`,
   also in Seasonal Landing) calls owner-only `/api/admin/translate` (same translator; GET = is ANTHROPIC_API_KEY set,
-  shown by `TranslationStatus`). `settings.portfolioBoxes` (settings cache key v4) false hides every "Book a memory like
-  this one" box (`withoutBoxes` in `liveMedia`) and the Spanish audit stops asking for their wording.
+  shown by `TranslationStatus`). `settings.portfolioBoxes` (settings cache key v4) is kept in the file for a revert
+  but no longer used: the boxes are gone and the Spanish audit never asks for their wording.
 - Unfinished bookings from "Not born yet?" (owner, Nov 11; migration 0029_draft_forms): /due-date saves the parent's
   contact draft on blur like the booking form (`form: "due_date"`, never the due date, babies or notes) and labels it
   in `booking_draft_forms` (best effort: no table = no label). Pressing Reserve marks the draft booked with the

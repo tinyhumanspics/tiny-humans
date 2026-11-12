@@ -223,6 +223,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **One "Little moments" gallery with inspiration — LIVE Nov 11 (owner: "everything is approved… let's push it")**.
+  Owner: drop the "Book a memory like this one" boxes and the sections; one gallery (3 per row, on the home page: the
+  Portfolio link, not a separate page); a line asking families to pick one as their reference; tapping a picture shows
+  it whole with "Use this one as my inspiration". Photos & Media → Little Moments is one list (Edit keeps replace /
+  remove / earlier-later / ad page / words EN+ES). Preview used the live pictures (Thanksgiving) copied locally.
 - [x] **Not born yet: automatic follow-up when the $50 isn't paid — LIVE Nov 11 (owner: "Great, so let's push that")**.
   Owner: after Pay → Back without paying they landed on an empty form and got no email. Now Back shows "Almost there"
   + Pay the deposit; the payment page closes after 1 hour and the family gets one automatic "Finish reserving your
