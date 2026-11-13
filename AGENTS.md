@@ -342,6 +342,16 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   writes the Spanish label on existing `bundle_translations` rows (a label without its Spanish pair hides /es). The line
   under the Bundles heading on /bundles and the ad page (`lib/pricing/promo.ts`, `features/booking/OfferLine.tsx`) is
   written from the offers themselves and disappears with them; no offers = pages exactly as before.
+- Booking for a family (owner, Nov 12; /admin → "Quotes / Booking" → "Book it for them", `OwnerBookingForm`, owner-only
+  `POST /api/admin/booking` + `GET /api/admin/booking/slots`): `createBooking(request, { holdHours: 48 })` with the
+  form's own rules and prices but the owner's calendar (`ownerRulesOf`: no online minimum notice), no spam checks, no
+  Meta events; request id `owner-<uuid>` marks it (`isOwnerBooked`). With deposits on it's saved pending with a
+  `booking_deposits` hold of 48 h and NO Stripe page (`openOwnerDeposit`); the family's signed link (/book?…&deposit=)
+  shows `OwnerBookedSteps`: backdrops (`POST /api/booking/deposit/backdrops`, ≤ the bundle's setups) then "Pay"
+  (`POST /api/booking/deposit/pay` → `payWithLink`: a page closing at the hold, 30 min–24 h, `payPageWindow`). Paid →
+  the usual confirm (Outlook, emails); unpaid at 48 h → the sweep releases it (Leads → Not paid). The email is
+  `emails/OwnerBooked.tsx` (also the Leads reminder for these: `sendDepositLinkEmail` picks it), plus a text to copy.
+  A reminder while still held keeps the 48 h (no re-hold). Deposits off → confirmed at once. Leads: "Booked by you".
 - Quotes (/admin/quotes, `lib/quotes/`): a family's ZIP code (read from a pasted address in the browser; the address is
   never sent) → every active bundle priced with the booking form's own functions (offer, twins, extra people, travel,
   deposit) + a ready-to-send EN/ES message. Optional owner "% off" (`&percent=`) is priced like a % discount code

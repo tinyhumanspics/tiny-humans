@@ -343,6 +343,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
     ...reminderRows(lead),
     ...problemRows(lead),
     ...(duplicate ? [["Possible duplicate", duplicate] as [string, string]] : []),
+    ...(lead.bookedByOwner ? [["Booked by", "You, in Quotes / Booking (they got the link to pick backdrops and pay)"] as [string, string]] : []),
     ...(lead.source
       ? ([
           ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],
@@ -352,7 +353,9 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
           ["Came from site", lead.source.referrer || "–"],
           ["First visit", lead.source.at ? when(lead.source.at) : "–"],
         ] as [string, string][])
-      : ([["Source", "Not tracked (booked before source tracking)"]] as [string, string][])),
+      : lead.bookedByOwner
+        ? []
+        : ([["Source", "Not tracked (booked before source tracking)"]] as [string, string][])),
   ];
   if (lead.cancellation) {
     rows.push(
@@ -418,7 +421,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
       <WaiverLine lead={lead} />
       {duplicate && <p className={cn(styles.duplicateNote, "chalk-soft")}>Possible duplicate: {duplicate}.</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
-        {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? "Not tracked"}</b>
+        {lead.reference} · Booked {when(lead.createdAt)} · Source: <b>{lead.source?.label ?? (lead.bookedByOwner ? "Booked by you" : "Not tracked")}</b>
         {lead.source?.campaign ? ` · ${lead.source.campaign}` : ""}
       </p>
       {lead.cancellation && (

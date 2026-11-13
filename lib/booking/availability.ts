@@ -37,6 +37,9 @@ export function dateBookable(date: string, rules: AvailabilityRules, now = new D
   return date >= addDaysKey(today, rules.limits.minimumNoticeDays) && date <= addDaysKey(today, rules.limits.bookingWindowDays);
 }
 
+/** The owner's view of the calendar (/admin: holding a time again, booking for a family): the online minimum notice doesn't apply. */
+export const ownerRulesOf = <R extends { limits: { minimumNoticeDays: number } }>(rules: R): R => ({ ...rules, limits: { ...rules.limits, minimumNoticeDays: 0 } });
+
 /**
  * Slots for one day. A slot appears only if it is inside the owner's hours
  * (weekly schedule or special date), within the notice/booking window, in the

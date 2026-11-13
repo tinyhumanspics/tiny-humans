@@ -124,6 +124,8 @@ export interface Lead {
   waiverKind?: WaiverKind;
   cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
+  /** Booked by the owner for the family (/admin → Quotes / Booking), not online. */
+  bookedByOwner?: boolean;
   source: { label: string; campaign: string | null; medium: string | null; content: string | null; term: string | null; landingPath: string | null; referrer: string | null; metaClick: boolean; at: string | null } | null;
   /** When the owner marked it "Completed" (it shows under Completed, not under its status); null = not marked. */
   completedAt?: string | null;

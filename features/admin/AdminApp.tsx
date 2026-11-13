@@ -23,6 +23,7 @@ import ShootsList from "@/features/shoots/ShootsList";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import QuotesPanel from "./QuotesPanel";
+import OwnerBookingForm from "./OwnerBookingForm";
 import SeasonalPanel from "./SeasonalPanel";
 import AdminMenu from "./AdminMenu";
 import { ADMIN_NAV, type AdminSection } from "./nav";
@@ -108,7 +109,12 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
         {section === "unfinished" && <UnfinishedPanel api={api} />}
         {section === "availability" && <AvailabilityPanel api={api} />}
         {section === "pricing" && <PricingPanel api={api} />}
-        {section === "quotes" && <QuotesPanel api={api} />}
+        {section === "quotes" && (
+          <>
+            <QuotesPanel api={api} />
+            <OwnerBookingForm api={api} />
+          </>
+        )}
         {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
         {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
         {section === "theme" && <ThemePanel settings={settings} onSave={save} />}

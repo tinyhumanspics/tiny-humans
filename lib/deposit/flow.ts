@@ -5,7 +5,7 @@ import { scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { bookingRules } from "@/config/booking";
-import { slotsForDay } from "@/lib/booking/availability";
+import { ownerRulesOf, slotsForDay } from "@/lib/booking/availability";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
@@ -17,7 +17,9 @@ import { noticeHoursFor } from "@/lib/booking/terms";
 import type { BookingResult } from "@/lib/booking/types";
 import { getDb, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
 import { bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
-import { depositAbandonedEmail, depositLinkEmail, internalDepositUnpaidEmail } from "@/lib/email";
+import { depositAbandonedEmail, depositLinkEmail, internalDepositUnpaidEmail, ownerBookedEmail, ownerBookedSms } from "@/lib/email";
+import type { OwnerBookedDetails } from "@/emails/OwnerBooked";
+import { todayInZone } from "@/lib/booking/timezone";
 import { fill } from "@/lib/email/messages";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
@@ -31,7 +33,10 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
 import { dbReason, depositOf, isMissingTable } from "./server";
-import { DEPOSIT_HOLD_MINUTES, type DepositReturnState } from "./types";
+import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState } from "./types";
+import { setupsOf } from "@/config/backdrops";
+import { backdropsFor, saveBackdrops } from "@/lib/booking/backdrops";
+import { getCatalog } from "@/lib/pricing/server";
 
 /**
  * The deposit, paid on Stripe Checkout as the last step of booking:
@@ -143,6 +148,67 @@ export async function reopenDeposit(row: Booking): Promise<NonNullable<BookingRe
   const session = await getCheckoutSession(d.stripeSessionId).catch(() => null);
   if (session?.status !== "open" || !session.url) return null;
   return { amountCents: d.amountCents, status: "pending", url: session.url, returnPath, holdUntil: d.holdUntil?.toISOString() };
+}
+
+/**
+ * A booking the owner made for a family (/admin → Quotes / Booking, owner Nov 12): its time is held `holdHours` (48)
+ * for the family's link, which asks for their backdrops and opens a Stripe page when they press Pay
+ * (`payWithLink`). No page is opened now: Stripe pages close within 24 hours, and the family may open the link later.
+ */
+export async function openOwnerDeposit(row: Booking, amountCents: number, holdHours: number, now = new Date()): Promise<NonNullable<BookingResult["deposit"]> | null> {
+  const reference = row.bookingReference;
+  const returnPath = depositReturnPath(reference, row.packageId, row.locale);
+  if (!returnPath) return null;
+  const holdUntil = new Date(now.getTime() + holdHours * 3_600_000);
+  try {
+    await getDb().insert(bookingDeposits).values({ bookingId: row.id, amountCents, status: "pending", holdUntil });
+  } catch (err) {
+    log.error("deposit", "Deposit row not saved: booked without it", { reference, error: dbReason(err) });
+    return null;
+  }
+  log.info("deposit", "Owner booking held for the family's link", { reference });
+  return { amountCents, status: "pending", url: `${base()}${returnPath}`, returnPath, holdUntil: holdUntil.toISOString() };
+}
+
+/**
+ * "Pay the deposit" on the family's link: the open Stripe page, or a new one that closes when the hold ends (30 min to
+ * 24 h, see payPageWindow). Only while the time is held and the deposit isn't paid.
+ */
+export async function payWithLink(reference: string, now = new Date()): Promise<string> {
+  const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+  const d = row ? await depositOf(row.id) : null;
+  const t = (row?.locale === "es" ? es : en).bookingFlow.depositReturn;
+  if (!row || !d) throw new BookingError("invalid_request", t.invalidTitle);
+  if (d.status === "paid" || row.status === "confirmed" || row.status === "rescheduled") throw new BookingError("invalid_request", t.confirmingTitle);
+  if (row.status !== "pending" || d.status !== "pending" || !d.holdUntil || d.holdUntil.getTime() <= now.getTime()) throw new BookingError("invalid_request", t.expiredTitle);
+  const open = await reopenDeposit(row).catch(() => null);
+  if (open?.url) return open.url;
+  if (!isStripeConfigured()) throw new BookingError("server_error", t.error);
+  const window = payPageWindow(d.holdUntil, now);
+  if (window.holdUntil.getTime() !== d.holdUntil.getTime()) {
+    await getDb().update(bookingDeposits).set({ holdUntil: window.holdUntil, updatedAt: now }).where(eq(bookingDeposits.bookingId, row.id));
+  }
+  const rules = await getAvailabilityRules();
+  try {
+    // one page per minute at most (a double tap gets the same page from Stripe)
+    const { url } = await createDepositPage(row, d.amountCents, await noticeHoursFor(row, rules.limits.rescheduleNoticeHours), window.expiresAt, `deposit/${row.id}/link/${Math.floor(now.getTime() / 60_000)}`);
+    log.info("deposit", "Deposit page opened from the family's link", { reference });
+    return url;
+  } catch (err) {
+    log.error("deposit", "Stripe couldn't open the deposit page from the family's link", { reference, code: stripeCode(err) });
+    throw new BookingError("server_error", t.error);
+  }
+}
+
+/** The family's backdrop picks on their link (a booking the owner made, still waiting on its deposit). */
+export async function saveLinkBackdrops(reference: string, picks: string[]): Promise<string[]> {
+  const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
+  const bundle = (await getCatalog()).find((b) => b.id === row.packageId);
+  const allowed = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
+  const kept = [...new Set(picks)].slice(0, allowed);
+  await saveBackdrops(row.id, kept, "family");
+  return kept;
 }
 
 export type PaidOutcome = "confirmed" | "confirming" | "failed" | "recorded" | "unknown";
@@ -393,8 +459,10 @@ export async function ownerDepositLink(row: Booking, opts: { email: boolean }, n
   if (!isStripeConfigured()) throw new BookingError("server_error", "Stripe isn't connected (STRIPE_SECRET_KEY is missing in Vercel).");
   let held = row;
   if (row.status === "pending" && d.status === "pending") {
-    // still held: its Stripe page must still be open (it isn't if Stripe never opened it, or it just ran out)
-    if (!(await reopenDeposit(row).catch(() => null))) {
+    // still held: its Stripe page must still be open (it isn't if Stripe never opened it, or it just ran out). A
+    // booking the owner made has no page until the family presses Pay: its link works for the whole hold.
+    const ownerHeld = isOwnerBooked(row) && d.holdUntil && d.holdUntil.getTime() > now.getTime() + GRACE_MS;
+    if (!ownerHeld && !(await reopenDeposit(row).catch(() => null))) {
       const r = await settleWithStripe(row, d, { email: false, closeOpen: true }).catch(() => "unknown" as const);
       if (r === "paid") throw new BookingError("invalid_request", "Stripe says this deposit was just paid: the booking is being confirmed.");
       if (r !== "released") throw new BookingError("server_error", "Couldn't check the payment page with Stripe. Please try again.");
@@ -425,8 +493,7 @@ async function holdAgain(row: Booking, d: BookingDeposit, now: Date): Promise<Bo
   } catch {
     throw new BookingError("calendar_unavailable", "Couldn't check the calendar just now. Please try again in a minute.");
   }
-  const ownerRules = { ...rules, limits: { ...rules.limits, minimumNoticeDays: 0 } };
-  if (!slotsForDay(row.sessionDate, minutes, busy, ownerRules, now).some((s) => s.start === localTime(row.sessionStart, tz))) {
+  if (!slotsForDay(row.sessionDate, minutes, busy, ownerRulesOf(rules), now).some((s) => s.start === localTime(row.sessionStart, tz))) {
     throw new BookingError("slot_unavailable", TAKEN_AGAIN);
   }
   const db = getDb();
@@ -470,6 +537,35 @@ async function reclaimCode(row: Booking): Promise<void> {
   }
 }
 
+const ownerBookedDetails = (row: Booking, d: BookingDeposit): OwnerBookedDetails => ({
+  parentName: row.parentName,
+  bundleName: row.packageName,
+  date: row.sessionDate,
+  start: localTime(row.sessionStart, row.timezone),
+  untilDate: todayInZone(row.timezone, d.holdUntil!),
+  untilTime: localTime(d.holdUntil!, row.timezone),
+  amountCents: d.amountCents,
+});
+
+/**
+ * Right after the owner books for a family (/admin → Quotes / Booking): their link, a text to copy, and (with `email`)
+ * the "We saved your session" email. An email problem never undoes the booking: `emailError` says why, the link works.
+ */
+export async function ownerBookingLink(reference: string, opts: { email: boolean }): Promise<{ url: string; holdUntil: string; sms: string; emailed: boolean; emailError?: string }> {
+  const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+  const d = row ? await depositOf(row.id) : null;
+  const url = row ? depositPageUrl(row) : null;
+  if (!row || !d?.holdUntil || !url) throw new BookingError("server_error", "The booking was saved, but its link couldn't be made. Open it in Leads → Not paid.");
+  const sms = ownerBookedSms(ownerBookedDetails(row, d), url, row.locale === "es" ? "es" : "en");
+  if (!opts.email) return { url, holdUntil: d.holdUntil.toISOString(), sms, emailed: false };
+  try {
+    await sendDepositLinkEmail(row, d, url);
+    return { url, holdUntil: d.holdUntil.toISOString(), sms, emailed: true };
+  } catch (err) {
+    return { url, holdUntil: d.holdUntil.toISOString(), sms, emailed: false, emailError: (err as Error).message };
+  }
+}
+
 /** The family's "Finish booking: pay the deposit" email (from /admin). Throws a friendly error when it can't be sent. */
 async function sendDepositLinkEmail(row: Booking, d: BookingDeposit, url: string): Promise<void> {
   const db = getDb();
@@ -483,10 +579,13 @@ async function sendDepositLinkEmail(row: Booking, d: BookingDeposit, url: string
     const themeId = await getSiteSettings()
       .then((s) => s.themeId)
       .catch(() => "default");
-    const mail = await depositLinkEmail(
-      { parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: localTime(row.sessionStart, row.timezone), until: localTime(d.holdUntil!, row.timezone), amountCents: d.amountCents },
-      { themeId, payUrl: url, locale: row.locale },
-    );
+    // a booking the owner made: "We saved your session" (backdrops + deposit, the hold's day and time)
+    const mail = isOwnerBooked(row)
+      ? await ownerBookedEmail(ownerBookedDetails(row, d), { themeId, url, locale: row.locale })
+      : await depositLinkEmail(
+          { parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: localTime(row.sessionStart, row.timezone), until: localTime(d.holdUntil!, row.timezone), amountCents: d.amountCents },
+          { themeId, payUrl: url, locale: row.locale },
+        );
     const { id: resendId } = await sendEmail({
       scope: "resend.deposit_link",
       to: row.email,
@@ -603,8 +702,13 @@ export async function depositReturnState(reference: string, client: ClientContex
   const start = localTime(row.sessionStart, row.timezone);
   if (row.status === "confirmed" || row.status === "rescheduled") return { state: "confirmed", booking: await resultOf(row), requestId: row.requestId };
   if (row.status === "pending" && deposit?.status === "paid") return { state: "confirming" };
-  if (row.status === "pending")
-    return { state: "waiting", amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };
+  if (row.status === "pending") {
+    const waiting = { state: "waiting" as const, amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };
+    if (!isOwnerBooked(row)) return waiting;
+    // booked by the owner: the family picks their backdrops here, then pays
+    const [bundle, saved] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => [])]);
+    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] } };
+  }
   if (deposit?.status === "expired") return { state: "expired", date: row.sessionDate, start, bundleName: row.packageName };
   return { state: "invalid" };
 }

@@ -15,6 +15,7 @@ export { galleryDeliveredEmail } from "@/emails/GalleryDelivered";
 export { paymentLinkEmail } from "@/emails/PaymentLink";
 export { depositAbandonedEmail } from "@/emails/DepositAbandoned";
 export { depositLinkEmail } from "@/emails/DepositLink";
+export { ownerBookedEmail, ownerBookedSms } from "@/emails/OwnerBooked";
 export { dayClosedEmail } from "@/emails/DayClosed";
 export { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";
 export { dueReservedEmail } from "@/emails/DueDateReserved";

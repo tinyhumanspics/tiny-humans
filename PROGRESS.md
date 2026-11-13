@@ -223,6 +223,13 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Quotes / Booking: book a session for a mom who texted — LIVE Nov 12 (owner: "Push it, please")**: the owner fills
+  in the family, bundle, day and time; with deposits on the time is held 48 hours (owner's choice) and the family gets
+  an email + a link (or a text to copy) to pick their backdrops (1/2/3 by bundle) and pay the deposit (only the
+  deposit link, owner's choice: no "already paid" option). Paid → Confirmed (calendar event + confirmation email);
+  not paid → Leads → Not paid (reminders keep working). Leads shows "Booked by you". Verified on scripts/local-db
+  with fake Outlook/Resend/Stripe (book → email → backdrops → pay → confirmed; reminder while held; 48 h expiry;
+  re-hold; deposits off).
 - [x] **"Book with my due date" up top — LIVE Nov 12 (owner picked design B of an A/B preview, "I like it")**: moms
   asking about due dates had to scroll past the Thanksgiving box. The home and ad page heroes now have a third button,
   "Book with my due date" (→ /due-date, its explanation at the top), on the first phone screen; the heart strip under

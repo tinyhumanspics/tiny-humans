@@ -1,4 +1,5 @@
 import "server-only";
+import { isOwnerBooked } from "@/lib/deposit/types";
 import { and, count, desc, eq, gte, inArray, lte, ne, notInArray, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
@@ -218,6 +219,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
             internal: { sent: r.internalCancellationSent, at: iso(r.internalCancellationSentAt), error: r.internalCancellationError },
           }
         : null,
+    bookedByOwner: isOwnerBooked(r),
     source:
       r.firstTouchAt || r.utmSource || r.fbclid || r.referrer || r.landingPath
         ? {

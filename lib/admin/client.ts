@@ -23,6 +23,35 @@ export interface DueList {
 }
 
 /** What the owner area needs: the /api/admin routes. */
+/** /admin → Quotes / Booking: what the owner fills in for a family (the booking form's fields). */
+export interface OwnerBookingInput {
+  bundleId: string;
+  locale: "en" | "es";
+  babies: { age: string; name?: string }[];
+  family: { role: string; name?: string }[];
+  slot: { date: string; start: string };
+  contact: { parentName: string; email: string; phone: string; babyAge: string; babyName?: string; notes?: string };
+  address: { street: string; unit?: string; city: string; zip: string; accessNotes?: string };
+  discountCode?: string;
+  requestId: string;
+  /** Email the family their link now. */
+  email: boolean;
+}
+
+export interface OwnerBookingResult {
+  reference: string;
+  /** pending = waiting on the deposit (the family's link); confirmed = deposits are off. */
+  status: "pending" | "confirmed";
+  url?: string;
+  holdUntil?: string;
+  /** The same message as a text to copy. */
+  sms?: string;
+  emailed: boolean;
+  emailError?: string;
+  pricing: import("@/lib/booking/types").PriceQuote | null;
+  travel: { feeCents: number | null; miles: number | null } | null;
+}
+
 export interface AdminApi {
   session(): Promise<{ authenticated: boolean; authConfigured: boolean; storageConfigured: boolean }>;
   login(password: string): Promise<{ ok: boolean; error?: string }>;
@@ -91,6 +120,10 @@ export interface AdminApi {
   deleteDueDate(id: string): Promise<{ ok: true }>;
   /* quotes (owner only): every bundle's price for a ZIP code */
   getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
+  /** Quotes / Booking: open times for a family (no online minimum notice). */
+  ownerSlots(q: { bundle: string; babies: number; zip: string; from: string; to: string }): Promise<import("@/lib/booking/types").DayAvailability[]>;
+  /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
+  ownerBook(input: OwnerBookingInput): Promise<OwnerBookingResult>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */
   getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
   saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
@@ -174,6 +207,9 @@ const httpApi: AdminApi = {
   cancelDueDate: async (id, refund) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "cancel", id, refund }) })),
   remindDueDeposit: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remind", id }) })),
   deleteDueDate: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) })),
+  ownerSlots: async (q) =>
+    (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/booking/slots?${new URLSearchParams({ bundle: q.bundle, babies: String(q.babies), zip: q.zip, from: q.from, to: q.to })}`, { cache: "no-store" }))).days,
+  ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
   getQuote: async (zip, babies, family, percent = 0) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family), percent: String(percent) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));

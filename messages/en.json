@@ -499,6 +499,21 @@
       }
     },
     "depositReturn": {
+      "bookedSubtitle": "Two quick steps and your session is booked.",
+      "bookedTitle": "We saved your session!",
+      "bookedText": "{bundle} on {date} at {time}, at your home. Two quick steps to confirm it: pick your backdrop, then pay the {deposit} deposit. We're holding it for you until {until} (Miami time).",
+      "stepBackdrop": "1. Your backdrop",
+      "stepBackdrops": "1. Your backdrops",
+      "stepPay": "2. The {deposit} deposit",
+      "saveBackdrops": "Save and continue",
+      "savingBackdrops": "Saving…",
+      "skipBackdrops": "Not sure yet, I'll choose later",
+      "backdropsSaved": "Saved: {list}.",
+      "backdropsLater": "No backdrop yet: you can choose it later from your confirmation email.",
+      "changeBackdrops": "Change",
+      "payNote": "The deposit is part of your total; the rest is paid after your session.",
+      "opening": "Opening the payment page…",
+      "otherTime": "Need a different time? Text us at {phone}.",
       "checking": "Checking your payment…",
       "confirmingTitle": "Your deposit is paid!",
       "confirmingText": "We're adding your session to our calendar. This only takes a few seconds.",
@@ -1168,6 +1183,18 @@
         "buttonText": "Pay the deposit: {url}",
         "help": "Something went wrong with the payment? Just reply to this email and we'll help.",
         "smsBody": "Hi {name}! Here's your link to pay the {deposit} deposit and confirm your Tiny Humans session: {url}"
+      },
+      "booked": {
+        "subject": "We saved your Tiny Humans session",
+        "preheader": "Pick your backdrop and pay the {deposit} deposit to confirm {date} at {time}.",
+        "eyebrow": "Two quick steps",
+        "title": "We saved your session, {name}!",
+        "intro": "{bundle} on {date} at {time}, at your home. To confirm it: pick your backdrop, then pay the {deposit} deposit. The rest is paid after your session.",
+        "hold": "We're holding this time for you until {until} (Miami time).",
+        "button": "Finish my booking",
+        "buttonText": "Finish your booking: {url}",
+        "help": "Questions? Just reply to this email or text us at {phone}.",
+        "smsBody": "Hi {name}! We saved {date} at {time} for your Tiny Humans session. Pick your backdrop and pay the {deposit} deposit to confirm it here: {url}"
       },
       "abandoned": {
         "subject": "Your Tiny Humans session isn't booked yet",

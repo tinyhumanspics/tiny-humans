@@ -18,6 +18,7 @@ import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import Confirmation from "./Confirmation";
+import OwnerBookedSteps from "./OwnerBookedSteps";
 import styles from "./Booking.module.css";
 
 const POLL_MS = 2500;
@@ -122,6 +123,8 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
           </div>
         );
       case "waiting": {
+        // booked by the owner for them: pick backdrops, then pay (owner, Nov 12)
+        if (state.ownerBooked) return <OwnerBookedSteps state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
         const when = { date: formatLongDate(state.date, locale), time: formatTimeLabel(state.start, locale) };
         const deposit = formatMoney(state.amountCents);
         return (
@@ -166,7 +169,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="book" level={1} />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={state?.state === "waiting" && state.ownerBooked ? t.bookedSubtitle : messages.section.subtitle} slot="book" level={1} />
         <div className={styles.panelAnchor} data-booking-panel>
           <ChalkBox className={styles.panel} seed={7} wobble={4} strokeWidth={3}>
             <div aria-live="polite">{body()}</div>

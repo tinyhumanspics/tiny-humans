@@ -194,8 +194,21 @@ export interface BookingClient {
   rescheduleWithToken(token: string, slot: { date: DateKey; start: string }): Promise<ManagedBooking>;
 }
 
+/**
+ * /admin → Quotes / Booking (owner, Nov 12): a session the owner books for a family who texted. Set on the server only,
+ * never taken from the browser. The online minimum notice doesn't apply, and with deposits on, the time is held
+ * `holdHours` for the family's link (pick backdrops, pay the deposit) instead of a 30-minute payment page.
+ */
+export interface OwnerBooking {
+  holdHours: number;
+}
+
 /** Full server-side contract. */
 export interface BookingProvider extends BookingClient {
+  /** `owner`: open times as the owner sees them (no online minimum notice). */
+  getAvailability(query: AvailabilityQuery, owner?: boolean): Promise<DayAvailability[]>;
+  /** `owner`: booked by the owner for the family (see OwnerBooking). */
+  createBooking(request: BookingRequest, owner?: OwnerBooking): Promise<BookingResult>;
   cancelBooking(reference: string, opts?: CancelOptions): Promise<void>;
   rescheduleBooking(reference: string, slot: Pick<TimeSlot, "date" | "start">): Promise<BookingResult>;
 }

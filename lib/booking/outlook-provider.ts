@@ -11,7 +11,7 @@ import { carryDueDeposit, claimDue, dueById, dueByToken, dueExtrasOf, finishDue,
 import { log } from "@/lib/log";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
-import { availabilityForRange, slotsForDay, type Busy } from "./availability";
+import { availabilityForRange, ownerRulesOf, slotsForDay, type Busy } from "./availability";
 import { applyTrips, tripConflict, tripContext, visitorForZip } from "./trips-server";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
@@ -37,12 +37,13 @@ import { managedOf, rescheduleAvailability, rescheduleBookingRow } from "./resch
 import { site } from "@/config/site";
 import { getDepositSettings } from "@/lib/deposit/server";
 import { depositCentsFor } from "@/lib/deposit/types";
-import { heldForSameFamily, openDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
+import { depositPageUrl, heldForSameFamily, openDeposit, openOwnerDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
 import { addPhotos, extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
 import { saveBookingAddons, saveBookingFamily } from "./addons";
 import { asksFamily, cleanFamily } from "./family";
-import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, TimeSlot } from "./types";
+import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, OwnerBooking, TimeSlot } from "./types";
+import { isStripeConfigured } from "@/lib/payments/stripe";
 
 const ACTIVE = ne(bookings.status, "cancelled");
 
@@ -96,7 +97,7 @@ export class OutlookBookingProvider implements BookingProvider {
     return [...calendar, ...rows.map((r) => ({ start: r.start, end: r.end }))];
   }
 
-  async getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]> {
+  async getAvailability(query: AvailabilityQuery, owner = false): Promise<DayAvailability[]> {
     this.ensureConfigured();
     const bundle = (await getCatalog()).find((b) => b.id === query.bundleId && b.active !== false);
     if (!bundle) throw new BookingError("invalid_request", "Choose a bundle first.");
@@ -112,13 +113,13 @@ export class OutlookBookingProvider implements BookingProvider {
     try {
       const [rules, busy, trips, visitor] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to), tripContext(query.from, query.to), visitorForZip(query.zip)]);
       // trip days (owner, Nov 10): a far day only for families near it, the morning after kept free
-      return applyTrips(availabilityForRange(query.from, query.to, minutes, busy, rules), visitor, trips);
+      return applyTrips(availabilityForRange(query.from, query.to, minutes, busy, owner ? ownerRulesOf(rules) : rules), visitor, trips);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }
   }
 
-  async createBooking(request: BookingRequest): Promise<BookingResult> {
+  async createBooking(request: BookingRequest, owner?: OwnerBooking): Promise<BookingResult> {
     this.ensureConfigured();
     const db = getDb();
     // "Not born yet": a due-date reservation becomes this booking (its bundle, its kept price, no new deposit).
@@ -187,8 +188,8 @@ export class OutlookBookingProvider implements BookingProvider {
     } catch (err) {
       asCalendarError(err, "createBooking.recheck");
     }
-    if (!slotsForDay(date, durationMinutes, busy, rules).some((s) => s.start === start)) {
-      throw new BookingError("slot_unavailable", friendly.slotTaken);
+    if (!slotsForDay(date, durationMinutes, busy, owner ? ownerRulesOf(rules) : rules).some((s) => s.start === start)) {
+      throw new BookingError("slot_unavailable", owner ? "That time isn't free anymore (another booking, a calendar event or outside your hours). Pick another time." : friendly.slotTaken);
     }
     // 2a. Trip days: this home's distance against the day's other sessions (Orlando vs Miami Beach on one day)
     if (tripConflict(date, start, await visitorForZip(request.address.zip), await tripContext(date, date))) {
@@ -206,6 +207,10 @@ export class OutlookBookingProvider implements BookingProvider {
     // 2c. Deposit: the bundle's, paid on Stripe as the last step (confirmed once it's paid). Never more than the total.
     // A due-date reservation paid its deposit already (carried over below), so it never pays a new one.
     const depositCents = due ? 0 : depositCentsFor(pricing.totalCents + (travel.feeCents ?? 0), bundle.id, await getDepositSettings());
+    // Booked by the owner: the family's link needs Stripe and the signed-link secret, so check before saving anything.
+    if (owner && depositCents > 0 && (!isStripeConfigured() || !depositPageUrl({ bookingReference: "TH-CHECK", packageId: bundle.id, locale: "en" }))) {
+      throw new BookingError("not_configured", "Deposits are on, but Stripe (STRIPE_SECRET_KEY) or ADMIN_SESSION_SECRET isn't set in Vercel, so the $50 link can't work. Nothing was booked.");
+    }
     // One booking per reservation: claim it now; given back if this booking fails.
     if (due && !(await claimDue(due.id))) throw new BookingError("invalid_request", dueUsedMessage(request.locale));
     const releaseDueClaim = () => (due ? releaseDue(due.id) : Promise.resolve());
@@ -303,7 +308,8 @@ export class OutlookBookingProvider implements BookingProvider {
     // webhook or the page they come back to confirms it (lib/deposit/flow.ts). Stripe down → booked without it.
     let deposit: BookingDetails["deposit"] = due?.depositStatus === "paid" && due.depositCents ? { amountCents: due.depositCents, status: "paid" } : undefined;
     if (depositCents > 0) {
-      const opened = await openDeposit(row, depositCents, noticeHours);
+      // booked by the owner: the time is held for the family's link (backdrops + deposit), no payment page yet
+      const opened = owner ? await openOwnerDeposit(row, depositCents, owner.holdHours) : await openDeposit(row, depositCents, noticeHours);
       if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
       deposit = { amountCents: depositCents, status: "unpaid" };
     }

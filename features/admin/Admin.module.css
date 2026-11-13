@@ -534,3 +534,15 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 .completePill:disabled { opacity: 0.6; cursor: default; }
 .completePillOn { color: var(--chalkboard-dark); background: var(--cloud-blue); border-color: var(--cloud-blue); border-style: solid; }
 .completePillOn:hover:not(:disabled) { color: var(--chalkboard-dark); }
+
+/* Quotes / Booking → "Book it for them" (OwnerBookingForm, owner Nov 12) */
+.ownerBookForm { display: grid; gap: 18px; margin-top: 10px; }
+.ownerBookGroup { display: grid; gap: 12px; margin: 0; padding: 14px clamp(12px, 3vw, 18px) 16px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 22%, transparent); border-radius: 12px; min-width: 0; }
+.ownerBookGroup > legend { padding: 0 6px; }
+.ownerBookGroup .label { display: grid; gap: 4px; }
+.ownerBookRow { display: grid; gap: 10px 14px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); align-items: end; }
+.ownerBookFamily { display: grid; gap: 10px; justify-items: start; }
+.ownerBookFamily > .ownerBookRow { width: 100%; }
+.ownerBookTimes { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; align-items: center; }
+.ownerBookCheck { display: flex; gap: 10px; align-items: flex-start; }
+.ownerBookCheck input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--sun-yellow); }

@@ -15,6 +15,25 @@ export const DEFAULT_DEPOSIT_CENTS = 5000;
 /** How long a booking holds its time while the family is on the Stripe page (Stripe's minimum page life is 30 min). */
 export const DEPOSIT_HOLD_MINUTES = 30;
 
+/** A booking the owner made for a family (/admin → Quotes / Booking, owner Nov 12) holds its time this long for them. */
+export const OWNER_HOLD_HOURS = 48;
+
+/** Bookings the owner makes carry this request id prefix (set on the server; the family's link shows its two steps). */
+export const OWNER_REQUEST_PREFIX = "owner-";
+export const isOwnerBooked = (row: { requestId: string | null }) => Boolean(row.requestId?.startsWith(OWNER_REQUEST_PREFIX));
+
+/**
+ * When a payment page opened from a family's link closes: at the hold's end, but Stripe pages live 30 minutes to 24
+ * hours, so within that (a minute of slack each side). Returns the page's end and the hold's end (pushed to the page's
+ * end when the hold had less than 31 minutes left, so the page never outlives the hold).
+ */
+export function payPageWindow(holdUntil: Date, now = new Date()): { expiresAt: Date; holdUntil: Date } {
+  const min = now.getTime() + 31 * 60_000;
+  const max = now.getTime() + (24 * 60 - 1) * 60_000;
+  const expiresAt = new Date(Math.min(Math.max(holdUntil.getTime(), min), max));
+  return { expiresAt, holdUntil: expiresAt.getTime() > holdUntil.getTime() ? expiresAt : holdUntil };
+}
+
 export const depositAmountFor = (bundleId: string, s: Pick<DepositSettings, "amounts"> | null | undefined) => s?.amounts[bundleId] ?? DEFAULT_DEPOSIT_CENTS;
 
 /** What a new booking pays while booking: its bundle's deposit, never more than its total. 0 = none (off, or a $0 booking). */
@@ -55,8 +74,22 @@ export type DepositReturnState =
   | { state: "confirmed"; booking: BookingResult; requestId: string | null }
   /** Paid; the calendar event and emails are still being done (or retried). */
   | { state: "confirming" }
-  /** Not paid yet; the time is held until `holdUntil`. */
-  | { state: "waiting"; amountCents: number; holdUntil: string | null; date: string; start: string; end: string; bundleName: string; payUrl: string | null }
+  /**
+   * Not paid yet; the time is held until `holdUntil`. `ownerBooked`: the owner booked it for them, so the page asks for
+   * their backdrops (`backdrops`: how many the bundle allows + what's picked) and then the deposit.
+   */
+  | {
+      state: "waiting";
+      amountCents: number;
+      holdUntil: string | null;
+      date: string;
+      start: string;
+      end: string;
+      bundleName: string;
+      payUrl: string | null;
+      ownerBooked?: boolean;
+      backdrops?: { allowed: number; picks: string[] };
+    }
   /** Never paid: the time was released. */
   | { state: "expired"; date: string; start: string; bundleName: string }
   | { state: "invalid" };
