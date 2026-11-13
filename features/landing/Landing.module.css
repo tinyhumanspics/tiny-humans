@@ -80,11 +80,9 @@
 
 /* 5. bundles + bonuses */
 .bundles { display: grid; gap: clamp(30px, 4vw, 40px); align-items: start; }
-.bundleCell { order: var(--phone-order, 0); }
 /* columns come from lib/pricing/columns.ts (3 bundles: 3 across, as before; 4: 2 × 2, then one row of 4) */
 @media (min-width: 900px) {
   .bundles { grid-template-columns: repeat(var(--cols-md, 3), minmax(0, 380px)); justify-content: center; gap: 28px; }
-  .bundleCell { order: 0; }
 }
 @media (min-width: 1180px) {
   .bundles { grid-template-columns: repeat(var(--cols-lg, 3), minmax(0, 380px)); }

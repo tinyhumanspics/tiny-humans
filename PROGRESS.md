@@ -223,6 +223,9 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Ad page bundles cheapest first on phones too — LIVE Nov 13 (owner: "just push it")**: phones showed Our
+  Family Story first (the Oct "price anchor" order); now every screen follows the owner's bundle order (Little
+  Moments, Our Little Story, Our Family Story), like the desktop and /bundles.
 - [x] **Book it for them, round 2 — LIVE Nov 12 (owner: "push it")**: prices next to each bundle (today's offer), the
   booking page's month calendar with the owner's open days (days off faded) and the day's times, and a live price
   box: a code is used only when it saves more than the running offer (e.g. CHRISTMAS15 over the 10% Thanksgiving

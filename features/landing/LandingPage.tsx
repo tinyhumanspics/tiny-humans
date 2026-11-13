@@ -36,8 +36,6 @@ import styles from "./Landing.module.css";
 import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";
 
-/** Phone order: the family bundle first (price anchor), the "most loved" one highlighted. Desktop keeps the owner's order. */
-const PHONE_ORDER = ["forever-little", "our-little-story", "little-moments"];
 const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
 
 /** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
@@ -218,7 +216,8 @@ export default function LandingPage({
         {available ? (
           <div className={styles.bundles} style={bundleColumns(bundles.length)}>
             {bundles.map((b, i) => (
-              <div key={b.id} className={styles.bundleCell} style={{ "--phone-order": PHONE_ORDER.indexOf(b.id) === -1 ? 9 : PHONE_ORDER.indexOf(b.id) } as React.CSSProperties}>
+              // the owner's order everywhere, phones too: cheapest first (owner, Nov 13; it was the family bundle first on phones)
+              <div key={b.id}>
                 <BundleCard bundle={b} index={i} messages={bundleMessages.card} locale={locale} href={scheduleHref(b.id, null, locale)} />
               </div>
             ))}
