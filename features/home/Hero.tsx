@@ -13,7 +13,11 @@ import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import styles from "./Hero.module.css";
 import { cn } from "@/lib/cn";
 
-export default function Hero({ messages = en.home.hero, locale = "en" }: { messages?: typeof en.home.hero; locale?: AppLocale }) {
+/**
+ * The home hero. Its third button (owner, Nov 12) opens "Not born yet?" (/due-date) straight away: moms asking about
+ * their due date no longer scroll for it.
+ */
+export default function Hero({ messages = en.home.hero, dueCta = en.dueDate.invite.button, locale = "en" }: { messages?: typeof en.home.hero; dueCta?: string; locale?: AppLocale }) {
   const hero = messages;
   const { media, theme } = useSiteSettings();
   const [first, second] = media.title;
@@ -37,6 +41,7 @@ export default function Hero({ messages = en.home.hero, locale = "en" }: { messa
           <div className={styles.actions}>
             <ChalkButton href={localePath("/#portfolio", locale)} variant="outline" seed={11}>{hero.secondaryCta}</ChalkButton>
             <ChalkButton href={bundlesHref(undefined, locale)} variant="solid" seed={12}>{hero.primaryCta}</ChalkButton>
+            <ChalkButton href={localePath("/due-date", locale)} variant="standOut" seed={13}>{dueCta}</ChalkButton>
           </div>
         </Reveal>
         <Reveal className={styles.snaps} delay={250}>

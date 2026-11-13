@@ -34,6 +34,21 @@ function fakeReserve(page: Page) {
     .then(() => sent);
 }
 
+test("home and ad page: “Book with my due date” is on the first screen and opens Not born yet (owner, Nov 12)", async ({ page }) => {
+  for (const path of ["/", "/home-sweet-home"]) {
+    await page.goto(path);
+    const button = page.getByRole("main").getByRole("link", { name: "Book with my due date" }).first();
+    await expect(button).toBeInViewport();
+    await expect(button).toHaveAttribute("href", "/due-date");
+    // its own color, not the white of the buttons next to it
+    const [own, white] = await button.evaluate((el) => [getComputedStyle(el).color, getComputedStyle(document.documentElement).getPropertyValue("--chalk-white")]);
+    expect(own).not.toBe(white.trim());
+  }
+  await page.getByRole("main").getByRole("link", { name: "Book with my due date" }).first().click();
+  await expect(page).toHaveURL(/\/due-date$/);
+  await expect(page.getByRole("heading", { name: "Not born yet?", level: 1 })).toBeVisible();
+});
+
 test("Reserve my spot → backdrops → review with a discount code → the reservation carries both (owner, Nov 11)", async ({ page }) => {
   const sent = await fakeReserve(page);
   await page.route("**/api/booking/quote", (route) =>

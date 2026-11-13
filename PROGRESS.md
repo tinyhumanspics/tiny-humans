@@ -223,6 +223,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **"Book with my due date" up top — LIVE Nov 12 (owner picked design B of an A/B preview, "I like it")**: moms
+  asking about due dates had to scroll past the Thanksgiving box. The home and ad page heroes now have a third button,
+  "Book with my due date" (→ /due-date, its explanation at the top), on the first phone screen; the heart strip under
+  the hero is gone (the box under the bundle cards stays). The button has its own color per theme (light blue; New
+  Year light green; deep blue on Valentine's cream). Visual parity baselines for / and /home-sweet-home updated.
 - [x] **Shoots: video cover pictures + photos and videos never mixed — LIVE Nov 12 (owner: "yes to push … make sure
   that videos and pics are separated")**. Instagram Reels/posts and YouTube cards show the video's cover picture
   (▶ in the middle, small app tag in the corner) through our server; TikTok gives none (▶ card). In the folder and on

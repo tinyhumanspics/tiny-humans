@@ -20,7 +20,8 @@ import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
 import OfferLine from "@/features/booking/OfferLine";
-import NotBornYet, { NotBornYetStrip } from "@/features/booking/NotBornYet";
+import NotBornYet from "@/features/booking/NotBornYet";
+import { localePath } from "@/i18n/path";
 import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
@@ -130,6 +131,8 @@ export default function LandingPage({
             <div className={styles.actions}>
               <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={12}>{t.hero.cta}</ChalkButton>
               <ChalkButton href="#bundles" variant="outline" seed={11}>{t.hero.secondary}</ChalkButton>
+              {/* moms asking about their due date see it right away (owner, Nov 12) */}
+              <ChalkButton href={localePath("/due-date", locale)} variant="standOut" seed={13}>{dueMessages.button}</ChalkButton>
             </div>
             <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.ctaNote}</p>
           </Reveal>
@@ -152,8 +155,6 @@ export default function LandingPage({
 
       {/* Seasonal offer boxes (/admin → Seasonal Landing), also on the home page: only while one is live. */}
       <SeasonalOffers messages={t.seasonalOffers} promoMessages={bundleMessages.promo} locale={locale} />
-      {/* "Not born yet?" near the top too (owner, Nov 10), besides the box under the bundles */}
-      <NotBornYetStrip messages={dueMessages} locale={locale} />
 
       {/* 2. Trust strip */}
       <section className="container" aria-label={t.trustLabel}>

@@ -244,7 +244,9 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
 - Emails declare `color-scheme: light only` (meta + `:root`, both layouts) so dark-mode mail apps (Gmail apps, Apple
   Mail) keep our colors; never set it back to `dark`. Classic Outlook for Windows can't be controlled.
 - Themes: each theme's board colors (`chalkboard`/`Dark`/`Light`) and Thanksgiving's lighter text/accents are in
-  `config/themes.ts`; Thanksgiving-only CSS uses `:global(html[data-theme="thanksgiving"])` and
+  `config/themes.ts` (plus `standOut` = `--stand-out`, the hero's "Book with my due date" button, ChalkButton
+  `variant="standOut"`, owner Nov 12: light blue = cloudBlue unless set; Thanksgiving/Christmas a lighter blue, New Year
+  light green; the contrast test checks it); Thanksgiving-only CSS uses `:global(html[data-theme="thanksgiving"])` and
   `tests/unit/contrast.test.ts` mirrors it. Seasonal email logos/strips in `lib/email/assets.ts` are generated images on
   each board color (logo = the theme's `public/brand` layers composited at 440 px wide); no generator in the repo.
 - Production bundles have an empty `people` line; who can join lives in `features` (use `includesSiblings()`).

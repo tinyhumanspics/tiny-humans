@@ -26,6 +26,11 @@ export interface ThemeColors {
   chalkWhite: string;
   chalkMuted: string;
   chalkError: string;
+  /**
+   * The "Book with my due date" button's own color, so it stands out from the other buttons (owner, Nov 12: light blue,
+   * light green for New Year). Missing = the theme's cloudBlue (light blue on the dark boards, deep blue on Valentine's).
+   */
+  standOut?: string;
   /** Seasonal accents: doodles, photo tape, small details. */
   accent: string;
   accent2: string;
@@ -200,6 +205,8 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
       chalkboardLight: "#ad5626",
       chalkMuted: "#cfd4c7",
       cloudBlue: "#94d7fd",
+      // a lighter blue than cloudBlue: 4.5:1+ on the orange board even with the chalk texture
+      standOut: "#b5e4ff",
       chalkError: "#fdc5bd",
       accent: "#f69035",
       accent2: "#ff8778",
@@ -247,7 +254,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "christmas",
     label: "Christmas",
     buttonLabel: "Christmas Theme",
-    colors: { ...board, chalkboard: "#7e2e2e", chalkboardDark: "#5a2020", chalkboardLight: "#9a3d3c", accent: "#ee4b46", accent2: "#f4f2ea", accent3: "#5cba6c" },
+    colors: { ...board, chalkboard: "#7e2e2e", chalkboardDark: "#5a2020", chalkboardLight: "#9a3d3c", standOut: "#9ad8ff", accent: "#ee4b46", accent2: "#f4f2ea", accent3: "#5cba6c" },
     logo: logo(
       {
         sun: "/brand/christmas/sun.webp",
@@ -290,7 +297,7 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     id: "newYear",
     label: "New Year",
     buttonLabel: "New Year Theme",
-    colors: { ...board, chalkboard: "#172647", chalkboardDark: "#0e1931", chalkboardLight: "#203158", accent: "#ff74b1", accent2: "#7fe0a7", accent3: "#6cc6f7" },
+    colors: { ...board, chalkboard: "#172647", chalkboardDark: "#0e1931", chalkboardLight: "#203158", standOut: "#7fe0a7", accent: "#ff74b1", accent2: "#7fe0a7", accent3: "#6cc6f7" },
     logo: logo(
       {
         sun: "/brand/newYear/sun.webp",
@@ -404,6 +411,7 @@ export function themeCssVariables(theme: ThemeDefinition): Record<string, string
     "--chalkboard-light": c.chalkboardLight,
     "--sun-yellow": c.sunYellow,
     "--cloud-blue": c.cloudBlue,
+    "--stand-out": c.standOut ?? c.cloudBlue,
     "--chalk-white": c.chalkWhite,
     "--chalk-muted": c.chalkMuted,
     "--chalk-error": c.chalkError,

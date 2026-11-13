@@ -35,6 +35,12 @@ describe("theme text contrast on the chalkboard (WCAG 1.4.3, 4.5:1)", () => {
         expect(contrast(color, c.chalkboard), name).toBeGreaterThanOrEqual(4.5);
       }
     });
+    test(`${theme.label}: the "Book with my due date" button's stand-out color (owner, Nov 12)`, () => {
+      expect(contrast(c.standOut ?? c.cloudBlue, c.chalkboard)).toBeGreaterThanOrEqual(4.5);
+      // it must look different from the white and yellow buttons next to it
+      expect((c.standOut ?? c.cloudBlue).toLowerCase()).not.toBe(c.chalkWhite.toLowerCase());
+      expect((c.standOut ?? c.cloudBlue).toLowerCase()).not.toBe(c.sunYellow.toLowerCase());
+    });
     test(`${theme.label}: seasonal cutoff line (accent 2 lightened 60/40 with chalk white)`, () => {
       expect(contrast(lighter?.cutoffWhite ? c.chalkWhite : mix(c.accent2, c.chalkWhite, 0.6), c.chalkboard)).toBeGreaterThanOrEqual(4.5);
     });

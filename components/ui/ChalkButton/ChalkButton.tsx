@@ -8,7 +8,8 @@ import { cn } from "@/lib/cn";
 
 interface ChalkButtonProps {
   children: ReactNode;
-  variant?: "solid" | "outline";
+  /** standOut: an outline in the theme's stand-out color (the "Book with my due date" button). */
+  variant?: "solid" | "outline" | "standOut";
   href?: string;
   onClick?: MouseEventHandler<HTMLButtonElement | HTMLAnchorElement>;
   type?: "button" | "submit";
@@ -27,7 +28,7 @@ export default function ChalkButton({ children, variant = "outline", href, onCli
       seed={seed}
       wobble={1.8}
       strokeWidth={variant === "solid" ? 3 : 2.4}
-      color={variant === "solid" ? "var(--sun-yellow)" : "var(--chalk-white)"}
+      color={variant === "solid" ? "var(--sun-yellow)" : variant === "standOut" ? "var(--stand-out)" : "var(--chalk-white)"}
     >
       {variant === "solid" && <span className={styles.fill} aria-hidden="true" />}
       <span className={cn(styles.label, "chalk-soft")}>{children}</span>

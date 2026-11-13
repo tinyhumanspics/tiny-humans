@@ -42,6 +42,7 @@
 .solid { color: var(--chalkboard-dark); }
 .solid .label { text-shadow: none; }
 .outline { color: var(--chalk-white); }
+.standOut { color: var(--stand-out); }
 
 .button:hover:not(:disabled) { transform: rotate(-1deg) scale(1.02); }
 .button:hover:not(:disabled) .inner { --chalkbox-opacity: 1; }
