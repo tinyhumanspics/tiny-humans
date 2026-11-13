@@ -23,6 +23,16 @@ export interface DueList {
 }
 
 /** What the owner area needs: the /api/admin routes. */
+/** /admin → Quotes / Booking: the family's price (GET /api/admin/booking/price). */
+export interface OwnerPrice {
+  quote: import("@/lib/booking/types").PriceQuote;
+  travel: { status: string; miles: number | null; feeCents: number } | null;
+  /** Bundle (offer or code) + extras + travel. */
+  totalCents: number;
+  /** Paid with their link; null = deposits off. */
+  depositCents: number | null;
+}
+
 /** /admin → Quotes / Booking: what the owner fills in for a family (the booking form's fields). */
 export interface OwnerBookingInput {
   bundleId: string;
@@ -122,6 +132,8 @@ export interface AdminApi {
   getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
   /** Quotes / Booking: open times for a family (no online minimum notice). */
   ownerSlots(q: { bundle: string; babies: number; zip: string; from: string; to: string }): Promise<import("@/lib/booking/types").DayAvailability[]>;
+  /** Quotes / Booking: the price as the booking form works it out (offer or code, extras, travel, deposit). */
+  ownerPrice(q: { bundle: string; babies: number; family: number; zip?: string; code?: string; email?: string }): Promise<OwnerPrice>;
   /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
   ownerBook(input: OwnerBookingInput): Promise<OwnerBookingResult>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */
@@ -209,6 +221,10 @@ const httpApi: AdminApi = {
   deleteDueDate: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) })),
   ownerSlots: async (q) =>
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/booking/slots?${new URLSearchParams({ bundle: q.bundle, babies: String(q.babies), zip: q.zip, from: q.from, to: q.to })}`, { cache: "no-store" }))).days,
+  ownerPrice: async (q) =>
+    json<OwnerPrice>(
+      await fetch(`/api/admin/booking/price?${new URLSearchParams(Object.entries({ bundle: q.bundle, babies: String(q.babies), family: String(q.family), zip: q.zip ?? "", code: q.code ?? "", email: q.email ?? "" }).filter(([, v]) => v))}`, { cache: "no-store" }),
+    ),
   ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
   getQuote: async (zip, babies, family, percent = 0) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family), percent: String(percent) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {

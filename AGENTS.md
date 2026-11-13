@@ -352,6 +352,10 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   the usual confirm (Outlook, emails); unpaid at 48 h → the sweep releases it (Leads → Not paid). The email is
   `emails/OwnerBooked.tsx` (also the Leads reminder for these: `sendDepositLinkEmail` picks it), plus a text to copy.
   A reminder while still held keeps the 48 h (no re-hold). Deposits off → confirmed at once. Leads: "Booked by you".
+  The form (owner, Nov 12 follow-up): bundle options show today's price (offer); the day is the booking page's month
+  calendar (`features/booking/BookingCalendar.tsx` re-exports flow/Calendar for other features) fed by the owner
+  slots for the month on screen (days off/booked faded); a live price box (`GET /api/admin/booking/price`, the
+  provider's `quote` + travel + deposit) shows the offer or the code when it saves more (only one counts).
 - Quotes (/admin/quotes, `lib/quotes/`): a family's ZIP code (read from a pasted address in the browser; the address is
   never sent) → every active bundle priced with the booking form's own functions (offer, twins, extra people, travel,
   deposit) + a ready-to-send EN/ES message. Optional owner "% off" (`&percent=`) is priced like a % discount code

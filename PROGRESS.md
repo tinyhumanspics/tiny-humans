@@ -223,6 +223,11 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Book it for them, round 2 — LIVE Nov 12 (owner: "push it")**: prices next to each bundle (today's offer), the
+  booking page's month calendar with the owner's open days (days off faded) and the day's times, and a live price
+  box: a code is used only when it saves more than the running offer (e.g. CHRISTMAS15 over the 10% Thanksgiving
+  offer), with the reason shown. Note: on Nov 12–13 Microsoft had a worldwide Outlook/Graph outage, so the live
+  calendar (public booking page and this form) said "We couldn't reach our calendar" until Microsoft recovered.
 - [x] **Quotes / Booking: book a session for a mom who texted — LIVE Nov 12 (owner: "Push it, please")**: the owner fills
   in the family, bundle, day and time; with deposits on the time is held 48 hours (owner's choice) and the family gets
   an email + a link (or a text to copy) to pick their backdrops (1/2/3 by bundle) and pay the deposit (only the

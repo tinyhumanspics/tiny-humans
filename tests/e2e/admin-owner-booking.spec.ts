@@ -11,14 +11,31 @@ const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(Date.now() + 9 * 864e5));
 const LINK = "/book?bundle=our-little-story&deposit=TH-20261112-4459&k=sig";
 
-test("Quotes / Booking: fill in the family, pick a time, book it; the link and a text to copy", async ({ page, context }, testInfo) => {
+test("Quotes / Booking: prices by the bundles, your calendar (days off faded), a code's price, book it; the link and a text", async ({ page, context }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
   await signedInAdmin(page);
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  // the owner's calendar for the month on screen: open every day but Sundays
   const asked: string[] = [];
   await page.route("**/api/admin/booking/slots?*", (route) => {
-    asked.push(new URL(route.request().url()).search);
-    return route.fulfill({ json: { days: [{ date: day, slots: [{ id: `${day}T09:00`, date: day, start: "09:00", end: "11:00", label: "9:00 AM" }, { id: `${day}T13:00`, date: day, start: "13:00", end: "15:00", label: "1:00 PM" }] }] } });
+    const q = new URL(route.request().url()).searchParams;
+    asked.push(q.toString());
+    const days = [];
+    for (let d = new Date(`${q.get("from")}T12:00:00Z`); d <= new Date(`${q.get("to")}T12:00:00Z`); d = new Date(d.getTime() + 864e5)) {
+      const date = d.toISOString().slice(0, 10);
+      days.push({ date, slots: d.getUTCDay() === 0 ? [] : [{ id: `${date}T09:00`, date, start: "09:00", end: "11:00", label: "9:00 AM" }, { id: `${date}T13:00`, date, start: "13:00", end: "15:00", label: "1:00 PM" }] });
+    }
+    return route.fulfill({ json: { days } });
+  });
+  // the price: today's offer, or CHRISTMAS15 when typed (it saves more)
+  const quote = { bundleId: "our-little-story", bundleName: "Our Little Story", regularCents: 29900, offerEndsOn: "2026-11-23", addons: [], addonsCents: 0, note: null };
+  await page.route("**/api/admin/booking/price?*", (route) => {
+    const code = new URL(route.request().url()).searchParams.get("code");
+    return route.fulfill({
+      json: code
+        ? { quote: { ...quote, offerCents: null, offerLabel: null, discountCode: code, discountCents: 4485, finalCents: 25415, totalCents: 25415, pricingType: "discount", note: "Your code gives you a better price than the Thanksgiving Offer, so we've used the code instead." }, travel: { status: "free", miles: 4, feeCents: 0 }, totalCents: 25415, depositCents: 5000 }
+        : { quote: { ...quote, offerCents: 26910, offerLabel: "Thanksgiving Offer", discountCode: null, discountCents: 0, finalCents: 26910, totalCents: 26910, pricingType: "offer" }, travel: { status: "free", miles: 4, feeCents: 0 }, totalCents: 26910, depositCents: 5000 },
+    });
   });
   let sent: Record<string, unknown> | null = null;
   await page.route("**/api/admin/booking", (route) => {
@@ -31,19 +48,35 @@ test("Quotes / Booking: fill in the family, pick a time, book it; the link and a
   await page.goto("/admin/quotes");
   await expect(page.getByRole("navigation", { name: "Owner area" }).getByRole("link", { name: "Quotes / Booking" })).toHaveAttribute("aria-current", "page");
   const form = page.getByRole("region", { name: "Book it for them" });
-  await form.getByLabel("Bundle").selectOption({ label: "Our Little Story" });
+  const bundle = form.getByLabel("Bundle");
+  // each bundle with the price a family books at today
+  await expect(bundle.locator("option")).toHaveText([/^Little Moments · \$\d/, /^Our Little Story · \$\d/, /^Our Family Story · \$\d/]);
+  await bundle.selectOption({ index: 1 });
   await form.getByLabel("Baby's name (optional)").fill("Mia");
-  await form.getByLabel("Day").fill(day);
-  await form.getByLabel("Their ZIP code").fill("33139");
-  await form.getByRole("button", { name: "1:00 PM" }).click();
+  await expect(form.getByText("Add their ZIP code to see your calendar", { exact: false })).toBeVisible();
+  await form.getByLabel(/Their ZIP code/).fill("33139");
+  const calendar = form.getByRole("grid");
+  await expect(calendar).toHaveAttribute("aria-busy", "false");
   expect(asked.at(-1)).toContain("bundle=our-little-story");
   expect(asked.at(-1)).toContain("zip=33139");
+  // Sundays are closed: faded, not pickable
+  const sundays = calendar.locator('button[aria-label^="Sunday"]');
+  if (await sundays.count()) await expect(sundays.first()).toBeDisabled();
+  await calendar.locator('button[aria-label*="available"]:not([disabled])').first().click();
+  await form.getByRole("button", { name: "1:00 PM" }).click();
+  const price = form.locator("#owner-price");
+  await expect(price).toContainText("Thanksgiving Offer");
+  await expect(price).toContainText("Total$269.10");
   await form.getByLabel("Full name").fill("Ana Rivera");
   await form.getByLabel("Email (their link goes here)").fill("ana@example.com");
   await form.getByLabel("Phone").fill("3055550133");
   await form.getByLabel("Street address").fill("1500 Bay Rd");
   await form.getByLabel("City").fill("Miami Beach");
   await form.getByLabel("What they asked for (optional)").fill("Cream set please");
+  await form.getByLabel("Discount code (optional)").fill("CHRISTMAS15");
+  await expect(price).toContainText("Code CHRISTMAS15");
+  await expect(price).toContainText("Total$254.15");
+  await expect(price).toContainText("Code CHRISTMAS15 saves more than today's special offer, so the code is used.");
 
   await page.evaluate(() => document.fonts.ready);
   const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
@@ -54,7 +87,8 @@ test("Quotes / Booking: fill in the family, pick a time, book it; the link and a
   expect(sent).toMatchObject({
     bundleId: "our-little-story",
     locale: "en",
-    slot: { date: day, start: "13:00" },
+    slot: { start: "13:00" },
+    discountCode: "CHRISTMAS15",
     babies: [{ age: "Newborn (0–2 weeks)", name: "Mia" }],
     contact: { parentName: "Ana Rivera", email: "ana@example.com", phone: "3055550133", babyAge: "Newborn (0–2 weeks)", babyName: "Mia", notes: "Cream set please" },
     address: { street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" },

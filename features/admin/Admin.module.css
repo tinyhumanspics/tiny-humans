@@ -546,3 +546,11 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 .ownerBookTimes { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; align-items: center; }
 .ownerBookCheck { display: flex; gap: 10px; align-items: flex-start; }
 .ownerBookCheck input { width: 20px; height: 20px; margin-top: 3px; accent-color: var(--sun-yellow); }
+.ownerBookZip { max-width: 320px; }
+.ownerBookCalendar { max-width: 460px; }
+.ownerBookDay { margin: 0; width: 100%; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--sun-yellow); }
+.ownerPrice { display: grid; gap: 8px; padding: 12px 14px; border: 2px solid color-mix(in srgb, var(--sun-yellow) 55%, transparent); border-radius: 12px; }
+.ownerPriceTable { width: 100%; border-collapse: collapse; }
+.ownerPriceTable th, .ownerPriceTable td { padding: 4px 0; text-align: left; font-weight: 400; color: var(--chalk-white); vertical-align: top; }
+.ownerPriceTable td { text-align: right; padding-left: 12px; }
+.ownerPriceTotal th, .ownerPriceTotal td { padding-top: 8px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 25%, transparent); font-family: var(--font-chalk); font-size: 1.2rem; color: var(--sun-yellow); }

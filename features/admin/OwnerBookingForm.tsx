@@ -6,13 +6,15 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { setupsOf } from "@/config/backdrops";
 import { babyAgeOptions, familyRoles } from "@/config/booking";
-import type { AdminApi, OwnerBookingResult } from "@/lib/admin/client";
-import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
+import BookingCalendar from "@/features/booking/BookingCalendar";
+import type { AdminApi, OwnerBookingResult, OwnerPrice } from "@/lib/admin/client";
+import { formatLongDate, formatTimeLabel, fromDateKey, toDateKey } from "@/lib/booking/dates";
 import { extraBabyLine, familyLimit } from "@/lib/booking/extra-babies";
 import { asksFamily } from "@/lib/booking/family";
-import type { DayAvailability } from "@/lib/booking/types";
+import type { TimeSlot } from "@/lib/booking/types";
 import { cn } from "@/lib/cn";
-import { formatMoney } from "@/lib/pricing/engine";
+import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
+import type { Bundle } from "@/lib/pricing/types";
 import en from "@/messages/en.json";
 import styles from "./Admin.module.css";
 
@@ -20,6 +22,16 @@ const ROLES = en.bookingFlow.details.family.roles;
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const errText = (e: unknown, f: string) => (e instanceof Error && e.message ? e.message : f);
+/** "Our Little Story · $269.10 (Thanksgiving Offer, was $299)": the price a family books at today. */
+const bundleLabel = (b: Bundle, todayKey: string) => {
+  const offer = activeOffer(b, todayKey);
+  const regular = formatMoney(toCents(b.price));
+  return offer ? `${b.name} · ${formatMoney(offer.cents)} (${offer.label}, was ${regular})` : `${b.name} · ${regular}`;
+};
+const monthStart = (key: string) => {
+  const d = fromDateKey(key);
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+};
 const miami = (iso: string) =>
   new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
 
@@ -42,7 +54,9 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
   const [code, setCode] = useState("");
   const [locale, setLocale] = useState<"en" | "es">("en");
   const [sendEmail, setSendEmail] = useState(true);
+  const todayKey = today();
   const [date, setDate] = useState("");
+  const [month, setMonth] = useState(() => monthStart(todayKey));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<OwnerBookingResult | null>(null);
@@ -53,28 +67,57 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
   const familyMax = bundle && asksFamily(bundle) ? familyLimit(bundle, babies.length) : 0;
   const zip = address.zip.trim();
 
-  // open times for the chosen day (bundle, babies and ZIP decide the length and trip days); a picked time belongs to
-  // the query it came from, so changing the day or bundle clears it by itself
-  const query = bundleId && date && /^\d{5}$/.test(zip) ? `${bundleId}|${babies.length}|${zip}|${date}` : null;
-  const [loaded, setLoaded] = useState<{ query: string; day?: DayAvailability; error?: string } | null>(null);
-  const [picked, setPicked] = useState<{ query: string; start: string } | null>(null);
-  const times = loaded?.query === query ? (loaded.day ?? null) : null;
-  const timesError = loaded?.query === query ? (loaded.error ?? null) : null;
-  const loadingTimes = Boolean(query) && loaded?.query !== query;
-  const start = picked && picked.query === query ? picked.start : "";
-  const setStart = (value: string) => setPicked(query && value ? { query, start: value } : null);
+  // your calendar for the month on screen, like the booking form's (your hours and days off, bookings, Outlook, trip
+  // days for their ZIP code); the bundle and babies decide how long a session is
+  const monthKey = toDateKey(month).slice(0, 7);
+  const calQuery = bundleId && /^\d{5}$/.test(zip) ? `${bundleId}|${babies.length}|${zip}|${monthKey}` : null;
+  const [cal, setCal] = useState<{ query: string; days?: Record<string, TimeSlot[]>; error?: string } | null>(null);
+  const days = cal?.query === calQuery ? (cal.days ?? {}) : {};
+  const calError = cal?.query === calQuery ? (cal.error ?? null) : null;
+  const calLoading = Boolean(calQuery) && cal?.query !== calQuery;
+  const times = date && cal?.query === calQuery && cal.days ? (days[date] ?? []) : null;
+  // a picked time belongs to its day and calendar: changing either clears it by itself
+  const timeKey = calQuery && date ? `${calQuery}|${date}` : null;
+  const [picked, setPicked] = useState<{ key: string; start: string } | null>(null);
+  const start = picked && picked.key === timeKey ? picked.start : "";
+  const setStart = (value: string) => setPicked(timeKey && value ? { key: timeKey, start: value } : null);
 
   useEffect(() => {
-    if (!query) return;
+    if (!calQuery) return;
     let live = true;
+    const first = `${monthKey}-01`;
+    const last = toDateKey(new Date(month.getFullYear(), month.getMonth() + 1, 0));
     api
-      .ownerSlots({ bundle: bundleId, babies: babies.length, zip, from: date, to: date })
-      .then((days) => live && setLoaded({ query, day: days.find((d) => d.date === date) ?? { date, slots: [] } }))
-      .catch((e) => live && setLoaded({ query, error: errText(e, "Couldn't load the times.") }));
+      .ownerSlots({ bundle: bundleId, babies: babies.length, zip, from: first < todayKey ? todayKey : first, to: last })
+      .then((list) => live && setCal({ query: calQuery, days: Object.fromEntries(list.filter((d) => d.slots.length).map((d) => [d.date, d.slots])) }))
+      .catch((e) => live && setCal({ query: calQuery, error: errText(e, "Couldn't load your calendar.") }));
     return () => {
       live = false;
     };
-  }, [api, query, bundleId, babies.length, date, zip]);
+  }, [api, calQuery, bundleId, babies.length, zip, monthKey, month, todayKey]);
+
+  // the price as the booking form works it out: today's offer, or the code when it saves more (only one counts)
+  const familyCount = family.filter((m) => m.role).length;
+  const codeText = code.trim();
+  const priceKey = bundleId ? JSON.stringify([bundleId, babies.length, familyCount, /^\d{5}$/.test(zip) ? zip : "", codeText, contact.email.trim()]) : null;
+  const [price, setPrice] = useState<{ key: string; data?: OwnerPrice; error?: string } | null>(null);
+  const priceNow = price?.key === priceKey ? price : null;
+  useEffect(() => {
+    if (!priceKey) return;
+    let live = true;
+    // a moment after typing stops (a code is checked as it's typed)
+    const timer = setTimeout(() => {
+      const [b, n, f, z, c, e] = JSON.parse(priceKey) as [string, number, number, string, string, string];
+      api
+        .ownerPrice({ bundle: b, babies: n, family: f, zip: z || undefined, code: c || undefined, email: e || undefined })
+        .then((data) => live && setPrice({ key: priceKey, data }))
+        .catch((err) => live && setPrice({ key: priceKey, error: errText(err, "Couldn't work out the price.") }));
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [api, priceKey]);
 
   const setBabyCount = (n: number) => setBabies((list) => Array.from({ length: n }, (_, i) => list[i] ?? { age: list[0]?.age ?? babyAgeOptions[0], name: "" }));
 
@@ -178,7 +221,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
             Bundle
             <select className={styles.input} value={bundleId} onChange={(e) => (setBundleId(e.target.value), setFamily([]), setBabyCount(1))}>
               {active.map((b) => (
-                <option key={b.id} value={b.id}>{b.name}</option>
+                <option key={b.id} value={b.id}>{bundleLabel(b, todayKey)}</option>
               ))}
             </select>
           </label>
@@ -237,33 +280,38 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
               )}
             </div>
           )}
-          <div className={styles.ownerBookRow}>
-            <label className={cn(styles.label, "chalk-soft")}>
-              Day
-              <input className={cn(styles.input, styles.timeInput)} type="date" min={today()} value={date} onChange={(e) => setDate(e.target.value)} />
-            </label>
-            <label className={cn(styles.label, "chalk-soft")}>
-              Their ZIP code
-              <input className={cn(styles.input, styles.timeInput)} inputMode="numeric" maxLength={5} value={address.zip} onChange={(e) => setAddress((a) => ({ ...a, zip: e.target.value.replace(/\D/g, "").slice(0, 5) }))} />
-            </label>
-          </div>
-          <div role="group" aria-label="Time" aria-busy={loadingTimes} className={styles.ownerBookTimes}>
-            {!date || !/^\d{5}$/.test(zip) ? (
-              <p className={cn(styles.hintSmall, "chalk-soft")}>Pick the day and add their ZIP code to see the open times.</p>
-            ) : loadingTimes ? (
-              <p className={cn(styles.hintSmall, "chalk-soft")} role="status">Checking the calendar…</p>
-            ) : timesError ? (
-              <p className={cn(styles.error, "chalk-soft")} role="alert">{timesError}</p>
-            ) : times && times.slots.length ? (
-              times.slots.map((s) => (
-                <button key={s.start} type="button" className={cn(styles.smallButton, start === s.start && styles.smallButtonOn)} aria-pressed={start === s.start} onClick={() => setStart(s.start)}>
-                  {formatTimeLabel(s.start)}
-                </button>
-              ))
-            ) : (
-              <p className={cn(styles.hintSmall, "chalk-soft")}>{`No open times on ${formatLongDate(date)} for this bundle. Try another day.`}</p>
-            )}
-          </div>
+          <label className={cn(styles.label, styles.ownerBookZip, "chalk-soft")}>
+            Their ZIP code (travel and trip days)
+            <input className={cn(styles.input, styles.timeInput)} inputMode="numeric" maxLength={5} value={address.zip} onChange={(e) => setAddress((a) => ({ ...a, zip: e.target.value.replace(/\D/g, "").slice(0, 5) }))} />
+          </label>
+          {!calQuery ? (
+            <p className={cn(styles.hintSmall, "chalk-soft")}>Add their ZIP code to see your calendar: your open days and times, like the booking page.</p>
+          ) : (
+            <div className={styles.ownerBookCalendar}>
+              <BookingCalendar todayKey={todayKey} month={month} onMonthChange={setMonth} days={days} loading={calLoading} selected={date || null} onSelect={setDate} messages={en.bookingFlow.calendar} locale="en" />
+              {calError && <p className={cn(styles.error, "chalk-soft")} role="alert">{calError}</p>}
+            </div>
+          )}
+          {calQuery && (
+            <div role="group" aria-label="Time" className={styles.ownerBookTimes}>
+              {!date ? (
+                <p className={cn(styles.hintSmall, "chalk-soft")}>Pick a bright day to see its times.</p>
+              ) : times && times.length ? (
+                <>
+                  <p className={cn(styles.ownerBookDay, "chalk-soft")}>{formatLongDate(date)}</p>
+                  {times.map((s) => (
+                    <button key={s.start} type="button" className={cn(styles.smallButton, start === s.start && styles.smallButtonOn)} aria-pressed={start === s.start} onClick={() => setStart(s.start)}>
+                      {formatTimeLabel(s.start)}
+                    </button>
+                  ))}
+                </>
+              ) : times ? (
+                <p className={cn(styles.hintSmall, "chalk-soft")}>{`No open times on ${formatLongDate(date)} for this bundle. Pick another day.`}</p>
+              ) : (
+                <p className={cn(styles.hintSmall, "chalk-soft")} role="status">Checking the calendar…</p>
+              )}
+            </div>
+          )}
         </fieldset>
 
         <fieldset className={styles.ownerBookGroup}>
@@ -311,7 +359,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
           <div className={styles.ownerBookRow}>
             <label className={cn(styles.label, "chalk-soft")}>
               Discount code (optional)
-              <input className={styles.input} value={code} maxLength={40} autoComplete="off" onChange={(e) => setCode(e.target.value.toUpperCase())} />
+              <input className={styles.input} value={code} maxLength={40} autoComplete="off" aria-describedby="owner-price" onChange={(e) => setCode(e.target.value.toUpperCase())} />
             </label>
             <label className={cn(styles.label, "chalk-soft")}>
               Their language (email and page)
@@ -321,6 +369,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
               </select>
             </label>
           </div>
+          <PriceBox id="owner-price" price={priceNow} code={codeText} />
           <label className={cn(styles.ownerBookCheck, "chalk-soft")}>
             <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
             Email them the link now (you can also copy it and text it)
@@ -331,5 +380,52 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
         {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
       </form>
     </section>
+  );
+}
+
+/**
+ * What the family pays, worked out by the server like the booking form: the bundle at today's offer, or the code when
+ * it saves more (only one saving counts), twins/family extras, travel for their ZIP code, and the deposit.
+ */
+function PriceBox({ id, price, code }: { id: string; price: { data?: OwnerPrice; error?: string } | null; code: string }) {
+  if (!price) return <p id={id} className={cn(styles.hintSmall, "chalk-soft")} role="status">Working out the price…</p>;
+  if (price.error || !price.data) {
+    return (
+      <p id={id} className={cn(styles.error, "chalk-soft")} role="alert">
+        {code ? `${price.error} (Leave the code empty to use today's price.)` : price.error}
+      </p>
+    );
+  }
+  const { quote: q, travel, totalCents, depositCents } = price.data;
+  const rows: [string, string][] = [[q.bundleName, formatMoney(q.regularCents)]];
+  if (q.pricingType === "offer" && q.offerCents !== null) rows.push([q.offerLabel ?? "Special offer", `${formatMoney(q.offerCents)} (saves ${formatMoney(q.regularCents - q.offerCents)})`]);
+  if (q.pricingType === "discount") rows.push([`Code ${q.discountCode}`, `${formatMoney(q.finalCents)} (saves ${formatMoney(q.discountCents)})`]);
+  for (const a of q.addons) rows.push([a.name + (a.quantity > 1 ? ` ×${a.quantity}` : ""), formatMoney(a.totalCents)]);
+  if (travel) rows.push(["Travel", travel.status === "fee" ? `${formatMoney(travel.feeCents)} (${travel.miles} miles)` : travel.status === "free" ? `No fee (${travel.miles} miles)` : travel.status === "too_far" ? `${travel.miles} miles: past your limit` : "No fee"]);
+  return (
+    <div id={id} className={styles.ownerPrice} aria-live="polite">
+      <table className={styles.ownerPriceTable}>
+        <tbody>
+          {rows.map(([k, v]) => (
+            <tr key={k}>
+              <th scope="row">{k}</th>
+              <td>{v}</td>
+            </tr>
+          ))}
+          <tr className={styles.ownerPriceTotal}>
+            <th scope="row">Total</th>
+            <td>{formatMoney(totalCents)}</td>
+          </tr>
+          {depositCents !== null && (
+            <tr>
+              <th scope="row">Deposit with their link</th>
+              <td>{`${formatMoney(depositCents)} · then ${formatMoney(totalCents - depositCents)} after the session`}</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+      {q.note && q.pricingType === "discount" && <p className={cn(styles.hintSmall, "chalk-soft")}>{`Code ${q.discountCode} saves more than today's special offer, so the code is used. Only one saving counts.`}</p>}
+      {q.note && q.pricingType === "offer" && code && <p className={cn(styles.hintSmall, "chalk-soft")}>{`The ${q.offerLabel ?? "special offer"} saves more than code ${code}, so the code isn't used. Only one saving counts.`}</p>}
+    </div>
   );
 }
