@@ -223,6 +223,13 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Get a quick price — LIVE Nov 13 (owner: "go ahead and push both", after the design preview)**: home page under
+  the hero + seasonal box (h2), ad page right under the bundle cards (h3), EN + ES (`messages.quickPrice`).
+  `features/booking/QuickPrice.tsx`: bundle chips (middle bundle to start) + ZIP → today's price (running offer, or a
+  code when it saves more: the booking form's `DiscountField`, loaded only on "Have a discount code?"), travel from
+  `/api/booking/travel` (fee + miles; outside Florida / too far = the booking form's note and no total), total,
+  deposit line ("$0 today" when deposits are off) and "Book <bundle>". Nothing to Meta/analytics. Home/ad page
+  +13 KB raw JS (~4 KB gzipped); visual baselines updated for / and landing-faq (FAQ moved down: texture offset only).
 - [x] **Quick form — LIVE Nov 13 (owner: "go ahead and push both")**: `/quick` (+ `/es/quick` while Spanish is on;
   noindex, no chalk intro) for families who'd rather the studio book it: full name, phone, email, ZIP (required) +
   baby name, age (due date when "Not born yet"), bundle, best times, message (optional). `POST /api/quick` (rate limit

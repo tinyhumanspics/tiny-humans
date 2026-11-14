@@ -479,3 +479,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   explains the SQL) + `internalQuickRequestEmail`. /admin → Quotes / Booking (`features/admin/QuotesBooking.tsx`):
   `QuickRequests` list → "Book it for them" passes `prefill` to `OwnerBookingForm` (keyed by request id) → booked =
   PATCH status "booked" + reference. Parent contact + what they wrote only; never to Meta/analytics.
+- "Get a quick price" (owner, Nov 13): `features/booking/QuickPrice.tsx` on the home page (EN/ES, under the hero) and
+  the ad page (under the bundle cards). Prices come from the catalog (`activeOffer`), travel from `/api/booking/travel`,
+  codes through the quote API; the code box is `next/dynamic` so ReviewStep stays out of the home page's JS. Pass its
+  messages as props (never import messages JSON in it). Anything that changes the booking form's price rules must
+  keep this box's total in step (or it says "You'll see the exact price before you book").
