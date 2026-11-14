@@ -9,8 +9,8 @@
 - Meta Pixel + CAPI: InitiateCheckout once when the form opens, Schedule once per booking (shared event id).
 - Brief 00: AGENTS.md rules, this file, docs/DECISIONS.md; old docs in docs/archive/.
 - Brief 01: AGENTS.md rule 3 is now true. scripts/migrate.mjs runs in every production build (vercel.json buildCommand):
-  deploy 5086c36 succeeded, so 0000–0032 are recorded as hand-run and 0033–0035 applied (its `[migrate]` build-log
-  line not read: needs the owner's Vercel login). Failure log
+  build log of 5086c36 (owner, Nov 14): "recorded 33 migrations run by hand (through 0032)", "applied: 0033, 0034,
+  0035"; 0036 came with the next deploy (036afbd). Failure log
   `system_events` (0036) + lib/monitoring: critical failures (Stripe webhook, calendar add/move, booking/request
   creation) email ALERT_EMAIL at most once per area per hour; /api/cron/health (daily 12:00 UTC) emails the last 24 h
   only when something failed or needs doing, plus "all good" on Mondays; warns 30 days before GRAPH_SECRET_EXPIRES.
