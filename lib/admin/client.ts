@@ -14,6 +14,7 @@ import type { BundleInput, CodeInput, OfferForAllInput } from "@/lib/pricing/val
 import type { QuoteResult } from "@/lib/quotes/types";
 import type { DueReservationRow } from "@/lib/due-date/types";
 import type { FollowUpResult, UnfinishedData } from "@/lib/unfinished/types";
+import type { QuickRequest } from "@/lib/quick/types";
 
 /** /admin → Leads → Due dates. `ready` false = migration 0026 not run yet. */
 export interface DueList {
@@ -136,6 +137,10 @@ export interface AdminApi {
   ownerPrice(q: { bundle: string; babies: number; family: number; zip?: string; code?: string; email?: string }): Promise<OwnerPrice>;
   /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
   ownerBook(input: OwnerBookingInput): Promise<OwnerBookingResult>;
+  /** Quotes / Booking: what families sent through the quick form (/quick). `notReady` = migration 0034 not run yet. */
+  listQuick(): Promise<{ requests: QuickRequest[]; notReady?: string }>;
+  setQuickStatus(id: string, status: QuickRequest["status"], bookingReference?: string | null): Promise<void>;
+  deleteQuick(id: string): Promise<void>;
   /* unfinished bookings (owner only); `period` = step counts' days + source */
   getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
   saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
@@ -226,6 +231,13 @@ const httpApi: AdminApi = {
       await fetch(`/api/admin/booking/price?${new URLSearchParams(Object.entries({ bundle: q.bundle, babies: String(q.babies), family: String(q.family), zip: q.zip ?? "", code: q.code ?? "", email: q.email ?? "" }).filter(([, v]) => v))}`, { cache: "no-store" }),
     ),
   ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
+  listQuick: async () => json(await fetch("/api/admin/quick", { cache: "no-store" })),
+  setQuickStatus: async (id, status, bookingReference) => {
+    await json(await fetch(`/api/admin/quick/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status, ...(bookingReference !== undefined ? { bookingReference } : {}) }) }));
+  },
+  deleteQuick: async (id) => {
+    await json(await fetch(`/api/admin/quick/${encodeURIComponent(id)}`, { method: "DELETE" }));
+  },
   getQuote: async (zip, babies, family, percent = 0) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family), percent: String(percent) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));

@@ -19,6 +19,19 @@ import en from "@/messages/en.json";
 import styles from "./Admin.module.css";
 
 const ROLES = en.bookingFlow.details.family.roles;
+/** A quick form request turned into the form's starting values (features/admin/QuickRequests.tsx). */
+export interface OwnerPrefill {
+  requestId: string;
+  parentName: string;
+  email: string;
+  phone: string;
+  zip: string;
+  babyName: string | null;
+  babyAge: string | null;
+  bundleId: string | null;
+  notes: string;
+  locale: "en" | "es";
+}
 const today = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 const errText = (e: unknown, f: string) => (e instanceof Error && e.message ? e.message : f);
@@ -41,18 +54,32 @@ const miami = (iso: string) =>
  * pick their backdrops and pay the deposit (paid → Leads → Confirmed; not paid → Leads → Not paid). Same prices and
  * rules as the booking form, except the online minimum notice.
  */
-export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quotedBabies = 1 }: { api: AdminApi; zip?: string; babies?: number }) {
+export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quotedBabies = 1, prefill, onBooked, onClearPrefill }: {
+  api: AdminApi;
+  zip?: string;
+  babies?: number;
+  /** Started from a quick form request (Quotes / Booking → "Book it for them"): what the family sent. */
+  prefill?: OwnerPrefill;
+  /** The booking made from `prefill`: the request is then marked booked with its reference. */
+  onBooked?: (requestId: string, reference: string) => void;
+  onClearPrefill?: () => void;
+}) {
   const { bundles } = useCatalog();
   const active = bundles.filter((b) => b.active !== false);
-  const [bundleId, setBundleId] = useState(active[0]?.id ?? "");
+  const [bundleId, setBundleId] = useState(() => (prefill?.bundleId && active.some((b) => b.id === prefill.bundleId) ? prefill.bundleId : (active[0]?.id ?? "")));
   const bundle = active.find((b) => b.id === bundleId);
-  const [babies, setBabies] = useState<{ age: string; name: string }[]>(() => Array.from({ length: Math.min(3, Math.max(1, quotedBabies)) }, () => ({ age: babyAgeOptions[0], name: "" })));
+  const prefillAge = prefill?.babyAge && (babyAgeOptions as readonly string[]).includes(prefill.babyAge) ? prefill.babyAge : babyAgeOptions[0];
+  const [babies, setBabies] = useState<{ age: string; name: string }[]>(() =>
+    prefill ? [{ age: prefillAge, name: prefill.babyName ?? "" }] : Array.from({ length: Math.min(3, Math.max(1, quotedBabies)) }, () => ({ age: babyAgeOptions[0], name: "" })),
+  );
   const [family, setFamily] = useState<{ role: string; name: string }[]>([]);
-  const [contact, setContact] = useState({ parentName: "", email: "", phone: "" });
-  const [address, setAddress] = useState({ street: "", unit: "", city: "", zip: quotedZip, accessNotes: "" });
-  const [notes, setNotes] = useState("");
+  const [contact, setContact] = useState(() => ({ parentName: prefill?.parentName ?? "", email: prefill?.email ?? "", phone: prefill?.phone ?? "" }));
+  const [address, setAddress] = useState(() => ({ street: "", unit: "", city: "", zip: prefill?.zip ?? quotedZip, accessNotes: "" }));
+  const [notes, setNotes] = useState(prefill?.notes ?? "");
   const [code, setCode] = useState("");
-  const [locale, setLocale] = useState<"en" | "es">("en");
+  const [locale, setLocale] = useState<"en" | "es">(prefill?.locale ?? "en");
+  // the quick request this booking comes from (only the first booking counts: "Book another family" starts blank)
+  const fromQuick = useRef(prefill?.requestId ?? null);
   const [sendEmail, setSendEmail] = useState(true);
   const todayKey = today();
   const [date, setDate] = useState("");
@@ -141,6 +168,10 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
         email: sendEmail,
       });
       setDone(result);
+      if (fromQuick.current) {
+        onBooked?.(fromQuick.current, result.reference);
+        fromQuick.current = null;
+      }
     } catch (err) {
       setError(errText(err, "Couldn't book it. Please try again."));
     } finally {
@@ -171,6 +202,8 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
     setFamily([]);
     setBabies([{ age: babyAgeOptions[0], name: "" }]);
     requestId.current = newId();
+    fromQuick.current = null;
+    onClearPrefill?.();
   };
 
   if (done) {
@@ -214,6 +247,12 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
         For moms who text you to book: fill in what they told you and pick the day and time. They get an email with a link to pick their backdrop and pay the
         deposit; their time is held for 48 hours. Paid → Leads → Confirmed. Not paid → Leads → Not paid.
       </p>
+      {prefill && (
+        <p className={cn(styles.banner, "chalk-soft")} role="status">
+          {`From the quick form: ${prefill.parentName}. Check what they sent, add their home address, then pick the day and time. `}
+          {onClearPrefill && <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={onClearPrefill}>Start blank instead</button>}
+        </p>
+      )}
       <form onSubmit={submit} noValidate className={styles.ownerBookForm}>
         <fieldset className={styles.ownerBookGroup}>
           <legend className={cn(styles.h3, "chalk")}>The session</legend>

@@ -1138,3 +1138,37 @@ export const photoWaivers = pgTable(
 );
 
 export type PhotoWaiver = typeof photoWaivers.$inferSelect;
+
+/**
+ * The quick form (/quick, owner Nov 13): families who'd rather send their details than book online; the owners book
+ * for them in /admin → Quotes / Booking. Parent contact + what they told us; read and written best effort (no table =
+ * the studio still gets the email). status: "new" | "booked" | "done".
+ */
+export const quickRequests = pgTable(
+  "quick_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    parentName: text("parent_name").notNull(),
+    email: text("email").notNull(),
+    phone: text("phone").notNull(),
+    zip: text("zip").notNull(),
+    babyName: text("baby_name"),
+    babyAge: text("baby_age"),
+    dueDate: date("due_date", { mode: "string" }),
+    bundleId: text("bundle_id"),
+    bestTime: text("best_time"),
+    message: text("message"),
+    locale: text("locale").notNull().default("en"),
+    status: text("status").notNull().default("new"),
+    bookingReference: text("booking_reference"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("quick_requests_created_idx").on(t.createdAt),
+    check("quick_requests_status_check", sql`${t.status} in ('new', 'booked', 'done')`),
+    check("quick_requests_locale_check", sql`${t.locale} in ('en', 'es')`),
+  ],
+);
+
+export type QuickRequestRow = typeof quickRequests.$inferSelect;

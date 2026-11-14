@@ -239,6 +239,13 @@
       "when": 1794461375606,
       "tag": "0033_shoot_sections",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794611188412,
+      "tag": "0034_quick_requests",
+      "breakpoints": true
     }
   ]
 }

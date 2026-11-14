@@ -196,6 +196,44 @@
       "rateLimited": "Too many tries from this connection. Please wait a little, or text us and we'll help."
     }
   },
+  "quick": {
+    "meta": {
+      "title": "Let us book it for you",
+      "description": "Send us a few details and we'll text you to set up your newborn or baby session at home."
+    },
+    "title": "Let us book it for you",
+    "subtitle": "Send us a few details and we'll text you to pick your date. It takes a minute.",
+    "name": "Full name",
+    "phone": "Phone (we'll text you)",
+    "email": "Email",
+    "zip": "Your ZIP code",
+    "babyName": "Baby's name (optional)",
+    "babyAge": "Baby's age",
+    "dueDate": "Due date (optional)",
+    "bundle": "Bundle you like (optional)",
+    "notSure": "Not sure yet",
+    "bestTime": "Best days or times (optional)",
+    "bestTimePlaceholder": "e.g. weekday mornings",
+    "message": "Anything else? (optional)",
+    "send": "Send my details",
+    "sending": "Sending…",
+    "privacy": "We only use these details to book your session.",
+    "privacyLink": "Privacy Policy",
+    "thanksTitle": "Got it, {name}!",
+    "thanksText": "We'll text you shortly to pick your date and time. Then you'll get an email to choose your backdrop and pay the {deposit} deposit, which confirms your session.",
+    "thanksTextNoDeposit": "We'll text you shortly to pick your date and time. Then you'll get an email with your confirmation.",
+    "thanksOnline": "Prefer to pick a time yourself?",
+    "thanksOnlineLink": "Book online",
+    "errors": {
+      "name": "Please add your full name.",
+      "phone": "Please add a phone number with at least 10 digits.",
+      "email": "Please add a valid email address.",
+      "zip": "Please add your 5-digit ZIP code.",
+      "check": "Please check your details and try again.",
+      "rateLimited": "Too many tries. Please wait a few minutes, or text us.",
+      "server": "We couldn't send your details just now. Please try again, or text us."
+    }
+  },
   "bookingFlow": {
     "due": {
       "title": "Your due-date reservation",

@@ -369,6 +369,44 @@
       "rateLimited": "Demasiados intentos desde esta conexión. Espera un poco, o escríbenos y te ayudamos."
     }
   },
+  "quick": {
+    "meta": {
+      "title": "Déjanos reservarla por ti",
+      "description": "Envíanos unos datos y te escribimos para organizar tu sesión de recién nacido o bebé en casa."
+    },
+    "title": "Déjanos reservarla por ti",
+    "subtitle": "Envíanos unos datos y te escribimos para elegir tu fecha. Toma un minuto.",
+    "name": "Nombre completo",
+    "phone": "Teléfono (te escribimos)",
+    "email": "Correo electrónico",
+    "zip": "Tu código postal",
+    "babyName": "Nombre del bebé (opcional)",
+    "babyAge": "Edad del bebé",
+    "dueDate": "Fecha de parto (opcional)",
+    "bundle": "Paquete que te gusta (opcional)",
+    "notSure": "Aún no sé",
+    "bestTime": "Mejores días u horas (opcional)",
+    "bestTimePlaceholder": "p. ej. mañanas entre semana",
+    "message": "¿Algo más? (opcional)",
+    "send": "Enviar mis datos",
+    "sending": "Enviando…",
+    "privacy": "Solo usamos estos datos para reservar tu sesión.",
+    "privacyLink": "Política de privacidad",
+    "thanksTitle": "¡Listo, {name}!",
+    "thanksText": "Te escribimos pronto para elegir tu fecha y hora. Después te llega un correo para elegir tu fondo y pagar el depósito de {deposit}, que confirma tu sesión.",
+    "thanksTextNoDeposit": "Te escribimos pronto para elegir tu fecha y hora. Después te llega un correo con tu confirmación.",
+    "thanksOnline": "¿Prefieres elegir la hora tú?",
+    "thanksOnlineLink": "Reserva en línea",
+    "errors": {
+      "name": "Agrega tu nombre completo.",
+      "phone": "Agrega un teléfono de al menos 10 dígitos.",
+      "email": "Agrega un correo electrónico válido.",
+      "zip": "Agrega tu código postal de 5 dígitos.",
+      "check": "Revisa tus datos e inténtalo de nuevo.",
+      "rateLimited": "Demasiados intentos. Espera unos minutos o escríbenos.",
+      "server": "No pudimos enviar tus datos ahora. Inténtalo de nuevo o escríbenos."
+    }
+  },
   "bookingFlow": {
     "due": {
       "title": "Tu reserva con fecha de parto",

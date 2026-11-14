@@ -316,3 +316,60 @@ export async function internalDueReservedEmail(p: {
   );
   return { subject: `Due-date reservation — ${p.parentName} — due ${formatLongDate(p.dueDate)} (${p.reference})`, html, text: text(["DUE-DATE RESERVATION", "", `${p.parentName} reserved ${p.bundleName} with their due date (${formatLongDate(p.dueDate)}). Nothing is on the calendar yet.`], rows), attachments: [] };
 }
+
+/** The quick form (/quick, owner Nov 13): a family sent their details so the owners book for them. */
+export async function internalQuickRequestEmail(q: {
+  parentName: string;
+  phone: string;
+  email: string;
+  zip: string;
+  babyName: string | null;
+  babyAge: string | null;
+  dueDate: string | null;
+  bundleName: string | null;
+  bestTime: string | null;
+  message: string | null;
+  locale: "en" | "es";
+  adminUrl: string;
+}): Promise<RenderedEmail> {
+  const first = firstName(q.parentName);
+  const baby = [q.babyName, q.babyAge === "Not born yet" && q.dueDate ? `not born yet (due ${formatLongDate(q.dueDate)})` : q.babyAge].filter(Boolean).join(", ");
+  const rows: [string, string][] = [
+    ["Customer name", q.parentName],
+    ["Phone", q.phone],
+    ["Email", q.email],
+    ["ZIP code", q.zip],
+    ["Baby", baby || "–"],
+    ["Bundle they like", q.bundleName ?? "Not sure yet"],
+    ["Best days or times", q.bestTime ?? "–"],
+    ["Message", q.message ?? "–"],
+    ["Language", q.locale === "es" ? "Spanish" : "English"],
+    ["Book it for them", q.adminUrl],
+  ];
+  const html = await renderHtml(
+    <InternalLayout
+      banner="QUICK FORM: BOOK IT FOR THEM"
+      bannerBg={C.yellow}
+      bannerFg={C.ink}
+      summary={
+        <>
+          <b>{q.parentName}</b>
+          {q.bundleName ? (
+            <>
+              {" sent their details on the quick form and likes "}
+              <b>{q.bundleName}</b>
+              {`. Text ${first} at `}
+            </>
+          ) : (
+            ` sent their details on the quick form. Text ${first} at `
+          )}
+          <b>{q.phone}</b>
+          {" to pick the day, then book it in /admin → Quotes / Booking (the request is there with a “Book it for them” button)."}
+        </>
+      }
+      rows={rows}
+      footer={`Reply to this email to write to ${first} directly.`}
+    />,
+  );
+  return { subject: `Quick form — ${q.parentName} — ZIP ${q.zip}`, html, text: text(["QUICK FORM: BOOK IT FOR THEM", "", `${q.parentName} sent their details on the quick form.`], rows), attachments: [] };
+}
