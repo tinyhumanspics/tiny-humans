@@ -4,6 +4,7 @@ import { BookingError, friendly } from "@/lib/booking/errors";
 import { bookingRequestSchema } from "@/lib/booking/validation";
 import { formatTimeLabel } from "@/lib/booking/dates";
 import { log } from "@/lib/log";
+import { errorCode, reportFailure } from "@/lib/monitoring/report";
 import { allow, clientIp } from "@/lib/rate-limit";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { FBC_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
@@ -82,6 +83,9 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
+    if (err instanceof BookingError && err.status < 500) return NextResponse.json({ error: err.message, code: err.code, ...(err.reason ? { reason: err.reason } : {}) }, { status: err.status });
+    // a family tried to book and couldn't: the owner hears about it within a minute (brief 01)
+    await reportFailure("booking", `A booking from the website failed (${err instanceof BookingError ? err.code : errorCode(err)})`, { severity: "critical" });
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code, ...(err.reason ? { reason: err.reason } : {}) }, { status: err.status });
     log.error("api.create", "Unexpected error", { error: err as Error });
     return NextResponse.json({ error: friendly.server, code: "server_error" }, { status: 500 });

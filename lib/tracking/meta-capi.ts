@@ -1,6 +1,7 @@
 import "server-only";
 import { createHash } from "crypto";
 import { log } from "@/lib/log";
+import { errorCode, reportFailure } from "@/lib/monitoring/report";
 import { normCity, normEmail, normPhoneUS, normZip, splitName } from "./normalize";
 
 /**
@@ -80,10 +81,12 @@ export async function sendScheduleEvent(e: ScheduleEvent): Promise<void> {
     const data = (await res.json().catch(() => ({}))) as { events_received?: number; fbtrace_id?: string; error?: { message?: string; code?: number; error_subcode?: number } };
     if (!res.ok) {
       log.error("meta.capi", "Schedule event rejected", { status: res.status, code: data.error?.code, subcode: data.error?.error_subcode, test: Boolean(testCode) });
+      await reportFailure("meta_capi", `Schedule event rejected (HTTP ${res.status}, code ${data.error?.code ?? "?"}/${data.error?.error_subcode ?? "-"})`);
       return;
     }
     log.info("meta.capi", "Schedule event sent", { received: data.events_received, fbtrace: data.fbtrace_id, test: Boolean(testCode) });
   } catch (err) {
     log.error("meta.capi", "Schedule event not sent", { error: err as Error });
+    await reportFailure("meta_capi", `Schedule event not sent (${errorCode(err)})`);
   }
 }

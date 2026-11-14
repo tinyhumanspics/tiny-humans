@@ -3,6 +3,7 @@ import { site } from "@/config/site";
 import { internalQuickRequestEmail } from "@/lib/email";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
+import { reportFailure } from "@/lib/monitoring/report";
 import { getCatalog } from "@/lib/pricing/server";
 import { saveQuickRequest } from "@/lib/quick/server";
 import { quickRequestSchema } from "@/lib/quick/validation";
@@ -60,6 +61,7 @@ export async function POST(req: Request) {
     log.error("quick", "Quick request email to the studio not sent", { error: err as Error, saved: Boolean(saved) });
   }
   // neither saved nor emailed: tell them, so they can text instead
+  if (!saved && !emailed) await reportFailure("booking", "A quick-form request was lost (not saved, studio email not sent)", { severity: "critical" });
   if (!saved && !emailed) return NextResponse.json({ error: t.errors.server, code: "server_error" }, { status: 503 });
   return NextResponse.json({ ok: true }, { status: 201, headers: { "cache-control": "no-store" } });
 }

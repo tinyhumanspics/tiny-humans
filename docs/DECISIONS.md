@@ -37,6 +37,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Spanish stays live; fix the /es defects · Carlos
 - 2026-11-14 · Seasonal themes stay, rebuilt to be reusable: one theme = one small data entry (color tokens, optional logo overlay/decorations, optional landing hero photo), switched by hand in Settings. One photo set for the site. Seasonal offer boxes go; the one-line offer in Prices replaces them · Carlos
 - 2026-11-14 · Migrations apply inside the Vercel production build (scripts/migrate.mjs, one transaction, before `next build`), not in a GitHub Action: Vercel deploys on its own, so an Action would race it and need the production database URL in GitHub; a failed migration stops that deploy and the live site keeps the previous version. Previews never migrate · brief 01
+- 2026-11-14 · Failure alerts and the daily health email go to support@tinyhumans.photography (ALERT_EMAIL) · owner
 - 2026-11-14 · Session rules live in AGENTS.md (CLAUDE.md imports it), current state in docs/STATE.md, decisions here; old docs in docs/archive/ · brief 00
 - 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
 - 2026-10-22 · Chalk drawings are always drawn whole: never cut off, never on letters, never under buttons or photos · owner

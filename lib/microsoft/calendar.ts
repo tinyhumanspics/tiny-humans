@@ -1,6 +1,13 @@
 import "server-only";
 import { graphFetch, GraphError } from "./graph";
 import { microsoftConfig } from "./config";
+import { reportFailure } from "@/lib/monitoring/report";
+
+/** Failure log (brief 01): a session that can't reach Outlook is critical (the owner hears within a minute). */
+async function reportWrite(what: string, err: unknown, critical: boolean) {
+  const detail = err instanceof GraphError ? `HTTP ${err.status}${err.code ? ` ${err.code}` : ""}` : err instanceof Error ? err.name : "unknown error";
+  await reportFailure("graph", `Outlook calendar: ${what} failed (${detail})`, { severity: critical ? "critical" : "error" });
+}
 
 /** A busy period on the Tiny Humans calendar (UTC instants). */
 export interface BusyInterval {
@@ -73,6 +80,9 @@ export async function createCalendarEvent(e: NewCalendarEvent): Promise<{ id: st
       reminderMinutesBeforeStart: 120,
       transactionId: e.transactionId,
     }),
+  }).catch(async (err) => {
+    await reportWrite("adding a session", err, true);
+    throw err;
   });
   return { id: created.id };
 }
@@ -82,6 +92,9 @@ export async function moveCalendarEvent(eventId: string, start: string, end: str
     method: "PATCH",
     scope: "graph.calendar",
     body: JSON.stringify({ start: { dateTime: start, timeZone }, end: { dateTime: end, timeZone } }),
+  }).catch(async (err) => {
+    await reportWrite("moving a session", err, true);
+    throw err;
   });
 }
 
@@ -91,6 +104,9 @@ export async function updateCalendarEventBody(eventId: string, bodyHtml: string)
     method: "PATCH",
     scope: "graph.calendar",
     body: JSON.stringify({ body: { contentType: "HTML", content: bodyHtml } }),
+  }).catch(async (err) => {
+    await reportWrite("updating a session's details", err, false);
+    throw err;
   });
 }
 
@@ -100,6 +116,7 @@ export async function deleteCalendarEvent(eventId: string): Promise<void> {
     await graphFetch(`/users/${user()}/events/${encodeURIComponent(eventId)}`, { method: "DELETE", scope: "graph.calendar" });
   } catch (err) {
     if (err instanceof GraphError && err.status === 404) return;
+    await reportWrite("removing a session", err, false);
     throw err;
   }
 }

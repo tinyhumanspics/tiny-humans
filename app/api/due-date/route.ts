@@ -3,6 +3,7 @@ import { BookingError } from "@/lib/booking/errors";
 import { checkDueRequest, createDueReservation } from "@/lib/due-date/server";
 import { dueRequestSchema } from "@/lib/due-date/validation";
 import { log } from "@/lib/log";
+import { errorCode, reportFailure } from "@/lib/monitoring/report";
 import { allow, clientIp } from "@/lib/rate-limit";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import en from "@/messages/en.json";
@@ -35,6 +36,8 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(await createDueReservation(r), { status: 201 });
   } catch (err) {
+    if (err instanceof BookingError && err.status < 500) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    await reportFailure("booking", `A "Not born yet" reservation failed (${err instanceof BookingError ? err.code : errorCode(err)})`, { severity: "critical" });
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.due", "Unexpected error", { error: err as Error });
     return NextResponse.json({ error: t.server, code: "server_error" }, { status: 500 });

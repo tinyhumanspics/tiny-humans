@@ -9,6 +9,7 @@ import { isDatabaseConfigured } from "@/lib/db/client";
 import { ownerBookingLink } from "@/lib/deposit/flow";
 import { OWNER_HOLD_HOURS, OWNER_REQUEST_PREFIX } from "@/lib/deposit/types";
 import { log } from "@/lib/log";
+import { errorCode, reportFailure } from "@/lib/monitoring/report";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,8 @@ export async function POST(req: Request) {
     // deposits off (or Stripe down): confirmed right away, with the usual confirmation email
     return NextResponse.json({ ...base, status: "confirmed", emailed: Boolean(booking.emailSent) }, { status: 201, headers: NO_STORE });
   } catch (err) {
+    if (err instanceof BookingError && err.status < 500) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status, headers: NO_STORE });
+    await reportFailure("booking", `"Book it for them" failed (${err instanceof BookingError ? err.code : errorCode(err)})`, { severity: "critical" });
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status, headers: NO_STORE });
     log.error("admin.booking", "Owner booking failed", { error: err as Error });
     return NextResponse.json({ error: "Couldn't book it just now. Please try again." }, { status: 500, headers: NO_STORE });

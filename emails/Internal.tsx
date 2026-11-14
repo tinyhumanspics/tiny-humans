@@ -7,6 +7,7 @@ import type { RenderedEmail } from "@/lib/email/types";
 import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayout";
 import { babiesLabel } from "@/lib/booking/extra-babies";
 import { familyLabel } from "@/lib/booking/family";
+import type { HealthReport } from "@/lib/monitoring/events";
 
 /* Emails to the studio (English only: they go to the owner, not to families). */
 
@@ -372,4 +373,42 @@ export async function internalQuickRequestEmail(q: {
     />,
   );
   return { subject: `Quick form — ${q.parentName} — ZIP ${q.zip}`, html, text: text(["QUICK FORM: BOOK IT FOR THEM", "", `${q.parentName} sent their details on the quick form.`], rows), attachments: [] };
+}
+
+/** Something broke (brief 01): one email per area per hour, to ALERT_EMAIL. Our own wording and codes only. */
+export async function systemAlertEmail(a: { label: string; message: string; ref: string | null; at: Date; action: string }): Promise<RenderedEmail> {
+  const rows: [string, string][] = [
+    ["What happened", a.message],
+    ["Where", a.label],
+    ["Reference", a.ref ?? "–"],
+    ["When", eastern(a.at)],
+    ["What to check", a.action],
+  ];
+  const summary = `${a.label}: ${a.message}`;
+  const footer = "You get at most one email an hour for each kind of problem. The daily health email lists every failure.";
+  const html = await renderHtml(<InternalLayout banner="SOMETHING BROKE" bannerBg={C.red} bannerFg="#ffffff" summary={summary} rows={rows} footer={footer} />);
+  return { subject: `Alert: ${a.label} problem`, html, text: text(["SOMETHING BROKE", "", summary], rows), attachments: [] };
+}
+
+/** The daily health check (brief 01): failures of the last 24 hours and warnings, or the Monday "all good". */
+export async function healthReportEmail(r: HealthReport, now: Date): Promise<RenderedEmail> {
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  if (r.kind === "all_good") {
+    const rows: [string, string][] = [["Checked", eastern(now)]];
+    const summary = "Nothing failed in the last 24 hours. You get this line every Monday, so a Monday without it means the check itself stopped.";
+    const html = await renderHtml(<InternalLayout banner="ALL GOOD" bannerBg={C.green} bannerFg="#ffffff" summary={summary} rows={rows} footer="Tiny Humans daily health check." />);
+    return { subject: "Health check: all good this week", html, text: text(["ALL GOOD", "", summary], rows), attachments: [] };
+  }
+  const failures = r.failures ? `${plural(r.failures, "failure")} in the last 24 hours${r.critical ? ` (${r.critical} critical)` : ""}.` : "Nothing failed in the last 24 hours.";
+  const summary = r.warnings.length ? `${failures} ${plural(r.warnings.length, "thing")} also need${r.warnings.length === 1 ? "s" : ""} you.` : failures;
+  const rows: [string, string][] = [
+    ...r.warnings.map((w): [string, string] => ["Needs you", w]),
+    ...r.areas.map((a): [string, string] => [
+      `${a.label} (${a.count}${a.critical ? `, ${a.critical} critical` : ""})`,
+      a.latest.map((e) => `${eastern(e.at)}: ${e.message}${e.ref ? ` (ref ${e.ref})` : ""}${e.times > 1 ? ` (×${e.times})` : ""}`).join(" · "),
+    ]),
+  ];
+  const html = await renderHtml(<InternalLayout banner="DAILY HEALTH CHECK" bannerBg={C.yellow} bannerFg={C.ink} summary={summary} rows={rows} footer="Up to the 3 newest per area. Tiny Humans daily health check." />);
+  const subject = r.failures ? `Health check: ${plural(r.failures, "problem")} in the last 24 hours` : "Health check: something needs you";
+  return { subject, html, text: text(["DAILY HEALTH CHECK", "", summary], rows), attachments: [] };
 }

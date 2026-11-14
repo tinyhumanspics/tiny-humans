@@ -30,7 +30,7 @@ npm run dev · typecheck · lint · build · test:unit · test:e2e (mock provide
 12. Ask the owner before: a new paid service, changing legal wording (waiver, privacy, terms, consent), or anything the current brief doesn't cover.
 
 ## Where things are
-app/(site) public pages · app/(admin) owner area · app/api routes · features/<feature> UI · lib/<domain> logic · emails/ templates · config/ constants only · drizzle/ migrations.
+app/(site) public pages · app/(admin) owner area · app/api routes · features/<feature> UI · lib/<domain> logic · emails/ templates · config/ constants only · drizzle/ migrations · lib/monitoring failure log (call reportFailure where something can fail silently).
 
 ## End of session
 Replace docs/STATE.md (≤ 1 page: live / in progress / next brief / waiting on owner). Add one line to docs/DECISIONS.md for any new decision. Reply to the owner in 3–5 plain lines, then:

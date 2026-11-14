@@ -1172,3 +1172,29 @@ export const quickRequests = pgTable(
 );
 
 export type QuickRequestRow = typeof quickRequests.$inferSelect;
+
+/**
+ * Failure log (brief 01): one row per silent failure (Stripe webhook, Meta CAPI, emails, Outlook calendar, booking
+ * creation, unhandled API errors, daily jobs). `message` is our own wording + error codes (never customer contact
+ * data); `ref` is a booking reference / event id. `alerted_at` = this row sent the owner an alert (one per area per
+ * hour). Rows older than 90 days are deleted by the daily health check.
+ */
+export const systemEvents = pgTable(
+  "system_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    area: text("area").notNull(),
+    severity: text("severity").notNull(),
+    message: text("message").notNull(),
+    ref: text("ref"),
+    alertedAt: timestamp("alerted_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("system_events_at_idx").on(t.at),
+    index("system_events_area_alert_idx").on(t.area, t.alertedAt),
+    check("system_events_severity_check", sql`${t.severity} in ('critical', 'error', 'warning')`),
+  ],
+);
+
+export type SystemEventRow = typeof systemEvents.$inferSelect;

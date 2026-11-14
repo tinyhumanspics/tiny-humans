@@ -1,6 +1,7 @@
 import "server-only";
 import { Resend } from "resend";
 import { log } from "@/lib/log";
+import { reportFailure } from "@/lib/monitoring/report";
 
 /** Tag values Resend accepts (ASCII letters, numbers, "_" and "-", up to 256 characters). */
 export const isTagValue = (v: string | undefined): v is string => Boolean(v && /^[A-Za-z0-9_-]{1,256}$/.test(v));
@@ -59,10 +60,17 @@ export interface OutgoingEmail {
   headers?: Record<string, string>;
 }
 
+/** Failure log (brief 01). Not for the failure emails themselves: their failures stay in the server logs. */
+async function reportEmailFailure(email: OutgoingEmail, code: string) {
+  if (email.scope.startsWith("monitoring.")) return;
+  await reportFailure("email", `Email not sent (${code}): ${email.scope}`, { ref: email.reference });
+}
+
 /** Sends one email. Returns the Resend message id; throws EmailSendError (no secrets) on failure. */
 export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | null }> {
   if (!isResendConfigured()) {
     log.error(email.scope, "Email not sent: RESEND_API_KEY is not set", { reference: email.reference });
+    await reportEmailFailure(email, "not_configured");
     throw new EmailSendError("not_configured", "RESEND_API_KEY is not set");
   }
   try {
@@ -84,6 +92,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
     if (error || !data) {
       const code = (error as { name?: string } | null)?.name ?? "send_failed";
       log.error(email.scope, "Resend rejected the email", { code, reference: email.reference });
+      await reportEmailFailure(email, code);
       throw new EmailSendError(code, (error as { message?: string } | null)?.message ?? "Resend send failed");
     }
     log.info(email.scope, "Email sent", { messageId: data.id, reference: email.reference });
@@ -91,6 +100,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
   } catch (err) {
     if (err instanceof EmailSendError) throw err;
     log.error(email.scope, "Could not reach Resend", { error: err as Error, reference: email.reference });
+    await reportEmailFailure(email, "network_error");
     throw new EmailSendError("network_error", "Could not reach Resend");
   }
 }

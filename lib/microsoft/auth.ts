@@ -1,5 +1,6 @@
 import "server-only";
 import { log } from "@/lib/log";
+import { reportFailure } from "@/lib/monitoring/report";
 import { microsoftConfig } from "./config";
 
 /**
@@ -21,7 +22,10 @@ export async function getGraphToken(): Promise<string> {
   if (inflight) return inflight;
   inflight = (async () => {
     const { tenantId, clientId, clientSecret } = microsoftConfig();
-    if (!tenantId || !clientId || !clientSecret) throw new GraphAuthError("Microsoft credentials are not configured");
+    if (!tenantId || !clientId || !clientSecret) {
+      await reportFailure("graph", "Microsoft sign-in impossible: MICROSOFT_* credentials are not set");
+      throw new GraphAuthError("Microsoft credentials are not configured");
+    }
     const body = new URLSearchParams({
       client_id: clientId,
       client_secret: clientSecret,
@@ -39,12 +43,15 @@ export async function getGraphToken(): Promise<string> {
       });
     } catch (err) {
       log.error("graph.auth", "Could not reach Microsoft sign-in", { error: err as Error });
+      await reportFailure("graph", "Could not reach Microsoft sign-in");
       throw new GraphAuthError("Could not reach Microsoft sign-in");
     }
     const data = (await res.json().catch(() => ({}))) as { access_token?: string; expires_in?: number; error?: string; error_codes?: number[] };
     if (!res.ok || !data.access_token) {
       // log the error code only (never the secret or the response body)
       log.error("graph.auth", "Token request failed", { status: res.status, error: data.error, errorCodes: data.error_codes });
+      // AADSTS7000222 = the client secret expired
+      await reportFailure("graph", `Microsoft sign-in failed (HTTP ${res.status} ${data.error ?? ""} ${data.error_codes?.map((c) => `AADSTS${c}`).join(" ") ?? ""})`);
       throw new GraphAuthError(`Token request failed (${res.status} ${data.error ?? "unknown"})`);
     }
     cached = { token: data.access_token, expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000 };
