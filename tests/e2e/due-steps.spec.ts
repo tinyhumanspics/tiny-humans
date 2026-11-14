@@ -24,10 +24,22 @@ async function stepOne(page: Page, zip = "33139") {
 async function stepTwo(page: Page) {
   await page.getByRole("button", { name: "Next: Your phone and home" }).click();
   await expect(page.getByText("Step 2 of 4 · Your phone and home")).toBeVisible();
+  await settled(page, "Your phone and home");
   await expect(page.locator("#due-firstName")).toHaveValue("Dana");
   for (const [k, v] of Object.entries({ lastName: "Due", phone: "3055550122", street: "1500 Bay Rd", city: "Miami Beach" })) await page.fill(`#due-${k}`, v);
   // the server refuses forms finished in under 4 seconds (spam check)
   await page.waitForTimeout(4200);
+}
+/** A new step scrolls smoothly to its top and focuses its heading: wait for that before tapping (WebKit misses taps on moving buttons). */
+async function settled(page: Page, heading: string | RegExp) {
+  await expect(page.getByRole("heading", { name: heading, level: 2 })).toBeFocused();
+  await page.waitForTimeout(700);
+}
+/** "Reserve my spot" on step 2 → the backdrops. */
+async function reserve(page: Page) {
+  await page.getByRole("button", { name: "Reserve my spot" }).click();
+  await expect(page.getByText("Step 3 of 4 · Backdrops")).toBeVisible();
+  await settled(page, /Pick your backdrop/);
 }
 async function details(page: Page) {
   await stepOne(page);
@@ -112,7 +124,7 @@ test("Not sure yet skips the backdrops; Back keeps what they typed; a wrong ZIP 
   await expect(page.getByText("Step 1 of 4 · Your details")).toBeVisible();
   await page.fill("#due-date", new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10));
   await stepTwo(page);
-  await page.getByRole("button", { name: "Reserve my spot" }).click();
+  await reserve(page);
   await page.getByRole("button", { name: "Not sure yet, I'll choose when I book my session" }).click();
   await expect(page.getByText("Not sure yet (you'll choose when you book your session)")).toBeVisible();
   await page.getByRole("button", { name: "Back" }).click();
@@ -121,7 +133,8 @@ test("Not sure yet skips the backdrops; Back keeps what they typed; a wrong ZIP 
   await page.getByRole("button", { name: "Back" }).click();
   await expect(page.locator("#due-firstName")).toHaveValue("Dana");
   await page.getByRole("button", { name: "Next: Your phone and home" }).click();
-  await page.getByRole("button", { name: "Reserve my spot" }).click();
+  await settled(page, "Your phone and home");
+  await reserve(page);
   await page.getByRole("button", { name: "Not sure yet, I'll choose when I book my session" }).click();
   await page.getByRole("button", { name: /Reserve my spot|Pay the .* deposit and reserve/ }).click();
   await page.waitForURL("**/due-date/done**");
@@ -132,12 +145,14 @@ test("Not sure yet skips the backdrops; Back keeps what they typed; a wrong ZIP 
 test("Back from Stripe without paying lands on their reservation page, not an empty form; Reserve again starts over (owner, Nov 11)", async ({ page }) => {
   await page.route("**/api/due-date", async (route) => {
     const body = route.request().postDataJSON() as Record<string, unknown>;
-    if (body.check) return route.continue();
+    // this test is about coming back from Stripe: step two's server check is answered here (WebKit sometimes stalls a
+    // continued POST in tests; the other tests run the real check)
+    if (body.check) return route.fulfill({ status: 200, json: { checked: true } });
     // "Stripe" here is another page of the site; the reservation page is the signed done link
     return route.fulfill({ status: 201, json: { reference: "TH-D-20261111-BACK", status: "pending", depositUrl: "/bundles", donePath: "/due-date/done?r=TH-D-20261111-BACK&k=sig" } });
   });
   await details(page);
-  await page.getByRole("button", { name: "Reserve my spot" }).click();
+  await reserve(page);
   await page.getByRole("button", { name: "Not sure yet, I'll choose when I book my session" }).click();
   await page.getByRole("button", { name: /Reserve my spot|Pay the .* deposit and reserve/ }).click();
   await page.waitForURL("**/bundles");
