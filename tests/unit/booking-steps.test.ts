@@ -41,6 +41,7 @@ describe("booking steps", () => {
     expect(s.slotZip).toBe("33139");
     s = reducer(s, { type: "clearSlot" });
     expect(s.slot).toBeNull();
+    expect(s.date).toBeNull();
     expect(s.maxStep).toBe(STEP.time);
     expect(s.contact.lastName).toBe("Rivera");
   });

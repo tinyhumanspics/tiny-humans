@@ -188,7 +188,8 @@ export function reducer(state: State, action: Action): State {
     case "slot":
       return { ...state, slot: action.slot, slotZip: state.contact.zip.trim().slice(0, 5), stepError: null };
     case "clearSlot":
-      return { ...state, slot: null, slotZip: undefined, maxStep: Math.min(state.maxStep, STEP.time) };
+      // the day too: it isn't open for this home, so nothing on the calendar should look picked
+      return { ...state, date: null, slot: null, slotZip: undefined, maxStep: Math.min(state.maxStep, STEP.time) };
     case "contact": {
       const fieldErrors = { ...state.fieldErrors };
       delete fieldErrors[action.field];
