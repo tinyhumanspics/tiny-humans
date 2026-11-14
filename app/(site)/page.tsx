@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Hero from "@/features/home/Hero";
 import Portfolio from "@/features/home/Portfolio";
 import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
+import QuickPrice from "@/features/booking/QuickPrice";
 import Reviews from "@/features/reviews/Reviews";
 import { getPublicReviews } from "@/lib/reviews/server";
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, pageMetadata } from "@/lib/seo/metadata";
@@ -19,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-/** Home: hero, the live seasonal offer boxes (/admin → Seasonal Landing), portfolio feed, the reviews picked in /admin. */
+/** Home: hero, the live seasonal offer boxes (/admin → Seasonal Landing), "Get a quick price", portfolio feed, the reviews picked in /admin. */
 export default async function HomePage() {
   const reviews = await getPublicReviews();
   return (
@@ -28,6 +29,7 @@ export default async function HomePage() {
       <main id="top">
         <Hero messages={en.home.hero} dueCta={en.dueDate.invite.button} locale="en" />
         <SeasonalOffers messages={en.landing.seasonalOffers} promoMessages={en.bundlesPage.promo} locale="en" />
+        <QuickPrice messages={{ price: en.quickPrice, discount: en.bookingFlow.review.discount, travel: en.bookingFlow.details.travel }} locale="en" />
         <Portfolio messages={en.home.portfolio} locale="en" />
         {reviews.length > 0 && <Reviews reviews={reviews} messages={en.reviewsSection} placement="home" />}
       </main>

@@ -21,6 +21,7 @@ import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
 import OfferLine from "@/features/booking/OfferLine";
 import NotBornYet from "@/features/booking/NotBornYet";
+import QuickPrice, { type QuickPriceMessages } from "@/features/booking/QuickPrice";
 import { localePath } from "@/i18n/path";
 import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import { bundleColumns } from "@/lib/pricing/columns";
@@ -80,6 +81,7 @@ export default function LandingPage({
   depositMessages = en.deposit.landing,
   noticeMessages = en.policy,
   reviewMessages = en.reviewsSection,
+  priceMessages = { price: en.quickPrice, discount: en.bookingFlow.review.discount, travel: en.bookingFlow.details.travel },
   locale = "en",
 }: {
   noticeHours: number;
@@ -93,6 +95,7 @@ export default function LandingPage({
   depositMessages?: typeof en.deposit.landing;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
   reviewMessages?: typeof en.reviewsSection;
+  priceMessages?: QuickPriceMessages;
   locale?: AppLocale;
 }) {
   const t = messages;
@@ -226,6 +229,8 @@ export default function LandingPage({
           <BookingPaused messages={bundleMessages.paused} />
         )}
         <p className={cn(styles.bundlesNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
+        {/* owner, Nov 13: a quick total for their ZIP code right under the cards */}
+        <QuickPrice messages={priceMessages} locale={locale} headingLevel={3} inline />
         <NotBornYet messages={dueMessages} locale={locale} headingLevel={3} />
         <Reveal className={styles.bonusWrap}>
           <ChalkBox className={styles.bonus} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">

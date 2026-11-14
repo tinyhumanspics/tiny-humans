@@ -1,0 +1,63 @@
+/* "Get a quick price" (home page under the hero, ad page under the bundle cards): bundle + ZIP code → the total. */
+.section { padding-top: clamp(28px, 5vw, 56px); padding-bottom: clamp(28px, 5vw, 56px); display: grid; justify-items: center; }
+.inline { display: grid; justify-items: center; margin-top: clamp(28px, 5vw, 48px); }
+.box { position: relative; width: min(100%, 940px); padding: clamp(20px, 3.6vw, 34px); display: grid; gap: 18px; }
+.doodle { position: absolute; top: -14px; right: 18px; }
+.head { display: grid; gap: 4px; }
+.title { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.8rem, 4.8vw, 2.4rem); color: var(--chalk-white); }
+.sub { margin: 0; color: var(--chalk-muted); font-size: 1.08rem; }
+.grid { display: grid; gap: 22px; }
+@media (min-width: 860px) { .grid { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 32px; align-items: start; } }
+.inputs { display: grid; gap: 16px; min-width: 0; }
+.group { display: grid; gap: 8px; }
+.label { margin: 0; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--chalk-white); }
+.chips { display: grid; gap: 8px; }
+.chip {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 10px; min-height: 48px; padding: 8px 14px; border-radius: 10px;
+  cursor: pointer; text-align: left; border: 2px dashed color-mix(in srgb, var(--chalk-white) 40%, transparent); background: none; color: var(--chalk-white);
+}
+.chip:hover { border-color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
+.chip:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
+.chipOn { border-style: solid; border-color: var(--sun-yellow); }
+.chipName { font-family: var(--font-chalk); font-size: 1.18rem; }
+.chipOn .chipName { color: var(--sun-yellow); }
+.chipPrice { font-size: 0.98rem; color: var(--chalk-muted); white-space: nowrap; }
+.chipPrice s { opacity: 0.75; }
+@media (max-width: 600px) { .chip { flex-direction: column; align-items: flex-start; gap: 2px; } }
+.zipRow { display: grid; gap: 6px; }
+/* same look as the booking form's boxes (every theme) */
+.zip {
+  width: min(100%, 220px); min-height: 50px; padding: 10px 14px; border-radius: 6px 10px 7px 9px;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent);
+  background: color-mix(in srgb, var(--chalkboard-dark) 60%, transparent);
+  font-family: var(--font-hand); font-size: 1.25rem; letter-spacing: 0.08em; color: var(--chalk-white);
+}
+.zip::placeholder { color: color-mix(in srgb, var(--chalk-white) 60%, transparent); opacity: 1; }
+:global(html[data-theme="thanksgiving"]) .zip::placeholder { color: color-mix(in srgb, var(--chalk-white) 70%, transparent); }
+:global(html[data-theme="valentines"]) .zip::placeholder { color: color-mix(in srgb, var(--chalk-white) 85%, transparent); }
+.zip:hover { border-color: color-mix(in srgb, var(--chalk-white) 65%, transparent); }
+.zip:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
+.note { margin: 0; color: var(--chalk-muted); font-size: 1rem; }
+.noteBad { color: var(--chalk-error); }
+.codeLink { justify-self: start; padding: 0; border: 0; background: none; color: var(--cloud-blue); font: inherit; font-size: 1.05rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; min-height: 32px; }
+.codeLink:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
+.code { display: grid; gap: 6px; }
+/* the receipt: dashed paper on the board */
+.receipt {
+  display: grid; gap: 10px; padding: 18px 18px 20px; border-radius: 14px; min-width: 0;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 32%, transparent);
+  background: color-mix(in srgb, var(--chalkboard-dark) 55%, transparent);
+}
+.receipt p { margin: 0; }
+.receiptTitle { font-family: var(--font-chalk); font-size: 1.45rem; color: var(--sun-yellow); }
+.lines { margin: 0; display: grid; gap: 8px; }
+.lines div { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.lines dt { color: var(--chalk-muted); font-size: 1.05rem; }
+.lines dd { margin: 0; display: grid; justify-items: end; color: var(--chalk-white); font-size: 1.15rem; text-align: right; }
+.lines dd b { font-weight: 400; font-family: var(--font-chalk); font-size: 1.3rem; }
+.was { color: var(--chalk-muted); font-size: 1rem; }
+.small { font-size: 0.95rem; color: var(--chalk-muted); }
+.totalRow { display: flex; justify-content: space-between; align-items: baseline; padding-top: 10px; border-top: 2px dashed color-mix(in srgb, var(--sun-yellow) 55%, transparent); font-family: var(--font-chalk); font-size: 1.35rem; color: var(--chalk-white); }
+.total { font-size: clamp(2rem, 6vw, 2.6rem); color: var(--sun-yellow); }
+.depositLine { color: var(--chalk-white); }
+.book { justify-self: stretch; margin-top: 6px; text-align: center; }

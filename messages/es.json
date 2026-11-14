@@ -407,6 +407,27 @@
       "server": "No pudimos enviar tus datos ahora. Inténtalo de nuevo o escríbenos."
     }
   },
+  "quickPrice": {
+    "title": "Calcula tu precio",
+    "sub": "Elige un paquete y escribe tu código postal. Incluye la oferta de hoy y el viaje.",
+    "bundle": "Paquete",
+    "zip": "Tu código postal",
+    "codeLink": "¿Tienes un código de descuento?",
+    "bundleLine": "Paquete",
+    "codeLine": "Código {code}",
+    "until": "hasta el {date}",
+    "travel": "Viaje",
+    "travelTo": "Viaje a {zip}",
+    "addZip": "escribe tu código postal",
+    "free": "Gratis",
+    "miles": "unas {miles} millas",
+    "confirm": "te lo confirmamos",
+    "total": "Tu total",
+    "deposit": "Depósito de {deposit} para reservar · {rest} después de tu sesión",
+    "payAfter": "$0 hoy · pagas después de tu sesión",
+    "fine": "Gemelos, familiares adicionales o un código pueden cambiarlo. Verás el precio exacto antes de reservar.",
+    "book": "Reservar {bundle}"
+  },
   "bookingFlow": {
     "due": {
       "title": "Tu reserva con fecha de parto",

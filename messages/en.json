@@ -234,6 +234,27 @@
       "server": "We couldn't send your details just now. Please try again, or text us."
     }
   },
+  "quickPrice": {
+    "title": "Get a quick price",
+    "sub": "Pick a bundle and add your ZIP code. Today's offer and travel included.",
+    "bundle": "Bundle",
+    "zip": "Your ZIP code",
+    "codeLink": "Have a discount code?",
+    "bundleLine": "Bundle",
+    "codeLine": "Code {code}",
+    "until": "until {date}",
+    "travel": "Travel",
+    "travelTo": "Travel to {zip}",
+    "addZip": "add your ZIP code",
+    "free": "Free",
+    "miles": "about {miles} miles",
+    "confirm": "we'll confirm",
+    "total": "Your total",
+    "deposit": "{deposit} deposit to book · {rest} after your session",
+    "payAfter": "$0 today · you pay after your session",
+    "fine": "Twins, extra family members or a code can change it. You'll see the exact price before you book.",
+    "book": "Book {bundle}"
+  },
   "bookingFlow": {
     "due": {
       "title": "Your due-date reservation",
