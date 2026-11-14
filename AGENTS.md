@@ -18,7 +18,7 @@ npm run dev · typecheck · lint · build · test:unit · test:e2e (mock provide
 ## Rules
 1. Small slices to main. Before push: typecheck, lint, build, unit + e2e. After push: check the Vercel deploy and smoke-test changed pages at 390×844. If production breaks: revert first, fix second.
 2. No unused code. When a change leaves a route, component, message key, email, test, env var, config or table unused, delete it in the same brief. Drop a table only after the owner confirms it holds no open records.
-3. Migrations run through the deploy pipeline (from brief 01 on), never by hand in the Neon console.
+3. Migrations run through the deploy pipeline (from brief 01 on), never by hand in the Neon console: scripts/migrate.mjs applies pending drizzle/ migrations in one transaction before `next build`, on production builds only. A drop/rename/delete needs a `-- destructive-ok: <reason>` line in the file, or the deploy stops.
 4. Business data the owner edits (prices, bundles, hours, photo counts, offers) lives in the database. Never hardcode it.
 5. Meta gets parent contact data only, hashed (em, ph, fn, ln, ct, st, zp, country, external_id), plus fbp/fbc/IP/user agent. Never baby names, ages, notes or photos. Never send secret-token URLs (pay, cancel, reschedule, prepare, unsubscribe links) to the Pixel.
 6. The repo is public. Never commit plan/, research, ad strategy, competitor names, customer data, secrets or .env* (except .env.example).
