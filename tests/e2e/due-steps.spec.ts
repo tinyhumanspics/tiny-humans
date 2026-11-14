@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { hydrated } from "./fixtures/hydration";
 
 /**
  * "Not born yet?" in four steps (owner, Nov 11; step one split Nov 13): bundle, due date, first name, email, ZIP code →
@@ -17,6 +18,7 @@ test.beforeEach(async ({ page }) => {
 /** Step 1: due date, first name, email, ZIP code. */
 async function stepOne(page: Page, zip = "33139") {
   await page.goto("/due-date?bundle=our-little-story");
+  await hydrated(page, "#due-date");
   await page.fill("#due-date", new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10));
   for (const [k, v] of Object.entries({ firstName: "Dana", email: "dana.due@example.com", zip })) await page.fill(`#due-${k}`, v);
 }
@@ -51,7 +53,8 @@ function fakeReserve(page: Page) {
   return page
     .route("**/api/due-date", async (route) => {
       const body = route.request().postDataJSON() as Record<string, unknown>;
-      if (body.check) return route.continue();
+      // the real server check, fetched by the test runner: WebKit sometimes stalls a continued POST (route.continue)
+      if (body.check) return route.fulfill({ response: await route.fetch() });
       sent.push(body);
       return route.fulfill({ status: 201, json: { reference: "TH-D-20261111-TEST", status: "reserved", donePath: "/due-date/done?r=TH-D-20261111-TEST&k=x" } });
     })

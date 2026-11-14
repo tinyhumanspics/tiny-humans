@@ -1,4 +1,5 @@
 import { expect, type Page } from "@playwright/test";
+import { hydrated } from "./hydration";
 
 /**
  * The booking form's boxes (owner, Nov 13): step 1 asks first name, email and ZIP code (enough for the calendar), and
@@ -16,6 +17,7 @@ export async function fillFirstStep(page: Page, fields: Record<string, string> =
   await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
   // by role: WebKit can keep a hidden streaming copy of the step for a moment (never visible, not in the accessibility tree)
   await expect(page.getByRole("paragraph").filter({ hasText: "We just need your information first. On the next step, you'll see the available dates." })).toBeVisible();
+  await hydrated(page, "#field-firstName");
   const all = { ...FIRST, ...HOME, ...fields };
   const contact: Record<string, string> = {};
   for (const [field, value] of Object.entries(all)) {
