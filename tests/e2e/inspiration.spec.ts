@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFirstStep, toDetails } from "./fixtures/booking-steps";
 import { BUILT_IN } from "@/config/media";
 
 test("a parent opens a gallery picture, uses it as their inspiration, and it stays through the booking (owner, Nov 11)", async ({ page }, testInfo) => {
@@ -25,13 +26,8 @@ test("a parent opens a gallery picture, uses it as their inspiration, and it sta
   // every booking step shows the picked picture at the top
   await expect(page.getByText("Inspired by", { exact: true })).toBeVisible();
   await expect(page.getByText(picture.title, { exact: false }).first()).toBeVisible();
-  // step 1: about you (owner, Nov 10), then the calendar
-  await page.fill("#field-parentName", "Role Model Test");
-  await page.fill("#field-email", "role.model@example.com");
-  await page.fill("#field-phone", "3055550199");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
+  // step 1 (owner, Nov 13): first name, email, ZIP code; then the calendar, the time and the contact step
+  await fillFirstStep(page, { firstName: "Role", lastName: "Model Test", email: "role.model@example.com", phone: "3055550199", zip: "33139" });
   const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
   await page.getByRole("button", { name: /Next: Date/ }).click();
   await loaded;
@@ -46,7 +42,7 @@ test("a parent opens a gallery picture, uses it as their inspiration, and it sta
   await openDay.click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
   await expect(page.getByText("Inspired by", { exact: true })).toBeVisible();
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.getByRole("button", { name: /Next: Review/ }).click();

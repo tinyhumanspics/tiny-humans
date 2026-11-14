@@ -146,8 +146,11 @@
       "redirecting": "Opening the secure payment page…",
       "pickBundle": "Choose a bundle.",
       "pickDate": "Pick your due date (today to {last}).",
-      "stepOf": "Step {n} of 3 · {name}",
+      "stepOf": "Step {n} of 4 · {name}",
       "stepDetails": "Your details",
+      "stepHome": "Your phone and home",
+      "toHome": "Next: Your phone and home",
+      "firstStep": "Pick your bundle and due date, then tell us your first name, email and ZIP code. Your phone and home address come next.",
       "stepBackdrops": "Backdrops",
       "stepReview": "Review and reserve",
       "checking": "Checking…",
@@ -276,6 +279,7 @@
       { "id": "you", "label": "You", "title": "About you" },
       { "id": "date", "label": "Date", "title": "Pick a day" },
       { "id": "time", "label": "Time", "title": "Pick a time" },
+      { "id": "contact", "label": "Home", "title": "Your phone and home" },
       { "id": "details", "label": "Details", "title": "Tell us about your family" },
       { "id": "review", "label": "Review", "title": "Check everything" }
     ],
@@ -315,7 +319,7 @@
       "one": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
       "many": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little ones whenever needed."
     },
-    "firstStep": "Fill in your details first. On the next step you'll see the days and times we have open for you.",
+    "firstStep": "Tell us your first name, email and ZIP code to see the days and times we have open for you.",
     "summary": {
       "yourBundle": "Your bundle",
       "inspiredBy": "Inspired by",
@@ -337,6 +341,9 @@
       "optional": " (optional)",
       "honeypot": "Leave this empty",
       "parentName": "Parent / guardian name",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "zipFirst": "Your home's ZIP code",
       "email": "Email",
       "saveNote": "We save your contact information as you type, so we can follow up if you were not able to finish booking. See our {privacy}.",
       "saveNotePrivacy": "Privacy Policy",
@@ -435,6 +442,8 @@
         "stripeLine": "Travel fee (about {miles} miles)"
       },
       "validation": {
+        "firstName": "Add your first name.",
+        "lastName": "Add your last name.",
         "parentName": "Add the parent or guardian's name.",
         "email": "Enter an email like name@example.com.",
         "phone": "Enter a phone number with at least 10 digits.",

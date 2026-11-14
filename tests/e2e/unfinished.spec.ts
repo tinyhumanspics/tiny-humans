@@ -23,31 +23,31 @@ function record(page: Page) {
   return { drafts, steps };
 }
 
-test("the booking form saves the parent's contact details (never the baby's) and counts each step once", async ({ page }) => {
+test("the booking form saves the parent's contact details from step one (never the baby's) and counts each step once", async ({ page }) => {
   const { drafts, steps } = record(page);
   await page.goto("/book?bundle=little-moments");
 
-  // step 1 "About you": the note sits at the bottom of the step, not under the email box (owner, Nov 11)
+  // step 1 (owner, Nov 13): first name, email, ZIP code; the note sits at the bottom of the step, not under the email box
   await expect(page.locator("#booking-save-note")).toHaveText("We save your contact information as you type, so we can follow up if you were not able to finish booking. See our Privacy Policy.");
   await expect(page.locator("#booking-save-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
   await expect(page.locator("#field-email-note")).toHaveCount(0);
+  await expect(page.locator("#field-phone")).toHaveCount(0);
 
-  await page.fill("#field-parentName", "Unfinished Test");
+  await page.fill("#field-firstName", "Unfinished");
   await page.fill("#field-email", "unfinished.tes");
-  await page.locator("#field-phone").focus();
+  await page.locator("#field-zip").focus();
   await page.waitForTimeout(300);
   expect(drafts, "a half-typed email isn't sent").toHaveLength(0);
 
   await page.fill("#field-email", "unfinished.test@example.com");
-  await page.locator("#field-phone").focus();
+  await page.locator("#field-zip").focus();
   await expect.poll(() => drafts.length).toBe(1);
-  expect(drafts[0]).toMatchObject({ email: "unfinished.test@example.com", parentName: "Unfinished Test", bundleId: "little-moments", step: "details", locale: "en" });
+  expect(drafts[0]).toMatchObject({ email: "unfinished.test@example.com", parentName: "Unfinished", bundleId: "little-moments", step: "details", locale: "en" });
   expect(drafts[0].date, "no day picked yet").toBeUndefined();
-
-  await page.fill("#field-phone", "3055550199");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
   await page.fill("#field-zip", "33139");
+  await page.locator("#field-firstName").focus();
+  await expect.poll(() => drafts.at(-1)?.zip).toBe("33139");
+
   const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
   await page.getByRole("button", { name: /Next: Date/ }).click();
   await loaded;
@@ -62,11 +62,20 @@ test("the booking form saves the parent's contact details (never the baby's) and
   await day.click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
-  // saved again with the day and time they picked
+  // the contact step: saved again with the day and time, then with the last name and phone; the note is there too
+  await page.getByRole("button", { name: /Next: Home/ }).click();
   await expect.poll(() => drafts.at(-1)?.start).toMatch(/^\d{2}:\d{2}$/);
-  expect(drafts.at(-1)).toMatchObject({ phone: "3055550199", zip: "33139", step: "details" });
   expect(drafts.at(-1)!.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  await expect(page.locator("#booking-save-note")).toBeVisible();
+  await expect(page.locator("#field-firstName")).toHaveValue("Unfinished");
+  await page.fill("#field-lastName", "Test");
+  await page.fill("#field-phone", "3055550199");
+  await page.locator("#field-street").focus();
+  await expect.poll(() => drafts.at(-1)?.phone).toBe("3055550199");
+  expect(drafts.at(-1)).toMatchObject({ parentName: "Unfinished Test", zip: "33139", step: "details" });
+  await page.fill("#field-street", "1500 Bay Rd");
+  await page.fill("#field-city", "Miami Beach");
+  await page.getByRole("button", { name: /Next: Details/ }).click();
 
   await page.locator("#field-babyName").focus();
   await page.fill("#field-babyName", "Baby Secret");
@@ -76,45 +85,52 @@ test("the booking form saves the parent's contact details (never the baby's) and
   // children's privacy: nothing about the baby leaves the form before booking
   expect(JSON.stringify(drafts)).not.toMatch(/Baby Secret|babyName|babyAge|Newborn/);
 
-  // going back and forth doesn't count a step twice ("calendar" = the booking form opened)
+  // the same step codes as before (owner, Nov 13), and going back and forth doesn't count a step twice
   await page.getByRole("button", { name: /Back/ }).first().click();
   await page.getByRole("button", { name: /Next: Review/ }).click();
   await expect.poll(() => steps.length).toBe(4);
   expect(steps).toEqual(["calendar", "date", "time", "details"]);
 });
 
-test("\"Not born yet?\" saves the parent's contact details too, labeled, never the due date (owner, Nov 11)", async ({ page }) => {
+test("\"Not born yet?\" saves first name, email, ZIP code and the due date from step one, labeled (owner, Nov 13)", async ({ page }) => {
   const { drafts } = record(page);
   await page.goto("/due-date?bundle=our-little-story");
-  // the note sits by the Reserve button, not under the email box (owner, Nov 11)
+  // the note sits by the button, not under the email box (owner, Nov 11)
   await expect(page.locator("#due-save-note").getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
   await expect(page.locator("#due-email-note")).toHaveCount(0);
+  await expect(page.locator("#due-phone")).toHaveCount(0);
   await page.fill("#due-date", "2027-03-20");
-  await page.fill("#due-notes", "Secret due-date note");
-  await page.fill("#due-parentName", "Dana Due");
+  await page.fill("#due-firstName", "Dana");
   await page.fill("#due-email", "dana.due@example.com");
-  await page.locator("#due-phone").focus();
+  await page.locator("#due-zip").focus();
   await expect.poll(() => drafts.length).toBe(1);
-  expect(drafts[0]).toMatchObject({ email: "dana.due@example.com", parentName: "Dana Due", bundleId: "our-little-story", step: "details", form: "due_date", locale: "en" });
-  await page.fill("#due-phone", "3055550122");
+  expect(drafts[0]).toMatchObject({ email: "dana.due@example.com", parentName: "Dana", date: "2027-03-20", bundleId: "our-little-story", step: "details", form: "due_date", locale: "en" });
   await page.fill("#due-zip", "33139");
-  await page.locator("#due-street").focus();
-  await page.fill("#due-street", "1500 Bay Rd");
-  await page.locator("#due-city").focus();
+  await page.locator("#due-firstName").focus();
   await expect.poll(() => drafts.at(-1)?.zip).toBe("33139");
-  expect(drafts.at(-1)).toMatchObject({ phone: "3055550122", form: "due_date" });
-  // nothing about the baby or the pregnancy leaves the form before reserving
-  expect(JSON.stringify(drafts)).not.toMatch(/2027-03-20|Secret due-date note|dueDate|babyCount|notes/);
+
+  // step 2: last name, phone, home; notes stay on the form
+  await page.getByRole("button", { name: "Next: Your phone and home" }).click();
+  await expect(page.getByRole("heading", { name: "Your phone and home" })).toBeVisible();
+  await expect(page.locator("#due-firstName")).toHaveValue("Dana");
+  await page.fill("#due-lastName", "Due");
+  await page.fill("#due-phone", "3055550122");
+  await page.fill("#due-notes", "Secret due-date note");
+  await page.locator("#due-street").focus();
+  await expect.poll(() => drafts.at(-1)?.phone).toBe("3055550122");
+  expect(drafts.at(-1)).toMatchObject({ parentName: "Dana Due", date: "2027-03-20", form: "due_date" });
+  // nothing about the babies and no notes leave the form before reserving
+  expect(JSON.stringify(drafts)).not.toMatch(/Secret due-date note|dueDate|babyCount|notes/);
 });
 
 test("fixing a typo'd email replaces the earlier one", async ({ page }) => {
   const { drafts } = record(page);
   await page.goto("/book?bundle=little-moments");
   await page.fill("#field-email", "ana@gmial.com");
-  await page.locator("#field-phone").focus();
+  await page.locator("#field-zip").focus();
   await expect.poll(() => drafts.length).toBe(1);
   await page.fill("#field-email", "ana@gmail.com");
-  await page.locator("#field-phone").focus();
+  await page.locator("#field-zip").focus();
   await expect.poll(() => drafts.length).toBe(2);
   expect(drafts[1]).toMatchObject({ email: "ana@gmail.com", replaces: "ana@gmial.com" });
 });

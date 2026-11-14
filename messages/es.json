@@ -319,8 +319,11 @@
       "redirecting": "Abriendo la página de pago segura…",
       "pickBundle": "Elige un paquete.",
       "pickDate": "Elige tu fecha de parto (desde hoy hasta el {last}).",
-      "stepOf": "Paso {n} de 3 · {name}",
+      "stepOf": "Paso {n} de 4 · {name}",
       "stepDetails": "Tus datos",
+      "stepHome": "Tu teléfono y tu hogar",
+      "toHome": "Siguiente: Tu teléfono y tu hogar",
+      "firstStep": "Elige tu paquete y tu fecha de parto, y escríbenos tu nombre, tu correo y tu código postal. Tu teléfono y tu dirección van en el siguiente paso.",
       "stepBackdrops": "Fondos",
       "stepReview": "Revisa y reserva",
       "checking": "Revisando…",
@@ -449,6 +452,7 @@
       { "id": "you", "label": "Tú", "title": "Sobre ti" },
       { "id": "date", "label": "Fecha", "title": "Elige un día" },
       { "id": "time", "label": "Hora", "title": "Elige una hora" },
+      { "id": "contact", "label": "Hogar", "title": "Tu teléfono y tu hogar" },
       { "id": "details", "label": "Detalles", "title": "Cuéntanos sobre tu familia" },
       { "id": "review", "label": "Revisar", "title": "Revisa todos los detalles" }
     ],
@@ -488,7 +492,7 @@
       "one": "Nuestras sesiones siguen el ritmo de tu bebé. Hay tiempo para alimentarlo, cambiarlo y consolarlo cuando lo necesite.",
       "many": "Nuestras sesiones siguen el ritmo de tus bebés. Hay tiempo para alimentarlos, cambiarlos y consolarlos cuando lo necesiten."
     },
-    "firstStep": "Primero completa tus datos. En el siguiente paso verás los días y horarios que tenemos disponibles para ti.",
+    "firstStep": "Escríbenos tu nombre, tu correo y tu código postal para ver los días y horarios que tenemos disponibles para ti.",
     "summary": {
       "yourBundle": "Tu paquete",
       "inspiredBy": "Inspirado en",
@@ -510,6 +514,9 @@
       "optional": " (opcional)",
       "honeypot": "Deja este campo vacío",
       "parentName": "Nombre del padre, madre o tutor",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "zipFirst": "Código postal de tu hogar",
       "email": "Correo electrónico",
       "saveNote": "Guardamos tu información de contacto mientras escribes, para poder darte seguimiento si no pudiste terminar tu reserva. Consulta nuestra {privacy}.",
       "saveNotePrivacy": "Política de privacidad",
@@ -608,6 +615,8 @@
         "stripeLine": "Cargo de viaje (aprox. {miles} millas)"
       },
       "validation": {
+        "firstName": "Agrega tu nombre.",
+        "lastName": "Agrega tu apellido.",
         "parentName": "Agrega el nombre del padre, madre o tutor.",
         "email": "Ingresa un correo como nombre@ejemplo.com.",
         "phone": "Ingresa un número de teléfono de al menos 10 dígitos.",

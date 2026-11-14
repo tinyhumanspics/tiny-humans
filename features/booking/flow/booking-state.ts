@@ -9,7 +9,10 @@ import type en from "@/messages/en.json";
 /* Booking form state, reducer and checks (no React): used by useBookingFlow and the step components. */
 
 export interface ContactDraft {
-  parentName: string;
+  /** Step one (owner, Nov 13); joined with lastName into the booking's parent name. */
+  firstName: string;
+  /** The contact step, after the time. */
+  lastName: string;
   email: string;
   phone: string;
   notes: string;
@@ -23,6 +26,14 @@ export interface ContactDraft {
 }
 
 export type ContactErrors = Partial<Record<keyof ContactDraft, string>>;
+
+/** The parent's name as it's booked and saved: first + last. */
+export const fullName = (c: Pick<ContactDraft, "firstName" | "lastName">) => `${c.firstName.trim()} ${c.lastName.trim()}`.trim();
+/** A name saved as one line (a "Not born yet" reservation's link) → first name + the rest. */
+export function splitName(name: string): { firstName: string; lastName: string } {
+  const [first = "", ...rest] = name.trim().split(/\s+/);
+  return { firstName: first, lastName: rest.join(" ") };
+}
 /** gender "" = not picked (it's optional). */
 export type BabyDraft = { name: string; age: string; gender: "" | BabyGender };
 /** Who else is in the photos (bundles that include the family); role "" = not picked yet. All of it is optional. */
@@ -50,6 +61,8 @@ export interface State {
   family: FamilyDraft[];
   date: DateKey | null;
   slot: TimeSlot | null;
+  /** The ZIP code the time was picked with: a different home ZIP on the contact step re-checks the time (trip days). */
+  slotZip?: string;
   contact: ContactDraft;
   /** Optional permissions (unticked = no). */
   consents: BookingConsents;
@@ -70,7 +83,7 @@ export interface LanguageDraftPayload {
   requestId: string | null;
 }
 
-const emptyContact: ContactDraft = { parentName: "", email: "", phone: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
+const emptyContact: ContactDraft = { firstName: "", lastName: "", email: "", phone: "", notes: "", street: "", unit: "", city: "", zip: "", access: "" };
 
 export const initialState: State = {
   step: STEP.you,
@@ -149,6 +162,7 @@ export function isLanguageDraftPayload(value: unknown, bundleId: string): value 
 export type Action =
   | { type: "date"; date: DateKey }
   | { type: "slot"; slot: TimeSlot }
+  | { type: "clearSlot" }
   | { type: "contact"; field: keyof ContactDraft; value: string }
   | { type: "babyCount"; count: number; slot?: TimeSlot | null }
   | { type: "baby"; index: number; field: keyof BabyDraft; value: string }
@@ -172,7 +186,9 @@ export function reducer(state: State, action: Action): State {
     case "date":
       return { ...state, date: action.date, slot: state.date === action.date ? state.slot : null, maxStep: state.date === action.date ? state.maxStep : Math.min(state.maxStep, STEP.time), stepError: null };
     case "slot":
-      return { ...state, slot: action.slot, stepError: null };
+      return { ...state, slot: action.slot, slotZip: state.contact.zip.trim().slice(0, 5), stepError: null };
+    case "clearSlot":
+      return { ...state, slot: null, slotZip: undefined, maxStep: Math.min(state.maxStep, STEP.time) };
     case "contact": {
       const fieldErrors = { ...state.fieldErrors };
       delete fieldErrors[action.field];
@@ -231,15 +247,31 @@ export function reducer(state: State, action: Action): State {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-export function validateContact(c: ContactDraft, messages: typeof en.bookingFlow.details): ContactErrors {
+export const isEmail = (value: string) => EMAIL_RE.test(value.trim());
+
+/** The ZIP code box (both steps): 5 digits, in Florida. */
+export function zipError(zip: string, messages: typeof en.bookingFlow.details): string | null {
+  if (!/^\d{5}(-\d{4})?$/.test(zip.trim())) return messages.validation.zip;
+  if (!isFloridaZip(zip)) return messages.travel.outsideFlorida;
+  return null;
+}
+
+/**
+ * The boxes of one step (owner, Nov 13): "you" = first name, email, ZIP code (enough for the calendar); "contact" =
+ * first and last name, phone and the home address.
+ */
+export function validateContact(c: ContactDraft, messages: typeof en.bookingFlow.details, part: "you" | "contact" = "contact"): ContactErrors {
   const e: ContactErrors = {};
-  if (c.parentName.trim().length < 2) e.parentName = messages.validation.parentName;
-  if (!EMAIL_RE.test(c.email.trim())) e.email = messages.validation.email;
-  if (c.phone.replace(/\D/g, "").length < 10) e.phone = messages.validation.phone;
-  if (c.street.trim().length < 4) e.street = messages.validation.street;
-  if (c.city.trim().length < 2) e.city = messages.validation.city;
-  if (!/^\d{5}(-\d{4})?$/.test(c.zip.trim())) e.zip = messages.validation.zip;
-  else if (!isFloridaZip(c.zip)) e.zip = messages.travel.outsideFlorida;
+  if (c.firstName.trim().length < 1) e.firstName = messages.validation.firstName;
+  if (part === "you" && !isEmail(c.email)) e.email = messages.validation.email;
+  if (part === "contact") {
+    if (c.lastName.trim().length < 1) e.lastName = messages.validation.lastName;
+    if (c.phone.replace(/\D/g, "").length < 10) e.phone = messages.validation.phone;
+    if (c.street.trim().length < 4) e.street = messages.validation.street;
+    if (c.city.trim().length < 2) e.city = messages.validation.city;
+  }
+  const zip = zipError(c.zip, messages);
+  if (zip) e.zip = zip;
   return e;
 }
 

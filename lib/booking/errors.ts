@@ -25,14 +25,19 @@ const STATUS: Record<BookingErrorCode, number> = {
   server_error: 500,
 };
 
+/** Why a time can't be booked, when the form should act on it ("trip_day": the home's ZIP code → pick another day). */
+export type BookingErrorReason = "trip_day";
+
 export class BookingError extends Error {
   readonly code: BookingErrorCode;
   readonly status: number;
-  constructor(code: BookingErrorCode, message: string) {
+  readonly reason?: BookingErrorReason;
+  constructor(code: BookingErrorCode, message: string, reason?: BookingErrorReason) {
     super(message);
     this.name = "BookingError";
     this.code = code;
     this.status = STATUS[code];
+    this.reason = reason;
   }
 }
 

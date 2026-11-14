@@ -217,8 +217,8 @@ export default function DetailsForm({
   onHp: (v: string) => void;
   /** Travel fee line under the ZIP box. */
   zipNote: { text: string; blocking: boolean } | null;
-  /** "you": the parent and the home (step one); "session": babies, family, notes, backdrops, permissions. */
-  part: "you" | "session";
+  /** "you": first name, email, ZIP code (step one); "contact": last name, phone, home (after the time); "session": babies, family, notes, backdrops, permissions. */
+  part: "you" | "contact" | "session";
   backdrops: string[];
   onBackdrops: (picks: string[]) => void;
   /** Backdrops they can pick (one per setup). */
@@ -305,55 +305,75 @@ export default function DetailsForm({
     );
   };
 
+  const zipBox = (label: string) => (
+    <div className={styles.field}>
+      {field("zip", label, { autoComplete: "postal-code", inputMode: "numeric" })}
+      {zipNote && !errors.zip && (
+        <p id="field-zip-travel" className={cn(zipNote.blocking ? styles.fieldError : styles.optional, "chalk-soft")} aria-live="polite">
+          {zipNote.text}
+        </p>
+      )}
+    </div>
+  );
+  /* owner, Nov 11: at the bottom of the step, by the button, not under the email box (people hesitated there) */
+  const saveNoteLine = (
+    <p id="booking-save-note" className={cn(styles.fieldWide, styles.optional, styles.fieldNote, "chalk-soft")}>
+      {saveNote[0]}
+      <a href={privacyHref} className={styles.inlineLink} target="_blank" rel="noopener">{messages.saveNotePrivacy}</a>
+      {saveNote[1]}
+    </p>
+  );
+
+  // step one (owner, Nov 13): only what the calendar needs (the ZIP code: trip days) and a way to follow up
   if (part === "you") {
     return (
       <div className={styles.form}>
         {/* Honeypot: hidden from people and screen readers; automated form-fillers tend to fill it. */}
-      <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
-        <label htmlFor="th-leave-empty">{messages.honeypot}</label>
-        <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
+        <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
+          <label htmlFor="th-leave-empty">{messages.honeypot}</label>
+          <input id="th-leave-empty" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => onHp(e.target.value)} />
+        </div>
+        {field("firstName", messages.firstName, { autoComplete: "given-name", maxLength: 60 })}
+        {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email" })}
+        {zipBox(messages.zipFirst)}
+        {saveNoteLine}
       </div>
-      {field("parentName", messages.parentName, { autoComplete: "name" })}
-      {field("email", messages.email, { type: "email", autoComplete: "email", inputMode: "email" })}
-      {field("phone", messages.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
-      <div className={cn(styles.fieldWide, styles.homeBlock)}>
-        <p className={cn(styles.homeTitle, "chalk-soft")}>{messages.address.title}</p>
-        <p className={cn(styles.homeText, "chalk-soft")}>{messages.address.help}</p>
-      </div>
-      <div className={cn(styles.fieldWide, styles.streetRow)}>
-        {field("street", messages.address.street, { autoComplete: "address-line1" })}
-        {field("unit", messages.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
-      </div>
-      {field("city", messages.address.city, { autoComplete: "address-level2" })}
-      <div className={styles.field}>
-        {field("zip", messages.address.zip, { autoComplete: "postal-code", inputMode: "numeric" })}
-        {zipNote && !errors.zip && (
-          <p id="field-zip-travel" className={cn(zipNote.blocking ? styles.fieldError : styles.optional, "chalk-soft")} aria-live="polite">
-            {zipNote.text}
-          </p>
-        )}
-      </div>
-      <div className={cn(styles.field, styles.fieldWide)}>
-        <label htmlFor="field-access" className={cn(styles.label, "chalk-soft")}>
-          {messages.address.access}
-          <span className={styles.optional}>{messages.optional}</span>
-        </label>
-        <textarea
-          id="field-access"
-          className={cn(styles.input, styles.textareaShort)}
-          rows={2}
-          maxLength={300}
-          value={contact.access}
-          onChange={(e) => onChange("access", e.target.value)}
-          placeholder={messages.address.accessPlaceholder}
-        />
-      </div>
-      {/* owner, Nov 11: at the bottom of the step, by the button, not under the email box (people hesitated there) */}
-      <p id="booking-save-note" className={cn(styles.fieldWide, styles.optional, styles.fieldNote, "chalk-soft")}>
-        {saveNote[0]}
-        <a href={privacyHref} className={styles.inlineLink} target="_blank" rel="noopener">{messages.saveNotePrivacy}</a>
-        {saveNote[1]}
-      </p>
+    );
+  }
+
+  // after the time (owner, Nov 13): the rest of the name, the phone and the home address
+  if (part === "contact") {
+    return (
+      <div className={styles.form}>
+        {field("firstName", messages.firstName, { autoComplete: "given-name", maxLength: 60 })}
+        {field("lastName", messages.lastName, { autoComplete: "family-name", maxLength: 60 })}
+        {field("phone", messages.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
+        <div className={cn(styles.fieldWide, styles.homeBlock)}>
+          <p className={cn(styles.homeTitle, "chalk-soft")}>{messages.address.title}</p>
+          <p className={cn(styles.homeText, "chalk-soft")}>{messages.address.help}</p>
+        </div>
+        <div className={cn(styles.fieldWide, styles.streetRow)}>
+          {field("street", messages.address.street, { autoComplete: "address-line1" })}
+          {field("unit", messages.address.unit, { optional: true, autoComplete: "address-line2", maxLength: 40 })}
+        </div>
+        {field("city", messages.address.city, { autoComplete: "address-level2" })}
+        {zipBox(messages.address.zip)}
+        <div className={cn(styles.field, styles.fieldWide)}>
+          <label htmlFor="field-access" className={cn(styles.label, "chalk-soft")}>
+            {messages.address.access}
+            <span className={styles.optional}>{messages.optional}</span>
+          </label>
+          <textarea
+            id="field-access"
+            className={cn(styles.input, styles.textareaShort)}
+            rows={2}
+            maxLength={300}
+            value={contact.access}
+            onChange={(e) => onChange("access", e.target.value)}
+            placeholder={messages.address.accessPlaceholder}
+          />
+        </div>
+        {saveNoteLine}
       </div>
     );
   }

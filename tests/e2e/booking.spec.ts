@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFirstStep, toDetails } from "./fixtures/booking-steps";
 
 // Instagram's in-app browser on iPhone (most ad clicks open here)
 const INSTAGRAM_UA =
@@ -26,14 +27,10 @@ async function pickFirstOpenDay(page: import("@playwright/test").Page, open: () 
   await (farAhead ? page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').last() : availableDay(page)).click();
 }
 
-/** Step 1 "About you" (owner, Nov 10): contact details and the home address come first, so the calendar only offers
- *  days that work for that address (trip days). The calendar loads when they press "Next: Date". */
-const ABOUT = { parentName: "José Muñoz", email: "jose.test@example.com", phone: "(305) 555-0142", street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" };
-async function fillAboutYou(page: import("@playwright/test").Page, about: Record<string, string> = ABOUT) {
-  await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
-  await expect(page.getByText("Fill in your details first. On the next step you'll see the days and times we have open for you.")).toBeVisible();
-  for (const [field, value] of Object.entries(about)) await page.fill(`#field-${field}`, value);
-}
+/** Step 1 "About you" (owner, Nov 13): first name, email and the home's ZIP code, so the calendar only offers days
+ *  that work for that ZIP (trip days); last name, phone and the address come after the time (fixtures/booking-steps). */
+const ABOUT = { firstName: "José", lastName: "Muñoz", email: "jose.test@example.com", phone: "(305) 555-0142", street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" };
+const fillAboutYou = (page: import("@playwright/test").Page, about: Record<string, string> = ABOUT) => fillFirstStep(page, about);
 const toCalendar = (page: import("@playwright/test").Page) => page.getByRole("button", { name: /Next: Date/ }).click();
 
 async function bookLittleMoments(page: import("@playwright/test").Page, { farAhead = false } = {}) {
@@ -49,9 +46,8 @@ async function bookLittleMoments(page: import("@playwright/test").Page, { farAhe
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await expect(page.getByText(/Miami time/).first()).toBeVisible();
   await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
-  await expect(page.getByRole("heading", { name: "Tell us about your family" })).toBeVisible();
-  await expect(page.locator("#field-parentName")).toHaveCount(0);
+  await toDetails(page);
+  await expect(page.locator("#field-lastName")).toHaveCount(0);
   // Little Moments is baby only: its notes example never mentions siblings
   await expect(page.locator("#field-notes")).toHaveAttribute("placeholder", /feeding and nap/);
 
@@ -100,13 +96,13 @@ test("a family can book a session (mock provider)", async ({ page }, testInfo) =
 
 test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
   await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, parentName: "Twins Test", email: "twins.test@example.com", phone: "3055550142" });
+  await fillAboutYou(page, { ...ABOUT, firstName: "Twins", lastName: "Test", email: "twins.test@example.com", phone: "3055550142" });
   await pickFirstOpenDay(page, () => toCalendar(page));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   const time = page.locator('label[for^="time-"]').first();
   await expect(time.getByText(/until/)).toBeVisible();
   await time.click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
   if (process.env.CAPTURE_BOOKING_DETAILS === "1") {
     await page.screenshot({ path: `.screenshots/booking-details-i18n/${testInfo.project.name}.png`, fullPage: true });
   }
@@ -147,12 +143,12 @@ test("a longer twins or triplets session keeps details and asks for another time
   });
 
   await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, parentName: "Saved Parent" });
+  await fillAboutYou(page, { ...ABOUT, firstName: "Saved", lastName: "Parent" });
   await toCalendar(page);
   await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
   await page.fill("#field-babyName", "Luna");
   await page.selectOption("#field-babyAge", { index: 1 });
   await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
@@ -161,21 +157,23 @@ test("a longer twins or triplets session keeps details and asks for another time
   await expect(page.getByText(/previous time doesn't have enough room/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Pick a time" })).toBeVisible();
   await page.locator('label[for^="time-"]').click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
   await expect(page.locator("#field-babyName")).toHaveValue("Luna");
   await expect(page.getByText("Baby 3", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: /Step 4, Home/ }).click();
+  await expect(page.locator("#field-lastName")).toHaveValue("Parent");
   await page.getByRole("button", { name: /Step 1, You/ }).click();
-  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
+  await expect(page.locator("#field-firstName")).toHaveValue("Saved");
 });
 
 test("a full language-page reload keeps the booking step, details and backdrop picks", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the session-transfer mechanism used by EN/ES.");
   await page.goto("/book?bundle=our-little-story");
-  await fillAboutYou(page, { ...ABOUT, parentName: "Saved Parent", email: "saved.parent@example.com" });
+  await fillAboutYou(page, { ...ABOUT, firstName: "Saved", lastName: "Parent", email: "saved.parent@example.com" });
   await pickFirstOpenDay(page, () => toCalendar(page));
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
 
   await page.getByRole("button", { name: "Cream", exact: true }).click();
   await page.getByRole("button", { name: "Wooden", exact: true }).click();
@@ -192,7 +190,7 @@ test("a full language-page reload keeps the booking step, details and backdrop p
   await expect(page.getByRole("button", { name: "Cream", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByRole("button", { name: "Wooden", exact: true })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: /Step 1, You/ }).click();
-  await expect(page.locator("#field-parentName")).toHaveValue("Saved Parent");
+  await expect(page.locator("#field-firstName")).toHaveValue("Saved");
   await expect(page.locator("#field-email")).toHaveValue("saved.parent@example.com");
 });
 
@@ -262,7 +260,7 @@ test("booking works in the Instagram in-app browser", async ({ browser }, testIn
 
 test("a ZIP code outside Florida can't be booked", async ({ page }) => {
   await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, parentName: "Ana Test", email: "ana.test@example.com", street: "100 Peachtree St", city: "Atlanta", zip: "30303" });
+  await fillAboutYou(page, { ...ABOUT, firstName: "Ana", email: "ana.test@example.com", zip: "30303" });
   await toCalendar(page);
   await expect(page.getByText("We only come to homes in Florida. Please check the ZIP code.")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Pick a day" })).toHaveCount(0);

@@ -82,7 +82,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json({ booking }, { status: 201 });
   } catch (err) {
-    if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
+    if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code, ...(err.reason ? { reason: err.reason } : {}) }, { status: err.status });
     log.error("api.create", "Unexpected error", { error: err as Error });
     return NextResponse.json({ error: friendly.server, code: "server_error" }, { status: 500 });
   }

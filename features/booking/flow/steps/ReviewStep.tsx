@@ -12,7 +12,7 @@ import { backdropNames } from "@/lib/booking/backdrop-names";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
 import { asksFamily, familyLabel } from "@/lib/booking/family";
-import { filledFamily } from "../booking-state";
+import { filledFamily, fullName } from "../booking-state";
 import { fill } from "@/lib/email/messages";
 import InspirationThumb from "@/features/booking/InspirationThumb";
 import type { AppLocale } from "@/i18n/config";
@@ -44,7 +44,7 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
             ).map(([label, value]) => ({ label, value, step: -1 })),
             ...(travelFee > 0
               ? [
-                  { label: messages.review.labels.travelFee, value: travelFeeValue(travelFee, travel?.miles ?? null, messages.details.travel), step: STEP.you },
+                  { label: messages.review.labels.travelFee, value: travelFeeValue(travelFee, travel?.miles ?? null, messages.details.travel), step: STEP.contact },
                   { label: messages.review.labels.total, value: formatMoney(beforeTravelCents + travelFee), step: -1 },
                 ]
               : []),
@@ -62,11 +62,11 @@ export default function ReviewStep({ flow, locale, messages }: { flow: BookingFl
             ...(inspiration ? [{ label: messages.review.labels.inspiration, value: inspiration.title, step: -1, photo: inspiration }] : []),
             { label: messages.review.labels.date, value: formatLongDate(state.date, locale), step: STEP.date },
             { label: messages.review.labels.time, value: fill(messages.review.timeRange, { start: formatTimeLabel(state.slot.start, locale), end: formatTimeLabel(state.slot.end, locale), zone: messages.time.zone }), step: STEP.time },
-            { label: messages.review.labels.location, value: `${[state.contact.street.trim(), unitLine(state.contact.unit, messages.review.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.you },
-            ...(state.contact.access.trim() ? [{ label: messages.review.labels.access, value: state.contact.access.trim(), step: STEP.you }] : []),
-            { label: messages.review.labels.parent, value: state.contact.parentName, step: STEP.you },
+            { label: messages.review.labels.location, value: `${[state.contact.street.trim(), unitLine(state.contact.unit, messages.review.unit), state.contact.city.trim()].filter(Boolean).join(", ")} ${state.contact.zip.trim()}`, step: STEP.contact },
+            ...(state.contact.access.trim() ? [{ label: messages.review.labels.access, value: state.contact.access.trim(), step: STEP.contact }] : []),
+            { label: messages.review.labels.parent, value: fullName(state.contact), step: STEP.contact },
             { label: messages.review.labels.email, value: state.contact.email, step: STEP.you },
-            { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.you },
+            { label: messages.review.labels.phone, value: state.contact.phone, step: STEP.contact },
             { label: state.babies.length > 1 ? messages.review.labels.babies : messages.review.labels.baby, value: bookingBabiesLabel(state.babies, messages.details), step: STEP.details },
             ...(asksFamily(bundle) && filledFamily(state.family).length ? [{ label: messages.review.labels.family, value: familyLabel(filledFamily(state.family), messages.details.family.roles), step: STEP.details }] : []),
             ...(state.contact.notes.trim() ? [{ label: messages.review.labels.notes, value: state.contact.notes.trim(), step: STEP.details }] : []),

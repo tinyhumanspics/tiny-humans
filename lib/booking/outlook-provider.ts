@@ -193,7 +193,7 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     // 2a. Trip days: this home's distance against the day's other sessions (Orlando vs Miami Beach on one day)
     if (tripConflict(date, start, await visitorForZip(request.address.zip), await tripContext(date, date))) {
-      throw new BookingError("slot_unavailable", fill((request.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }));
+      throw new BookingError("slot_unavailable", fill((request.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }), "trip_day");
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.

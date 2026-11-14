@@ -58,3 +58,5 @@
   .review div { grid-template-columns: 1fr; gap: 2px; }
   .stepActions .submit { margin-left: 0; }
 }
+/* step one (owner, Nov 13): what this step asks, above the bundles */
+.firstStep { margin: -2px 0 2px; }

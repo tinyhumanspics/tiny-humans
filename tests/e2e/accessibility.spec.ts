@@ -96,13 +96,10 @@ test.describe("manual accessibility regression checks", () => {
       throw new Error(`Not reachable with Tab: ${target}`);
     };
     await page.goto("/book?bundle=little-moments");
-    // step 1: about you (owner, Nov 10), then the calendar for that address
+    // step 1 (owner, Nov 13): first name, email and ZIP code, then the calendar for that ZIP code
     for (const [field, value] of [
-      ["#field-parentName", "Kim Keyboard"],
+      ["#field-firstName", "Kim"],
       ["#field-email", "kim.keyboard@example.com"],
-      ["#field-phone", "(305) 555-0142"],
-      ["#field-street", "1500 Bay Rd"],
-      ["#field-city", "Miami Beach"],
       ["#field-zip", "33139"],
     ]) {
       await tabTo(page.locator(field));
@@ -124,6 +121,18 @@ test.describe("manual accessibility regression checks", () => {
     await page.keyboard.press("Enter");
     await tabTo(page.locator('input[name="time"]').first());
     await page.keyboard.press("Space");
+    // the contact step: last name, phone and the home
+    await tabTo(page.getByRole("button", { name: /Next: Home/ }));
+    await page.keyboard.press("Enter");
+    for (const [field, value] of [
+      ["#field-lastName", "Keyboard"],
+      ["#field-phone", "(305) 555-0142"],
+      ["#field-street", "1500 Bay Rd"],
+      ["#field-city", "Miami Beach"],
+    ]) {
+      await tabTo(page.locator(field));
+      await page.keyboard.type(value);
+    }
     await tabTo(page.getByRole("button", { name: /Next: Details/ }));
     await page.keyboard.press("Enter");
     await tabTo(page.locator("#field-babyAge"));

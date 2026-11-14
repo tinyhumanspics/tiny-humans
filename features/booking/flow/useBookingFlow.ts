@@ -24,7 +24,9 @@ import { BOOKING_LANGUAGE_SWITCH_EVENT, consumeBookingLanguageDraft, saveBooking
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import { useBookingSelection } from "./BookingSelectionContext";
-import { apiErrorMessage, filledFamily, initialState, isLanguageDraftPayload, newRequestId, reducer, validateContact, type LanguageDraftPayload, type State } from "./booking-state";
+import { apiErrorMessage, filledFamily, fullName, initialState, isLanguageDraftPayload, newRequestId, reducer, splitName, validateContact, type ContactErrors, type LanguageDraftPayload, type State } from "./booking-state";
+import { fill } from "@/lib/email/messages";
+import { site } from "@/config/site";
 
 /**
  * The booking form's state and actions: availability, travel estimate, deposit, discount quote, the language-switch
@@ -47,8 +49,12 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   }, []);
   const [hp, setHp] = useState("");
   const selection = useBookingSelection();
-  // from a due-date reservation's link: the parent's details are filled in already
-  const [state, dispatch] = useReducer(reducer, { ...initialState, bundleId, contact: due ? { ...initialState.contact, ...due.summary.contact } : initialState.contact });
+  // from a due-date reservation's link: the parent's details are filled in already (its name is one line: split it)
+  const [state, dispatch] = useReducer(reducer, null, () => {
+    if (!due) return { ...initialState, bundleId };
+    const { parentName, ...rest } = due.summary.contact;
+    return { ...initialState, bundleId, contact: { ...initialState.contact, ...rest, ...splitName(parentName) } };
+  });
   const router = useRouter();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -309,17 +315,18 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
   }, [bundle?.id]);
 
   // /admin step counts (no names or emails): which screen each visit reached; "Book my session" is counted by the server.
-  // "calendar" = the booking form opened (its first screen; "About you" since Nov 10, the calendar before).
+  // "calendar" = the booking form opened (its first screen; "About you" since Nov 10, the calendar before); "date" = a
+  // day picked; "time" = a time picked (the contact step since Nov 13); "details" = the details filled (review shown).
   useEffect(() => {
     if (!bundle || state.status === "done") return;
-    const reached = { [STEP.you]: "calendar", [STEP.time]: "date", [STEP.details]: "time", [STEP.review]: "details" } as const;
+    const reached = { [STEP.you]: "calendar", [STEP.time]: "date", [STEP.contact]: "time", [STEP.review]: "details" } as const;
     const step = reached[state.step as keyof typeof reached];
     if (step) countBookingStep(step, bundle.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bundle?.id, state.step, state.status]);
 
-  // /admin → Unfinished bookings: the parent's contact details, saved when they leave a contact box and on the review
-  // step (the Privacy Policy says so under the email box). Never baby details.
+  // /admin → Unfinished bookings: the parent's contact details, saved when they leave a contact box (from step one: first
+  // name, email, ZIP), on the contact and details steps, and on the review step. Never baby details.
   const savedEmail = useRef<string | null>(null);
   const lastDraft = useRef("");
   const saveDraft = (step: "details" | "review") => {
@@ -328,7 +335,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     if (!bundle || state.status !== "editing" || !looksLikeEmail(email)) return;
     const draft = {
       email,
-      parentName: c.parentName.trim() || undefined,
+      parentName: fullName(c) || undefined,
       phone: c.phone.trim() || undefined,
       bundleId: bundle.id,
       date: state.slot?.date ?? state.date ?? undefined,
@@ -345,16 +352,52 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     saveBookingDraft(draft);
   };
   const onContactBlur = (field: keyof ContactDraft) => {
-    if (field === "email" || field === "parentName" || field === "phone" || field === "zip") saveDraft("details");
+    if (field === "email" || field === "firstName" || field === "lastName" || field === "phone" || field === "zip") saveDraft("details");
   };
   useEffect(() => {
     if (state.step === STEP.review) saveDraft("review");
-    // contact details come first (Nov 10): save again with the day and time they picked
-    else if (state.step === STEP.details) saveDraft("details");
+    // save again with the day and time they picked, and with the phone and home once given (Nov 13)
+    else if (state.step === STEP.contact || state.step === STEP.details) saveDraft("details");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.step]);
 
-  const next = () => {
+  // the travel answer for a ZIP code: the one on screen, or asked now (Continue pressed before it arrived)
+  const travelFor = async (zipCode: string): Promise<TravelQuote | null> => {
+    if (travelEst?.zip === zipCode) return travelEst.quote;
+    try {
+      const res = await fetch(`/api/booking/travel?zip=${zipCode}`, { cache: "no-store" });
+      const quote = res.ok ? ((await res.json()) as { travel?: TravelQuote }).travel ?? null : null;
+      setTravelEst({ zip: zipCode, quote });
+      return quote;
+    } catch {
+      return null;
+    }
+  };
+  const [checkingStep, setCheckingStep] = useState(false);
+  const showErrors = (errors: ContactErrors) => {
+    dispatch({ type: "fieldErrors", errors, babyErrors: [], familyErrors: [] });
+    const first = Object.keys(errors)[0];
+    requestAnimationFrame(() => document.getElementById(`field-${first}`)?.focus());
+  };
+  // the boxes of step one or the contact step; outside the area we travel to = a friendly note, never an empty calendar
+  const checkContact = async (part: "you" | "contact"): Promise<boolean> => {
+    const errors = validateContact(state.contact, messages.details, part);
+    if (!errors.zip) {
+      setCheckingStep(true);
+      const quote = await travelFor(zip);
+      setCheckingStep(false);
+      const hint = quote && (quote.status === "too_far" || quote.status === "outside_florida") ? travelHint(quote, messages.details.travel) : null;
+      if (hint) errors.zip = hint.text;
+    }
+    if (Object.keys(errors).length) {
+      showErrors(errors);
+      return false;
+    }
+    return true;
+  };
+
+  const next = async () => {
+    if (checkingStep) return;
     switch (state.step) {
       case STEP.date:
         if (!state.date) return dispatch({ type: "stepError", message: messages.errors.date });
@@ -363,17 +406,27 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
         if (!state.slot) return dispatch({ type: "stepError", message: messages.errors.time });
         break;
       case STEP.you: {
-        // who they are and where home is: the ZIP code decides which days work (trip days) and the travel fee
-        const errors = validateContact(state.contact, messages.details);
-        const tooFar = travel?.status === "too_far" ? travelHint(travel, messages.details.travel) : null;
-        if (tooFar && !errors.zip) errors.zip = tooFar.text;
-        if (Object.keys(errors).length) {
-          dispatch({ type: "fieldErrors", errors, babyErrors: [], familyErrors: [] });
-          const first = Object.keys(errors)[0];
-          requestAnimationFrame(() => document.getElementById(`field-${first}`)?.focus());
-          return;
-        }
+        // first name, email and the home's ZIP code: the ZIP decides which days work (trip days) and the travel fee
+        if (!(await checkContact("you"))) return;
         saveDraft("details");
+        break;
+      }
+      case STEP.contact: {
+        if (!(await checkContact("contact"))) return;
+        saveDraft("details");
+        // a different home ZIP code than the one the time was picked with: is that time still open for this home?
+        if (state.slot && state.slotZip !== zip) {
+          setCheckingStep(true);
+          try {
+            const [day] = await provider.getAvailability({ bundleId: state.bundleId!, babyCount: state.babies.length, from: state.slot.date, to: state.slot.date, zip });
+            if (!day?.slots.some((s) => s.start === state.slot?.start)) return backToDays();
+            dispatch({ type: "slot", slot: state.slot });
+          } catch (err) {
+            return dispatch({ type: "stepError", message: apiErrorMessage(err, messages, messages.errors.availability) });
+          } finally {
+            setCheckingStep(false);
+          }
+        }
         break;
       }
       case STEP.details: {
@@ -395,6 +448,14 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     dispatch({ type: "next" });
   };
 
+  const backToDays = () => {
+    requestIdRef.current = null;
+    setDays({});
+    dispatch({ type: "clearSlot" });
+    dispatch({ type: "go", step: STEP.date });
+    dispatch({ type: "stepError", message: fill(messages.errors.tripDay, { phone: site.contact.phone }) });
+  };
+
   const submit = async () => {
     if (!state.bundleId || !state.slot) return;
     dispatch({ type: "submitting" });
@@ -412,7 +473,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
         discountCode: due ? undefined : appliedCode ?? undefined,
         dueToken: due?.token,
         contact: {
-          parentName: c.parentName.trim(),
+          parentName: fullName(c),
           email: c.email.trim(),
           phone: c.phone.trim(),
           babyName: babies[0].name,
@@ -459,6 +520,8 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
       }
       dispatch({ type: "done", result });
     } catch (err) {
+      // the home's ZIP code puts that day on another area's trip: pick another day (owner, Nov 13)
+      if (err instanceof BookingApiError && err.code === "slot_unavailable" && err.reason === "trip_day") return backToDays();
       if (err instanceof BookingApiError && err.code === "slot_unavailable" && state.slot) {
         // that time is gone: drop it and send the family back to pick another
         const taken = state.slot;
@@ -483,7 +546,7 @@ export function useBookingFlow(bundleId: string, locale: AppLocale, messages: ty
     inspiration, bundle, today, addon, personAddon, maxFamily, quote, setQuote, zip, travel, travelChecking, travelFee,
     backdrops, setBackdrops, setups, appliedCode, setAppliedCode, checkingBabyCount, changeBabyCount,
     depositOffer, redirecting, bundleCents, beforeTravelCents, totalCents, depositCents, deposit, due,
-    goTo, goBack, next, submit, daySlots, onContactBlur,
+    goTo, goBack, next, submit, daySlots, onContactBlur, checkingStep,
   };
 }
 

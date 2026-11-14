@@ -279,7 +279,8 @@ function Family({ item, canSend, busy, onSend, onDelete }: { item: UnfinishedIte
       </div>
       <p className={cn(styles.leadLine, "chalk-soft")}>
         <b>{item.bundleName ?? "Bundle not known"}</b>
-        {picked ? ` · picked ${picked}` : ""}
+        {/* "Not born yet" drafts keep the due date there (owner, Nov 13) */}
+        {item.form === "due_date" && item.sessionDate ? ` · due ${formatLongDate(item.sessionDate)}` : picked ? ` · picked ${picked}` : ""}
         {travel ? ` · ${travel}` : ""}
       </p>
       <p className={cn(styles.leadMeta, "chalk-soft")}>

@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { fillFirstStep, toDetails } from "./fixtures/booking-steps";
 
 /** Owner, Nov 10: Our Family Story asks who else is in the photos (up to 5, a role each, names optional). Mock provider. */
 
@@ -7,13 +8,8 @@ const availableDay = (page: import("@playwright/test").Page) =>
 
 async function openDetails(page: import("@playwright/test").Page) {
   await page.goto("/book?bundle=forever-little");
-  // step 1: about you (owner, Nov 10), then the calendar
-  await page.fill("#field-parentName", "Ana Morales");
-  await page.fill("#field-email", "ana.family@example.com");
-  await page.fill("#field-phone", "(305) 555-0177");
-  await page.fill("#field-street", "1500 Bay Rd");
-  await page.fill("#field-city", "Miami Beach");
-  await page.fill("#field-zip", "33139");
+  // step 1 (owner, Nov 13): first name, email, ZIP code; then the calendar, the time and the contact step
+  await fillFirstStep(page, { firstName: "Ana", lastName: "Morales", email: "ana.family@example.com", phone: "(305) 555-0177", zip: "33139" });
   const loaded = page.waitForResponse((r) => r.url().includes("/api/booking/availability"));
   await page.getByRole("button", { name: /Next: Date/ }).click();
   await loaded;
@@ -27,7 +23,7 @@ async function openDetails(page: import("@playwright/test").Page) {
   await availableDay(page).click();
   await page.getByRole("button", { name: /Next: Time/ }).click();
   await page.locator('label[for^="time-"]').first().click();
-  await page.getByRole("button", { name: /Next: Details/ }).click();
+  await toDetails(page);
   await expect(page.locator("#field-babyAge")).toBeVisible();
 }
 

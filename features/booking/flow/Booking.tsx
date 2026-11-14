@@ -79,7 +79,7 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
           </div>
         )}
         <BabyLedNote messages={messages.babyLed} multiple={state.babies.length > 1} />
-        {/* owner, Nov 10: step one asks who they are first; tell them the open days come next */}
+        {/* owner, Nov 13: step one asks only first name, email and ZIP code; the open days come right after */}
         {state.step === STEP.you && state.status !== "done" && <p className={cn(styles.firstStepNote, "chalk-soft")}>{messages.firstStep}</p>}
 
         <Reveal>
@@ -121,9 +121,9 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
                     <TimeStep date={state.date} slots={daySlots} selectedId={state.slot?.id} onSelect={(slot) => dispatch({ type: "slot", slot })} locale={locale} messages={messages.time} />
                   )}
 
-                  {(state.step === STEP.you || state.step === STEP.details) && (
+                  {(state.step === STEP.you || state.step === STEP.contact || state.step === STEP.details) && (
                     <DetailsForm
-                      part={state.step === STEP.you ? "you" : "session"}
+                      part={state.step === STEP.you ? "you" : state.step === STEP.contact ? "contact" : "session"}
                       contact={state.contact}
                       errors={state.fieldErrors}
                       onChange={(field, value) => dispatch({ type: "contact", field, value })}
@@ -180,7 +180,7 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
                     <span />
                   )}
                   {state.step < bookingSteps.length - 1 ? (
-                    <ChalkButton variant="solid" onClick={next} seed={82}>
+                    <ChalkButton variant="solid" onClick={next} disabled={flow.checkingStep} seed={82}>
                       {fill(messages.actions.next, { label: messages.steps[state.step + 1].label })}
                     </ChalkButton>
                   ) : (

@@ -14,7 +14,7 @@ import BookingPaused from "@/features/booking/BookingPaused";
 import { formatLongDate } from "@/lib/booking/dates";
 import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
 import { travelHint } from "@/lib/travel/format";
-import type { TravelQuote } from "@/lib/travel/types";
+import { isFloridaZip, type TravelQuote } from "@/lib/travel/types";
 import { dueWindow, type DueCreateResult } from "@/lib/due-date/types";
 import { looksLikeEmail, saveBookingDraft } from "@/lib/unfinished/client";
 import { localePath } from "@/i18n/path";
@@ -30,15 +30,18 @@ import styles from "./DueDate.module.css";
 import { cn } from "@/lib/cn";
 
 const fill = (template: string, values: Record<string, string>) => template.replace(/\{(\w+)\}/g, (m, k: string) => values[k] ?? m);
-type Field = "parentName" | "email" | "phone" | "street" | "unit" | "city" | "zip" | "notes";
+type Field = "firstName" | "lastName" | "email" | "phone" | "street" | "unit" | "city" | "zip" | "notes";
 /** How long the form has been open (a spam signal: people take longer than 4 seconds). */
 const elapsedSince = (start: number) => Date.now() - start;
-const empty: Record<Field, string> = { parentName: "", email: "", phone: "", street: "", unit: "", city: "", zip: "", notes: "" };
+const fullName = (c: Record<Field, string>) => `${c.firstName.trim()} ${c.lastName.trim()}`.trim();
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+const empty: Record<Field, string> = { firstName: "", lastName: "", email: "", phone: "", street: "", unit: "", city: "", zip: "", notes: "" };
 
 /**
- * "Not born yet?" (/due-date), three steps (owner, Nov 11): 1) bundle, due date (today to 9 months ahead), contact
- * details and home address ("Reserve my spot" checks them on the server); 2) backdrops, or "Not sure yet" to skip;
- * 3) review with an optional discount code (it comes off the session; the deposit stays the same), then the deposit
+ * "Not born yet?" (/due-date), four steps (owner, Nov 11; step one split Nov 13): 1) bundle, due date (today to 9
+ * months ahead), first name, email and ZIP code; 2) last name, phone and home address ("Reserve my spot" checks them
+ * on the server, so the travel fee and deposit come from the full address); 3) backdrops, or "Not sure yet" to skip;
+ * 4) review with an optional discount code (it comes off the session; the deposit stays the same), then the deposit
  * on Stripe. Then "Your spot is reserved", and an email with the link to pick their session when the baby arrives.
  */
 export default function DueDateForm({ locale, messages, bookingMessages, pausedMessages }: { locale: AppLocale; messages: typeof en.dueDate; bookingMessages: typeof en.bookingFlow; pausedMessages: typeof en.bundlesPage.paused }) {
@@ -54,7 +57,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"saving" | "redirecting" | null>(null);
   const [travel, setTravel] = useState<{ zip: string; quote: TravelQuote | null } | null>(null);
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [backdrops, setBackdrops] = useState<string[]>([]);
   const [code, setCode] = useState<{ applied: string; quote: PriceQuote } | null>(null);
   const stepTitle = useRef<HTMLHeadingElement>(null);
@@ -78,8 +81,9 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     return () => window.removeEventListener("pageshow", onShow);
   }, [params, router]);
 
-  // /admin → Unfinished bookings (owner, Nov 11): the parent's contact details, saved when they leave a contact box,
-  // labeled "Not born yet". Never the due date, the babies or the notes. Same rules as the booking form.
+  // /admin → Unfinished bookings (owner, Nov 11): the parent's contact details, saved when they leave a contact box
+  // (from step one: first name, email, ZIP code and the due date, owner Nov 13), labeled "Not born yet". Never the
+  // babies or the notes. Same rules as the booking form.
   const savedEmail = useRef<string | null>(null);
   const lastDraft = useRef("");
   const saveDraft = () => {
@@ -88,10 +92,11 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     const zipCode = contact.zip.trim().slice(0, 5);
     const draft = {
       email,
-      parentName: contact.parentName.trim() || undefined,
+      parentName: fullName(contact) || undefined,
       phone: contact.phone.trim() || undefined,
       bundleId: bundleId || "none",
       zip: /^\d{5}$/.test(zipCode) ? zipCode : undefined,
+      date: dueDate && dueDate >= range.from && dueDate <= range.to ? dueDate : undefined,
       step: "details" as const,
       locale,
       form: "due_date" as const,
@@ -141,7 +146,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     stepTop.current?.scrollIntoView({ block: "start", behavior: "smooth" });
     stepTitle.current?.focus({ preventScroll: true });
   }, [step]);
-  const go = (next: 1 | 2 | 3) => {
+  const go = (next: 1 | 2 | 3 | 4) => {
     setStep(next);
     setError(null);
   };
@@ -157,7 +162,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     locale,
     babyCount: Math.min(babyCount, maxBabies),
     dueDate,
-    contact: { parentName: contact.parentName.trim(), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim() || undefined },
+    contact: { parentName: fullName(contact), email: contact.email.trim(), phone: contact.phone.trim(), notes: contact.notes.trim() || undefined },
     address: { street: contact.street.trim(), unit: contact.unit.trim() || undefined, city: contact.city.trim(), zip: contact.zip.trim() },
     hp: hp || undefined,
     elapsedMs: elapsedSince(openedAt.current),
@@ -167,27 +172,61 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
     setContact((c) => ({ ...c, [field]: value }));
     setError(null);
   };
+  const focusError = (field: Field, message: string) => {
+    setError(message);
+    requestAnimationFrame(() => document.getElementById(`due-${field}`)?.focus());
+  };
+
+  // the ZIP code box: 5 digits, in the area we travel to (asked now if the answer isn't on screen yet)
+  const zipProblem = async (): Promise<string | null> => {
+    const v = bookingMessages.details;
+    if (!/^\d{5}$/.test(contact.zip.trim())) return v.validation.zip;
+    if (!isFloridaZip(zip)) return v.travel.outsideFlorida;
+    let quote = travel?.zip === zip ? travel.quote : null;
+    if (travel?.zip !== zip) {
+      quote = await fetch(`/api/booking/travel?zip=${zip}`, { cache: "no-store" })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((j: { travel?: TravelQuote } | null) => j?.travel ?? null)
+        .catch(() => null);
+      setTravel({ zip, quote });
+    }
+    return quote && (quote.status === "too_far" || quote.status === "outside_florida") ? travelHint(quote, v.travel)?.text ?? null : null;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     if (!bundle) return setError(t.pickBundle);
     if (!dueDate || dueDate < range.from || dueDate > range.to) return setError(fill(t.pickDate, { last }));
+    if (step === 1) {
+      // first name, email and ZIP code (owner, Nov 13); the rest comes on the next step
+      const v = bookingMessages.details.validation;
+      if (!contact.firstName.trim()) return focusError("firstName", v.firstName);
+      if (!EMAIL_RE.test(contact.email.trim())) return focusError("email", v.email);
+      setBusy("saving");
+      const problem = await zipProblem();
+      setBusy(null);
+      if (problem) return focusError("zip", problem);
+      saveDraft();
+      return go(2);
+    }
     if (zipNote?.blocking) return setError(zipNote.text);
-    if (step === 2) return go(3);
+    if (step === 3) return go(4);
     setBusy("saving");
     setError(null);
     try {
-      // step 1 only checks the details on the server (nothing is reserved yet)
+      // step 2 only checks the details on the server (nothing is reserved yet)
       const res = await fetch("/api/due-date", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(step === 1 ? { ...payload(), check: true } : { ...payload(), backdrops, discountCode: code?.applied, requestId: (requestId.current ??= crypto.randomUUID()) }),
+        body: JSON.stringify(step === 2 ? { ...payload(), check: true } : { ...payload(), backdrops, discountCode: code?.applied, requestId: (requestId.current ??= crypto.randomUUID()) }),
       });
       const body = (await res.json().catch(() => null)) as (DueCreateResult & { error?: string; checked?: boolean }) | null;
       if (!res.ok || !body) throw new Error(body?.error || messages.errors.server);
-      if (step === 1) {
+      if (step === 2) {
         setBusy(null);
-        return go(2);
+        saveDraft();
+        return go(3);
       }
       if (body.depositUrl) {
         setBusy("redirecting");
@@ -207,7 +246,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
       <label htmlFor={`due-${name}`} className={cn(formStyles.label, "chalk-soft")}>{label}</label>
       <input id={`due-${name}`} className={formStyles.input} type={opts.type ?? "text"} autoComplete={opts.autoComplete} inputMode={opts.inputMode} value={contact[name]} onChange={(e) => set(name, e.target.value)} required={!opts.optional}
         aria-describedby={opts.note ? `due-${name}-note` : undefined}
-        onBlur={name === "parentName" || name === "email" || name === "phone" || name === "zip" ? saveDraft : undefined} />
+        onBlur={name === "firstName" || name === "lastName" || name === "email" || name === "phone" || name === "zip" ? saveDraft : undefined} />
       {opts.note && <p id={`due-${name}-note`} className={cn(formStyles.optional, formStyles.fieldNote, "chalk-soft")}>{opts.note}</p>}
     </div>
   );
@@ -228,9 +267,10 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   <input id="due-leave-empty" name="due-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(e) => setHp(e.target.value)} />
                 </div>
 
-                <p ref={stepTop} className={cn(styles.stepOf, "chalk-soft")}>{fill(t.stepOf, { n: String(step), name: step === 1 ? t.stepDetails : step === 2 ? t.stepBackdrops : t.stepReview })}</p>
+                <p ref={stepTop} className={cn(styles.stepOf, "chalk-soft")}>{fill(t.stepOf, { n: String(step), name: step === 1 ? t.stepDetails : step === 2 ? t.stepHome : step === 3 ? t.stepBackdrops : t.stepReview })}</p>
                 {step === 1 && (
                 <>
+                <p className={cn(formStyles.optional, styles.firstStep, "chalk-soft")}>{t.firstStep}</p>
                 <fieldset className={styles.group}>
                   <legend className={cn(styles.legend, "chalk")}>{t.bundle}</legend>
                   <div className={styles.bundles}>
@@ -268,9 +308,36 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                       </div>
                     </div>
                   )}
-                  <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.you}</p>
-                  {field("parentName", t.name, { autoComplete: "name" })}
+                  {field("firstName", bookingMessages.details.firstName, { autoComplete: "given-name" })}
                   {field("email", t.email, { type: "email", autoComplete: "email", inputMode: "email" })}
+                  <div className={formStyles.field}>
+                    {field("zip", bookingMessages.details.zipFirst, { autoComplete: "postal-code", inputMode: "numeric" })}
+                    {zipNote && (
+                      <p className={cn(zipNote.blocking ? formStyles.fieldError : formStyles.optional, "chalk-soft")} aria-live="polite">
+                        {zipNote.text}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
+                {/* owner, Nov 11: at the bottom of the step, by the button, not under the email box (people hesitated there) */}
+                <p id="due-save-note" className={cn(formStyles.optional, formStyles.fieldNote, "chalk-soft")}>
+                  {saveNote[0]}
+                  <a href={localePath("/privacy", locale)} className={formStyles.inlineLink} target="_blank" rel="noopener">{bookingMessages.details.saveNotePrivacy}</a>
+                  {saveNote[1]}
+                </p>
+                <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={82} className={styles.submit}>
+                  {busy ? t.checking : t.toHome}
+                </ChalkButton>
+                </>
+                )}
+
+                {step === 2 && bundle && (
+                <div className={styles.stepBody}>
+                  <h2 ref={stepTitle} tabIndex={-1} className={cn(styles.legend, "chalk")}>{t.stepHome}</h2>
+                  <div className={cn(formStyles.form, styles.fields)}>
+                  {field("firstName", bookingMessages.details.firstName, { autoComplete: "given-name" })}
+                  {field("lastName", bookingMessages.details.lastName, { autoComplete: "family-name" })}
                   {field("phone", t.phone, { type: "tel", autoComplete: "tel", inputMode: "tel" })}
                   <p className={cn(formStyles.fieldWide, styles.subhead, "chalk")}>{t.address}</p>
                   <div className={cn(formStyles.fieldWide, formStyles.streetRow)}>
@@ -290,8 +357,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                     <label htmlFor="due-notes" className={cn(formStyles.label, "chalk-soft")}>{t.notes}</label>
                     <textarea id="due-notes" className={cn(formStyles.input, formStyles.textareaShort)} rows={2} maxLength={1500} value={contact.notes} onChange={(e) => set("notes", e.target.value)} />
                   </div>
-                </div>
-
+                  </div>
                 {bundle && (
                   <div className={cn(styles.summary, "chalk-soft")} aria-live="polite">
                     <p>{offer ? fill(t.priceOffer, { offer: offer.label, price: formatMoney(offer.cents), regular: formatMoney(toCents(bundle.price)) }) : fill(t.price, { price: formatMoney(priceCents) })}</p>
@@ -299,33 +365,36 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                   </div>
                 )}
                 {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
-                {/* owner, Nov 11: by the Reserve button, not under the email box (people hesitated there) */}
+                {/* owner, Nov 11: at the bottom of the step, by the button, not under the email box (people hesitated there) */}
                 <p id="due-save-note" className={cn(formStyles.optional, formStyles.fieldNote, "chalk-soft")}>
                   {saveNote[0]}
                   <a href={localePath("/privacy", locale)} className={formStyles.inlineLink} target="_blank" rel="noopener">{bookingMessages.details.saveNotePrivacy}</a>
                   {saveNote[1]}
                 </p>
-                <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={82} className={styles.submit}>
-                  {busy ? t.checking : t.submit}
-                </ChalkButton>
-                </>
+                  <div className={styles.stepActions}>
+                    <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(1)}>{t.back}</button>
+                    <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={85} className={styles.submit}>
+                      {busy ? t.checking : t.submit}
+                    </ChalkButton>
+                  </div>
+                </div>
                 )}
 
-                {step === 2 && bundle && (
+                {step === 3 && bundle && (
                   <div className={styles.stepBody}>
                     <h2 ref={stepTitle} tabIndex={-1} className={cn(styles.legend, "chalk")}>{setups > 1 ? bookingMessages.details.backdrops.titleMany : bookingMessages.details.backdrops.title}</h2>
                     <p className={cn(formStyles.optional, "chalk-soft")}>{setups > 1 ? fill(t.backdropsHintMany, { n: String(setups) }) : t.backdropsHint}</p>
                     <BackdropPicker max={setups} value={backdrops} onChange={setBackdrops} label={setups > 1 ? bookingMessages.details.backdrops.titleMany : bookingMessages.details.backdrops.title} names={bookingMessages.details.backdrops.names} />
                     {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
                     <div className={styles.stepActions}>
-                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(1)}>{t.back}</button>
-                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => (setBackdrops([]), go(3))}>{t.skipBackdrops}</button>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(2)}>{t.back}</button>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => (setBackdrops([]), go(4))}>{t.skipBackdrops}</button>
                       <ChalkButton type="submit" variant="solid" seed={83} className={styles.submit} disabled={!backdrops.length}>{t.toReview}</ChalkButton>
                     </div>
                   </div>
                 )}
 
-                {step === 3 && bundle && (
+                {step === 4 && bundle && (
                   <div className={styles.stepBody}>
                     <h2 ref={stepTitle} tabIndex={-1} className={cn(styles.legend, "chalk")}>{t.reviewTitle}</h2>
                     <dl className={cn(styles.review, "chalk-soft")}>
@@ -335,7 +404,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                         <dt>{t.reviewBackdrops}</dt>
                         <dd>
                           {backdrops.length ? backdrops.map((id) => backdropName(id, bookingMessages.details.backdrops.names)).join(", ") : t.noBackdrops}{" "}
-                          <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(2)}>{t.change}</button>
+                          <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(3)}>{t.change}</button>
                         </dd>
                       </div>
                       <div>
@@ -364,7 +433,7 @@ export default function DueDateForm({ locale, messages, bookingMessages, pausedM
                     </div>
                     {error && <p className={cn(formStyles.error, "chalk-soft")} role="alert">{error}</p>}
                     <div className={styles.stepActions}>
-                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(2)}>{t.back}</button>
+                      <button type="button" className={cn(formStyles.linkButton, "chalk-soft")} onClick={() => go(3)}>{t.back}</button>
                       <ChalkButton type="submit" variant="solid" disabled={busy !== null} seed={84} className={styles.submit}>
                         {busy === "redirecting" ? t.redirecting : busy ? t.submitting : depositCents > 0 ? fill(t.submitDeposit, { deposit }) : t.submit}
                       </ChalkButton>
