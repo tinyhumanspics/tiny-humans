@@ -15,6 +15,10 @@ test.beforeEach(async ({ page }) => {
   await page.route("**/api/booking/draft", (r) => r.fulfill({ status: 204 }));
 });
 
+/** "Step 2 of 4 · …" by role: WebKit can keep a hidden streaming copy of the page for a moment (never visible, not in
+ *  the accessibility tree), and a plain text match then finds two. */
+const stepLabel = (page: Page, text: string) => page.getByRole("paragraph").filter({ hasText: text });
+
 /** Step 1: due date, first name, email, ZIP code. */
 async function stepOne(page: Page, zip = "33139") {
   await page.goto("/due-date?bundle=our-little-story");
@@ -25,7 +29,7 @@ async function stepOne(page: Page, zip = "33139") {
 /** Step 2: last name, phone, home. */
 async function stepTwo(page: Page) {
   await page.getByRole("button", { name: "Next: Your phone and home" }).click();
-  await expect(page.getByText("Step 2 of 4 · Your phone and home")).toBeVisible();
+  await expect(stepLabel(page, "Step 2 of 4 · Your phone and home")).toBeVisible();
   await settled(page, "Your phone and home");
   await expect(page.locator("#due-firstName")).toHaveValue("Dana");
   for (const [k, v] of Object.entries({ lastName: "Due", phone: "3055550122", street: "1500 Bay Rd", city: "Miami Beach" })) await page.fill(`#due-${k}`, v);
@@ -40,7 +44,7 @@ async function settled(page: Page, heading: string | RegExp) {
 /** "Reserve my spot" on step 2 → the backdrops. */
 async function reserve(page: Page) {
   await page.getByRole("button", { name: "Reserve my spot" }).click();
-  await expect(page.getByText("Step 3 of 4 · Backdrops")).toBeVisible();
+  await expect(stepLabel(page, "Step 3 of 4 · Backdrops")).toBeVisible();
   await settled(page, /Pick your backdrop/);
 }
 async function details(page: Page) {
@@ -82,13 +86,13 @@ test("Reserve my spot → backdrops → review with a discount code → the rese
     route.fulfill({ json: { quote: { bundleId: "our-little-story", bundleName: "Our Little Story", regularCents: 29900, offerCents: null, offerLabel: null, offerEndsOn: null, discountCode: "SAVE10", discountCents: 2990, finalCents: 26910, addons: [], addonsCents: 0, totalCents: 26910, pricingType: "discount", note: null } } }),
   );
   await stepOne(page);
-  await expect(page.getByText("Step 1 of 4 · Your details")).toBeVisible();
+  await expect(stepLabel(page, "Step 1 of 4 · Your details")).toBeVisible();
   await expect(page.getByText("Pick your bundle and due date, then tell us your first name, email and ZIP code.", { exact: false })).toBeVisible();
   await stepTwo(page);
   await page.getByRole("button", { name: "Reserve my spot" }).click();
 
   // step 3: backdrops (two setups on Our Little Story)
-  await expect(page.getByText("Step 3 of 4 · Backdrops")).toBeVisible();
+  await expect(stepLabel(page, "Step 3 of 4 · Backdrops")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Pick your backdrops", level: 2 })).toBeFocused();
   await page.getByRole("button", { name: "Pink", exact: true }).click();
   await page.getByRole("button", { name: "Cream", exact: true }).click();
@@ -97,7 +101,7 @@ test("Reserve my spot → backdrops → review with a discount code → the rese
   await page.getByRole("button", { name: "Next: Review" }).click();
 
   // step 4: review, the code, and the deposit
-  await expect(page.getByText("Step 4 of 4 · Review and reserve")).toBeVisible();
+  await expect(stepLabel(page, "Step 4 of 4 · Review and reserve")).toBeVisible();
   await expect(page.getByText("Pink, Cream", { exact: false })).toBeVisible();
   await page.getByLabel("Have a discount code?").fill("save10");
   await page.getByRole("button", { name: "Apply" }).click();
@@ -117,14 +121,14 @@ test("Not sure yet skips the backdrops; Back keeps what they typed; a wrong ZIP 
   await stepOne(page, "10001");
   await page.getByRole("button", { name: "Next: Your phone and home" }).click();
   await expect(page.getByText("We only come to homes in Florida", { exact: false }).first()).toBeVisible();
-  await expect(page.getByText("Step 1 of 4 · Your details")).toBeVisible();
+  await expect(stepLabel(page, "Step 1 of 4 · Your details")).toBeVisible();
   await page.fill("#due-zip", "33139");
   // the 9-month limit
   const tooLate = await page.locator("#due-date").getAttribute("max").then((max) => new Date(new Date(`${max}T12:00:00Z`).getTime() + 2 * 864e5).toISOString().slice(0, 10));
   await page.fill("#due-date", tooLate);
   await page.getByRole("button", { name: "Next: Your phone and home" }).click();
   await expect(page.getByText("Pick your due date", { exact: false }).first()).toBeVisible();
-  await expect(page.getByText("Step 1 of 4 · Your details")).toBeVisible();
+  await expect(stepLabel(page, "Step 1 of 4 · Your details")).toBeVisible();
   await page.fill("#due-date", new Date(Date.now() + 60 * 864e5).toISOString().slice(0, 10));
   await stepTwo(page);
   await reserve(page);
@@ -165,5 +169,5 @@ test("Back from Stripe without paying lands on their reservation page, not an em
   // again" starts a new form)
   await expect(page.getByRole("link", { name: "Reserve again" })).toHaveAttribute("href", "/due-date?new=1");
   await page.goto("/due-date?new=1");
-  await expect(page.getByText("Step 1 of 4 · Your details")).toBeVisible();
+  await expect(stepLabel(page, "Step 1 of 4 · Your details")).toBeVisible();
 });
