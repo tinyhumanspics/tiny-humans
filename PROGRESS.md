@@ -223,6 +223,13 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Quick form — LIVE Nov 13 (owner: "go ahead and push both")**: `/quick` (+ `/es/quick` while Spanish is on;
+  noindex, no chalk intro) for families who'd rather the studio book it: full name, phone, email, ZIP (required) +
+  baby name, age (due date when "Not born yet"), bundle, best times, message (optional). `POST /api/quick` (rate limit
+  `quick` 8/h, honeypot, < 3 s refused) saves to `quick_requests` (migration 0034, best effort) and emails the studio
+  (reply-to the family). /admin → Quotes / Booking → "Quick form": the link to copy (EN/ES), new requests on top
+  (Call/Text/Email, Book it for them, Mark done, Delete); "Book it for them" fills `OwnerBookingForm` (`prefill`) and
+  marks the request booked with the reference. Verified on scripts/local-db (with and without 0034) + e2e.
 - [x] **Ad page bundles cheapest first on phones too — LIVE Nov 13 (owner: "just push it")**: phones showed Our
   Family Story first (the Oct "price anchor" order); now every screen follows the owner's bundle order (Little
   Moments, Our Little Story, Our Family Story), like the desktop and /bundles.
@@ -1879,6 +1886,12 @@ Oct 7 answers: Vercel plan = **Hobby** (reminders once a day). Backdrops: **Blue
 a temperature ("just warm the room"); space + pets lines use the approved landing FAQ wording.
 
 ## Open owner questions
+- **Nov 13 (quick form):** (1) run `drizzle/0034_quick_requests.sql` in the Neon SQL editor (safe twice); until then the
+  form still emails the studio and the /admin list says the step is needed; (2) Privacy Policy: proposed sentence "If you
+  send us our quick form instead, we keep what you send (your name, phone, email, ZIP code and anything you tell us about
+  your baby, bundle and best times) so we can book your session for you." (legal wording: not added without a yes);
+  (3) optional home-address box on the form (not asked today; the owner adds it when booking); (4) optional Meta "Lead"
+  event (parent contact only), not added.
 - **Nov 12:** run `drizzle/0033_shoot_sections.sql` in the Neon SQL editor (own sections in Shoots; safe to run
   twice). Until then Shoots works as before and "+ Add a section" says the step is needed.
 - **Nov 10 night:** (1) optional: show the code category in the studio "New booking" email, or a Dashboard count by

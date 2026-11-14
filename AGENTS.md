@@ -474,3 +474,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   sends the automatic "Finish reserving your spot" (`autoRemindDue`: once per reservation, claimed as the first row of
   `due_deposit_reminders`, so none after an owner reminder; skipped if they reserved/booked again). Backstop for a
   missed webhook: `sweepDueDeposits` (daily cron, opening Leads, after availability checks).
+- Quick form (owner, Nov 13; migration 0034_quick_requests): `/quick` (`features/booking/quick/QuickForm.tsx`, in
+  NO_INTRO_PATHS) → `POST /api/quick` → `quick_requests` (best effort: no table = the studio email still goes and /admin
+  explains the SQL) + `internalQuickRequestEmail`. /admin → Quotes / Booking (`features/admin/QuotesBooking.tsx`):
+  `QuickRequests` list → "Book it for them" passes `prefill` to `OwnerBookingForm` (keyed by request id) → booked =
+  PATCH status "booked" + reference. Parent contact + what they wrote only; never to Meta/analytics.
