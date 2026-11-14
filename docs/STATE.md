@@ -39,3 +39,6 @@ Rule 5 listed em, ph, fn, zp, external_id; the live Pixel and CAPI also send has
 - The owner often runs `npm run dev` on :3000: stop only your own servers, by port.
 - Before committing: `npx tsc --noEmit -p . --incremental false` (a stale tsbuildinfo can hide errors).
 - Commit as tinyhumanspics <hello@tinyhumans.photography>, no AI co-author trailers.
+- CI: the iPhone Safari (WebKit) e2e tests fail at random on GitHub. The docs-only commit e9872b9 failed once with 1
+  test, then on rerun with 3 different ones (a fill that never landed, a hidden duplicate "Step 1 of 4", timeouts);
+  unit, lint, typecheck and Chromium passed. Briefs 02/04 rewrite those tests; until then rerun, and fix any that fails twice.
