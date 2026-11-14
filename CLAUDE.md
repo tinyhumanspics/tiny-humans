@@ -275,7 +275,7 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   best effort: a missing table must never reach the form. The "What stopped you?" email is marketing (CAN-SPAM):
   ChalkLayout `marketing` footer (ad note, mailing address, unsubscribe) + `List-Unsubscribe` one-click headers; it
   can't be sent without the mailing address and never to `email_unsubscribes`. /unsubscribe needs a button press
-  (link scanners). Changing what's saved means changing the Privacy Policy and the saved-details note (`bookingFlow.details.saveNote`, owner's wording, Nov 11: at the BOTTOM of booking step one and of Not born yet, above the button, never under the email box: people hesitated there).
+  (link scanners). Changing what's saved means changing the Privacy Policy and the saved-details note (`bookingFlow.details.saveNote`, owner's wording, Nov 11: at the BOTTOM of booking step one and of Not born yet, above the button, never under the email box: people hesitated there; since Nov 13 also on the contact steps).
 - Website reviews ("What families say", home after the photos + ad page section 7): `getPublicReviews()`
   (`lib/reviews/server.ts`, cache tag `reviews`) = the 6 newest reviews with `approved` AND `consent_public`. Anything
   that changes a review, its pick or deletes a lead calls `expireReviews()`. No picked reviews = no section (pages stay
@@ -388,18 +388,27 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   logo/strip come from `scripts/theme-assets-valentines.mjs` (the email JPEGs are base64 in `lib/email/assets.ts`). Built-in seasonal offer
   `valentines` ("Show love to your tiny human", last sessions Feb 28, off by default). The owner switches the theme in
   /admin → Theme on Feb 1 and back on Mar 1.
-- Booking order + trip days (owner, Nov 10; migration 0027_trip_settings): the steps are `you` (contact + home address)
-  → `date` → `time` → `details` (babies, family, notes, backdrops, permissions) → `review` (`STEP` in `config/booking.ts`;
-  `DetailsForm` `part`). Step one shows "Fill in your details first…" (`bookingFlow.firstStep`) under the baby-led note.
-  The calendar loads only after step one and sends the ZIP (`/api/booking/availability?zip=`). Trip days
+- Booking order + trip days (owner, Nov 10; step one shortened Nov 13; migration 0027_trip_settings): the steps are `you`
+  (first name, email, home ZIP code) → `date` → `time` → `contact` ("Home": first name again, last name, phone, home
+  address) → `details` (babies, family, notes, backdrops, permissions) → `review` (`STEP` in `config/booking.ts`;
+  `DetailsForm` `part` "you" | "contact" | "session"). The form keeps `firstName` + `lastName` and sends `fullName()` as
+  `parentName` (server, emails, /admin unchanged); a due link's one-line name is `splitName()`. Under the "About you"
+  title: `bookingFlow.firstStep` (owner's wording). Step one checks the ZIP's area before the calendar (outside Florida
+  / too far = the travel note, no calendar). A time remembers its ZIP (`slotZip`): a different home ZIP on the contact
+  step re-checks that time; not open → `clearSlot` (day + time) and back to the days with `bookingFlow.errors.tripDay`
+  ("That day isn't available…", owner: never say we're photographing elsewhere); create's `tripConflict` returns
+  `reason: "trip_day"` for the same. The calendar loads only after step one and sends the ZIP
+  (`/api/booking/availability?zip=`). Trip days
   (`lib/booking/trips.ts` pure + unit tested, `trips-server.ts`): a session more than `tripMiles` (60) road miles from the
   travel-fee base ZIP takes its day: only families within `sameTripMiles` (30) of every trip session that day can book
   it; a far family can't take a day with sessions near home or whose next morning (before `nextDayUntil`, 12:00) is
   booked; the day after a trip opens at `nextDayUntil`. Miles come from `travelQuote` (no travel settings saved = miles
   unknown = local, so no trip days). Enforced in availability, create (`tripConflict` → `slot_unavailable` with
   `bookingFlow.errors.tripDay`) and reschedule. /admin → Availability → Trip days saves `trip_settings` (best effort:
-  no row or table = the defaults). Unfinished bookings: the draft is saved from step one (no date yet) and again on
-  reaching details (with date/time); funnel step "calendar" = the booking form opened ("Opened the booking form").
+  no row or table = the defaults). Unfinished bookings: the draft is saved from step one (first name, email, ZIP; no
+  date yet), again on reaching the contact step (date/time), on leaving its boxes (full name, phone) and at review.
+  Funnel codes kept as they were (owner, Nov 13, to compare before/after): "calendar" = the booking form opened,
+  "date" = time step reached, "time" = contact step reached (a time picked), "details" = review reached.
   Older saved form drafts (`lib/booking/language-draft.ts` v1) are ignored.
 - Discount code categories (owner, Nov 10; migration 0028_code_categories): an optional owner-only campaign label per
   code ("Thanksgiving offer", "Christmas offer", "Happy Valentine's offer" presets in `lib/pricing/code-categories.ts`,
@@ -420,7 +429,8 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   the save-time fill-in still copies the English when it can't translate). `settings.portfolioBoxes` (settings cache key v4) is kept in the file for a revert
   but no longer used: the boxes are gone and the Spanish audit never asks for their wording.
 - Unfinished bookings from "Not born yet?" (owner, Nov 11; migration 0029_draft_forms): /due-date saves the parent's
-  contact draft on blur like the booking form (`form: "due_date"`, never the due date, babies or notes) and labels it
+  contact draft on blur like the booking form (`form: "due_date"`; since Nov 13 the due date too, in the draft's `date`,
+  shown as "due …" in /admin and named in the Privacy Policy; never the babies or notes) and labels it
   in `booking_draft_forms` (best effort: no table = no label). Pressing Reserve marks the draft booked with the
   reservation's TH-D reference; `dueDraftStage` hides it while the deposit page is open or once reserved, shows
   "Didn't pay the deposit" when it expired. "What stopped you?" sends due-date families back to /due-date.
@@ -454,9 +464,10 @@ restyling components run `node scripts/css-ties.mjs <base URL>` (read-only; expe
   The button itself shows it was sent (owner, Nov 11: no note at the top): "✓ Deposit reminder sent" pill + "Sent N
   times · last …" (from `deposit.reminders` / `notPaidDue().reminders`, plus a just-sent local state) and "Send again".
   `remindDueDeposit` returns `{ counted }`: false (no 0031 table) = sent but not counted, and the card says so.
-- Not born yet in three steps (owner, Nov 11; migration 0032_due_reservation_extras): 1) details, "Reserve my spot"
-  = `POST /api/due-date` with `check: true` (`checkDueRequest`: bundle, babies, window, Florida/distance; no database,
-  nothing saved); 2) backdrops (`BackdropPicker`, one per setup) or "Not sure yet" (skip); 3) review + the booking
+- Not born yet in four steps (owner, Nov 11; step one split Nov 13; migration 0032_due_reservation_extras): 1) bundle,
+  due date, babies, first name, email, ZIP (area checked in the browser); 2) last name, phone, home, notes; "Reserve my
+  spot" = `POST /api/due-date` with `check: true` (`checkDueRequest`: bundle, babies, window, Florida/distance; no
+  database, nothing saved); 3) backdrops (`BackdropPicker`, one per setup) or "Not sure yet" (skip); 4) review + the booking
   form's `DiscountField` (quote API), then the deposit. `createDueReservation` validates the code like bookings and
   keeps it only when it beats the running offer; `due_reservation_extras` stores backdrops + the code's TERMS (so it is
   honored later even if the code changes) + `code_id`/`usage_id`. A code is refused (never silently dropped) when the
