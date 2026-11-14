@@ -1,42 +1,19 @@
 ---
 name: handoff
-description: End-of-phase (or end-of-session) handoff for Tiny Humans. Updates PROGRESS.md, saves a copy-paste prompt for the next session in PROGRESS.md under "▶ Next session prompt" (works in Claude Code and Codex), and ends with a short owner summary plus that prompt. Use when a phase is finished, when the conversation is getting long, when the owner types /handoff, or asks to hand off to Codex or Claude.
+description: End-of-session handoff for Tiny Humans. Replaces docs/STATE.md, adds a docs/DECISIONS.md line when something was decided, and ends with the owner's reply (summary, owner steps, "Send this to Carlos"). Use at the end of a brief or session, when the conversation is getting long, or when the owner types /handoff or asks to hand off to Codex or Claude.
 ---
 
-# Handoff to the next session
+# Handoff
 
-The owner pastes your prompt into a fresh session that has none of this conversation, in Claude Code or in Codex.
-Anything the next session needs must be in CLAUDE.md + AGENTS.md (same rules), PROGRESS.md or the prompt itself.
+The next session (Claude Code or Codex) reads only AGENTS.md, docs/STATE.md and its brief. Anything it needs goes in
+those files.
 
-## 1. Gather the facts (don't guess)
-- `git status --short` and `git log --oneline -10`. If there are changes you didn't make, leave them alone and mention them.
-- `git ls-remote origin main`: what's on GitHub. For that SHA, the Vercel status:
-  `curl -s https://api.github.com/repos/tinyhumanspics/tiny-humans/commits/<sha>/status` (context "Vercel").
-- In PROGRESS.md: which phase and slices are done, in progress or still to do; open owner questions; placeholders;
-  anything time-sensitive (seasonal cutoffs, DST, launches).
+1. **Replace docs/STATE.md** (≤ 4 KB, one page): Live now · In progress · Next brief · Waiting on owner, plus any
+   "Watch out" lines that are still true. Check the facts first (`git status --short`, `git log --oneline -5`, the
+   Vercel status of the pushed SHA). Keep only what is still true; don't copy history.
+2. **Add one line to docs/DECISIONS.md** for each decision made this session: `date · decision · source`.
+   Decisions only: no competitor names, ad strategy or pricing reasoning (the repo is public).
+3. **Never append to docs/archive/.** It's history.
 
-## 2. Update the files
-- PROGRESS.md: tick the finished slices, refresh **Status** and **▶ NEXT STEPS**, add new owner questions, research
-  notes, dependencies and bugs.
-- Lessons the next session must know (new conventions, gotchas): put them in CLAUDE.md **and** AGENTS.md (same text),
-  not only in the prompt.
-- Replace the block under **## ▶ Next session prompt** in PROGRESS.md with the new prompt (template below).
-- Commit only the files you changed, by path (never `git add -A`): `docs: handoff after phase <N>`. Push it if `main`
-  is otherwise in a pushable, verified state, then confirm the Vercel deploy succeeded.
-
-## 3. Reply to the owner
-1. 3–5 plain-language lines: what changed in this phase and anything he has to do (numbered one-line steps).
-2. The prompt, in one code block he can copy.
-
-## Prompt template (keep it under ~25 lines; facts, not instructions already in CLAUDE.md)
-```
-Read CLAUDE.md (Claude Code) or AGENTS.md (Codex) and PROGRESS.md, and continue. (Brief: tiny-humans-claude-code-prompt.md, gitignored, never commit.)
-
-State (<date>): main = <short sha>, live and smoke-tested: <what shipped this phase>.
-Not on main yet: <branches / uncommitted work and why, or "nothing">.
-
-Next: Phase <N>: <name>. Start with <first slice>. Research current official docs first (note links in PROGRESS.md).
-Time-sensitive: <cutoffs or deadlines, or "none">.
-Waiting on the owner: <open questions or approvals, or "nothing">.
-Watch out: <anything surprising from this phase that a fresh session could trip on>.
-```
+Commit the changed files by path (`docs: state after brief NN`). Then reply to the owner as AGENTS.md → "End of session"
+says: 3–5 plain lines, his numbered steps (including plan/OWNER-ACTIONS.md items now due), and "Send this to Carlos".
