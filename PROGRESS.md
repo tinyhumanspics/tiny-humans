@@ -223,6 +223,19 @@ table (best effort); Valentine's is a LIGHT board with dark writing: check new c
 ```
 
 ## Owner requests (outside the original brief)
+- [x] **Shorter first step on /book and "Not born yet?" — LIVE Nov 13, 2026, 10:19 PM Miami time (2026-11-14 03:19:55
+  UTC, commit `83dd0b3`; owner: "push it")**. Why: Meta counted 15 booking-form opens and 0 bookings from the ads (since
+  Nov 10), 121 InitiateCheckout vs 2 Schedule site-wide in 30 days, with name, email, phone and full address asked
+  before any day showed. Now /book: You (first name, email, ZIP) → Date → Time → Home (last name, phone, address) →
+  Details → Review + $50; /due-date: 4 steps (bundle, due date, babies, first name, email, ZIP → last name, phone, home →
+  backdrops → review). Out-of-area ZIPs get the travel note on step one; a home ZIP that no longer fits the picked time
+  sends them back to the days ("That day isn't available. Please pick another day, or text us at …", owner's wording).
+  Drafts from step one (+ the due date on /due-date; Privacy Policy updated, "Last updated November 13, 2026").
+  **Compare before/after from this time**: /admin → Unfinished bookings step counts (same codes: calendar = form
+  opened, date, time, details, booked) and Meta InitiateCheckout vs Schedule (event names and timing unchanged).
+  Verified on scripts/local-db at phone width EN + ES from /home-sweet-home (Miami ZIP booking with the deposit,
+  Orlando trip day, out-of-area ZIPs, leaving at step one + "What stopped you?", a full Not born yet reservation, the
+  9-month limit) and read-only on production after the deploy.
 - [x] **Get a quick price — LIVE Nov 13 (owner: "go ahead and push both", after the design preview)**: home page under
   the hero + seasonal box (h2), ad page right under the bundle cards (h3), EN + ES (`messages.quickPrice`).
   `features/booking/QuickPrice.tsx`: bundle chips (middle bundle to start) + ZIP → today's price (running offer, or a
@@ -1946,6 +1959,12 @@ a temperature ("just warm the room"); space + pets lines use the approved landin
   reviews the owner picked in /admin with the family's OK, and is absent while there are none (Nov 5).
 
 ## Bug log
+- **Nov 13:** Vercel never received the push of `3852cee` (no deployment, no status) while api.github.com was
+  unreachable from here; an empty commit (`e3b002e`) triggered it. If a push shows no Vercel status after ~10 min,
+  check GitHub's deployments for the SHA, then push an empty `chore: redeploy` commit.
+- **Nov 13:** GitHub CI sometimes failed `due-steps.spec.ts` on iPhone Safari (WebKit missed taps on a button still
+  scrolling into place after a step change, and a continued POST in a test route sometimes stalled). Tests now wait
+  for each step's heading focus + scroll, and the Stripe-back test answers the check itself; 3 × 6 Safari repeats pass.
 Severity: critical / high / medium / low. Found in Phase 0 unless noted.
 - **BUG-17 (high, live payments; found Oct 17 from Stripe's "webhook disabled" email; code hardening `2db4a7e`, real fix =
   owner config)** Every live Stripe webhook delivery since the endpoint was set up (Oct 7) got **400 "Invalid
