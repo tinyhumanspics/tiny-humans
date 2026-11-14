@@ -319,7 +319,7 @@
       "one": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
       "many": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little ones whenever needed."
     },
-    "firstStep": "Tell us your first name, email and ZIP code to see the days and times we have open for you.",
+    "firstStep": "We just need your information first. On the next step, you'll see the available dates.",
     "summary": {
       "yourBundle": "Your bundle",
       "inspiredBy": "Inspired by",
@@ -604,7 +604,7 @@
       "network": "We couldn't connect. Check your connection and try again.",
       "rateLimited": "Too many tries. Please wait a few minutes.",
       "slotTaken": "That time was just booked. Please pick another time.",
-      "tripDay": "That day we're photographing in another area, so it isn't open for your home. Please pick another day, or text us at {phone} and we'll find one.",
+      "tripDay": "That day isn't available. Please pick another day, or text us at {phone}.",
       "inProgress": "We're still saving your booking. One moment, please.",
       "date": "Pick a day on the calendar.",
       "time": "Pick a time to continue.",

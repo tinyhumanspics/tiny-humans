@@ -79,8 +79,6 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
           </div>
         )}
         <BabyLedNote messages={messages.babyLed} multiple={state.babies.length > 1} />
-        {/* owner, Nov 13: step one asks only first name, email and ZIP code; the open days come right after */}
-        {state.step === STEP.you && state.status !== "done" && <p className={cn(styles.firstStepNote, "chalk-soft")}>{messages.firstStep}</p>}
 
         <Reveal>
         <div ref={panelRef} className={styles.panelAnchor} data-booking-panel>
@@ -102,6 +100,8 @@ export default function Booking({ bundleId, locale = "en", messages, due = null 
                   <h2 ref={headingRef} tabIndex={-1} className={cn(styles.stepTitle, "chalk")}>
                     {messages.steps[state.step].title}
                   </h2>
+                  {/* owner, Nov 13: right under "About you", what this step is for; the open days come right after */}
+                  {state.step === STEP.you && <p className={cn(styles.stepIntro, "chalk-soft")}>{messages.firstStep}</p>}
 
                   {state.step === STEP.date && (
                     <Calendar

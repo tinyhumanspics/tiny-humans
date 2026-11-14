@@ -14,7 +14,8 @@ const later = new WeakMap<Page, Record<string, string>>();
 /** Step 1: fills the first-step boxes; any other box (lastName, phone, street, unit, access…) waits for the contact step. */
 export async function fillFirstStep(page: Page, fields: Record<string, string> = {}) {
   await expect(page.getByRole("heading", { name: "About you" })).toBeVisible();
-  await expect(page.getByText("Tell us your first name, email and ZIP code to see the days and times we have open for you.")).toBeVisible();
+  // by role: WebKit can keep a hidden streaming copy of the step for a moment (never visible, not in the accessibility tree)
+  await expect(page.getByRole("paragraph").filter({ hasText: "We just need your information first. On the next step, you'll see the available dates." })).toBeVisible();
   const all = { ...FIRST, ...HOME, ...fields };
   const contact: Record<string, string> = {};
   for (const [field, value] of Object.entries(all)) {

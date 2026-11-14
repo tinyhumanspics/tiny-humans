@@ -492,7 +492,7 @@
       "one": "Nuestras sesiones siguen el ritmo de tu bebé. Hay tiempo para alimentarlo, cambiarlo y consolarlo cuando lo necesite.",
       "many": "Nuestras sesiones siguen el ritmo de tus bebés. Hay tiempo para alimentarlos, cambiarlos y consolarlos cuando lo necesiten."
     },
-    "firstStep": "Escríbenos tu nombre, tu correo y tu código postal para ver los días y horarios que tenemos disponibles para ti.",
+    "firstStep": "Primero solo necesitamos tus datos. En el siguiente paso verás las fechas disponibles.",
     "summary": {
       "yourBundle": "Tu paquete",
       "inspiredBy": "Inspirado en",
@@ -777,7 +777,7 @@
       "network": "No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.",
       "rateLimited": "Demasiados intentos. Espera unos minutos.",
       "slotTaken": "Ese horario acaba de reservarse. Elige otro horario.",
-      "tripDay": "Ese día estamos fotografiando en otra zona, así que no está disponible para tu hogar. Elige otro día, o escríbenos al {phone} y buscamos uno.",
+      "tripDay": "Ese día no está disponible. Elige otro día, o escríbenos al {phone}.",
       "inProgress": "Todavía estamos guardando tu reserva. Un momento, por favor.",
       "date": "Elige un día en el calendario.",
       "time": "Elige una hora para continuar.",

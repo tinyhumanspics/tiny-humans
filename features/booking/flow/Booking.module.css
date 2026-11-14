@@ -523,15 +523,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* step one only: "Fill in your details first…" between the baby-led note and the form. It starts below the note's
    bottom margin: that gap holds one of the note's chalk drawings (config/themes.ts boardFrom "note"), never on words. */
-.firstStepNote {
-  margin: 0 0 clamp(18px, 3vw, 24px);
-  padding-top: 10px; /* adds to the note's bottom margin (margins would merge) */
-  max-width: 760px;
-  font-family: var(--font-chalk);
-  font-size: clamp(1.15rem, 3.4vw, 1.3rem);
-  line-height: 1.35;
-  color: var(--sun-yellow);
-}
 
 .babyLedCompact {
   display: flex;
@@ -699,3 +690,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .ownerStepNote { margin: 0; font-size: 1rem; color: var(--chalk-muted); text-align: center; }
 .ownerStepChange { padding: 0 2px; border: 0; background: none; color: var(--cloud-blue); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .ownerStepChange:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 2px; }
+
+/* step one's line under "About you" (owner, Nov 13) */
+.stepIntro { margin: -4px 0 16px; max-width: 40em; color: var(--sun-yellow); font-size: 1.12rem; line-height: 1.45; }
