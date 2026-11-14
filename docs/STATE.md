@@ -44,5 +44,6 @@ optimized for Schedule; switch to Lead at relaunch, after brief 03), bundles set
 - The owner often runs `npm run dev` on :3000: stop only your own servers, by port.
 - Before committing: `npx tsc --noEmit -p . --incremental false` (a stale tsbuildinfo can hide errors).
 - Commit as tinyhumanspics <hello@tinyhumans.photography>, no AI co-author trailers.
-- CI: iPhone Safari (WebKit) e2e tests fail at random (different ones each run, also locally under load); rerun, and
-  fix any that fails twice. Briefs 02/04 rewrite most of them.
+- CI green again at 20ecfa1: WebKit tests typed before React hydrated the box (use tests/e2e/fixtures/hydration.ts
+  before the first fill) and stalled on route.continue() POSTs (use route.fetch()). Other WebKit flakes: rerun, fix
+  any that fails twice. Repeating e2e (--repeat-each) fills the mock calendar and hits rate limits: don't judge by it.
