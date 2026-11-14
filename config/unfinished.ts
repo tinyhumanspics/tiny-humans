@@ -13,7 +13,8 @@ export const isFeedbackReason = (value: unknown): value is FeedbackReason => FEE
  * ("calendar": its first screen was the calendar until Nov 10, now "About you"; what Meta counts as "InitiateCheckout"),
  * a date picked (time step shown), a time picked (details step shown), the details filled (review step shown), booked.
  */
-export const FUNNEL_STEPS = ["calendar", "date", "time", "details", "booked"] as const;
+/** The old form's steps, then the new /book's (brief 02: request_sent is counted on the server). */
+export const FUNNEL_STEPS = ["calendar", "date", "time", "details", "booked", "when_viewed", "when_done", "details_viewed", "request_sent"] as const;
 export type FunnelStep = (typeof FUNNEL_STEPS)[number];
 export const isFunnelStep = (value: unknown): value is FunnelStep => FUNNEL_STEPS.some((step) => step === value);
 

@@ -8,6 +8,9 @@ import { InternalLayout, INTERNAL_COLORS as C } from "./components/InternalLayou
 import { babiesLabel } from "@/lib/booking/extra-babies";
 import { familyLabel } from "@/lib/booking/family";
 import type { HealthReport } from "@/lib/monitoring/events";
+import type { BookingRequestRow } from "@/lib/db/schema";
+import { formatUsMobile } from "@/lib/requests/types";
+import { requestWhen } from "./RequestReceived";
 
 /* Emails to the studio (English only: they go to the owner, not to families). */
 
@@ -411,4 +414,29 @@ export async function healthReportEmail(r: HealthReport, now: Date): Promise<Ren
   const html = await renderHtml(<InternalLayout banner="DAILY HEALTH CHECK" bannerBg={C.yellow} bannerFg={C.ink} summary={summary} rows={rows} footer="Up to the 3 newest per area. Tiny Humans daily health check." />);
   const subject = r.failures ? `Health check: ${plural(r.failures, "problem")} in the last 24 hours` : "Health check: something needs you";
   return { subject, html, text: text(["DAILY HEALTH CHECK", "", summary], rows), attachments: [] };
+}
+
+/** New booking request (brief 02): the owner texts the parent to confirm, then sends the pay link from /admin. */
+export async function internalNewRequestEmail(r: BookingRequestRow, adminUrl: string): Promise<RenderedEmail> {
+  const when = requestWhen(r, "en");
+  const mobile = formatUsMobile(r.mobile);
+  const travel =
+    r.travelStatus === "fee" ? `${formatMoney(r.travelFeeCents)} (about ${r.travelMiles} miles)` : r.travelStatus === "free" ? `Free (about ${r.travelMiles} miles)` : r.travelStatus === "unknown_zip" ? "Distance unknown: confirm it with them" : "No travel fee set";
+  const rows: [string, string][] = [
+    ["Name", r.firstName],
+    ["Mobile", mobile],
+    ["Email", r.email],
+    ["When", r.type === "due_date" ? `Not born yet, ${when}` : `${when} (Miami time)`],
+    ["Bundle", `${r.bundleName}${r.babyCount > 1 ? ` (${r.babyCount} babies)` : ""}: ${formatMoney(r.totalCents)}`],
+    ["ZIP code", r.zip],
+    ["Travel", travel],
+    ["OK to text", r.textConsent ? "Yes" : "Not ticked (call or email first)"],
+    ["Language", r.locale === "es" ? "Spanish" : "English"],
+    ...(r.holdUntil ? [["Time held until", eastern(r.holdUntil)] as [string, string]] : []),
+    ["Reference", r.reference],
+    ["Requests", adminUrl],
+  ];
+  const summary = `${r.firstName} sent a request for ${r.type === "due_date" ? "their due date" : when}. Text ${r.firstName} at ${mobile} to confirm, then send the pay link from /admin.`;
+  const html = await renderHtml(<InternalLayout banner="NEW REQUEST: TEXT TO CONFIRM" bannerBg={C.yellow} bannerFg={C.ink} summary={summary} rows={rows} footer={`Reply to this email to write to ${r.firstName} directly.`} />);
+  return { subject: `New request: ${r.firstName} · ${r.type === "due_date" ? `due ${formatLongDate(r.dueDate ?? "")}` : when} · ${r.bundleName}`, html, text: text(["NEW REQUEST: TEXT TO CONFIRM", "", summary], rows), attachments: [] };
 }

@@ -9,6 +9,8 @@ import { getDb, isDatabaseConfigured, isOverlapViolation, isUniqueViolation } fr
 import { bookingConsents, bookings, type Booking, type DueDateReservation } from "@/lib/db/schema";
 import { carryDueDeposit, claimDue, dueById, dueByToken, dueExtrasOf, finishDue, keptPriceBundle, releaseDue, sweepDueDeposits } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
+import { heldIntervals } from "@/lib/requests/holds";
+import { holdsBetween } from "@/lib/requests/store";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, ownerRulesOf, slotsForDay, type Busy } from "./availability";
@@ -82,19 +84,20 @@ export class OutlookBookingProvider implements BookingProvider {
     }
   }
 
-  /** Busy time = Outlook calendar events + active bookings in Neon (belt and braces). */
+  /** Busy time = Outlook calendar events + active bookings in Neon (belt and braces) + times held by new requests. */
   private async busyBetween(fromDate: string, toDate: string): Promise<Busy[]> {
     const tz = bookingRules.timeZone;
     const from = zonedTimeToUtc(addDaysKey(fromDate, -1), "00:00", tz);
     const to = zonedTimeToUtc(addDaysKey(toDate, 2), "00:00", tz);
-    const [calendar, rows] = await Promise.all([
+    const [calendar, rows, holds] = await Promise.all([
       getBusyIntervals(from, to),
       getDb()
         .select({ start: bookings.sessionStart, end: bookings.sessionEnd })
         .from(bookings)
         .where(and(ACTIVE, gte(bookings.sessionDate, addDaysKey(fromDate, -1)), lte(bookings.sessionDate, addDaysKey(toDate, 1)))),
+      holdsBetween(fromDate, toDate),
     ]);
-    return [...calendar, ...rows.map((r) => ({ start: r.start, end: r.end }))];
+    return [...calendar, ...rows.map((r) => ({ start: r.start, end: r.end })), ...heldIntervals(holds, new Date())];
   }
 
   async getAvailability(query: AvailabilityQuery, owner = false): Promise<DayAvailability[]> {

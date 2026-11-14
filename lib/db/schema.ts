@@ -1198,3 +1198,61 @@ export const systemEvents = pgTable(
 );
 
 export type SystemEventRow = typeof systemEvents.$inferSelect;
+
+/**
+ * Booking requests (brief 02): the new /book sends a request instead of paying. type "date" = a day + start time
+ * (held for 12 h: `hold_until`, while status is "new"); "due_date" = not born yet (no hold). Prices are a snapshot of
+ * what the family saw; the owner confirms by text and the existing owner booking (48 h hold + pay link) takes over.
+ * status: new | confirmed | booked | declined | expired. Parent contact data only (never to Meta/analytics).
+ */
+export const bookingRequests = pgTable(
+  "booking_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reference: text("reference").notNull(),
+    /** The browser's id for this submission: a retried request returns the first one. */
+    clientId: text("client_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    locale: text("locale").notNull().default("en"),
+    type: text("type").notNull(),
+    status: text("status").notNull().default("new"),
+    bundleId: text("bundle_id").notNull(),
+    bundleName: text("bundle_name").notNull(),
+    babyCount: integer("baby_count").notNull().default(1),
+    /** The bundle after any running offer, the extra babies, and both together (travel is separate). */
+    bundleCents: integer("bundle_cents").notNull(),
+    addonsCents: integer("addons_cents").notNull().default(0),
+    totalCents: integer("total_cents").notNull(),
+    pricing: jsonb("pricing").notNull(),
+    slotDate: date("slot_date", { mode: "string" }),
+    slotStart: text("slot_start"),
+    startsAt: timestamp("starts_at", { withTimezone: true }),
+    endsAt: timestamp("ends_at", { withTimezone: true }),
+    dueDate: date("due_date", { mode: "string" }),
+    holdUntil: timestamp("hold_until", { withTimezone: true }),
+    firstName: text("first_name").notNull(),
+    /** E.164, e.g. +13055550142 */
+    mobile: text("mobile").notNull(),
+    email: text("email").notNull(),
+    zip: text("zip").notNull(),
+    travelStatus: text("travel_status"),
+    travelMiles: integer("travel_miles"),
+    travelFeeCents: integer("travel_fee_cents").notNull().default(0),
+    textConsent: boolean("text_consent").notNull().default(false),
+    consentVersion: text("consent_version"),
+    bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  },
+  (t) => [
+    uniqueIndex("booking_requests_reference_idx").on(t.reference),
+    uniqueIndex("booking_requests_client_idx").on(t.clientId),
+    index("booking_requests_created_idx").on(t.createdAt),
+    index("booking_requests_hold_idx").on(t.slotDate).where(sql`status = 'new' AND type = 'date'`),
+    check("booking_requests_type_check", sql`${t.type} in ('date', 'due_date')`),
+    check("booking_requests_status_check", sql`${t.status} in ('new', 'confirmed', 'booked', 'declined', 'expired')`),
+    check("booking_requests_locale_check", sql`${t.locale} in ('en', 'es')`),
+    check("booking_requests_when_check", sql`(${t.type} = 'date' AND ${t.slotDate} IS NOT NULL AND ${t.startsAt} IS NOT NULL) OR (${t.type} = 'due_date' AND ${t.dueDate} IS NOT NULL)`),
+  ],
+);
+
+export type BookingRequestRow = typeof bookingRequests.$inferSelect;

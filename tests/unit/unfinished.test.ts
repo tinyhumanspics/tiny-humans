@@ -51,8 +51,13 @@ describe("unfinished bookings: step counts and answers", () => {
       { step: "time", count: 4 },
       { step: "details", count: 1 },
       { step: "booked", count: 1 },
+      // the new /book's steps (brief 02)
+      { step: "when_viewed", count: 0 },
+      { step: "when_done", count: 0 },
+      { step: "details_viewed", count: 0 },
+      { step: "request_sent", count: 0 },
     ]);
-    expect(funnelSummary(rows, 30, "Meta ads").steps.map((s) => s.count)).toEqual([14, 7, 4, 0, 0]);
+    expect(funnelSummary(rows, 30, "Meta ads").steps.map((s) => s.count)).toEqual([14, 7, 4, 0, 0, 0, 0, 0, 0]);
     expect(funnelSummary(rows, 30, null).sources).toEqual(["Meta ads", "Direct"]);
   });
   test("counts each family's reasons once, most picked first", () => {

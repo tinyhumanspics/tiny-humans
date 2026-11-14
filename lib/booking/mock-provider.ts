@@ -26,6 +26,8 @@ import type {
 import { addMinutes, formatTimeLabel } from "./dates";
 import { extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
 import { asksFamily, cleanFamily } from "./family";
+import { heldIntervals } from "@/lib/requests/holds";
+import { holdsBetween } from "@/lib/requests/store";
 
 /** Deterministic pseudo-random number in [0,1) for a string seed. */
 function seeded(seed: string): number {
@@ -79,8 +81,10 @@ export class MockBookingProvider implements BookingProvider {
     if (count > 1 && !extraBabyLine(bundle, count)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count.");
     const minutes = sessionMinutes(bundle, count);
     const rules = await this.rules();
+    // times held by new booking requests (brief 02), like the real calendar
+    const held = heldIntervals(await holdsBetween(query.from, query.to), new Date());
     // The owner's real rules, plus simulated existing bookings so the preview looks lived-in.
-    return availabilityForRange(query.from, query.to, minutes, [], rules).map((day) =>
+    return availabilityForRange(query.from, query.to, minutes, held, rules).map((day) =>
       seeded(`full-${day.date}`) < 0.16 ? { date: day.date, slots: [] } : { date: day.date, slots: day.slots.filter((t) => seeded(`${day.date}-${t.start}`) > 0.25) },
     );
   }

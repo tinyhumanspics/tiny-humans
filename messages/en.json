@@ -258,6 +258,73 @@
     "fine": "Twins, extra family members or a code can change it. You'll see the exact price before you book.",
     "book": "Book {bundle}"
   },
+  "bookingRequest": {
+    "meta": {
+      "title": "Book your session",
+      "description": "Pick a day and time, or your due date, and send a request. Nothing to pay now."
+    },
+    "when": {
+      "title": "When should we come?",
+      "here": "Baby is here",
+      "notBorn": "Not born yet",
+      "hereHelp": "Pick a day and a start time. Sessions are best in the first two weeks.",
+      "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we move it to day 5–14.",
+      "dueLabel": "Your due date",
+      "dueWindow": "Pick a due date from today to {date}.",
+      "bundle": "Your bundle",
+      "change": "change",
+      "chooseBundle": "Choose your bundle",
+      "twins": "Twins? +{price} per extra baby",
+      "travel": "Free within {miles} miles of Miami Beach",
+      "pickTime": "Pick a day and a start time.",
+      "pickDue": "Pick your due date.",
+      "pickBundle": "Choose a bundle first.",
+      "next": "Next: your details"
+    },
+    "details": {
+      "title": "Where should we text you?",
+      "firstName": "First name",
+      "mobile": "Mobile",
+      "email": "Email",
+      "zip": "ZIP code",
+      "consent": "Text me about this request. Msg & data rates may apply. Reply STOP to stop.",
+      "due": "Due date: {date}",
+      "send": "Send request",
+      "sending": "Sending…",
+      "nothingToPay": "Nothing to pay now. We'll text you to confirm, then a {deposit} link holds your date.",
+      "nothingToPayPlain": "Nothing to pay now. We'll text you to confirm.",
+      "holdLine": "{deposit} holds your date · fully refundable up to {hours} h before.",
+      "dueLine": "If your session can't happen, you choose: get your {deposit} back or put it toward a session when baby is older.",
+      "back": "Back",
+      "errors": {
+        "firstName": "Add your first name.",
+        "mobile": "Enter a US mobile number (10 digits).",
+        "email": "Enter a valid email address.",
+        "zip": "Enter a 5-digit ZIP code.",
+        "slotTaken": "That time was just taken. Please pick another one.",
+        "check": "Please check your details and try again.",
+        "generic": "We couldn't send your request just now. Please try again, or text us at (786) 222-7194.",
+        "rateLimited": "Too many requests from this connection. Please wait a little, or text us at (786) 222-7194."
+      }
+    },
+    "sent": {
+      "title": "Request sent, {name}.",
+      "textYou": "We'll text you at {mobile} within minutes (8 a.m.–8 p.m.) to confirm {when}.",
+      "whenDue": "your due date ({date})",
+      "next": "What happens next:",
+      "steps": [
+        "We confirm by text.",
+        "A {deposit} link holds your date.",
+        "We bring the studio."
+      ],
+      "stepsPlain": [
+        "We confirm by text.",
+        "You get your confirmation by email.",
+        "We bring the studio."
+      ],
+      "question": "Got a question now? Text {phone}."
+    }
+  },
   "bookingFlow": {
     "due": {
       "title": "Your due-date reservation",
@@ -916,6 +983,28 @@
     }
   },
   "emails": {
+    "requestReceived": {
+      "subject": "We got your request",
+      "preheader": "We'll text you at {mobile} to confirm. Nothing to pay now.",
+      "eyebrow": "Request received",
+      "title": "Thank you, {name}!",
+      "intro": "We'll text you at {mobile} within minutes (8 a.m.–8 p.m.) to confirm {when}.",
+      "whenDue": "your due date ({date})",
+      "summary": "{bundle} · {price}",
+      "next": "What happens next:",
+      "steps": [
+        "We confirm by text.",
+        "A {deposit} link holds your date.",
+        "We bring the studio."
+      ],
+      "stepsPlain": [
+        "We confirm by text.",
+        "You get your confirmation by email.",
+        "We bring the studio."
+      ],
+      "nothing": "Nothing to pay now.",
+      "question": "Got a question now? Text {phone}."
+    },
     "dueDate": {
       "subject": "Your Tiny Humans spot is reserved",
       "preheader": "When your baby arrives, pick your session date with one tap.",

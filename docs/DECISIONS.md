@@ -9,6 +9,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Due-date $50: if the session can't happen, the parent chooses a refund or moving it to a later session · Carlos
 - 2026-11-14 · /quick and /due-date (+ /es) are retired with no redirects and their code deleted, after the link checklist in brief 04 · Carlos
 - 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, trip days, the in-flow discount box · Carlos
+- 2026-11-14 · Requests live in `booking_requests`; two requests for the same minute are allowed (a request isn't a booking; bookings_no_overlap still stops double bookings) · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link on landing pages; it fires Contact and isn't a booking path · Carlos
 
 ## Tracking

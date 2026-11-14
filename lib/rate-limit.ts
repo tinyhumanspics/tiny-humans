@@ -22,6 +22,8 @@ export const RULES = {
   create: { limit: 20, windowSec: 3600 },
   // "Not born yet" reservations, and the schedule link's summary on the booking form
   due: { limit: 10, windowSec: 3600 },
+  // "Send request" on the new /book (brief 02)
+  request: { limit: 12, windowSec: 3600 },
   // the quick form (/quick): a family sending their details for the owners to book
   quick: { limit: 8, windowSec: 3600 },
   dueGet: { limit: 40, windowSec: 600 },

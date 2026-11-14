@@ -1,0 +1,155 @@
+/* The new /book (brief 02). Shared pieces (panel, fields, buttons, calendar) come from ../flow/Booking.module.css;
+   only what's new is here. Theme variables only. */
+
+.toggle {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 14px;
+}
+
+.toggleButton {
+  min-height: 44px;
+  padding: 6px 18px;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 55%, transparent);
+  border-radius: 999px;
+  background: none;
+  color: var(--chalk-white);
+  font-family: var(--font-chalk);
+  font-size: 1.25rem;
+  cursor: pointer;
+}
+
+.toggleOn {
+  border-style: solid;
+  border-color: var(--sun-yellow);
+  color: var(--sun-yellow);
+  background: color-mix(in srgb, var(--sun-yellow) 10%, transparent);
+}
+
+.toggleButton:focus-visible,
+.bundleChoice:focus-visible {
+  outline: 2px dashed var(--sun-yellow);
+  outline-offset: 3px;
+}
+
+.bundleRow { margin: 0 0 14px; }
+
+.bundleLine {
+  margin: 0;
+  font-size: 1.12rem;
+  line-height: 1.5;
+}
+
+.bundleList {
+  display: grid;
+  gap: 8px;
+}
+
+.bundleChoice {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 45%, transparent);
+  border-radius: 10px;
+  background: none;
+  color: var(--chalk-white);
+  font-family: var(--font-chalk);
+  font-size: 1.2rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.bundleChoiceOn {
+  border-style: solid;
+  border-color: var(--sun-yellow);
+  color: var(--sun-yellow);
+}
+
+.bundleChoiceName { font-weight: 600; }
+
+.twins,
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 0 0 16px;
+  font-size: 1.08rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.twins input,
+.consent input {
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  flex: none;
+  accent-color: var(--sun-yellow);
+}
+
+.travelNote {
+  margin: 14px 0 0;
+  color: var(--chalk-muted);
+  font-size: 1.05rem;
+}
+
+.summary {
+  margin: -4px 0 18px;
+  color: var(--sun-yellow);
+  font-size: 1.12rem;
+  line-height: 1.45;
+}
+
+.fields {
+  display: grid;
+  gap: 4px 18px;
+}
+
+@media (min-width: 720px) {
+  .fields { grid-template-columns: 1fr 1fr; }
+}
+
+.hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.underButton {
+  margin: 14px 0 0;
+  color: var(--chalk-muted);
+  font-size: 1.02rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.underButton p { margin: 0 0 4px; }
+
+.lead {
+  margin: 0 0 18px;
+  font-size: 1.2rem;
+  line-height: 1.5;
+}
+
+.nextTitle {
+  margin: 0 0 6px;
+  font-size: 1.35rem;
+  color: var(--sun-yellow);
+}
+
+.nextSteps {
+  margin: 0 0 18px;
+  padding-left: 1.4em;
+  font-size: 1.12rem;
+  line-height: 1.6;
+}
+
+.question {
+  margin: 0;
+  font-size: 1.08rem;
+}

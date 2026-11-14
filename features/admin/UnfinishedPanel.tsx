@@ -21,6 +21,10 @@ const STEP_LABEL: Record<FunnelStep, string> = {
   time: "Picked a time",
   details: "Filled in their details",
   booked: "Pressed “Book my session”",
+  when_viewed: "New booking page: opened",
+  when_done: "New booking page: picked when",
+  details_viewed: "New booking page: saw “Your details”",
+  request_sent: "New booking page: sent a request",
 };
 
 const STAGE_LABEL: Record<UnfinishedStage, string> = {

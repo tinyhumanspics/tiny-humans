@@ -431,6 +431,73 @@
     "fine": "Gemelos, familiares adicionales o un código pueden cambiarlo. Verás el precio exacto antes de reservar.",
     "book": "Reservar {bundle}"
   },
+  "bookingRequest": {
+    "meta": {
+      "title": "Reserva tu sesión",
+      "description": "Elige un día y una hora, o la fecha en que esperan al bebé, y envía una solicitud. No pagas nada ahora."
+    },
+    "when": {
+      "title": "¿Cuándo vamos?",
+      "here": "Ya nació",
+      "notBorn": "Todavía no nace",
+      "hereHelp": "Elige un día y una hora de inicio. Lo ideal es en las primeras dos semanas.",
+      "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos entre los días 5 y 14.",
+      "dueLabel": "Fecha en que esperan al bebé",
+      "dueWindow": "Elige una fecha entre hoy y el {date}.",
+      "bundle": "Tu paquete",
+      "change": "cambiar",
+      "chooseBundle": "Elige tu paquete",
+      "twins": "¿Gemelos? +{price} por bebé adicional",
+      "travel": "Sin costo a menos de {miles} millas de Miami Beach",
+      "pickTime": "Elige un día y una hora de inicio.",
+      "pickDue": "Elige la fecha en que esperan al bebé.",
+      "pickBundle": "Primero elige un paquete.",
+      "next": "Siguiente: tus datos"
+    },
+    "details": {
+      "title": "¿A dónde te escribimos?",
+      "firstName": "Nombre",
+      "mobile": "Celular",
+      "email": "Correo",
+      "zip": "Código postal",
+      "consent": "Envíenme mensajes sobre esta solicitud. Pueden aplicar tarifas. Responde STOP para dejar de recibirlos.",
+      "due": "Fecha esperada: {date}",
+      "send": "Enviar solicitud",
+      "sending": "Enviando…",
+      "nothingToPay": "No pagas nada ahora. Te escribimos para confirmar y luego, con un enlace de {deposit}, apartas tu fecha.",
+      "nothingToPayPlain": "No pagas nada ahora. Te escribimos para confirmar.",
+      "holdLine": "Con {deposit} apartas tu fecha · reembolsable hasta {hours} h antes.",
+      "dueLine": "Si la sesión no puede hacerse, tú eliges: te devolvemos los {deposit} o los usas para una sesión cuando el bebé sea más grande.",
+      "back": "Atrás",
+      "errors": {
+        "firstName": "Escribe tu nombre.",
+        "mobile": "Escribe un celular de EE. UU. (10 dígitos).",
+        "email": "Escribe un correo válido.",
+        "zip": "Escribe un código postal de 5 dígitos.",
+        "slotTaken": "Alguien acaba de tomar esa hora. Por favor elige otra.",
+        "check": "Revisa tus datos e inténtalo de nuevo.",
+        "generic": "No pudimos enviar tu solicitud. Inténtalo de nuevo o escríbenos al (786) 222-7194.",
+        "rateLimited": "Demasiadas solicitudes desde esta conexión. Espera un poco o escríbenos al (786) 222-7194."
+      }
+    },
+    "sent": {
+      "title": "Solicitud enviada, {name}.",
+      "textYou": "Te escribimos al {mobile} en minutos (de 8 a.m. a 8 p.m.) para confirmar {when}.",
+      "whenDue": "tu fecha esperada ({date})",
+      "next": "Lo que sigue:",
+      "steps": [
+        "Confirmamos por mensaje.",
+        "Con un enlace de {deposit} apartas tu fecha.",
+        "Llevamos el estudio."
+      ],
+      "stepsPlain": [
+        "Confirmamos por mensaje.",
+        "Recibes la confirmación por correo.",
+        "Llevamos el estudio."
+      ],
+      "question": "¿Alguna pregunta? Escríbenos al {phone}."
+    }
+  },
   "bookingFlow": {
     "due": {
       "title": "Tu reserva con fecha de parto",
@@ -916,6 +983,28 @@
     "owner": "Área del propietario (solo prototipo)"
   },
   "emails": {
+    "requestReceived": {
+      "subject": "Recibimos tu solicitud",
+      "preheader": "Te escribimos al {mobile} para confirmar. No pagas nada ahora.",
+      "eyebrow": "Solicitud recibida",
+      "title": "¡Gracias, {name}!",
+      "intro": "Te escribimos al {mobile} en minutos (de 8 a.m. a 8 p.m.) para confirmar {when}.",
+      "whenDue": "tu fecha esperada ({date})",
+      "summary": "{bundle} · {price}",
+      "next": "Lo que sigue:",
+      "steps": [
+        "Confirmamos por mensaje.",
+        "Con un enlace de {deposit} apartas tu fecha.",
+        "Llevamos el estudio."
+      ],
+      "stepsPlain": [
+        "Confirmamos por mensaje.",
+        "Recibes la confirmación por correo.",
+        "Llevamos el estudio."
+      ],
+      "nothing": "No pagas nada ahora.",
+      "question": "¿Alguna pregunta? Escríbenos al {phone}."
+    },
     "dueDate": {
       "subject": "Tu lugar en Tiny Humans está reservado",
       "preheader": "Cuando llegue tu bebé, elige la fecha de tu sesión con un toque.",

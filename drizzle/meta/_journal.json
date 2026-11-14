@@ -260,6 +260,13 @@
       "when": 1794693981562,
       "tag": "0036_system_events",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1794698527353,
+      "tag": "0037_booking_requests",
+      "breakpoints": true
     }
   ]
 }
