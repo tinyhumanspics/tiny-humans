@@ -52,6 +52,7 @@ const row = (over: Partial<BookingRequestRow> = {}): BookingRequestRow => ({
   textConsent: true,
   consentVersion: "2026-11-14-draft",
   bookingId: null,
+  dueId: null,
   ...over,
 });
 
@@ -112,7 +113,7 @@ describe("the emails", () => {
     const parent = h.sent[1];
     expect(parent.subject).toBe(es.emails.requestReceived.subject);
     expect(parent.text).toContain("Nuestra pequeña historia");
-    expect(parent.text).toContain("para confirmar tu fecha esperada (");
+    expect(parent.text).toContain("para confirmar tu fecha de parto (");
     expect(h.sent[0].subject).toMatch(/^New request: Dana · due .* · Our Little Story$/);
   });
   it("English and Spanish have the same keys", () => {

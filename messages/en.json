@@ -259,6 +259,13 @@
     "book": "Book {bundle}"
   },
   "bookingRequest": {
+    "texts": {
+      "hello": "Hi {name}! This is Tiny Humans about your session request for {when}.",
+      "confirmed": "Hi {name}, you're confirmed for {when}. Here's the link to hold it with the {deposit} deposit: {link}",
+      "confirmedDue": "Hi {name}, your spot for your due date ({date}) is saved. Here's the link to hold it with the {deposit} deposit: {link}",
+      "booked": "Hi {name}, you're booked for {when}! Your confirmation is in your email.",
+      "reservedDue": "Hi {name}, your spot for your due date ({date}) is reserved! The details are in your email."
+    },
     "meta": {
       "title": "Book your session",
       "description": "Pick a day and time, or your due date, and send a request. Nothing to pay now."
@@ -983,6 +990,14 @@
     }
   },
   "emails": {
+    "requestDeclined": {
+      "subject": "About your session request",
+      "preheader": "Thank you for reaching out to Tiny Humans.",
+      "eyebrow": "Your request",
+      "title": "Hi {name}",
+      "body": "Thank you for your request for {when}. We're sorry, we can't make it work this time.",
+      "other": "If another day works for you, text us at {phone} and we'll find one together."
+    },
     "requestReceived": {
       "subject": "We got your request",
       "preheader": "We'll text you at {mobile} to confirm. Nothing to pay now.",

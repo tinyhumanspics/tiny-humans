@@ -37,6 +37,7 @@ import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnS
 import { setupsOf } from "@/config/backdrops";
 import { backdropsFor, saveBackdrops } from "@/lib/booking/backdrops";
 import { getCatalog } from "@/lib/pricing/server";
+import { markRequestBooked } from "@/lib/requests/store";
 
 /**
  * The deposit, paid on Stripe Checkout as the last step of booking:
@@ -265,6 +266,8 @@ async function confirmPaid(row: Booking, client: ClientContext): Promise<"confir
     const noticeHours = await noticeHoursFor(current, rules.limits.rescheduleNoticeHours);
     await confirmBookingRow(current, details, { manageToken: token.token, noticeHours });
     scheduleEvent(current, client);
+    // a booking the owner made from a website request (/admin → Requests): that request is now booked
+    await markRequestBooked({ bookingId: current.id });
     return "confirmed";
   } catch (err) {
     // the lease stays, so the next try (webhook retry, the family's page, the sweep) comes after LEASE_MS

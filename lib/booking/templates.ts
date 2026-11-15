@@ -156,7 +156,8 @@ export const unitLine = (unit?: string, unitLabel = "Unit") => {
   return !u ? "" : /^\d/.test(u) ? `${unitLabel} ${u}` : u;
 };
 
-export const formatAddress = (a: SessionAddress, unitLabel = "Unit") => [a.street, unitLine(a.unit, unitLabel), a.city].filter(Boolean).join(", ") + `, FL ${a.zip}`;
+/** "1 Main St, Unit 4, Miami, FL 33139"; just "FL 33139" while the street is still to come (a booking made from a request). */
+export const formatAddress = (a: SessionAddress, unitLabel = "Unit") => [a.street, unitLine(a.unit, unitLabel), a.city, `FL ${a.zip}`].filter(Boolean).join(", ");
 
 /** Studio-facing label for the gate / parking / concierge notes (calendar, studio email, /admin). */
 export const ACCESS_LABEL = "Gate / parking / concierge";

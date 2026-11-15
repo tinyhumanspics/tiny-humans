@@ -57,3 +57,51 @@ export function formatUsMobile(e164: string): string {
   const d = e164.replace(/\D/g, "").slice(-10);
   return d.length === 10 ? `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}` : e164;
 }
+
+/** One request on /admin → Requests (GET /api/admin/requests). */
+export interface RequestListItem {
+  id: string;
+  reference: string;
+  createdAt: string;
+  locale: "en" | "es";
+  type: RequestType;
+  status: RequestStatus;
+  bundleId: string;
+  bundleName: string;
+  babyCount: number;
+  /** Bundle + extra babies, without travel (cents). */
+  totalCents: number;
+  travelStatus: string | null;
+  travelMiles: number | null;
+  travelFeeCents: number;
+  slotDate: string | null;
+  slotStart: string | null;
+  dueDate: string | null;
+  holdUntil: string | null;
+  firstName: string;
+  /** "(305) 555-0142" */
+  mobile: string;
+  email: string;
+  zip: string;
+  textConsent: boolean;
+  /** The booking (with its day and start time: "Other time" may differ from the request) or due-date reservation made from it. */
+  made: { reference: string; date?: string; start?: string } | null;
+  /** The "Text" button's message, in their language. */
+  hello: string;
+}
+
+/** What "Confirm & send pay link" (or "Other time") returns. */
+export interface RequestConfirmed {
+  /** The booking's or the due-date reservation's reference. */
+  reference: string;
+  kind: "booking" | "due";
+  /** pending = waiting on the deposit (the request is "confirmed"); done = nothing to pay (the request is "booked"). */
+  status: "pending" | "done";
+  /** The family's pay link (null when there's nothing to pay). */
+  url: string | null;
+  holdUntil: string | null;
+  /** The text to send them (the sms: body), in their language. */
+  sms: string;
+  emailed: boolean;
+  emailError?: string;
+}

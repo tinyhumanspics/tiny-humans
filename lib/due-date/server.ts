@@ -32,6 +32,7 @@ import { dueWindow, type DueCreateResult, type DueReservationRow, type DueSummar
 import type { DueRequest } from "./validation";
 import { markDraftBooked } from "@/lib/unfinished/server";
 import type { NotPaidDue } from "@/lib/leads/types";
+import { markRequestBooked } from "@/lib/requests/store";
 
 const base = () => site.url.replace(/\/$/, "");
 const missingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
@@ -198,6 +199,97 @@ export async function createDueReservation(r: DueRequest): Promise<DueCreateResu
 }
 
 /**
+ * A "Not born yet" request the owner confirmed (/admin → Requests, brief 02): a reservation like the form's, priced
+ * today, with the address still to come (the family adds it when their session is booked). With deposits on, the
+ * family gets the deposit email: its button opens their reservation page, which opens a payment page any time (no
+ * page is opened now). That email counts as the reminder, so no automatic one follows. Same request again = the same
+ * reservation.
+ */
+export async function reserveDueForRequest(r: { requestId: string; bundleId: string; babyCount: number; dueDate: string; firstName: string; email: string; phone: string; zip: string; locale: "en" | "es" }): Promise<{ row: DueDateReservation; url: string | null; emailed: boolean; emailError?: string }> {
+  const db = getDb();
+  const [existing] = await db.select().from(dueDateReservations).where(eq(dueDateReservations.requestId, `request-${r.requestId}`)).limit(1);
+  if (existing) return { row: existing, url: payPageFor(existing), emailed: false };
+  const bundle = (await getCatalog()).find((b) => b.id === r.bundleId && b.active !== false);
+  if (!bundle) throw new BookingError("invalid_request", "That bundle is turned off now. Turn it back on in Pricing, or use Other time.");
+  if (r.babyCount > 1 && !extraBabyLine(bundle, r.babyCount)) throw new BookingError("invalid_request", "That bundle doesn't offer this baby count anymore.");
+  const travel = travelQuote(r.zip, await getTravelSettings());
+  const travelCents = travel.status === "fee" ? travel.feeCents : 0;
+  const pricing = computeQuote(bundle, todayInZone(bookingRules.timeZone));
+  const depositCents = depositCentsFor(pricing.finalCents + travelCents, bundle.id, await getDepositSettings());
+  if (depositCents > 0 && (!isStripeConfigured() || !dueReturnPath("TH-D-CHECK"))) {
+    throw new BookingError("not_configured", "Deposits are on, but Stripe (STRIPE_SECRET_KEY) or ADMIN_SESSION_SECRET isn't set in Vercel, so the deposit link can't work. Nothing was saved.");
+  }
+  const id = crypto.randomUUID();
+  const token = dueTokenFor(id);
+  if (!token) throw new BookingError("not_configured", "Reservations need ADMIN_SESSION_SECRET in Vercel. Nothing was saved.");
+  let row: DueDateReservation | undefined;
+  for (let attempt = 0; attempt < 4 && !row; attempt++) {
+    try {
+      [row] = await db
+        .insert(dueDateReservations)
+        .values({
+          id,
+          reference: reference(),
+          requestId: `request-${r.requestId}`,
+          packageId: bundle.id,
+          packageName: bundle.name,
+          regularPriceCents: pricing.regularCents,
+          bundlePriceCents: pricing.finalCents,
+          offerLabel: pricing.offerLabel,
+          babyCount: r.babyCount,
+          dueDate: r.dueDate,
+          parentName: r.firstName,
+          email: r.email,
+          phone: r.phone,
+          locale: r.locale,
+          street: "",
+          city: "",
+          zip: r.zip.slice(0, 5),
+          travelFeeCents: travel.status === "off" ? null : travelCents,
+          travelMiles: travel.miles,
+          status: depositCents > 0 ? "pending" : "reserved",
+          depositCents,
+          depositStatus: depositCents > 0 ? "pending" : "none",
+          scheduleTokenHash: token.hash,
+        })
+        .returning();
+    } catch (err) {
+      if (isUniqueViolation(err, "reference")) continue;
+      log.error("due.db", "Reservation from a request not saved", { error: safe(err) });
+      throw new BookingError("server_error", "The reservation couldn't be saved. Please try again.");
+    }
+  }
+  if (!row) throw new BookingError("server_error", "The reservation couldn't be saved. Please try again.");
+  if (depositCents === 0) {
+    await sendDueEmails(row);
+    return { row, url: null, emailed: true };
+  }
+  const url = payPageFor(row)!;
+  try {
+    const themeId = await getSiteSettings()
+      .then((s) => s.themeId)
+      .catch(() => "default");
+    const mail = await dueDepositReminderEmail(
+      { parentName: row.parentName, bundleName: row.packageName, dueDate: row.dueDate, amountCents: row.depositCents, bundlePriceCents: row.bundlePriceCents, offerLabel: row.bundlePriceCents < row.regularPriceCents ? row.offerLabel : null },
+      { themeId, payUrl: url, locale: row.locale, auto: true },
+    );
+    await sendEmail({ scope: "resend.due_deposit_reminder", to: row.email, subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments, replyTo: emailConfig().notify, idempotencyKey: `due-request/${row.reference}`, reference: row.reference });
+    await db.insert(dueDepositReminders).values({ reservationId: row.id }).onConflictDoNothing().catch(() => undefined);
+    return { row, url, emailed: true };
+  } catch (err) {
+    const code = (err instanceof EmailSendError ? err.code : "send_failed").slice(0, 120);
+    log.error("due", "Deposit email for a confirmed request not sent", { reference: row.reference, code });
+    return { row, url, emailed: false, emailError: `The email wasn't sent (${code}): text them the link instead.` };
+  }
+}
+
+/** The family's reservation page (signed): it opens a payment page while the deposit is missing. */
+function payPageFor(row: Pick<DueDateReservation, "reference" | "locale">): string | null {
+  const back = dueReturnPath(row.reference, row.locale);
+  return back ? `${base()}${back}` : null;
+}
+
+/**
  * The Stripe page for the deposit. Nothing is held meanwhile, so the family's own page closes after an hour (owner, Nov
  * 11: then the automatic "Finish reserving your spot" email goes out); the owner's reminder link stays open a day.
  * Null when Stripe can't.
@@ -253,6 +345,8 @@ export async function dueDepositPaid(id: string, session: Pick<CheckoutSession, 
   log.info("due", "Due-date deposit paid", { reference: row.reference });
   await claimDueCode(row);
   await sendDueEmails(row);
+  // a reservation the owner made from a website request (/admin → Requests): that request is now booked
+  await markRequestBooked({ dueId: row.id });
 }
 
 /** The deposit page closed unpaid: the reservation ends (the family can reserve again; nothing was held). */

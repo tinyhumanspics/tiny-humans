@@ -1242,6 +1242,8 @@ export const bookingRequests = pgTable(
     textConsent: boolean("text_consent").notNull().default(false),
     consentVersion: text("consent_version"),
     bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+    /** A "Not born yet" request the owner confirmed: its due-date reservation (deposit link, then the session). */
+    dueId: uuid("due_id").references(() => dueDateReservations.id, { onDelete: "set null" }),
   },
   (t) => [
     uniqueIndex("booking_requests_reference_idx").on(t.reference),

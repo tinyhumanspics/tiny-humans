@@ -15,6 +15,7 @@ import type { QuoteResult } from "@/lib/quotes/types";
 import type { DueReservationRow } from "@/lib/due-date/types";
 import type { FollowUpResult, UnfinishedData } from "@/lib/unfinished/types";
 import type { QuickRequest } from "@/lib/quick/types";
+import type { RequestConfirmed, RequestListItem } from "@/lib/requests/types";
 
 /** /admin → Leads → Due dates. `ready` false = migration 0026 not run yet. */
 export interface DueList {
@@ -137,6 +138,12 @@ export interface AdminApi {
   ownerPrice(q: { bundle: string; babies: number; family: number; zip?: string; code?: string; email?: string }): Promise<OwnerPrice>;
   /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
   ownerBook(input: OwnerBookingInput): Promise<OwnerBookingResult>;
+  /** Requests: the website's booking requests, newest first. `notReady` = migration 0037 not run yet. */
+  listRequests(): Promise<{ requests: RequestListItem[]; notReady?: string }>;
+  /** Requests: "Confirm & send pay link" (or "Other time" with `slot`): the booking or reservation, its link and the text. */
+  confirmRequest(id: string, slot?: { date: string; start: string }): Promise<RequestConfirmed>;
+  /** Requests: "Decline", optionally with a polite email. */
+  declineRequest(id: string, email: boolean): Promise<{ emailed: boolean; emailError?: string }>;
   /** Quotes / Booking: what families sent through the quick form (/quick). `notReady` = migration 0034 not run yet. */
   listQuick(): Promise<{ requests: QuickRequest[]; notReady?: string }>;
   setQuickStatus(id: string, status: QuickRequest["status"], bookingReference?: string | null): Promise<void>;
@@ -231,6 +238,9 @@ const httpApi: AdminApi = {
       await fetch(`/api/admin/booking/price?${new URLSearchParams(Object.entries({ bundle: q.bundle, babies: String(q.babies), family: String(q.family), zip: q.zip ?? "", code: q.code ?? "", email: q.email ?? "" }).filter(([, v]) => v))}`, { cache: "no-store" }),
     ),
   ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
+  listRequests: async () => json(await fetch("/api/admin/requests", { cache: "no-store" })),
+  confirmRequest: async (id, slot) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "confirm", id, ...(slot ? { slot } : {}) }) })),
+  declineRequest: async (id, email) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "decline", id, email }) })),
   listQuick: async () => json(await fetch("/api/admin/quick", { cache: "no-store" })),
   setQuickStatus: async (id, status, bookingReference) => {
     await json(await fetch(`/api/admin/quick/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status, ...(bookingReference !== undefined ? { bookingReference } : {}) }) }));

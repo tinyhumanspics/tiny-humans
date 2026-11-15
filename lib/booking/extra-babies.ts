@@ -85,7 +85,11 @@ export function addPhotos(label: string | null | undefined, extra: number): stri
 
 export function babiesLabel(babies: BookingBaby[]): string {
   return babies
-    .map((baby, i) => `${baby.name?.trim() || `Baby ${i + 1}`} (${baby.gender ? `${OWNER_GENDERS[baby.gender]}, ` : ""}${baby.age})`)
+    .map((baby, i) => {
+      // a booking made from a request has no age until the family says
+      const about = [baby.gender ? OWNER_GENDERS[baby.gender] : "", baby.age].filter(Boolean).join(", ");
+      return `${baby.name?.trim() || `Baby ${i + 1}`}${about ? ` (${about})` : ""}`;
+    })
     .join(", ");
 }
 

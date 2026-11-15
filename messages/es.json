@@ -432,6 +432,13 @@
     "book": "Reservar {bundle}"
   },
   "bookingRequest": {
+    "texts": {
+      "hello": "¡Hola {name}! Te escribe Tiny Humans sobre tu solicitud de sesión para {when}.",
+      "confirmed": "Hola {name}, tu sesión está confirmada para {when}. Aquí está el enlace para apartarla con el depósito de {deposit}: {link}",
+      "confirmedDue": "Hola {name}, guardamos tu lugar para tu fecha de parto ({date}). Aquí está el enlace para apartarlo con el depósito de {deposit}: {link}",
+      "booked": "Hola {name}, ¡tu sesión quedó reservada para {when}! Te enviamos la confirmación por email.",
+      "reservedDue": "Hola {name}, ¡tu lugar para tu fecha de parto ({date}) quedó reservado! Te enviamos los detalles por email."
+    },
     "meta": {
       "title": "Reserva tu sesión",
       "description": "Elige un día y una hora, o la fecha en que esperan al bebé, y envía una solicitud. No pagas nada ahora."
@@ -483,7 +490,7 @@
     "sent": {
       "title": "Solicitud enviada, {name}.",
       "textYou": "Te escribimos al {mobile} en minutos (de 8 a.m. a 8 p.m.) para confirmar {when}.",
-      "whenDue": "tu fecha esperada ({date})",
+      "whenDue": "tu fecha de parto ({date})",
       "next": "Lo que sigue:",
       "steps": [
         "Confirmamos por mensaje.",
@@ -983,13 +990,21 @@
     "owner": "Área del propietario (solo prototipo)"
   },
   "emails": {
+    "requestDeclined": {
+      "subject": "Sobre tu solicitud de sesión",
+      "preheader": "Gracias por escribirle a Tiny Humans.",
+      "eyebrow": "Tu solicitud",
+      "title": "Hola {name}",
+      "body": "Gracias por tu solicitud para {when}. Lo sentimos, esta vez no podemos hacerla.",
+      "other": "Si otro día te funciona, escríbenos al {phone} y lo buscamos juntos."
+    },
     "requestReceived": {
       "subject": "Recibimos tu solicitud",
       "preheader": "Te escribimos al {mobile} para confirmar. No pagas nada ahora.",
       "eyebrow": "Solicitud recibida",
       "title": "¡Gracias, {name}!",
       "intro": "Te escribimos al {mobile} en minutos (de 8 a.m. a 8 p.m.) para confirmar {when}.",
-      "whenDue": "tu fecha esperada ({date})",
+      "whenDue": "tu fecha de parto ({date})",
       "summary": "{bundle} · {price}",
       "next": "Lo que sigue:",
       "steps": [

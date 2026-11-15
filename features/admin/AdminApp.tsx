@@ -23,6 +23,7 @@ import ShootsList from "@/features/shoots/ShootsList";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import QuotesBooking from "./QuotesBooking";
+import RequestsPanel from "./RequestsPanel";
 import SeasonalPanel from "./SeasonalPanel";
 import AdminMenu from "./AdminMenu";
 import { ADMIN_NAV, type AdminSection } from "./nav";
@@ -103,6 +104,7 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
         )}
 
         {section === "dashboard" && <Dashboard api={api} settings={settings} />}
+        {section === "requests" && <RequestsPanel api={api} />}
         {section === "leads" && <LeadsPanel api={api} />}
         {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
         {section === "unfinished" && <UnfinishedPanel api={api} />}

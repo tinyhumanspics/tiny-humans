@@ -68,9 +68,11 @@ test("Shoot days: menu entry after Leads, coming up / done cards, links to folde
   await page.goto("/admin/shoots");
 
   const menu = page.getByRole("navigation", { name: "Owner area" }).getByRole("link");
-  await expect(menu.nth(1)).toHaveText("Leads");
-  await expect(menu.nth(2)).toHaveText("Shoots");
-  await expect(menu.nth(2)).toHaveAttribute("aria-current", "page");
+  // Requests (brief 02) comes first, then Leads and Shoots
+  await expect(menu.nth(1)).toHaveText("Requests");
+  await expect(menu.nth(2)).toHaveText("Leads");
+  await expect(menu.nth(3)).toHaveText("Shoots");
+  await expect(menu.nth(3)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { name: "Shoots", level: 1 })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Shoots" }).getByRole("link", { name: "Shoot days" })).toHaveAttribute("aria-current", "page");
 
