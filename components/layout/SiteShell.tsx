@@ -1,4 +1,5 @@
 import "server-only";
+import { Suspense } from "react";
 import { SiteSettingsProvider } from "@/components/providers/SiteSettingsProvider";
 import { CatalogProvider } from "@/components/providers/CatalogProvider";
 import SeasonalDecor from "@/components/layout/SeasonalDecor/SeasonalDecor";
@@ -36,7 +37,10 @@ export default async function SiteShell({ children }: { children: React.ReactNod
         <Header messages={messages.header} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
         {children}
         <Footer messages={messages.footer} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
-        <MetaPixel />
+        {/* reads the query string (no Pixel on secret-token links): its own boundary keeps pages static */}
+        <Suspense fallback={null}>
+          <MetaPixel />
+        </Suspense>
       </CatalogProvider>
     </SiteSettingsProvider>
   );

@@ -85,3 +85,8 @@ export function bundlesHref(inspirationId?: string | null, locale: AppLocale = "
   const path = localePath("/bundles", locale);
   return inspirationId ? `${path}?inspiration=${encodeURIComponent(inspirationId)}` : path;
 }
+
+/** How a family reached the owner, for bookings the owner makes by hand (brief 03): /admin → "Book it for them". */
+export const OWNER_SOURCES = { instagram_dm: "Instagram DM", facebook_dm: "Facebook DM", text: "Text", referral: "Referral", repeat: "Repeat client", other: "Other" } as const;
+export type OwnerSource = keyof typeof OWNER_SOURCES;
+export const isOwnerSource = (v: unknown): v is OwnerSource => typeof v === "string" && Object.hasOwn(OWNER_SOURCES, v);

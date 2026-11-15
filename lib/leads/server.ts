@@ -17,6 +17,7 @@ import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/details";
 import type { Lead, LeadDeposit, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
 import { sourceLabel } from "@/lib/tracking/attribution";
+import { OWNER_SOURCES, isOwnerSource } from "@/config/booking";
 import { log } from "@/lib/log";
 import { bookingPayUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
@@ -220,8 +221,9 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
           }
         : null,
     bookedByOwner: isOwnerBooked(r),
-    source:
-      r.firstTouchAt || r.utmSource || r.fbclid || r.referrer || r.landingPath
+    source: isOwnerSource(r.ownerSource)
+      ? { label: OWNER_SOURCES[r.ownerSource], campaign: null, medium: null, content: null, term: null, landingPath: null, referrer: null, metaClick: false, at: null }
+      : r.firstTouchAt || r.utmSource || r.fbclid || r.referrer || r.landingPath
         ? {
             label: sourceLabel({ utmSource: r.utmSource ?? undefined, utmMedium: r.utmMedium ?? undefined, fbclid: r.fbclid ?? undefined, referrer: r.referrer ?? undefined }),
             campaign: r.utmCampaign,

@@ -54,6 +54,16 @@ const row = (over: Partial<BookingRequestRow> = {}): BookingRequestRow => ({
   bookingId: null,
   dueId: null,
   inspirationId: null,
+  firstTouch: null,
+  lastTouch: null,
+  adId: null,
+  adsetId: null,
+  campaignId: null,
+  fbp: null,
+  fbc: null,
+  clientIp: null,
+  userAgent: null,
+  leadSentAt: null,
   ...over,
 });
 

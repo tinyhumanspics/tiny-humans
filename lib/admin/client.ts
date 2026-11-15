@@ -47,6 +47,8 @@ export interface OwnerBookingInput {
   requestId: string;
   /** Email the family their link now. */
   email: boolean;
+  /** How they reached the owner (Instagram DM, Text…). */
+  source: import("@/config/booking").OwnerSource;
 }
 
 export interface OwnerBookingResult {

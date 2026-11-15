@@ -71,7 +71,7 @@ export interface DepositOffer {
 
 /** GET /api/booking/deposit/status: the booking page after Stripe. */
 export type DepositReturnState =
-  | { state: "confirmed"; booking: BookingResult; requestId: string | null }
+  | { state: "confirmed"; booking: BookingResult }
   /** Paid; the calendar event and emails are still being done (or retried). */
   | { state: "confirming" }
   /**

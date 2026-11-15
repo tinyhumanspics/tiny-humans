@@ -25,6 +25,8 @@ import { onRequestCreated } from "./hooks";
 import { findByClientId, insertRequest } from "./store";
 import { TEXT_CONSENT_VERSION, formatUsMobile, usMobile, type RequestSent } from "./types";
 import type { ValidRequest } from "./validation";
+import type { Attribution } from "@/lib/tracking/attribution";
+import type { MetaClient } from "@/lib/tracking/meta-capi";
 
 /** "TH-R-20261114-4821": shown to the owner and in the parent's email. */
 export function requestReference(now = new Date()): string {
@@ -42,14 +44,36 @@ const sentOf = (r: BookingRequestRow): RequestSent => ({
   ...(r.dueDate ? { dueDate: r.dueDate } : {}),
 });
 
+/** Where the family came from and their browser (brief 03), read from the request's cookies and headers. */
+export interface RequestSource {
+  firstTouch?: Attribution | null;
+  lastTouch?: Attribution | null;
+  client?: MetaClient;
+}
+
+const sourceValues = ({ firstTouch, lastTouch, client }: RequestSource) => {
+  const ids = lastTouch?.adId || lastTouch?.campaignId ? lastTouch : firstTouch;
+  return {
+    firstTouch: firstTouch ?? null,
+    lastTouch: lastTouch ?? null,
+    adId: ids?.adId ?? null,
+    adsetId: ids?.adsetId ?? null,
+    campaignId: ids?.campaignId ?? null,
+    fbp: client?.fbp?.slice(0, 200) || null,
+    fbc: client?.fbc?.slice(0, 600) || null,
+    clientIp: client?.ip?.slice(0, 64) || null,
+    userAgent: client?.userAgent?.slice(0, 500) || null,
+  };
+};
+
 /**
  * "Send request" (brief 02): re-checks the time (or the due date), prices it like the booking form, saves it with a
  * 12-hour hold (Baby is here), emails the owner and the parent, and calls onRequestCreated. Nothing is paid here.
  * The same clientId again (double tap, retry) returns the first request.
  */
-export async function createRequest(r: ValidRequest, now = new Date()): Promise<{ sent: RequestSent; row: BookingRequestRow; created: boolean }> {
+export async function createRequest(r: ValidRequest, source: RequestSource = {}, now = new Date()): Promise<{ sent: RequestSent; row: BookingRequestRow; created: boolean; lead: boolean }> {
   const existing = await findByClientId(r.clientId);
-  if (existing) return { sent: sentOf(existing), row: existing, created: false };
+  if (existing) return { sent: sentOf(existing), row: existing, created: false, lead: false };
   const messages = r.locale === "es" ? es : en;
   const provider = getBookingProvider();
 
@@ -108,6 +132,7 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
     consentVersion: TEXT_CONSENT_VERSION,
     dueId: due?.id ?? null,
     inspirationId: r.inspiration || null,
+    ...sourceValues(source),
   };
   let row: BookingRequestRow;
   try {
@@ -115,12 +140,12 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
   } catch (err) {
     // the same submission arriving twice at once: the first one wins
     const again = await findByClientId(r.clientId).catch(() => null);
-    if (again) return { sent: sentOf(again), row: again, created: false };
+    if (again) return { sent: sentOf(again), row: again, created: false, lead: false };
     throw err;
   }
   log.info("requests", "Request saved", { reference: row.reference, type: row.type });
-  await onRequestCreated(row);
-  return { sent: sentOf(row), row, created: true };
+  const { lead } = await onRequestCreated(row);
+  return { sent: sentOf(row), row, created: true, lead };
 }
 
 /** The owner's "new request" email and the parent's "request received" (best effort: the request is already saved). */

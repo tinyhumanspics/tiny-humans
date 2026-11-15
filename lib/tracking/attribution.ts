@@ -1,12 +1,14 @@
 /**
- * Booking source ("where did this family come from?"): the first touch of a visit, stored in a first-party,
- * httpOnly cookie for 90 days by `proxy.ts` and saved on the booking by the booking-create route.
+ * Booking source ("where did this family come from?"), stored by `proxy.ts` in first-party, httpOnly cookies for 90
+ * days and saved on each request (brief 03): the first touch (`th_src`) and the last touch (`th_last`: the latest
+ * landing that came from somewhere: campaign tags, a Meta click id or ad ids, or another site).
  *
  * Used by proxy.ts (Node.js runtime in Next 16); keep it free of heavy imports.
  * Privacy: only campaign parameters, the landing path and the referring site's origin are kept (never a full
  * referrer URL, which can contain personal data).
  */
 export const SOURCE_COOKIE = "th_src";
+export const LAST_TOUCH_COOKIE = "th_last";
 /** Latest Meta click id, in Meta's `_fbc` format, for the Conversions API when the Pixel's own `_fbc` is missing. */
 export const FBC_COOKIE = "th_fbc";
 export const ATTRIBUTION_MAX_AGE = 60 * 60 * 24 * 90;
@@ -18,6 +20,10 @@ export interface Attribution {
   utmContent?: string;
   utmTerm?: string;
   fbclid?: string;
+  /** Meta ad, ad set and campaign ids from our ad links (?th_ad=…&th_adset=…&th_campaign=…, OWNER-ACTIONS 7). */
+  adId?: string;
+  adsetId?: string;
+  campaignId?: string;
   landingPath?: string;
   /** Origin of an external referring site, e.g. "https://l.instagram.com". */
   referrer?: string;
@@ -25,7 +31,9 @@ export interface Attribution {
   at: string;
 }
 
-const FIELDS = ["utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm", "fbclid", "landingPath", "referrer"] as const;
+const FIELDS = ["utmSource", "utmMedium", "utmCampaign", "utmContent", "utmTerm", "fbclid", "adId", "adsetId", "campaignId", "landingPath", "referrer"] as const;
+/** Meta ids are digits; anything else in those parameters is ignored. */
+const metaId = (v: string | null) => (v && /^\d{1,30}$/.test(v.trim()) ? v.trim() : undefined);
 const clip = (v: string | null | undefined, max = 200) => (v ? v.trim().slice(0, max) || undefined : undefined);
 
 /** The touch described by a page request. */
@@ -47,15 +55,18 @@ export function attributionFromRequest(url: URL, referer: string | null, now = n
     utmContent: clip(p.get("utm_content")),
     utmTerm: clip(p.get("utm_term")),
     fbclid: clip(p.get("fbclid"), 500),
+    adId: metaId(p.get("th_ad")),
+    adsetId: metaId(p.get("th_adset")),
+    campaignId: metaId(p.get("th_campaign")),
     landingPath: clip(url.pathname, 300),
     referrer: clip(referrer, 200),
     at: now.toISOString(),
   };
 }
 
-/** A touch that carries real source information (campaign tags, a Meta click id, or an external referrer). */
+/** A touch that carries real source information (campaign tags, a Meta click id or ad ids, or an external referrer). */
 export function isCampaign(a: Attribution | null | undefined): boolean {
-  return Boolean(a && (a.utmSource || a.utmCampaign || a.fbclid || a.referrer));
+  return Boolean(a && (a.utmSource || a.utmCampaign || a.fbclid || a.adId || a.campaignId || a.referrer));
 }
 
 export function encodeAttribution(a: Attribution): string {

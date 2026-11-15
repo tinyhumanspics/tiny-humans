@@ -11,7 +11,6 @@ import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking";
 import type { DepositReturnState } from "@/lib/deposit/types";
 import { fill } from "@/lib/email/messages";
-import { trackBooked } from "@/lib/tracking/client";
 import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
@@ -70,21 +69,6 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
     }, POLL_MS);
     return () => window.clearTimeout(timer);
   }, [state, paid, load]);
-
-  useEffect(() => {
-    if (!state || state.state === "waiting" || state.state === "confirming") return;
-    if (state.state === "confirmed" && state.requestId) {
-      const b = state.booking;
-      trackBooked({
-        eventId: state.requestId,
-        id: b.request.bundleId,
-        name: b.pricing?.bundleName ?? b.request.bundleId,
-        value: ((b.pricing?.totalCents ?? b.pricing?.finalCents ?? 0) + (b.travel?.feeCents ?? 0)) / 100,
-        contact: b.request.contact,
-        address: b.request.address,
-      });
-    }
-  }, [state]);
 
   const startOver = () => {
     router.replace(scheduleHref(bundleId, undefined, locale));

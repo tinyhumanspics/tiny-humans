@@ -5,7 +5,7 @@ import Link from "next/link";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { setupsOf } from "@/config/backdrops";
-import { babyAgeOptions, familyRoles } from "@/config/booking";
+import { babyAgeOptions, familyRoles, isOwnerSource, OWNER_SOURCES } from "@/config/booking";
 import BookingCalendar from "@/features/booking/BookingCalendar";
 import type { AdminApi, OwnerBookingResult, OwnerPrice } from "@/lib/admin/client";
 import { formatLongDate, formatTimeLabel, fromDateKey, toDateKey } from "@/lib/booking/dates";
@@ -81,6 +81,8 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
   // the quick request this booking comes from (only the first booking counts: "Book another family" starts blank)
   const fromQuick = useRef(prefill?.requestId ?? null);
   const [sendEmail, setSendEmail] = useState(true);
+  // how they reached you (Leads → Source; brief 03): picked every time
+  const [source, setSource] = useState("");
   const todayKey = today();
   const [date, setDate] = useState("");
   const [month, setMonth] = useState(() => monthStart(todayKey));
@@ -153,6 +155,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
     setError(null);
     if (!bundle) return setError("Pick a bundle.");
     if (!date || !start) return setError("Pick the day and the time.");
+    if (!isOwnerSource(source)) return setError("Pick how they reached you.");
     setBusy(true);
     try {
       const result = await api.ownerBook({
@@ -166,6 +169,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
         ...(code.trim() ? { discountCode: code.trim() } : {}),
         requestId: requestId.current,
         email: sendEmail,
+        source,
       });
       setDone(result);
       if (fromQuick.current) {
@@ -191,6 +195,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
   };
 
   const again = () => {
+    setSource("");
     setDone(null);
     setCopied(null);
     setStart("");
@@ -355,6 +360,15 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
 
         <fieldset className={styles.ownerBookGroup}>
           <legend className={cn(styles.h3, "chalk")}>The family</legend>
+          <label className={cn(styles.label, "chalk-soft")}>
+            How did they reach you?
+            <select className={styles.input} value={source} onChange={(e) => setSource(e.target.value)}>
+              <option value="">Choose…</option>
+              {Object.entries(OWNER_SOURCES).map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+          </label>
           <div className={styles.ownerBookRow}>
             <label className={cn(styles.label, "chalk-soft")}>
               Full name

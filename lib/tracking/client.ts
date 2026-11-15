@@ -1,6 +1,7 @@
 "use client";
 
-import { normCity, normEmail, normPhoneUS, normZip, splitName } from "./normalize";
+import { neutralId, normEmail, normName, normPhoneUS, normZip } from "./normalize";
+import { pixelAllowed } from "./safe-url";
 
 /**
  * Browser-side conversion tracking. Components call these provider-neutral functions; each ad platform is an
@@ -19,7 +20,8 @@ declare global {
 const pixelId = () => process.env.NEXT_PUBLIC_META_PIXEL_ID ?? "";
 const fbq = (...args: unknown[]) => {
   try {
-    if (typeof window !== "undefined" && typeof window.fbq === "function" && !location.pathname.startsWith("/admin")) window.fbq(...args);
+    // never in /admin, never on pages whose links carry a secret token (brief 03)
+    if (typeof window !== "undefined" && typeof window.fbq === "function" && pixelAllowed(location.pathname, location.search)) window.fbq(...args);
   } catch {
     /* tracking must never break the page */
   }
@@ -56,16 +58,21 @@ export function trackSelectBundle(b: TrackBundle) {
 
 
 /**
- * A booking was created. eventId = the booking's requestId (the server sends the same event through the Conversions
- * API; Meta keeps one). Fires once per requestId even if the confirmation re-renders.
+ * A request was saved and the server said this one counts as a Lead (one per person per 30 days). eventId = the
+ * request's reference: the server sends the same Lead through the Conversions API and Meta keeps one. Neutral names
+ * only (never "due date", "baby" or "newborn"). Advanced matching: the Pixel hashes these in the browser.
  */
-export function trackBooked(b: TrackBundle & { eventId: string; contact: { parentName: string; email: string; phone: string }; address: { city: string; zip: string } }) {
-  if (!b.eventId || !firstTime(`sched_${b.eventId}`)) return;
-  const { fn, ln } = splitName(b.contact.parentName);
-  const email = normEmail(b.contact.email);
-  // advanced matching: the Pixel hashes these in the browser before sending
-  const am: Record<string, string> = { em: email, ph: normPhoneUS(b.contact.phone), fn, ln, ct: normCity(b.address.city), st: "fl", zp: normZip(b.address.zip), country: "us", external_id: email };
+export function trackLead(l: { eventId: string; bundleId: string; firstName: string; email: string; mobile: string; zip: string }) {
+  if (!l.eventId || !firstTime(`lead_${l.eventId}`)) return;
+  const email = normEmail(l.email);
+  const am: Record<string, string> = { em: email, ph: normPhoneUS(l.mobile), fn: normName(l.firstName).split(" ")[0] ?? "", zp: normZip(l.zip), country: "us", external_id: email };
   for (const k of Object.keys(am)) if (!am[k]) delete am[k];
   if (pixelId()) fbq("init", pixelId(), am);
-  fbq("track", "Schedule", { content_name: b.name, content_ids: [b.id], content_type: "product", value: b.value, currency: "USD" }, { eventID: b.eventId });
+  const id = neutralId(l.bundleId);
+  fbq("track", "Lead", { content_name: "request", ...(id ? { content_ids: [id] } : {}) }, { eventID: l.eventId });
+}
+
+/** A tap on a "text us" or "call us" link (sms: / tel:). */
+export function trackContact() {
+  fbq("track", "Contact", { content_name: "text" });
 }

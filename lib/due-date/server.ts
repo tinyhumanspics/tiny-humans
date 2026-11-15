@@ -33,6 +33,7 @@ import type { DueRequest } from "./validation";
 import { markDraftBooked } from "@/lib/unfinished/server";
 import type { NotPaidDue } from "@/lib/leads/types";
 import { markRequestBooked } from "@/lib/requests/store";
+import { scheduleReservation } from "@/lib/tracking/schedule";
 
 const base = () => site.url.replace(/\/$/, "");
 const missingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
@@ -347,6 +348,8 @@ export async function dueDepositPaid(id: string, session: Pick<CheckoutSession, 
   await sendDueEmails(row);
   // a reservation the owner made from a website request (/admin → Requests): that request is now booked
   await markRequestBooked({ dueId: row.id });
+  // Meta "Schedule" for the reservation (its session, booked later, isn't counted again)
+  scheduleReservation(row);
 }
 
 /** The deposit page closed unpaid: the reservation ends (the family can reserve again; nothing was held). */

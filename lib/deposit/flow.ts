@@ -1,5 +1,4 @@
 import "server-only";
-import { after } from "next/server";
 import { and, desc, eq, gt, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
@@ -9,7 +8,7 @@ import { ownerRulesOf, slotsForDay } from "@/lib/booking/availability";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { addressOf, detailsFromRow } from "@/lib/booking/details";
+import { detailsFromRow } from "@/lib/booking/details";
 import { BookingError } from "@/lib/booking/errors";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { busyExcluding } from "@/lib/booking/reschedule";
@@ -28,7 +27,7 @@ import { createCheckoutSession, expireCheckoutSession, getCheckoutSession, isStr
 import { formatMoney } from "@/lib/pricing/engine";
 import { attachUsage, claimCode, releaseCodeUsage } from "@/lib/pricing/server";
 import { getSiteSettings } from "@/lib/settings/server";
-import { sendScheduleEvent } from "@/lib/tracking/meta-capi";
+import { scheduleBooking } from "@/lib/tracking/schedule";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
@@ -225,7 +224,8 @@ async function confirmPaid(row: Booking, client: ClientContext): Promise<"confir
     const [details, rules] = await Promise.all([detailsFromRow(current), getAvailabilityRules()]);
     const noticeHours = await noticeHoursFor(current, rules.limits.rescheduleNoticeHours);
     await confirmBookingRow(current, details, { manageToken: token.token, noticeHours });
-    scheduleEvent(current, client);
+    // Meta "Schedule" (paid from the family's link on our site; the request's match data when it came from one)
+    scheduleBooking(current, "website", client);
     // a booking the owner made from a website request (/admin → Requests): that request is now booked
     await markRequestBooked({ bookingId: current.id });
     return "confirmed";
@@ -233,28 +233,6 @@ async function confirmPaid(row: Booking, client: ClientContext): Promise<"confir
     // the lease stays, so the next try (webhook retry, the family's page, the sweep) comes after LEASE_MS
     log.error("deposit", "Deposit paid, but the booking couldn't be confirmed yet (tried again in 2 minutes)", { reference: current.bookingReference, code: stripeCode(err) });
     return "failed";
-  }
-}
-
-/** Meta "Schedule" once the booking is confirmed (same event id as the browser Pixel: the requestId). Never throws. */
-function scheduleEvent(row: Booking, client: ClientContext) {
-  const address = addressOf(row.locationAddress);
-  const fbc = client.fbc ?? (row.fbclid ? `fb.1.${(row.firstTouchAt ?? row.createdAt).getTime()}.${row.fbclid}` : undefined);
-  const send = () =>
-    sendScheduleEvent({
-      eventId: row.requestId ?? row.bookingReference,
-      eventSourceUrl: `${base()}${scheduleHref(row.packageId)}`,
-      value: totalCents(row) / 100,
-      bundleId: row.packageId,
-      bundleName: row.packageName,
-      contact: { parentName: row.parentName, email: row.email, phone: row.phone },
-      address: { city: address.city, zip: address.zip },
-      client: { ...client, fbc },
-    });
-  try {
-    after(send);
-  } catch {
-    void send();
   }
 }
 
@@ -639,7 +617,7 @@ export async function depositReturnState(reference: string, client: ClientContex
   }
   if (!row) return { state: "invalid" };
   const start = localTime(row.sessionStart, row.timezone);
-  if (row.status === "confirmed" || row.status === "rescheduled") return { state: "confirmed", booking: await resultOf(row), requestId: row.requestId };
+  if (row.status === "confirmed" || row.status === "rescheduled") return { state: "confirmed", booking: await resultOf(row) };
   if (row.status === "pending" && deposit?.status === "paid") return { state: "confirming" };
   if (row.status === "pending") {
     const waiting = { state: "waiting" as const, amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };

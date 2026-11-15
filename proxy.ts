@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, SOURCE_COOKIE, attributionFromRequest, decodeAttribution, encodeAttribution, isCampaign } from "@/lib/tracking/attribution";
+import { ATTRIBUTION_MAX_AGE, FBC_COOKIE, LAST_TOUCH_COOKIE, SOURCE_COOKIE, attributionFromRequest, decodeAttribution, encodeAttribution, isCampaign } from "@/lib/tracking/attribution";
 import { PUBLIC_LOCALE_HEADER } from "@/i18n/config";
 import { hasTrustedMutationOrigin } from "@/lib/security/origin";
 
@@ -7,7 +7,8 @@ import { hasTrustedMutationOrigin } from "@/lib/security/origin";
  * Booking source capture (first touch). On a page visit, store where the family came from in a first-party,
  * httpOnly cookie set by the server (Safari keeps server-set cookies; script-set ones can expire after a day when
  * the link has a click id). The first touch is kept for 90 days; a plain "direct" first touch is replaced by a later
- * campaign touch. The latest Meta click id is also kept (for the Conversions API).
+ * campaign touch. The last touch is the latest landing that came from somewhere (an ad, a link, another site), so it
+ * survives the clicks to /book. The latest Meta click id is also kept (for the Conversions API).
  */
 export function proxy(req: NextRequest) {
   if (req.nextUrl.pathname.startsWith("/api/admin/") && !hasTrustedMutationOrigin(req)) {
@@ -26,6 +27,7 @@ export function proxy(req: NextRequest) {
   const touch = attributionFromRequest(req.nextUrl, req.headers.get("referer"));
   const existing = decodeAttribution(req.cookies.get(SOURCE_COOKIE)?.value);
   if (!existing || (!isCampaign(existing) && isCampaign(touch))) res.cookies.set(SOURCE_COOKIE, encodeAttribution(touch), cookie);
+  if (isCampaign(touch) || !req.cookies.get(LAST_TOUCH_COOKIE)) res.cookies.set(LAST_TOUCH_COOKIE, encodeAttribution(touch), cookie);
   if (touch.fbclid) res.cookies.set(FBC_COOKIE, `fb.1.${Date.now()}.${touch.fbclid}`, cookie);
   return res;
 }

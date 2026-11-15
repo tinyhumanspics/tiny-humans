@@ -7,7 +7,8 @@ import { allow, clientIp } from "@/lib/rate-limit";
 import { createRequest, sendRequestEmails } from "@/lib/requests/server";
 import { requestSchema } from "@/lib/requests/validation";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
-import { SOURCE_COOKIE } from "@/lib/tracking/attribution";
+import { clientContext } from "@/lib/deposit/request";
+import { LAST_TOUCH_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
 import { countFunnelStep } from "@/lib/unfinished/server";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
@@ -31,12 +32,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: t.generic, code: "invalid_request" }, { status: 400, headers: NO_STORE });
   }
   try {
-    const { sent, row, created } = await createRequest(r);
-    if (created) {
-      const source = (await cookies()).get(SOURCE_COOKIE)?.value;
-      after(() => Promise.all([sendRequestEmails(row), countFunnelStep("request_sent", row.bundleId, source)]));
-    }
-    return NextResponse.json({ request: sent }, { status: created ? 201 : 200, headers: NO_STORE });
+    const jar = await cookies();
+    const source = jar.get(SOURCE_COOKIE)?.value;
+    const { sent, row, created, lead } = await createRequest(r, { firstTouch: decodeAttribution(source), lastTouch: decodeAttribution(jar.get(LAST_TOUCH_COOKIE)?.value), client: await clientContext(req) });
+    if (created) after(() => Promise.all([sendRequestEmails(row), countFunnelStep("request_sent", row.bundleId, source)]));
+    // lead: the browser sends its Pixel Lead with the same event id (the server one goes after this answer)
+    return NextResponse.json({ request: sent, lead }, { status: created ? 201 : 200, headers: NO_STORE });
   } catch (err) {
     if (err instanceof BookingError && err.status < 500) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status, headers: NO_STORE });
     // a family tried to send a request and couldn't: the owner hears about it within a minute (brief 01)

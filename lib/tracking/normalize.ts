@@ -22,3 +22,14 @@ export function splitName(full?: string | null): { fn: string; ln: string } {
   const parts = normName(full).split(" ").filter(Boolean);
   return { fn: parts[0] ?? "", ln: parts.length > 1 ? parts[parts.length - 1] : "" };
 }
+
+/** The newer of two Meta click ids ("fb.1.<ms>.<fbclid>"): the Pixel's _fbc and our th_fbc can disagree. */
+export function latestFbc(a?: string | null, b?: string | null): string | undefined {
+  const at = (v?: string | null) => Number(v?.split(".")[2] ?? 0) || 0;
+  if (!a) return b || undefined;
+  if (!b) return a;
+  return at(b) > at(a) ? b : a;
+}
+
+/** Ids sent to Meta stay neutral (Meta's personal-attributes policy): a bundle id saying "newborn" isn't sent. */
+export const neutralId = (id: string) => (/(due|pregnan|baby|babies|newborn)/i.test(id) ? undefined : id);

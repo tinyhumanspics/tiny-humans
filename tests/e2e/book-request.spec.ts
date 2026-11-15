@@ -241,3 +241,46 @@ test("a due-date reservation's link: its bundle and kept price, details filled i
   await expect(page.getByRole("heading", { name: "Request sent, Lucía." })).toBeFocused();
   expect(body).toMatchObject({ type: "date", bundleId: "our-little-story", dueToken: token, firstName: "Lucía", mobile: "(786) 555-0199", zip: "33139" });
 });
+
+/** Meta's Pixel is off in tests: a stand-in `fbq` records what our code would send. sms:/tel: taps stay on the page. */
+async function recordPixel(page: Page) {
+  await page.addInitScript(() => {
+    const w = window as unknown as { fbq: (...a: unknown[]) => void; __fbq: unknown[][] };
+    w.__fbq = [];
+    w.fbq = (...a: unknown[]) => void w.__fbq.push(a);
+    window.addEventListener("click", (e) => (e.target as Element | null)?.closest?.('a[href^="sms:"], a[href^="tel:"]') && e.preventDefault());
+  });
+  return () => page.evaluate(() => (window as unknown as { __fbq: unknown[][] }).__fbq);
+}
+
+test("brief 03: one Lead per person (browser, same id as the server), Contact on a text tap", async ({ page }) => {
+  const calls = await recordPixel(page);
+  const who = { firstName: "Lea", mobile: `(305) 555-${String(1000 + Math.floor(Math.random() * 8999))}`, email: `lead.${test.info().project.name}.${Date.now()}@example.com`, zip: "33139" };
+  await page.goto("/book?bundle=little-moments&utm_source=meta&th_ad=1&th_adset=2&th_campaign=3");
+  await hydrated(page, "#request-title");
+  await page.getByRole("button", { name: "Not born yet" }).click();
+  await page.fill("#request-due", new Date(Date.now() + 40 * 864e5).toISOString().slice(0, 10));
+  await details(page, who);
+  const answer = page.waitForResponse((r) => r.url().endsWith("/api/booking/request"));
+  await send(page);
+  const body = (await (await answer).json()) as { request: { reference: string }; lead: boolean };
+  await expect(page.getByRole("heading", { name: "Request sent, Lea." })).toBeVisible();
+  expect(body.lead).toBe(true);
+  expect((await calls()).filter((c) => c[1] === "Lead")).toEqual([["track", "Lead", { content_name: "request", content_ids: ["little-moments"] }, { eventID: body.request.reference }]]);
+  // Contact: the tap-to-text number on the Request sent screen
+  await page.getByRole("link", { name: "(786) 222-7194" }).click();
+  expect((await calls()).filter((c) => c[1] === "Contact")).toEqual([["track", "Contact", { content_name: "text" }]]);
+  // the same person again (same email) within 30 days: the request is saved, no Lead
+  const again = await page.request.post("/api/booking/request", { data: { clientId: `again-${Date.now()}`, locale: "en", type: "due_date", bundleId: "little-moments", babyCount: 1, dueDate: new Date(Date.now() + 41 * 864e5).toISOString().slice(0, 10), firstName: "Lea", mobile: "(786) 555-0101", email: who.email, zip: "33139", textConsent: false, elapsedMs: 9000 } });
+  expect(again.status()).toBe(201);
+  expect(((await again.json()) as { lead: boolean }).lead).toBe(false);
+});
+
+test("brief 03: no Pixel calls on a page whose link carries a secret token", async ({ page }) => {
+  const calls = await recordPixel(page);
+  const booking = { reference: "TH-20261201-0001", bundleId: "little-moments", bundleName: "Little Moments", date: "2026-12-01", start: "09:00", end: "10:00", parentFirstName: "Ana", status: "active", canCancel: false, noticeHours: 48 };
+  await page.route("**/api/booking/cancel*", (r) => r.fulfill({ json: { booking } }));
+  await page.goto("/cancel?t=secret-token-0123456789abcdef");
+  await page.getByRole("link", { name: /Text us at/ }).click();
+  expect(await calls()).toEqual([]);
+});

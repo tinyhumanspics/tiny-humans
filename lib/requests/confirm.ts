@@ -14,6 +14,7 @@ import { log } from "@/lib/log";
 import { getSiteSettings } from "@/lib/settings/server";
 import { claimRequest, declineRequest as decline, linkRequest, requestById, unclaimRequest } from "./store";
 import { confirmText, requestWhenText } from "./texts";
+import { scheduleOwnerBooked } from "@/lib/tracking/schedule";
 import { formatUsMobile, type RequestConfirmed } from "./types";
 
 /**
@@ -59,6 +60,8 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
       requestId: `${OWNER_REQUEST_PREFIX}request-${row.id}`,
       ...(due ? { dueReservationId: due.id } : {}),
       ...(row.inspirationId ? { inspirationPhotoId: row.inspirationId } : {}),
+      // where the family came from (Leads → Source): the request's first touch
+      ...(row.firstTouch ? { attribution: row.firstTouch } : {}),
     },
     { holdHours: OWNER_HOLD_HOURS },
   );
@@ -70,8 +73,10 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
     const sms = confirmText({ name: row.firstName, locale, slot, depositCents: booking.deposit.amountCents, link: link.url });
     return { reference: booking.id, kind: "booking", status: "pending", url: link.url, holdUntil: link.holdUntil, sms, emailed: link.emailed, emailError: link.emailError };
   }
-  // deposits off: confirmed now (calendar event + the usual confirmation email)
+  // deposits off (or a due-date reservation's paid deposit): confirmed now (calendar event + the usual email)
   await linkRequest(row.id, { bookingId: saved.id }, "booked");
+  // Meta "Schedule", confirmed by text; a due-date reservation was counted when its deposit was paid
+  if (!due) await scheduleOwnerBooked(booking.id);
   return { reference: booking.id, kind: "booking", status: "done", url: null, holdUntil: null, sms: confirmText({ name: row.firstName, locale, slot, depositCents: 0, link: null }), emailed: Boolean(booking.emailSent) };
 }
 

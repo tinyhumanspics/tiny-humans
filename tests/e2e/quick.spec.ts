@@ -169,6 +169,7 @@ test("Quotes / Booking: the quick form's link, a family's request, and Book it f
   await expect(calendar).toHaveAttribute("aria-busy", "false");
   await calendar.locator('button[aria-label*="available"]:not([disabled])').first().click();
   await form.getByRole("button", { name: "1:00 PM" }).click();
+  await form.getByLabel("How did they reach you?").selectOption({ label: "Text" });
   await form.getByRole("button", { name: "Book it and send the link" }).click();
   await expect(form.getByRole("heading", { name: "✓ Booked TH-20261113-5120" })).toBeVisible();
   expect(booked).toMatchObject({ bundleId: "our-little-story", locale: "es", contact: { parentName: "Ana Rivera", babyName: "Mia", babyAge: "2–6 weeks" }, address: { zip: "33139" } });

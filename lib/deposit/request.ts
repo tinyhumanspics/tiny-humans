@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { FBC_COOKIE } from "@/lib/tracking/attribution";
 import { clientIp } from "@/lib/rate-limit";
+import { latestFbc } from "@/lib/tracking/normalize";
 import { verifyDepositLink } from "@/lib/payments/link";
 import type { ClientContext } from "./flow";
 
@@ -18,6 +19,6 @@ export async function clientContext(req: Request): Promise<ClientContext> {
     ip: ip === "unknown" ? undefined : ip,
     userAgent: req.headers.get("user-agent") ?? undefined,
     fbp: jar.get("_fbp")?.value,
-    fbc: jar.get("_fbc")?.value ?? jar.get(FBC_COOKIE)?.value,
+    fbc: latestFbc(jar.get("_fbc")?.value, jar.get(FBC_COOKIE)?.value),
   };
 }

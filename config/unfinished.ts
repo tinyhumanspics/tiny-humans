@@ -10,7 +10,7 @@ export const isFeedbackReason = (value: unknown): value is FeedbackReason => FEE
 
 /**
  * Booking form steps counted without names or emails (once per bundle per browser session): the booking form opened
- * ("calendar": its first screen was the calendar until Nov 10, now "About you"; what Meta counts as "InitiateCheckout"),
+ * ("calendar": its first screen was the calendar until Nov 10, now "About you"),
  * a date picked (time step shown), a time picked (details step shown), the details filled (review step shown), booked.
  */
 /** The old form's steps, then the new /book's (brief 02: request_sent is counted on the server). */

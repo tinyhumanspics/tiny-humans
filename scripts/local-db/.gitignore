@@ -3,3 +3,4 @@ node_modules/
 .down
 .graph-down
 .emails/
+.meta/

@@ -3,6 +3,7 @@
  * Change this file, then run `npm run db:generate` to create a migration.
  */
 import { sql } from "drizzle-orm";
+import type { Attribution } from "@/lib/tracking/attribution";
 import { bigint, boolean, check, date, index, integer, jsonb, pgEnum, pgTable, primaryKey, smallint, text, time, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import type { AppLocale } from "@/i18n/config";
 
@@ -98,6 +99,8 @@ export const bookings = pgTable(
     landingPath: text("landing_path"),
     referrer: text("referrer"),
     firstTouchAt: timestamp("first_touch_at", { withTimezone: true }),
+    /** A booking the owner made for a family who reached out another way (brief 03): see config/booking OWNER_SOURCES. */
+    ownerSource: text("owner_source"),
 
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -1250,11 +1253,26 @@ export const bookingRequests = pgTable(
     dueId: uuid("due_id").references(() => dueDateReservations.id, { onDelete: "set null" }),
     /** The portfolio photo the family picked as inspiration ("Book a memory like this one"), passed to the booking. */
     inspirationId: text("inspiration_id"),
+    /* where the family came from (brief 03): first touch (th_src) and the visit that produced the request (th_last) */
+    firstTouch: jsonb("first_touch").$type<Attribution>(),
+    lastTouch: jsonb("last_touch").$type<Attribution>(),
+    /** Meta ad, ad set and campaign ids (from the last touch, else the first). */
+    adId: text("ad_id"),
+    adsetId: text("adset_id"),
+    campaignId: text("campaign_id"),
+    /** Match data for Meta (Lead now, Schedule when it's booked): never sent anywhere else. */
+    fbp: text("fbp"),
+    fbc: text("fbc"),
+    clientIp: text("client_ip"),
+    userAgent: text("user_agent"),
+    /** When its Lead went to Meta (one per person per 30 days; null = none sent). */
+    leadSentAt: timestamp("lead_sent_at", { withTimezone: true }),
   },
   (t) => [
     uniqueIndex("booking_requests_reference_idx").on(t.reference),
     uniqueIndex("booking_requests_client_idx").on(t.clientId),
     index("booking_requests_created_idx").on(t.createdAt),
+    index("booking_requests_lead_idx").on(t.leadSentAt),
     index("booking_requests_hold_idx").on(t.slotDate).where(sql`status = 'new' AND type = 'date'`),
     check("booking_requests_type_check", sql`${t.type} in ('date', 'due_date')`),
     check("booking_requests_status_check", sql`${t.status} in ('new', 'confirmed', 'booked', 'declined', 'expired')`),

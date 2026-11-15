@@ -81,6 +81,10 @@ test("Quotes / Booking: prices by the bundles, your calendar (days off faded), a
   const scan = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
   expect(scan.violations).toEqual([]);
 
+  // brief 03: how they reached the owner, picked every time
+  await form.getByRole("button", { name: "Book it and send the link" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Pick how they reached you.");
+  await form.getByLabel("How did they reach you?").selectOption({ label: "Instagram DM" });
   await form.getByRole("button", { name: "Book it and send the link" }).click();
   await expect(form.getByRole("heading", { name: "✓ Booked TH-20261112-4459" })).toBeVisible();
   expect(sent).toMatchObject({
@@ -92,6 +96,7 @@ test("Quotes / Booking: prices by the bundles, your calendar (days off faded), a
     contact: { parentName: "Ana Rivera", email: "ana@example.com", phone: "3055550133", babyAge: "Newborn (0–2 weeks)", babyName: "Mia", notes: "Cream set please" },
     address: { street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" },
     email: true,
+    source: "instagram_dm",
   });
   expect(String(sent!.requestId).length).toBeGreaterThan(8);
   await expect(form).toContainText("We emailed them the link.");

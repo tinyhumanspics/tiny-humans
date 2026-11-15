@@ -19,6 +19,7 @@ import type { RequestSent, RequestType } from "@/lib/requests/types";
 import { usMobile } from "@/lib/requests/types";
 import { travelHint } from "@/lib/travel/format";
 import type { TravelQuote } from "@/lib/travel/types";
+import { trackLead } from "@/lib/tracking/client";
 import { countBookingStep, looksLikeEmail } from "@/lib/unfinished/client";
 import type en from "@/messages/en.json";
 import { useBookingSelection } from "../flow/BookingSelectionContext";
@@ -223,8 +224,10 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           elapsedMs: elapsedSince(openedAt.current),
         }),
       });
-      const j = (await res.json().catch(() => ({}))) as { request?: RequestSent; error?: string; code?: string };
+      const j = (await res.json().catch(() => ({}))) as { request?: RequestSent; lead?: boolean; error?: string; code?: string };
       if (res.ok && j.request) {
+        // Meta Lead (the server sent the same one; one per person per 30 days, so only when the server says so)
+        if (j.lead) trackLead({ eventId: j.request.reference, bundleId: bundle.id, firstName: fields.firstName, email: fields.email, mobile: fields.mobile, zip: fields.zip });
         setSent(j.request);
         setStep("sent");
         return;

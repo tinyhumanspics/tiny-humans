@@ -5,8 +5,12 @@ import { formatTimeLabel } from "@/lib/booking/dates";
 import { BookingError } from "@/lib/booking/errors";
 import { getBookingProvider } from "@/lib/booking/server";
 import { bookingRequestSchema } from "@/lib/booking/validation";
-import { isDatabaseConfigured } from "@/lib/db/client";
+import { eq } from "drizzle-orm";
+import { isOwnerSource } from "@/config/booking";
+import { getDb, isDatabaseConfigured } from "@/lib/db/client";
+import { bookings } from "@/lib/db/schema";
 import { ownerBookingLink } from "@/lib/deposit/flow";
+import { scheduleOwnerBooked } from "@/lib/tracking/schedule";
 import { OWNER_HOLD_HOURS, OWNER_REQUEST_PREFIX } from "@/lib/deposit/types";
 import { log } from "@/lib/log";
 import { errorCode, reportFailure } from "@/lib/monitoring/report";
@@ -32,6 +36,8 @@ export async function POST(req: Request) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Check the form." }, { status: 400, headers: NO_STORE });
   const r = parsed.data;
   const email = (input as { email?: unknown }).email !== false;
+  const source = (input as { source?: unknown }).source;
+  if (!isOwnerSource(source)) return NextResponse.json({ error: "Pick how they reached you." }, { status: 400, headers: NO_STORE });
   try {
     const booking = await provider.createBooking(
       {
@@ -49,11 +55,18 @@ export async function POST(req: Request) {
       },
       { holdHours: OWNER_HOLD_HOURS },
     );
+    // how they reached the owner (Leads → Source); best effort, never fails the booking
+    await getDb()
+      .update(bookings)
+      .set({ ownerSource: source })
+      .where(eq(bookings.bookingReference, booking.id))
+      .catch((err) => log.error("admin.booking", "Source not saved", { reference: booking.id, error: err as Error }));
     const base = { reference: booking.id, pricing: booking.pricing ?? null, travel: booking.travel ?? null };
     if (booking.status === "pending" && booking.deposit?.status === "pending") {
       return NextResponse.json({ ...base, status: "pending", ...(await ownerBookingLink(booking.id, { email })) }, { status: 201, headers: NO_STORE });
     }
-    // deposits off (or Stripe down): confirmed right away, with the usual confirmation email
+    // deposits off: confirmed right away, with the usual confirmation email; Meta "Schedule" (confirmed by text)
+    await scheduleOwnerBooked(booking.id);
     return NextResponse.json({ ...base, status: "confirmed", emailed: Boolean(booking.emailSent) }, { status: 201, headers: NO_STORE });
   } catch (err) {
     if (err instanceof BookingError && err.status < 500) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status, headers: NO_STORE });

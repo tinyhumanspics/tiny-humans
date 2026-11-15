@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { and, desc, eq, gt, gte, inArray, isNull, lt, lte, or, type SQL } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, isNull, lt, lte, or, sql, type SQL } from "drizzle-orm";
 import { getDb, isDatabaseConfigured, isUndefinedTable } from "@/lib/db/client";
 import { bookingRequests, bookings, dueDateReservations, type BookingRequestRow } from "@/lib/db/schema";
 import { addDaysKey } from "@/lib/booking/timezone";
@@ -52,6 +52,16 @@ export async function insertRequest(values: NewRequestRow, now = new Date()): Pr
       bookingId: null,
       dueId: null,
       inspirationId: null,
+      firstTouch: null,
+      lastTouch: null,
+      adId: null,
+      adsetId: null,
+      campaignId: null,
+      fbp: null,
+      fbc: null,
+      clientIp: null,
+      userAgent: null,
+      leadSentAt: null,
       ...values,
     } as BookingRequestRow;
     mem.push(row);
@@ -154,6 +164,54 @@ export function declineRequest(id: string): Promise<BookingRequestRow | null> {
     (r) => r.status === "new" || (r.status === "confirmed" && unlinked(r)),
     or(eq(bookingRequests.status, "new"), and(eq(bookingRequests.status, "confirmed"), unlinkedSql())),
   );
+}
+
+/** Meta gets one Lead per person per 30 days (brief 03): the same email or mobile within that time sends none. */
+export const LEAD_EVERY_DAYS = 30;
+
+/**
+ * Claims this request's Lead: marks it sent unless another request with the same email or mobile had one in the last
+ * 30 days. One statement, so two requests at once can't both claim. True = send the Lead (browser + server).
+ */
+export async function claimLead(row: BookingRequestRow, now = new Date()): Promise<boolean> {
+  const since = new Date(now.getTime() - LEAD_EVERY_DAYS * 86_400_000);
+  const mem = inMemory();
+  if (mem) {
+    const email = row.email.toLowerCase();
+    const recent = mem.some((r) => r.id !== row.id && r.leadSentAt && r.leadSentAt > since && (r.email.toLowerCase() === email || r.mobile === row.mobile));
+    const own = mem.find((r) => r.id === row.id);
+    if (recent || !own || own.leadSentAt) return false;
+    own.leadSentAt = now;
+    return true;
+  }
+  const claimed = await getDb()
+    .update(bookingRequests)
+    .set({ leadSentAt: now })
+    .where(
+      and(
+        eq(bookingRequests.id, row.id),
+        isNull(bookingRequests.leadSentAt),
+        sql`not exists (select 1 from booking_requests o where o.id <> ${row.id} and o.lead_sent_at > ${since.toISOString()}::timestamptz and (lower(o.email) = lower(${row.email}) or o.mobile = ${row.mobile}))`,
+      ),
+    )
+    .returning({ id: bookingRequests.id });
+  return claimed.length > 0;
+}
+
+/** The request a booking was made from (Schedule reuses its match data), or null. */
+export async function requestForBooking(bookingId: string): Promise<BookingRequestRow | null> {
+  const mem = inMemory();
+  if (mem) return mem.find((r) => r.bookingId === bookingId) ?? null;
+  const [row] = await getDb().select().from(bookingRequests).where(eq(bookingRequests.bookingId, bookingId)).limit(1);
+  return row ?? null;
+}
+
+/** The "Not born yet" request a due-date reservation was made from, or null. */
+export async function requestForDue(dueId: string): Promise<BookingRequestRow | null> {
+  const mem = inMemory();
+  if (mem) return mem.find((r) => r.type === "due_date" && r.dueId === dueId) ?? null;
+  const [row] = await getDb().select().from(bookingRequests).where(and(eq(bookingRequests.dueId, dueId), eq(bookingRequests.type, "due_date"))).limit(1);
+  return row ?? null;
 }
 
 /** "Delete" (owner, Nov 14: tests): gone for good, and its hold with it. A booking or reservation made from it stays. */
