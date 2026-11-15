@@ -54,11 +54,6 @@ export function trackSelectBundle(b: TrackBundle) {
   fbq("track", "ViewContent", { content_name: b.name, content_ids: [b.id], content_type: "product", value: b.value, currency: "USD" });
 }
 
-/** The visitor started booking (the schedule step opened with a bundle). Once per bundle per browser session. */
-export function trackBeginBooking(b: TrackBundle) {
-  if (!firstTime(`ic_${b.id}`)) return;
-  fbq("track", "InitiateCheckout", { content_name: b.name, content_ids: [b.id], content_type: "product", value: b.value, currency: "USD", num_items: 1 });
-}
 
 /**
  * A booking was created. eventId = the booking's requestId (the server sends the same event through the Conversions

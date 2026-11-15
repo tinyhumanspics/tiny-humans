@@ -40,15 +40,15 @@ import { getCatalog } from "@/lib/pricing/server";
 import { markRequestBooked } from "@/lib/requests/store";
 
 /**
- * The deposit, paid on Stripe Checkout as the last step of booking:
- * 1. The booking is saved as "pending" (it blocks its time like any booking) with a booking_deposits row, and the
- *    family goes to a Stripe page that expires after ~30 minutes.
+ * The deposit, paid from the family's link after the owner confirms (brief 02: nothing is paid on /book):
+ * 1. The owner's booking is saved as "pending" (it blocks its time like any booking) with a booking_deposits row held
+ *    48 h; the family's link asks for their backdrops and opens a Stripe page when they press Pay (`payWithLink`).
  * 2. Paid (webhook, or the page they come back to, whichever is first) → the booking is confirmed: Outlook event,
- *    confirmation + studio emails, Meta "Schedule". A short lease on the deposit row makes one request do it.
- * 3. Not paid by the time the page expires (webhook checkout.session.expired, or the sweep that runs with availability
- *    and the daily cron) → the time is released (booking cancelled, discount code use given back) and the family gets
- *    one "Your date isn't confirmed yet" email.
- * Stripe down while booking → booked without the deposit ("unpaid", flagged in /admin; the payment link takes it).
+ *    confirmation + studio emails, Meta "Schedule", and its website request marked booked. A short lease on the
+ *    deposit row makes one request do it.
+ * 3. Not paid while held (webhook checkout.session.expired, or the sweep that runs with availability and the daily
+ *    cron) → the time is released (booking cancelled, discount code use given back) and the family gets one "Your date
+ *    isn't confirmed yet" email.
  * The owner is alerted when a deposit isn't paid in time, and /admin can email or copy the family's deposit link: it
  * works while the time is held, and a released time is held again (30 minutes) if it's still free.
  */
@@ -70,14 +70,6 @@ export interface ClientContext {
   userAgent?: string;
   fbp?: string;
   fbc?: string;
-}
-
-async function markUnpaid(bookingId: string, amountCents: number, reference: string) {
-  await getDb()
-    .insert(bookingDeposits)
-    .values({ bookingId, amountCents, status: "unpaid" })
-    .onConflictDoUpdate({ target: bookingDeposits.bookingId, set: { status: "unpaid", holdUntil: null, updatedAt: new Date() } })
-    .catch((err) => log.error("deposit", "Couldn't flag the deposit as not paid", { reference, error: dbReason(err) }));
 }
 
 /** Opens the Stripe page of a held deposit (expiring with the hold) and saves its id. Throws when Stripe can't. */
@@ -107,38 +99,6 @@ async function createDepositPage(row: Booking, amountCents: number, noticeHours:
     .where(eq(bookingDeposits.bookingId, row.id))
     .catch((err) => log.error("deposit", "Stripe page id not saved (the webhook still finds the booking)", { reference, error: dbReason(err) }));
   return { url: session.url };
-}
-
-/**
- * Opens the Stripe page for the deposit of a booking that was just saved as pending. Null when Stripe can't (not set
- * up, or not reachable): the caller then confirms the booking without it.
- */
-export async function openDeposit(row: Booking, amountCents: number, noticeHours: number, now = new Date()): Promise<NonNullable<BookingResult["deposit"]> | null> {
-  const reference = row.bookingReference;
-  const returnPath = depositReturnPath(reference, row.packageId, row.locale);
-  if (!returnPath || !isStripeConfigured()) {
-    log.error("deposit", "Deposit is on, but STRIPE_SECRET_KEY or ADMIN_SESSION_SECRET is missing: booked without it", { reference });
-    await markUnpaid(row.id, amountCents, reference);
-    return null;
-  }
-  // a minute over Stripe's 30-minute minimum, so the request's own travel time can't make it too short
-  const holdUntil = new Date(now.getTime() + (DEPOSIT_HOLD_MINUTES + 1) * 60_000);
-  const db = getDb();
-  try {
-    await db.insert(bookingDeposits).values({ bookingId: row.id, amountCents, status: "pending", holdUntil });
-  } catch (err) {
-    log.error("deposit", "Deposit row not saved: booked without it", { reference, error: dbReason(err) });
-    return null;
-  }
-  try {
-    const { url } = await createDepositPage(row, amountCents, noticeHours, holdUntil, `deposit/${row.id}`);
-    log.info("deposit", "Deposit page opened", { reference });
-    return { amountCents, status: "pending", url, returnPath, holdUntil: holdUntil.toISOString() };
-  } catch (err) {
-    log.error("deposit", "Stripe couldn't open the deposit page: booked without it", { reference, code: stripeCode(err), error: err instanceof StripeError ? undefined : (err as Error) });
-    await markUnpaid(row.id, amountCents, reference);
-    return null;
-  }
 }
 
 /** A retry of a booking whose deposit page is still open: the same page again (null if there's none). */
@@ -427,30 +387,6 @@ export function depositPageUrl(row: Pick<Booking, "bookingReference" | "packageI
 }
 
 /**
- * The same family trying the same time again (e.g. their connection dropped before Stripe's page opened, or they
- * switched devices): their own booking still holding that time, so the booking form can reopen its payment page.
- */
-export async function heldForSameFamily(email: string, bundleId: string, sessionStart: Date, now = new Date()): Promise<Booking | null> {
-  const [row] = await getDb()
-    .select({ booking: bookings })
-    .from(bookings)
-    .innerJoin(bookingDeposits, eq(bookingDeposits.bookingId, bookings.id))
-    .where(
-      and(
-        eq(sql`lower(${bookings.email})`, email.trim().toLowerCase()),
-        eq(bookings.packageId, bundleId),
-        eq(bookings.sessionStart, sessionStart),
-        eq(bookings.status, "pending"),
-        eq(bookingDeposits.status, "pending"),
-        gt(bookingDeposits.holdUntil, now),
-      ),
-    )
-    .limit(1)
-    .catch(() => []);
-  return row?.booking ?? null;
-}
-
-/**
  * /admin "Email payment link" / "Copy link" for a booking's deposit. While its time is held, the link works until
  * the hold ends; once the 30 minutes ran out (the time was released), the same time is held again for 30 minutes if
  * it's still free. With `email`, the family gets the "Finish booking" email. Returns the link and the hold's end.
@@ -714,17 +650,6 @@ export async function depositReturnState(reference: string, client: ClientContex
   }
   if (deposit?.status === "expired") return { state: "expired", date: row.sessionDate, start, bundleName: row.packageName };
   return { state: "invalid" };
-}
-
-/** "Pick another time": closes the Stripe page and frees the time now (no email: they're rebooking). */
-export async function releaseByFamily(reference: string): Promise<DepositReturnState> {
-  const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
-  const d = row ? await depositOf(row.id) : null;
-  if (row?.status === "pending" && d?.status === "pending") {
-    const r = await settleWithStripe(row, d, { email: false, closeOpen: true }).catch(() => "unknown" as const);
-    if (r === "unknown" || r === "open") throw new BookingError("server_error", (row.locale === "es" ? es : en).bookingFlow.depositReturn.error);
-  }
-  return depositReturnState(reference);
 }
 
 /** Before deleting a lead that's still on its deposit page: closes the page and releases the time. False if Stripe couldn't. */

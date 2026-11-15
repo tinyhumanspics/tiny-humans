@@ -1,8 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
+import { BUILT_IN } from "@/config/media";
 import { hydrated } from "./fixtures/hydration";
 
 /**
- * The new /book (brief 02, at /book/new until it replaces /book): 1) When 2) Your details (4 boxes, "Send request")
+ * /book (brief 02): 1) When 2) Your details (4 boxes, "Send request")
  * 3) Request sent. Nothing is paid. Mock provider: requests live in the test server's memory; a requested time is
  * held from other visitors for 12 hours.
  */
@@ -57,7 +58,7 @@ async function send(page: Page) {
 test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", async ({ page }) => {
   const posted: Record<string, unknown>[] = [];
   page.on("request", (r) => r.url().includes("/api/booking/request") && posted.push(r.postDataJSON()));
-  await page.goto("/book/new?bundle=our-little-story&utm_source=facebook");
+  await page.goto("/book?bundle=our-little-story&utm_source=facebook");
   await expect(page.getByText("Our Little Story", { exact: false }).first()).toBeVisible();
   const time = await pickTime(page, 0);
   await details(page);
@@ -74,7 +75,7 @@ test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", a
 });
 
 test("Not born yet: a due date instead of a time, and the day 5–14 rule", async ({ page }) => {
-  await page.goto("/book/new?bundle=little-moments");
+  await page.goto("/book?bundle=little-moments");
   await expect(page.getByRole("heading", { name: "When should we come?" })).toBeVisible();
   await hydrated(page, "#request-title");
   await page.getByRole("button", { name: "Not born yet" }).click();
@@ -94,7 +95,7 @@ test("Not born yet: a due date instead of a time, and the day 5–14 rule", asyn
 });
 
 test("without ?bundle= the family picks a bundle on screen 1; twins add the extra-baby price", async ({ page }) => {
-  await page.goto("/book/new");
+  await page.goto("/book");
   await expect(page.getByText("Choose your bundle")).toBeVisible();
   await page.getByRole("button", { name: "Next: your details" }).click();
   await expect(page.locator("main").getByRole("alert")).toHaveText("Choose a bundle first.");
@@ -112,7 +113,7 @@ test("without ?bundle= the family picks a bundle on screen 1; twins add the extr
 
 test("a requested time is held from other families; one taken meanwhile sends them back to the times, details kept", async ({ page, browser }) => {
   // family A picks a time and reaches their details
-  await page.goto("/book/new?bundle=forever-little");
+  await page.goto("/book?bundle=forever-little");
   const time = await pickTime(page, 2);
   const day = await page.locator('[role="grid"] button[aria-pressed="true"], [role="grid"] [aria-selected="true"]').first().getAttribute("aria-label");
   await details(page, { firstName: "Ana", mobile: "3055550101", email: "ana.first@example.com", zip: "33139" });
@@ -121,7 +122,7 @@ test("a requested time is held from other families; one taken meanwhile sends th
   const other = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": "198.51.100.77" }, userAgent: INSTAGRAM_UA });
   const b = await other.newPage();
   await b.route("**/api/booking/funnel", (r) => r.fulfill({ status: 204 }));
-  await b.goto("/book/new?bundle=forever-little");
+  await b.goto("/book?bundle=forever-little");
   await expect(b.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
   await b.getByRole("button", { name: "Next month" }).click();
   await b.locator(`[role="grid"] button[aria-label="${day}"]`).click();
@@ -134,7 +135,7 @@ test("a requested time is held from other families; one taken meanwhile sends th
   const third = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": "198.51.100.78" } });
   const c = await third.newPage();
   await c.route("**/api/booking/funnel", (r) => r.fulfill({ status: 204 }));
-  await c.goto("/book/new?bundle=forever-little");
+  await c.goto("/book?bundle=forever-little");
   await expect(c.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
   await c.getByRole("button", { name: "Next month" }).click();
   await expect(c.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
@@ -160,7 +161,7 @@ test("a requested time is held from other families; one taken meanwhile sends th
 });
 
 test("wrong boxes are explained in words; a ZIP outside Florida stops the request", async ({ page }) => {
-  await page.goto("/book/new?bundle=little-moments");
+  await page.goto("/book?bundle=little-moments");
   await pickTime(page, 4);
   await details(page, { firstName: " ", mobile: "12345", email: "not-an-email", zip: "331" });
   await send(page);
@@ -176,7 +177,67 @@ test("wrong boxes are explained in words; a ZIP outside Florida stops the reques
   await expect(page.getByRole("heading", { name: "Where should we text you?" })).toBeVisible();
 });
 
-test("no chalk intro on the new /book", async ({ page }) => {
-  await page.goto("/book/new?bundle=little-moments");
+test("no chalk intro on /book", async ({ page }) => {
+  await page.goto("/book?bundle=little-moments");
   await expect(page.locator("html")).not.toHaveAttribute("data-intro", /.+/);
+});
+
+test("a gallery picture picked as inspiration shows on /book and goes with the request (owner, Nov 11)", async ({ page }) => {
+  // the second picture of the one "Little moments" gallery
+  const picture = BUILT_IN.sections.flatMap((x) => x.photos)[1];
+  const posted: Record<string, unknown>[] = [];
+  page.on("request", (r) => r.url().includes("/api/booking/request") && posted.push(r.postDataJSON()));
+  await page.goto("/");
+  await page.getByRole("button", { name: new RegExp(`^Open photo 2 of \\d+: `) }).click();
+  const viewer = page.getByRole("dialog", { name: "Photo viewer" });
+  await viewer.getByRole("link", { name: "Use this one as my inspiration" }).click();
+  await expect(page).toHaveURL(new RegExp(`/bundles\\?inspiration=${picture.id}$`));
+  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
+  await expect(page).toHaveURL(new RegExp(`/book\\?bundle=little-moments&inspiration=${picture.id}$`));
+  await expect(page.getByText(`You picked “${picture.title}”`)).toBeVisible();
+  await pickTime(page, 5);
+  await details(page, { firstName: "Rosa", mobile: "305-555-0133", email: "rosa.request@example.com", zip: "33139" });
+  await send(page);
+  await expect(page.getByRole("heading", { name: "Request sent, Rosa." })).toBeFocused();
+  expect(posted.at(-1)).toMatchObject({ bundleId: "little-moments", inspiration: picture.id });
+});
+
+test("a due-date reservation's link: its bundle and kept price, details filled in, a day and time only (APIs faked)", async ({ page }) => {
+  const token = "due-token-0123456789abcdefghijklmnopqrstuv";
+  await page.route("**/api/booking/due?*", (r) =>
+    r.fulfill({
+      json: {
+        due: { reference: "TH-D-20261101-0001", bundleId: "our-little-story", bundleName: "Our Little Story", dueDate: "2026-12-20", babyCount: 1, bundlePriceCents: 24900, regularPriceCents: 29900, offerLabel: "Thanksgiving Offer", depositPaidCents: 5000, backdrops: [], discountCode: null, contact: { parentName: "Lucía Gómez", email: "lucia@example.com", phone: "(786) 555-0199", street: "", unit: "", city: "", zip: "33139" } },
+      },
+    }),
+  );
+  // every day open at 9:00 (no real hold is made: the request below is faked too)
+  await page.route("**/api/booking/availability?*", (r) => {
+    const q = new URL(r.request().url()).searchParams;
+    const days = [];
+    for (let d = new Date(`${q.get("from")}T12:00:00Z`); d <= new Date(`${q.get("to")}T12:00:00Z`); d = new Date(d.getTime() + 864e5)) {
+      const date = d.toISOString().slice(0, 10);
+      days.push({ date, slots: [{ id: `${date}T09:00`, date, start: "09:00", end: "11:00", label: "9:00 AM" }] });
+    }
+    return r.fulfill({ json: { days } });
+  });
+  let body: Record<string, unknown> | null = null;
+  await page.route("**/api/booking/request", (r) => {
+    body = r.request().postDataJSON() as Record<string, unknown>;
+    return r.fulfill({ status: 201, json: { request: { reference: "TH-R-1", firstName: "Lucía", mobile: "(786) 555-0199", type: "date", slot: body.slot } } });
+  });
+  await page.goto(`/book?bundle=our-little-story&due=${token}`);
+  await expect(page.getByText("Your due-date reservation")).toBeVisible();
+  await expect(page.getByText("Pick a day and time for Our Little Story. Your price ($249) is kept.")).toBeVisible();
+  await expect(page.getByText("Your $50 deposit is already paid, so there's nothing to pay now.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Not born yet" })).toHaveCount(0);
+  await pickTime(page, 0);
+  await page.getByRole("button", { name: "Next: your details" }).click();
+  await hydrated(page, "#request-firstName");
+  await expect(page.locator("#request-firstName")).toHaveValue("Lucía");
+  await expect(page.locator("#request-email")).toHaveValue("lucia@example.com");
+  await expect(page.getByText("Nothing to pay now", { exact: false })).toBeVisible();
+  await send(page);
+  await expect(page.getByRole("heading", { name: "Request sent, Lucía." })).toBeFocused();
+  expect(body).toMatchObject({ type: "date", bundleId: "our-little-story", dueToken: token, firstName: "Lucía", mobile: "(786) 555-0199", zip: "33139" });
 });

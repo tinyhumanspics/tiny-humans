@@ -1,4 +1,4 @@
-import type { AvailabilityQuery, BookingClient, BookingRequest, BookingResult, CancellationSummary, DayAvailability, ManagedBooking, PriceQuote } from "./types";
+import type { AvailabilityQuery, BookingClient, CancellationSummary, DayAvailability, ManagedBooking, PriceQuote } from "./types";
 import type { BookingErrorCode, BookingErrorReason } from "./errors";
 
 type BookingApiErrorCode = BookingErrorCode | "network" | "rate_limited";
@@ -36,16 +36,7 @@ export class HttpBookingClient implements BookingClient {
 
   getAvailability(q: AvailabilityQuery): Promise<DayAvailability[]> {
     const params = new URLSearchParams({ bundle: q.bundleId, babies: String(q.babyCount ?? 1), from: q.from, to: q.to });
-    if (q.zip && /^\d{5}$/.test(q.zip)) params.set("zip", q.zip);
     return call<{ days: DayAvailability[] }>(`/api/booking/availability?${params}`).then((r) => r.days);
-  }
-
-  createBooking(request: BookingRequest): Promise<BookingResult> {
-    return call<{ booking: BookingResult }>("/api/booking/create", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(request),
-    }).then((r) => r.booking);
   }
 
   quote(bundleId: string, code?: string, email?: string, babyCount = 1, familyCount = 0, dueToken?: string): Promise<PriceQuote> {

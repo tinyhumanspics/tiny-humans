@@ -8,7 +8,7 @@ import { getDb } from "@/lib/db/client";
 import { bookings, type BookingRequestRow } from "@/lib/db/schema";
 import { ownerBookingLink } from "@/lib/deposit/flow";
 import { OWNER_HOLD_HOURS, OWNER_REQUEST_PREFIX } from "@/lib/deposit/types";
-import { reserveDueForRequest } from "@/lib/due-date/server";
+import { dueById, reserveDueForRequest } from "@/lib/due-date/server";
 import { emailConfig, EmailSendError, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
 import { getSiteSettings } from "@/lib/settings/server";
@@ -44,6 +44,8 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
   const provider = getBookingProvider();
   if (provider.name !== "outlook") throw new BookingError("not_configured", "Confirming needs the real calendar (BOOKING_PROVIDER=outlook).");
   const locale = localeOf(row);
+  // sent from a due-date reservation's link: that reservation is booked (kept price, its paid deposit, its address)
+  const due = row.type === "date" && row.dueId ? await dueById(row.dueId) : null;
   const booking = await provider.createBooking(
     {
       bundleId: row.bundleId,
@@ -51,10 +53,12 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
       // their baby's age and name, and the street, come later on their "Prepare for your session" page
       babies: Array.from({ length: row.babyCount }, () => ({ age: "" })),
       slot: { id: `${slot.date}T${slot.start}`, date: slot.date, start: slot.start, end: "", label: formatTimeLabel(slot.start) },
-      contact: { parentName: row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: "" },
-      address: { street: "", city: "", zip: row.zip },
+      contact: { parentName: due?.parentName ?? row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: "" },
+      address: due ? { street: due.street, unit: due.unit ?? undefined, city: due.city, zip: due.zip } : { street: "", city: "", zip: row.zip },
       // one booking per request (a retry returns it); the prefix marks it as booked by the owner
       requestId: `${OWNER_REQUEST_PREFIX}request-${row.id}`,
+      ...(due ? { dueReservationId: due.id } : {}),
+      ...(row.inspirationId ? { inspirationPhotoId: row.inspirationId } : {}),
     },
     { holdHours: OWNER_HOLD_HOURS },
   );

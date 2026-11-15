@@ -73,23 +73,6 @@ export const bookingSettings = {
   timeZone: bookingRules.timeZone,
 };
 
-/** The bundle is chosen on the bundles page, so booking starts at the calendar. */
-// Owner, Nov 13 (fewer boxes before the calendar): first name, email and ZIP code first (the ZIP decides which days work:
-// trip days, lib/booking/trips.ts), then the day and time, then last name, phone and home address ("contact")
-export const bookingSteps = [
-  { id: "you" },
-  { id: "date" },
-  { id: "time" },
-  { id: "contact" },
-  { id: "details" },
-  { id: "review" },
-] as const;
-
-export type BookingStepId = (typeof bookingSteps)[number]["id"];
-
-/** Step positions by name, so the flow can change without renumbering. */
-export const STEP = { you: 0, date: 1, time: 2, contact: 3, details: 4, review: 5 } as const;
-
 /** Link to the booking calendar for a bundle (keeps the inspiration photo). */
 export function scheduleHref(bundleId: string, inspirationId?: string | null, locale: AppLocale = "en"): string {
   const q = new URLSearchParams({ bundle: bundleId });

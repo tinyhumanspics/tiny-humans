@@ -6,7 +6,6 @@ import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayImpact,
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { Dashboard } from "@/lib/admin/dashboard-types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
-import type { TripSettings } from "@/lib/booking/trips";
 import type { DepositSettings } from "@/lib/deposit/types";
 import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
@@ -85,9 +84,6 @@ export interface AdminApi {
   deleteBlock(id: string): Promise<AvailabilityRules>;
   /** Travel fee settings (null = not saved yet, fees off) + example fees. */
   getTravel(): Promise<{ settings: TravelSettings | null; examples: TravelExample[]; databaseConfigured: boolean }>;
-  /** Trip days: a far session takes the whole day (Availability → Travel). */
-  getTrips(): Promise<{ settings: TripSettings }>;
-  saveTrips(s: TripSettings): Promise<{ settings: TripSettings }>;
   saveTravel(s: TravelSettings): Promise<{ settings: TravelSettings | null; examples: TravelExample[] }>;
   /** Deposits on/off + each bundle's amount (null = the database or its table isn't there). `stripeReady`: Stripe can take them. */
   getDeposit(): Promise<{ settings: DepositSettings | null; stripeReady: boolean; databaseConfigured: boolean }>;
@@ -133,7 +129,7 @@ export interface AdminApi {
   /* quotes (owner only): every bundle's price for a ZIP code */
   getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
   /** Quotes / Booking: open times for a family (no online minimum notice). */
-  ownerSlots(q: { bundle: string; babies: number; zip: string; from: string; to: string }): Promise<import("@/lib/booking/types").DayAvailability[]>;
+  ownerSlots(q: { bundle: string; babies: number; from: string; to: string }): Promise<import("@/lib/booking/types").DayAvailability[]>;
   /** Quotes / Booking: the price as the booking form works it out (offer or code, extras, travel, deposit). */
   ownerPrice(q: { bundle: string; babies: number; family: number; zip?: string; code?: string; email?: string }): Promise<OwnerPrice>;
   /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
@@ -144,6 +140,8 @@ export interface AdminApi {
   confirmRequest(id: string, slot?: { date: string; start: string }): Promise<RequestConfirmed>;
   /** Requests: "Decline", optionally with a polite email. */
   declineRequest(id: string, email: boolean): Promise<{ emailed: boolean; emailError?: string }>;
+  /** Requests: "Delete", for good (tests). */
+  deleteRequest(id: string): Promise<void>;
   /** Quotes / Booking: what families sent through the quick form (/quick). `notReady` = migration 0034 not run yet. */
   listQuick(): Promise<{ requests: QuickRequest[]; notReady?: string }>;
   setQuickStatus(id: string, status: QuickRequest["status"], bookingReference?: string | null): Promise<void>;
@@ -210,8 +208,6 @@ const httpApi: AdminApi = {
     (await json<{ rules: AvailabilityRules }>(await fetch("/api/admin/availability/blocks", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) }))).rules,
   deleteBlock: async (id) => (await json<{ rules: AvailabilityRules }>(await fetch(`/api/admin/availability/blocks?id=${id}`, { method: "DELETE" }))).rules,
   getTravel: async () => json(await fetch("/api/admin/travel", { cache: "no-store" })),
-  getTrips: async () => json(await fetch("/api/admin/trips", { cache: "no-store" })),
-  saveTrips: async (s) => json(await fetch("/api/admin/trips", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   saveTravel: async (s) => json(await fetch("/api/admin/travel", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   getDeposit: async () => json(await fetch("/api/admin/deposit", { cache: "no-store" })),
   saveDeposit: async (s) => json(await fetch("/api/admin/deposit", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
@@ -232,7 +228,7 @@ const httpApi: AdminApi = {
   remindDueDeposit: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "remind", id }) })),
   deleteDueDate: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) })),
   ownerSlots: async (q) =>
-    (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/booking/slots?${new URLSearchParams({ bundle: q.bundle, babies: String(q.babies), zip: q.zip, from: q.from, to: q.to })}`, { cache: "no-store" }))).days,
+    (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/booking/slots?${new URLSearchParams({ bundle: q.bundle, babies: String(q.babies), from: q.from, to: q.to })}`, { cache: "no-store" }))).days,
   ownerPrice: async (q) =>
     json<OwnerPrice>(
       await fetch(`/api/admin/booking/price?${new URLSearchParams(Object.entries({ bundle: q.bundle, babies: String(q.babies), family: String(q.family), zip: q.zip ?? "", code: q.code ?? "", email: q.email ?? "" }).filter(([, v]) => v))}`, { cache: "no-store" }),
@@ -240,6 +236,9 @@ const httpApi: AdminApi = {
   ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
   listRequests: async () => json(await fetch("/api/admin/requests", { cache: "no-store" })),
   confirmRequest: async (id, slot) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "confirm", id, ...(slot ? { slot } : {}) }) })),
+  deleteRequest: async (id) => {
+    await json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) }));
+  },
   declineRequest: async (id, email) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "decline", id, email }) })),
   listQuick: async () => json(await fetch("/api/admin/quick", { cache: "no-store" })),
   setQuickStatus: async (id, status, bookingReference) => {

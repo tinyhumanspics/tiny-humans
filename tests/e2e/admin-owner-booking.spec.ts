@@ -58,7 +58,6 @@ test("Quotes / Booking: prices by the bundles, your calendar (days off faded), a
   const calendar = form.getByRole("grid");
   await expect(calendar).toHaveAttribute("aria-busy", "false");
   expect(asked.at(-1)).toContain("bundle=our-little-story");
-  expect(asked.at(-1)).toContain("zip=33139");
   // Sundays are closed: faded, not pickable
   const sundays = calendar.locator('button[aria-label^="Sunday"]');
   if (await sundays.count()) await expect(sundays.first()).toBeDisabled();
@@ -104,7 +103,6 @@ test("Quotes / Booking: prices by the bundles, your calendar (days off faded), a
 });
 
 test("the mom's link: her backdrops first (two for Our Little Story), then the deposit opens Stripe", async ({ page }) => {
-  await page.route("**/api/booking/draft", (r) => r.fulfill({ status: 204 }));
   const waiting: DepositReturnState = { state: "waiting", amountCents: 5000, holdUntil: new Date(Date.now() + 47 * 3_600_000).toISOString(), date: day, start: "13:00", end: "15:00", bundleName: "Our Little Story", payUrl: null, ownerBooked: true, backdrops: { allowed: 2, picks: [] } };
   await page.route("**/api/booking/deposit/status?*", (route) => route.fulfill({ json: waiting }));
   const saved: unknown[] = [];
@@ -142,7 +140,6 @@ test("the mom's link: her backdrops first (two for Our Little Story), then the d
 
 test("the mom's link: “Not sure yet” skips the backdrops; Change brings them back", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "iphone-safari", "One phone covers it");
-  await page.route("**/api/booking/draft", (r) => r.fulfill({ status: 204 }));
   await page.route("**/api/booking/deposit/status?*", (route) =>
     route.fulfill({ json: { state: "waiting", amountCents: 5000, holdUntil: new Date(Date.now() + 47 * 3_600_000).toISOString(), date: day, start: "09:00", end: "10:00", bundleName: "Little Moments", payUrl: null, ownerBooked: true, backdrops: { allowed: 1, picks: [] } } }),
   );

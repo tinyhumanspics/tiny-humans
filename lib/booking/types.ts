@@ -44,8 +44,6 @@ export interface AvailabilityQuery {
   /** Inclusive range. */
   from: DateKey;
   to: DateKey;
-  /** The family's home ZIP code: trip days (lib/booking/trips.ts) open or close days for it. */
-  zip?: string;
 }
 
 export interface BookingContact {
@@ -179,7 +177,6 @@ export interface CancelOptions {
 export interface BookingClient {
   readonly name: string;
   getAvailability(query: AvailabilityQuery): Promise<DayAvailability[]>;
-  createBooking(request: BookingRequest): Promise<BookingResult>;
   /** Price for a bundle (optionally with a code). Always calculated server-side for real bookings. */
   quote(bundleId: string, code?: string, email?: string, babyCount?: number, familyCount?: number, dueToken?: string): Promise<PriceQuote>;
   /** Customer cancel link: look up the booking behind a token. */

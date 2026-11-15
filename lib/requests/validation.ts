@@ -17,6 +17,9 @@ export const requestSchema = z
     email: z.string().trim().toLowerCase().max(254).email(),
     zip: z.string().trim().regex(/^\d{5}$/),
     textConsent: z.boolean(),
+    /** Sent from a due-date reservation's schedule link: books that reservation (its bundle, kept price, paid deposit). */
+    dueToken: z.string().trim().max(200).optional(),
+    inspiration: z.string().trim().max(80).optional(),
     hp: z.string().max(200).optional(),
     elapsedMs: z.number().int().nonnegative().optional(),
   })

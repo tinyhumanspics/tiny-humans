@@ -11,9 +11,8 @@ import { site } from "@/config/site";
 import type { AppLocale } from "@/i18n/config";
 import { addDays, formatLongDate, formatTimeLabel, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
 import { HttpBookingClient } from "@/lib/booking/http-client";
-import { rememberBundle } from "@/lib/booking/last-bundle";
 import { cn } from "@/lib/cn";
-import { dueWindow } from "@/lib/due-date/types";
+import { dueWindow, type DueSummary } from "@/lib/due-date/types";
 import { activeOffer, formatMoney } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import type { RequestSent, RequestType } from "@/lib/requests/types";
@@ -22,6 +21,7 @@ import { travelHint } from "@/lib/travel/format";
 import type { TravelQuote } from "@/lib/travel/types";
 import { countBookingStep, looksLikeEmail } from "@/lib/unfinished/client";
 import type en from "@/messages/en.json";
+import { useBookingSelection } from "../flow/BookingSelectionContext";
 import Calendar from "../flow/Calendar";
 import TimeStep from "../flow/steps/TimeStep";
 import flowStyles from "../flow/Booking.module.css";
@@ -41,6 +41,7 @@ export interface RequestFlowMessages {
   time: typeof en.bookingFlow.time;
   travel: typeof en.bookingFlow.details.travel;
   paused: typeof en.bundlesPage.paused;
+  due: typeof en.bookingFlow.due;
 }
 
 const priceOf = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? Math.round(b.price * 100);
@@ -48,18 +49,21 @@ const priceOf = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? Ma
 /**
  * The new /book (brief 02): 1) When ("Baby is here" → day + start time, or "Not born yet" → due date; bundle and twins)
  * 2) Your details (first name, mobile, email, ZIP; "Send request") 3) Request sent. Nothing is paid here.
+ * `due`: opened from a due-date reservation's schedule link (/book?due=…): its bundle, babies and kept price, their
+ * details filled in, a day and start time only; the owner confirms it like any request (no new deposit).
  */
-export default function RequestFlow({ locale, messages, freeMiles, noticeHours }: { locale: AppLocale; messages: RequestFlowMessages; freeMiles: number | null; noticeHours: number }) {
+export default function RequestFlow({ locale, messages, freeMiles, noticeHours, due }: { locale: AppLocale; messages: RequestFlowMessages; freeMiles: number | null; noticeHours: number; due?: { token: string; summary: DueSummary } }) {
   const m = messages.request;
   const params = useSearchParams();
   const { bundles, getBundle, today, available, depositFor } = useCatalog();
+  const { inspirationId } = useBookingSelection();
   const provider = useMemo(() => new HttpBookingClient(), []);
 
-  const [bundleId, setBundleId] = useState<string | null>(() => getBundle(params.get("bundle"))?.id ?? null);
+  const [bundleId, setBundleId] = useState<string | null>(() => (due ? due.summary.bundleId : (getBundle(params.get("bundle"))?.id ?? null)));
   const bundle = getBundle(bundleId);
   const [choosing, setChoosing] = useState(!bundle);
   const [type, setType] = useState<RequestType>("date");
-  const [babyCount, setBabyCount] = useState(1);
+  const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
   const [step, setStep] = useState<Step>("when");
 
   // screen 1: open days and start times (other families' held requests are already left out by the server)
@@ -79,7 +83,10 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
   const dueRange = dueWindow(today);
 
   // screen 2
-  const [fields, setFields] = useState<Record<Field, string>>({ firstName: "", mobile: "", email: "", zip: "" });
+  const [fields, setFields] = useState<Record<Field, string>>(() => {
+    const c = due?.summary.contact;
+    return c ? { firstName: c.parentName.split(" ")[0], mobile: c.phone, email: c.email, zip: c.zip } : { firstName: "", mobile: "", email: "", zip: "" };
+  });
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
@@ -112,10 +119,6 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
       live = false;
     };
   }, [type, step, bundleId, babyCount, month, choice, monthKey, reload, provider, m.details.errors.generic]);
-
-  useEffect(() => {
-    if (bundleId) rememberBundle(bundleId);
-  }, [bundleId]);
 
   // anonymous step counts (no names, no ids): opened, picked when, saw the details screen; "sent" is counted on the server
   const counted = useRef(new Set<string>());
@@ -161,9 +164,11 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
   if (!available) return <BookingPaused messages={messages.paused} />;
 
   const extra = bundle?.extraBaby?.active && bundle.extraBaby.maxBabies >= 2 ? bundle.extraBaby : null;
-  const deposit = bundle ? depositFor(bundle.id) : null;
+  // a due-date reservation paid its deposit already: nothing more to hold the date
+  const deposit = bundle && !due ? depositFor(bundle.id) : null;
   const depositText = deposit ? formatMoney(deposit) : null;
-  const priceCents = bundle ? priceOf(bundle, today) + (babyCount > 1 && extra ? Math.round(extra.price * 100) * (babyCount - 1) : 0) : 0;
+  const bundleCents = due ? due.summary.bundlePriceCents : bundle ? priceOf(bundle, today) : 0;
+  const priceCents = bundle ? bundleCents + (babyCount > 1 && extra ? Math.round(extra.price * 100) * (babyCount - 1) : 0) : 0;
   const hint = travel ? travelHint(travel, messages.travel) : null;
   const whenLabel = type === "date" && date && slot ? `${formatLongDate(date, locale)} · ${formatTimeLabel(slot.start, locale)}` : type === "due_date" && dueDate ? fill(m.details.due, { date: formatLongDate(dueDate, locale) }) : "";
   const summary = bundle ? [whenLabel, bundle.name, formatMoney(priceCents + (travel?.status === "fee" ? travel.feeCents : 0))].filter(Boolean).join(" · ") : "";
@@ -212,6 +217,8 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
           email: fields.email.trim(),
           zip: fields.zip.trim(),
           textConsent: consent,
+          ...(due ? { dueToken: due.token } : {}),
+          ...(inspirationId ? { inspiration: inspirationId } : {}),
           hp,
           elapsedMs: elapsedSince(openedAt.current),
         }),
@@ -315,9 +322,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
           <ChalkBox className={flowStyles.panel} seed={7} wobble={4} strokeWidth={3}>
             {step === "sent" && sent ? (
               <div className={flowStyles.stepBody}>
-                <h2 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
                   {fill(m.sent.title, { name: sent.firstName })}
-                </h2>
+                </h1>
                 <p className={cn(styles.lead, "chalk-soft")}>
                   {fill(m.sent.textYou, {
                     mobile: sent.mobile,
@@ -341,21 +348,30 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
             ) : step === "when" ? (
               <>
                 <div className={flowStyles.stepBody}>
-                  <h2 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
                     {m.when.title}
-                  </h2>
-                  <div className={styles.toggle} role="group" aria-label={m.when.title}>
-                    {(["date", "due_date"] as const).map((t) => (
-                      <button key={t} type="button" className={cn(styles.toggleButton, "chalk-soft", type === t && styles.toggleOn)} aria-pressed={type === t} onClick={() => (setType(t), setError(null))}>
-                        {t === "date" ? m.when.here : m.when.notBorn}
-                      </button>
-                    ))}
-                  </div>
-                  <p className={cn(flowStyles.stepIntro, "chalk-soft")}>{type === "date" ? m.when.hereHelp : m.when.notBornHelp}</p>
+                  </h1>
+                  {due && bundle ? (
+                    <div className={cn(styles.dueNote, "chalk-soft")}>
+                      <p className={styles.bundleChoiceName}>{messages.due.title}</p>
+                      <p>{fill(messages.due.body, { bundle: bundle.name, price: formatMoney(priceCents) })}</p>
+                      {due.summary.depositPaidCents > 0 && <p>{fill(messages.due.deposit, { deposit: formatMoney(due.summary.depositPaidCents) })}</p>}
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.toggle} role="group" aria-label={m.when.title}>
+                        {(["date", "due_date"] as const).map((t) => (
+                          <button key={t} type="button" className={cn(styles.toggleButton, "chalk-soft", type === t && styles.toggleOn)} aria-pressed={type === t} onClick={() => (setType(t), setError(null))}>
+                            {t === "date" ? m.when.here : m.when.notBorn}
+                          </button>
+                        ))}
+                      </div>
+                      <p className={cn(flowStyles.stepIntro, "chalk-soft")}>{type === "date" ? m.when.hereHelp : m.when.notBornHelp}</p>
+                      {bundleRow}
+                    </>
+                  )}
 
-                  {bundleRow}
-
-                  {bundle && extra && (
+                  {bundle && extra && !due && (
                     <label className={cn(styles.twins, "chalk-soft")}>
                       <input type="checkbox" checked={babyCount === 2} onChange={(ev) => (setBabyCount(ev.target.checked ? 2 : 1), setSlot(null))} /> {fill(m.when.twins, { price: formatMoney(Math.round(extra.price * 100)) })}
                     </label>
@@ -395,9 +411,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours }
             ) : (
               <>
                 <div className={flowStyles.stepBody}>
-                  <h2 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
                     {m.details.title}
-                  </h2>
+                  </h1>
                   <p className={cn(styles.summary, "chalk-soft")}>{summary}</p>
                   <div className={styles.fields}>
                     {field("firstName", m.details.firstName, { type: "text", autoComplete: "given-name", maxLength: 60 })}

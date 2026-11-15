@@ -77,7 +77,7 @@ test.describe("public API request size", () => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One server-level check is enough.");
     const quote = await request.post("/api/booking/quote", { data: { bundleId: "little-moments", code: "x".repeat(9000) } });
     expect(quote.status()).toBe(413);
-    const booking = await request.post("/api/booking/create", { data: { notes: "x".repeat(70_000) } });
+    const booking = await request.post("/api/booking/request", { data: { firstName: "x".repeat(70_000) } });
     expect(booking.status()).toBe(413);
     const normal = await request.post("/api/booking/quote", { data: { bundleId: "little-moments" } });
     expect(normal.status()).toBe(200);
@@ -95,55 +95,34 @@ test.describe("manual accessibility regression checks", () => {
       }
       throw new Error(`Not reachable with Tab: ${target}`);
     };
+    // never count steps from a test
+    await page.route("**/api/booking/funnel", (r) => r.fulfill({ status: 204 }));
     await page.goto("/book?bundle=little-moments");
-    // step 1 (owner, Nov 13): first name, email and ZIP code, then the calendar for that ZIP code
-    for (const [field, value] of [
-      ["#field-firstName", "Kim"],
-      ["#field-email", "kim.keyboard@example.com"],
-      ["#field-zip", "33139"],
-    ]) {
-      await tabTo(page.locator(field));
-      await page.keyboard.type(value);
-    }
-    const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
-    await tabTo(page.getByRole("button", { name: /Next: Date/ }));
-    await page.keyboard.press("Enter");
-    await loaded;
+    // screen 1: a day next month and its first start time
     await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
-    const openDay = page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
-    if (!(await openDay.count())) {
-      await tabTo(page.getByRole("button", { name: "Next month" }));
-      await page.keyboard.press("Enter");
-    }
-    await tabTo(openDay);
+    await tabTo(page.getByRole("button", { name: "Next month" }));
     await page.keyboard.press("Enter");
-    await tabTo(page.getByRole("button", { name: /Next: Time/ }));
+    await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+    await tabTo(page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first());
     await page.keyboard.press("Enter");
     await tabTo(page.locator('input[name="time"]').first());
     await page.keyboard.press("Space");
-    // the contact step: last name, phone and the home
-    await tabTo(page.getByRole("button", { name: /Next: Home/ }));
+    await tabTo(page.getByRole("button", { name: "Next: your details" }));
     await page.keyboard.press("Enter");
+    // screen 2: the four boxes, then "Send request"
     for (const [field, value] of [
-      ["#field-lastName", "Keyboard"],
-      ["#field-phone", "(305) 555-0142"],
-      ["#field-street", "1500 Bay Rd"],
-      ["#field-city", "Miami Beach"],
+      ["#request-firstName", "Kim"],
+      ["#request-mobile", "305 555 0142"],
+      ["#request-email", "kim.keyboard@example.com"],
+      ["#request-zip", "33139"],
     ]) {
       await tabTo(page.locator(field));
       await page.keyboard.type(value);
     }
-    await tabTo(page.getByRole("button", { name: /Next: Details/ }));
+    await page.waitForTimeout(3200); // the server refuses requests sent faster than a person
+    await tabTo(page.getByRole("button", { name: "Send request" }));
     await page.keyboard.press("Enter");
-    await tabTo(page.locator("#field-babyAge"));
-    await page.keyboard.type("Newborn"); // type-ahead picks the option (arrow keys open the menu on macOS)
-    await tabTo(page.getByRole("button", { name: /Next: Review/ }));
-    await page.keyboard.press("Enter");
-    await expect(page.getByText("Check everything")).toBeVisible();
-    await page.waitForTimeout(4500); // the server refuses forms finished in under 4 seconds
-    await tabTo(page.getByRole("button", { name: /Book my session/ }));
-    await page.keyboard.press("Enter");
-    await expect(page.getByText("Booking confirmed")).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("heading", { name: "Request sent, Kim." })).toBeVisible();
   });
 
   test("every page has one main heading and no skipped heading levels", async ({ page }, testInfo) => {

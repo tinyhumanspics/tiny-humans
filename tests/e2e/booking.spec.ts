@@ -1,236 +1,30 @@
 import { expect, test } from "@playwright/test";
-import { fillFirstStep, toDetails } from "./fixtures/booking-steps";
 
-// Instagram's in-app browser on iPhone (most ad clicks open here)
-const INSTAGRAM_UA =
-  "Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Instagram 389.0.0.29.87 (iPhone15,2; iOS 18_5; en_US; en; scale=3.00; 1179x2556; 739461213)";
+// Customer pages around a booking (manage links, shells) and the site's general pages. The booking request itself
+// (/book) is covered by book-request.spec.ts.
 
-const availableDay = (page: import("@playwright/test").Page) =>
-  page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').first();
-
-/** Runs `action` (which shows or changes the calendar month) and waits until that month's availability is shown. */
-async function loadMonth(page: import("@playwright/test").Page, action: () => Promise<unknown>) {
-  const loaded = page.waitForResponse((response) => response.url().includes("/api/booking/availability"));
-  await action();
-  await loaded;
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
-}
-
-/** Runs `open` (which shows the calendar), waits for this month's availability, then picks the first open day
- *  (next month when this one is full). Counting days before the calendar has loaded would skip a month too early.
- *  `farAhead` picks next month's last open day instead: always outside the cancel/reschedule notice window. */
-async function pickFirstOpenDay(page: import("@playwright/test").Page, open: () => Promise<unknown>, { farAhead = false } = {}) {
-  await loadMonth(page, open);
-  if (farAhead || !(await availableDay(page).count())) {
-    await loadMonth(page, () => page.getByRole("button", { name: "Next month" }).click());
-  }
-  await (farAhead ? page.locator('button[aria-label*="time available"], button[aria-label*="times available"]').last() : availableDay(page)).click();
-}
-
-/** Step 1 "About you" (owner, Nov 13): first name, email and the home's ZIP code, so the calendar only offers days
- *  that work for that ZIP (trip days); last name, phone and the address come after the time (fixtures/booking-steps). */
-const ABOUT = { firstName: "José", lastName: "Muñoz", email: "jose.test@example.com", phone: "(305) 555-0142", street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" };
-const fillAboutYou = (page: import("@playwright/test").Page, about: Record<string, string> = ABOUT) => fillFirstStep(page, about);
-const toCalendar = (page: import("@playwright/test").Page) => page.getByRole("button", { name: /Next: Date/ }).click();
-
-async function bookLittleMoments(page: import("@playwright/test").Page, { farAhead = false } = {}) {
-  const errors: string[] = [];
-  page.on("pageerror", (e) => errors.push(e.message));
-  page.on("console", (m) => m.type() === "error" && !/404|Failed to load resource/.test(m.text()) && errors.push(m.text()));
-
-  await page.goto("/bundles?utm_source=facebook&utm_medium=paid_social&fbclid=TEST");
-  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
-  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
-  await fillAboutYou(page, { ...ABOUT, unit: "1204", access: "Gate code 4821, guest parking on level 2" });
-  await pickFirstOpenDay(page, () => toCalendar(page), { farAhead });
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await expect(page.getByText(/Miami time/).first()).toBeVisible();
-  await page.locator('label[for^="time-"]').first().click();
-  await toDetails(page);
-  await expect(page.locator("#field-lastName")).toHaveCount(0);
-  // Little Moments is baby only: its notes example never mentions siblings
-  await expect(page.locator("#field-notes")).toHaveAttribute("placeholder", /feeding and nap/);
-
-  await page.selectOption("#field-babyAge", { index: 1 });
-  // optional gender: tapping the picked one again clears it
-  const girl = page.getByRole("button", { name: "Girl", exact: true });
-  await girl.click();
-  await expect(girl).toHaveAttribute("aria-pressed", "true");
-  await girl.click();
-  await expect(girl).toHaveAttribute("aria-pressed", "false");
-  await girl.click();
-  // optional permissions: both start unticked
-  await expect(page.locator("#field-consent-sms")).not.toBeChecked();
-  await expect(page.locator("#field-consent-photos")).not.toBeChecked();
-  await page.locator("#field-consent-sms").check();
-  // optional backdrop (Little Moments: 1 setup)
-  await page.getByRole("button", { name: "Pink", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Pink", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: /Next: Review/ }).click();
-  await expect(page.getByText("Check everything")).toBeVisible();
-  await expect(page.getByText("1500 Bay Rd, Unit 1204, Miami Beach 33139")).toBeVisible();
-  await expect(page.getByText("Gate code 4821, guest parking on level 2")).toBeVisible();
-  await expect(page.locator("dl").getByText("Pink", { exact: true })).toBeVisible();
-  await expect(page.locator("dl").getByText("Baby 1 (Girl, Newborn (0–2 weeks))", { exact: true })).toBeVisible();
-  await expect(page.getByText("OK to text you")).toBeVisible();
-  await expect(page.getByText("Kept private")).toBeVisible();
-  // the server refuses bookings finished in under 4 seconds (spam check): a person is never that fast
-  await page.waitForTimeout(4500);
-  await page.getByRole("button", { name: /Book my session/ }).click();
-  await expect(page.getByText("Booking confirmed")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByText("Baby 1 (Girl, Newborn (0–2 weeks))", { exact: true })).toBeVisible();
-  expect(errors).toEqual([]);
-}
-
-test("a family can book a session (mock provider)", async ({ page }, testInfo) => {
-  let submitted: unknown;
-  page.on("request", (request) => {
-    if (request.method() === "POST" && request.url().endsWith("/api/booking/create")) submitted = request.postDataJSON();
-  });
-  await bookLittleMoments(page);
-  if (process.env.CAPTURE_BOOKING_CONFIRMATION === "1") {
-    await page.screenshot({ path: `.screenshots/booking-confirmation-i18n/${testInfo.project.name}.png`, fullPage: true });
-  }
-  expect(submitted).toMatchObject({ locale: "en", babies: [{ age: "Newborn (0–2 weeks)", gender: "girl" }] });
-});
-
-test("twins add full-price time and photos to any bundle", async ({ page }, testInfo) => {
-  await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, firstName: "Twins", lastName: "Test", email: "twins.test@example.com", phone: "3055550142" });
-  await pickFirstOpenDay(page, () => toCalendar(page));
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  const time = page.locator('label[for^="time-"]').first();
-  await expect(time.getByText(/until/)).toBeVisible();
-  await time.click();
-  await toDetails(page);
-  if (process.env.CAPTURE_BOOKING_DETAILS === "1") {
-    await page.screenshot({ path: `.screenshots/booking-details-i18n/${testInfo.project.name}.png`, fullPage: true });
-  }
-
-  await expect(page.locator("#field-baby-1-name")).toHaveCount(0);
-  await expect(page.getByText("Your bundle includes one baby.")).toBeVisible();
-  await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
-  await expect(page.getByRole("button", { name: /Twins.*\+\$75.*\+30 min.*\+5 photos/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Triplets.*\+\$150.*\+60 min.*\+10 photos/ })).toBeVisible();
-  await page.getByRole("button", { name: /Twins.*\+\$75/ }).click();
-  await expect(page.locator("#field-baby-1-name")).toBeVisible();
-  await expect(page.getByText(/Each extra baby adds \$75, 30 minutes and 5 edited photos/)).toBeVisible();
-  await expect(page.getByText(/Up to 90 minutes total · 13 edited photos/)).toBeVisible();
-
-  await page.fill("#field-babyName", "Luna");
-  await page.selectOption("#field-babyAge", { index: 1 });
-  await page.fill("#field-baby-1-name", "Mia");
-  await page.selectOption("#field-baby-1-age", { index: 1 });
-  await page.getByRole("button", { name: /Next: Review/ }).click();
-  if (process.env.CAPTURE_BOOKING_REVIEW === "1") {
-    await page.screenshot({ path: `.screenshots/booking-review-i18n/${testInfo.project.name}.png`, fullPage: true });
-  }
-
-  await expect(page.getByText("1 × $75 = $75", { exact: true })).toBeVisible();
-  await expect(page.getByText("$224", { exact: true })).toBeVisible();
-  await expect(page.getByText(/Luna \(Newborn \(0–2 weeks\)\), Mia \(Newborn \(0–2 weeks\)\)/)).toBeVisible();
-});
-
-test("a longer twins or triplets session keeps details and asks for another time only when needed", async ({ page }) => {
-  await page.route("**/api/booking/availability?*", async (route) => {
-    const url = new URL(route.request().url());
-    const date = url.searchParams.get("from")!;
-    const multiple = url.searchParams.get("babies") !== "1";
-    const slot = multiple
-      ? { id: `${date}T14:00`, date, start: "14:00", end: "16:00", label: "2:00 pm" }
-      : { id: `${date}T16:00`, date, start: "16:00", end: "17:00", label: "4:00 pm" };
-    await route.fulfill({ json: { days: [{ date, slots: [slot] }] } });
-  });
-
-  await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, firstName: "Saved", lastName: "Parent" });
-  await toCalendar(page);
-  await availableDay(page).click();
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await page.locator('label[for^="time-"]').click();
-  await toDetails(page);
-  await page.fill("#field-babyName", "Luna");
-  await page.selectOption("#field-babyAge", { index: 1 });
-  await page.getByRole("button", { name: "Shooting twins or triplets?" }).click();
-  await page.getByRole("button", { name: /Triplets.*\+\$150/ }).click();
-
-  await expect(page.getByText(/previous time doesn't have enough room/)).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Pick a time" })).toBeVisible();
-  await page.locator('label[for^="time-"]').click();
-  await toDetails(page);
-  await expect(page.locator("#field-babyName")).toHaveValue("Luna");
-  await expect(page.getByText("Baby 3", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: /Step 4, Home/ }).click();
-  await expect(page.locator("#field-lastName")).toHaveValue("Parent");
-  await page.getByRole("button", { name: /Step 1, You/ }).click();
-  await expect(page.locator("#field-firstName")).toHaveValue("Saved");
-});
-
-test("a full language-page reload keeps the booking step, details and backdrop picks", async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the session-transfer mechanism used by EN/ES.");
-  await page.goto("/book?bundle=our-little-story");
-  await fillAboutYou(page, { ...ABOUT, firstName: "Saved", lastName: "Parent", email: "saved.parent@example.com" });
-  await pickFirstOpenDay(page, () => toCalendar(page));
-  await page.getByRole("button", { name: /Next: Time/ }).click();
-  await page.locator('label[for^="time-"]').first().click();
-  await toDetails(page);
-
-  await page.getByRole("button", { name: "Cream", exact: true }).click();
-  await page.getByRole("button", { name: "Wooden", exact: true }).click();
-  await expect(page.getByText(/one for each of your 2 setups/i)).toBeVisible();
-
-  // Spanish is intentionally gated off in the isolated test build. This dispatches the same synchronous handoff
-  // event as the real EN | ES link, then performs the same full document navigation on the matching local route.
-  await page.evaluate(() => {
-    window.dispatchEvent(new CustomEvent("tiny-humans:booking-language-switch", { detail: { targetPath: "/book" } }));
-  });
-  await page.reload();
-
-  await expect(page.getByRole("heading", { name: "Tell us about your family" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Cream", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: "Wooden", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: /Step 1, You/ }).click();
-  await expect(page.locator("#field-firstName")).toHaveValue("Saved");
-  await expect(page.locator("#field-email")).toHaveValue("saved.parent@example.com");
-});
-
-test("mock mode previews the confirmation email (React Email rendered in the browser)", async ({ page }) => {
-  await bookLittleMoments(page);
-  await page.getByRole("button", { name: "Preview the confirmation email" }).click();
-  const email = page.frameLocator('iframe[title="English confirmation email preview"]');
-  await expect(email.getByRole("heading", { name: /You're booked, José!/ })).toBeVisible();
-  await expect(email.getByRole("link", { name: "Reschedule Booking" })).toBeVisible();
-  await expect(email.getByText("1500 Bay Rd, Unit 1204, Miami Beach, FL 33139").first()).toBeVisible();
-  await page.getByRole("button", { name: "Close" }).click();
-  await page.getByRole("button", { name: "Preview the Spanish email" }).click();
-  const spanish = page.frameLocator('iframe[title="Spanish confirmation email preview"]');
-  await expect(spanish.getByRole("heading", { name: /Tu sesión está reservada, José!/ })).toBeVisible();
-  await expect(spanish.getByRole("link", { name: "Cambiar la fecha o la hora" })).toBeVisible();
-  await expect(spanish.getByText("Rosa", { exact: true })).toBeVisible();
-  await expect(spanish.locator("body")).toContainText(/(?:lunes|martes|miércoles|jueves|viernes|sábado|domingo), \d+ de \w+ de 2026/);
-});
-
-test("mock management links show the booking and allow cancellation", async ({ page }, testInfo) => {
-  // A session weeks away, so online cancellation is still open (inside the notice window it's correctly refused).
-  await bookLittleMoments(page, { farAhead: true });
-  await page.getByRole("button", { name: "Try the Reschedule link" }).click();
+test("management links: reschedule shows the session, and cancel asks for a reason (APIs faked)", async ({ page }) => {
+  const booking = { reference: "TH-20261201-0001", bundleId: "little-moments", bundleName: "Little Moments", date: "2026-12-01", start: "09:00", end: "10:00", parentFirstName: "Ana", status: "active" as const };
+  await page.route("**/api/booking/manage?*", (r) => r.fulfill({ json: { booking: { ...booking, location: "1500 Bay Rd, Miami Beach, FL 33139", canReschedule: true, rescheduleNoticeHours: 48 } } }));
+  await page.route("**/api/booking/manage/availability?*", (r) => r.fulfill({ json: { days: [] } }));
+  await page.goto("/reschedule?t=test-token-0123456789abcdef");
   await expect(page.getByRole("heading", { name: "Reschedule your session" })).toBeVisible();
   await expect(page.getByText("Your Current Session")).toBeVisible();
   await expect(page.getByText("Little Moments", { exact: true })).toBeVisible();
-  if (process.env.CAPTURE_MANAGE_PAGES === "1") {
-    await page.screenshot({ path: `.screenshots/manage-pages-i18n/reschedule-${testInfo.project.name}.png`, fullPage: true });
-  }
 
-  const token = new URL(page.url()).searchParams.get("t");
-  expect(token).toBeTruthy();
-  await page.goto(`/cancel?t=${encodeURIComponent(token!)}`);
+  let reason = "";
+  await page.route("**/api/booking/cancel*", async (r) => {
+    const summary = { ...booking, canCancel: true, noticeHours: 48 };
+    if (r.request().method() === "GET") return r.fulfill({ json: { booking: summary } });
+    reason = (r.request().postDataJSON() as { reason: string }).reason;
+    return r.fulfill({ json: { booking: { ...summary, status: "cancelled", canCancel: false } } });
+  });
+  await page.goto("/cancel?t=test-token-0123456789abcdef");
   await expect(page.getByRole("heading", { name: "Cancel your session?" })).toBeVisible();
-  if (process.env.CAPTURE_MANAGE_PAGES === "1") {
-    await page.screenshot({ path: `.screenshots/manage-pages-i18n/cancel-${testInfo.project.name}.png`, fullPage: true });
-  }
   await page.fill("#cancel-reason", "Our plans changed");
   await page.getByRole("button", { name: "Confirm Cancellation" }).click();
   await expect(page.getByRole("heading", { name: "Your session has been cancelled" })).toBeVisible();
+  expect(reason).toBe("Our plans changed");
 });
 
 test("email-linked customer tool shells load safely", async ({ page }, testInfo) => {
@@ -249,21 +43,6 @@ test("email-linked customer tool shells load safely", async ({ page }, testInfo)
   await expect(page.getByRole("heading", { name: "Thank you!" })).toBeVisible();
   await expect(page.getByText("Your payment is complete. We can't wait for you to see your photos.")).toBeVisible();
   if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/pay-${testInfo.project.name}.png`, fullPage: true });
-});
-
-test("booking works in the Instagram in-app browser", async ({ browser }, testInfo) => {
-  test.skip(testInfo.project.name !== "desktop-chrome", "One explicit Instagram browser context is enough.");
-  const ctx = await browser.newContext({ userAgent: INSTAGRAM_UA, viewport: { width: 390, height: 664 }, isMobile: true, hasTouch: true });
-  await bookLittleMoments(await ctx.newPage());
-  await ctx.close();
-});
-
-test("a ZIP code outside Florida can't be booked", async ({ page }) => {
-  await page.goto("/book?bundle=little-moments");
-  await fillAboutYou(page, { ...ABOUT, firstName: "Ana", email: "ana.test@example.com", zip: "30303" });
-  await toCalendar(page);
-  await expect(page.getByText("We only come to homes in Florida. Please check the ZIP code.")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Pick a day" })).toHaveCount(0);
 });
 
 test("the landing page and legal pages load", async ({ page }) => {
@@ -293,16 +72,6 @@ test("the About photo placeholder has customer-facing accessible copy", async ({
   await page.goto("/about");
   await expect(page.getByRole("img", { name: "Photo coming soon: Adrian & Alondra" })).toBeVisible();
   await expect(page.getByText("photo coming soon").first()).toBeVisible();
-});
-
-test("/book without a bundle: the bundle picked earlier this visit, otherwise the bundles page", async ({ page }) => {
-  await page.goto("/book");
-  await expect(page).toHaveURL(/\/bundles$/);
-  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
-  await expect(page).toHaveURL(/\/book\?bundle=little-moments/);
-  await page.goto("/book");
-  await expect(page).toHaveURL(/\/book\?bundle=little-moments$/);
-  await expect(page.getByRole("button", { name: /Next: Date/ })).toBeVisible();
 });
 
 test("unknown pages show the chalkboard 404", async ({ page }) => {

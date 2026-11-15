@@ -9,10 +9,8 @@ import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking";
-import { forgetDepositReturn } from "@/lib/booking/deposit-return";
 import type { DepositReturnState } from "@/lib/deposit/types";
 import { fill } from "@/lib/email/messages";
-import { formatMoney } from "@/lib/pricing/engine";
 import { trackBooked } from "@/lib/tracking/client";
 import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";
@@ -27,7 +25,6 @@ const SLOW_AFTER = 24;
 /** Back from Stripe's success page before Stripe's answer reached us: ask again a few times. */
 const PAID_RETRIES = 6;
 
-const miamiClock = (iso: string, locale: AppLocale) => new Intl.DateTimeFormat(locale === "es" ? "es-US" : "en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(iso)).toLowerCase();
 
 /**
  * The booking page after the deposit's Stripe page (/book?bundle=…&deposit=<reference>&k=<signature>[&paid=1]):
@@ -41,7 +38,6 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [state, setState] = useState<DepositReturnState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const polls = useRef(0);
   const [slow, setSlow] = useState(false);
 
@@ -77,7 +73,6 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
 
   useEffect(() => {
     if (!state || state.state === "waiting" || state.state === "confirming") return;
-    forgetDepositReturn();
     if (state.state === "confirmed" && state.requestId) {
       const b = state.booking;
       trackBooked({
@@ -91,21 +86,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
     }
   }, [state]);
 
-  const pickAnother = async () => {
-    setBusy(true);
-    try {
-      const res = await fetch("/api/booking/deposit/release", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ b: reference, k: signature }) });
-      const data = (await res.json().catch(() => null)) as DepositReturnState | null;
-      if (!res.ok || !data?.state) throw new Error(t.error);
-      if (data.state === "confirmed" || data.state === "confirming") return setState(data);
-      startOver();
-    } catch {
-      setError(t.error);
-      setBusy(false);
-    }
-  };
   const startOver = () => {
-    forgetDepositReturn();
     router.replace(scheduleHref(bundleId, undefined, locale));
   };
 
@@ -122,31 +103,9 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
             <p className={cn(styles.confirmText, "chalk-soft")}>{slow ? t.confirmingSlow : t.confirmingText}</p>
           </div>
         );
-      case "waiting": {
-        // booked by the owner for them: pick backdrops, then pay (owner, Nov 12)
-        if (state.ownerBooked) return <OwnerBookedSteps state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
-        const when = { date: formatLongDate(state.date, locale), time: formatTimeLabel(state.start, locale) };
-        const deposit = formatMoney(state.amountCents);
-        return (
-          <div className={styles.confirm}>
-            <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>{t.waitingTitle}</h2>
-            <p className={cn(styles.confirmText, "chalk-soft")}>
-              {state.payUrl && state.holdUntil ? fill(t.waitingText, { ...when, until: miamiClock(state.holdUntil, locale), deposit }) : fill(t.waitingClosed, when)}
-            </p>
-            <div className={styles.depositActions}>
-              {state.payUrl && (
-                <ChalkButton href={state.payUrl} variant="solid" seed={95}>
-                  {fill(t.pay, { deposit })}
-                </ChalkButton>
-              )}
-              <ChalkButton variant="outline" onClick={pickAnother} disabled={busy} seed={96}>
-                {busy ? t.releasing : t.another}
-              </ChalkButton>
-            </div>
-            {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
-          </div>
-        );
-      }
+      case "waiting":
+        // a booking the owner made for them (Requests or "Book it for them"): pick backdrops, then pay
+        return <OwnerBookedSteps state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
       case "expired":
         return (
           <div className={styles.confirm}>

@@ -9,6 +9,7 @@ import { getBookingProvider } from "@/lib/booking/server";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import type { BookingRequestRow } from "@/lib/db/schema";
 import { depositOfferFor } from "@/lib/deposit/server";
+import { dueByToken } from "@/lib/due-date/server";
 import { dueWindow } from "@/lib/due-date/types";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { fill } from "@/lib/email/messages";
@@ -52,8 +53,15 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
   const messages = r.locale === "es" ? es : en;
   const provider = getBookingProvider();
 
+  // sent from a due-date reservation's schedule link: that reservation's bundle, babies and kept price
+  const due = r.dueToken ? await dueByToken(r.dueToken) : null;
+  if (r.dueToken && (!due || due.status !== "reserved" || due.packageId !== r.bundleId || r.type !== "date")) {
+    throw new BookingError("invalid_request", fill(messages.bookingFlow.due.used, { phone: site.contact.phone }));
+  }
+  const babyCount = due?.babyCount ?? r.babyCount;
+
   // price: the bundle (with any running offer) + extra babies, exactly like the booking form; never from the browser
-  const pricing = await provider.quote(r.bundleId, undefined, r.email, r.babyCount);
+  const pricing = await provider.quote(r.bundleId, undefined, r.email, babyCount, 0, r.dueToken);
 
   // the home: Florida only, and not farther than the owner's limit (those families text instead)
   const travel = travelQuote(r.zip, await getTravelSettings());
@@ -64,7 +72,7 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
   if (r.type === "date") {
     const slot = r.slot!;
     // the time is still open for this bundle and baby count (Outlook, bookings and other families' request holds)
-    const [day] = await provider.getAvailability({ bundleId: r.bundleId, babyCount: r.babyCount, from: slot.date, to: slot.date });
+    const [day] = await provider.getAvailability({ bundleId: r.bundleId, babyCount, from: slot.date, to: slot.date });
     const open = day?.slots.find((s) => s.start === slot.start);
     if (!open) throw new BookingError("slot_unavailable", messages.bookingRequest.details.errors.slotTaken);
     const tz = bookingRules.timeZone;
@@ -83,7 +91,7 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
     status: "new",
     bundleId: pricing.bundleId,
     bundleName: pricing.bundleName,
-    babyCount: r.babyCount,
+    babyCount,
     bundleCents: pricing.finalCents,
     addonsCents: pricing.addonsCents,
     totalCents: pricing.totalCents,
@@ -98,6 +106,8 @@ export async function createRequest(r: ValidRequest, now = new Date()): Promise<
     travelFeeCents: travel.feeCents,
     textConsent: r.textConsent,
     consentVersion: TEXT_CONSENT_VERSION,
+    dueId: due?.id ?? null,
+    inspirationId: r.inspiration || null,
   };
   let row: BookingRequestRow;
   try {
@@ -128,7 +138,7 @@ export async function sendRequestEmails(row: BookingRequestRow): Promise<void> {
     const themeId = await getSiteSettings()
       .then((s) => s.themeId)
       .catch(() => "default");
-    const mail = await requestReceivedEmail(row, { themeId, locale, bundleName, depositCents: await depositOfferFor(row.bundleId) });
+    const mail = await requestReceivedEmail(row, { themeId, locale, bundleName, depositCents: row.dueId ? null : await depositOfferFor(row.bundleId) });
     await sendEmail({ scope: "resend.request_received", to: row.email, subject: mail.subject, html: mail.html, text: mail.text, attachments: mail.attachments, replyTo: emailConfig().notify, idempotencyKey: `request-received/${row.id}`, reference: row.reference });
   } catch (err) {
     log.error("requests", "Request received email not sent", { reference: row.reference, error: err as Error });

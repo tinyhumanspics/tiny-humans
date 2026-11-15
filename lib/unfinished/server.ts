@@ -2,7 +2,7 @@ import "server-only";
 import { and, desc, eq, gte, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import { bookingRules, scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
-import { unfinishedRules, type DraftStep, type FeedbackReason, type FunnelStep } from "@/config/unfinished";
+import { unfinishedRules, type FeedbackReason, type FunnelStep } from "@/config/unfinished";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
 import { BookingError } from "@/lib/booking/errors";
@@ -17,9 +17,7 @@ import { log } from "@/lib/log";
 import { getCatalog, getPublicCatalog } from "@/lib/pricing/server";
 import { getSiteSettings } from "@/lib/settings/server";
 import { decodeAttribution, sourceLabel } from "@/lib/tracking/attribution";
-import { travelQuote } from "@/lib/travel/distance";
-import { getTravelSettings } from "@/lib/travel/server";
-import { draftStage, dueDraftStage, emailKey, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "./summary";
+import { draftStage, dueDraftStage, emailKey, funnelSummary, needsFollowUp, reasonSummary } from "./summary";
 import type { FollowUpResult, UnfinishedData, UnfinishedItem } from "./types";
 
 /**
@@ -39,96 +37,6 @@ function skipIfMissing(err: unknown, scope: string): void {
     return;
   }
   log.error(scope, "Unfinished-booking save failed", { error: err as Error });
-}
-
-export interface DraftInput {
-  email: string;
-  parentName?: string;
-  phone?: string;
-  bundleId: string;
-  date?: string;
-  start?: string;
-  zip?: string;
-  step: DraftStep;
-  locale: AppLocale;
-  /** An email saved a moment ago on the same form that they then corrected: removed if it's still fresh. */
-  replaces?: string;
-  /** "Not born yet?" (/due-date); left out on the booking form. */
-  form?: "due_date";
-}
-
-/** Which form this draft came from now (only "due_date" is stored). Best effort: no table (0029) = no label. */
-async function saveDraftForm(draftId: string, form: "due_date" | undefined): Promise<void> {
-  try {
-    const db = getDb();
-    if (form) await db.insert(bookingDraftForms).values({ draftId, form, updatedAt: new Date() }).onConflictDoUpdate({ target: bookingDraftForms.draftId, set: { form, updatedAt: new Date() } });
-    else await db.delete(bookingDraftForms).where(eq(bookingDraftForms.draftId, draftId));
-  } catch (err) {
-    if (!isMissingTable(err)) log.error("unfinished.form", "Draft form label not saved", { error: err as Error });
-  }
-}
-
-/** Saves what the family has typed so far (POST /api/booking/draft). Best effort: never throws. */
-export async function saveDraft(input: DraftInput, sourceCookie: string | undefined, now = new Date()): Promise<void> {
-  if (!isDatabaseConfigured()) return;
-  try {
-    const key = emailKey(input.email);
-    const [bundle, travel] = await Promise.all([
-      getCatalog().then((all) => all.find((b) => b.id === input.bundleId) ?? null).catch(() => null),
-      input.zip ? getTravelSettings().then((s) => travelQuote(input.zip!, s)).catch(() => null) : Promise.resolve(null),
-    ]);
-    const attribution = decodeAttribution(sourceCookie);
-    const fields = {
-      email: input.email.trim(),
-      parentName: input.parentName?.trim() || null,
-      phone: input.phone?.trim() || null,
-      bundleId: bundle?.id ?? null,
-      bundleName: bundle?.name ?? null,
-      sessionDate: input.date ?? null,
-      startTime: input.start ?? null,
-      zip: input.zip ?? null,
-      travelFeeCents: travel && travel.status === "fee" ? travel.feeCents : travel ? 0 : null,
-      locale: input.locale,
-      updatedAt: now,
-    };
-    const db = getDb();
-    if (input.replaces && emailKey(input.replaces) !== key) {
-      // a typo they fixed on the same form: never touch a family that booked, was emailed, or isn't from the last 2 hours
-      await db
-        .delete(bookingDrafts)
-        .where(and(eq(bookingDrafts.emailKey, emailKey(input.replaces)), isNull(bookingDrafts.bookedReference), isNull(bookingDrafts.followUpStatus), gte(bookingDrafts.createdAt, new Date(now.getTime() - 2 * 3_600_000))));
-    }
-    const [existing] = await db.select().from(bookingDrafts).where(eq(bookingDrafts.emailKey, key)).limit(1);
-    if (!existing) {
-      const [row] = await db
-        .insert(bookingDrafts)
-        .values({ ...fields, emailKey: key, step: input.step, source: attribution ? sourceLabel(attribution) : null, campaign: attribution?.utmCampaign ?? null, createdAt: now })
-        // two saves at once (typing fast): the second one just updates
-        .onConflictDoUpdate({ target: bookingDrafts.emailKey, set: { ...fields } })
-        .returning({ id: bookingDrafts.id });
-      if (row) await saveDraftForm(row.id, input.form);
-      return;
-    }
-    const merge = mergeDraft(existing, { step: input.step, at: now });
-    if (merge.action === "ignore") return;
-    await db
-      .update(bookingDrafts)
-      .set({
-        ...fields,
-        // keep what they typed earlier if this save left a box empty
-        parentName: fields.parentName ?? existing.parentName,
-        phone: fields.phone ?? existing.phone,
-        step: merge.step,
-        attempts: merge.attempts,
-        ...(merge.clearBooking ? { bookedReference: null, bookedAt: null } : {}),
-        source: existing.source ?? (attribution ? sourceLabel(attribution) : null),
-        campaign: existing.campaign ?? attribution?.utmCampaign ?? null,
-      })
-      .where(eq(bookingDrafts.id, existing.id));
-    await saveDraftForm(existing.id, input.form);
-  } catch (err) {
-    skipIfMissing(err, "unfinished.save");
-  }
 }
 
 /** After a booking is created (also one waiting on its deposit): this email's draft is "booked". Best effort. */

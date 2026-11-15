@@ -51,6 +51,7 @@ export async function insertRequest(values: NewRequestRow, now = new Date()): Pr
       consentVersion: null,
       bookingId: null,
       dueId: null,
+      inspirationId: null,
       ...values,
     } as BookingRequestRow;
     mem.push(row);
@@ -114,7 +115,9 @@ async function change(id: string, set: Partial<BookingRequestRow>, when: (r: Boo
   return row ?? null;
 }
 
-const unlinked = (r: BookingRequestRow) => !r.bookingId && !r.dueId;
+/** Nothing made from it yet (a day-and-time request's due_id is where it came from, not something made from it). */
+const unlinked = (r: BookingRequestRow) => !r.bookingId && (r.type === "date" || !r.dueId);
+const unlinkedSql = () => and(isNull(bookingRequests.bookingId), or(eq(bookingRequests.type, "date"), isNull(bookingRequests.dueId)));
 
 /**
  * "Confirm" pressed: new → confirmed before the booking is made, so the request's own hold no longer blocks its time
@@ -126,21 +129,21 @@ export function claimRequest(id: string, now = new Date()): Promise<BookingReque
     id,
     { status: "confirmed" },
     (r) => r.status === "new" || (r.status === "confirmed" && unlinked(r) && r.updatedAt < stale),
-    or(eq(bookingRequests.status, "new"), and(eq(bookingRequests.status, "confirmed"), isNull(bookingRequests.bookingId), isNull(bookingRequests.dueId), lt(bookingRequests.updatedAt, stale))),
+    or(eq(bookingRequests.status, "new"), and(eq(bookingRequests.status, "confirmed"), unlinkedSql(), lt(bookingRequests.updatedAt, stale))),
     now,
   );
 }
 
 /** The booking failed: back to new (its hold counts again until it lapses). */
 export async function unclaimRequest(id: string): Promise<void> {
-  await change(id, { status: "new" }, (r) => r.status === "confirmed" && unlinked(r), and(eq(bookingRequests.status, "confirmed"), isNull(bookingRequests.bookingId), isNull(bookingRequests.dueId))).catch((err) =>
+  await change(id, { status: "new" }, (r) => r.status === "confirmed" && unlinked(r), and(eq(bookingRequests.status, "confirmed"), unlinkedSql())).catch((err) =>
     log.error("requests", "Request not given back after a failed confirm", { error: err as Error }),
   );
 }
 
 /** The booking or reservation made from it: confirmed (waiting on the deposit) or booked (nothing to pay). */
 export function linkRequest(id: string, link: { bookingId?: string; dueId?: string }, status: "confirmed" | "booked"): Promise<BookingRequestRow | null> {
-  return change(id, { status, bookingId: link.bookingId ?? null, dueId: link.dueId ?? null }, (r) => r.status === "confirmed", eq(bookingRequests.status, "confirmed"));
+  return change(id, { status, ...(link.bookingId ? { bookingId: link.bookingId } : {}), ...(link.dueId ? { dueId: link.dueId } : {}) }, (r) => r.status === "confirmed", eq(bookingRequests.status, "confirmed"));
 }
 
 /** "Decline": a new request (or a claim that never finished) ends, and its hold with it. */
@@ -149,8 +152,20 @@ export function declineRequest(id: string): Promise<BookingRequestRow | null> {
     id,
     { status: "declined" },
     (r) => r.status === "new" || (r.status === "confirmed" && unlinked(r)),
-    or(eq(bookingRequests.status, "new"), and(eq(bookingRequests.status, "confirmed"), isNull(bookingRequests.bookingId), isNull(bookingRequests.dueId))),
+    or(eq(bookingRequests.status, "new"), and(eq(bookingRequests.status, "confirmed"), unlinkedSql())),
   );
+}
+
+/** "Delete" (owner, Nov 14: tests): gone for good, and its hold with it. A booking or reservation made from it stays. */
+export async function deleteRequest(id: string): Promise<boolean> {
+  const mem = inMemory();
+  if (mem) {
+    const i = mem.findIndex((r) => r.id === id);
+    if (i >= 0) mem.splice(i, 1);
+    return i >= 0;
+  }
+  const gone = await getDb().delete(bookingRequests).where(eq(bookingRequests.id, id)).returning({ id: bookingRequests.id });
+  return gone.length > 0;
 }
 
 /**

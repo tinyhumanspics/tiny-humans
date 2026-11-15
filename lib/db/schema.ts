@@ -1242,8 +1242,14 @@ export const bookingRequests = pgTable(
     textConsent: boolean("text_consent").notNull().default(false),
     consentVersion: text("consent_version"),
     bookingId: uuid("booking_id").references(() => bookings.id, { onDelete: "set null" }),
-    /** A "Not born yet" request the owner confirmed: its due-date reservation (deposit link, then the session). */
+    /**
+     * Its due-date reservation: for a "Not born yet" request, the one the owner made when confirming (deposit link);
+     * for a day-and-time request sent from a reservation's schedule link, the reservation it books (kept price, paid
+     * deposit).
+     */
     dueId: uuid("due_id").references(() => dueDateReservations.id, { onDelete: "set null" }),
+    /** The portfolio photo the family picked as inspiration ("Book a memory like this one"), passed to the booking. */
+    inspirationId: text("inspiration_id"),
   },
   (t) => [
     uniqueIndex("booking_requests_reference_idx").on(t.reference),

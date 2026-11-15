@@ -4,7 +4,6 @@ import { babiesLabel } from "@/lib/booking/extra-babies";
 import { bookingBabiesLabel } from "@/lib/booking/customer-page-format";
 import { customerBabiesLabel } from "@/lib/email/customer-format";
 import { sanitizeLogFields } from "@/lib/security/logging";
-import { initialState, isLanguageDraftPayload } from "@/features/booking/flow/booking-state";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 
@@ -14,15 +13,6 @@ const request = (babies: unknown[]) => ({
   slot: { date: "2026-11-10", start: "10:00" },
   contact: { parentName: "Test Parent", email: "test@example.com", phone: "3055550100", babyAge: "Newborn (0–2 weeks)" },
   address: { street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" },
-});
-
-const draft = (babies: unknown[]) => ({
-  state: { ...initialState, bundleId: "little-moments", babies },
-  backdrops: [],
-  month: "2026-11",
-  appliedCode: null,
-  openedAt: 1,
-  requestId: null,
 });
 
 describe("baby gender (optional, boy or girl)", () => {
@@ -41,12 +31,6 @@ describe("baby gender (optional, boy or girl)", () => {
       "Bebé 1 (Niño, 2–6 semanas), Bebé 2 (2–6 semanas)",
     );
     expect(customerBabiesLabel(babies, "es")).toBe("Luna (Niña, Recién nacido (0–2 semanas)), Bebé 2 (Aún no ha nacido)");
-  });
-
-  test("a language switch keeps drafts saved before gender existed and rejects unknown values", () => {
-    expect(isLanguageDraftPayload(draft([{ name: "", age: "" }]), "little-moments")).toBe(true);
-    expect(isLanguageDraftPayload(draft([{ name: "", age: "", gender: "girl" }]), "little-moments")).toBe(true);
-    expect(isLanguageDraftPayload(draft([{ name: "", age: "", gender: "other" }]), "little-moments")).toBe(false);
   });
 
   test("server logs never keep it", () => {

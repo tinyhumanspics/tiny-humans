@@ -522,20 +522,6 @@
       "title": "Creemos algunos recuerdos",
       "subtitle": "Elige un día y una hora, y llevaremos el estudio a tu puerta. Solo toma unos dos minutos."
     },
-    "steps": [
-      { "id": "you", "label": "Tú", "title": "Sobre ti" },
-      { "id": "date", "label": "Fecha", "title": "Elige un día" },
-      { "id": "time", "label": "Hora", "title": "Elige una hora" },
-      { "id": "contact", "label": "Hogar", "title": "Tu teléfono y tu hogar" },
-      { "id": "details", "label": "Detalles", "title": "Cuéntanos sobre tu familia" },
-      { "id": "review", "label": "Revisar", "title": "Revisa todos los detalles" }
-    ],
-    "tracker": {
-      "label": "Pasos de la reserva",
-      "mobile": "Paso {current} de {total}: {label}",
-      "step": "Paso {current}, {label}{done}",
-      "done": ", completado"
-    },
     "calendar": {
       "weekdays": ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sá"],
       "months": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"],
@@ -556,34 +542,7 @@
       "filled": "Este día acaba de llenarse. Regresa y elige otro día.",
       "until": "hasta las {time}"
     },
-    "actions": {
-      "back": "Atrás",
-      "next": "Siguiente: {label}",
-      "booking": "Reservando…",
-      "book": "Reservar mi sesión"
-    },
-    "babyLed": {
-      "one": "Nuestras sesiones siguen el ritmo de tu bebé. Hay tiempo para alimentarlo, cambiarlo y consolarlo cuando lo necesite.",
-      "many": "Nuestras sesiones siguen el ritmo de tus bebés. Hay tiempo para alimentarlos, cambiarlos y consolarlos cuando lo necesiten."
-    },
     "firstStep": "Primero solo necesitamos tus datos. En el siguiente paso verás las fechas disponibles.",
-    "summary": {
-      "yourBundle": "Tu paquete",
-      "inspiredBy": "Inspirado en",
-      "removeInspiration": "Quitar la foto de inspiración",
-      "remove": "Quitar",
-      "changeBundle": "Cambiar paquete",
-      "editedPhotos": "{count} fotos editadas",
-      "extraBaby": "Bebé adicional",
-      "extraBabies": "Bebés adicionales",
-      "extraPerson": "Familiar adicional",
-      "extraPeople": "Familiares adicionales",
-      "durationMinutes": "Hasta {minutes} minutos",
-      "durationHour": "Hasta 1 hora",
-      "durationHours": "Hasta {hours} horas",
-      "totalDuration": "{duration} en total",
-      "deposit": "Un depósito de {deposit} guarda tu fecha. Es parte de tu total; el resto se paga después de tu sesión."
-    },
     "details": {
       "optional": " (opcional)",
       "honeypot": "Deja este campo vacío",
@@ -592,8 +551,6 @@
       "lastName": "Apellido",
       "zipFirst": "Código postal de tu hogar",
       "email": "Correo electrónico",
-      "saveNote": "Guardamos tu información de contacto mientras escribes, para poder darte seguimiento si no pudiste terminar tu reserva. Consulta nuestra {privacy}.",
-      "saveNotePrivacy": "Política de privacidad",
       "phone": "Teléfono",
       "address": {
         "title": "¿Dónde debemos llevar el estudio?",
@@ -602,18 +559,14 @@
         "unit": "Apartamento / unidad",
         "city": "Ciudad",
         "zip": "Código postal",
-        "access": "Código de entrada, estacionamiento o recepción",
-        "accessPlaceholder": "Código de entrada, dónde estacionar, registrarnos en la recepción…"
+        "access": "Código de entrada, estacionamiento o recepción"
       },
       "baby": {
         "one": "Tu bebé",
-        "many": "Bebés",
         "number": "Bebé {number}",
         "name": "Nombre del bebé",
         "age": "Edad (obligatoria)",
         "chooseAge": "Elige una edad",
-        "ageError": "Elige una edad para cada bebé.",
-        "olderNote": "¿Tu pequeño tiene más de 2 años? Escríbenos a {email} y te avisaremos cuando aceptemos más edades.",
         "ageOptions": ["Recién nacido (0–2 semanas)", "2–6 semanas", "6 semanas–3 meses", "3–6 meses", "6–12 meses", "1–2 años", "Aún no ha nacido"],
         "gender": "Género",
         "genders": { "boy": "Niño", "girl": "Niña" }
@@ -621,44 +574,28 @@
       "family": {
         "title": "¿Quién más sale en las fotos?",
         "hint": "Tu paquete incluye hasta {included} personas en total, contando a tu bebé. Los nombres son opcionales.",
-        "extraPrice": "Cada persona adicional cuesta +{price}.",
-        "extraOne": "1 persona adicional: +{total}",
-        "extraMany": "{count} personas adicionales: +{total}",
-        "overLimit": "Este paquete no tiene lugar para esta persona. Por favor, quítala.",
-        "member": "Familiar {number}",
         "role": "¿Quién es?",
-        "chooseRole": "Elige uno",
         "name": "Nombre",
         "add": "+ Agregar un familiar",
         "remove": "Quitar",
-        "removeLabel": "Quitar el familiar {number}",
-        "full": "Es el máximo que permite este paquete.",
         "roles": { "mom": "Mamá", "dad": "Papá", "sister": "Hermana", "brother": "Hermano", "grandma": "Abuela", "grandpa": "Abuelo", "aunt": "Tía", "uncle": "Tío", "cousin": "Primo o prima", "other": "Otro familiar" }
       },
       "extraBabies": {
         "one": "1 bebé",
-        "two": "Gemelos",
-        "three": "Trillizos",
-        "included": "Tu paquete incluye un bebé.",
         "question": "¿La sesión es para gemelos o trillizos?",
         "choose": "Elige gemelos o trillizos",
         "details": "Cada bebé adicional agrega {price}, {minutes} minutos y {photos} fotos editadas.",
-        "fullPrice": "Las ofertas especiales y los códigos de descuento se aplican solo al paquete.",
         "choice": "+{price} · +{minutes} min · +{photos} fotos",
-        "checking": "Comprobando que el horario elegido todavía tenga suficiente tiempo…",
-        "checkFailed": "No pudimos comprobar ese horario. Vuelve a elegir la opción de gemelos o trillizos.",
-        "timeUnavailable": "El horario anterior no tiene suficiente tiempo para una sesión de gemelos o trillizos. Guardamos tu información; elige otro horario."
+        "checking": "Comprobando que el horario elegido todavía tenga suficiente tiempo…"
       },
       "notes": {
         "label": "Notas o solicitudes especiales",
-        "placeholder": "Hermanos que participarán, colores favoritos, algún recuerdo familiar que quieras incluir…",
-        "placeholderBabyOnly": "Colores favoritos, algún recuerdo familiar que quieras incluir, los horarios habituales de comida y siesta del bebé…"
+        "placeholder": "Hermanos que participarán, colores favoritos, algún recuerdo familiar que quieras incluir…"
       },
       "backdrops": {
         "title": "Elige tu fondo",
         "titleMany": "Elige tus fondos",
         "hint": "Opcional. ¿Todavía no sabes cuál? Puedes omitirlo y elegirlo después desde tu correo de confirmación.",
-        "hintMany": "Opcional: uno para cada uno de tus {n} montajes. ¿Todavía no sabes cuáles? Puedes omitirlos y elegirlos después desde tu correo de confirmación.",
         "names": {
           "blueAura": "Azul Aura",
           "burgundy": "Borgoña",
@@ -702,7 +639,6 @@
     "review": {
       "and": "y",
       "labels": {
-        "package": "Paquete",
         "regularPrice": "Precio regular",
         "specialOffer": "Oferta especial",
         "discountCode": "Código de descuento",
@@ -716,7 +652,6 @@
         "travelFee": "Cargo de viaje",
         "total": "Total",
         "paymentDue": "Pago pendiente",
-        "afterPhotoshoot": "Después de la sesión de fotos",
         "inspiration": "Inspiración",
         "date": "Fecha",
         "time": "Hora",
@@ -731,20 +666,12 @@
         "notes": "Notas",
         "backdrop": "Fondo",
         "backdrops": "Fondos",
-        "backdropNone": "Aún no elegido (puedes elegirlo después)",
         "texts": "Mensajes de texto",
-        "textsYes": "Aceptaste recibir mensajes",
-        "textsNo": "Sin mensajes",
-        "photos": "Tus fotos",
-        "photosYes": "Aceptaste que las mostremos",
-        "photosNo": "Se mantendrán privadas"
+        "photos": "Tus fotos"
       },
       "timeRange": "{start} a {end} ({zone})",
       "unit": "Unidad",
       "change": "Cambiar",
-      "changeAria": "Cambiar {label}",
-      "edit": "Editar",
-      "editAria": "Editar {label}",
       "discount": {
         "label": "¿Tienes un código de descuento?",
         "optional": "(opcional)",
@@ -778,7 +705,6 @@
         "button": "Pagar depósito de {deposit}",
         "opening": "Abriendo el pago seguro…",
         "note": "Pagarás el depósito en la página segura de Stripe. Guardamos tu horario durante 30 minutos y tu reserva se confirma en cuanto se pague. Cancela en línea al menos {notice} antes de tu sesión y te lo reembolsaremos por completo.",
-        "partOfTotal": "Tu depósito de {deposit} es parte de tu total de {total}, no un cargo extra: el resto ({rest}) se paga después de tu sesión de fotos.",
         "notice": {
           "hour": "{n} hora",
           "hours": "{n} horas"
@@ -833,12 +759,7 @@
       "confirmingTitle": "¡Tu depósito está pagado!",
       "confirmingText": "Estamos agregando tu sesión a nuestro calendario. Solo tomará unos segundos.",
       "confirmingSlow": "Tu depósito está pagado y tu horario está guardado. Estamos terminando tu reserva y tu correo de confirmación llegará dentro de poco.",
-      "waitingTitle": "Tu fecha todavía no está confirmada",
-      "waitingText": "Guardamos el {date} a las {time} para ti hasta las {until} (hora de Miami). Paga el depósito de {deposit} para confirmarlo.",
-      "waitingClosed": "Guardamos el {date} a las {time} para ti durante unos minutos más. Si acabas de pagar, esta página se actualizará sola.",
       "pay": "Pagar el depósito de {deposit}",
-      "another": "Elegir otro horario",
-      "releasing": "Un momento…",
       "expiredTitle": "Este horario ya no está reservado",
       "expiredText": "El depósito para el {date} a las {time} no fue pagado, así que liberamos el horario. Puedes elegir otro; solo toma dos minutos.",
       "pickAgain": "Elegir un horario",
@@ -851,7 +772,6 @@
       "network": "No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.",
       "rateLimited": "Demasiados intentos. Espera unos minutos.",
       "slotTaken": "Ese horario acaba de reservarse. Elige otro horario.",
-      "tripDay": "Ese día no está disponible. Elige otro día, o escríbenos al {phone}.",
       "inProgress": "Todavía estamos guardando tu reserva. Un momento, por favor.",
       "date": "Elige un día en el calendario.",
       "time": "Elige una hora para continuar.",
@@ -1700,14 +1620,15 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "13 de noviembre de 2026",
+      "lastUpdated": "14 de noviembre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
           "id": "information",
           "heading": "Información que recopilamos",
           "body": [
-            "Cuando reservas una sesión, nos das:",
+            "Cuando nos envías una solicitud de reserva, nos das tu nombre, número de celular, correo electrónico y código postal, el paquete y el día y la hora (o la fecha de parto) que prefieres, y si quieres que te escribamos por mensaje de texto sobre tu solicitud. Los usamos para responder tu solicitud, y apartamos la hora que pediste por 12 horas mientras la confirmamos.",
+            "Cuando reservas una sesión (en nuestro sitio web, por mensaje de texto o en tu página “Prepara tu sesión”), nos das:",
             { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "En las sesiones familiares, quién más saldrá en las fotos (por ejemplo, mamá, papá o un hermano) y sus nombres, si decides compartirlos", "El paquete, la fecha y la hora que eliges", "Si reservas con tu fecha de parto («¿Aún no nace?»), tu fecha de parto y cuántos bebés esperas", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio (por ejemplo, el nombre de la campaña en un enlace publicitario) y la primera página que visitaste.",
             "Si empiezas una reserva y no la terminas, guardamos el nombre, el correo electrónico y el teléfono que escribiste, el paquete, la fecha y la hora que elegiste (en nuestro formulario “¿Aún no nace?”, tu fecha de parto), tu código postal y hasta qué paso llegaste, para poder escribirte. Aparte de esa fecha de parto, no guardamos los datos de tu bebé de una reserva que no terminaste. También contamos cuántos visitantes llegan a cada paso del formulario de reserva, sin nombres, correos ni nada que te identifique.",

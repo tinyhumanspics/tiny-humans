@@ -7,7 +7,7 @@ import type { BookingRequestRow } from "@/lib/db/schema";
 import { log } from "@/lib/log";
 import { errorCode, reportFailure } from "@/lib/monitoring/report";
 import { confirmRequest, declineRequest } from "@/lib/requests/confirm";
-import { listRequests, madeFor } from "@/lib/requests/store";
+import { deleteRequest, listRequests, madeFor } from "@/lib/requests/store";
 import { helloText, requestWhenText } from "@/lib/requests/texts";
 import { formatUsMobile, type RequestListItem, type RequestStatus, type RequestType } from "@/lib/requests/types";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
@@ -69,11 +69,12 @@ const body = z.discriminatedUnion("action", [
     slot: z.object({ date: z.string().refine(isDateKey, "Pick a day."), start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time.") }).optional(),
   }),
   z.object({ action: z.literal("decline"), id: z.string().uuid(), email: z.boolean() }),
+  z.object({ action: z.literal("delete"), id: z.string().uuid() }),
 ]);
 
 /**
  * Owner only. "confirm": books the request (or the day and time picked with Other time) and returns the pay link and
- * the text to send. "decline": ends it, optionally with a polite email.
+ * the text to send. "decline": ends it, optionally with a polite email. "delete": removes it for good (tests).
  */
 export async function POST(req: Request) {
   if (!(await isAdmin())) return NextResponse.json({ error: "Sign in first." }, { status: 401, headers: NO_STORE });
@@ -82,6 +83,7 @@ export async function POST(req: Request) {
   const p = body.safeParse(input);
   if (!p.success) return NextResponse.json({ error: p.error.issues[0]?.message ?? "Check the request." }, { status: 400, headers: NO_STORE });
   try {
+    if (p.data.action === "delete") return NextResponse.json({ deleted: await deleteRequest(p.data.id) }, { headers: NO_STORE });
     if (p.data.action === "decline") return NextResponse.json(await declineRequest(p.data.id, { email: p.data.email }), { headers: NO_STORE });
     return NextResponse.json(await confirmRequest(p.data.id, p.data.slot), { status: 201, headers: NO_STORE });
   } catch (err) {

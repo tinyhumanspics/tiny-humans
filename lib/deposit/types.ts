@@ -12,7 +12,7 @@ export interface DepositSettings {
 /** A bundle's deposit until the owner sets its own. */
 export const DEFAULT_DEPOSIT_CENTS = 5000;
 
-/** How long a booking holds its time while the family is on the Stripe page (Stripe's minimum page life is 30 min). */
+/** Leads → Not paid → "send the link" on a time already released holds it again this long (Stripe's minimum page life). */
 export const DEPOSIT_HOLD_MINUTES = 30;
 
 /** A booking the owner made for a family (/admin → Quotes / Booking, owner Nov 12) holds its time this long for them. */

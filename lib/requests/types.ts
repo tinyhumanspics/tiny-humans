@@ -10,10 +10,10 @@ export type RequestStatus = "new" | "confirmed" | "booked" | "declined" | "expir
 export const REQUEST_HOLD_HOURS = 12;
 
 /**
- * The text-consent box's wording version. PENDING LEGAL REVIEW (plan/OWNER-ACTIONS.md 10): when the lawyer changes the
- * wording in messages/*.json (bookingRequest.details.consent), bump this so each request records what it agreed to.
+ * The text-consent box's wording version (messages/*.json → bookingRequest.details.consent). Approved by the owner on
+ * Nov 14, 2026 (no lawyer review). When the wording changes, change this too, so each request records what it agreed to.
  */
-export const TEXT_CONSENT_VERSION = "2026-11-14-draft";
+export const TEXT_CONSENT_VERSION = "2026-11-14";
 
 /** What the browser sends ("Send request"). */
 export interface RequestInput {

@@ -94,8 +94,8 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
   const familyMax = bundle && asksFamily(bundle) ? familyLimit(bundle, babies.length) : 0;
   const zip = address.zip.trim();
 
-  // your calendar for the month on screen, like the booking form's (your hours and days off, bookings, Outlook, trip
-  // days for their ZIP code); the bundle and babies decide how long a session is
+  // your calendar for the month on screen, like the booking page's (your hours and days off, bookings, Outlook, held
+  // requests); the bundle and babies decide how long a session is
   const monthKey = toDateKey(month).slice(0, 7);
   const calQuery = bundleId && /^\d{5}$/.test(zip) ? `${bundleId}|${babies.length}|${zip}|${monthKey}` : null;
   const [cal, setCal] = useState<{ query: string; days?: Record<string, TimeSlot[]>; error?: string } | null>(null);
@@ -115,13 +115,13 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
     const first = `${monthKey}-01`;
     const last = toDateKey(new Date(month.getFullYear(), month.getMonth() + 1, 0));
     api
-      .ownerSlots({ bundle: bundleId, babies: babies.length, zip, from: first < todayKey ? todayKey : first, to: last })
+      .ownerSlots({ bundle: bundleId, babies: babies.length, from: first < todayKey ? todayKey : first, to: last })
       .then((list) => live && setCal({ query: calQuery, days: Object.fromEntries(list.filter((d) => d.slots.length).map((d) => [d.date, d.slots])) }))
       .catch((e) => live && setCal({ query: calQuery, error: errText(e, "Couldn't load your calendar.") }));
     return () => {
       live = false;
     };
-  }, [api, calQuery, bundleId, babies.length, zip, monthKey, month, todayKey]);
+  }, [api, calQuery, bundleId, babies.length, monthKey, month, todayKey]);
 
   // the price as the booking form works it out: today's offer, or the code when it saves more (only one counts)
   const familyCount = family.filter((m) => m.role).length;
@@ -320,7 +320,7 @@ export default function OwnerBookingForm({ api, zip: quotedZip = "", babies: quo
             </div>
           )}
           <label className={cn(styles.label, styles.ownerBookZip, "chalk-soft")}>
-            Their ZIP code (travel and trip days)
+            Their ZIP code (travel)
             <input className={cn(styles.input, styles.timeInput)} inputMode="numeric" maxLength={5} value={address.zip} onChange={(e) => setAddress((a) => ({ ...a, zip: e.target.value.replace(/\D/g, "").slice(0, 5) }))} />
           </label>
           {!calQuery ? (

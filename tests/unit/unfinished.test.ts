@@ -1,10 +1,9 @@
 import { describe, expect, test } from "vitest";
 import { unfinishedFollowUpEmail } from "@/emails/UnfinishedBooking";
 import { periodOf } from "@/lib/unfinished/period";
-import { draftStage, dueDraftStage, funnelSummary, mergeDraft, needsFollowUp, reasonSummary } from "@/lib/unfinished/summary";
+import { draftStage, dueDraftStage, funnelSummary, needsFollowUp, reasonSummary } from "@/lib/unfinished/summary";
 import { looksLikeEmail } from "@/lib/unfinished/client";
 
-const at = (iso: string) => new Date(iso);
 
 describe("unfinished bookings: where a draft stands", () => {
   test("no booking: the step they reached", () => {
@@ -16,21 +15,6 @@ describe("unfinished bookings: where a draft stands", () => {
     expect(draftStage("review", { status: "pending", cancellationReason: null })).toBe("booked");
     expect(draftStage("review", { status: "cancelled", cancellationReason: "Deposit not paid (the payment page expired, so the time was released)" })).toBe("deposit");
     expect(draftStage("review", { status: "cancelled", cancellationReason: "We moved away" })).toBe("cancelled");
-  });
-});
-
-describe("unfinished bookings: a new save on an existing draft", () => {
-  const base = { step: "details", attempts: 1, updatedAt: at("2026-11-03T15:00:00Z"), bookedAt: null };
-  test("keeps the furthest step of the same visit", () => {
-    expect(mergeDraft({ ...base, step: "review" }, { step: "details", at: at("2026-11-03T15:05:00Z") })).toEqual({ action: "update", step: "review", attempts: 1, clearBooking: false });
-    expect(mergeDraft(base, { step: "review", at: at("2026-11-03T15:05:00Z") })).toMatchObject({ step: "review", attempts: 1 });
-  });
-  test("a late save right after booking is ignored", () => {
-    expect(mergeDraft({ ...base, bookedAt: at("2026-11-03T15:10:00Z") }, { step: "review", at: at("2026-11-03T16:00:00Z") })).toEqual({ action: "ignore" });
-  });
-  test("coming back long after booking, or after a week, is a new visit", () => {
-    expect(mergeDraft({ ...base, bookedAt: at("2026-11-01T15:00:00Z") }, { step: "details", at: at("2026-11-03T15:00:00Z") })).toEqual({ action: "update", step: "details", attempts: 2, clearBooking: true });
-    expect(mergeDraft({ ...base, step: "review" }, { step: "details", at: at("2026-11-11T15:00:00Z") })).toEqual({ action: "update", step: "details", attempts: 2, clearBooking: false });
   });
 });
 

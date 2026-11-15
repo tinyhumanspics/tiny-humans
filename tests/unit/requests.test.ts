@@ -50,9 +50,10 @@ const row = (over: Partial<BookingRequestRow> = {}): BookingRequestRow => ({
   travelMiles: 6,
   travelFeeCents: 0,
   textConsent: true,
-  consentVersion: "2026-11-14-draft",
+  consentVersion: "2026-11-14",
   bookingId: null,
   dueId: null,
+  inspirationId: null,
   ...over,
 });
 

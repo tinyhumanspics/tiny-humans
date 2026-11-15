@@ -1,5 +1,4 @@
-import type { DraftStep, FunnelStep } from "@/config/unfinished";
-import type { AppLocale } from "@/i18n/config";
+import type { FunnelStep } from "@/config/unfinished";
 
 /**
  * Browser side of unfinished bookings: anonymous step counts and the contact details a family has typed on the booking
@@ -28,24 +27,6 @@ function firstTime(key: string): boolean {
 export function countBookingStep(step: FunnelStep, bundleId: string) {
   if (firstTime(`th_funnel_${step}_${bundleId}`)) post("/api/booking/funnel", { step, bundleId });
 }
-
-export interface DraftPayload {
-  email: string;
-  parentName?: string;
-  phone?: string;
-  bundleId: string;
-  date?: string;
-  start?: string;
-  zip?: string;
-  step: DraftStep;
-  locale: AppLocale;
-  /** "Not born yet?" (/due-date); left out on the booking form. */
-  form?: "due_date";
-  /** An email saved earlier on this form that they then corrected (the typo'd one is removed). */
-  replaces?: string;
-}
-
-export const saveBookingDraft = (draft: DraftPayload) => post("/api/booking/draft", draft);
 
 /** Close to the server's email check, so half-typed addresses aren't sent. */
 export const looksLikeEmail = (value: string) => /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/.test(value);

@@ -83,8 +83,9 @@
 
 .twins input,
 .consent input {
-  width: 22px;
-  height: 22px;
+  /* WCAG 2.2 target size: at least 24px */
+  width: 24px;
+  height: 24px;
   margin-top: 2px;
   flex: none;
   accent-color: var(--sun-yellow);
@@ -153,3 +154,15 @@
   margin: 0;
   font-size: 1.08rem;
 }
+
+/* opened from a due-date reservation's link: its bundle and kept price */
+.dueNote {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border: 2px dashed var(--sun-yellow);
+  border-radius: 10px;
+  font-size: 1.08rem;
+  line-height: 1.45;
+}
+
+.dueNote p { margin: 0 0 4px; }

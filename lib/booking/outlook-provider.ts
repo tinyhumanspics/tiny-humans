@@ -14,7 +14,6 @@ import { holdsBetween } from "@/lib/requests/store";
 import { getBusyIntervals } from "@/lib/microsoft/calendar";
 import { isMicrosoftConfigured, microsoftConfig } from "@/lib/microsoft/config";
 import { availabilityForRange, ownerRulesOf, slotsForDay, type Busy } from "./availability";
-import { applyTrips, tripConflict, tripContext, visitorForZip } from "./trips-server";
 import { getAvailabilityRules } from "@/lib/availability/server";
 import { BookingError, friendly } from "./errors";
 import { addMinutes, formatTimeLabel } from "./dates";
@@ -38,8 +37,8 @@ import { fill } from "@/lib/email/messages";
 import { managedOf, rescheduleAvailability, rescheduleBookingRow } from "./reschedule";
 import { site } from "@/config/site";
 import { getDepositSettings } from "@/lib/deposit/server";
-import { depositCentsFor } from "@/lib/deposit/types";
-import { depositPageUrl, heldForSameFamily, openDeposit, openOwnerDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
+import { depositCentsFor, OWNER_HOLD_HOURS } from "@/lib/deposit/types";
+import { depositPageUrl, openOwnerDeposit, reopenDeposit, sweepDeposits } from "@/lib/deposit/flow";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
 import { addPhotos, extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
 import { saveBookingAddons, saveBookingFamily } from "./addons";
@@ -114,9 +113,8 @@ export class OutlookBookingProvider implements BookingProvider {
       /* outside a request (scripts) */
     }
     try {
-      const [rules, busy, trips, visitor] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to), tripContext(query.from, query.to), visitorForZip(query.zip)]);
-      // trip days (owner, Nov 10): a far day only for families near it, the morning after kept free
-      return applyTrips(availabilityForRange(query.from, query.to, minutes, busy, owner ? ownerRulesOf(rules) : rules), visitor, trips);
+      const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
+      return availabilityForRange(query.from, query.to, minutes, busy, owner ? ownerRulesOf(rules) : rules);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }
@@ -162,14 +160,6 @@ export class OutlookBookingProvider implements BookingProvider {
     // 1-due. A reservation books once: already booked or cancelled = text us instead.
     if (due && due.status !== "reserved" && due.status !== "scheduling") throw new BookingError("invalid_request", dueUsedMessage(request.locale));
 
-    // 1a. The same family trying the same time again while their own deposit hold still blocks it (their connection
-    // dropped before the payment page opened, or they switched devices): back to that payment page, not "time taken".
-    const held = await heldForSameFamily(request.contact.email, bundle.id, zonedTimeToUtc(date, start, tz));
-    if (held) {
-      const deposit = await reopenDeposit(held);
-      if (deposit) return { ...this.toResult(held, request), status: "pending", deposit };
-    }
-
     // 1b. Travel fee from the home's ZIP code (calculated here, never taken from the browser). Florida only, and not
     // farther than the owner's limit (those families text instead).
     const quote = travelQuote(request.address.zip, await getTravelSettings());
@@ -193,10 +183,6 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     if (!slotsForDay(date, durationMinutes, busy, owner ? ownerRulesOf(rules) : rules).some((s) => s.start === start)) {
       throw new BookingError("slot_unavailable", owner ? "That time isn't free anymore (another booking, a calendar event or outside your hours). Pick another time." : friendly.slotTaken);
-    }
-    // 2a. Trip days: this home's distance against the day's other sessions (Orlando vs Miami Beach on one day)
-    if (tripConflict(date, start, await visitorForZip(request.address.zip), await tripContext(date, date))) {
-      throw new BookingError("slot_unavailable", fill((request.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }), "trip_day");
     }
 
     // 2b. Price, recalculated now. A code is re-validated and, if it's the price used, one use is reserved atomically.
@@ -307,12 +293,11 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     const slot = { ...request.slot, end, label: formatTimeLabel(start) };
 
-    // 4a. Deposit: send the family to Stripe. The booking stays pending (holding its time) until it's paid; then the
-    // webhook or the page they come back to confirms it (lib/deposit/flow.ts). Stripe down → booked without it.
+    // 4a. Deposit: the booking stays pending (holding its time) for the family's link (backdrops + deposit); paid → the
+    // webhook or the page they come back to confirms it (lib/deposit/flow.ts). Signed links not possible → booked without it.
     let deposit: BookingDetails["deposit"] = due?.depositStatus === "paid" && due.depositCents ? { amountCents: due.depositCents, status: "paid" } : undefined;
     if (depositCents > 0) {
-      // booked by the owner: the time is held for the family's link (backdrops + deposit), no payment page yet
-      const opened = owner ? await openOwnerDeposit(row, depositCents, owner.holdHours) : await openDeposit(row, depositCents, noticeHours);
+      const opened = await openOwnerDeposit(row, depositCents, owner?.holdHours ?? OWNER_HOLD_HOURS);
       if (opened) return { id: row.bookingReference, status: "pending", request: { ...request, family, slot }, createdAt: row.createdAt.toISOString(), pricing, travel, rescheduleNoticeHours: noticeHours, deposit: opened };
       deposit = { amountCents: depositCents, status: "unpaid" };
     }

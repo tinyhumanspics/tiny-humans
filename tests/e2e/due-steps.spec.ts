@@ -10,11 +10,6 @@ import { hydrated } from "./fixtures/hydration";
 
 const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
-test.beforeEach(async ({ page }) => {
-  // never count steps or save drafts from a test
-  await page.route("**/api/booking/draft", (r) => r.fulfill({ status: 204 }));
-});
-
 /** "Step 2 of 4 · …" by role: WebKit can keep a hidden streaming copy of the page for a moment (never visible, not in
  *  the accessibility tree), and a plain text match then finds two. */
 const stepLabel = (page: Page, text: string) => page.getByRole("paragraph").filter({ hasText: text });

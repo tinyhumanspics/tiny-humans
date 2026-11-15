@@ -110,11 +110,12 @@ export default function RequestsPanel({ api }: { api: AdminApi }) {
 }
 
 function RequestCard({ r, api, now, onChanged }: { r: RequestListItem; api: AdminApi; now: number; onChanged: () => void }) {
-  const [busy, setBusy] = useState<"confirm" | "decline" | null>(null);
+  const [busy, setBusy] = useState<"confirm" | "decline" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<RequestConfirmed | null>(null);
   const [other, setOther] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const held = r.status === "new" && r.type === "date" ? holdLeft(r.holdUntil, now) : null;
   const total = r.totalCents + r.travelFeeCents;
@@ -146,6 +147,19 @@ function RequestCard({ r, api, now, onChanged }: { r: RequestListItem; api: Admi
     } catch (e) {
       setError(errText(e, "Couldn't decline it. Please try again."));
     } finally {
+      setBusy(null);
+    }
+  };
+
+  const remove = async () => {
+    setDeleting(false);
+    setBusy("delete");
+    setError(null);
+    try {
+      await api.deleteRequest(r.id);
+      onChanged();
+    } catch (e) {
+      setError(errText(e, "Couldn't delete it. Please try again."));
       setBusy(null);
     }
   };
@@ -194,22 +208,33 @@ function RequestCard({ r, api, now, onChanged }: { r: RequestListItem; api: Admi
           </p>
         </div>
       ) : (
-        r.status !== "declined" && (
-          <div className={styles.photoBar}>
-            <a className={styles.smallButton} href={smsHref(r.mobile, r.hello)} aria-label={`Text ${r.firstName}`}>Text</a>
-            {r.status === "new" && (
-              <>
-                <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => confirm()}>{busy === "confirm" && !other ? "Confirming…" : "Confirm & send pay link"}</button>
-                <button type="button" className={styles.smallButton} disabled={busy !== null} aria-expanded={other} onClick={() => setOther((v) => !v)}>Other time</button>
-                <button type="button" className={cn(styles.smallButton, styles.danger)} disabled={busy !== null} onClick={() => setDeclining(true)}>{busy === "decline" ? "Declining…" : "Decline"}</button>
-              </>
-            )}
-          </div>
-        )
+        <div className={styles.photoBar}>
+          {r.status !== "declined" && <a className={styles.smallButton} href={smsHref(r.mobile, r.hello)} aria-label={`Text ${r.firstName}`}>Text</a>}
+          {r.status === "new" && (
+            <>
+              <button type="button" className={styles.smallButton} disabled={busy !== null} onClick={() => confirm()}>{busy === "confirm" && !other ? "Confirming…" : "Confirm & send pay link"}</button>
+              <button type="button" className={styles.smallButton} disabled={busy !== null} aria-expanded={other} onClick={() => setOther((v) => !v)}>Other time</button>
+              <button type="button" className={cn(styles.smallButton, styles.danger)} disabled={busy !== null} onClick={() => setDeclining(true)}>{busy === "decline" ? "Declining…" : "Decline"}</button>
+            </>
+          )}
+          <button type="button" className={cn(styles.linkButton, "chalk-soft")} disabled={busy !== null} onClick={() => setDeleting(true)}>{busy === "delete" ? "Deleting…" : "Delete"}</button>
+        </div>
       )}
       {other && !done && <OtherTime r={r} api={api} busy={busy === "confirm"} onPick={confirm} />}
       {error && <p className={cn(styles.error, "chalk-soft")} role="alert">{error}</p>}
 
+      {deleting && (
+        <AdminDialog labelledBy={`delete-t-${r.id}`} describedBy={`delete-d-${r.id}`} onClose={() => setDeleting(false)}>
+          <h3 id={`delete-t-${r.id}`} className={cn(styles.h3, "chalk")}>{`Delete ${r.firstName}'s request for good?`}</h3>
+          <p id={`delete-d-${r.id}`} className={cn(styles.muted, "chalk-soft")}>
+            {`For tests and spam: it's removed from this list and can't be brought back${r.status === "new" && r.type === "date" ? ", and its time opens up for other families" : ""}. No email is sent.${r.made ? ` ${r.made.reference} stays in Leads.` : ""}`}
+          </p>
+          <div className={styles.photoBar}>
+            <button type="button" className={styles.smallButton} onClick={() => setDeleting(false)}>Cancel</button>
+            <button type="button" className={cn(styles.smallButton, styles.danger)} onClick={remove}>Delete for good</button>
+          </div>
+        </AdminDialog>
+      )}
       {declining && (
         <AdminDialog labelledBy={`decline-t-${r.id}`} describedBy={`decline-d-${r.id}`} onClose={() => setDeclining(false)}>
           <h3 id={`decline-t-${r.id}`} className={cn(styles.h3, "chalk")}>{`Decline ${r.firstName}'s request?`}</h3>
@@ -227,7 +252,7 @@ function RequestCard({ r, api, now, onChanged }: { r: RequestListItem; api: Admi
   );
 }
 
-/** "Other time": your calendar for their bundle and ZIP code; tapping a time books that one instead. */
+/** "Other time": your calendar for their bundle and babies; tapping a time books that one instead. */
 function OtherTime({ r, api, busy, onPick }: { r: RequestListItem; api: AdminApi; busy: boolean; onPick: (slot: { date: string; start: string }) => void }) {
   const today = todayKey();
   const [month, setMonth] = useState(() => {
@@ -245,13 +270,13 @@ function OtherTime({ r, api, busy, onPick }: { r: RequestListItem; api: AdminApi
     const first = `${monthKey}-01`;
     const last = toDateKey(new Date(month.getFullYear(), month.getMonth() + 1, 0));
     api
-      .ownerSlots({ bundle: r.bundleId, babies: r.babyCount, zip: r.zip, from: first < today ? today : first, to: last })
+      .ownerSlots({ bundle: r.bundleId, babies: r.babyCount, from: first < today ? today : first, to: last })
       .then((list) => live && setCal({ month: monthKey, days: Object.fromEntries(list.filter((d) => d.slots.length).map((d) => [d.date, d.slots])) }))
       .catch((e) => live && setCal({ month: monthKey, error: errText(e, "Couldn't load your calendar.") }));
     return () => {
       live = false;
     };
-  }, [api, r.bundleId, r.babyCount, r.zip, monthKey, month, today]);
+  }, [api, r.bundleId, r.babyCount, monthKey, month, today]);
 
   const times = date && ready ? (days[date] ?? []) : null;
   return (

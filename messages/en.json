@@ -349,20 +349,6 @@
       "title": "Let's make some memories",
       "subtitle": "Pick a day and time, and we'll bring the studio to your door. It takes about two minutes."
     },
-    "steps": [
-      { "id": "you", "label": "You", "title": "About you" },
-      { "id": "date", "label": "Date", "title": "Pick a day" },
-      { "id": "time", "label": "Time", "title": "Pick a time" },
-      { "id": "contact", "label": "Home", "title": "Your phone and home" },
-      { "id": "details", "label": "Details", "title": "Tell us about your family" },
-      { "id": "review", "label": "Review", "title": "Check everything" }
-    ],
-    "tracker": {
-      "label": "Booking steps",
-      "mobile": "Step {current} of {total}: {label}",
-      "step": "Step {current}, {label}{done}",
-      "done": ", done"
-    },
     "calendar": {
       "weekdays": ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"],
       "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -383,34 +369,7 @@
       "filled": "This day just filled up. Go back and pick another day.",
       "until": "until {time}"
     },
-    "actions": {
-      "back": "Back",
-      "next": "Next: {label}",
-      "booking": "Booking…",
-      "book": "Book my session"
-    },
-    "babyLed": {
-      "one": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little one whenever needed.",
-      "many": "Our sessions are baby-led. Time is allowed for feeding, changing and comforting your little ones whenever needed."
-    },
     "firstStep": "We just need your information first. On the next step, you'll see the available dates.",
-    "summary": {
-      "yourBundle": "Your bundle",
-      "inspiredBy": "Inspired by",
-      "removeInspiration": "Remove inspiration photo",
-      "remove": "Remove",
-      "changeBundle": "Change bundle",
-      "editedPhotos": "{count} edited photos",
-      "extraBaby": "Extra baby",
-      "extraBabies": "Extra babies",
-      "extraPerson": "Extra family member",
-      "extraPeople": "Extra family members",
-      "durationMinutes": "Up to {minutes} minutes",
-      "durationHour": "Up to 1 hour",
-      "durationHours": "Up to {hours} hours",
-      "totalDuration": "{duration} total",
-      "deposit": "{deposit} deposit holds your date. It's part of your total; the rest is paid after your session."
-    },
     "details": {
       "optional": " (optional)",
       "honeypot": "Leave this empty",
@@ -419,8 +378,6 @@
       "lastName": "Last name",
       "zipFirst": "Your home's ZIP code",
       "email": "Email",
-      "saveNote": "We save your contact information as you type, so we can follow up if you were not able to finish booking. See our {privacy}.",
-      "saveNotePrivacy": "Privacy Policy",
       "phone": "Phone",
       "address": {
         "title": "Where should we bring the studio?",
@@ -429,18 +386,14 @@
         "unit": "Apt / unit",
         "city": "City",
         "zip": "ZIP code",
-        "access": "Gate code, parking or concierge",
-        "accessPlaceholder": "Gate code, where to park, check in at the front desk…"
+        "access": "Gate code, parking or concierge"
       },
       "baby": {
         "one": "Your baby",
-        "many": "Babies",
         "number": "Baby {number}",
         "name": "Baby name",
         "age": "Age (required)",
         "chooseAge": "Choose an age",
-        "ageError": "Choose an age for each baby.",
-        "olderNote": "Your little one is over 2? Email us at {email} and we'll let you know when we open more ages.",
         "ageOptions": ["Newborn (0–2 weeks)", "2–6 weeks", "6 weeks – 3 months", "3–6 months", "6–12 months", "1–2 years", "Not born yet"],
         "gender": "Gender",
         "genders": { "boy": "Boy", "girl": "Girl" }
@@ -448,44 +401,28 @@
       "family": {
         "title": "Who else is in the photos?",
         "hint": "Your bundle includes up to {included} people in total, counting your baby. Names are optional.",
-        "extraPrice": "Each extra person is +{price}.",
-        "extraOne": "1 extra person: +{total}",
-        "extraMany": "{count} extra people: +{total}",
-        "overLimit": "This bundle doesn't have room for this person. Please remove them.",
-        "member": "Family member {number}",
         "role": "Who is this?",
-        "chooseRole": "Choose one",
         "name": "Name",
         "add": "+ Add a family member",
         "remove": "Remove",
-        "removeLabel": "Remove family member {number}",
-        "full": "That's the most this bundle allows.",
         "roles": { "mom": "Mom", "dad": "Dad", "sister": "Sister", "brother": "Brother", "grandma": "Grandma", "grandpa": "Grandpa", "aunt": "Aunt", "uncle": "Uncle", "cousin": "Cousin", "other": "Other family member" }
       },
       "extraBabies": {
         "one": "1 baby",
-        "two": "Twins",
-        "three": "Triplets",
-        "included": "Your bundle includes one baby.",
         "question": "Shooting twins or triplets?",
         "choose": "Choose twins or triplets",
         "details": "Each extra baby adds {price}, {minutes} minutes and {photos} edited photos.",
-        "fullPrice": "Special offers and discount codes apply to the bundle only.",
         "choice": "+{price} · +{minutes} min · +{photos} photos",
-        "checking": "Checking that your selected time still fits…",
-        "checkFailed": "We couldn't check that time. Please try your twins or triplets choice again.",
-        "timeUnavailable": "Your previous time doesn't have enough room for a twins or triplets session. Your information is saved—please choose another time."
+        "checking": "Checking that your selected time still fits…"
       },
       "notes": {
         "label": "Notes or special requests",
-        "placeholder": "Siblings joining, favorite colors, a family heirloom to include…",
-        "placeholderBabyOnly": "Favorite colors, a family heirloom to include, baby's usual feeding and nap times…"
+        "placeholder": "Siblings joining, favorite colors, a family heirloom to include…"
       },
       "backdrops": {
         "title": "Pick your backdrop",
         "titleMany": "Pick your backdrops",
         "hint": "Optional. Not sure yet? Skip it: you can choose later from your confirmation email.",
-        "hintMany": "Optional: one for each of your {n} setups. Not sure yet? Skip it: you can choose later from your confirmation email.",
         "names": {
           "blueAura": "Blue Aura",
           "burgundy": "Burgundy",
@@ -529,7 +466,6 @@
     "review": {
       "and": "and",
       "labels": {
-        "package": "Package",
         "regularPrice": "Regular price",
         "specialOffer": "Special offer",
         "discountCode": "Discount code",
@@ -543,7 +479,6 @@
         "travelFee": "Travel fee",
         "total": "Total",
         "paymentDue": "Payment due",
-        "afterPhotoshoot": "After the photoshoot",
         "inspiration": "Inspiration",
         "date": "Date",
         "time": "Time",
@@ -558,20 +493,12 @@
         "notes": "Notes",
         "backdrop": "Backdrop",
         "backdrops": "Backdrops",
-        "backdropNone": "Not chosen yet (you can pick later)",
         "texts": "Texts",
-        "textsYes": "OK to text you",
-        "textsNo": "No texts",
-        "photos": "Your photos",
-        "photosYes": "OK to feature them",
-        "photosNo": "Kept private"
+        "photos": "Your photos"
       },
       "timeRange": "{start} to {end} ({zone})",
       "unit": "Unit",
       "change": "Change",
-      "changeAria": "Change {label}",
-      "edit": "Edit",
-      "editAria": "Edit {label}",
       "discount": {
         "label": "Have a discount code?",
         "optional": "(optional)",
@@ -605,7 +532,6 @@
         "button": "Pay {deposit} deposit",
         "opening": "Opening secure payment…",
         "note": "You'll pay the deposit on Stripe's secure page. We hold your time for 30 minutes, and your booking is confirmed as soon as it's paid. Cancel online at least {notice} before your session and we refund it in full.",
-        "partOfTotal": "Your {deposit} deposit is part of your {total} total, not an extra fee: the remaining {rest} is paid after your photoshoot.",
         "notice": {
           "hour": "{n} hour",
           "hours": "{n} hours"
@@ -660,12 +586,7 @@
       "confirmingTitle": "Your deposit is paid!",
       "confirmingText": "We're adding your session to our calendar. This only takes a few seconds.",
       "confirmingSlow": "Your deposit is paid and your time is saved. We're finishing your booking, and your confirmation email will arrive shortly.",
-      "waitingTitle": "Your date isn't confirmed yet",
-      "waitingText": "We're holding {date} at {time} for you until {until} (Miami time). Pay the {deposit} deposit to confirm it.",
-      "waitingClosed": "We're holding {date} at {time} for you for a few more minutes. If you just paid, this page updates by itself.",
       "pay": "Pay the {deposit} deposit",
-      "another": "Pick another time",
-      "releasing": "One moment…",
       "expiredTitle": "This time is no longer held",
       "expiredText": "The deposit for {date} at {time} wasn't paid, so we released the time. You're welcome to pick a time again: it only takes two minutes.",
       "pickAgain": "Pick a time",
@@ -678,7 +599,6 @@
       "network": "We couldn't connect. Check your connection and try again.",
       "rateLimited": "Too many tries. Please wait a few minutes.",
       "slotTaken": "That time was just booked. Please pick another time.",
-      "tripDay": "That day isn't available. Please pick another day, or text us at {phone}.",
       "inProgress": "We're still saving your booking. One moment, please.",
       "date": "Pick a day on the calendar.",
       "time": "Pick a time to continue.",
@@ -1700,14 +1620,15 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "November 13, 2026",
+      "lastUpdated": "November 14, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
           "id": "information",
           "heading": "Information we collect",
           "body": [
-            "When you book a session, you give us:",
+            "When you send a booking request, you give us your first name, mobile number, email address and ZIP code, the package and the day and time (or due date) you'd like, and whether you'd like us to text you about your request. We use them to answer your request, and we hold the time you asked for 12 hours while we confirm it.",
+            "When you book a session (on our website, by text, or on your “Prepare for your session” page), you give us:",
             { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "For family sessions, who else will be in the photos (for example Mom, Dad or a sibling) and their names, if you choose to share them", "The package, date and time you choose", "If you book with your due date (\"Not born yet?\"), your due date and how many babies you're expecting", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that brought you to our site (for example the campaign name in an ad link) and the first page you visited.",
             "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked (on our “Not born yet?” form, your due date), your ZIP code and how far you got, so we can follow up. Apart from that due date, we don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",

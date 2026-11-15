@@ -27,13 +27,10 @@ export const DRAFT_STEPS = ["details", "review"] as const;
 export type DraftStep = (typeof DRAFT_STEPS)[number];
 
 export const unfinishedRules = {
-  /** A family that booked and comes back to the form after this long starts a new attempt. */
-  newAttemptAfterBookedHours: 12,
   /** Contact details from unfinished bookings are deleted after this many days (daily cron). */
   keepDays: 365,
   /** Follow-ups sent per "Send to everyone" click (Resend allows about 2 emails a second). */
   bulkSendLimit: 40,
   /** Limits for what visitors can save. */
-  maxNameLength: 120,
   maxCommentLength: 1000,
 };

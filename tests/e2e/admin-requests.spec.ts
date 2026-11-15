@@ -49,6 +49,10 @@ test("Requests: each new request with its hold; Text, Confirm (pay link text), O
     if (route.request().method() === "GET") return route.fulfill({ json: { requests: list } });
     const body = route.request().postDataJSON() as { action: string; id: string; slot?: { date: string; start: string }; email?: boolean };
     posted.push(body);
+    if (body.action === "delete") {
+      list = list.filter((r) => r.id !== body.id);
+      return route.fulfill({ json: { deleted: true } });
+    }
     if (body.action === "decline") {
       list = list.map((r) => (r.id === body.id ? { ...r, status: "declined" } : r));
       return route.fulfill({ json: { emailed: true } });
@@ -118,4 +122,12 @@ test("Requests: each new request with its hold; Text, Confirm (pay link text), O
   await expect(page.getByRole("heading", { name: "Nothing new" })).toBeVisible();
   await page.getByRole("button", { name: "Show answered requests (1)" }).click();
   await expect(page.getByRole("list", { name: "Answered requests" })).toContainText("Declined");
+
+  // Delete (owner, Nov 14: tests): for good, answered ones too
+  await page.getByRole("list", { name: "Answered requests" }).getByRole("button", { name: "Delete" }).click();
+  const confirmDelete = page.getByRole("alertdialog", { name: "Delete Sofía's request for good?" });
+  await expect(confirmDelete).toContainText("can't be brought back");
+  await confirmDelete.getByRole("button", { name: "Delete for good" }).click();
+  expect(posted.at(-1)).toEqual({ action: "delete", id: "00000000-0000-4000-8000-000000000003" });
+  await expect(page.getByText("No requests yet.")).toBeVisible();
 });

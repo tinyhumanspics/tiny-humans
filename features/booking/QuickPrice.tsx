@@ -16,7 +16,7 @@ import { cn } from "@/lib/cn";
 import styles from "./QuickPrice.module.css";
 
 // the booking form's code box, loaded only when "Have a discount code?" is pressed (keeps the home page light)
-const DiscountField = dynamic(() => import("./flow/steps/ReviewStep").then((m) => m.DiscountField), { ssr: false });
+const DiscountField = dynamic(() => import("./DiscountField").then((m) => m.DiscountField), { ssr: false });
 
 const fill = (template: string, values: Record<string, string>) => template.replace(/\{(\w+)\}/g, (m, k: string) => values[k] ?? m);
 const shortDate = (key: string, locale: AppLocale) =>

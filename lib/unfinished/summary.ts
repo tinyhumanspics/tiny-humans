@@ -1,4 +1,4 @@
-import { FEEDBACK_REASONS, FUNNEL_STEPS, isFeedbackReason, unfinishedRules, type DraftStep, type FeedbackReason, type FunnelStep } from "@/config/unfinished";
+import { FEEDBACK_REASONS, FUNNEL_STEPS, isFeedbackReason, type FeedbackReason, type FunnelStep } from "@/config/unfinished";
 import type { FunnelSummary, UnfinishedItem, UnfinishedStage } from "./types";
 
 /** Pure helpers for unfinished bookings (no database), unit tested in tests/unit/unfinished.test.ts. */
@@ -27,30 +27,6 @@ export function dueDraftStage(status: string): UnfinishedStage | "booked" | "can
   if (status === "expired") return "deposit";
   if (status === "cancelled") return "cancelled";
   return "booked";
-}
-
-export interface DraftActivity {
-  step: DraftStep;
-  at: Date;
-}
-
-/**
- * What a new save does to an existing draft: ignore it (they just booked: the form can still send a late save),
- * start a new attempt (they booked a while ago, or came back after a week), or update the current attempt (the
- * furthest step reached is kept).
- */
-export function mergeDraft(
-  existing: { step: string; attempts: number; updatedAt: Date; bookedAt: Date | null },
-  incoming: DraftActivity,
-): { action: "ignore" } | { action: "update"; step: DraftStep; attempts: number; clearBooking: boolean } {
-  const hours = (from: Date) => (incoming.at.getTime() - from.getTime()) / 3_600_000;
-  if (existing.bookedAt) {
-    if (hours(existing.bookedAt) < unfinishedRules.newAttemptAfterBookedHours) return { action: "ignore" };
-    return { action: "update", step: incoming.step, attempts: existing.attempts + 1, clearBooking: true };
-  }
-  if (hours(existing.updatedAt) >= 24 * 7) return { action: "update", step: incoming.step, attempts: existing.attempts + 1, clearBooking: false };
-  const step: DraftStep = existing.step === "review" || incoming.step === "review" ? "review" : "details";
-  return { action: "update", step, attempts: existing.attempts, clearBooking: false };
 }
 
 /** Step counts for the period, in form order, for one source (null = all), plus the sources seen. */

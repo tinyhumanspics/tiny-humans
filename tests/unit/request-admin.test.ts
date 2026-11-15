@@ -4,7 +4,7 @@ import { requestDeclinedEmail } from "@/emails/RequestDeclined";
 import { homeOf } from "@/lib/booking/details";
 import { formatAddress } from "@/lib/booking/templates";
 import { babiesLabel } from "@/lib/booking/extra-babies";
-import { claimRequest, declineRequest, insertRequest, linkRequest, markRequestBooked, requestById, unclaimRequest, type NewRequestRow } from "@/lib/requests/store";
+import { claimRequest, declineRequest, deleteRequest, insertRequest, linkRequest, markRequestBooked, requestById, unclaimRequest, type NewRequestRow } from "@/lib/requests/store";
 import { confirmText, helloText, requestWhenText } from "@/lib/requests/texts";
 
 // /admin → Requests (brief 02, part 2): the texts the owner sends, and each request's way from new to booked or declined.
@@ -92,6 +92,8 @@ describe("a request's way through /admin (kept in memory without a database)", (
     expect((await requestById(row.id))?.status).toBe("new");
     expect((await declineRequest(row.id))?.status).toBe("declined");
     expect(await claimRequest(row.id)).toBeNull();
+    expect(await deleteRequest(row.id)).toBe(true);
+    expect(await requestById(row.id)).toBeNull();
   });
 
   it("a due-date reservation's deposit makes its request booked", async () => {

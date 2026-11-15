@@ -9,88 +9,6 @@
   --chalkbox-opacity: 0.8;
 }
 
-/* ---------- tracker ---------- */
-.trackerNav { margin-bottom: 26px; }
-
-.trackerMobile {
-  margin: 0 0 12px;
-  font-family: var(--font-chalk);
-  font-size: 1.1rem;
-  color: var(--chalk-muted);
-}
-
-.tracker {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  grid-template-columns: repeat(var(--steps, 4), minmax(0, 1fr));
-  gap: 4px;
-  position: relative;
-}
-
-/* from the first circle's center to the last one's */
-.tracker::before {
-  content: "";
-  position: absolute;
-  left: calc(50% / var(--steps, 4));
-  right: calc(50% / var(--steps, 4));
-  top: 22px;
-  border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 25%, transparent);
-}
-
-.trackerItem { position: relative; display: flex; justify-content: center; }
-
-.trackerButton {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  min-width: 44px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--chalk-dim);
-  cursor: pointer;
-}
-.trackerButton:disabled { cursor: default; opacity: 0.55; }
-
-.trackerNum {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
-  font-family: var(--font-chalk);
-  font-size: 1.25rem;
-  background: var(--chalkboard);
-  border-radius: 50%;
-}
-
-.trackerCircle {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  color: color-mix(in srgb, var(--chalk-white) 40%, transparent);
-}
-
-.trackerLabel {
-  display: none;
-  font-family: var(--font-chalk);
-  font-size: 1rem;
-}
-
-@media (min-width: 640px) {
-  .trackerMobile { display: none; }
-  .trackerLabel { display: block; }
-}
-
-.trackerCurrent .trackerButton { color: var(--sun-yellow); }
-.trackerCurrent .trackerCircle { color: var(--sun-yellow); }
-.trackerDone .trackerButton { color: var(--chalk-white); }
-.trackerDone .trackerCircle { color: var(--chalk-white); }
-
 /* ---------- step body ---------- */
 .stepBody { min-height: 260px; }
 
@@ -111,11 +29,6 @@
   font-family: var(--font-chalk);
   font-size: 1.2rem;
   color: var(--chalk-muted);
-}
-
-.choices { display: grid; gap: 16px; }
-@media (min-width: 900px) {
-  .choices { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 }
 
 .slots { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -269,7 +182,6 @@
 
 .calSelected { color: var(--sun-yellow); }
 
-
 .calLegend {
   margin: 14px 0 0;
   font-size: 1.05rem;
@@ -333,77 +245,11 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
   font-size: 1.05rem;
   color: var(--chalk-error);
 }
-.babiesForm { display: grid; gap: 8px; }
-.babiesGrid { display: grid; gap: 14px; }
-.babyCard { display: grid; gap: 6px; padding: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 9px; }
-.babyTitle { margin: 0; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
-.genderLabel { margin: 6px 0 0; }
-.genderChoices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.genderChoice { min-height: 50px; padding: 8px 12px; border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); border-radius: 6px 10px 7px 9px; background: transparent; font-family: var(--font-hand); font-size: 1.2rem; color: var(--chalk-white); cursor: pointer; transition: border-color 0.2s ease; }
-.genderChoice:hover { border-color: color-mix(in srgb, var(--chalk-white) 65%, transparent); }
-.genderChoice:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
-.genderChoiceSelected, .genderChoiceSelected:hover { border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 12%, transparent); color: var(--sun-yellow); }
-.extraBabiesPrompt { display: grid; gap: 8px; padding: 14px; border: 2px dashed color-mix(in srgb, var(--sun-yellow) 58%, transparent); border-radius: 10px; }
-.extraBabiesIncluded, .extraBabiesHint, .extraBabiesChecking { margin: 0; line-height: 1.4; }
-.extraBabiesIncluded { color: var(--chalk-white); }
-.extraBabiesHint { color: var(--chalk-muted); }
-.extraBabiesToggle { width: fit-content; min-height: 44px; padding: 2px 4px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.3rem; text-decoration: underline wavy; text-underline-offset: 5px; cursor: pointer; }
-.extraBabiesToggle:hover, .extraBabiesToggle:focus-visible { color: var(--sun-yellow); }
-.extraBabiesChoices { display: grid; gap: 10px; margin-top: 4px; }
-@media (min-width: 640px) { .extraBabiesChoices { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.extraBabyChoice { display: grid; gap: 3px; min-height: 72px; padding: 10px 12px; border: 2px solid color-mix(in srgb, var(--chalk-white) 45%, transparent); border-radius: 9px; background: transparent; color: var(--chalk-white); text-align: left; cursor: pointer; }
-.extraBabyChoice strong { color: var(--sun-yellow); font-size: 1.25rem; font-weight: 400; }
-.extraBabyChoice span { color: var(--chalk-muted); font-size: 1rem; }
-.extraBabyChoice:hover:not(:disabled), .extraBabyChoice:focus-visible, .extraBabyChoiceSelected { border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 7%, transparent); }
-.extraBabyChoice:disabled, .oneBabyButton:disabled { opacity: 0.55; cursor: wait; }
-.oneBabyButton { min-height: 44px; padding: 4px 8px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.05rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; }
-@media (min-width: 640px) { .oneBabyButton { grid-column: 1 / -1; justify-self: center; } }
-.extraBabiesChecking { color: var(--sun-yellow); }
-.extraBabiesGrid { display: grid; gap: 14px; }
-@media (min-width: 720px) { .extraBabiesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 .error { margin-top: 18px; font-family: var(--font-chalk); font-size: 1.15rem; }
-/* who else is in the photos (bundles that include the family) */
-.familyForm { display: grid; gap: 10px; }
-.familyList { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-@media (min-width: 720px) { .familyList { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.familyRow { display: grid; gap: 8px; padding: 12px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 20%, transparent); border-radius: 9px; }
-.familyHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; }
-.familyFields { display: grid; gap: 10px; }
-.familyRemove, .familyAdd { min-height: 44px; padding: 2px 6px; border: 0; background: transparent; color: var(--cloud-blue); font-size: 1.1rem; text-decoration: underline wavy; text-underline-offset: 4px; cursor: pointer; }
-.familyAdd { justify-self: start; font-size: 1.25rem; }
-/* the list + the extra-charge line: no room taken while both are empty */
-.familyBody { display: grid; }
-/* stays in the page (empty) so screen readers hear the extra charge when it appears */
-.familyExtra { margin: 0; color: var(--sun-yellow); font-size: 1.15rem; }
-.familyExtra:not(:empty) { margin-top: 10px; }
-.familyRemove:hover, .familyRemove:focus-visible, .familyAdd:hover, .familyAdd:focus-visible { color: var(--sun-yellow); }
 
 /* ---------- review ---------- */
 .review { margin: 0; display: grid; gap: 0; }
-
-.reviewRow {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2px 12px;
-  padding: 12px 0;
-  border-bottom: 2px dashed color-mix(in srgb, var(--chalk-white) 16%, transparent);
-}
-@media (min-width: 640px) {
-  .reviewRow { grid-template-columns: 180px 1fr auto; align-items: baseline; }
-}
-
-.reviewLabel { font-size: 1.05rem; color: var(--chalk-muted); }
-.reviewValue {
-  margin: 0;
-  font-family: var(--font-chalk);
-  font-size: 1.3rem;
-  color: var(--chalk-white);
-  overflow-wrap: anywhere;
-  grid-column: 1;
-}
-@media (min-width: 640px) { .reviewValue { grid-column: 2; } }
-.reviewEdit { margin: 0; grid-column: 2; grid-row: 1 / span 2; align-self: center; }
-@media (min-width: 640px) { .reviewEdit { grid-column: 3; grid-row: 1; } }
 
 .linkButton {
   min-height: 44px;
@@ -500,66 +346,7 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 }
 .chip p { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--chalk-white); }
 .chipLabel { color: var(--cloud-blue); }
-
-.reviewPhoto { display: inline-flex; align-items: center; gap: 12px; }
-
-/* ---------- baby-led note ---------- */
-.babyLedWrap { position: relative; margin: 0 0 clamp(30px, 4.5vw, 40px); max-width: 760px; }
-
-.babyLed {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-}
-.babyLed p {
-  margin: 0;
-  font-family: var(--font-chalk);
-  font-size: clamp(1.2rem, 3.6vw, 1.35rem);
-  line-height: 1.35;
-  color: var(--chalk-white);
-}
-.babyLedIcon { flex: none; }
-
-/* step one only: "Fill in your details first…" between the baby-led note and the form. It starts below the note's
-   bottom margin: that gap holds one of the note's chalk drawings (config/themes.ts boardFrom "note"), never on words. */
-
-.babyLedCompact {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin: 18px 0 0;
-  font-size: 1.1rem;
-  color: var(--chalk-muted);
-}
-.babyLedCompact svg { flex: none; margin-top: 2px; }
-
-/* ---------- home address ---------- */
-.homeBlock {
-  margin-top: 6px;
-  padding: 14px 16px;
-  border: 2px dashed color-mix(in srgb, var(--sun-yellow) 55%, transparent);
-  border-radius: 10px;
-}
-.homeTitle { margin: 0; font-family: var(--font-chalk); font-size: 1.35rem; color: var(--sun-yellow); }
-.homeText { margin: 4px 0 0; font-size: 1.08rem; color: var(--chalk-muted); }
-
-/* ---------- chosen bundle ---------- */
-.bundleSummary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px 16px;
-  margin: 0 0 14px;
-  padding: 10px 14px;
-  border: 2px dashed color-mix(in srgb, var(--sun-yellow) 60%, transparent);
-  border-radius: 10px;
-}
-.bundleSummary p { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--chalk-white); }
 .bundleName { color: var(--sun-yellow); font-size: 1.3rem; }
-.bundleMeta { display: block; font-family: var(--font-hand); font-size: 1.02rem; color: var(--chalk-muted); }
-
 
 /* the calendar sits in the middle of the booking box */
 .calendar { margin-left: auto; margin-right: auto; }
@@ -567,50 +354,16 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* ---------- compact booking box: fits on one screen ---------- */
 .panel { padding-top: clamp(18px, 3vw, 30px); padding-bottom: clamp(18px, 3vw, 30px); }
-.trackerNav { margin-bottom: 14px; }
 .stepTitle { margin-bottom: 10px; }
 .stepBody { min-height: 0; }
 .actions { margin-top: 16px; }
-.bundleSummary { margin-bottom: 10px; padding: 8px 12px; }
 .chip { margin-bottom: 12px; padding: 6px 10px 6px 8px; }
 .calHeader { margin-bottom: 4px; }
 .calGrid, .calRow { gap: 2px; }
 .calDay { aspect-ratio: auto; height: 44px; min-height: 44px; }
 .calLegend { margin-top: 8px; }
-@media (min-width: 640px) {
-  .bundleMeta { display: inline; margin-left: 10px; }
-}
 
-/* one bar: bundle + inspiration photo */
-.bundleSummary { flex-wrap: nowrap; justify-content: flex-start; }
-.summaryText { flex: 1; min-width: 0; }
-.bundleSummary .linkButton { flex: none; min-height: 40px; }
-.summaryPhoto { margin: 2px 0 0 !important; font-size: 1.02rem !important; color: var(--chalk-muted) !important; }
 .inlineLink { padding: 0 2px; border: 0; background: none; color: var(--cloud-blue); font: inherit; text-decoration: underline; text-decoration-style: wavy; text-underline-offset: 3px; cursor: pointer; min-height: 32px; }
-@media (max-width: 520px) {
-  .bundleSummary { flex-wrap: wrap; }
-  .bundleSummary .linkButton { min-height: 36px; padding: 0; }
-}
-/* compact step tracker */
-.trackerNum { width: 38px; height: 38px; font-size: 1.1rem; }
-.tracker::before { top: 18px; }
-.trackerMobile { margin-bottom: 6px; }
-
-/* bundle bar sits above the booking box, at the top of the page */
-.bundleSummary {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: 6px 14px;
-  max-width: 760px;
-  margin: 0 0 16px;
-  padding: 10px 14px;
-}
-.bundleSummary > :only-child { grid-column: 1 / -1; }
-@media (max-width: 520px) {
-  .bundleSummary { grid-template-columns: auto 1fr; }
-  .bundleSummary .linkButton { grid-column: 1 / -1; justify-self: start; }
-}
 
 /* ---------- selected date: chalk circle centred on the number ----------
    The date button is the positioning container. The circle is centred from
@@ -647,7 +400,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 @media (max-width: 420px) { .confirmRow { grid-template-columns: 1fr; gap: 0; } }
 .paymentBox { width: 100%; max-width: 460px; padding: 14px 18px 16px; text-align: left; background: color-mix(in srgb, var(--sun-yellow) 6%, transparent); border-radius: 8px; }
 .paymentTitle { margin: 0 0 2px; font-family: var(--font-chalk); font-size: 1.45rem; color: var(--sun-yellow); }
-.paymentToday { color: var(--sun-yellow) !important; font-size: 1.45rem !important; }
 .paymentNote { margin: 8px 0 0; font-size: 1.08rem; line-height: 1.45; color: var(--chalk-white); }
 
 /* ---------- mock-mode previews (local development, tests) ---------- */
@@ -678,11 +430,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* the note under the email box: room for the Privacy Policy link's wavy underline inside the chalk mask */
 .fieldNote { padding-bottom: 0.45em; }
-
-/* "Not born yet": booking from a due-date reservation's link (price kept, deposit already paid) */
-.dueBanner { display: grid; gap: 4px; margin: 0 0 16px; padding: 12px 16px; border: 2px dashed var(--sun-yellow); border-radius: 12px; color: var(--chalk-white); font-size: 1.1rem; }
-.dueBanner p { margin: 0; }
-.dueTitle { font-family: var(--font-chalk); font-size: 1.3rem; color: var(--sun-yellow); }
 
 /* A family's link for a session the owner booked for them: 1) backdrops, 2) the deposit (OwnerBookedSteps) */
 .ownerStep { display: grid; gap: 10px; justify-items: center; width: 100%; margin-top: 18px; padding-top: 16px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); }
