@@ -990,6 +990,12 @@
     }
   },
   "emails": {
+    "prepare": {
+      "title": "Prepare for your session",
+      "text": "Add your home address, your baby's name and your backdrop, so we arrive ready.",
+      "button": "Prepare for your session",
+      "textLine": "Prepare for your session (home address, baby's name, backdrop): {url}"
+    },
     "requestDeclined": {
       "subject": "About your session request",
       "preheader": "Thank you for reaching out to Tiny Humans.",
@@ -1602,16 +1608,30 @@
     "textUs": "Text us at {phone}"
   },
   "backdropPage": {
-    "metaTitle": "Choose your backdrop",
+    "metaTitle": "Prepare for your session",
+    "prep": {
+      "title": "Prepare for your session",
+      "intro": "Hi {name}! A few details for your {bundle} session on {date}.",
+      "home": "Your home",
+      "street": "Street address (and apt or unit)",
+      "city": "City",
+      "zip": "ZIP code {zip}. A different ZIP code? Text us at {phone}.",
+      "access": "Gate code, parking, anything we should know (optional)",
+      "baby": "Your baby",
+      "babyName": "Baby's name (optional)",
+      "babyNameN": "Baby {n}: name (optional)",
+      "photosTitle": "Your photos",
+      "save": "Save",
+      "saved": "Saved! See you on {date}.",
+      "missingHome": "Add your street address and city so we can find you.",
+      "closed": "Your session is very soon, so these details can't be changed online anymore. Just text us at {phone}."
+    },
     "title": "Choose your backdrop",
     "titleMany": "Choose your backdrops",
     "intro": "For your {bundle} session on {date}.",
     "pickOne": "Pick one.",
     "pickMany": "Pick up to {n}, one for each setup.",
-    "save": "Save my backdrop",
-    "saveMany": "Save my backdrops",
     "saving": "Saving…",
-    "saved": "Saved! We'll bring {list} to your session.",
     "current": "Right now: {list}.",
     "notChosen": "Not chosen yet.",
     "later": "Not sure yet? You can come back to this page any time until the day before your session.",

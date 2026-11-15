@@ -8,7 +8,7 @@ import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/securi
 
 export const dynamic = "force-dynamic";
 
-/** GET ?t=<management token>: the booking's backdrop picks and how many it can have. */
+/** GET ?t=<management token>: what "Prepare for your session" shows (backdrops, home, baby names, photo permission). */
 export async function GET(req: Request) {
   if (!(await allow("manageGet", clientIp(req)))) return tooMany();
   const token = new URL(req.url).searchParams.get("t");
@@ -20,9 +20,17 @@ export async function GET(req: Request) {
   }
 }
 
-const body = z.object({ token: z.string(), picks: backdropPicks });
+const line = (max: number) => z.string().trim().max(max);
+const body = z.object({
+  token: z.string(),
+  picks: backdropPicks,
+  // "Prepare for your session": the rest of the page (left out = unchanged)
+  home: z.object({ street: line(200).min(4, "Add your street address."), city: line(100).min(2, "Add your city."), accessNotes: line(300).optional() }).optional(),
+  babyNames: z.array(line(80)).max(3).optional(),
+  photos: z.boolean().optional(),
+});
 
-/** POST {token, picks}: the family picks or changes their backdrop (until the day before the session). */
+/** POST {token, picks, home?, babyNames?, photos?}: the family prepares their session (until the day before it). */
 export async function POST(req: Request) {
   if (!(await allow("managePost", clientIp(req)))) return tooMany();
   const input = await readJson(req, BODY_LIMITS.small);
@@ -31,9 +39,10 @@ export async function POST(req: Request) {
   if (!p.success) return NextResponse.json({ error: p.error.issues[0]?.message ?? "Pick a backdrop.", code: "invalid_request" }, { status: 400, headers: NO_STORE });
   if (!tokenOk(p.data.token)) return invalidLink();
   try {
-    const { view, row, before } = await saveBackdropsWithToken(p.data.token, p.data.picks);
+    const { token, ...input } = p.data;
+    const { view, row, before, changed } = await saveBackdropsWithToken(token, input);
     // studio email + Outlook event, after the response (never slows down or fails the save)
-    if (before.join() !== p.data.picks.join()) after(() => afterBackdropChange(row, before, p.data.picks));
+    if (changed) after(() => afterBackdropChange(row, before, input.picks));
     return NextResponse.json({ backdrop: view }, { headers: NO_STORE });
   } catch (err) {
     return manageFail(err, "api.backdrop.post");

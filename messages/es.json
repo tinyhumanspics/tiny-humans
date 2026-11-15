@@ -990,6 +990,12 @@
     "owner": "Área del propietario (solo prototipo)"
   },
   "emails": {
+    "prepare": {
+      "title": "Prepara tu sesión",
+      "text": "Agrega la dirección de tu casa, el nombre de tu bebé y tu fondo, para llegar listos.",
+      "button": "Prepara tu sesión",
+      "textLine": "Prepara tu sesión (dirección, nombre del bebé, fondo): {url}"
+    },
     "requestDeclined": {
       "subject": "Sobre tu solicitud de sesión",
       "preheader": "Gracias por escribirle a Tiny Humans.",
@@ -1602,16 +1608,30 @@
     "textUs": "Escríbenos al {phone}"
   },
   "backdropPage": {
-    "metaTitle": "Elige tu fondo",
+    "metaTitle": "Prepara tu sesión",
+    "prep": {
+      "title": "Prepara tu sesión",
+      "intro": "¡Hola {name}! Unos detalles para tu sesión {bundle} del {date}.",
+      "home": "Tu casa",
+      "street": "Dirección (y apartamento o unidad)",
+      "city": "Ciudad",
+      "zip": "Código postal {zip}. ¿Es otro código postal? Escríbenos al {phone}.",
+      "access": "Código del portón, estacionamiento o algo que debamos saber (opcional)",
+      "baby": "Tu bebé",
+      "babyName": "Nombre del bebé (opcional)",
+      "babyNameN": "Bebé {n}: nombre (opcional)",
+      "photosTitle": "Tus fotos",
+      "save": "Guardar",
+      "saved": "¡Listo! Nos vemos el {date}.",
+      "missingHome": "Agrega tu dirección y ciudad para que podamos llegar.",
+      "closed": "Tu sesión es muy pronto, así que estos detalles ya no se pueden cambiar en línea. Escríbenos al {phone}."
+    },
     "title": "Elige tu fondo",
     "titleMany": "Elige tus fondos",
     "intro": "Para tu sesión {bundle} del {date}.",
     "pickOne": "Elige uno.",
     "pickMany": "Elige hasta {n}, uno para cada montaje.",
-    "save": "Guardar mi fondo",
-    "saveMany": "Guardar mis fondos",
     "saving": "Guardando…",
-    "saved": "¡Guardado! Llevaremos {list} a tu sesión.",
     "current": "En este momento: {list}.",
     "notChosen": "Aún no has elegido.",
     "later": "¿Todavía no estás seguro? Puedes volver a esta página en cualquier momento hasta el día antes de tu sesión.",

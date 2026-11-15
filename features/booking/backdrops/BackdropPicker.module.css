@@ -34,3 +34,6 @@
 .on .name { color: var(--sun-yellow); }
 
 .item:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 2px; border-radius: 10px; }
+
+/* "Prepare for your session": room above each part (home, baby, backdrops, photos) */
+.sectionTitle { margin-top: 26px; }

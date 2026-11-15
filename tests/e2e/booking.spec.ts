@@ -235,7 +235,7 @@ test("mock management links show the booking and allow cancellation", async ({ p
 
 test("email-linked customer tool shells load safely", async ({ page }, testInfo) => {
   await page.goto("/backdrop");
-  await expect(page.getByRole("heading", { name: "Choose your backdrop" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Prepare for your session" })).toBeVisible();
   await expect(page.getByText(/This link isn't valid anymore/)).toBeVisible();
   if (process.env.CAPTURE_CUSTOMER_TOOLS === "1") await page.screenshot({ path: `.screenshots/customer-tools-i18n/backdrop-${testInfo.project.name}.png`, fullPage: true });
 

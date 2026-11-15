@@ -24,6 +24,8 @@ interface Options {
   photographersPhoto?: string | null;
   /** The backdrop page (pick or change their backdrop). */
   backdropUrl?: string;
+  /** Their street is still to come (booked from a website request): the backdrop block asks them to prepare instead. */
+  prepare?: boolean;
   images?: ImageMode;
   locale?: EmailLocale;
 }
@@ -76,6 +78,7 @@ export function BookingConfirmation({
   rescheduleNoticeHours,
   photographersPhoto,
   backdropUrl,
+  prepare,
   swatches,
 }: Omit<Options, "themeId" | "images"> & { details: BookingDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; swatches: EmailSwatch[] }) {
   const { m, date, first, time, paymentRows, due, prepGuide, location, babyLed } = content(d, locale);
@@ -102,7 +105,18 @@ export function BookingConfirmation({
       />
       <Paragraph theme={t} align="center">{m.common.arrival}</Paragraph>
       <ChalkBox theme={t} title={m.common.payment} rows={paymentRows} note={due.note} />
-      <BackdropChoice theme={t} locale={locale} picks={d.backdrops ?? []} swatches={swatches} url={backdropUrl} />
+      {prepare && backdropUrl ? (
+        <>
+          <Paragraph theme={t} align="center">
+            <b>{m.prepare.title}</b>
+            <br />
+            {m.prepare.text}
+          </Paragraph>
+          <ChalkButton theme={t} label={m.prepare.button} href={backdropUrl} />
+        </>
+      ) : (
+        <BackdropChoice theme={t} locale={locale} picks={d.backdrops ?? []} swatches={swatches} url={backdropUrl} />
+      )}
       <ChalkList theme={t} title={m.prepGuide.title} items={prepGuide} />
       <ChalkList theme={t} title={c.nextTitle} items={nextSteps(d, locale)} color={t.chalk} mark="•" />
       <PhotographersIntro theme={t} title={c.meetTitle} text={c.meet} footnote={c.spanish} photo={photographersPhoto ? { src: photographersPhoto, alt: c.meetPhotoAlt } : null} />
@@ -138,6 +152,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
       rescheduleNoticeHours={opts.rescheduleNoticeHours}
       photographersPhoto={opts.photographersPhoto}
       backdropUrl={opts.backdropUrl}
+      prepare={opts.prepare}
       swatches={backdrop.swatches}
     />,
   );
@@ -160,7 +175,7 @@ export async function bookingConfirmationEmail(d: BookingDetails, opts: Options)
     "",
     due.note,
     "",
-    backdropTextLine(locale, picks, opts.backdropUrl),
+    opts.prepare && opts.backdropUrl ? fill(m.prepare.textLine, { url: opts.backdropUrl }) : backdropTextLine(locale, picks, opts.backdropUrl),
     "",
     `${m.prepGuide.title}:`,
     ...prepGuide.map((i) => `- ${i}`),

@@ -98,12 +98,12 @@ export async function moveCalendarEvent(eventId: string, start: string, end: str
   });
 }
 
-/** Replaces the event's description (e.g. after the family changes their backdrop). */
-export async function updateCalendarEventBody(eventId: string, bodyHtml: string): Promise<void> {
+/** Replaces the event's description (e.g. after the family changes their backdrop), and its location when given. */
+export async function updateCalendarEventBody(eventId: string, bodyHtml: string, location?: string): Promise<void> {
   await graphFetch(`/users/${user()}/events/${encodeURIComponent(eventId)}`, {
     method: "PATCH",
     scope: "graph.calendar",
-    body: JSON.stringify({ body: { contentType: "HTML", content: bodyHtml } }),
+    body: JSON.stringify({ body: { contentType: "HTML", content: bodyHtml }, ...(location ? { location: { displayName: location } } : {}) }),
   }).catch(async (err) => {
     await reportWrite("updating a session's details", err, false);
     throw err;

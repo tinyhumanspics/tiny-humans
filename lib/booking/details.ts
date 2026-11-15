@@ -56,6 +56,14 @@ export function addressOf(line: string, accessNotes?: string): SessionAddress {
   return m ? { street: m[1], city: m[2].trim(), zip: m[3], accessNotes } : { street: line, city: "", zip: "", accessNotes };
 }
 
+/** The saved address line as the prepare page's boxes ("FL 33139" alone = the street is still to come: a booking made from a request). */
+export function homeOf(line: string): { street: string; city: string; zip: string } {
+  const zipOnly = line.match(/^FL (\d{5})$/);
+  if (zipOnly) return { street: "", city: "", zip: zipOnly[1] };
+  const a = addressOf(line);
+  return { street: a.street, city: a.city, zip: a.zip };
+}
+
 /**
  * Everything the calendar event and the emails show, rebuilt from the saved booking and its extras (permissions,
  * gate notes, backdrops, deposit): the same rows as when it was booked.

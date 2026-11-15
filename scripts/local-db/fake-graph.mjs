@@ -57,6 +57,7 @@ http
       if (b.start) e.startUtc = toUtc(b.start.dateTime, b.start.timeZone);
       if (b.end) e.endUtc = toUtc(b.end.dateTime, b.end.timeZone);
       if (b.body) e.body = b.body.content;
+      if (b.location) e.location = b.location.displayName;
       return send(res, 200, { id: e.id });
     }
     if (req.method === "DELETE" && id) {

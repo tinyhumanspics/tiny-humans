@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { site } from "@/config/site";
 import { requestDeclinedEmail } from "@/emails/RequestDeclined";
+import { homeOf } from "@/lib/booking/details";
 import { formatAddress } from "@/lib/booking/templates";
 import { babiesLabel } from "@/lib/booking/extra-babies";
 import { claimRequest, declineRequest, insertRequest, linkRequest, markRequestBooked, requestById, unclaimRequest, type NewRequestRow } from "@/lib/requests/store";
@@ -108,5 +109,8 @@ describe("a booking made from a request (street and baby's age still to come)", 
     expect(formatAddress({ street: "1500 Bay Rd", unit: "4", city: "Miami Beach", zip: "33139" })).toBe("1500 Bay Rd, Unit 4, Miami Beach, FL 33139");
     expect(babiesLabel([{ age: "" }, { age: "", name: "Mia" }])).toBe("Baby 1, Mia");
     expect(babiesLabel([{ age: "2–6 weeks", name: "Leo" }])).toBe("Leo (2–6 weeks)");
+    // the prepare page's boxes: empty street until they add it
+    expect(homeOf("FL 33139")).toEqual({ street: "", city: "", zip: "33139" });
+    expect(homeOf("1500 Bay Rd, Unit 4, Miami Beach, FL 33139")).toEqual({ street: "1500 Bay Rd, Unit 4", city: "Miami Beach", zip: "33139" });
   });
 });
