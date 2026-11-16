@@ -100,11 +100,12 @@ test("Not born yet: a due date instead of a time, and the day 10–20 rule (owne
   await expect(page.getByText("to confirm your due date (", { exact: false })).toBeVisible();
 });
 
-test("the bundles sit side by side with what they include; without ?bundle= the family picks one; twins add the extra-baby price", async ({ page }) => {
+test("the menu's /book: the bundles side by side with the middle one checked and the calendar showing; twins add the extra-baby price", async ({ page }) => {
   await page.goto("/book");
   await expect(page.getByText("Choose your bundle")).toBeVisible();
-  await page.getByRole("button", { name: "Next: your details" }).click();
-  await expect(page.locator("main").getByRole("alert")).toHaveText("Choose a bundle first.");
+  // like "Check dates": the middle bundle is checked, so the calendar is already there (owner, Nov 16)
+  await expect(page.getByRole("button", { name: /Our Little Story/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('[role="grid"]')).toBeVisible();
   // every bundle with its details, cheapest first (owner, Nov 16)
   const cards = page.locator("main fieldset button[aria-pressed]");
   await expect(cards).toHaveCount(3);

@@ -60,11 +60,19 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   const { inspirationId } = useBookingSelection();
   const provider = useMemo(() => new HttpBookingClient(), []);
 
-  const [bundleId, setBundleId] = useState<string | null>(() => (due ? due.summary.bundleId : (getBundle(params.get("bundle"))?.id ?? null)));
+  // no bundle in the link (the menu's Book, "Not born yet?"): the middle one is checked, as "Check dates" does, so the
+  // calendar shows right away (owner, Nov 16)
+  const [bundleId, setBundleId] = useState<string | null>(() => {
+    if (due) return due.summary.bundleId;
+    const linked = getBundle(params.get("bundle"))?.id;
+    if (linked) return linked;
+    const shown = bundles.filter((b) => b.showOnLanding !== false).sort((x, y) => priceOf(x, today) - priceOf(y, today));
+    return shown[Math.floor((shown.length - 1) / 2)]?.id ?? null;
+  });
   const bundle = getBundle(bundleId);
   // a bundle card was clicked (the bundles page, the ad page's cards): their pick with "Change"; "Check dates" (?compare=1)
-  // or no bundle yet: every bundle side by side (owner, Nov 16)
-  const [comparing, setComparing] = useState(() => !bundle || params.get("compare") === "1");
+  // and links without a bundle: every bundle side by side (owner, Nov 16)
+  const [comparing, setComparing] = useState(() => !params.get("bundle") || params.get("compare") === "1");
   // "Not born yet?" buttons elsewhere on the site open this screen on the due date (?when=due)
   const [type, setType] = useState<RequestType>(() => (!due && params.get("when") === "due" ? "due_date" : "date"));
   const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
