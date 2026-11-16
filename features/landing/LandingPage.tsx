@@ -7,6 +7,7 @@ import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
+import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
@@ -71,7 +72,10 @@ export default function LandingPage({
   // the bundles shown here (cheapest first), "Check dates" (the middle one) and the price line, as on the home page
   const { shown, withQuery, ctaHref, onCta, priceLine, notice, available } = useLandingOffer({ noticeHours, travel, deposit, query, priceMessages: t.price, noticeMessages, locale });
   const perMile = travel ? money(travel.perMileCents) : "";
-  const twins = shown.find((b) => b.extraBaby?.active)?.extraBaby;
+  // twins: the extra price, and its extra time and photos when every bundle adds the same (owner, Nov 16)
+  const extras = shown.flatMap((b) => (b.extraBaby?.active ? [b.extraBaby] : []));
+  const twins = extras[0];
+  const samePerks = Boolean(twins) && twins.extraMinutes > 0 && twins.extraPhotos > 0 && extras.every((e) => e.price === twins.price && e.extraMinutes === twins.extraMinutes && e.extraPhotos === twins.extraPhotos);
 
   // owner photos only: an empty slot shows nothing here (no "photo coming soon" card on the ad page)
   const meetPhoto = media.landing[1];
@@ -92,6 +96,7 @@ export default function LandingPage({
             </div>
           )}
           <div className={styles.heroCopy}>
+            <BoardDoodles area="hero" />
             <p className={cn(styles.eyebrow, "chalk-soft")}>{heading?.eyebrow ?? t.hero.eyebrow}</p>
             <h1 id="landing-title" className={cn(styles.title, "chalk")}>
               {heading
@@ -183,7 +188,7 @@ export default function LandingPage({
             <p className="chalk-soft">
               <b>{t.offer.dueTitle}</b> {t.offer.due} {deposit ? depositText({ one: t.offer.dueDeposit, from: t.offer.dueDeposit }, deposit) : ""}
             </p>
-            {twins && <p className={cn(styles.small, "chalk-soft")}>{fill(t.offer.twins, { price: money(toCents(twins.price)) })}</p>}
+            {twins && <p className={cn(styles.small, "chalk-soft")}>{fill(samePerks ? t.offer.twinsPerks : t.offer.twins, { price: money(toCents(twins.price)), minutes: String(twins.extraMinutes), photos: String(twins.extraPhotos) })}</p>}
             {travel && <p className={cn(styles.small, "chalk-soft")}>{fill(t.offer.travel, { miles: String(travel.freeMiles), perMile })}</p>}
           </ChalkBox>
         </Reveal>

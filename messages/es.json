@@ -98,6 +98,7 @@
       "due": "Elige una fecha cerca de tu fecha de parto. Cuando llegue el bebé, nos escribes y la movemos.",
       "dueDeposit": "Si la sesión no puede hacerse, tú eliges: te devolvemos los {deposit} o los usas para una sesión cuando el bebé sea más grande.",
       "twins": "Gemelos: +{price} por bebé adicional.",
+      "twinsPerks": "Gemelos: +{price} por bebé adicional, con {minutes} minutos más y {photos} fotos editadas más.",
       "travel": "Traslado: sin costo a menos de {miles} millas de Miami Beach; después, {perMile} por milla. Lo ves antes de pagar."
     },
     "how": {
@@ -317,6 +318,7 @@
       "change": "Cambiar",
       "chooseBundle": "Elige tu paquete",
       "twins": "¿Gemelos? +{price} por bebé adicional",
+      "twinsPerks": "¿Gemelos? +{price} por bebé adicional: +{minutes} min y +{photos} fotos editadas",
       "travel": "Sin costo a menos de {miles} millas de Miami Beach",
       "pickTime": "Elige un día y una hora de inicio.",
       "pickDue": "Elige la fecha en que esperan al bebé.",

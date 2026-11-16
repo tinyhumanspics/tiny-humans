@@ -52,7 +52,7 @@ export interface ScatterDoodle {
 export type DoodleColor = ScatterDoodle["color"];
 
 /** Places on the page where little chalk drawings sit on the board. */
-export type BoardArea = "heading" | "cta" | "card" | "note";
+export type BoardArea = "hero" | "heading" | "cta" | "card" | "note";
 
 export interface BoardDoodle {
   shape: DoodleShape;
@@ -78,6 +78,12 @@ type Palette = [DoodleShape, DoodleColor][];
 function boardFrom(p: Palette): Record<BoardArea, BoardDoodle[]> {
   const at = (i: number) => ({ shape: p[i % p.length][0], color: p[i % p.length][1] });
   return {
+    // the home page's and the ad page's top words: beside the short line above the title and beside "Text us" (they
+    // sketch in when the page opens, like the headings of the other pages; owner, Nov 16)
+    hero: [
+      { ...at(0), top: "-8px", right: "1%", size: 32, rotate: -8 },
+      { ...at(1), bottom: "2px", right: "2%", size: 42, rotate: 6 },
+    ],
     heading: [
       { ...at(2), top: "2px", right: "0px", size: 39, rotate: 10 },
       { ...at(3), top: "46px", right: "2px", size: 29, rotate: -12 },

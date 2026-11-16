@@ -406,7 +406,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
 
                   {bundle && extra && !due && (
                     <label className={cn(styles.twins, "chalk-soft")}>
-                      <input type="checkbox" checked={babyCount === 2} onChange={(ev) => (setBabyCount(ev.target.checked ? 2 : 1), setSlot(null))} /> {fill(m.when.twins, { price: formatMoney(Math.round(extra.price * 100)) })}
+                      <input type="checkbox" checked={babyCount === 2} onChange={(ev) => (setBabyCount(ev.target.checked ? 2 : 1), setSlot(null))} />{" "}
+                      {/* what the extra pays for: this bundle's extra time and photos from /admin (owner, Nov 16) */}
+                      {fill(extra.extraMinutes > 0 && extra.extraPhotos > 0 ? m.when.twinsPerks : m.when.twins, { price: formatMoney(Math.round(extra.price * 100)), minutes: String(extra.extraMinutes), photos: String(extra.extraPhotos) })}
                     </label>
                   )}
 

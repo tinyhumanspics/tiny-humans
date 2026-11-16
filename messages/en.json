@@ -129,6 +129,7 @@
       "change": "Change",
       "chooseBundle": "Choose your bundle",
       "twins": "Twins? +{price} per extra baby",
+      "twinsPerks": "Twins? +{price} per extra baby: +{minutes} min and +{photos} edited photos",
       "travel": "Free within {miles} miles of Miami Beach",
       "pickTime": "Pick a day and a start time.",
       "pickDue": "Pick your due date.",
@@ -632,6 +633,7 @@
       "due": "Pick a date near your due date. When baby arrives, text us and we move it.",
       "dueDeposit": "If your session can't happen, you choose: get your {deposit} back or put it toward a session when baby is older.",
       "twins": "Twins: +{price} per extra baby.",
+      "twinsPerks": "Twins: +{price} per extra baby, with {minutes} more minutes and {photos} more edited photos.",
       "travel": "Travel: free within {miles} miles of Miami Beach, then {perMile} a mile. You see it before you pay."
     },
     "how": {
