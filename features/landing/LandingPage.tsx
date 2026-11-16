@@ -88,7 +88,8 @@ export default function LandingPage({
   return (
     <main id="top" className={styles.page}>
       {/* 1. Hero: a real photo, what it is, the price, one proof line, one button */}
-      <section className={styles.hero} aria-labelledby="landing-title">
+      {/* the home page's top animates in (owner, Nov 16): the photo settles, the title writes itself, the rest rises */}
+      <section className={cn(styles.hero, heading && styles.animate)} aria-labelledby="landing-title">
         <div className={cn("container", styles.heroGrid)}>
           {hero && (
             <div className={styles.heroPhoto}>
