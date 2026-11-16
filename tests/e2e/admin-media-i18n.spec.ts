@@ -45,8 +45,8 @@ test("the owner can save Spanish photo details and box wording, or have it fille
   await expect(page.getByRole("heading", { name: "Pictures by website section" })).toBeVisible();
   await expect(page.getByText(/Spanish fills itself in/)).toBeVisible();
 
-  await page.locator("summary", { hasText: "Title Pictures" }).click();
-  await page.getByRole("button", { name: "Edit Title Pictures Image 1" }).click();
+  await page.locator("summary", { hasText: "Portfolio Page (Little Moments)" }).click();
+  await page.getByRole("button", { name: "Edit Portfolio Page (Little Moments) Image 1", exact: true }).click();
   const photo = page.locator("dialog[open]");
   // Built-in placeholders carry complete Spanish metadata; clear one field to exercise the partial-draft guard.
   await photo.getByLabel("Description for screen readers (Spanish)", { exact: true }).fill("");
@@ -56,8 +56,8 @@ test("the owner can save Spanish photo details and box wording, or have it fille
   await photo.getByLabel("Description for screen readers (Spanish)", { exact: true }).fill("Recién nacido dormido envuelto suavemente");
   if (visualCapture) await page.screenshot({ path: `.screenshots/admin-media-spanish/${testInfo.project.name}-photo.png` });
   await photo.getByRole("button", { name: "Save words" }).click();
-  await expect(page.getByText("Details saved. It's live on the website now.")).toBeVisible();
-  expect(saved.media.default?.title[0]?.spanish).toEqual({
+  await expect(page.getByText(/Caption saved: “First week”/)).toBeVisible();
+  expect(saved.media.default?.sections?.[0]?.photos[0]?.spanish).toEqual({
     title: "Recién nacido dormido",
     alt: "Recién nacido dormido envuelto suavemente",
     caption: "Primera semana",

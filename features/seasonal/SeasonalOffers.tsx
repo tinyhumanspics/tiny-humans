@@ -2,18 +2,14 @@
 
 import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
-import { bundlesHref, scheduleHref } from "@/config/booking";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
-import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import OfferLine from "@/features/booking/OfferLine";
 import { formatLongDate } from "@/lib/booking/dates";
-import { activeOffer, toCents } from "@/lib/pricing/engine";
 import { activeSeasonalOffers } from "@/lib/seasonal/offers";
-import { trackSelectBundle } from "@/lib/tracking/client";
 import styles from "./SeasonalOffers.module.css";
 import { cn } from "@/lib/cn";
 
@@ -23,18 +19,13 @@ const fill = (template: string, values: Record<string, string>) => template.repl
  * The seasonal offer boxes (owner-managed in /admin → Seasonal Landing) on the ad page and the home page: switched on,
  * before their last session date, made for the live theme (or any theme). Inside each box, the running bundle special
  * offer's line when there is one ("Thanksgiving offer: 10% off every bundle…", owner Nov 10). Nothing when none is live.
- * `cta={false}`: no button of its own (the ad page: "Check dates" is right above it, owner Nov 15).
+ * No button of its own: "Check dates" sits right above it on both pages (owner, Nov 15–16).
  */
-export default function SeasonalOffers({ messages, promoMessages, locale, className, cta = true }: { messages: typeof en.landing.seasonalOffers; promoMessages: typeof en.bundlesPage.promo; locale: AppLocale; className?: string; cta?: boolean }) {
-  const { bundles, today } = useCatalog();
+export default function SeasonalOffers({ messages, promoMessages, locale, className }: { messages: typeof en.landing.seasonalOffers; promoMessages: typeof en.bundlesPage.promo; locale: AppLocale; className?: string }) {
+  const { today } = useCatalog();
   const { settings, theme } = useSiteSettings();
   const offers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today, locale);
   if (!offers.length) return null;
-  const featured = bundles.find((b) => b.badge) ?? bundles[0];
-  const ctaHref = featured ? scheduleHref(featured.id, null, locale) : bundlesHref(null, locale);
-  const onCta = () => {
-    if (featured) trackSelectBundle({ id: featured.id, name: featured.name, value: (activeOffer(featured, today)?.cents ?? toCents(featured.price)) / 100 });
-  };
   return (
     <section className={cn("container", styles.seasonal, className)} aria-labelledby="seasonal-offer">
       <Reveal>
@@ -50,7 +41,6 @@ export default function SeasonalOffers({ messages, promoMessages, locale, classN
               <div className={styles.seasonalPromo}>
                 <OfferLine messages={promoMessages} locale={locale} />
               </div>
-              {cta && <ChalkButton href={ctaHref} onClick={onCta} variant="outline" seed={26 + index}>{messages.cta}</ChalkButton>}
             </ChalkBox>
           ))}
         </div>

@@ -27,11 +27,17 @@ const PROJECT_SLOT: Record<string, number> = { "iphone-safari": 0, "android-chro
 const dayFor = (k: number) => (PROJECT_SLOT[test.info().project.name] ?? 0) * 6 + k;
 
 /** Screen 1: next month, its open day number `k` (per test and browser), and that day's first time. */
+/** The calendar has loaded (one calendar: a CI Android run once caught two for a moment while the page settled). */
+async function calendarReady(page: Page) {
+  await expect(page.locator('[role="grid"]')).toHaveCount(1);
+  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+}
+
 async function pickTime(page: Page, k: number) {
   await expect(page.getByRole("heading", { name: "When should we come?" })).toBeVisible();
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  await calendarReady(page);
   await page.getByRole("button", { name: "Next month" }).click();
-  await expect(page.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  await calendarReady(page);
   const open = await openDays(page).count();
   await openDays(page).nth(dayFor(k) % open).click();
   const time = page.locator('label[for^="time-"]').first();
@@ -74,12 +80,12 @@ test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", a
   expect(posted[0]).toMatchObject({ type: "date", bundleId: "our-little-story", babyCount: 1, firstName: "Dana", mobile: "305-555-0122", zip: "33139", textConsent: false });
 });
 
-test("Not born yet: a due date instead of a time, and the day 5–14 rule", async ({ page }) => {
+test("Not born yet: a due date instead of a time, and the day 10–20 rule (owner, Nov 16)", async ({ page }) => {
   await page.goto("/book?bundle=little-moments");
   await expect(page.getByRole("heading", { name: "When should we come?" })).toBeVisible();
   await hydrated(page, "#request-title");
   await page.getByRole("button", { name: "Not born yet" }).click();
-  await expect(page.getByText("When baby arrives, text us and we move it to day 5–14.")).toBeVisible();
+  await expect(page.getByText("When baby arrives, text us and we move it to day 10–20.")).toBeVisible();
   // a date too far ahead stops screen 1
   const max = await page.locator("#request-due").getAttribute("max");
   await page.getByRole("button", { name: "Next: your details" }).click();
@@ -130,7 +136,7 @@ test("a requested time is held from other families; one taken meanwhile sends th
   const b = await other.newPage();
   await b.route("**/api/booking/funnel", (r) => r.fulfill({ status: 204 }));
   await b.goto("/book?bundle=forever-little");
-  await expect(b.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  await calendarReady(b);
   await b.getByRole("button", { name: "Next month" }).click();
   await b.locator(`[role="grid"] button[aria-label="${day}"]`).click();
   await b.locator('label[for^="time-"]', { hasText: time }).first().click();
@@ -143,9 +149,9 @@ test("a requested time is held from other families; one taken meanwhile sends th
   const c = await third.newPage();
   await c.route("**/api/booking/funnel", (r) => r.fulfill({ status: 204 }));
   await c.goto("/book?bundle=forever-little");
-  await expect(c.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  await calendarReady(c);
   await c.getByRole("button", { name: "Next month" }).click();
-  await expect(c.locator('[role="grid"]')).toHaveAttribute("aria-busy", "false");
+  await calendarReady(c);
   // the same day: one time fewer (or no times left), and never the requested one
   const cell = c.locator(`[role="grid"] button[aria-label^="${day!.split(",").slice(0, 3).join(",")},"]`);
   await expect(cell).not.toHaveAttribute("aria-label", day!);
@@ -194,7 +200,7 @@ test("a gallery picture picked as inspiration shows on /book and goes with the r
   const picture = BUILT_IN.sections.flatMap((x) => x.photos)[1];
   const posted: Record<string, unknown>[] = [];
   page.on("request", (r) => r.url().includes("/api/booking/request") && posted.push(r.postDataJSON()));
-  await page.goto("/");
+  await page.goto("/portfolio");
   await page.getByRole("button", { name: new RegExp(`^Open photo 2 of \\d+: `) }).click();
   const viewer = page.getByRole("dialog", { name: "Photo viewer" });
   await viewer.getByRole("link", { name: "Use this one as my inspiration" }).click();
@@ -293,7 +299,7 @@ test("brief 03: no Pixel calls on a page whose link carries a secret token", asy
 });
 
 test("brief 04: 'Not born yet?' buttons open /book on the due date", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/bundles");
   const cta = page.locator('main a[href="/book?when=due"]').first();
   await expect(cta).toBeVisible();
   await cta.click();

@@ -53,7 +53,7 @@ test("the landing page and legal pages load", async ({ page }) => {
 });
 
 test("the home portfolio viewer keeps its localized controls", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/portfolio");
   // Opened from the keyboard: closing must put focus back on the same photo (WCAG 2.4.3).
   const opener = page.getByRole("button", { name: /Open photo 1 of/ });
   await opener.focus();

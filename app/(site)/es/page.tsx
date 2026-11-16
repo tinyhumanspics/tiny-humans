@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-import Hero from "@/features/home/Hero";
-import Portfolio from "@/features/home/Portfolio";
-import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
-import QuickPrice from "@/features/booking/QuickPrice";
-import Reviews from "@/features/reviews/Reviews";
+import LandingPage from "@/features/landing/LandingPage";
+import { getNoticeHoursSetting } from "@/lib/availability/server";
+import { siteDeposit } from "@/lib/deposit/server";
 import { getPublicReviews } from "@/lib/reviews/server";
 import { DEFAULT_SITE_TITLE_ES, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
+import { getTravelSettings } from "@/lib/travel/server";
 import es from "@/messages/es.json";
 
 export const metadata: Metadata = pageMetadata({
@@ -18,18 +17,24 @@ export const metadata: Metadata = pageMetadata({
   translations: true,
 });
 
+/** Home (owner, Nov 16): the ad page, with "Tiny moments. Big memories." as its title. */
 export default async function SpanishHomePage() {
-  const reviews = await getPublicReviews();
+  const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd("es")) }} />
-      <main id="top">
-        <Hero messages={es.home.hero} dueCta={es.dueDate.invite.button} locale="es" />
-        <SeasonalOffers messages={es.landing.seasonalOffers} promoMessages={es.bundlesPage.promo} locale="es" />
-        <QuickPrice messages={{ price: es.quickPrice, discount: es.bookingFlow.review.discount, travel: es.bookingFlow.details.travel }} locale="es" />
-        <Portfolio messages={es.home.portfolio} locale="es" />
-        {reviews.length > 0 && <Reviews reviews={reviews} messages={es.reviewsSection} placement="home" />}
-      </main>
+      <LandingPage
+        headline={es.home.hero.title}
+        noticeHours={noticeHours}
+        travel={travel}
+        deposit={deposit}
+        reviews={reviews}
+        messages={es.landing}
+        bundleMessages={es.bundlesPage}
+        noticeMessages={es.policy}
+        reviewMessages={es.reviewsSection}
+        locale="es"
+      />
     </>
   );
 }

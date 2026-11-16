@@ -28,7 +28,9 @@ export const site = {
 } as const;
 
 export const navigation = [
-  { message: "portfolio", href: "/#portfolio" },
+  { message: "home", href: "/" },
+  // the portfolio is its own page (owner, Nov 16)
+  { message: "portfolio", href: "/portfolio" },
   { message: "bundles", href: "/bundles" },
   // straight to /book: the bundles and the calendar are on its first screen (owner, Nov 16; brief 05)
   { message: "book", href: "/book", emphasis: true },

@@ -86,6 +86,13 @@
 
 .link:hover { color: var(--sun-yellow); transform: rotate(-2deg); }
 
+/* "Home": the word on computers, a small chalk house on phones (the word stays for screen readers) */
+.homeIcon { display: none; }
+@media (max-width: 767px) {
+  .homeIcon { display: block; }
+  .homeWord { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+}
+
 .emphasis { color: var(--sun-yellow); padding: 4px 10px; }
 
 .circle {
@@ -124,11 +131,18 @@
   }
 }
 
+/* Phones up to 430px: four menu items (Home, Portfolio, Bundles, Book) need a little less room each. */
+@media (max-width: 430px) {
+  .nav ul { gap: 10px; }
+  .link { font-size: clamp(1rem, 4.2vw, 1.12rem); }
+}
+
 /* WCAG reflow at 320 CSS px: keep the complete hand-drawn Book circle on-screen. */
 @media (max-width: 350px) {
-  .bar { gap: 8px; }
-  .logoSlot { --logo-w: 70; }
-  .nav ul { gap: 10px; }
+  .bar { gap: 6px; }
+  .logoSlot { --logo-w: 64; }
+  .nav ul { gap: 7px; }
+  .link { font-size: 0.95rem; }
   /* Spanish: a few px of spare room, since text renders slightly wider on some systems (e.g. Linux). */
   .header[data-locale="es"] .link { font-size: 0.95rem; }
 }

@@ -17,6 +17,7 @@
 .heroCopy { position: relative; }
 .eyebrow { margin: 0 0 6px; font-family: var(--font-chalk); font-size: clamp(1.1rem, 3.4vw, 1.35rem); letter-spacing: 0.04em; color: var(--cloud-blue); }
 .title { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(2rem, 8.4vw, 3.6rem); line-height: 1.06; color: var(--chalk-white); }
+.titleLine { display: block; }
 .sub { margin: 12px 0 0; max-width: 30em; font-size: clamp(1.1rem, 3.4vw, 1.3rem); color: var(--chalk-white); }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
 .priceLine { margin: 12px 0 0; font-size: 1.05rem; color: var(--chalk-muted); }

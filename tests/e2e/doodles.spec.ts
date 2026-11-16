@@ -45,7 +45,7 @@ test.describe("chalk drawings stay off heading letters", () => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One Chromium pass over every width is enough.");
     for (const width of [320, 360, 390, 412, 430, 768, 1024, 1280, 1440]) {
       await page.setViewportSize({ width, height: 900 });
-      for (const path of ["/", "/bundles", "/about", "/home-sweet-home"]) {
+      for (const path of ["/", "/portfolio", "/bundles", "/about", "/home-sweet-home"]) {
         await page.goto(path, { waitUntil: "networkidle" });
         expect(await doodlesOnLetters(page), `${path} at ${width}px`).toEqual([]);
       }

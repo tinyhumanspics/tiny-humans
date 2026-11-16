@@ -14,17 +14,17 @@ async function photosPage(page: Page) {
     await route.fulfill({ json: state.saved });
   });
   await page.goto("/admin/photos");
-  // each part of the page is folded to one line: open "Little Moments"
-  await page.locator("summary").filter({ has: page.getByRole("heading", { name: "Little Moments", exact: true }) }).click();
+  // each part of the page is folded to one line: open the portfolio's pictures
+  await page.locator("summary").filter({ has: page.getByRole("heading", { name: "Portfolio Page (Little Moments)", exact: true }) }).click();
   return state;
 }
 
 const saved = (page: Page, text: string) => expect(page.getByRole("status").filter({ hasText: text })).toBeVisible();
 const dialog = (page: Page) => page.locator("dialog[open]");
 /** A picture's card (its tags) and its Edit dialog. */
-const card = (page: Page, n: number) => page.getByRole("button", { name: `Edit Little Moments Image ${n}`, exact: true }).locator("xpath=..");
+const card = (page: Page, n: number) => page.getByRole("button", { name: `Edit Portfolio Page (Little Moments) Image ${n}`, exact: true }).locator("xpath=..");
 async function editPicture(page: Page, n: number) {
-  await page.getByRole("button", { name: `Edit Little Moments Image ${n}`, exact: true }).click();
+  await page.getByRole("button", { name: `Edit Portfolio Page (Little Moments) Image ${n}`, exact: true }).click();
   await expect(dialog(page)).toBeVisible();
   return dialog(page);
 }
@@ -43,7 +43,7 @@ test("Little Moments is one list: add, order and remove pictures; no sections or
   await expect(page.getByRole("button", { name: "+ Add a section" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /box/i })).toHaveCount(0);
   await expect(page.getByText("Show the “Book a memory like this one” boxes", { exact: false })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Edit Little Moments Image \d+$/ })).toHaveCount(builtIn.length);
+  await expect(page.getByRole("button", { name: /^Edit Portfolio Page \(Little Moments\) Image \d+$/ })).toHaveCount(builtIn.length);
 
   await page.getByLabel("Add pictures to Little Moments").setInputFiles(["public/portfolio/tiny-toes.jpg", "public/portfolio/first-smile.jpg"]);
   await saved(page, "2 pictures added at the end of the gallery.");

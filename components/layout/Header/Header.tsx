@@ -58,7 +58,15 @@ export default function Header({ messages, languageMessages, locale, showLanguag
                   <Link
                     href={localePath(item.href, locale)}
                     className={cn(styles.link, "emphasis" in item && item.emphasis ? styles.emphasis : "")}>
-                    <span className="chalk-soft">{messages[item.message]}</span>
+                    {item.message === "home" ? (
+                      // phones: a small chalk house (the word stays for screen readers), so four items fit (owner, Nov 16)
+                      <>
+                        <span className={cn(styles.homeWord, "chalk-soft")}>{messages.home}</span>
+                        <ChalkDoodle name="house" className={styles.homeIcon} color="var(--chalk-white)" strokeWidth={3} size={28} />
+                      </>
+                    ) : (
+                      <span className="chalk-soft">{messages[item.message]}</span>
+                    )}
                     {"emphasis" in item && item.emphasis && (
                       <ChalkDoodle name="circle" className={styles.circle} color="var(--sun-yellow)" strokeWidth={2.6} size="100%" />
                     )}

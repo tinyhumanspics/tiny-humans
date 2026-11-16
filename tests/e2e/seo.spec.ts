@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 const ORIGIN = "https://www.tinyhumans.photography";
 
 test("public pages publish unique canonical and social URLs", async ({ page }) => {
-  for (const path of ["/", "/about", "/bundles", "/home-sweet-home", "/privacy", "/terms"]) {
+  for (const path of ["/", "/portfolio", "/about", "/bundles", "/home-sweet-home", "/privacy", "/terms"]) {
     await page.goto(path);
     const canonical = new URL((await page.locator('link[rel="canonical"]').getAttribute("href")) ?? "");
     const openGraph = new URL((await page.locator('meta[property="og:url"]').getAttribute("content")) ?? "");
@@ -34,7 +34,7 @@ test("sitemap includes only canonical public content pages", async ({ request })
   const response = await request.get("/sitemap.xml");
   expect(response.ok()).toBe(true);
   const body = await response.text();
-  for (const path of ["/", "/about", "/bundles", "/home-sweet-home", "/privacy", "/terms"]) {
+  for (const path of ["/", "/portfolio", "/about", "/bundles", "/home-sweet-home", "/privacy", "/terms"]) {
     expect(body).toContain(`<loc>${ORIGIN}${path === "/" ? "/" : path}</loc>`);
   }
   expect(body).not.toContain("/admin");

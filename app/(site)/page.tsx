@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import Hero from "@/features/home/Hero";
-import Portfolio from "@/features/home/Portfolio";
-import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
-import QuickPrice from "@/features/booking/QuickPrice";
-import Reviews from "@/features/reviews/Reviews";
+import LandingPage from "@/features/landing/LandingPage";
+import { getSpanishPublication } from "@/i18n/publication";
+import { getNoticeHoursSetting } from "@/lib/availability/server";
+import { siteDeposit } from "@/lib/deposit/server";
 import { getPublicReviews } from "@/lib/reviews/server";
 import { DEFAULT_SITE_DESCRIPTION, DEFAULT_SITE_TITLE, pageMetadata } from "@/lib/seo/metadata";
 import { serializeJsonLd, serviceBusinessJsonLd } from "@/lib/seo/structured-data";
+import { getTravelSettings } from "@/lib/travel/server";
 import en from "@/messages/en.json";
-import { getSpanishPublication } from "@/i18n/publication";
 
 export async function generateMetadata(): Promise<Metadata> {
   return pageMetadata({
@@ -20,19 +19,24 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-/** Home: hero, the live seasonal offer boxes (/admin → Seasonal Landing), "Get a quick price", portfolio feed, the reviews picked in /admin. */
+/** Home (owner, Nov 16): the ad page, with "Tiny moments. Big memories." as its title. */
 export default async function HomePage() {
-  const reviews = await getPublicReviews();
+  const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd()) }} />
-      <main id="top">
-        <Hero messages={en.home.hero} dueCta={en.dueDate.invite.button} locale="en" />
-        <SeasonalOffers messages={en.landing.seasonalOffers} promoMessages={en.bundlesPage.promo} locale="en" />
-        <QuickPrice messages={{ price: en.quickPrice, discount: en.bookingFlow.review.discount, travel: en.bookingFlow.details.travel }} locale="en" />
-        <Portfolio messages={en.home.portfolio} locale="en" />
-        {reviews.length > 0 && <Reviews reviews={reviews} messages={en.reviewsSection} placement="home" />}
-      </main>
+      <LandingPage
+        headline={en.home.hero.title}
+        noticeHours={noticeHours}
+        travel={travel}
+        deposit={deposit}
+        reviews={reviews}
+        messages={en.landing}
+        bundleMessages={en.bundlesPage}
+        noticeMessages={en.policy}
+        reviewMessages={en.reviewsSection}
+        locale="en"
+      />
     </>
   );
 }

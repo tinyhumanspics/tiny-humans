@@ -15,14 +15,14 @@ type Messages = typeof en.reviewsSection;
 
 /**
  * "What families say": the reviews the owner picked in /admin → Leads ("Use on the website"; only reviews the family
- * said OK to show). Renders nothing while there are none. `placement` sets the spacing for the home page (after the
- * photos) or the ad landing page (between the photographers and the questions).
+ * said OK to show), between the photographers and the questions on the ad page and the home page. Renders nothing while
+ * there are none.
  */
-export default function Reviews({ reviews, messages = en.reviewsSection, placement }: { reviews: PublicReview[]; messages?: Messages; placement: "home" | "landing" }) {
+export default function Reviews({ reviews, messages = en.reviewsSection }: { reviews: PublicReview[]; messages?: Messages }) {
   if (!reviews.length) return null;
-  const id = `${placement}-reviews`;
+  const id = "reviews-title";
   return (
-    <section className={cn("container", styles.section)} data-placement={placement} aria-labelledby={id}>
+    <section className={cn("container", styles.section)} aria-labelledby={id}>
       <SectionHeading id={id} title={messages.title} subtitle={messages.subtitle} slot="portfolio" align="center" />
       <ul className={styles.list} data-count={reviews.length}>
         {reviews.map((review, i) => (

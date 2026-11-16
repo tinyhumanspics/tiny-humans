@@ -1,7 +1,6 @@
-/* Home: right after the photos (their section already leaves room above). Ad landing page: like its other sections.
-   Only top/bottom padding here: the global .container class sets the side padding. */
-.section[data-placement="home"] { padding-bottom: clamp(64px, 9vw, 110px); }
-.section[data-placement="landing"] { padding-top: clamp(56px, 9vw, 110px); }
+/* Like the other sections of the ad page and the home page. Only top padding here: the global .container class sets the
+   side padding. */
+.section { padding-top: clamp(56px, 9vw, 110px); }
 
 /* Centered rows: 1 card per row on phones, 2 on tablets, 3 on desktops (2 + 2 for four reviews). Cards don't grow,
    so a short last row keeps the same card width and sits in the middle. */

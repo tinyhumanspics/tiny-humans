@@ -7,11 +7,7 @@
   },
   "home": {
     "hero": {
-      "title": ["Momentos pequeñitos.", "Grandes recuerdos."],
-      "subtitle": "Fotografía de recién nacidos y bebés hecha con amor.",
-      "promise": "Llevamos el estudio a tu hogar para que tu bebé esté cómodo.",
-      "primaryCta": "Reserva una sesión",
-      "secondaryCta": "Mira nuestro trabajo"
+      "title": ["Momentos pequeñitos.", "Grandes recuerdos."]
     },
     "portfolio": {
       "title": "Pequeños momentos",
@@ -45,15 +41,15 @@
       "concepts": {
         "a": {
           "title": "Fotos de recién nacido en tu propia sala.",
-          "sub": "Sin silla del carro, sin estudio, sin empacar. Llevamos luces, fondos y mantitas a tu casa en Miami, y tu bebé marca el ritmo. Ves tus fotos al día siguiente."
+          "sub": "Sin silla del carro, sin estudio, sin empacar. Llevamos luces, fondos y mantitas a tu casa en Miami, y tu bebé marca el ritmo. Ves tus fotos al día siguiente. ¿Tu bebé aún no nace? También puedes reservar con tu fecha de parto."
         },
         "b": {
           "title": "Reserva tu sesión de recién nacido con tiempo. Movemos la fecha cuando llegue el bebé.",
-          "sub": "Las mejores fotos de recién nacido se toman en las primeras dos semanas. Elige ahora una fecha cerca de tu fecha de parto; cuando llegue el bebé, nos escribes y vamos a tu casa entre el día 5 y el 14."
+          "sub": "Las mejores fotos de recién nacido se toman en las primeras semanas. Elige ahora una fecha cerca de tu fecha de parto; cuando llegue el bebé, nos escribes y vamos a tu casa entre el día 10 y el 20."
         },
         "c": {
           "title": "Fotos de recién nacido en casa, con Adrian y Alondra.",
-          "sub": "Somos las dos personas que van a tu casa. Nos lavamos las manos primero, mamá o papá siempre al alcance de la mano, y tu bebé marca el ritmo."
+          "sub": "Somos las dos personas que van a tu casa. Nos lavamos las manos primero, mamá o papá siempre al alcance de la mano, y tu bebé marca el ritmo. ¿Tu bebé aún no nace? También puedes reservar con tu fecha de parto."
         }
       },
       "cta": "Ver fechas"
@@ -153,7 +149,7 @@
         },
         {
           "q": "¿Cuál es el mejor momento?",
-          "a": "Para fotos de bebé dormido y acurrucado, las primeras dos semanas (idealmente entre los días 5 y 14). Muchas familias reservan con tiempo una fecha cerca de su fecha de parto, y la movemos cuando llega el bebé."
+          "a": "Para fotos de bebé dormido y acurrucado, entre los días 10 y 20. Muchas familias reservan con tiempo una fecha cerca de su fecha de parto, y la movemos cuando llega el bebé."
         },
         {
           "q": "¿Y si el bebé nace antes o después, o no se calma?",
@@ -203,7 +199,6 @@
     "seasonalOffers": {
       "eyebrow": "Sesiones de temporada en casa",
       "cutoff": "Últimas sesiones: {date}",
-      "cta": "Ver fechas disponibles",
       "defaults": {
         "thanksgiving": {
           "title": "El primer Día de Acción de Gracias de tu bebé en casa",
@@ -301,27 +296,6 @@
       "message": "Tu depósito reserva tu lugar. Cuando llegue tu bebé, elige la fecha de tu sesión con el enlace de tu correo."
     }
   },
-  "quickPrice": {
-    "title": "Calcula tu precio",
-    "sub": "Elige un paquete y escribe tu código postal. Incluye la oferta de hoy y el viaje.",
-    "bundle": "Paquete",
-    "zip": "Tu código postal",
-    "codeLink": "¿Tienes un código de descuento?",
-    "bundleLine": "Paquete",
-    "codeLine": "Código {code}",
-    "until": "hasta el {date}",
-    "travel": "Viaje",
-    "travelTo": "Viaje a {zip}",
-    "addZip": "escribe tu código postal",
-    "free": "Gratis",
-    "miles": "unas {miles} millas",
-    "confirm": "te lo confirmamos",
-    "total": "Tu total",
-    "deposit": "Depósito de {deposit} para reservar · {rest} después de tu sesión",
-    "payAfter": "$0 hoy · pagas después de tu sesión",
-    "fine": "Gemelos, familiares adicionales o un código pueden cambiarlo. Verás el precio exacto antes de reservar.",
-    "book": "Reservar {bundle}"
-  },
   "bookingRequest": {
     "texts": {
       "hello": "¡Hola {name}! Te escribe Tiny Humans sobre tu solicitud de sesión para {when}.",
@@ -338,8 +312,8 @@
       "title": "¿Cuándo vamos?",
       "here": "Ya nació",
       "notBorn": "Todavía no nace",
-      "hereHelp": "Elige un día y una hora de inicio. Lo ideal es en las primeras dos semanas.",
-      "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos entre los días 5 y 14.",
+      "hereHelp": "Elige un día y una hora de inicio. Lo ideal es después de las primeras dos semanas del bebé.",
+      "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos entre los días 10 y 20.",
       "dueLabel": "Fecha en que esperan al bebé",
       "dueWindow": "Elige una fecha entre hoy y el {date}.",
       "chooseBundle": "Elige tu paquete",
@@ -561,32 +535,6 @@
       "timeRange": "{start} a {end} ({zone})",
       "unit": "Unidad",
       "change": "Cambiar",
-      "discount": {
-        "label": "¿Tienes un código de descuento?",
-        "optional": "(opcional)",
-        "empty": "Ingresa un código o puedes omitirlo. Es opcional.",
-        "applied": "Código {code} aplicado: -{amount}.{note}",
-        "appliedBefore": "Código ",
-        "appliedAfter": " aplicado.",
-        "remove": "Quitar",
-        "placeholder": "Ingresa el código",
-        "checking": "Comprobando…",
-        "apply": "Aplicar",
-        "offerBest": "Tu {offer} ya te da el mejor precio, así que no agregamos el código. Solo se puede usar un ahorro por reserva.",
-        "codeBetter": " Tu código te da un mejor precio que la oferta {offer}, así que usamos el código. Solo se puede usar un ahorro por reserva.",
-        "best": "Tu precio ya es el mejor disponible.",
-        "failed": "No pudimos comprobar ese código. Inténtalo de nuevo.",
-        "network": "No pudimos conectarnos. Revisa tu conexión e inténtalo de nuevo.",
-        "rateLimited": "Demasiados intentos. Espera unos minutos.",
-        "errors": {
-          "notFound": "No encontramos ese código. Revisa cómo está escrito e inténtalo de nuevo.",
-          "inactive": "Ese código no está activo en este momento.",
-          "expired": "Ese código venció.",
-          "notForBundle": "Ese código no se aplica a este paquete.",
-          "maxed": "Ese código alcanzó su límite y ya no se puede usar.",
-          "usedByEmail": "Ese código ya fue usado con este correo electrónico."
-        }
-      },
       "deposit": {
         "today": "Depósito hoy",
         "value": "{deposit} (reserva tu fecha)",
@@ -767,9 +715,16 @@
   "header": {
     "logoHome": "{brand}, inicio",
     "navigationLabel": "Principal",
+    "home": "Inicio",
     "portfolio": "Portafolio",
     "bundles": "Paquetes",
     "book": "Reservar"
+  },
+  "portfolioPage": {
+    "meta": {
+      "title": "Portafolio",
+      "description": "Fotos de recién nacidos y bebés, todas tomadas en los hogares de las familias en Miami."
+    }
   },
   "language": {
     "label": "Idioma",

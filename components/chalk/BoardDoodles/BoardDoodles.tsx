@@ -8,7 +8,7 @@ import type { BoardArea, DoodleColor } from "@/config/themes";
 import styles from "./BoardDoodles.module.css";
 import { cn } from "@/lib/cn";
 
-export const colorVar: Record<DoodleColor, string> = {
+const colorVar: Record<DoodleColor, string> = {
   accent: "var(--accent)",
   accent2: "var(--accent-2)",
   accent3: "var(--accent-3)",
@@ -59,7 +59,7 @@ export default function BoardDoodles({ area, only, desktopExtras = true }: {
  * Marks an element "pending" and then "drawn" the first time it scrolls
  * into view (after the logo intro). CSS turns that into a chalk sketch.
  */
-export function useDrawOnce(ref: RefObject<HTMLElement | null>, key: string) {
+function useDrawOnce(ref: RefObject<HTMLElement | null>, key: string) {
   useEffect(() => {
     const el = ref.current;
     if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;

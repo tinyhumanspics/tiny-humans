@@ -52,7 +52,7 @@ export interface ScatterDoodle {
 export type DoodleColor = ScatterDoodle["color"];
 
 /** Places on the page where little chalk drawings sit on the board. */
-export type BoardArea = "hero" | "heading" | "cta" | "card" | "note";
+export type BoardArea = "heading" | "cta" | "card" | "note";
 
 export interface BoardDoodle {
   shape: DoodleShape;
@@ -70,12 +70,6 @@ export interface BoardDoodle {
 
 type Palette = [DoodleShape, DoodleColor][];
 
-/** A medium-sized drawing that fills an empty spot in the portfolio grid. */
-export interface BoardScene {
-  main: [DoodleShape, DoodleColor];
-  accents: [[DoodleShape, DoodleColor], [DoodleShape, DoodleColor]];
-}
-
 /**
  * One shared layout of open spots on the board; each theme fills it with
  * its own palette of drawings. Spots were chosen so drawings never sit on
@@ -84,11 +78,6 @@ export interface BoardScene {
 function boardFrom(p: Palette): Record<BoardArea, BoardDoodle[]> {
   const at = (i: number) => ({ shape: p[i % p.length][0], color: p[i % p.length][1] });
   return {
-    hero: [
-      { ...at(0), top: "-14px", right: "2%", size: 44, rotate: -8 },
-      { ...at(1), bottom: "4px", right: "6%", size: 52, rotate: 4 },
-      { ...at(4), top: "38%", right: "-2%", size: 31, rotate: 12, desktopOnly: true },
-    ],
     heading: [
       { ...at(2), top: "2px", right: "0px", size: 39, rotate: 10 },
       { ...at(3), top: "46px", right: "2px", size: 29, rotate: -12 },
@@ -123,15 +112,12 @@ export interface ThemeDefinition {
   logo: LogoAsset;
   decorations: {
     heading: { portfolio: DoodleShape; bundles: DoodleShape; book: DoodleShape };
-    hero: [DoodleShape, DoodleShape];
     cards: [DoodleShape, DoodleShape, DoodleShape];
     cta: [DoodleShape, DoodleShape];
     /** Small chalk doodles in the page margins (wide screens only). */
     scatter: ScatterDoodle[];
-    /** Little drawings on the board around headings, the hero and prompts. */
+    /** Little drawings on the board around headings, calls to action, cards and notes. */
     board: Record<BoardArea, BoardDoodle[]>;
-    /** Medium drawings for empty spots in the portfolio grid (used in turn). */
-    scenes: [BoardScene, BoardScene, BoardScene];
   };
 }
 
@@ -167,7 +153,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     ),
     decorations: {
       heading: { portfolio: "heart", bundles: "star", book: "sparkle" },
-      hero: ["heart", "sparkle"],
       cards: ["star", "heart", "sparkle"],
       cta: ["star", "heart"],
       scatter: [
@@ -186,11 +171,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         ["sparkle", "white"],
         ["heart", "white"],
       ]),
-      scenes: [
-        { main: ["sun", "sun"], accents: [["cloud", "cloud"], ["star", "sun"]] },
-        { main: ["cloud", "cloud"], accents: [["heart", "white"], ["sparkle", "sun"]] },
-        { main: ["heart", "cloud"], accents: [["star", "sun"], ["sparkle", "white"]] },
-      ],
     },
   },
   thanksgiving: {
@@ -224,7 +204,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     ),
     decorations: {
       heading: { portfolio: "mapleLeaf", bundles: "leaf", book: "pumpkin" },
-      hero: ["mapleLeaf", "pumpkin"],
       cards: ["leaf", "mapleLeaf", "pumpkin"],
       cta: ["leaf", "mapleLeaf"],
       scatter: [
@@ -243,11 +222,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         ["swirl", "white"],
         ["leaf", "accent3"],
       ]),
-      scenes: [
-        { main: ["pumpkin", "accent"], accents: [["leaf", "accent3"], ["mapleLeaf", "accent2"]] },
-        { main: ["mapleLeaf", "accent2"], accents: [["acorn", "accent3"], ["swirl", "white"]] },
-        { main: ["acorn", "accent3"], accents: [["leaf", "accent"], ["pumpkin", "accent"]] },
-      ],
     },
   },
   christmas: {
@@ -267,7 +241,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     ),
     decorations: {
       heading: { portfolio: "snowflake", bundles: "star", book: "candyCane" },
-      hero: ["snowflake", "candyCane"],
       cards: ["snowflake", "holly", "star"],
       cta: ["snowflake", "holly"],
       scatter: [
@@ -286,11 +259,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         ["candyCane", "accent"],
         ["snowflake", "white"],
       ]),
-      scenes: [
-        { main: ["tree", "accent3"], accents: [["star", "sun"], ["snowflake", "white"]] },
-        { main: ["snowflake", "white"], accents: [["ornament", "accent"], ["candyCane", "accent"]] },
-        { main: ["ornament", "accent"], accents: [["holly", "accent3"], ["snowflake", "white"]] },
-      ],
     },
   },
   newYear: {
@@ -310,7 +278,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     ),
     decorations: {
       heading: { portfolio: "firework", bundles: "star", book: "partyHat" },
-      hero: ["firework", "star"],
       cards: ["star", "firework", "sparkle"],
       cta: ["firework", "star"],
       scatter: [
@@ -329,11 +296,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         ["partyHat", "accent"],
         ["sparkle", "white"],
       ]),
-      scenes: [
-        { main: ["firework", "accent"], accents: [["star", "sun"], ["confetti", "accent2"]] },
-        { main: ["balloon", "accent3"], accents: [["star", "sun"], ["sparkle", "white"]] },
-        { main: ["partyHat", "accent"], accents: [["firework", "accent2"], ["confetti", "accent"]] },
-      ],
     },
   },
   valentines: {
@@ -370,7 +332,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
     ),
     decorations: {
       heading: { portfolio: "heart", bundles: "twoHearts", book: "heartArrow" },
-      hero: ["heartArrow", "rose"],
       cards: ["heart", "twoHearts", "rose"],
       cta: ["heart", "loveLetter"],
       scatter: [
@@ -389,11 +350,6 @@ export const themes: Record<TinyHumansTheme, ThemeDefinition> = {
         ["loveLetter", "accent3"],
         ["xo", "white"],
       ]),
-      scenes: [
-        { main: ["heartArrow", "accent2"], accents: [["heart", "accent"], ["sparkle", "sun"]] },
-        { main: ["loveLetter", "accent3"], accents: [["twoHearts", "accent"], ["xo", "white"]] },
-        { main: ["rose", "accent"], accents: [["heart", "accent2"], ["sparkle", "accent3"]] },
-      ],
     },
   },
 };

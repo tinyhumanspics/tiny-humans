@@ -2,7 +2,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
-import { BUILT_IN, emptyThemeMedia, LANDING_FROM_ABOUT, MEDIA_GROUPS, resolveMedia, type ThemeMedia } from "@/config/media";
+import { emptyThemeMedia, LANDING_FROM_ABOUT, MEDIA_GROUPS, resolveMedia, type ThemeMedia } from "@/config/media";
 import type { PortfolioPhoto } from "@/config/portfolio";
 import type { SiteSettings } from "@/lib/settings/types";
 import { preparePhoto } from "@/lib/admin/client";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/cn";
 
 type Upload = (b: Blob) => Promise<{ src: string }>;
 type Note = { kind: "ok" | "error"; text: string } | null;
-type SlotPath = ["title" | "landing" | "about" | "email", number];
+type SlotPath = ["landing" | "about" | "email", number];
 
 const newId = () => `photo-${Math.random().toString(36).slice(2, 9)}`;
 const titleFromFile = (name: string) => name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 60) || "New photo";
@@ -36,11 +36,11 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   const [themeId, setThemeId] = useState<TinyHumansTheme>(settings.themeId);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState<Note>(null);
+  const [copyFrom, setCopyFrom] = useState<TinyHumansTheme | "">("");
   const media = settings.media[themeId] ?? emptyThemeMedia();
   /** Other themes show the Original theme's picture wherever they have none of their own. */
   const base = themeId === "default" ? undefined : settings.media.default;
   const baseLabel = themes.default.label;
-  const back = (where: string, inherited: PortfolioPhoto | null | undefined, otherwise: string) => `${where} ${inherited ? `now shows the ${baseLabel} theme's picture.` : otherwise}`;
   const live = themeId === settings.themeId;
   // empty landing slots: the Original theme's landing photo, else the matching About Us photo, and for the big top
   // photo the first ad-page pick from "Little moments" (as on the website)
@@ -63,6 +63,15 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
     }
   };
 
+  // owner, Nov 16: one theme's pictures into another in one go (e.g. Thanksgiving's on Christmas for now)
+  const copyTheme = async () => {
+    if (!copyFrom) return;
+    const from = themes[copyFrom].label;
+    if (!window.confirm(`Copy every picture from ${from} into ${label}? The pictures ${label} has now are replaced; ${from} keeps its own.`)) return;
+    await saveMedia(clone(settings.media[copyFrom] ?? emptyThemeMedia()), "copy", `${label} now has all of ${from}'s pictures.`);
+    setCopyFrom("");
+  };
+
   const toPhoto = async (file: File, previous?: PortfolioPhoto | null): Promise<PortfolioPhoto> => {
     const { blob, width, height } = await preparePhoto(file);
     const { src } = await upload(blob);
@@ -72,8 +81,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
 
   const setSlot = async (path: SlotPath, photo: PortfolioPhoto | null, okText: string) => {
     const next = clone(media);
-    if (path[0] === "title") next.title[path[1]] = photo;
-    else if (path[0] === "landing") next.landing[path[1]] = photo;
+    if (path[0] === "landing") next.landing[path[1]] = photo;
     else if (path[0] === "about") next.about[path[1]] = photo;
     else (next.email ??= emptyThemeMedia().email)[path[1]] = photo;
     await saveMedia(next, path.join("-"), okText);
@@ -107,23 +115,18 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         Editing: <b>{label}</b> {live ? <span className={styles.mediaLiveTag}>live on the site now</span> : <span className={styles.mediaOffTag}>not the active theme</span>}
       </p>
       {themeId !== "default" && <p className={cn(styles.hintSmall, "chalk-soft")}>Any spot you leave empty here shows the {baseLabel} theme&apos;s picture, so only replace the ones you want different.</p>}
+      <div className={styles.copyTheme}>
+        <label htmlFor="media-copy-from" className="chalk-soft">Copy all pictures from</label>
+        <select id="media-copy-from" className={styles.input} value={copyFrom} disabled={busy !== null} onChange={(e) => setCopyFrom(e.target.value as TinyHumansTheme | "")}>
+          <option value="">Choose a theme</option>
+          {THEME_IDS.filter((id) => id !== themeId).map((id) => (
+            <option key={id} value={id}>{themes[id].label}</option>
+          ))}
+        </select>
+        <button type="button" className={styles.smallButton} disabled={!copyFrom || busy !== null} onClick={copyTheme}>{busy === "copy" ? "Copying…" : `Copy into ${label}`}</button>
+      </div>
       <TranslationStatus />
 
-      <MediaFold title={MEDIA_GROUPS.title.label} summary={countLine(media.title, 2, base?.title.some(Boolean) ? `same as ${baseLabel}` : "built-in")} where={`${MEDIA_GROUPS.title.where} These two are shown without captions.`}>
-        <div className={styles.slotGrid}>
-          {[0, 1].map((i) => (
-            <Slot key={`t${i}-${themeId}-${media.title[i]?.id ?? "built-in"}`} name={`Image ${i + 1}`} groupLabel={MEDIA_GROUPS.title.label} custom={media.title[i]} inherited={base?.title[i]} inheritedLabel={baseLabel} builtIn={BUILT_IN.title[i]} busy={busy === `title-${i}`}
-              onReplace={(e) => replace(["title", i], media.title[i], `${MEDIA_GROUPS.title.label} · Image ${i + 1}`, e)}
-              onReset={() => setSlot(["title", i], null, back(`${MEDIA_GROUPS.title.label} · Image ${i + 1}`, base?.title[i], "is back to the built-in picture."))}
-              resetLabel={base?.title[i] ? `Use the ${baseLabel} picture` : "Use the built-in picture"}
-              onDetails={(p) => setSlot(["title", i], p, "Details saved.")} captions={false} />
-          ))}
-        </div>
-      </MediaFold>
-
-      <MediaSections media={media} base={base} themeId={themeId} isOriginal={themeId === "default"} themeLabel={label} baseLabel={baseLabel} spanishLive={settings.spanishPublished}
-        busy={busy} setBusy={setBusy} saveMedia={saveMedia} toPhoto={toPhoto}
-        fail={(err, fallback) => setNote({ kind: "error", text: err instanceof Error ? err.message : fallback })} />
 
       <FixedPlaceholderGroup
         definition={MEDIA_GROUPS.landing}
@@ -137,6 +140,11 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
         replace={replace}
         setSlot={setSlot}
       />
+
+      <MediaSections media={media} base={base} themeId={themeId} isOriginal={themeId === "default"} themeLabel={label} baseLabel={baseLabel} spanishLive={settings.spanishPublished}
+        busy={busy} setBusy={setBusy} saveMedia={saveMedia} toPhoto={toPhoto}
+        fail={(err, fallback) => setNote({ kind: "error", text: err instanceof Error ? err.message : fallback })} />
+
 
       <FixedPlaceholderGroup
         definition={MEDIA_GROUPS.about}

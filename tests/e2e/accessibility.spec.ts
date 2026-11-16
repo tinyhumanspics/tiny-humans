@@ -3,7 +3,7 @@ import { expect, test, type Locator } from "@playwright/test";
 import es from "@/messages/es.json";
 
 const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
-const PAGES = ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin"];
+const PAGES = ["/", "/portfolio", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin"];
 
 test.describe("automated WCAG 2.2 AA checks", () => {
   for (const path of PAGES) {
@@ -61,9 +61,9 @@ test.describe("content security policy (report-only)", () => {
       (window as unknown as { __csp: string[] }).__csp = seen;
       document.addEventListener("securitypolicyviolation", (e) => seen.push(`${e.effectiveDirective} ${e.blockedURI}`));
     });
-    for (const path of ["/", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin", "/no-such-page"]) {
+    for (const path of ["/", "/portfolio", "/bundles", "/book?bundle=little-moments", "/home-sweet-home", "/about", "/privacy", "/terms", "/cancel", "/reschedule", "/review", "/admin", "/no-such-page"]) {
       await page.goto(path, { waitUntil: "networkidle" });
-      if (path === "/") {
+      if (path === "/portfolio") {
         await page.getByRole("button", { name: /Open photo 1 of/ }).click();
         await page.getByRole("button", { name: "Close photo viewer" }).click();
       }

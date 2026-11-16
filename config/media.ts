@@ -9,14 +9,13 @@ import { portfolio, portfolioCtas, type FeedBlock, type PortfolioPhoto } from ".
  * layout, so every theme has the same groups, each stored independently.
  */
 export const MEDIA_GROUPS = {
+  // the two pinned photos the old home page had at its top: kept in saved settings, no longer shown or edited (Nov 16)
   title: {
-    label: "Title Pictures",
-    where: "The two pinned photos next to the main title at the top of the home page.",
     slots: 2,
   },
   landing: {
-    label: "Stay-Home Session Page (/home-sweet-home)",
-    where: `The photos on the ad page: the big photo at the top (a real in-home newborn photo; a family's photo only with their signed release), one next to “${en.landing.why.title}” and one in “${en.landing.meet.title}”. Until you add one, the top photo is the first photo picked for the ad page in “Little moments”, and the other two use the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”).`,
+    label: "Home Page and Ad Page",
+    where: `The same photos show on the home page and the ad page (/home-sweet-home): the big photo at the top (a real in-home newborn photo; a family's photo only with their signed release), one next to “${en.landing.why.title}” and one in “${en.landing.meet.title}”. Until you add one, the top photo is the first photo picked for the ad page in “Little moments”, and the other two use the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”).`,
     // saved choices keep their place (index); `order` is how /admin lists them (the big top photo first)
     slots: ["Why at home", "Who's coming", "Big top photo"],
     order: [2, 0, 1],
@@ -32,8 +31,8 @@ export const MEDIA_GROUPS = {
     slots: ["Meet your photographers"],
   },
   sections: {
-    label: "Little Moments",
-    where: `The “${en.home.portfolio.title}” gallery on the home page (the Portfolio link): every picture, in rows of 3, in this order. Families tap one to see it whole and can use it as the inspiration for their session.`,
+    label: "Portfolio Page (Little Moments)",
+    where: `The babies' photos on the Portfolio page (/portfolio), in this order. Families tap one to see it whole and can use it as the inspiration for their session. The ones you put “on the ad page” also show on the home page and the ad page.`,
     maxSections: 10,
     maxPhotos: 12,
     /** Pictures that can be picked for the ad landing page's gallery. */

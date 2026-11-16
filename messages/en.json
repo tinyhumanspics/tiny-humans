@@ -7,11 +7,7 @@
   },
   "home": {
     "hero": {
-      "title": ["Tiny moments.", "Big memories."],
-      "subtitle": "Newborn & baby photography made with love.",
-      "promise": "We bring the studio to your home, so your little one stays comfy.",
-      "primaryCta": "Book a session",
-      "secondaryCta": "View our work"
+      "title": ["Tiny moments.", "Big memories."]
     },
     "portfolio": {
       "title": "Little moments",
@@ -112,27 +108,6 @@
       "message": "Your deposit reserves your spot. When your baby arrives, pick your session date with the link in your email."
     }
   },
-  "quickPrice": {
-    "title": "Get a quick price",
-    "sub": "Pick a bundle and add your ZIP code. Today's offer and travel included.",
-    "bundle": "Bundle",
-    "zip": "Your ZIP code",
-    "codeLink": "Have a discount code?",
-    "bundleLine": "Bundle",
-    "codeLine": "Code {code}",
-    "until": "until {date}",
-    "travel": "Travel",
-    "travelTo": "Travel to {zip}",
-    "addZip": "add your ZIP code",
-    "free": "Free",
-    "miles": "about {miles} miles",
-    "confirm": "we'll confirm",
-    "total": "Your total",
-    "deposit": "{deposit} deposit to book · {rest} after your session",
-    "payAfter": "$0 today · you pay after your session",
-    "fine": "Twins, extra family members or a code can change it. You'll see the exact price before you book.",
-    "book": "Book {bundle}"
-  },
   "bookingRequest": {
     "texts": {
       "hello": "Hi {name}! This is Tiny Humans about your session request for {when}.",
@@ -149,8 +124,8 @@
       "title": "When should we come?",
       "here": "Baby is here",
       "notBorn": "Not born yet",
-      "hereHelp": "Pick a day and a start time. Sessions are best in the first two weeks.",
-      "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we move it to day 5–14.",
+      "hereHelp": "Pick a day and a start time. Sessions are best after baby's first two weeks.",
+      "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we move it to day 10–20.",
       "dueLabel": "Your due date",
       "dueWindow": "Pick a due date from today to {date}.",
       "chooseBundle": "Choose your bundle",
@@ -372,32 +347,6 @@
       "timeRange": "{start} to {end} ({zone})",
       "unit": "Unit",
       "change": "Change",
-      "discount": {
-        "label": "Have a discount code?",
-        "optional": "(optional)",
-        "empty": "Enter a code, or skip this. It's optional.",
-        "applied": "Code {code} applied: -{amount}.{note}",
-        "appliedBefore": "Code ",
-        "appliedAfter": " applied.",
-        "remove": "Remove",
-        "placeholder": "Enter code",
-        "checking": "Checking…",
-        "apply": "Apply",
-        "offerBest": "Your {offer} already gives you the best price, so the code wasn't added. Only one saving can be used per booking.",
-        "codeBetter": " Your code gives you a better price than the {offer}, so we've used the code instead. Only one saving can be used per booking.",
-        "best": "Your price is already the best available.",
-        "failed": "We couldn't check that code. Please try again.",
-        "network": "We couldn't connect. Check your connection and try again.",
-        "rateLimited": "Too many tries. Please wait a few minutes.",
-        "errors": {
-          "notFound": "We couldn't find that code. Please check the spelling and try again.",
-          "inactive": "That code isn't active right now.",
-          "expired": "That code has expired.",
-          "notForBundle": "That code doesn't apply to this bundle.",
-          "maxed": "That code has reached its limit and can't be used anymore.",
-          "usedByEmail": "That code has already been used with this email address."
-        }
-      },
       "deposit": {
         "today": "Deposit today",
         "value": "{deposit} (holds your date)",
@@ -578,9 +527,16 @@
   "header": {
     "logoHome": "{brand}, home",
     "navigationLabel": "Main",
+    "home": "Home",
     "portfolio": "Portfolio",
     "bundles": "Bundles",
     "book": "Book"
+  },
+  "portfolioPage": {
+    "meta": {
+      "title": "Portfolio",
+      "description": "Newborn and baby photos, all taken in families' own homes in Miami."
+    }
   },
   "language": {
     "label": "Language",
@@ -621,15 +577,15 @@
       "concepts": {
         "a": {
           "title": "Newborn photos in your own living room.",
-          "sub": "No car seat, no studio, no packing. We bring the lights, backdrops and wraps to your home in Miami, and your baby sets the pace. You see your photos the next day."
+          "sub": "No car seat, no studio, no packing. We bring the lights, backdrops and wraps to your home in Miami, and your baby sets the pace. You see your photos the next day. Not born yet? You can book with your due date."
         },
         "b": {
           "title": "Reserve your newborn session ahead. We move the date when baby arrives.",
-          "sub": "The best newborn photos happen in the first two weeks. Pick a date near your due date now; when baby arrives, text us and we come to your home between days 5 and 14."
+          "sub": "The best newborn photos happen in the first weeks. Pick a date near your due date now; when baby arrives, text us and we come to your home between days 10 and 20."
         },
         "c": {
           "title": "Newborn photos at home, by Adrian and Alondra.",
-          "sub": "We're the two people who come to your home. We wash our hands first, a parent stays within arm's reach, and your baby sets the pace."
+          "sub": "We're the two people who come to your home. We wash our hands first, a parent stays within arm's reach, and your baby sets the pace. Not born yet? You can book with your due date."
         }
       },
       "cta": "Check dates"
@@ -729,7 +685,7 @@
         },
         {
           "q": "When is the best time?",
-          "a": "For sleepy, curled-up photos, the first two weeks (we aim for days 5–14). Many families reserve ahead with a date near their due date, and we move it when baby arrives."
+          "a": "For sleepy, curled-up photos, between days 10 and 20. Many families reserve ahead with a date near their due date, and we move it when baby arrives."
         },
         {
           "q": "What if baby comes early or late, or won't settle?",
@@ -779,7 +735,6 @@
     "seasonalOffers": {
       "eyebrow": "Seasonal sessions at home",
       "cutoff": "Last sessions: {date}",
-      "cta": "See open dates",
       "defaults": {
         "thanksgiving": {
           "title": "Baby’s First Thanksgiving",
