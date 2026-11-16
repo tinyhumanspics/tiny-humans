@@ -3,25 +3,33 @@
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { scheduleHref } from "@/config/booking";
 import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
 import type en from "@/messages/en.json";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BundleCard from "@/features/booking/BundleCard";
 import OfferLine from "@/features/booking/OfferLine";
-import NotBornYet from "@/features/booking/NotBornYet";
 import { useBookingSelection } from "@/features/booking/flow/BookingSelectionContext";
 import BookingPaused from "@/features/booking/BookingPaused";
 import { bundleColumns } from "@/lib/pricing/columns";
 import styles from "./Bundles.module.css";
 
-/** Step one of booking: pick a bundle. Each card leads to the calendar. */
-export default function Bundles({ messages, dueMessages, locale }: { messages: typeof en.bundlesPage; dueMessages: typeof en.dueDate.invite; locale: AppLocale }) {
+/** Step one of booking: pick a bundle. Each card leads to the calendar. Due dates: one line under the heading (owner, Nov 16). */
+export default function Bundles({ messages, locale }: { messages: typeof en.bundlesPage; locale: AppLocale }) {
   const id = "bundles";
   const { inspirationId } = useBookingSelection();
   const { bundles, available } = useCatalog();
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="bundles" level={1} note={<OfferLine messages={messages.promo} locale={locale} />} />
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={messages.section.subtitle} slot="bundles" level={1} note={
+            <>
+              <OfferLine messages={messages.promo} locale={locale} />
+              <a href={`${localePath("/book", locale)}?when=due`} className={styles.dueLink}>
+                {messages.section.due} →
+              </a>
+            </>
+          }
+        />
         {available ? (
           <>
             <div className={styles.grid} style={bundleColumns(bundles.length)}>
@@ -29,7 +37,6 @@ export default function Bundles({ messages, dueMessages, locale }: { messages: t
                 <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} href={scheduleHref(bundle.id, inspirationId, locale)} headingLevel={2} />
               ))}
             </div>
-            <NotBornYet messages={dueMessages} locale={locale} />
           </>
         ) : (
           <BookingPaused messages={messages.paused} />

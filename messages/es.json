@@ -238,7 +238,8 @@
     },
     "section": {
       "title": "Paquetes",
-      "subtitle": "Tres paquetes sencillos, todos en tu hogar. Nosotros llevamos el estudio."
+      "subtitle": "Tres paquetes sencillos, todos en tu hogar. Nosotros llevamos el estudio.",
+      "due": "¿Tu bebé aún no nace? Reserva con tu fecha de parto"
     },
     "promo": {
       "every": "{label} en todos los paquetes.",
@@ -286,11 +287,6 @@
     "book": "Mira lo que incluye cada paquete y reserva aquí: {link}"
   },
   "dueDate": {
-    "invite": {
-      "title": "¿Aún no nace?",
-      "text": "Reserva con tu fecha de parto y ajustamos tu sesión según la llegada de tu bebé.",
-      "button": "Reservar con mi fecha de parto"
-    },
     "stripe": {
       "product": "Depósito · {bundle} (reserva con fecha de parto)",
       "description": "Reserva tu sesión para tu fecha de parto ({date}). Es parte de tu total; el resto se paga después de tu sesión.",

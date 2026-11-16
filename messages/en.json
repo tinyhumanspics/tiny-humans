@@ -50,7 +50,8 @@
     },
     "section": {
       "title": "Bundles",
-      "subtitle": "Three simple packages, all at your home. We bring the studio to you."
+      "subtitle": "Three simple packages, all at your home. We bring the studio to you.",
+      "due": "Not born yet? Book with your due date"
     },
     "promo": {
       "every": "{label} on every bundle.",
@@ -98,11 +99,6 @@
     "book": "See what's in each bundle and book here: {link}"
   },
   "dueDate": {
-    "invite": {
-      "title": "Not born yet?",
-      "text": "Book with your due date and we'll adjust your session around your baby's arrival.",
-      "button": "Book with my due date"
-    },
     "stripe": {
       "product": "Deposit · {bundle} (due-date reservation)",
       "description": "Reserves your session for your due date ({date}). Part of your total; the rest is paid after your session.",

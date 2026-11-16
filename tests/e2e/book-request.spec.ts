@@ -298,7 +298,7 @@ test("brief 03: no Pixel calls on a page whose link carries a secret token", asy
   expect(await calls()).toEqual([]);
 });
 
-test("brief 04: 'Not born yet?' buttons open /book on the due date", async ({ page }) => {
+test("the bundles page's 'Not born yet? Book with your due date' line opens /book on the due date (owner, Nov 16)", async ({ page }) => {
   await page.goto("/bundles");
   const cta = page.locator('main a[href="/book?when=due"]').first();
   await expect(cta).toBeVisible();
