@@ -8,10 +8,11 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · A "Baby is here" request holds its slot 12 h. Once the owner confirms, the owner-booking 48 h hold and pay link take over · Carlos
 - 2026-11-14 · Due-date $50: if the session can't happen, the parent chooses a refund or moving it to a later session · Carlos
 - 2026-11-14 · /quick and /due-date (+ /es) are retired with no redirects and their code deleted, after the link checklist in brief 04 · Carlos
-- 2026-11-15 · Due-date deposits pay at /pay?d=&k=; "Not born yet?" opens /book?when=due · brief 04
-- 2026-11-15 · Ad page: bundles switched on in /admin, cheapest first; "Check dates" opens the middle one · brief 05
-- 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, trip days, the in-flow discount box · Carlos
-- 2026-11-14 · Requests may share a minute (bookings_no_overlap still blocks doubles) · brief 02
+- 2026-11-15 · Due-date deposits pay at /pay?d=; Not born yet → /book?when=due · brief 04
+- 2026-11-15 · Ad page bundles: on in /admin, cheapest first; CTA opens the middle one · brief 05
+- 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
+- 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, the in-flow discount box · Carlos
+- 2026-11-14 · Requests can share a minute; bookings can't (no_overlap) · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link on landing pages; it fires Contact and isn't a booking path · Carlos
 
 ## Tracking
@@ -19,7 +20,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Lead fires when a request is saved: browser + Conversions API with a shared event_id, once per person per 30 days. It's the optimization event · Carlos
 - 2026-11-14 · Every request saves full attribution (first and last touch, Meta ad / ad set / campaign IDs from URL parameters, fbp/fbc/IP/user agent); bookings link to their request · Carlos
 - 2026-11-14 · Schedule stays as the booking event: it fires when the pay-link deposit is paid or the owner marks a booking booked, and reuses the request's match data · Carlos
-- 2026-11-14 · Owner-confirmed, nothing-to-pay Schedule: action_source "chat" · brief 03
+- 2026-11-14 · Nothing-to-pay Schedule: action_source chat · brief 03
 
 ## Offer
 - 2026-11-14 · Focus: in-home newborn sessions, bookable before birth with a due date. Milestone sessions come later as a separate offer to existing families · Carlos
@@ -40,8 +41,8 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Texting is manual. Automation waits for a business texting line, carrier registration and lawyer-approved consent wording · Carlos
 - 2026-11-14 · Spanish stays live; fix the /es defects · Carlos
 - 2026-11-14 · Seasonal themes stay, rebuilt to be reusable: one theme = one small data entry (color tokens, optional logo overlay/decorations, optional landing hero photo), switched by hand in Settings. One photo set for the site. Seasonal offer boxes go; the one-line offer in Prices replaces them · Carlos
-- 2026-11-14 · Migrations run in the Vercel production build; a failed one stops the deploy · brief 01
-- 2026-11-14 · Failure alerts and the daily health email go to support@tinyhumans.photography (ALERT_EMAIL) · owner
+- 2026-11-14 · Migrations run in the production build; a failure stops the deploy · brief 01
+- 2026-11-14 · Failure alerts + daily health email → support@tinyhumans.photography (ALERT_EMAIL) · owner
 - 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
 - 2026-10-22 · Chalk drawings are always drawn whole: never cut off, never on letters, never under buttons or photos · owner
 - 2026-11-09 · Empty Spanish fields fill themselves from the English on save (owner-written marketing text only, never family data); Spanish the owner typed is never overwritten · owner
@@ -50,5 +51,5 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-11 · Home "Little moments" is one gallery, 3 per row, no boxes · owner
 - 2026-11-13 · Customer wording never says we're photographing somewhere else; a closed day is just "not available" · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
-- 2026-11-14 · Confirmed requests book with the ZIP; the family adds the rest on /backdrop · brief 02
-- 2026-11-14 · "Text me" wording owner-approved (no lawyer); photo release signed at the session · owner
+- 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
+- 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner
