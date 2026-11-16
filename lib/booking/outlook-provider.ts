@@ -363,12 +363,12 @@ export class OutlookBookingProvider implements BookingProvider {
   }
 
   /**
-   * The due-date reservation this booking comes from (schedule link or /admin); null for a normal booking. Its status
+   * The due-date reservation this booking comes from (Requests or /admin); null for a normal booking. Its status
    * is checked after the retry check, so a retried submission still gets its booking back.
    */
   private async dueFor(request: BookingRequest): Promise<DueDateReservation | null> {
-    if (!request.dueToken && !request.dueReservationId) return null;
-    const due = request.dueReservationId ? await dueById(request.dueReservationId) : await dueByToken(request.dueToken!);
+    if (!request.dueReservationId) return null;
+    const due = await dueById(request.dueReservationId);
     if (!due) throw new BookingError("invalid_request", dueUsedMessage(request.locale));
     return due;
   }

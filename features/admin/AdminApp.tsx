@@ -15,7 +15,6 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
 import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights";
 import LeadsPanel from "./LeadsPanel";
-import UnfinishedPanel from "./UnfinishedPanel";
 import BringLists from "@/features/shoots/BringLists";
 import DaySheet from "@/features/shoots/DaySheet";
 import ShootFolder from "@/features/shoots/ShootFolder";
@@ -107,7 +106,6 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
         {section === "requests" && <RequestsPanel api={api} />}
         {section === "leads" && <LeadsPanel api={api} />}
         {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
-        {section === "unfinished" && <UnfinishedPanel api={api} />}
         {section === "availability" && <AvailabilityPanel api={api} />}
         {section === "pricing" && <PricingPanel api={api} />}
         {section === "quotes" && <QuotesBooking api={api} />}

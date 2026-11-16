@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { dueDepositReminderEmail } from "@/emails/DueDepositReminder";
 
 const details = { parentName: "Camila Reyes", bundleName: "Our Little Story", dueDate: "2027-01-20", amountCents: 5000, bundlePriceCents: 29900, offerLabel: null };
-const payUrl = "https://www.tinyhumans.photography/due-date/return?r=TH-D-TEST&s=sig";
+const payUrl = "https://www.tinyhumans.photography/pay?d=TH-D-TEST&k=sig";
 
 describe("Leads → Not paid: the deposit reminder for a “Not born yet” family (owner, Nov 11)", () => {
   test("English: their bundle and due date, the deposit button to their own page, their saved price", async () => {

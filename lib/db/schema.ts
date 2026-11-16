@@ -464,29 +464,6 @@ export const bookingDeposits = pgTable(
 
 export type BookingDeposit = typeof bookingDeposits.$inferSelect;
 
-/* ---------------- trip days (owner, Nov 10) ---------------- */
-
-/**
- * Trip-day rules (/admin → Availability → Travel): one row (id 1). Without the row (or the table) the owner's Nov 10
- * choices apply (lib/booking/trips.ts DEFAULT_TRIP_SETTINGS), so bookings never depend on it.
- */
-export const tripSettingsTable = pgTable(
-  "trip_settings",
-  {
-    id: smallint("id").primaryKey().default(1),
-    enabled: boolean("enabled").notNull().default(true),
-    tripMiles: integer("trip_miles").notNull().default(60),
-    sameTripMiles: integer("same_trip_miles").notNull().default(30),
-    nextDayUntil: text("next_day_until").notNull().default("12:00"),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    check("trip_settings_single_row", sql`${t.id} = 1`),
-    check("trip_settings_miles_check", sql`${t.tripMiles} between 10 and 1000 and ${t.sameTripMiles} between 1 and 200`),
-    check("trip_settings_time_check", sql`${t.nextDayUntil} ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'`),
-  ],
-);
-
 /* ---------------- due-date reservations ("Not born yet", owner Nov 10) ---------------- */
 
 /**
@@ -846,12 +823,6 @@ export const adminAuth = pgTable("admin_auth", {
 });
 
 /**
- * Unfinished bookings: the parent's contact details, saved while they fill the booking form (from a valid email on),
- * one row per email (`email_key` = lower-cased). Never any baby details. Booking with that email sets
- * `booked_reference`; the owner sends one "What stopped you?" email from /admin, whose link token (hash only) opens
- * /feedback and /unsubscribe. Migration 0022; until it runs, nothing is saved and bookings work as before.
- */
-/**
  * Leads the owner marked "Completed" (owner, Nov 11: "for email marketing"): the session is done, the family is a past
  * client. Its own table (migration 0030), read best effort; the booking's status doesn't change, so payment links,
  * gallery emails and reviews keep working.
@@ -889,80 +860,9 @@ export const dueReservationExtras = pgTable("due_reservation_extras", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const bookingDrafts = pgTable(
-  "booking_drafts",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    emailKey: text("email_key").notNull().unique(),
-    email: text("email").notNull(),
-    parentName: text("parent_name"),
-    phone: text("phone"),
-    bundleId: text("bundle_id"),
-    bundleName: text("bundle_name"),
-    sessionDate: date("session_date"),
-    /** "HH:MM", Miami time. */
-    startTime: text("start_time"),
-    zip: text("zip"),
-    /** The travel fee for that ZIP when they were on the form. */
-    travelFeeCents: integer("travel_fee_cents"),
-    /** Furthest step reached: "details" | "review". */
-    step: text("step").notNull().default("details"),
-    locale: text("locale").$type<AppLocale>().notNull().default("en"),
-    /** Where they came from (as in /admin Leads, e.g. "Meta ads") and the ad campaign name. */
-    source: text("source"),
-    campaign: text("campaign"),
-    /** Separate visits to the booking form with this email. */
-    attempts: integer("attempts").notNull().default(1),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    /** Last time they typed on the form. */
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-    bookedReference: text("booked_reference"),
-    bookedAt: timestamp("booked_at", { withTimezone: true }),
-    /** The "What stopped you?" email: "sending" | "sent" | "failed". */
-    followUpStatus: text("follow_up_status"),
-    followUpError: text("follow_up_error"),
-    followUpAttempts: integer("follow_up_attempts").notNull().default(0),
-    followUpSentAt: timestamp("follow_up_sent_at", { withTimezone: true }),
-    followUpResendId: text("follow_up_resend_id"),
-    /** SHA-256 of the token in that email's links. */
-    linkTokenHash: text("link_token_hash").unique(),
-    feedbackReasons: text("feedback_reasons").array(),
-    feedbackComment: text("feedback_comment"),
-    feedbackAt: timestamp("feedback_at", { withTimezone: true }),
-  },
-  (t) => [
-    index("booking_drafts_updated_idx").on(t.updatedAt),
-    check("booking_drafts_step_check", sql`${t.step} in ('details', 'review')`),
-    check("booking_drafts_follow_up_check", sql`${t.followUpStatus} is null or ${t.followUpStatus} in ('sending', 'sent', 'failed')`),
-  ],
-);
-
 /**
- * Which form an unfinished booking came from (owner, Nov 11; migration 0029): only "due_date" ("Not born yet?",
- * /due-date) gets a row; no row = the booking form. Its own table, read and written best effort, so the drafts keep
- * saving before the migration.
- */
-export const bookingDraftForms = pgTable(
-  "booking_draft_forms",
-  {
-    draftId: uuid("draft_id").primaryKey().references(() => bookingDrafts.id, { onDelete: "cascade" }),
-    form: text("form").notNull(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [check("booking_draft_forms_form_check", sql`${t.form} in ('due_date')`)],
-);
-
-export type BookingDraft = typeof bookingDrafts.$inferSelect;
-
-/** Emails that asked for no more marketing emails (lower-cased). Checked before every follow-up. */
-export const emailUnsubscribes = pgTable("email_unsubscribes", {
-  emailKey: text("email_key").primaryKey(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
-
-/**
- * Anonymous booking-form step counts per Miami day (no names, emails, IPs or ids): how many visits reached each step,
- * by bundle and by source ("Meta ads", "Direct", …). Steps: config/unfinished.ts FUNNEL_STEPS.
+ * Anonymous /book step counts per Miami day (no names, emails, IPs or ids): how many visits reached each step, by
+ * bundle and by source ("Meta ads", "Direct", …). Steps: config/funnel.ts FUNNEL_STEPS (older rows: the old form's).
  */
 export const funnelCounts = pgTable(
   "funnel_counts",
@@ -975,13 +875,6 @@ export const funnelCounts = pgTable(
   },
   (t) => [primaryKey({ columns: [t.day, t.step, t.bundleId, t.source] })],
 );
-
-/** Owner settings for marketing emails, one row (id 1): the mailing address CAN-SPAM requires in the footer. */
-export const marketingSettings = pgTable("marketing_settings", {
-  id: smallint("id").primaryKey(),
-  mailingAddress: text("mailing_address"),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
 
 /* ---------------- shoots (/admin → Shoots, migration 0024) ---------------- */
 
@@ -1141,40 +1034,6 @@ export const photoWaivers = pgTable(
 );
 
 export type PhotoWaiver = typeof photoWaivers.$inferSelect;
-
-/**
- * The quick form (/quick, owner Nov 13): families who'd rather send their details than book online; the owners book
- * for them in /admin → Quotes / Booking. Parent contact + what they told us; read and written best effort (no table =
- * the studio still gets the email). status: "new" | "booked" | "done".
- */
-export const quickRequests = pgTable(
-  "quick_requests",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    parentName: text("parent_name").notNull(),
-    email: text("email").notNull(),
-    phone: text("phone").notNull(),
-    zip: text("zip").notNull(),
-    babyName: text("baby_name"),
-    babyAge: text("baby_age"),
-    dueDate: date("due_date", { mode: "string" }),
-    bundleId: text("bundle_id"),
-    bestTime: text("best_time"),
-    message: text("message"),
-    locale: text("locale").notNull().default("en"),
-    status: text("status").notNull().default("new"),
-    bookingReference: text("booking_reference"),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    index("quick_requests_created_idx").on(t.createdAt),
-    check("quick_requests_status_check", sql`${t.status} in ('new', 'booked', 'done')`),
-    check("quick_requests_locale_check", sql`${t.locale} in ('en', 'es')`),
-  ],
-);
-
-export type QuickRequestRow = typeof quickRequests.$inferSelect;
 
 /**
  * Failure log (brief 01): one row per silent failure (Stripe webhook, Meta CAPI, emails, Outlook calendar, booking

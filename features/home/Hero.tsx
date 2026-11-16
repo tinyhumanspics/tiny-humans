@@ -14,7 +14,7 @@ import styles from "./Hero.module.css";
 import { cn } from "@/lib/cn";
 
 /**
- * The home hero. Its third button (owner, Nov 12) opens "Not born yet?" (/due-date) straight away: moms asking about
+ * The home hero. Its third button (owner, Nov 12) opens /book on "Not born yet" (?when=due) straight away: moms asking about
  * their due date no longer scroll for it.
  */
 export default function Hero({ messages = en.home.hero, dueCta = en.dueDate.invite.button, locale = "en" }: { messages?: typeof en.home.hero; dueCta?: string; locale?: AppLocale }) {
@@ -41,7 +41,7 @@ export default function Hero({ messages = en.home.hero, dueCta = en.dueDate.invi
           <div className={styles.actions}>
             <ChalkButton href={localePath("/#portfolio", locale)} variant="outline" seed={11}>{hero.secondaryCta}</ChalkButton>
             <ChalkButton href={bundlesHref(undefined, locale)} variant="solid" seed={12}>{hero.primaryCta}</ChalkButton>
-            <ChalkButton href={localePath("/due-date", locale)} variant="standOut" seed={13}>{dueCta}</ChalkButton>
+            <ChalkButton href={`${localePath("/book", locale)}?when=due`} variant="standOut" seed={13}>{dueCta}</ChalkButton>
           </div>
         </Reveal>
         <Reveal className={styles.snaps} delay={250}>

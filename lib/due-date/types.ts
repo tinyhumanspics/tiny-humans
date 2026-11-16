@@ -76,12 +76,3 @@ export interface DueReservationRow {
   /** Discount code entered while reserving and what it takes off the bundle (null = none). */
   discount: { code: string; offCents: number } | null;
 }
-
-/** POST /api/due-date answer: reserved now (no deposit), or the Stripe page for the deposit. */
-export interface DueCreateResult {
-  reference: string;
-  status: "reserved" | "pending";
-  depositUrl?: string;
-  /** The signed "Your spot is reserved" page (no deposit to pay). */
-  donePath?: string;
-}

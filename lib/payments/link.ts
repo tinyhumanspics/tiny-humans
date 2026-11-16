@@ -39,13 +39,16 @@ export function depositReturnPath(reference: string, bundleId: string, locale: A
 
 export const verifyDepositLink = (reference: string, signature: string) => verify("deposit-link:v1", reference, signature);
 
-/** Back from the due-date deposit page ("Not born yet"): /due-date/done?r=<reference>&k=<signature>. */
-export function dueReturnPath(reference: string, locale: AppLocale = "en"): string | null {
+/**
+ * A due-date reservation's deposit link ("Not born yet", brief 04): /pay?d=<reference>&k=<signature>. It never expires
+ * and opens a Stripe page while the deposit is missing. (Same signature as the retired /due-date/done?r=…&k= link.)
+ */
+export function duePayPath(reference: string, locale: AppLocale = "en"): string | null {
   if (!secret()) return null;
-  return `${localePath("/due-date/done", locale)}?${new URLSearchParams({ r: reference, k: signFor("due-return:v1", reference) })}`;
+  return `${localePath("/pay", locale)}?${new URLSearchParams({ d: reference, k: signFor("due-return:v1", reference) })}`;
 }
 
-export const verifyDueReturn = (reference: string, signature: string) => verify("due-return:v1", reference, signature);
+export const verifyDuePay = (reference: string, signature: string) => verify("due-return:v1", reference, signature);
 
 /**
  * The parent's own copy of their signed photo and video release (owner, Nov 11): /waiver?w=<release id>&s=<signature>,

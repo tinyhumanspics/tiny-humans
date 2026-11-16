@@ -84,3 +84,10 @@ test("unknown pages show the chalkboard 404", async ({ page }) => {
   await page.getByRole("link", { name: "Back to the home page" }).click();
   await expect(page).toHaveURL(/\/$/);
 });
+
+test("brief 04: the retired pages are gone (no redirects, on purpose)", async ({ page }) => {
+  for (const path of ["/quick", "/due-date", "/due-date/done", "/feedback", "/unsubscribe", "/admin/unfinished"]) {
+    const res = await page.goto(path);
+    expect(res?.status(), path).toBe(404);
+  }
+});

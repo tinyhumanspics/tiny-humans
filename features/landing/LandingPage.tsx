@@ -28,7 +28,6 @@ import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
 import type { PublicReview } from "@/lib/reviews/public";
 import { activeOffer, toCents } from "@/lib/pricing/engine";
-import { requestBookingScroll } from "@/lib/scroll/booking";
 import { trackSelectBundle } from "@/lib/tracking/client";
 import { formatLongDate } from "@/lib/booking/dates";
 import { activeSeasonalOffers } from "@/lib/seasonal/offers";
@@ -108,7 +107,6 @@ export default function LandingPage({
   const ctaHref = featured ? scheduleHref(featured.id, null, locale) : bundlesHref(null, locale);
   const onFeaturedCta = () => {
     if (featured) trackSelectBundle({ id: featured.id, name: featured.name, value: (activeOffer(featured, today)?.cents ?? toCents(featured.price)) / 100 });
-    requestBookingScroll();
   };
   const [first, second] = media.title;
   const gallery = media.gallery;
@@ -133,7 +131,7 @@ export default function LandingPage({
               <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={12}>{t.hero.cta}</ChalkButton>
               <ChalkButton href="#bundles" variant="outline" seed={11}>{t.hero.secondary}</ChalkButton>
               {/* moms asking about their due date see it right away (owner, Nov 12) */}
-              <ChalkButton href={localePath("/due-date", locale)} variant="standOut" seed={13}>{dueMessages.button}</ChalkButton>
+              <ChalkButton href={`${localePath("/book", locale)}?when=due`} variant="standOut" seed={13}>{dueMessages.button}</ChalkButton>
             </div>
             <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.ctaNote}</p>
           </Reveal>

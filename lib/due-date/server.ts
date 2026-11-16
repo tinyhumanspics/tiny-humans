@@ -1,4 +1,6 @@
 import "server-only";
+import { localePath } from "@/i18n/path";
+import type { AppLocale } from "@/i18n/config";
 import { createHmac } from "crypto";
 import { and, desc, eq, gt, inArray, lt, ne, or, sql } from "drizzle-orm";
 import { bookingRules, scheduleHref } from "@/config/booking";
@@ -17,20 +19,17 @@ import { dueDepositReminderEmail, dueReservedEmail, internalDueReservedEmail } f
 import { fill } from "@/lib/email/messages";
 import { EmailSendError, emailConfig, sendEmail } from "@/lib/email/resend";
 import { log } from "@/lib/log";
-import { dueReturnPath, verifyDueReturn } from "@/lib/payments/link";
+import { duePayPath, verifyDuePay } from "@/lib/payments/link";
 import { createCheckoutSession, createRefund, expireCheckoutSession, getCheckoutSession, isStripeConfigured, StripeError, type CheckoutSession } from "@/lib/payments/stripe";
 import { codeDiscountCents, computeQuote, formatMoney, type CodeTerms } from "@/lib/pricing/engine";
-import { claimCode, getCatalog, validateCode } from "@/lib/pricing/server";
-import { setupsOf } from "@/config/backdrops";
+import { claimCode, getCatalog } from "@/lib/pricing/server";
 import type { Bundle } from "@/lib/pricing/types";
 import { getSiteSettings } from "@/lib/settings/server";
 import { travelQuote } from "@/lib/travel/distance";
 import { getTravelSettings } from "@/lib/travel/server";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
-import { dueWindow, type DueCreateResult, type DueReservationRow, type DueSummary } from "./types";
-import type { DueRequest } from "./validation";
-import { markDraftBooked } from "@/lib/unfinished/server";
+import type { DueReservationRow, DueSummary } from "./types";
 import type { NotPaidDue } from "@/lib/leads/types";
 import { markRequestBooked } from "@/lib/requests/store";
 import { scheduleReservation } from "@/lib/tracking/schedule";
@@ -68,137 +67,6 @@ function reference(): string {
   return generateBookingReference().replace(/^TH-/, "TH-D-");
 }
 
-/** New reservation from the "Not born yet" form. Throws BookingError with a message the family can read. */
-/**
- * Step one of the form (owner, Nov 11: backdrops and the code come next): the same checks as reserving (bundle, babies,
- * due date window, Florida and distance), without the database and without saving anything.
- */
-export async function checkDueRequest(r: DueRequest): Promise<void> {
-  const messages = r.locale === "es" ? es : en;
-  const t = messages.dueDate.errors;
-  const bundle = (await getCatalog()).find((b) => b.id === r.bundleId && b.active !== false);
-  if (!bundle) throw new BookingError("invalid_request", t.bundle);
-  if (r.babyCount > 1 && !extraBabyLine(bundle, r.babyCount)) throw new BookingError("invalid_request", t.babies);
-  const window = dueWindow(todayInZone(bookingRules.timeZone));
-  if (r.dueDate < window.from || r.dueDate > window.to) throw new BookingError("invalid_request", t.window);
-  const travel = travelQuote(r.address.zip, await getTravelSettings());
-  if (travel.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
-  if (travel.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
-}
-
-export async function createDueReservation(r: DueRequest): Promise<DueCreateResult> {
-  if (!isDatabaseConfigured()) throw new BookingError("server_error", "Reservations need the database. Please text us and we'll reserve your spot.");
-  const messages = r.locale === "es" ? es : en;
-  const t = messages.dueDate.errors;
-  const db = getDb();
-  const bundle = (await getCatalog()).find((b) => b.id === r.bundleId && b.active !== false);
-  if (!bundle) throw new BookingError("invalid_request", t.bundle);
-  if (r.babyCount > 1 && !extraBabyLine(bundle, r.babyCount)) throw new BookingError("invalid_request", t.babies);
-  const today = todayInZone(bookingRules.timeZone);
-  const window = dueWindow(today);
-  if (r.dueDate < window.from || r.dueDate > window.to) throw new BookingError("invalid_request", t.window);
-
-  // the same submission again (double tap, slow network): the same reservation (and its payment page while open)
-  if (r.requestId) {
-    const [existing] = await db.select().from(dueDateReservations).where(eq(dueDateReservations.requestId, r.requestId)).limit(1);
-    if (existing) return resultOf(existing);
-  }
-
-  const travel = travelQuote(r.address.zip, await getTravelSettings());
-  if (travel.status === "outside_florida") throw new BookingError("invalid_request", messages.bookingFlow.details.travel.outsideFlorida);
-  if (travel.status === "too_far") throw new BookingError("invalid_request", fill(messages.bookingFlow.details.travel.tooFar, { phone: site.contact.phone }));
-  const pricing = computeQuote(bundle, today);
-  // A discount code (owner, Nov 11): checked like on the booking form; kept only when it beats the running offer
-  // (one saving per booking). The deposit stays the same; the code comes off what they pay after the session.
-  let code: { terms: CodeTerms; codeId: string } | null = null;
-  if (r.discountCode) {
-    const check = await validateCode(r.discountCode, bundle.id, r.contact.email);
-    if (!check.ok) throw new BookingError("invalid_request", check.message);
-    if (computeQuote(bundle, today, check.terms).pricingType === "discount") code = { terms: check.terms, codeId: check.codeId };
-  }
-  const backdrops = [...new Set(r.backdrops ?? [])].slice(0, setupsOf([bundle.setups, ...bundle.features]));
-  // the choices live in their own table: a code needs it (never silently dropped), backdrops are best effort
-  const extrasReady = code || backdrops.length ? await db.select({ id: dueReservationExtras.reservationId }).from(dueReservationExtras).limit(1).then(() => true, () => false) : true;
-  if (code && !extrasReady) {
-    log.error("due.db", "due_reservation_extras is missing: run drizzle/0032_due_reservation_extras.sql");
-    throw new BookingError("server_error", t.server);
-  }
-  const travelCents = travel.status === "fee" ? travel.feeCents : 0;
-  const totalCents = (code ? computeQuote(bundle, today, code.terms).finalCents : pricing.finalCents) + travelCents;
-  const depositCents = depositCentsFor(totalCents, bundle.id, await getDepositSettings());
-  const id = crypto.randomUUID();
-  const token = dueTokenFor(id);
-  if (!token) throw new BookingError("server_error", t.server);
-
-  let row: DueDateReservation | undefined;
-  for (let attempt = 0; attempt < 4 && !row; attempt++) {
-    try {
-      [row] = await db
-        .insert(dueDateReservations)
-        .values({
-          id,
-          reference: reference(),
-          requestId: r.requestId,
-          packageId: bundle.id,
-          packageName: bundle.name,
-          regularPriceCents: pricing.regularCents,
-          bundlePriceCents: pricing.finalCents,
-          offerLabel: pricing.offerLabel,
-          babyCount: r.babyCount,
-          dueDate: r.dueDate,
-          parentName: r.contact.parentName,
-          email: r.contact.email,
-          phone: r.contact.phone,
-          locale: r.locale ?? "en",
-          street: r.address.street,
-          unit: r.address.unit ?? null,
-          city: r.address.city,
-          zip: r.address.zip.slice(0, 5),
-          notes: r.contact.notes ?? null,
-          travelFeeCents: travel.status === "off" ? null : travelCents,
-          travelMiles: travel.miles,
-          status: depositCents > 0 ? "pending" : "reserved",
-          depositCents,
-          depositStatus: depositCents > 0 ? "pending" : "none",
-          scheduleTokenHash: token.hash,
-        })
-        .returning();
-    } catch (err) {
-      if (isUniqueViolation(err, "reference")) continue;
-      if (isUniqueViolation(err, "request_id")) throw new BookingError("in_progress", t.inProgress);
-      log.error("due.db", missingTable(err) ? "due_date_reservations is missing: run drizzle/0026_due_dates.sql" : "Reservation not saved", { error: safe(err) });
-      throw new BookingError("server_error", t.server);
-    }
-  }
-  if (!row) throw new BookingError("server_error", t.server);
-  if ((code || backdrops.length) && extrasReady) {
-    const saved = await db
-      .insert(dueReservationExtras)
-      .values({ reservationId: row.id, backdrops, discountCode: code?.terms.code ?? null, discountType: code?.terms.type ?? null, discountValue: code?.terms.value ?? null, codeId: code?.codeId ?? null })
-      .then(() => true)
-      .catch((err) => {
-        log.error("due.db", "Reservation choices not saved", { reference: row!.reference, error: safe(err) });
-        return false;
-      });
-    if (code && !saved) {
-      await db.delete(dueDateReservations).where(eq(dueDateReservations.id, row.id)).catch(() => undefined);
-      throw new BookingError("server_error", t.server);
-    }
-  }
-  // Unfinished bookings: this family's "Not born yet?" draft is now a reservation (best effort, never throws)
-  await markDraftBooked(row.email, row.reference);
-
-  if (depositCents > 0) {
-    const url = await openDuePage(row);
-    if (url) return { reference: row.reference, status: "pending", depositUrl: url, donePath: dueReturnPath(row.reference, row.locale) ?? undefined };
-    // Stripe not reachable: reserved without the deposit (flagged in /admin; the studio follows up), like bookings
-    [row] = await db.update(dueDateReservations).set({ status: "reserved", depositStatus: "unpaid", updatedAt: new Date() }).where(eq(dueDateReservations.id, row.id)).returning();
-  }
-  await claimDueCode(row);
-  await sendDueEmails(row);
-  return { reference: row.reference, status: "reserved", donePath: dueReturnPath(row.reference, row.locale) ?? undefined };
-}
-
 /**
  * A "Not born yet" request the owner confirmed (/admin → Requests, brief 02): a reservation like the form's, priced
  * today, with the address still to come (the family adds it when their session is booked). With deposits on, the
@@ -217,7 +85,7 @@ export async function reserveDueForRequest(r: { requestId: string; bundleId: str
   const travelCents = travel.status === "fee" ? travel.feeCents : 0;
   const pricing = computeQuote(bundle, todayInZone(bookingRules.timeZone));
   const depositCents = depositCentsFor(pricing.finalCents + travelCents, bundle.id, await getDepositSettings());
-  if (depositCents > 0 && (!isStripeConfigured() || !dueReturnPath("TH-D-CHECK"))) {
+  if (depositCents > 0 && (!isStripeConfigured() || !duePayPath("TH-D-CHECK"))) {
     throw new BookingError("not_configured", "Deposits are on, but Stripe (STRIPE_SECRET_KEY) or ADMIN_SESSION_SECRET isn't set in Vercel, so the deposit link can't work. Nothing was saved.");
   }
   const id = crypto.randomUUID();
@@ -284,9 +152,9 @@ export async function reserveDueForRequest(r: { requestId: string; bundleId: str
   }
 }
 
-/** The family's reservation page (signed): it opens a payment page while the deposit is missing. */
+/** The family's deposit link (/pay?d=…&k=…, signed): it opens a payment page while the deposit is missing. */
 function payPageFor(row: Pick<DueDateReservation, "reference" | "locale">): string | null {
-  const back = dueReturnPath(row.reference, row.locale);
+  const back = duePayPath(row.reference, row.locale);
   return back ? `${base()}${back}` : null;
 }
 
@@ -296,7 +164,7 @@ function payPageFor(row: Pick<DueDateReservation, "reference" | "locale">): stri
  * Null when Stripe can't.
  */
 async function openDuePage(row: DueDateReservation, idempotencyKey = `due-deposit/${row.id}`, hours = 1): Promise<string | null> {
-  const back = dueReturnPath(row.reference, row.locale);
+  const back = duePayPath(row.reference, row.locale);
   if (!back || !isStripeConfigured()) {
     log.error("due", "Deposit is on, but Stripe or ADMIN_SESSION_SECRET is missing: reserved without it", { reference: row.reference });
     return null;
@@ -310,8 +178,9 @@ async function openDuePage(row: DueDateReservation, idempotencyKey = `due-deposi
       customerEmail: row.email,
       reference: row.reference,
       bookingId: row.id,
-      successUrl: `${base()}${back}&paid=1`,
-      cancelUrl: `${base()}${back}`,
+      // back from Stripe: "Your spot is reserved", or "No payment was made" (their link works again any time)
+      successUrl: `${base()}${localePath("/pay/status", row.locale)}?s=reserved`,
+      cancelUrl: `${base()}${localePath("/pay/status", row.locale)}?s=cancelled`,
       idempotencyKey,
       kind: "due_deposit",
       expiresAt: Math.floor(Date.now() / 1000) + Math.round(hours * 3600),
@@ -324,14 +193,6 @@ async function openDuePage(row: DueDateReservation, idempotencyKey = `due-deposi
     log.error("due", "Stripe couldn't open the deposit page", { reference: row.reference, code: err instanceof StripeError ? err.code : undefined });
     return null;
   }
-}
-
-async function resultOf(row: DueDateReservation): Promise<DueCreateResult> {
-  if (row.status === "pending" && row.stripeSessionId) {
-    const session = await getCheckoutSession(row.stripeSessionId).catch(() => null);
-    if (session?.status === "open" && session.url) return { reference: row.reference, status: "pending", depositUrl: session.url, donePath: dueReturnPath(row.reference, row.locale) ?? undefined };
-  }
-  return { reference: row.reference, status: row.status === "pending" ? "pending" : "reserved", donePath: dueReturnPath(row.reference, row.locale) ?? undefined };
 }
 
 /** Stripe says the deposit is paid (webhook or the page they come back to): reserved, and the emails go out once. */
@@ -360,30 +221,6 @@ export async function dueDepositExpired(id: string): Promise<void> {
     .where(and(eq(dueDateReservations.id, id), eq(dueDateReservations.status, "pending")))
     .returning();
   if (row) await autoRemindDue(row);
-}
-
-/** The page after Stripe: reserved / still waiting (asks Stripe in case the webhook is late) / not valid. */
-export async function dueReturnState(referenceValue: string, signature: string): Promise<{ state: "reserved" | "pending" | "expired" | "invalid"; row?: DueDateReservation; payUrl?: string }> {
-  if (!verifyDueReturn(referenceValue, signature) || !isDatabaseConfigured()) return { state: "invalid" };
-  let [row] = await getDb().select().from(dueDateReservations).where(eq(dueDateReservations.reference, referenceValue)).limit(1);
-  if (!row) return { state: "invalid" };
-  // reserved while Stripe was down: a deposit reminder from /admin opens its page (the spot stays reserved meanwhile)
-  const awaiting = row.status === "pending" || (row.status === "reserved" && row.depositStatus === "unpaid");
-  if (awaiting && row.stripeSessionId) {
-    const session = await getCheckoutSession(row.stripeSessionId).catch(() => null);
-    if (session?.payment_status === "paid") {
-      await dueDepositPaid(row.id, session);
-      [row] = await getDb().select().from(dueDateReservations).where(eq(dueDateReservations.id, row.id)).limit(1);
-    } else if (session?.status === "open" && session.url) {
-      return { state: "pending", row, payUrl: session.url };
-    } else if (session?.status === "expired" && row.status === "pending") {
-      await dueDepositExpired(row.id);
-      return { state: "expired", row };
-    }
-  }
-  if (row.status === "pending") return { state: "pending", row };
-  if (row.status === "expired" || row.status === "cancelled") return { state: "expired", row };
-  return { state: "reserved", row };
 }
 
 /** The reservation behind a schedule link (any status; the caller decides). */
@@ -575,17 +412,6 @@ export async function cancelDueReservation(id: string, refund: boolean): Promise
   }
 }
 
-/** Waiting reservations, for the dashboard and the Leads tab count (0 when the table is missing). */
-export async function countWaitingDue(): Promise<number> {
-  if (!isDatabaseConfigured()) return 0;
-  try {
-    const rows = await getDb().select({ id: dueDateReservations.id }).from(dueDateReservations).where(inArray(dueDateReservations.status, ["reserved", "scheduling"]));
-    return rows.length;
-  } catch {
-    return 0;
-  }
-}
-
 /** A reservation that still needs its deposit: at the Stripe page, the page ran out, or reserved while Stripe was down. */
 const missingDeposit = (r: Pick<DueDateReservation, "status" | "depositStatus" | "depositCents">) =>
   r.depositCents > 0 &&
@@ -664,7 +490,7 @@ export async function remindDueDeposit(id: string): Promise<{ counted: boolean }
   if (!row) throw new BookingError("invalid_request", "That reservation isn't here anymore. Refresh the page.");
   if (!missingDeposit(row)) throw new BookingError("invalid_request", "This reservation's deposit isn't missing anymore. Refresh the page.");
   if (!isStripeConfigured()) throw new BookingError("server_error", "Stripe isn't connected (STRIPE_SECRET_KEY is missing in Vercel).");
-  const back = dueReturnPath(row.reference, row.locale);
+  const back = duePayPath(row.reference, row.locale);
   if (!back) throw new BookingError("server_error", "Payment links need ADMIN_SESSION_SECRET.");
   row = (await ensureDuePayPage(row, 23)).row;
   const themeId = await getSiteSettings()
@@ -807,18 +633,25 @@ async function ensureDuePayPage(start: DueDateReservation, hours: number): Promi
 }
 
 /**
- * "Pay the deposit" on the family's reservation page (owner, Nov 11: back from Stripe without paying, or from the
- * automatic email): a payment page for their saved reservation, no new form. Signed link (?r=…&k=…).
+ * A reservation's deposit link (/pay?d=…&k=…, brief 04): a Stripe page for the saved reservation while its deposit is
+ * missing (the open one, else a new one open an hour). "reserved" = already paid (or nothing to pay); "invalid" = a
+ * bad link or a cancelled reservation.
  */
-export async function payDueAgain(reference: string, signature: string, locale: "en" | "es" = "en"): Promise<string> {
-  const t = (locale === "es" ? es : en).dueDate.errors;
-  if (!verifyDueReturn(reference, signature) || !isDatabaseConfigured()) throw new BookingError("invalid_request", t.server);
+export async function duePayment(reference: string | null, signature: string | null): Promise<{ redirect: string } | { status: "reserved" | "invalid" | "error"; locale?: AppLocale }> {
+  if (!reference || !signature || !verifyDuePay(reference, signature) || !isDatabaseConfigured()) return { status: "invalid" };
   const [row] = await getDb().select().from(dueDateReservations).where(eq(dueDateReservations.reference, reference)).limit(1);
-  if (!row || !missingDeposit(row)) throw new BookingError("invalid_request", t.server);
-  if (!isStripeConfigured()) throw new BookingError("server_error", t.server);
-  return (await ensureDuePayPage(row, 1)).url;
+  if (!row || row.status === "cancelled") return { status: "invalid", locale: row?.locale };
+  if (!missingDeposit(row)) return { status: "reserved", locale: row.locale };
+  if (!isStripeConfigured()) return { status: "error", locale: row.locale };
+  try {
+    return { redirect: (await ensureDuePayPage(row, 1)).url };
+  } catch (err) {
+    // just paid meanwhile: Stripe confirmed it while opening the page
+    if (err instanceof BookingError && err.code === "invalid_request") return { status: "reserved", locale: row.locale };
+    log.error("due", "Deposit page not opened from the pay link", { reference, code: err instanceof BookingError ? err.code : undefined });
+    return { status: "error", locale: row.locale };
+  }
 }
-
 /** The family booked or reserved (and paid) again since this reservation: nobody needs a reminder for it. */
 async function dueMovedOn(row: DueDateReservation): Promise<boolean> {
   const db = getDb();
@@ -841,7 +674,7 @@ async function dueMovedOn(row: DueDateReservation): Promise<boolean> {
 async function autoRemindDue(row: DueDateReservation): Promise<void> {
   try {
     if (!row.depositCents || (await dueMovedOn(row))) return;
-    const back = dueReturnPath(row.reference, row.locale);
+    const back = duePayPath(row.reference, row.locale);
     if (!back) return;
     // claim it: one automatic email per reservation (and none after one the owner sent)
     const claimed = await getDb()

@@ -11,7 +11,6 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { trackSelectBundle } from "@/lib/tracking/client";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import Reveal from "@/components/layout/Reveal/Reveal";
-import { requestBookingScroll } from "@/lib/scroll/booking";
 import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import styles from "./BundleCard.module.css";
@@ -97,7 +96,6 @@ export default function BundleCard({ bundle, index, messages, locale, href, head
           href={href}
           onClick={() => {
             trackSelectBundle({ id: bundle.id, name: bundle.name, value: (offer?.cents ?? toCents(bundle.price)) / 100 });
-            requestBookingScroll();
           }}
           className={styles.cta}
           seed={60 + index}

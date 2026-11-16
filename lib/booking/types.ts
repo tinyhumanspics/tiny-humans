@@ -100,9 +100,10 @@ export interface BookingRequest {
   elapsedMs?: number;
   /** Booking source (set on the server from the first-party cookie, never by the browser). */
   attribution?: Attribution;
-  /** "Not born yet": the schedule link's token from the family's email (their kept price, no new deposit). */
-  dueToken?: string;
-  /** The same, when the owner books it in /admin (set on the server only, never taken from the browser). */
+  /**
+   * "Not born yet": the due-date reservation this session books (its kept price, no new deposit). Set on the server
+   * only (Requests confirm, /admin → Due dates), never taken from the browser.
+   */
   dueReservationId?: string;
 }
 

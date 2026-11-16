@@ -101,140 +101,15 @@
     "book": "See what's in each bundle and book here: {link}"
   },
   "dueDate": {
-    "meta": {
-      "title": "Book with your due date",
-      "description": "Not born yet? Reserve your newborn session with your due date, and we'll plan it around your baby's arrival."
-    },
     "invite": {
       "title": "Not born yet?",
       "text": "Book with your due date and we'll adjust your session around your baby's arrival.",
       "button": "Book with my due date"
     },
-    "page": {
-      "title": "Not born yet?",
-      "subtitle": "Reserve your session with your due date. When your baby arrives, you pick the day, or text us and we'll do it for you.",
-      "bundle": "Your bundle",
-      "dueDate": "Your due date",
-      "dueHint": "Any day from today to {last}.",
-      "babies": "How many babies are you expecting?",
-      "one": "One baby",
-      "twins": "Twins",
-      "triplets": "Triplets",
-      "you": "Your details",
-      "name": "Full name",
-      "email": "Email",
-      "phone": "Phone",
-      "address": "Your home (where we bring the studio)",
-      "street": "Street address",
-      "unit": "Apt / unit (optional)",
-      "city": "City",
-      "zip": "ZIP code",
-      "notes": "Anything we should know? (optional)",
-      "how": "How it works",
-      "steps": [
-        "Reserve your bundle today with your due date.",
-        "When your baby is born, pick your session date with the link in your email, or text us at {phone} and we'll book it for you.",
-        "We adjust your session around your baby's arrival, and your price today is kept."
-      ],
-      "price": "Your price: {price}, kept for you",
-      "priceOffer": "{offer}: {price} (regular {regular}), kept for you",
-      "depositNote": "{deposit} deposit today, part of your total. The rest is paid after your session.",
-      "noDepositNote": "$0 today: you pay after your session.",
-      "submit": "Reserve my spot",
-      "submitDeposit": "Pay the {deposit} deposit and reserve",
-      "submitting": "Reserving…",
-      "redirecting": "Opening the secure payment page…",
-      "pickBundle": "Choose a bundle.",
-      "pickDate": "Pick your due date (today to {last}).",
-      "stepOf": "Step {n} of 4 · {name}",
-      "stepDetails": "Your details",
-      "stepHome": "Your phone and home",
-      "toHome": "Next: Your phone and home",
-      "firstStep": "Pick your bundle and due date, then tell us your first name, email and ZIP code. Your phone and home address come next.",
-      "stepBackdrops": "Backdrops",
-      "stepReview": "Review and reserve",
-      "checking": "Checking…",
-      "backdropsHint": "Optional: pick the backdrop you'd love. Not sure yet? Skip it and choose when you book your session.",
-      "backdropsHintMany": "Optional: one for each of your {n} setups. Not sure yet? Skip it and choose when you book your session.",
-      "skipBackdrops": "Not sure yet, I'll choose when I book my session",
-      "toReview": "Next: Review",
-      "back": "Back",
-      "change": "Change",
-      "reviewTitle": "Review and reserve",
-      "reviewBackdrops": "Backdrops",
-      "noBackdrops": "Not sure yet (you'll choose when you book your session)",
-      "reviewPrice": "Your price",
-      "codePrice": "{price} with your code {code} (regular {regular}), kept for you",
-      "codeHint": "Your code comes off what you pay after your session. The deposit today is still {deposit}.",
-      "codeHintNoDeposit": "Your code comes off what you pay after your session."
-    },
-    "done": {
-      "title": "Your spot is reserved!",
-      "body": "Congratulations, {name}! We've emailed you the details. When your baby is born, use the link in that email to pick your session date, or text us at {phone} and we'll book it for you.",
-      "pendingTitle": "Almost there",
-      "pendingBody": "Your deposit isn't paid yet, so your spot isn't reserved yet.",
-      "pay": "Pay the deposit",
-      "paying": "Opening the payment page…",
-      "payError": "We couldn't open the payment page just now. Please try again, or text us and we'll help.",
-      "checking": "We're still confirming your payment. Refresh this page in a minute.",
-      "expiredTitle": "Almost there",
-      "expiredBody": "Your deposit isn't paid yet, so your spot isn't reserved yet. Your details are saved: pay it now and you're all set.",
-      "again": "Reserve again",
-      "invalidTitle": "We couldn't open this reservation",
-      "invalid": "This link isn't valid. Check your email, or text us and we'll help.",
-      "bundles": "See the bundles"
-    },
     "stripe": {
       "product": "Deposit · {bundle} (due-date reservation)",
       "description": "Reserves your session for your due date ({date}). Part of your total; the rest is paid after your session.",
       "message": "Your deposit reserves your spot. When your baby arrives, pick your session date with the link in your email."
-    },
-    "errors": {
-      "bundle": "That bundle isn't available anymore. Please choose another one.",
-      "babies": "That bundle doesn't offer this many babies. Please choose again.",
-      "window": "Pick a due date between today and 9 months from now.",
-      "server": "We couldn't reserve your spot just now. Please try again, or text us and we'll reserve it for you.",
-      "inProgress": "We're still saving your reservation. Please wait a moment.",
-      "spam": "We couldn't reserve this automatically. Please try again, or text us and we'll help.",
-      "rateLimited": "Too many tries from this connection. Please wait a little, or text us and we'll help."
-    }
-  },
-  "quick": {
-    "meta": {
-      "title": "Let us book it for you",
-      "description": "Send us a few details and we'll text you to set up your newborn or baby session at home."
-    },
-    "title": "Let us book it for you",
-    "subtitle": "Send us a few details and we'll text you to pick your date. It takes a minute.",
-    "name": "Full name",
-    "phone": "Phone (we'll text you)",
-    "email": "Email",
-    "zip": "Your ZIP code",
-    "babyName": "Baby's name (optional)",
-    "babyAge": "Baby's age",
-    "dueDate": "Due date (optional)",
-    "bundle": "Bundle you like (optional)",
-    "notSure": "Not sure yet",
-    "bestTime": "Best days or times (optional)",
-    "bestTimePlaceholder": "e.g. weekday mornings",
-    "message": "Anything else? (optional)",
-    "send": "Send my details",
-    "sending": "Sending…",
-    "privacy": "We only use these details to book your session.",
-    "privacyLink": "Privacy Policy",
-    "thanksTitle": "Got it, {name}!",
-    "thanksText": "We'll text you shortly to pick your date and time. Then you'll get an email to choose your backdrop and pay the {deposit} deposit, which confirms your session.",
-    "thanksTextNoDeposit": "We'll text you shortly to pick your date and time. Then you'll get an email with your confirmation.",
-    "thanksOnline": "Prefer to pick a time yourself?",
-    "thanksOnlineLink": "Book online",
-    "errors": {
-      "name": "Please add your full name.",
-      "phone": "Please add a phone number with at least 10 digits.",
-      "email": "Please add a valid email address.",
-      "zip": "Please add your 5-digit ZIP code.",
-      "check": "Please check your details and try again.",
-      "rateLimited": "Too many tries. Please wait a few minutes, or text us.",
-      "server": "We couldn't send your details just now. Please try again, or text us."
     }
   },
   "quickPrice": {
@@ -1225,26 +1100,6 @@
       "payButton": "Pay {amount}",
       "payText": "Pay {amount} by card: {url}"
     },
-    "unfinished": {
-      "subject": "Did something stop you, {name}?",
-      "subjectNoName": "Did something stop you?",
-      "preheader": "We'd love to know what got in the way of your booking.",
-      "eyebrow": "Your booking",
-      "title": "We'd love to have you with us, {name}",
-      "titleNoName": "We'd love to have you with us",
-      "intro": "We noticed you started booking {bundle} with Tiny Humans but didn't finish.",
-      "introNoBundle": "We noticed you started booking a session with Tiny Humans but didn't finish.",
-      "ask": "If something got in the way, would you tell us what? It takes less than a minute, and it helps us make booking easier for every family.",
-      "askButton": "Tell us what stopped you",
-      "askLine": "Tell us what stopped you: {url}",
-      "bookTitle": "Still thinking about it?",
-      "bookText": "Whenever you're ready, you can pick a date and time in a couple of minutes.",
-      "bookButton": "Finish booking",
-      "bookLine": "Finish booking: {url}",
-      "adNote": "This is a marketing email from Tiny Humans. You're getting it because you started a booking on our website.",
-      "unsubscribe": "Unsubscribe",
-      "unsubscribeLine": "Unsubscribe: {url}"
-    },
     "paymentLink": {
       "subject": "Your Tiny Humans payment link",
       "preheader": "Pay for your session whenever it suits you, before or after.",
@@ -1307,49 +1162,6 @@
       }
     }
   },
-  "feedback": {
-    "metaTitle": "What stopped you? · Tiny Humans",
-    "loading": "Loading…",
-    "invalidTitle": "This link isn't working",
-    "invalidText": "Please use the link in your most recent Tiny Humans email, or just reply to that email and tell us there.",
-    "eyebrow": "Your booking",
-    "title": "What stopped you, {name}?",
-    "titleNoName": "What stopped you?",
-    "intro": "Tap everything that applies. Your answer comes straight to us and helps us make booking easier for every family.",
-    "reasonsLabel": "What got in the way?",
-    "reasons": {
-      "price": "The price",
-      "travel_fee": "The travel fee",
-      "dates": "The dates or times didn't work for me",
-      "trust": "I wanted to see more photos or reviews first",
-      "not_ready": "I'm not ready yet, or baby isn't here yet",
-      "other_photographer": "I chose another photographer",
-      "other": "Something else"
-    },
-    "commentLabel": "Anything else you'd like to tell us?",
-    "submit": "Send my answer",
-    "sending": "Sending…",
-    "doneTitle": "Thank you, {name}!",
-    "doneTitleNoName": "Thank you!",
-    "doneText": "We read every answer. If you'd like to talk, just reply to our email and we'll get back to you.",
-    "bundlesLink": "See our bundles",
-    "errors": {
-      "reason": "Pick at least one answer, or tell us in the box below.",
-      "failed": "We couldn't send your answer. Please try again."
-    }
-  },
-  "unsubscribe": {
-    "metaTitle": "Unsubscribe · Tiny Humans",
-    "title": "Unsubscribe from our emails",
-    "text": "Press the button and we won't send you any more marketing emails. If you book a session, you'll still get the emails about it.",
-    "button": "Unsubscribe",
-    "sending": "One moment…",
-    "doneTitle": "You're unsubscribed",
-    "doneText": "We won't send you any more marketing emails. Thank you for your interest in Tiny Humans.",
-    "invalidTitle": "This link isn't working",
-    "invalidText": "Reply to our email and we'll remove your address by hand.",
-    "failed": "Something went wrong. Please try again."
-  },
   "review": {
     "metaTitle": "Share your experience",
     "eyebrow": "Hi {name}",
@@ -1393,6 +1205,10 @@
     "less": "Show less"
   },
   "pay": {
+    "reserved": {
+      "title": "Your spot is reserved",
+      "text": "Thank you! Your deposit is paid. When your baby arrives, pick your session day with the link in your email, or text us."
+    },
     "metaTitle": "Payment",
     "paid": {
       "title": "Thank you!",
@@ -1620,7 +1436,7 @@
     },
     "privacy": {
       "title": "Privacy Policy",
-      "lastUpdated": "November 14, 2026",
+      "lastUpdated": "November 15, 2026",
       "intro": "Tiny Humans is a newborn and baby photography studio in Miami, Florida that comes to you. This policy explains what information we collect when you visit our website or book a session, how we use it, and the choices you have. We keep it simple: we only collect what we need to take care of your family's session.",
       "sections": [
         {
@@ -1631,7 +1447,7 @@
             "When you book a session (on our website, by text, or on your “Prepare for your session” page), you give us:",
             { "list": ["The parent or guardian's name, email address and phone number", "Your baby's name (optional) and age", "For family sessions, who else will be in the photos (for example Mom, Dad or a sibling) and their names, if you choose to share them", "The package, date and time you choose", "If you book with your due date (\"Not born yet?\"), your due date and how many babies you're expecting", "The home address where we'll set up for your session", "Any notes or special requests you share", "The portfolio photo you picked as inspiration, if any"] },
             "We also note how you found us: the ad, link or website that first brought you to our site and the most recent one before you sent a request (for example the campaign name, or Meta's ad, ad set and campaign numbers in an ad link), and the page you landed on. When you send a request, we also keep your IP address and browser details with it, for the ad measurement described below.",
-            "If you start a booking but don't finish it, we keep the name, email address and phone number you typed, the package, date and time you picked (on our “Not born yet?” form, your due date), your ZIP code and how far you got, so we can follow up. Apart from that due date, we don't keep your baby's details from a booking you didn't finish. We also count how many visitors reach each step of the booking form, without names, email addresses or anything else that identifies them.",
+            "We count how many visitors reach each step of the booking page, without names, email addresses or anything else that identifies them. Nothing you type is kept unless you send a request.",
             "During your session we take photographs of your baby and, depending on your package, your family. If you sign our photo and video release at your session, we keep your name, whether you're the parent or legal guardian, your signature, the choices you made and when you signed, together with your booking.",
             "Like most websites, our hosting provider automatically records basic technical information when you visit, such as your browser type, the pages you view and your IP address. Our host also gives us anonymous visitor statistics (Vercel Web Analytics and Speed Insights) so we can count visits and see how quickly our pages load; they record things like the page, your type of device and browser and your approximate location, and they don't identify you. We also use advertising measurement tools from Meta (see \"Advertising and measurement\" below)."
           ]
@@ -1640,7 +1456,7 @@
           "id": "use",
           "heading": "How we use your information",
           "body": [
-            { "list": ["To schedule, prepare for and travel to your session at your home", "To contact you about your booking, including reminders and any changes", "To edit and deliver your photos through your online gallery", "To keep business records we're required to keep", "To keep our website working and secure, including limiting repeated requests from the same connection", "To understand which ads and links bring families to us, and to measure and improve our ads on Facebook and Instagram", "If you started a booking but didn't finish it, to email you about it and ask what stopped you (these emails always have an unsubscribe link, and we stop as soon as you use it)"] },
+            { "list": ["To schedule, prepare for and travel to your session at your home", "To contact you about your booking, including reminders and any changes", "To edit and deliver your photos through your online gallery", "To keep business records we're required to keep", "To keep our website working and secure, including limiting repeated requests from the same connection", "To understand which ads and links bring families to us, and to measure and improve our ads on Facebook and Instagram"] },
             "We never sell or rent your information."
           ]
         },
@@ -1684,7 +1500,7 @@
         {
           "id": "retention",
           "heading": "How long we keep information",
-          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time. Contact details from a booking you didn't finish are deleted after 12 months. We keep signed photo releases as our record of your permission, even after a booking is deleted."]
+          "body": ["We keep booking information for as long as we need it to provide your session and to meet our legal and accounting obligations. We keep your session photos on file for a limited time after delivery, so we can help if you lose access to your gallery. You can ask us to delete your photos or information sooner at any time. We keep signed photo releases as our record of your permission, even after a booking is deleted."]
         },
         {
           "id": "security",

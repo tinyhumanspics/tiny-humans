@@ -5,9 +5,7 @@ import { offerForAllSchema } from "@/lib/pricing/validation";
 import { zipFromText, type QuoteLine } from "@/lib/quotes/types";
 import { quoteMessage, quotePercentTerms, quoteSaving } from "@/lib/quotes/message";
 import { addMonthsToKey, dueWindow } from "@/lib/due-date/types";
-import { dueRequestSchema } from "@/lib/due-date/validation";
 import { withAddons } from "@/lib/booking/extra-babies";
-import { bookingRequestSchema } from "@/lib/booking/validation";
 import type { Bundle } from "@/lib/pricing/types";
 import type { TravelQuote } from "@/lib/travel/types";
 import en from "@/messages/en.json";
@@ -175,7 +173,7 @@ describe("Quotes: the owner's % off", () => {
   });
 });
 
-describe("Not born yet: the due-date window and form", () => {
+describe("Not born yet: the due-date window", () => {
   test("9 months from today, the last day of a shorter month when needed", () => {
     expect(addMonthsToKey("2026-11-10", 9)).toBe("2027-08-10");
     expect(addMonthsToKey("2026-12-15", 9)).toBe("2027-09-15");
@@ -184,17 +182,5 @@ describe("Not born yet: the due-date window and form", () => {
     expect(dueWindow("2026-11-10")).toEqual({ from: "2026-11-10", to: "2027-08-10" });
   });
 
-  test("the reservation form needs a bundle, a real due date, contact details and the home address", () => {
-    const ok = { bundleId: "lm", dueDate: "2027-01-15", contact: { parentName: "Ana Diaz", email: "ana@example.com", phone: "305 555 1234" }, address: { street: "123 Main St", city: "Miami", zip: "33139" } };
-    expect(dueRequestSchema.safeParse(ok).success).toBe(true);
-    expect(dueRequestSchema.safeParse({ ...ok, dueDate: "2027-02-30" }).success).toBe(false);
-    expect(dueRequestSchema.safeParse({ ...ok, babyCount: 4 }).success).toBe(false);
-    expect(dueRequestSchema.safeParse({ ...ok, contact: { ...ok.contact, phone: "123" } }).success).toBe(false);
-  });
 
-  test("a booking request takes the schedule link's token only in its exact shape", () => {
-    const base = { bundleId: "lm", slot: { date: "2027-01-20", start: "10:00" }, contact: { parentName: "Ana Diaz", email: "ana@example.com", phone: "305 555 1234", babyAge: "Newborn (0–2 weeks)" }, address: { street: "123 Main St", city: "Miami", zip: "33139" } };
-    expect(bookingRequestSchema.safeParse({ ...base, dueToken: "a".repeat(43) }).success).toBe(true);
-    expect(bookingRequestSchema.safeParse({ ...base, dueToken: "not-a-token" }).success).toBe(false);
-  });
 });

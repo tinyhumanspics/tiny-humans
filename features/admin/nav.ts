@@ -1,5 +1,5 @@
 /** Owner area sections and navigation (shared by the admin shell and dashboard). */
-export type AdminSection = "dashboard" | "requests" | "leads" | "shoots" | "unfinished" | "availability" | "pricing" | "quotes" | "seasonal" | "photos" | "theme" | "settings";
+export type AdminSection = "dashboard" | "requests" | "leads" | "shoots" | "availability" | "pricing" | "quotes" | "seasonal" | "photos" | "theme" | "settings";
 
 /** Admin navigation: one place to move between sections. */
 export const ADMIN_NAV: { id: AdminSection; label: string; href: string; blurb: string }[] = [
@@ -7,7 +7,6 @@ export const ADMIN_NAV: { id: AdminSection; label: string; href: string; blurb: 
   { id: "requests", label: "Requests", href: "/admin/requests", blurb: "Booking requests from the website: text them, confirm with the pay link, another time, or decline." },
   { id: "leads", label: "Leads", href: "/admin/leads", blurb: "Every booking: details, reschedule, cancel, delete." },
   { id: "shoots", label: "Shoots", href: "/admin/shoots", blurb: "Every shoot: the family's inspo and our BTS ideas, ticked off at the shoot." },
-  { id: "unfinished", label: "Unfinished bookings", href: "/admin/unfinished", blurb: "Families who started booking but didn't finish, where they stopped and why." },
   { id: "availability", label: "Availability", href: "/admin/availability", blurb: "Weekly hours, booking rules, special dates, time blocks." },
   { id: "pricing", label: "Pricing & Promotions", href: "/admin/pricing", blurb: "Bundles, prices, special offers and discount codes." },
   { id: "quotes", label: "Quotes / Booking", href: "/admin/quotes", blurb: "A family's price with travel, ready to send, and booking a session for a family who texted you." },

@@ -11,7 +11,7 @@ import { useCatalog } from "@/components/providers/CatalogProvider";
 import styles from "./NotBornYet.module.css";
 import { cn } from "@/lib/cn";
 
-/** "Not born yet?" under the bundle cards (/bundles and the ad landing page): book with the due date instead of a day. */
+/** "Not born yet?" under the bundle cards (/bundles and the ad landing page): /book on its due-date choice. */
 export default function NotBornYet({ messages, locale, headingLevel = 2 }: { messages: typeof en.dueDate.invite; locale: AppLocale; headingLevel?: 2 | 3 }) {
   const Title = headingLevel === 3 ? "h3" : "h2";
   const { available } = useCatalog();
@@ -22,7 +22,7 @@ export default function NotBornYet({ messages, locale, headingLevel = 2 }: { mes
         <ChalkDoodle name="heart" size={30} color="var(--accent)" className={styles.doodle} />
         <Title className={cn(styles.title, "chalk")}>{messages.title}</Title>
         <p className={cn(styles.text, "chalk-soft")}>{messages.text}</p>
-        <ChalkButton variant="outline" href={localePath("/due-date", locale)} seed={72} className={styles.button}>
+        <ChalkButton variant="outline" href={`${localePath("/book", locale)}?when=due`} seed={72} className={styles.button}>
           {messages.button}
         </ChalkButton>
       </ChalkBox>

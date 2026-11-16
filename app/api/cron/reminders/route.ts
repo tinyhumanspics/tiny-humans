@@ -6,7 +6,6 @@ import { sweepDueDeposits } from "@/lib/due-date/server";
 import { log } from "@/lib/log";
 import { isCronRequest } from "@/lib/security/cron";
 import { errorCode, reportFailure } from "@/lib/monitoring/report";
-import { purgeOldDrafts } from "@/lib/unfinished/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -34,9 +33,7 @@ export async function GET(req: Request) {
     // "Not born yet" payment pages that closed unpaid (the automatic email), if a webhook was missed
     const dueDeposits = dryRun ? undefined : await sweepDueDeposits(new Date(), 50);
     const result = await runReminders({ secret, dryRun, now: at ? new Date(at) : undefined });
-    // unfinished bookings older than the Privacy Policy's 12 months (best effort)
-    const unfinishedDeleted = dryRun ? undefined : await purgeOldDrafts();
-    return NextResponse.json({ ...result, deposits, dueDeposits, unfinishedDeleted }, { headers: NO_STORE });
+    return NextResponse.json({ ...result, deposits, dueDeposits }, { headers: NO_STORE });
   } catch (err) {
     log.error("reminders", "Reminder run failed", { error: err as Error });
     await reportFailure("cron", `Daily reminders and deposit checks failed (${errorCode(err)})`);

@@ -8,12 +8,12 @@ import type { AppLocale } from "@/i18n/config";
 import styles from "./AfterSession.module.css";
 
 export type PayState = keyof Omit<typeof en.pay, "metaTitle" | "home">;
-export const PAY_STATES = ["paid", "deposit", "already", "nothing", "cancelled", "invalid", "error"] as const satisfies readonly PayState[];
+export const PAY_STATES = ["paid", "deposit", "reserved", "already", "nothing", "cancelled", "invalid", "error"] as const satisfies readonly PayState[];
 
 /** Where the family lands after the Stripe payment page (or when a pay link can't be used). */
 export default function PayStatus({ state, locale = "en", messages = en.pay }: { state: PayState; locale?: AppLocale; messages?: typeof en.pay }) {
   const m = messages[state];
-  const good = state === "paid" || state === "deposit" || state === "already" || state === "nothing";
+  const good = state === "paid" || state === "deposit" || state === "reserved" || state === "already" || state === "nothing";
   return (
     <section className={cn("container", styles.page)} aria-labelledby="pay-title">
       <ChalkBox className={styles.panel} seed={411} wobble={3.4} strokeWidth={2.8}>

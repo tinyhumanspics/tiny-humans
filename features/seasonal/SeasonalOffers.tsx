@@ -12,7 +12,6 @@ import Reveal from "@/components/layout/Reveal/Reveal";
 import OfferLine from "@/features/booking/OfferLine";
 import { formatLongDate } from "@/lib/booking/dates";
 import { activeOffer, toCents } from "@/lib/pricing/engine";
-import { requestBookingScroll } from "@/lib/scroll/booking";
 import { activeSeasonalOffers } from "@/lib/seasonal/offers";
 import { trackSelectBundle } from "@/lib/tracking/client";
 import styles from "./SeasonalOffers.module.css";
@@ -34,7 +33,6 @@ export default function SeasonalOffers({ messages, promoMessages, locale, classN
   const ctaHref = featured ? scheduleHref(featured.id, null, locale) : bundlesHref(null, locale);
   const onCta = () => {
     if (featured) trackSelectBundle({ id: featured.id, name: featured.name, value: (activeOffer(featured, today)?.cents ?? toCents(featured.price)) / 100 });
-    requestBookingScroll();
   };
   return (
     <section className={cn("container", styles.seasonal, className)} aria-labelledby="seasonal-offer">

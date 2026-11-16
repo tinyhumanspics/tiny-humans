@@ -144,12 +144,6 @@ export interface CancellationDetails {
 
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-/** Payment wording: nothing is collected at booking; the bundle is paid after the photoshoot. */
-export const PAYMENT_NOTE = {
-  page: "Payment is not required at the time of booking. Payment for your session will be due once your photoshoot is completed.",
-  email: "Payment is not required at the time of booking. Payment for your session will be due once your photoshoot is completed.",
-};
-
 /** "1204" → "Unit 1204"; "Apt 4B", "#4B" or "PH 2" stay as typed. */
 export const unitLine = (unit?: string, unitLabel = "Unit") => {
   const u = unit?.trim();

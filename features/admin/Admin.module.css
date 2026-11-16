@@ -22,7 +22,6 @@
 /* ---------- login ---------- */
 .login { max-width: 460px; margin: clamp(40px, 8vw, 80px) auto; padding: 28px clamp(20px, 5vw, 32px); }
 .loginForm { display: grid; gap: 10px; margin-top: 20px; }
-.hint { margin: 16px 0 0; font-size: 1rem; color: var(--cloud-blue); }
 
 /* ---------- theme cards ---------- */
 .themes {
@@ -467,11 +466,6 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 .deviceName { margin: 0; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--chalk-white); }
 .signInActions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
 
-/* Unfinished bookings: period buttons + source filter on one left-aligned row */
-.periodBar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; margin-top: 14px; }
-.sourcePick { display: flex; align-items: center; gap: 8px; }
-.sourcePick .input { width: auto; min-width: 180px; margin: 0; }
-
 /* Quotes (owner, Nov 10): address/ZIP, babies, family members, % off, then the button; one under the other on phones. */
 .quoteForm { display: grid; gap: 10px 16px; align-items: end; margin: 8px 0 6px; }
 .quoteForm .label { display: grid; gap: 4px; }
@@ -523,9 +517,6 @@ a.smallButton { text-decoration: none; display: inline-flex; align-items: center
 /* a section's box: one line + "Edit box" */
 .boxSummary { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .boxSummaryText { margin: 0; color: var(--chalk-white); }
-
-/* Unfinished bookings: drafts from "Not born yet?" (owner, Nov 11) */
-.duePill { border-color: var(--cloud-blue); color: var(--cloud-blue); }
 
 /* Leads: "Completed" pill before the status (owner, Nov 11): tap to mark the session done (moves to Completed) */
 .completePill { cursor: pointer; background: transparent; color: var(--chalk-muted); border-style: dashed; line-height: inherit; }

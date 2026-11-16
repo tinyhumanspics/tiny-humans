@@ -9,7 +9,7 @@ import { requestSchema } from "@/lib/requests/validation";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { clientContext } from "@/lib/deposit/request";
 import { LAST_TOUCH_COOKIE, SOURCE_COOKIE, decodeAttribution } from "@/lib/tracking/attribution";
-import { countFunnelStep } from "@/lib/unfinished/server";
+import { countFunnelStep } from "@/lib/funnel/server";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 

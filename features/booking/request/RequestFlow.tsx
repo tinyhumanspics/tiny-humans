@@ -16,11 +16,11 @@ import { dueWindow, type DueSummary } from "@/lib/due-date/types";
 import { activeOffer, formatMoney } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import type { RequestSent, RequestType } from "@/lib/requests/types";
-import { usMobile } from "@/lib/requests/types";
+import { looksLikeEmail, usMobile } from "@/lib/requests/types";
 import { travelHint } from "@/lib/travel/format";
 import type { TravelQuote } from "@/lib/travel/types";
 import { trackLead } from "@/lib/tracking/client";
-import { countBookingStep, looksLikeEmail } from "@/lib/unfinished/client";
+import { countBookingStep } from "@/lib/funnel/client";
 import type en from "@/messages/en.json";
 import { useBookingSelection } from "../flow/BookingSelectionContext";
 import Calendar from "../flow/Calendar";
@@ -63,7 +63,8 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   const [bundleId, setBundleId] = useState<string | null>(() => (due ? due.summary.bundleId : (getBundle(params.get("bundle"))?.id ?? null)));
   const bundle = getBundle(bundleId);
   const [choosing, setChoosing] = useState(!bundle);
-  const [type, setType] = useState<RequestType>("date");
+  // "Not born yet?" buttons elsewhere on the site open this screen on the due date (?when=due)
+  const [type, setType] = useState<RequestType>(() => (!due && params.get("when") === "due" ? "due_date" : "date"));
   const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
   const [step, setStep] = useState<Step>("when");
 

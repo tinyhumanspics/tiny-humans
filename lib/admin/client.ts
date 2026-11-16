@@ -12,8 +12,6 @@ import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput, OfferForAllInput } from "@/lib/pricing/validation";
 import type { QuoteResult } from "@/lib/quotes/types";
 import type { DueReservationRow } from "@/lib/due-date/types";
-import type { FollowUpResult, UnfinishedData } from "@/lib/unfinished/types";
-import type { QuickRequest } from "@/lib/quick/types";
 import type { RequestConfirmed, RequestListItem } from "@/lib/requests/types";
 
 /** /admin → Leads → Due dates. `ready` false = migration 0026 not run yet. */
@@ -144,23 +142,7 @@ export interface AdminApi {
   declineRequest(id: string, email: boolean): Promise<{ emailed: boolean; emailError?: string }>;
   /** Requests: "Delete", for good (tests). */
   deleteRequest(id: string): Promise<void>;
-  /** Quotes / Booking: what families sent through the quick form (/quick). `notReady` = migration 0034 not run yet. */
-  listQuick(): Promise<{ requests: QuickRequest[]; notReady?: string }>;
-  setQuickStatus(id: string, status: QuickRequest["status"], bookingReference?: string | null): Promise<void>;
-  deleteQuick(id: string): Promise<void>;
-  /* unfinished bookings (owner only); `period` = step counts' days + source */
-  getUnfinished(period: UnfinishedPeriod): Promise<UnfinishedData>;
-  saveMailingAddress(address: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
-  deleteUnfinished(id: string, period: UnfinishedPeriod): Promise<UnfinishedData>;
-  sendUnfinishedFollowUp(target: { id: string } | { all: true }, period: UnfinishedPeriod): Promise<FollowUpResult>;
 }
-
-export interface UnfinishedPeriod {
-  days: number;
-  source: string | null;
-}
-const periodQuery = (p: UnfinishedPeriod, extra: Record<string, string> = {}) =>
-  new URLSearchParams({ days: String(p.days), ...(p.source ? { source: p.source } : {}), ...extra }).toString();
 
 async function json<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => ({}));
@@ -242,13 +224,6 @@ const httpApi: AdminApi = {
     await json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) }));
   },
   declineRequest: async (id, email) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "decline", id, email }) })),
-  listQuick: async () => json(await fetch("/api/admin/quick", { cache: "no-store" })),
-  setQuickStatus: async (id, status, bookingReference) => {
-    await json(await fetch(`/api/admin/quick/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ status, ...(bookingReference !== undefined ? { bookingReference } : {}) }) }));
-  },
-  deleteQuick: async (id) => {
-    await json(await fetch(`/api/admin/quick/${encodeURIComponent(id)}`, { method: "DELETE" }));
-  },
   getQuote: async (zip, babies, family, percent = 0) => json(await fetch(`/api/admin/quote?${new URLSearchParams({ zip, babies: String(babies), family: String(family), percent: String(percent) })}`, { cache: "no-store" })),
   deleteLead: async (reference) => {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
@@ -275,12 +250,6 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
   checkPayment: async (reference) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
-  getUnfinished: async (period) => json(await fetch(`/api/admin/unfinished?${periodQuery(period)}`, { cache: "no-store" })),
-  saveMailingAddress: async (mailingAddress, period) =>
-    json(await fetch(`/api/admin/unfinished?${periodQuery(period)}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ mailingAddress }) })),
-  deleteUnfinished: async (id, period) => json(await fetch(`/api/admin/unfinished?${periodQuery(period, { id })}`, { method: "DELETE" })),
-  sendUnfinishedFollowUp: async (target, period) =>
-    json(await fetch(`/api/admin/unfinished/follow-up?${periodQuery(period)}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(target) })),
 };
 
 export function getAdminApi(): AdminApi {

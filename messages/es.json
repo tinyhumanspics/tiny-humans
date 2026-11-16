@@ -274,140 +274,15 @@
     "book": "Mira lo que incluye cada paquete y reserva aquí: {link}"
   },
   "dueDate": {
-    "meta": {
-      "title": "Reserva con tu fecha de parto",
-      "description": "¿Tu bebé aún no nace? Reserva tu sesión de recién nacido con tu fecha de parto y la planificamos según la llegada de tu bebé."
-    },
     "invite": {
       "title": "¿Aún no nace?",
       "text": "Reserva con tu fecha de parto y ajustamos tu sesión según la llegada de tu bebé.",
       "button": "Reservar con mi fecha de parto"
     },
-    "page": {
-      "title": "¿Aún no nace?",
-      "subtitle": "Reserva tu sesión con tu fecha de parto. Cuando llegue tu bebé, tú eliges el día, o escríbenos y lo hacemos por ti.",
-      "bundle": "Tu paquete",
-      "dueDate": "Tu fecha de parto",
-      "dueHint": "Cualquier día desde hoy hasta el {last}.",
-      "babies": "¿Cuántos bebés esperas?",
-      "one": "Un bebé",
-      "twins": "Gemelos",
-      "triplets": "Trillizos",
-      "you": "Tus datos",
-      "name": "Nombre completo",
-      "email": "Correo electrónico",
-      "phone": "Teléfono",
-      "address": "Tu hogar (donde llevamos el estudio)",
-      "street": "Dirección",
-      "unit": "Apto / unidad (opcional)",
-      "city": "Ciudad",
-      "zip": "Código postal",
-      "notes": "¿Algo que debamos saber? (opcional)",
-      "how": "Cómo funciona",
-      "steps": [
-        "Reserva hoy tu paquete con tu fecha de parto.",
-        "Cuando nazca tu bebé, elige la fecha de tu sesión con el enlace de tu correo, o escríbenos al {phone} y la reservamos por ti.",
-        "Ajustamos tu sesión según la llegada de tu bebé, y te guardamos el precio de hoy."
-      ],
-      "price": "Tu precio: {price}, guardado para ti",
-      "priceOffer": "{offer}: {price} (precio regular {regular}), guardado para ti",
-      "depositNote": "Depósito de {deposit} hoy, parte de tu total. El resto se paga después de tu sesión.",
-      "noDepositNote": "$0 hoy: pagas después de tu sesión.",
-      "submit": "Reservar mi lugar",
-      "submitDeposit": "Pagar el depósito de {deposit} y reservar",
-      "submitting": "Reservando…",
-      "redirecting": "Abriendo la página de pago segura…",
-      "pickBundle": "Elige un paquete.",
-      "pickDate": "Elige tu fecha de parto (desde hoy hasta el {last}).",
-      "stepOf": "Paso {n} de 4 · {name}",
-      "stepDetails": "Tus datos",
-      "stepHome": "Tu teléfono y tu hogar",
-      "toHome": "Siguiente: Tu teléfono y tu hogar",
-      "firstStep": "Elige tu paquete y tu fecha de parto, y escríbenos tu nombre, tu correo y tu código postal. Tu teléfono y tu dirección van en el siguiente paso.",
-      "stepBackdrops": "Fondos",
-      "stepReview": "Revisa y reserva",
-      "checking": "Revisando…",
-      "backdropsHint": "Opcional: elige el fondo que te encante. ¿Aún no sabes? Sáltalo y elígelo cuando reserves tu sesión.",
-      "backdropsHintMany": "Opcional: uno para cada uno de tus {n} montajes. ¿Aún no sabes? Sáltalo y elígelos cuando reserves tu sesión.",
-      "skipBackdrops": "Aún no sé, lo elegiré cuando reserve mi sesión",
-      "toReview": "Siguiente: Revisar",
-      "back": "Atrás",
-      "change": "Cambiar",
-      "reviewTitle": "Revisa y reserva",
-      "reviewBackdrops": "Fondos",
-      "noBackdrops": "Aún no sé (lo elegirás cuando reserves tu sesión)",
-      "reviewPrice": "Tu precio",
-      "codePrice": "{price} con tu código {code} (precio regular {regular}), te lo guardamos",
-      "codeHint": "Tu código se descuenta de lo que pagas después de tu sesión. El depósito de hoy sigue siendo de {deposit}.",
-      "codeHintNoDeposit": "Tu código se descuenta de lo que pagas después de tu sesión."
-    },
-    "done": {
-      "title": "¡Tu lugar está reservado!",
-      "body": "¡Felicidades, {name}! Te enviamos los detalles por correo. Cuando nazca tu bebé, usa el enlace de ese correo para elegir la fecha de tu sesión, o escríbenos al {phone} y la reservamos por ti.",
-      "pendingTitle": "Ya casi",
-      "pendingBody": "Tu depósito aún no está pagado, así que tu lugar todavía no está reservado.",
-      "pay": "Pagar el depósito",
-      "paying": "Abriendo la página de pago…",
-      "payError": "No pudimos abrir la página de pago. Inténtalo de nuevo, o escríbenos y te ayudamos.",
-      "checking": "Todavía estamos confirmando tu pago. Actualiza esta página en un minuto.",
-      "expiredTitle": "Ya casi",
-      "expiredBody": "Tu depósito aún no está pagado, así que tu lugar aún no está reservado. Tus datos están guardados: págalo ahora y listo.",
-      "again": "Reservar de nuevo",
-      "invalidTitle": "No pudimos abrir esta reserva",
-      "invalid": "Este enlace no es válido. Revisa tu correo, o escríbenos y te ayudamos.",
-      "bundles": "Ver los paquetes"
-    },
     "stripe": {
       "product": "Depósito · {bundle} (reserva con fecha de parto)",
       "description": "Reserva tu sesión para tu fecha de parto ({date}). Es parte de tu total; el resto se paga después de tu sesión.",
       "message": "Tu depósito reserva tu lugar. Cuando llegue tu bebé, elige la fecha de tu sesión con el enlace de tu correo."
-    },
-    "errors": {
-      "bundle": "Ese paquete ya no está disponible. Elige otro, por favor.",
-      "babies": "Ese paquete no ofrece esa cantidad de bebés. Elige de nuevo, por favor.",
-      "window": "Elige una fecha de parto entre hoy y dentro de 9 meses.",
-      "server": "No pudimos reservar tu lugar en este momento. Inténtalo de nuevo, o escríbenos y lo reservamos por ti.",
-      "inProgress": "Todavía estamos guardando tu reserva. Espera un momento, por favor.",
-      "spam": "No pudimos reservar esto automáticamente. Inténtalo de nuevo, o escríbenos y te ayudamos.",
-      "rateLimited": "Demasiados intentos desde esta conexión. Espera un poco, o escríbenos y te ayudamos."
-    }
-  },
-  "quick": {
-    "meta": {
-      "title": "Déjanos reservarla por ti",
-      "description": "Envíanos unos datos y te escribimos para organizar tu sesión de recién nacido o bebé en casa."
-    },
-    "title": "Déjanos reservarla por ti",
-    "subtitle": "Envíanos unos datos y te escribimos para elegir tu fecha. Toma un minuto.",
-    "name": "Nombre completo",
-    "phone": "Teléfono (te escribimos)",
-    "email": "Correo electrónico",
-    "zip": "Tu código postal",
-    "babyName": "Nombre del bebé (opcional)",
-    "babyAge": "Edad del bebé",
-    "dueDate": "Fecha de parto (opcional)",
-    "bundle": "Paquete que te gusta (opcional)",
-    "notSure": "Aún no sé",
-    "bestTime": "Mejores días u horas (opcional)",
-    "bestTimePlaceholder": "p. ej. mañanas entre semana",
-    "message": "¿Algo más? (opcional)",
-    "send": "Enviar mis datos",
-    "sending": "Enviando…",
-    "privacy": "Solo usamos estos datos para reservar tu sesión.",
-    "privacyLink": "Política de privacidad",
-    "thanksTitle": "¡Listo, {name}!",
-    "thanksText": "Te escribimos pronto para elegir tu fecha y hora. Después te llega un correo para elegir tu fondo y pagar el depósito de {deposit}, que confirma tu sesión.",
-    "thanksTextNoDeposit": "Te escribimos pronto para elegir tu fecha y hora. Después te llega un correo con tu confirmación.",
-    "thanksOnline": "¿Prefieres elegir la hora tú?",
-    "thanksOnlineLink": "Reserva en línea",
-    "errors": {
-      "name": "Agrega tu nombre completo.",
-      "phone": "Agrega un teléfono de al menos 10 dígitos.",
-      "email": "Agrega un correo electrónico válido.",
-      "zip": "Agrega tu código postal de 5 dígitos.",
-      "check": "Revisa tus datos e inténtalo de nuevo.",
-      "rateLimited": "Demasiados intentos. Espera unos minutos o escríbenos.",
-      "server": "No pudimos enviar tus datos ahora. Inténtalo de nuevo o escríbenos."
     }
   },
   "quickPrice": {
@@ -1225,26 +1100,6 @@
       "payButton": "Pagar {amount}",
       "payText": "Paga {amount} con tarjeta: {url}"
     },
-    "unfinished": {
-      "subject": "¿Algo te detuvo, {name}?",
-      "subjectNoName": "¿Algo te detuvo?",
-      "preheader": "Nos encantaría saber qué te impidió terminar tu reserva.",
-      "eyebrow": "Tu reserva",
-      "title": "Nos encantaría tenerte con nosotros, {name}",
-      "titleNoName": "Nos encantaría tenerte con nosotros",
-      "intro": "Vimos que empezaste a reservar {bundle} con Tiny Humans, pero no terminaste.",
-      "introNoBundle": "Vimos que empezaste a reservar una sesión con Tiny Humans, pero no terminaste.",
-      "ask": "Si algo te lo impidió, ¿nos contarías qué fue? Toma menos de un minuto y nos ayuda a que reservar sea más fácil para todas las familias.",
-      "askButton": "Cuéntanos qué pasó",
-      "askLine": "Cuéntanos qué pasó: {url}",
-      "bookTitle": "¿Todavía lo estás pensando?",
-      "bookText": "Cuando quieras, puedes elegir fecha y hora en un par de minutos.",
-      "bookButton": "Terminar mi reserva",
-      "bookLine": "Termina tu reserva: {url}",
-      "adNote": "Este es un correo de marketing de Tiny Humans. Lo recibes porque empezaste una reserva en nuestro sitio web.",
-      "unsubscribe": "Cancelar suscripción",
-      "unsubscribeLine": "Cancelar suscripción: {url}"
-    },
     "paymentLink": {
       "subject": "Tu enlace de pago de Tiny Humans",
       "preheader": "Paga tu sesión cuando te convenga, antes o después.",
@@ -1307,49 +1162,6 @@
       }
     }
   },
-  "feedback": {
-    "metaTitle": "¿Qué te detuvo? · Tiny Humans",
-    "loading": "Cargando…",
-    "invalidTitle": "Este enlace no funciona",
-    "invalidText": "Usa el enlace de tu correo más reciente de Tiny Humans, o simplemente responde a ese correo y cuéntanos allí.",
-    "eyebrow": "Tu reserva",
-    "title": "¿Qué te detuvo, {name}?",
-    "titleNoName": "¿Qué te detuvo?",
-    "intro": "Toca todo lo que aplique. Tu respuesta nos llega directamente y nos ayuda a que reservar sea más fácil para todas las familias.",
-    "reasonsLabel": "¿Qué te lo impidió?",
-    "reasons": {
-      "price": "El precio",
-      "travel_fee": "El cargo de viaje",
-      "dates": "Las fechas u horarios no me funcionaban",
-      "trust": "Quería ver más fotos o reseñas primero",
-      "not_ready": "Todavía no es el momento, o el bebé aún no ha nacido",
-      "other_photographer": "Elegí a otro fotógrafo",
-      "other": "Otra cosa"
-    },
-    "commentLabel": "¿Hay algo más que quieras contarnos?",
-    "submit": "Enviar mi respuesta",
-    "sending": "Enviando…",
-    "doneTitle": "¡Gracias, {name}!",
-    "doneTitleNoName": "¡Gracias!",
-    "doneText": "Leemos cada respuesta. Si quieres conversar, responde a nuestro correo y te contestaremos.",
-    "bundlesLink": "Ver nuestros paquetes",
-    "errors": {
-      "reason": "Elige al menos una respuesta, o cuéntanos en el cuadro de abajo.",
-      "failed": "No pudimos enviar tu respuesta. Inténtalo de nuevo."
-    }
-  },
-  "unsubscribe": {
-    "metaTitle": "Cancelar suscripción · Tiny Humans",
-    "title": "Cancelar la suscripción a nuestros correos",
-    "text": "Presiona el botón y no te enviaremos más correos de marketing. Si reservas una sesión, igual recibirás los correos sobre tu reserva.",
-    "button": "Cancelar suscripción",
-    "sending": "Un momento…",
-    "doneTitle": "Cancelaste tu suscripción",
-    "doneText": "No te enviaremos más correos de marketing. Gracias por tu interés en Tiny Humans.",
-    "invalidTitle": "Este enlace no funciona",
-    "invalidText": "Responde a nuestro correo y quitaremos tu dirección manualmente.",
-    "failed": "Algo salió mal. Inténtalo de nuevo."
-  },
   "review": {
     "metaTitle": "Comparte tu experiencia",
     "eyebrow": "Hola, {name}",
@@ -1393,6 +1205,10 @@
     "less": "Ver menos"
   },
   "pay": {
+    "reserved": {
+      "title": "Tu lugar está reservado",
+      "text": "¡Gracias! Tu depósito está pagado. Cuando nazca tu bebé, elige el día de tu sesión con el enlace de tu correo, o escríbenos."
+    },
     "metaTitle": "Pago",
     "paid": {
       "title": "¡Gracias!",
@@ -1620,7 +1436,7 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "14 de noviembre de 2026",
+      "lastUpdated": "15 de noviembre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
@@ -1631,7 +1447,7 @@
             "Cuando reservas una sesión (en nuestro sitio web, por mensaje de texto o en tu página “Prepara tu sesión”), nos das:",
             { "list": ["El nombre, correo electrónico y número de teléfono del padre, madre o tutor", "El nombre de tu bebé (opcional) y su edad", "En las sesiones familiares, quién más saldrá en las fotos (por ejemplo, mamá, papá o un hermano) y sus nombres, si decides compartirlos", "El paquete, la fecha y la hora que eliges", "Si reservas con tu fecha de parto («¿Aún no nace?»), tu fecha de parto y cuántos bebés esperas", "La dirección del hogar donde prepararemos el estudio para tu sesión", "Las notas o solicitudes especiales que compartas", "La foto del portafolio que elegiste como inspiración, si corresponde"] },
             "También anotamos cómo nos encontraste: el anuncio, enlace o sitio web que te llevó a nuestro sitio la primera vez y el más reciente antes de enviar una solicitud (por ejemplo, el nombre de la campaña o los números del anuncio, del conjunto de anuncios y de la campaña de Meta en un enlace de anuncio), y la página a la que llegaste. Cuando envías una solicitud, también guardamos con ella tu dirección IP y los datos de tu navegador, para la medición de anuncios que explicamos más abajo.",
-            "Si empiezas una reserva y no la terminas, guardamos el nombre, el correo electrónico y el teléfono que escribiste, el paquete, la fecha y la hora que elegiste (en nuestro formulario “¿Aún no nace?”, tu fecha de parto), tu código postal y hasta qué paso llegaste, para poder escribirte. Aparte de esa fecha de parto, no guardamos los datos de tu bebé de una reserva que no terminaste. También contamos cuántos visitantes llegan a cada paso del formulario de reserva, sin nombres, correos ni nada que te identifique.",
+            "Contamos cuántos visitantes llegan a cada paso de la página de reserva, sin nombres, correos ni nada que te identifique. No guardamos nada de lo que escribes a menos que envíes una solicitud.",
             "Durante tu sesión tomamos fotografías de tu bebé y, según tu paquete, de tu familia. Si firmas nuestra autorización de fotos y videos en tu sesión, guardamos tu nombre, si eres el padre, la madre o el tutor legal, tu firma, lo que elegiste y cuándo firmaste, junto con tu reserva.",
             "Como la mayoría de los sitios web, nuestro proveedor de alojamiento registra automáticamente información técnica básica cuando nos visitas, como el tipo de navegador, las páginas que ves y tu dirección IP. Nuestro proveedor de alojamiento también nos da estadísticas anónimas de visitas (Vercel Web Analytics y Speed Insights) para contar las visitas y ver qué tan rápido cargan nuestras páginas; registran datos como la página, tu tipo de dispositivo y navegador y tu ubicación aproximada, y no te identifican. También usamos herramientas de medición publicitaria de Meta (consulta la sección «Publicidad y medición» más abajo)."
           ]
@@ -1640,7 +1456,7 @@
           "id": "use",
           "heading": "Cómo usamos tu información",
           "body": [
-            { "list": ["Para programar y preparar tu sesión en casa, y trasladarnos hasta allí", "Para comunicarnos contigo sobre tu reserva, incluidos recordatorios y cualquier cambio", "Para editar y entregar tus fotos mediante tu galería en línea", "Para mantener los registros comerciales que debemos conservar", "Para mantener nuestro sitio web en funcionamiento y protegido, incluido limitar solicitudes repetidas desde la misma conexión", "Para entender qué anuncios y enlaces atraen familias a nuestro sitio, y medir y mejorar nuestros anuncios en Facebook e Instagram", "Si empezaste una reserva y no la terminaste, para escribirte al respecto y preguntarte qué te detuvo (estos correos siempre tienen un enlace para cancelar la suscripción, y dejamos de escribirte en cuanto lo usas)"] },
+            { "list": ["Para programar y preparar tu sesión en casa, y trasladarnos hasta allí", "Para comunicarnos contigo sobre tu reserva, incluidos recordatorios y cualquier cambio", "Para editar y entregar tus fotos mediante tu galería en línea", "Para mantener los registros comerciales que debemos conservar", "Para mantener nuestro sitio web en funcionamiento y protegido, incluido limitar solicitudes repetidas desde la misma conexión", "Para entender qué anuncios y enlaces atraen familias a nuestro sitio, y medir y mejorar nuestros anuncios en Facebook e Instagram"] },
             "Nunca vendemos ni alquilamos tu información."
           ]
         },
@@ -1684,7 +1500,7 @@
         {
           "id": "retention",
           "heading": "Cuánto tiempo conservamos la información",
-          "body": ["Conservamos la información de la reserva durante el tiempo necesario para brindar tu sesión y cumplir con nuestras obligaciones legales y contables. Conservamos las fotos de tu sesión durante un tiempo limitado después de entregarlas, para poder ayudarte si pierdes acceso a tu galería. Puedes pedirnos en cualquier momento que eliminemos antes tus fotos o tu información. Los datos de contacto de una reserva que no terminaste se eliminan después de 12 meses. Conservamos las autorizaciones de fotos firmadas como constancia de tu permiso, incluso después de eliminar una reserva."]
+          "body": ["Conservamos la información de la reserva durante el tiempo necesario para brindar tu sesión y cumplir con nuestras obligaciones legales y contables. Conservamos las fotos de tu sesión durante un tiempo limitado después de entregarlas, para poder ayudarte si pierdes acceso a tu galería. Puedes pedirnos en cualquier momento que eliminemos antes tus fotos o tu información. Conservamos las autorizaciones de fotos firmadas como constancia de tu permiso, incluso después de eliminar una reserva."]
         },
         {
           "id": "security",

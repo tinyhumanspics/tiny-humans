@@ -284,3 +284,16 @@ test("brief 03: no Pixel calls on a page whose link carries a secret token", asy
   await page.getByRole("link", { name: /Text us at/ }).click();
   expect(await calls()).toEqual([]);
 });
+
+test("brief 04: 'Not born yet?' buttons open /book on the due date", async ({ page }) => {
+  await page.goto("/");
+  const cta = page.locator('main a[href="/book?when=due"]').first();
+  await expect(cta).toBeVisible();
+  await cta.click();
+  await expect(page).toHaveURL(/\/book\?when=due$/);
+  await expect(page.getByRole("button", { name: "Not born yet" })).toHaveAttribute("aria-pressed", "true");
+  // no bundle in the link: they choose one, then the due date
+  await hydrated(page, "#request-title");
+  await page.getByRole("button", { name: /^Little Moments/ }).click();
+  await expect(page.locator("#request-due")).toBeVisible();
+});

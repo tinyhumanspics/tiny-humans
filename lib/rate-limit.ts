@@ -18,14 +18,8 @@ export const RULES = {
   quote: { limit: 30, windowSec: 600 },
   // travel fee estimate under the ZIP box
   travel: { limit: 60, windowSec: 600 },
-  // includes the browser's automatic "still saving" retries
-  create: { limit: 20, windowSec: 3600 },
-  // "Not born yet" reservations, and the schedule link's summary on the booking form
-  due: { limit: 10, windowSec: 3600 },
   // "Send request" on the new /book (brief 02)
   request: { limit: 12, windowSec: 3600 },
-  // the quick form (/quick): a family sending their details for the owners to book
-  quick: { limit: 8, windowSec: 3600 },
   dueGet: { limit: 40, windowSec: 600 },
   cancelGet: { limit: 30, windowSec: 600 },
   cancelPost: { limit: 10, windowSec: 600 },
@@ -39,12 +33,8 @@ export const RULES = {
   pay: { limit: 30, windowSec: 600 },
   reviewGet: { limit: 40, windowSec: 600 },
   reviewPost: { limit: 10, windowSec: 600 },
-  // unfinished bookings: saves while typing on the booking form, step counts, "What stopped you?", unsubscribe
-  draft: { limit: 40, windowSec: 600 },
+  // anonymous step counts on /book
   funnel: { limit: 60, windowSec: 600 },
-  feedbackGet: { limit: 40, windowSec: 600 },
-  feedbackPost: { limit: 10, windowSec: 600 },
-  unsubscribe: { limit: 20, windowSec: 600 },
   // browser Content-Security-Policy reports (a page with several blocked items sends several)
   cspReport: { limit: 60, windowSec: 600 },
   // owner login: per IP, and across all IPs (slows a distributed password-guessing attempt)

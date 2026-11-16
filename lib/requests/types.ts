@@ -15,25 +15,6 @@ export const REQUEST_HOLD_HOURS = 12;
  */
 export const TEXT_CONSENT_VERSION = "2026-11-14";
 
-/** What the browser sends ("Send request"). */
-export interface RequestInput {
-  clientId: string;
-  locale: "en" | "es";
-  type: RequestType;
-  bundleId: string;
-  babyCount: number;
-  slot?: { date: string; start: string };
-  dueDate?: string;
-  firstName: string;
-  mobile: string;
-  email: string;
-  zip: string;
-  textConsent: boolean;
-  /** Spam signals (never stored): a hidden box people never see, and how long the form was open. */
-  hp?: string;
-  elapsedMs?: number;
-}
-
 /** What the "Request sent" screen shows. */
 export interface RequestSent {
   reference: string;
@@ -51,6 +32,9 @@ export function usMobile(value: string): string | null {
   const ten = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
   return /^[2-9]\d{2}[2-9]\d{6}$/.test(ten) ? `+1${ten}` : null;
 }
+
+/** Close to the server's email check (the request form's inline error). */
+export const looksLikeEmail = (value: string) => /^[^\s@]+@[^\s@.]+(\.[^\s@.]+)*\.[A-Za-z]{2,}$/.test(value);
 
 /** "+13055550142" → "(305) 555-0142" */
 export function formatUsMobile(e164: string): string {
