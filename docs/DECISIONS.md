@@ -11,6 +11,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-15 · Due-date deposits pay at /pay?d=; Not born yet → /book?when=due · brief 04
 - 2026-11-15 · Ad page bundles: on in /admin, cheapest first; CTA opens the middle one · brief 05
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
+- 2026-11-16 · Sessions after week 2; a due date moves to day 10–20 · owner
 - 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, the in-flow discount box · Carlos
 - 2026-11-14 · Requests can share a minute; bookings can't (no_overlap) · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link on landing pages; it fires Contact and isn't a booking path · Carlos
@@ -42,14 +43,14 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Spanish stays live; fix the /es defects · Carlos
 - 2026-11-14 · Seasonal themes stay, rebuilt to be reusable: one theme = one small data entry (color tokens, optional logo overlay/decorations, optional landing hero photo), switched by hand in Settings. One photo set for the site. Seasonal offer boxes go; the one-line offer in Prices replaces them · Carlos
 - 2026-11-14 · Migrations run in the production build; a failure stops the deploy · brief 01
-- 2026-11-14 · Failure alerts + daily health email → support@tinyhumans.photography (ALERT_EMAIL) · owner
+- 2026-11-14 · Failure alerts + daily health email → ALERT_EMAIL (support@) · owner
 - 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
-- 2026-10-22 · Chalk drawings are always drawn whole: never cut off, never on letters, never under buttons or photos · owner
-- 2026-11-09 · Empty Spanish fields fill themselves from the English on save (owner-written marketing text only, never family data); Spanish the owner typed is never overwritten · owner
+- 2026-10-22 · Chalk drawings: always whole, never on letters, buttons or photos · owner
+- 2026-11-09 · Empty Spanish fields fill from the English on save (owner marketing text only, never family data); typed Spanish is kept · owner
 - 2026-11-10 · Shoot videos are links that play in the site's own player; no video uploads · owner
 - 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
-- 2026-11-11 · Home "Little moments" is one gallery, 3 per row, no boxes · owner
-- 2026-11-13 · Customer wording never says we're photographing somewhere else; a closed day is just "not available" · owner
+- 2026-11-16 · Home = the ad page titled "Tiny moments. Big memories."; portfolio = /portfolio (photo wall) · owner
+- 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner
