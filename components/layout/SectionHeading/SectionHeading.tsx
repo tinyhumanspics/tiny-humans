@@ -24,17 +24,16 @@ export default function SectionHeading({ id, title, subtitle, align = "start", s
   const Heading = level === 1 ? "h1" : "h2";
   const { theme, locale } = useSiteSettings();
   const doodle = theme.decorations.heading[slot];
-  // Spanish titles run longer: the mid-heading desktop drawing would sit on their letters.
   const spanish = locale === "es";
-  // Long titles shrink a little on mid-size screens to stay on one line and clear the desktop drawing 16% from the right
-  // ("Choose your Stay-Home Session", 29 letters, reached it at 1024px on Linux fonts).
+  // Long titles shrink a little on mid-size screens to stay on one line. They (and Spanish titles, which run longer)
+  // leave out the desktop drawing 16% from the right, which would sit on their letters (seen with Linux fonts).
   const long = title.length > 28;
   // The last word and the doodle wrap together, so the doodle never ends up alone on a line.
   const words = title.split(" ");
   const lastWord = words.pop();
   return (
     <Reveal className={cn(styles.wrap, align === "center" && styles.center, long && styles.long)}>
-      <BoardDoodles area="heading" desktopExtras={!spanish} />
+      <BoardDoodles area="heading" desktopExtras={!spanish && !long} />
       <Heading id={id} className={cn(styles.title, "chalk")}>
         {words.length > 0 && `${words.join(" ")} `}
         <span className={styles.tail}>
