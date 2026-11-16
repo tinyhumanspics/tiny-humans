@@ -16,6 +16,7 @@ import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
 import Reviews from "@/features/reviews/Reviews";
+import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
@@ -153,6 +154,9 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+
+      {/* The live seasonal offer (/admin → Seasonal Landing), without a button: "Check dates" is right above it */}
+      <SeasonalOffers messages={t.seasonalOffers} promoMessages={bundleMessages.promo} locale={locale} cta={false} />
 
       {/* 2. Trust strip */}
       <section className="container" aria-label={t.trustLabel}>

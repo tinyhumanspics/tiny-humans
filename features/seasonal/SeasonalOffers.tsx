@@ -23,8 +23,9 @@ const fill = (template: string, values: Record<string, string>) => template.repl
  * The seasonal offer boxes (owner-managed in /admin → Seasonal Landing) on the ad page and the home page: switched on,
  * before their last session date, made for the live theme (or any theme). Inside each box, the running bundle special
  * offer's line when there is one ("Thanksgiving offer: 10% off every bundle…", owner Nov 10). Nothing when none is live.
+ * `cta={false}`: no button of its own (the ad page: "Check dates" is right above it, owner Nov 15).
  */
-export default function SeasonalOffers({ messages, promoMessages, locale, className }: { messages: typeof en.landing.seasonalOffers; promoMessages: typeof en.bundlesPage.promo; locale: AppLocale; className?: string }) {
+export default function SeasonalOffers({ messages, promoMessages, locale, className, cta = true }: { messages: typeof en.landing.seasonalOffers; promoMessages: typeof en.bundlesPage.promo; locale: AppLocale; className?: string; cta?: boolean }) {
   const { bundles, today } = useCatalog();
   const { settings, theme } = useSiteSettings();
   const offers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today, locale);
@@ -49,7 +50,7 @@ export default function SeasonalOffers({ messages, promoMessages, locale, classN
               <div className={styles.seasonalPromo}>
                 <OfferLine messages={promoMessages} locale={locale} />
               </div>
-              <ChalkButton href={ctaHref} onClick={onCta} variant="outline" seed={26 + index}>{messages.cta}</ChalkButton>
+              {cta && <ChalkButton href={ctaHref} onClick={onCta} variant="outline" seed={26 + index}>{messages.cta}</ChalkButton>}
             </ChalkBox>
           ))}
         </div>
