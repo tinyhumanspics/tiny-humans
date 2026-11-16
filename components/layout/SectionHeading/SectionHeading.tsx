@@ -26,8 +26,9 @@ export default function SectionHeading({ id, title, subtitle, align = "start", s
   const doodle = theme.decorations.heading[slot];
   // Spanish titles run longer: the mid-heading desktop drawing would sit on their letters.
   const spanish = locale === "es";
-  // Long titles (today only Spanish ones) shrink a little on mid-size screens to stay on one line.
-  const long = title.length > 30;
+  // Long titles shrink a little on mid-size screens to stay on one line and clear the desktop drawing 16% from the right
+  // ("Choose your Stay-Home Session", 29 letters, reached it at 1024px on Linux fonts).
+  const long = title.length > 28;
   // The last word and the doodle wrap together, so the doodle never ends up alone on a line.
   const words = title.split(" ");
   const lastWord = words.pop();
