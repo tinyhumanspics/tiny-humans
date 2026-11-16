@@ -12,7 +12,7 @@
   due date →" under the heading (the box is gone).
 - /book: bundles side by side with features; a bundle card's link shows that pick + Change; Check dates, the menu
   and Not born yet open the comparison with the middle bundle checked (calendar showing). Twins line shows the
-  bundle's extra minutes/photos. Copy: "after baby's first two weeks"; due-date moves to "day 10–20".
+  bundle's extra minutes/photos. Timing copy everywhere: "after baby's first two weeks" (owner).
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
   (config/booking.ts `tripDays`, no /admin); /book's calendar applies them once the ZIP is typed; requests and family
   reschedules re-check. The owner's own bookings and confirms aren't limited.
@@ -27,7 +27,6 @@
 - Brief 06 clean-up note: /api/booking/quote + HttpBookingClient.quote have no UI caller since the quick price box.
 
 ## Waiting on owner
-- Wording: "after the first two weeks" (/book) vs "day 10–20" (due-date move, FAQ, ad concept b): one or the other?
 - /admin → Photos: "Big top photo"; rename "IMG 6087", "IMG 7378", "UPDATED 10"; Spanish photo names.
 - "From $179.10" while the 10% Thanksgiving offer runs (ends Nov 23).
 - Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,

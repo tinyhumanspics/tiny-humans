@@ -46,7 +46,7 @@
         },
         "b": {
           "title": "Reserva tu sesión de recién nacido con tiempo. Movemos la fecha cuando llegue el bebé.",
-          "sub": "Las mejores fotos de recién nacido se toman en las primeras semanas. Elige ahora una fecha cerca de tu fecha de parto; cuando llegue el bebé, nos escribes y vamos a tu casa entre el día 10 y el 20."
+          "sub": "Elige ahora una fecha cerca de tu fecha de parto. Cuando llegue el bebé, nos escribes y vamos a tu casa después de sus primeras dos semanas."
         },
         "c": {
           "title": "Fotos de recién nacido en casa, con Adrian y Alondra.",
@@ -151,7 +151,7 @@
         },
         {
           "q": "¿Cuál es el mejor momento?",
-          "a": "Para fotos de bebé dormido y acurrucado, entre los días 10 y 20. Muchas familias reservan con tiempo una fecha cerca de su fecha de parto, y la movemos cuando llega el bebé."
+          "a": "Después de las primeras dos semanas del bebé. Muchas familias reservan con tiempo una fecha cerca de su fecha de parto, y la movemos cuando llega el bebé."
         },
         {
           "q": "¿Y si el bebé nace antes o después, o no se calma?",
@@ -311,7 +311,7 @@
       "here": "Ya nació",
       "notBorn": "Todavía no nace",
       "hereHelp": "Elige un día y una hora de inicio. Lo ideal es después de las primeras dos semanas del bebé.",
-      "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos entre los días 10 y 20.",
+      "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos para después de sus primeras dos semanas.",
       "dueLabel": "Fecha en que esperan al bebé",
       "dueWindow": "Elige una fecha entre hoy y el {date}.",
       "bundle": "Tu paquete",

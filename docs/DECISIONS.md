@@ -11,7 +11,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-15 · Due-date deposits pay at /pay?d=; Not born yet → /book?when=due · brief 04
 - 2026-11-15 · Ad page bundles: on in /admin, cheapest first; CTA opens the middle one · brief 05
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
-- 2026-11-16 · Sessions after week 2; a due date moves to day 10–20 · owner
+- 2026-11-16 · Sessions after week 2; a due date moves there too · owner
 - 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, the in-flow discount box · Carlos
 - 2026-11-14 · Requests can share a minute; bookings can't (no_overlap) · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link on landing pages; it fires Contact and isn't a booking path · Carlos
