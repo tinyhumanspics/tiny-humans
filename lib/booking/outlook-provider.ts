@@ -43,6 +43,7 @@ import { addDaysKey, todayInZone, zonedTimeToUtc } from "./timezone";
 import { addPhotos, extraBabyLine, familyLimit, sessionMinutes, withAddons, type BookingBaby } from "./extra-babies";
 import { saveBookingAddons, saveBookingFamily } from "./addons";
 import { asksFamily, cleanFamily } from "./family";
+import { applyTrips, tripSessions, visitorForZip } from "./trips-server";
 import type { AvailabilityQuery, BookingProvider, BookingRequest, BookingResult, CancelOptions, CancellationSummary, DayAvailability, ManagedBooking, OwnerBooking, TimeSlot } from "./types";
 import { isStripeConfigured } from "@/lib/payments/stripe";
 
@@ -114,7 +115,10 @@ export class OutlookBookingProvider implements BookingProvider {
     }
     try {
       const [rules, busy] = await Promise.all([getAvailabilityRules(), this.busyBetween(query.from, query.to)]);
-      return availabilityForRange(query.from, query.to, minutes, busy, owner ? ownerRulesOf(rules) : rules);
+      if (owner) return availabilityForRange(query.from, query.to, minutes, busy, ownerRulesOf(rules));
+      // trip days (owner, Nov 16: 70+ miles takes the day; config/booking.ts): the owner books around them by hand
+      const [sessions, visitor] = await Promise.all([tripSessions(query.from, query.to), visitorForZip(query.zip)]);
+      return applyTrips(availabilityForRange(query.from, query.to, minutes, busy, rules), visitor, sessions);
     } catch (err) {
       asCalendarError(err, "getAvailability");
     }

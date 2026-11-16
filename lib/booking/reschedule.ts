@@ -16,6 +16,7 @@ import { getSiteSettings } from "@/lib/settings/server";
 import { depositInfoOf, depositOf } from "@/lib/deposit/server";
 import type { AvailabilityRules } from "@/lib/availability/types";
 import { availabilityForRange, slotsForDay, type Busy } from "./availability";
+import { applyTrips, tripConflict, tripSessions, visitorForBooking } from "./trips-server";
 import { addMinutes } from "./dates";
 import { BookingError, friendly } from "./errors";
 import { createCancelToken } from "./cancel-token";
@@ -25,6 +26,9 @@ import { addDaysKey, graphLocalDateTime, zonedTimeToUtc } from "./timezone";
 import type { DayAvailability, ManagedBooking } from "./types";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
+import { fill } from "@/lib/email/messages";
+import en from "@/messages/en.json";
+import es from "@/messages/es.json";
 
 const localTime = (d: Date, tz: string) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(d);
 const localDate = (d: Date, tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
@@ -82,8 +86,9 @@ export async function rescheduleAvailability(own: Booking, from: string, to: str
   // the booking keeps its own session length (even if the bundle changes later)
   const minutes = Math.round((own.sessionEnd.getTime() - own.sessionStart.getTime()) / 60_000);
   try {
-    const [rules, busy] = await Promise.all([getAvailabilityRules(), busyExcluding(own, from, to)]);
-    return availabilityForRange(from, to, minutes, busy, rules);
+    const [rules, busy, sessions] = await Promise.all([getAvailabilityRules(), busyExcluding(own, from, to), tripSessions(from, to, own.id)]);
+    // trip days: the booking's own home against the other sessions (it never limits itself)
+    return applyTrips(availabilityForRange(from, to, minutes, busy, rules), visitorForBooking(own), sessions);
   } catch (err) {
     log.error("booking.reschedule", "Availability failed", { error: err as Error, reference: own.bookingReference });
     if (err instanceof GraphError || err instanceof GraphAuthError) throw new BookingError("calendar_unavailable", friendly.calendar);
@@ -125,6 +130,10 @@ export async function rescheduleBookingRow(row: Booking, slot: { date: string; s
     throw new BookingError("calendar_unavailable", friendly.calendar);
   }
   if (!slotsForDay(slot.date, minutes, busy, rules).some((s) => s.start === slot.start)) throw new BookingError("slot_unavailable", friendly.rescheduleTaken);
+  // trip days (the owner moving a booking in /admin decides for themselves)
+  if (by === "customer" && tripConflict(slot.date, slot.start, visitorForBooking(row), await tripSessions(slot.date, slot.date, row.id))) {
+    throw new BookingError("slot_unavailable", fill((row.locale === "es" ? es : en).bookingFlow.errors.tripDay, { phone: site.contact.phone }), "trip_day");
+  }
 
   const graphTz = bookingRules.graphTimeZone;
   const oldDate = row.sessionDate;

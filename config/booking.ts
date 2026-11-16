@@ -30,6 +30,14 @@ export const FAMILY_INCLUDED_PEOPLE = 5;
 export const MAX_FAMILY_MEMBERS = 14;
 
 /**
+ * Trip days (owner, Nov 10; 70 miles from Nov 16): a session 70+ road miles from Miami Beach (Orlando is ~4 hours away)
+ * takes the whole day. That day only families within `sameTripMiles` of it can book, a far family can't take a day
+ * that already has sessions back home, and the next morning stays free until `nextDayUntil` (the drive back). Fixed
+ * here for now: the owner asked for no /admin setting (Nov 16).
+ */
+export const tripDays = { tripMiles: 70, sameTripMiles: 30, nextDayUntil: "12:00" } as const;
+
+/**
  * Fixed booking settings. The *changeable* rules (weekly hours, notice,
  * booking window, buffer, special dates, time blocks) are managed by the
  * owner in /admin > Availability and stored in Neon; the defaults below are

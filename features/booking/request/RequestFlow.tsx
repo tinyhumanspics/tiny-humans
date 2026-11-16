@@ -71,14 +71,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   // screen 1: open days and start times (other families' held requests are already left out by the server)
   const earliest = addDays(startOfDay(fromDateKey(today)), bookingSettings.minDaysAhead);
   const [month, setMonth] = useState(() => new Date(earliest.getFullYear(), earliest.getMonth(), 1));
-  // open times per bundle + baby count ("choice") and which months of it are loaded: nothing to reset on a change
-  const choice = `${bundleId}:${babyCount}`;
-  const monthKey = `${choice}:${month.getFullYear()}-${month.getMonth()}`;
   const [daysBy, setDaysBy] = useState<Record<string, Record<DateKey, TimeSlot[]>>>({});
   const [loaded, setLoaded] = useState<Record<string, number>>({});
   const [reload, setReload] = useState(0);
-  const days = daysBy[choice] ?? {};
-  const loadingDays = type === "date" && Boolean(bundleId) && loaded[monthKey] !== reload;
   const [date, setDate] = useState<DateKey | null>(null);
   const [slot, setSlot] = useState<TimeSlot | null>(null);
   const [dueDate, setDueDate] = useState("");
@@ -89,6 +84,13 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     const c = due?.summary.contact;
     return c ? { firstName: c.parentName.split(" ")[0], mobile: c.phone, email: c.email, zip: c.zip } : { firstName: "", mobile: "", email: "", zip: "" };
   });
+  // open times per bundle + baby count + home ZIP once typed (trip days) ("choice") and which months of it are loaded:
+  // nothing to reset on a change
+  const tripZip = /^\d{5}$/.test(fields.zip.trim()) ? fields.zip.trim() : "";
+  const choice = `${bundleId}:${babyCount}:${tripZip}`;
+  const monthKey = `${choice}:${month.getFullYear()}-${month.getMonth()}`;
+  const days = daysBy[choice] ?? {};
+  const loadingDays = type === "date" && Boolean(bundleId) && loaded[monthKey] !== reload;
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
@@ -113,14 +115,14 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     const from = toDateKey(new Date(month.getFullYear(), month.getMonth(), 1));
     const to = toDateKey(new Date(month.getFullYear(), month.getMonth() + 1, 0));
     provider
-      .getAvailability({ bundleId, babyCount, from, to })
+      .getAvailability({ bundleId, babyCount, from, to, zip: tripZip || undefined })
       .then((result) => setDaysBy((prev) => ({ ...prev, [choice]: { ...prev[choice], ...Object.fromEntries(result.map((d) => [d.date, d.slots])) } })))
       .catch(() => live && setError(m.details.errors.generic))
       .finally(() => setLoaded((prev) => ({ ...prev, [monthKey]: reload })));
     return () => {
       live = false;
     };
-  }, [type, step, bundleId, babyCount, month, choice, monthKey, reload, provider, m.details.errors.generic]);
+  }, [type, step, bundleId, babyCount, tripZip, month, choice, monthKey, reload, provider, m.details.errors.generic]);
 
   // anonymous step counts (no names, no ids): opened, picked when, saw the details screen; "sent" is counted on the server
   const counted = useRef(new Set<string>());

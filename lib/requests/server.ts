@@ -6,6 +6,7 @@ import { requestReceivedEmail } from "@/emails/RequestReceived";
 import { formatLongDate } from "@/lib/booking/dates";
 import { BookingError } from "@/lib/booking/errors";
 import { getBookingProvider } from "@/lib/booking/server";
+import { tripConflict, tripSessions, visitorForZip } from "@/lib/booking/trips-server";
 import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import type { BookingRequestRow } from "@/lib/db/schema";
 import { depositOfferFor } from "@/lib/deposit/server";
@@ -95,8 +96,12 @@ export async function createRequest(r: ValidRequest, source: RequestSource = {},
   let when: { slotDate: string; slotStart: string; startsAt: Date; endsAt: Date; holdUntil: Date } | { dueDate: string };
   if (r.type === "date") {
     const slot = r.slot!;
+    // trip days: this home against the day's other sessions (an Orlando home and a Miami Beach one on the same day)
+    if (tripConflict(slot.date, slot.start, await visitorForZip(r.zip), await tripSessions(slot.date, slot.date, undefined, now))) {
+      throw new BookingError("slot_unavailable", fill(messages.bookingFlow.errors.tripDay, { phone: site.contact.phone }), "trip_day");
+    }
     // the time is still open for this bundle and baby count (Outlook, bookings and other families' request holds)
-    const [day] = await provider.getAvailability({ bundleId: r.bundleId, babyCount, from: slot.date, to: slot.date });
+    const [day] = await provider.getAvailability({ bundleId: r.bundleId, babyCount, from: slot.date, to: slot.date, zip: r.zip });
     const open = day?.slots.find((s) => s.start === slot.start);
     if (!open) throw new BookingError("slot_unavailable", messages.bookingRequest.details.errors.slotTaken);
     const tz = bookingRules.timeZone;
