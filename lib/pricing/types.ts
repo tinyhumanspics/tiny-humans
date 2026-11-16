@@ -22,6 +22,8 @@ export interface Bundle {
   description?: string;
   /** Inactive bundles are hidden from the public site (kept for history). */
   active?: boolean;
+  /** Shown on the ad landing page and the bundles page (false = bookable by link only). */
+  showOnLanding?: boolean;
   sortOrder?: number;
   /** Special offer (owner-editable). Active only while enabled and today <= endsOn. */
   offer?: BundleOffer | null;

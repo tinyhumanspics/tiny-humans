@@ -42,7 +42,7 @@ export default function MediaPanel({ settings, onSave, upload }: { settings: Sit
   const back = (where: string, inherited: PortfolioPhoto | null | undefined, otherwise: string) => `${where} ${inherited ? `now shows the ${baseLabel} theme's picture.` : otherwise}`;
   const live = themeId === settings.themeId;
   // empty landing slots: the Original theme's landing photo, else the matching About Us photo (as on the website)
-  const landingFromAbout = LANDING_FROM_ABOUT.map((a) => media.about?.[a] ?? base?.about?.[a] ?? null);
+  const landingFromAbout = LANDING_FROM_ABOUT.map((a) => (a === null ? null : (media.about?.[a] ?? base?.about?.[a] ?? null)));
   const landingInherited = MEDIA_GROUPS.landing.slots.map((_, i) => base?.landing?.[i] ?? landingFromAbout[i]);
   const landingNotes = MEDIA_GROUPS.landing.slots.map((_, i) => (!base?.landing?.[i] && landingFromAbout[i] ? ABOUT_NOTE : undefined));
   const label = themes[themeId].label;

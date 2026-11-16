@@ -542,6 +542,8 @@ export const bundlesTable = pgTable(
     photosLabel: text("photos_label"),
     badge: text("badge"),
     active: boolean("active").notNull().default(true),
+    /** Shown on the ad landing page (/home-sweet-home) and the bundles page (brief 05); off = booking only by link. */
+    showOnLanding: boolean("show_on_landing").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),
     offerEnabled: boolean("offer_enabled").notNull().default(false),
     offerPriceCents: integer("offer_price_cents"),

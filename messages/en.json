@@ -613,153 +613,169 @@
   },
   "landing": {
     "meta": {
-      "title": "The Stay-Home Session: newborn & baby photos at home",
-      "description": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos, $0 today, pay after your session."
+      "title": "Newborn photos at home in Miami · Tiny Humans",
+      "description": "Newborn photos in your own living room in Miami. Pick a time or your due date and send a request; nothing to pay until we text you to confirm."
     },
     "hero": {
-      "eyebrow": "The Stay-Home Session",
-      "title": [
-        "Newborn & baby photos,",
-        "at home."
-      ],
-      "sub": "We bring the studio to your living room, anywhere from Miami to Orlando. Baby-led, with feeding breaks built in.",
-      "cta": "See open dates",
-      "ctaNote": "2-minute booking · $0 today · pay after your session",
-      "secondary": "See the bundles"
+      "eyebrow": "The Stay-Home Session · Miami",
+      "photo": "Hero photo",
+      "concepts": {
+        "a": {
+          "title": "Newborn photos in your own living room.",
+          "sub": "No car seat, no studio, no packing. We bring the lights, backdrops and wraps to your home in Miami, and your baby sets the pace. You see your photos the next day."
+        },
+        "b": {
+          "title": "Reserve your newborn session ahead. We move the date when baby arrives.",
+          "sub": "The best newborn photos happen in the first two weeks. Pick a date near your due date now; when baby arrives, text us and we come to your home between days 5 and 14."
+        },
+        "c": {
+          "title": "Newborn photos at home, by Adrian and Alondra.",
+          "sub": "We're the two people who come to your home. We wash our hands first, a parent stays within arm's reach, and your baby sets the pace."
+        }
+      },
+      "cta": "Check dates"
     },
-    "trust": [
-      "At your home",
-      "Baby-led",
-      "$0 today, pay after",
-      "Miami to Orlando"
-    ],
+    "price": {
+      "from": "From {price}",
+      "deposit": {
+        "one": "{deposit} holds your date, refundable up to {notice} before",
+        "from": "A deposit from {deposit} holds your date, refundable up to {notice} before"
+      },
+      "travel": "Free travel within {miles} miles of Miami Beach"
+    },
+    "proofLang": {"en": "in English", "es": "in Spanish"},
+    "textUs": "Questions first? Text us:",
     "trustLabel": "Why families choose us",
-    "spanish": "Hablamos español",
-    "portfolio": {
-      "title": "Real homes, tiny humans",
-      "sub": "Every one of these was taken in a family's own home.",
-      "cta": "I want photos like these"
+    "trust": [
+      "At your home in Miami",
+      "Photos the next day",
+      "Baby-led, breaks anytime",
+      "Hablamos español"
+    ],
+    "why": {
+      "title": "The first weeks are for staying home.",
+      "text": "Getting a newborn to a studio means a car seat, a packed bag, feeding on someone else's schedule and a drive home with a tired baby. So we come to you.",
+      "space": "You don't need to clean the house. {strong} We bring everything else.",
+      "spaceStrong": "One spot near a window is plenty.",
+      "photo": "Behind the scenes"
+    },
+    "work": {
+      "title": "Real homes. Real families.",
+      "sub": "Every photo here was taken in a family's own home."
+    },
+    "offer": {
+      "title": "Choose your Stay-Home Session",
+      "includesTitle": "Every Stay-Home Session includes",
+      "includes": [
+        "A one-page home-prep guide",
+        "Your gallery the next day to pick your favorites",
+        "Edited photos within 72 hours",
+        "Feeding and cuddle breaks whenever baby needs them"
+      ],
+      "promiseTitle": "Our baby-led promise",
+      "promise": "If baby just can't settle, we come back once, free, within 14 days.",
+      "dueTitle": "Not born yet?",
+      "due": "Pick a date near your due date. When baby arrives, text us and we move it.",
+      "dueDeposit": "If your session can't happen, you choose: get your {deposit} back or put it toward a session when baby is older.",
+      "twins": "Twins: +{price} per extra baby.",
+      "travel": "Travel: free within {miles} miles of Miami Beach, then {perMile} a mile. You see it before you pay."
     },
     "how": {
       "title": "How it works",
       "steps": [
         {
-          "title": "Pick your bundle",
-          "text": "One, two or three hours, baby only or the whole family."
+          "title": "Pick a time, or your due date.",
+          "text": "See real open dates. It takes about a minute."
         },
         {
-          "title": "Pick a date and time",
-          "text": "See real open times and book in about two minutes. $0 today."
+          "title": "We text you to confirm.",
+          "text": "Usually within minutes, 8 a.m.–8 p.m."
         },
         {
-          "title": "We bring the studio",
-          "text": "Lights, backdrops, props and outfits for baby. You just stay comfy."
+          "title": "We bring the studio.",
+          "text": "Lights, backdrops, wraps and outfits for baby. You stay comfortable."
+        },
+        {
+          "title": "Your photos the next day.",
+          "text": "Pick your favorites; edited photos arrive within 72 hours. The rest is paid after your session."
         }
       ],
-      "after": "Within 24 hours you'll see your photos and choose your favorites. Your edited favorites arrive within 72 hours of your pick. You pay after your session by card, with a secure link we email you.",
-      "photo": "Our set-up in a family's living room"
-    },
-    "offer": {
-      "title": "Pick your bundle",
-      "sub": "Every bundle is a Stay-Home Session: we come to you, wherever you are in Florida.",
-      "bonusTitle": "Every session also includes",
-      "bonuses": [
-        {
-          "title": "Home Session Prep Guide",
-          "text": "A one-page guide to get your home and baby ready (warmth, light, feeding, outfits)."
-        },
-        {
-          "title": "Your photos in 24 hours",
-          "text": "See your whole session the next day and pick your favorites. We edit them and deliver within 72 hours."
-        },
-        {
-          "title": "Pick your backdrop",
-          "text": "Choose yours while you book, or later from your confirmation email, and we'll bring it to your session."
-        }
-      ],
-      "promiseTitle": "Our baby-led promise",
-      "promise": "If baby just can't settle, we'll come back once, free, within 14 days.",
-      "deliverNote": "Your prep guide arrives in your confirmation email, right after you book."
+      "deposit": {
+        "one": "Then a {deposit} link holds your date (refundable up to {notice} before).",
+        "from": "Then a deposit link (from {deposit}) holds your date (refundable up to {notice} before)."
+      }
     },
     "meet": {
-      "title": "Meet Adrian & Alondra",
-      "paragraphs": [
-        "Tiny Humans started with our own newborn. We wanted photos at home, and we couldn't find anyone who would come to us. So we became that photographer.",
-        "Home is where babies, and parents, are most comfortable: no car seat, no packing the whole nursery, and feeding whenever baby wants.",
-        "Adrian photographs and edits every session. Alondra designs the set-ups, styling and little details. We're parents too, and we know how fast these first weeks go."
-      ],
-      "spanish": "Hablamos español.",
-      "photo": "Adrian & Alondra"
+      "title": "Meet who's coming to your home",
+      "photo": "Adrian & Alondra",
+      "body": "We're Adrian and Alondra. Adrian photographs and edits every session; Alondra designs the setups and the little details. We're parents too, and we started Tiny Humans because we couldn't find anyone who'd come to our home.",
+      "standardsTitle": "How we work in your home",
+      "standards": [
+        "We wash our hands when we arrive.",
+        "A parent stays within arm's reach the whole session.",
+        "Baby sets the pace: feeding and cuddle breaks anytime.",
+        "No unsupported poses. Anything tricky is a safe composite of two photos.",
+        "We don't wear fragrance, and the room stays warm.",
+        "Anyone sick, us included? We reschedule, free.",
+        "Freshly washed wraps every session.",
+        "We never post your photos without your OK."
+      ]
     },
     "faq": {
       "title": "Questions parents ask",
       "items": [
         {
           "q": "Is it safe for a newborn?",
-          "a": "Yes, safety always comes first. We keep the room warm, wash and sanitize our hands, and never use unsupported poses: any tricky pose is a safe composite of two photos. A parent stays within arm's reach, and we don't wear fragrance."
+          "a": "Safety comes first. We wash our hands on arrival, keep the room warm, never use unsupported poses, and a parent stays within arm's reach."
         },
         {
-          "q": "How soon after birth should we book?",
-          "a": "Any time that suits you. The first couple of weeks are lovely for sleepy, curled-up newborn photos, and we photograph little ones up to 2 years old. Expecting? Book with your due date and we'll adjust the day once baby arrives."
+          "q": "When is the best time?",
+          "a": "For sleepy, curled-up photos, the first two weeks (we aim for days 5–14). Many families reserve ahead with a date near their due date, and we move it when baby arrives."
         },
         {
-          "q": "What if baby comes early or late, or is fussy or hungry?",
-          "a": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before, or just text us. And if baby can't settle, we'll come back once, free, within 14 days.",
-          "aDeposit": "Every session goes at baby's pace, with feeding and cuddle breaks built in. You can move or cancel your session online up to {notice} before (cancel and we refund your deposit), or just text us. And if baby can't settle, we'll come back once, free, within 14 days."
+          "q": "What if baby comes early or late, or won't settle?",
+          "a": "Text us and we move the date. Every session goes at baby's pace. If baby just can't settle, we come back once, free, within 14 days."
         },
         {
-          "q": "How much space do we need?",
-          "a": "Just a little space, ideally near a window. We bring the lights, backdrops, props and outfits for baby."
+          "q": "Do we need to clean or have a big space?",
+          "a": "No. One spot near a window is enough. We bring lights, backdrops, wraps and outfits for baby."
         },
         {
-          "q": "What should we wear?",
-          "a": "We bring outfits and wraps for baby. For family photos, soft solid colors look beautiful: cream, beige, sage or light blue. Skip big logos and busy patterns."
+          "q": "Can siblings join?",
+          "a": "Yes: parents and siblings join in the family bundle."
         },
         {
-          "q": "Can siblings and pets be in the photos?",
-          "a": "Siblings and parents join with Our Family Story. Little Moments and Our Little Story are baby only. Want a pet in the photos? Tell us in your booking notes and we'll plan for it."
-        },
-        {
-          "q": "Which areas do you cover? Is there a travel fee?",
-          "a": "We're based in Miami Beach and travel anywhere from Miami to Orlando. Homes farther away may have a travel fee, and we'll always confirm it with you before your session.",
-          "aFee": "We're based in Miami Beach and come to homes up to {max} miles away. The first {free} miles are free; after that it's {perMile} a mile, and you'll see the exact travel fee as soon as you type your ZIP code."
-        },
-        {
-          "q": "When do we get the photos, and how do we pay?",
-          "a": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. Nothing is due today: you pay after your session by card, with a secure link we email you.",
-          "aDeposit": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. When you book, a {deposit} deposit holds your date and counts toward your total. The rest is paid after your session, by card, with a secure link we email you.",
-          "aDepositFrom": "Within 24 hours of your session, you'll get a private gallery to choose your favorites (as many as your bundle includes). We edit your picks and deliver them within 72 hours. When you book, a deposit (from {deposit}, depending on your bundle) holds your date and counts toward your total. The rest is paid after your session, by card, with a secure link we email you."
+          "q": "How do payment and refunds work?",
+          "a": "After we confirm by text, a {deposit} link holds your date. It counts toward your total and is refundable up to {notice} before. The rest is paid after your session.",
+          "aNoDeposit": "After we confirm by text, your date is set. You pay after your session, by card, with a secure link we email you."
         }
       ]
     },
     "area": {
       "title": "Where we go",
-      "sub": "Based in Miami Beach. We come to you anywhere from Miami to Orlando.",
+      "based": "Based in Miami Beach. We come to homes in:",
       "cities": [
-        "Miami",
         "Miami Beach",
         "Aventura",
+        "Sunny Isles",
         "North Miami",
+        "Brickell",
+        "Downtown",
+        "Edgewater",
+        "Coconut Grove",
         "Coral Gables",
-        "Doral",
+        "South Miami",
+        "Pinecrest",
+        "Key Biscayne",
         "Kendall",
-        "Hialeah",
-        "Hollywood",
-        "Fort Lauderdale",
-        "Boca Raton",
-        "West Palm Beach",
-        "Port St. Lucie",
-        "Orlando"
+        "Doral"
       ],
-      "more": "…and everywhere in between."
+      "free": "Free travel within {miles} miles of Miami Beach.",
+      "florida": "We also travel across Florida, up to Orlando. Travel is free within {miles} miles of Miami Beach, then {perMile} a mile, and you see it before you pay."
     },
     "final": {
-      "title": "Your little one won't be this little for long",
-      "nextDates": "Next open dates",
-      "loading": "Checking the calendar…",
-      "cap": "We take up to 10 home sessions a week.",
-      "cta": "Book your Stay-Home Session",
-      "ctaNote": "$0 today · pay after your session"
+      "title": "They're only this small for a few weeks.",
+      "text": "Pick a time, or a date near your due date. We'll text you to confirm."
     },
     "seasonalOffers": {
       "eyebrow": "Seasonal sessions at home",
@@ -1386,29 +1402,6 @@
       "balanceDescription": "Session {reference} on {date}.",
       "extraBabies": "Twins/triplets add-on",
       "extraPeople": "Extra family members"
-    },
-    "landing": {
-      "metaDescription": {
-        "one": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos: a {deposit} deposit holds your date, and the rest is paid after your session.",
-        "from": "We bring the studio to your home, anywhere from Miami to Orlando. Baby-led newborn and baby photos: a deposit (from {deposit}) holds your date, and the rest is paid after your session."
-      },
-      "ctaNote": {
-        "one": "2-minute booking · {deposit} deposit holds your date",
-        "from": "2-minute booking · a deposit from {deposit} holds your date"
-      },
-      "trust": {
-        "one": "{deposit} holds your date",
-        "from": "A deposit holds your date"
-      },
-      "howStep": {
-        "one": "See real open times and book in about two minutes. A {deposit} deposit holds your date.",
-        "from": "See real open times and book in about two minutes. A deposit (from {deposit}) holds your date."
-      },
-      "after": "Within 24 hours you'll see your photos and choose your favorites. Your edited favorites arrive within 72 hours of your pick. The rest is paid after your session, by card, with a secure link we email you.",
-      "finalCtaNote": {
-        "one": "{deposit} deposit holds your date · the rest after your session",
-        "from": "A deposit from {deposit} holds your date · the rest after your session"
-      }
     },
     "aboutCta": {
       "one": "Pick a bundle and a time that suits you. A {deposit} deposit holds your date, and the rest is paid after your session.",

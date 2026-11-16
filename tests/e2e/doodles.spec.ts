@@ -56,7 +56,7 @@ test.describe("chalk drawings stay off heading letters", () => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One Chromium pass over every width is enough.");
     // Spanish routes are gated off in the isolated test build: put the real Spanish titles into the English headings.
     const titles: [string, string][] = [
-      ["landing-portfolio", es.landing.portfolio.title],
+      ["landing-work", es.landing.work.title],
       ["landing-how", es.landing.how.title],
       ["landing-bundles", es.landing.offer.title],
       ["landing-faq", es.landing.faq.title],

@@ -64,7 +64,6 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   compareCatalogShape(en.policy, es.policy, "policy");
   compareCatalogShape(en.legal, es.legal, "legal");
   compareCatalogShape(en.deposit.terms, es.deposit.terms, "deposit.terms");
-  compareCatalogShape(en.deposit.landing, es.deposit.landing, "deposit.landing");
   expect(es.legal.privacy.sections.map((section) => section.id)).toEqual(en.legal.privacy.sections.map((section) => section.id));
   expect(es.legal.terms.sections.map((section) => section.id)).toEqual(en.legal.terms.sections.map((section) => section.id));
   expect(en.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);

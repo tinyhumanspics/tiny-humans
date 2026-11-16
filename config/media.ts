@@ -16,9 +16,9 @@ export const MEDIA_GROUPS = {
   },
   landing: {
     label: "Stay-Home Session Page (/home-sweet-home)",
-    where: `The two photos on the ad landing page: “${en.landing.how.photo}” under “${en.landing.how.title}”, and “${en.landing.meet.photo}” next to “${en.landing.meet.title}”. Until you add one, the page uses the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”), or a “photo coming soon” card if that one is empty too.`,
-    // same names as the "photo coming soon" cards on the page
-    slots: [en.landing.how.photo, en.landing.meet.photo],
+    where: `The photos on the ad landing page: “${en.landing.why.photo}” next to “${en.landing.why.title}”, “${en.landing.meet.photo}” next to “${en.landing.meet.title}”, and the “${en.landing.hero.photo}” at the top (a real in-home newborn photo; use a family's photo only with their signed release). Until you add one, the first two use the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”) and the hero uses the first photo of “Little moments”.`,
+    // same names as the "photo coming soon" cards on the page; new slots go last (saved choices keep their place)
+    slots: [en.landing.why.photo, en.landing.meet.photo, en.landing.hero.photo],
   },
   about: {
     label: "About Us Page",
@@ -76,10 +76,11 @@ export interface LegacyMedia {
 }
 
 /**
- * An empty landing slot shows the About Us photo of the same subject (same frame shape): “Our set-up in a family's
- * living room” (3:2) ← “Behind the scenes” (3:2), “Adrian & Alondra” (4:5) ← “Adrian & Alondra” (4:5).
+ * An empty landing slot shows the About Us photo of the same subject (same frame shape): “Behind the scenes” (3:2) ←
+ * “Behind the scenes”, “Adrian & Alondra” (4:5) ← “Adrian & Alondra”. The hero (slot 2) has no About Us match: the
+ * page falls back to the first gallery photo.
  */
-export const LANDING_FROM_ABOUT = [1, 0] as const;
+export const LANDING_FROM_ABOUT = [1, 0, null] as const;
 
 /** The built-in pictures for every slot (same look as before slots existed). */
 export const BUILT_IN = {
@@ -191,7 +192,10 @@ export function resolveMedia(m: ThemeMedia | undefined, fallback?: ThemeMedia, l
   const titleIds = new Set(title.map((p) => p.id));
   return {
     title,
-    landing: MEDIA_GROUPS.landing.slots.map((_, i) => localizedPhoto(media.landing?.[i] ?? f?.landing?.[i] ?? about[LANDING_FROM_ABOUT[i]] ?? null, locale)),
+    landing: MEDIA_GROUPS.landing.slots.map((_, i) => {
+      const fromAbout = LANDING_FROM_ABOUT[i];
+      return localizedPhoto(media.landing?.[i] ?? f?.landing?.[i] ?? (fromAbout === null ? null : about[fromAbout]) ?? null, locale);
+    }),
     about: about.map((photo) => localizedPhoto(photo, locale)),
     sections: resolved,
     gallery: (picked.length ? picked : all.filter((p) => !titleIds.has(p.id))).slice(0, MEDIA_GROUPS.sections.landingPicks),

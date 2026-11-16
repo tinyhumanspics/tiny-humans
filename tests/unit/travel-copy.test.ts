@@ -27,12 +27,12 @@ describe("travel fee wording follows /admin", () => {
     });
   }
 
-  test("the FAQ and the Terms fill in all three numbers", () => {
+  test("the ad page's travel lines and the Terms fill in the numbers", () => {
     for (const m of [en, es]) {
-      const faq = m.landing.faq.items.find((i) => "aFee" in i) as { aFee: string } | undefined;
-      expect(faq?.aFee).toMatch(/\{max\}/);
-      expect(faq?.aFee).toMatch(/\{free\}/);
-      expect(faq?.aFee).toMatch(/\{perMile\}/);
+      expect(m.landing.price.travel).toMatch(/\{miles\}/);
+      expect(m.landing.area.free).toMatch(/\{miles\}/);
+      expect(m.landing.area.florida).toMatch(/\{miles\}/);
+      expect(m.landing.area.florida).toMatch(/\{perMile\}/);
       expect(m.legal.dynamic.travelFee).toMatch(/\{freeMiles\}/);
       expect(m.legal.dynamic.travelFee).toMatch(/\{maxMiles\}/);
       expect(m.legal.dynamic.travelFee).toMatch(/\{perMile\}/);

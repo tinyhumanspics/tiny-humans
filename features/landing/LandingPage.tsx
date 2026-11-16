@@ -1,320 +1,350 @@
 "use client";
 
+import Image from "next/image";
 import en from "@/messages/en.json";
-import type { TravelSettings } from "@/lib/travel/types";
-import { formatMoney } from "@/lib/pricing/engine";
-import { fill } from "@/lib/email/messages";
-import { depositText, type SiteDeposit } from "@/lib/deposit/copy";
-import { noticeLabel } from "@/lib/booking/reschedule-policy";
-import { bundlesHref, scheduleHref } from "@/config/booking";
+import { site } from "@/config/site";
+import { scheduleHref } from "@/config/booking";
+import type { PortfolioPhoto } from "@/config/portfolio";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
-import SitePhotoSlot from "@/components/ui/SitePhotoSlot/SitePhotoSlot";
 import Reveal from "@/components/layout/Reveal/Reveal";
-import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import BookingPaused from "@/features/booking/BookingPaused";
 import BundleCard from "@/features/booking/BundleCard";
-import OfferLine from "@/features/booking/OfferLine";
-import NotBornYet from "@/features/booking/NotBornYet";
-import QuickPrice, { type QuickPriceMessages } from "@/features/booking/QuickPrice";
-import { localePath } from "@/i18n/path";
-import SeasonalOffers from "@/features/seasonal/SeasonalOffers";
-import { bundleColumns } from "@/lib/pricing/columns";
 import Reviews from "@/features/reviews/Reviews";
-import type { PublicReview } from "@/lib/reviews/public";
-import { activeOffer, toCents } from "@/lib/pricing/engine";
-import { trackSelectBundle } from "@/lib/tracking/client";
-import { formatLongDate } from "@/lib/booking/dates";
-import { activeSeasonalOffers } from "@/lib/seasonal/offers";
-import NextOpenDates from "./NextOpenDates";
-import styles from "./Landing.module.css";
-import { cn } from "@/lib/cn";
 import type { AppLocale } from "@/i18n/config";
+import { localePath } from "@/i18n/path";
+import { noticeLabel } from "@/lib/booking/reschedule-policy";
+import { cn } from "@/lib/cn";
+import { depositText, type SiteDeposit } from "@/lib/deposit/copy";
+import { fill } from "@/lib/email/messages";
+import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
+import type { Bundle } from "@/lib/pricing/types";
+import type { PublicReview } from "@/lib/reviews/public";
+import { trackSelectBundle } from "@/lib/tracking/client";
+import type { TravelSettings } from "@/lib/travel/types";
+import styles from "./Landing.module.css";
 
-const tapes = ["yellow", "blue", undefined, "white", undefined, "yellow"] as const;
+/** Ad concepts for message match (?c= on the ad link): the H1 and subhead change, nothing else. */
+export type LandingConcept = "a" | "b" | "c";
 
-/** Ad landing page: hook → trust → proof → process → offer → people → questions → area → ask. */
-/** FAQ answer with today's settings ("aFee" replaces "a" once a travel fee is set up, "aDeposit" while there's a deposit). */
-function faqAnswer(f: { a: string; aFee?: string; aDeposit?: string; aDepositFrom?: string }, noticeHours: number, travel: TravelSettings | null, deposit: SiteDeposit | null, noticeMessages: Pick<typeof en.policy, "hour" | "hours">): string {
-  const text =
-    deposit && f.aDeposit
-      ? depositText({ one: f.aDeposit, from: f.aDepositFrom ?? f.aDeposit }, deposit)
-      : travel && f.aFee
-        ? fill(f.aFee, { max: String(travel.maxMiles), free: String(travel.freeMiles), perMile: formatMoney(travel.perMileCents) })
-        : f.a;
-  return text.replace(/\{notice\}/g, noticeLabel(noticeHours, noticeMessages));
-}
+/** Admin photo names that are file names ("IMG 6087", "UPDATED 10") never become alt text, nor a "(placeholder)" tag. */
+const altOf = (photo: PortfolioPhoto, fallback: string) => {
+  const alt = photo.alt.replace(/\s*\((placeholder|foto provisional)\)\s*$/i, "").trim();
+  return !alt || /^(img|dsc|updated|photo)[\s_-]*\d+$/i.test(alt) ? fallback : alt;
+};
 
-/** The "$0 today, pay after your session" lines, or their deposit versions while deposits are on. */
-function paymentCopy(deposit: SiteDeposit | null, t: typeof en.landing, d: typeof en.deposit.landing) {
-  if (!deposit) return { ctaNote: t.hero.ctaNote, finalCtaNote: t.final.ctaNote, after: t.how.after, trust: t.trust, steps: t.how.steps };
-  return {
-    ctaNote: depositText(d.ctaNote, deposit),
-    finalCtaNote: depositText(d.finalCtaNote, deposit),
-    after: d.after,
-    // the trust strip's "$0 today, pay after" item and the "Pick a date and time" step mention paying
-    trust: t.trust.map((item, index) => (index === 2 ? depositText(d.trust, deposit) : item)),
-    steps: t.how.steps.map((step, index) => (index === 1 ? { ...step, text: depositText(d.howStep, deposit) } : step)),
-  };
-}
+/** What a family pays at least today: the lowest landing bundle, at its running offer if any. */
+const priceCents = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? toCents(b.price);
 
 /**
- * `noticeHours`: today's online cancel/reschedule notice; `travel`: the travel fee (null = off), both from /admin >
- * Availability; `deposit`: the deposit paid while booking (null = none), from /admin > Pricing & Promotions;
- * `reviews`: the reviews picked in /admin > Leads (none = no reviews section).
+ * The ad landing page (/home-sweet-home, brief 05), section by section from the copy draft: hero (real photo, H1, "Check
+ * dates", the price line, one real review, "Text us") → trust → why at home → the work → bundles → how it works → who's
+ * coming → reviews → FAQ → where we go → final call. Every price and amount comes from /admin; facts the owner hasn't
+ * confirmed aren't on the page. `query`: the incoming link's parameters (utm, ad ids), kept on every "Check dates".
  */
 export default function LandingPage({
   noticeHours,
   travel,
   deposit = null,
   reviews = [],
+  concept = "a",
+  query = "",
   messages = en.landing,
   bundleMessages = en.bundlesPage,
-  dueMessages = en.dueDate.invite,
-  photoMessages = en.photoPlaceholder,
-  depositMessages = en.deposit.landing,
   noticeMessages = en.policy,
   reviewMessages = en.reviewsSection,
-  priceMessages = { price: en.quickPrice, discount: en.bookingFlow.review.discount, travel: en.bookingFlow.details.travel },
   locale = "en",
 }: {
   noticeHours: number;
   travel: TravelSettings | null;
   deposit?: SiteDeposit | null;
   reviews?: PublicReview[];
+  concept?: LandingConcept;
+  query?: string;
   messages?: typeof en.landing;
   bundleMessages?: typeof en.bundlesPage;
-  dueMessages?: typeof en.dueDate.invite;
-  photoMessages?: typeof en.photoPlaceholder;
-  depositMessages?: typeof en.deposit.landing;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
   reviewMessages?: typeof en.reviewsSection;
-  priceMessages?: QuickPriceMessages;
   locale?: AppLocale;
 }) {
   const t = messages;
-  const pay = paymentCopy(deposit, t, depositMessages);
   const { bundles, today, available } = useCatalog();
-  const { settings, media, theme } = useSiteSettings();
-  // the theme's two doodles by the hero photos (as on the home page)
-  const [doodleA, doodleB] = theme.decorations.hero;
-  const featured = bundles.find((b) => b.badge) ?? bundles[0];
-  const ctaHref = featured ? scheduleHref(featured.id, null, locale) : bundlesHref(null, locale);
-  const onFeaturedCta = () => {
-    if (featured) trackSelectBundle({ id: featured.id, name: featured.name, value: (activeOffer(featured, today)?.cents ?? toCents(featured.price)) / 100 });
+  const { media } = useSiteSettings();
+  const notice = noticeLabel(noticeHours, noticeMessages);
+  const money = (cents: number) => formatMoney(cents);
+
+  // the bundles the owner shows here, cheapest first; the middle one is the one the page sends people to
+  const shown = bundles.filter((b) => b.showOnLanding !== false).sort((a, b) => priceCents(a, today) - priceCents(b, today));
+  const featured = shown[Math.floor((shown.length - 1) / 2)] ?? bundles[0];
+  const withQuery = (href: string) => (query ? `${href}&${query}` : href);
+  const ctaHref = featured ? withQuery(scheduleHref(featured.id, null, locale)) : `${localePath("/book", locale)}${query ? `?${query}` : ""}`;
+  const onCta = (b: Bundle | undefined = featured) => {
+    if (b) trackSelectBundle({ id: b.id, name: b.name, value: priceCents(b, today) / 100 });
   };
-  const [first, second] = media.title;
-  const gallery = media.gallery;
-  const seasonalOffers = activeSeasonalOffers(settings.seasonalOffers, theme.id, today, locale);
+
+  // "From $299 · $50 holds your date, refundable up to 48 hours before · Free travel within 30 miles of Miami Beach"
+  const lowest = shown.length ? Math.min(...shown.map((b) => priceCents(b, today))) : null;
+  const priceLine = [
+    lowest !== null ? fill(t.price.from, { price: money(lowest) }) : null,
+    deposit ? fill(depositText(t.price.deposit, deposit), { notice }) : null,
+    travel ? fill(t.price.travel, { miles: String(travel.freeMiles) }) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const perMile = travel ? money(travel.perMileCents) : "";
+  const twins = shown.find((b) => b.extraBaby?.active)?.extraBaby;
+
+  // owner photos only: an empty slot shows nothing here (no "photo coming soon" card on the ad page)
+  const [whyPhoto, meetPhoto] = media.landing;
+  const hero = media.landing[2] ?? media.gallery[0] ?? media.title[0] ?? null;
+  const proof = reviews[0];
+  const proofText = proof ? (proof.body.length > 170 ? `${proof.body.slice(0, 167).replace(/\s+\S*$/, "")}…` : proof.body) : "";
+  const words = t.hero.concepts[concept] ?? t.hero.concepts.a;
+  const gallery = media.gallery.slice(0, 9);
+
+  const textUs = (
+    <p className={cn(styles.textUs, "chalk-soft")}>
+      {t.textUs}{" "}
+      <a href={`sms:${site.contact.sms}`} className={styles.textLink}>
+        {site.contact.phone}
+      </a>
+    </p>
+  );
 
   return (
     <main id="top" className={styles.page}>
-      {/* 1. Hero */}
+      {/* 1. Hero: a real photo, what it is, the price, one proof line, one button */}
       <section className={styles.hero} aria-labelledby="landing-title">
         <div className={cn("container", styles.heroGrid)}>
-          <Reveal className={styles.heroCopy}>
-            <BoardDoodles area="hero" />
+          {hero && (
+            <div className={styles.heroPhoto}>
+              <Image src={hero.src} alt={altOf(hero, t.hero.photo)} fill priority sizes="(min-width: 900px) 46vw, 100vw" className={styles.heroImg} />
+            </div>
+          )}
+          <div className={styles.heroCopy}>
             <p className={cn(styles.eyebrow, "chalk-soft")}>{t.hero.eyebrow}</p>
             <h1 id="landing-title" className={cn(styles.title, "chalk")}>
-              {t.hero.title.map((line) => (
-                <span key={line} className={styles.line}>{line}</span>
-              ))}
+              {words.title}
             </h1>
-            <ChalkDoodle name="underline" size={230} color="var(--sun-yellow)" strokeWidth={3} className={styles.underline} />
-            <p className={cn(styles.sub, "chalk-soft")}>{t.hero.sub}</p>
+            <p className={cn(styles.sub, "chalk-soft")}>{words.sub}</p>
             <div className={styles.actions}>
-              <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={12}>{t.hero.cta}</ChalkButton>
-              <ChalkButton href="#bundles" variant="outline" seed={11}>{t.hero.secondary}</ChalkButton>
-              {/* moms asking about their due date see it right away (owner, Nov 12) */}
-              <ChalkButton href={`${localePath("/book", locale)}?when=due`} variant="standOut" seed={13}>{dueMessages.button}</ChalkButton>
+              <ChalkButton href={ctaHref} onClick={() => onCta()} variant="solid" seed={12}>
+                {t.hero.cta}
+              </ChalkButton>
             </div>
-            <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.ctaNote}</p>
-          </Reveal>
-          {first && second && (
-            <Reveal className={styles.snaps} delay={200}>
-              <div aria-hidden="true" className={styles.snapsInner}>
-                <div className={styles.snapA}>
-                  <PinnedPhoto photo={first} seed={21} sizes="(min-width: 900px) 300px, 46vw" priority showCaption={false} tape="yellow" />
-                </div>
-                <div className={styles.snapB}>
-                  <PinnedPhoto photo={second} seed={22} sizes="(min-width: 900px) 320px, 50vw" priority showCaption={false} tape="blue" />
-                </div>
-                <ChalkDoodle name={doodleA} size={40} color="var(--accent-2)" className={styles.heroDoodleA} />
-                <ChalkDoodle name={doodleB} size={34} color="var(--accent)" className={styles.heroDoodleB} />
-              </div>
+            {priceLine && <p className={cn(styles.priceLine, "chalk-soft")}>{priceLine}</p>}
+            {proof && (
+              <figure className={styles.proof}>
+                <blockquote lang={proof.lang} className="chalk-soft">
+                  “{proofText}”
+                </blockquote>
+                <figcaption className="chalk-soft">
+                  — {proof.displayName}
+                  {proof.lang !== locale ? ` (${t.proofLang[proof.lang]})` : ""}
+                </figcaption>
+              </figure>
+            )}
+            {textUs}
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Trust strip */}
+      <section className="container" aria-label={t.trustLabel}>
+        <ul className={styles.trust}>
+          {t.trust.map((item) => (
+            <li key={item} className="chalk-soft">
+              <ChalkDoodle name="check" size={22} color="var(--sun-yellow)" strokeWidth={3.4} grain={false} />
+              {item}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* 3. Why at home */}
+      <section className={cn("container", styles.section)} aria-labelledby="landing-why">
+        <SectionHeading id="landing-why" title={t.why.title} slot="book" />
+        <div className={cn(styles.why, !whyPhoto && styles.whySolo)}>
+          <div>
+            <p className={cn(styles.text, "chalk-soft")}>{t.why.text}</p>
+            <p className={cn(styles.text, "chalk-soft")}>
+              {t.why.space.split("{strong}")[0]}
+              <b>{t.why.spaceStrong}</b>
+              {t.why.space.split("{strong}")[1]}
+            </p>
+          </div>
+          {whyPhoto && (
+            <Reveal className={styles.whyPhoto}>
+              <PinnedPhoto photo={{ ...whyPhoto, alt: altOf(whyPhoto, t.why.photo) }} seed={45} sizes="(min-width: 900px) 520px, 100vw" showCaption={false} tape="white" />
             </Reveal>
           )}
         </div>
       </section>
 
-      {/* Seasonal offer boxes (/admin → Seasonal Landing), also on the home page: only while one is live. */}
-      <SeasonalOffers messages={t.seasonalOffers} promoMessages={bundleMessages.promo} locale={locale} />
-
-      {/* 2. Trust strip */}
-      <section className="container" aria-label={t.trustLabel}>
-        <Reveal>
-          <ul className={styles.trust}>
-            {pay.trust.map((item) => (
-              <li key={item} className="chalk-soft">
-                <ChalkDoodle name="check" size={22} color="var(--sun-yellow)" strokeWidth={3.4} grain={false} />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className={cn(styles.spanish, "chalk-soft")}>{t.spanish}</p>
-        </Reveal>
-      </section>
-
-      {/* 3. Proof: real sessions (the owner's /admin photos) */}
+      {/* 4. The work: real sessions, full phone width */}
       {gallery.length > 0 && (
-        <section className={cn("container", styles.section)} aria-labelledby="landing-portfolio">
-          <SectionHeading id="landing-portfolio" title={t.portfolio.title} subtitle={t.portfolio.sub} slot="portfolio" />
-          <ul className={styles.gallery} data-count={gallery.length}>
+        <section className={cn("container", styles.section)} aria-labelledby="landing-work">
+          <SectionHeading id="landing-work" title={t.work.title} subtitle={t.work.sub} slot="portfolio" />
+          <ul className={styles.work}>
             {gallery.map((photo, i) => (
-              <Reveal as="li" key={photo.id} delay={(i % 3) * 90}>
-                <PinnedPhoto photo={photo} seed={300 + i} tape={tapes[i % tapes.length]} sizes="(min-width: 900px) 340px, 46vw" />
+              <Reveal as="li" key={photo.id} delay={(i % 3) * 80}>
+                <PinnedPhoto photo={{ ...photo, alt: altOf(photo, t.work.title) }} seed={300 + i} sizes="(min-width: 900px) 360px, 100vw" showCaption={false} tape={i % 2 ? "blue" : "yellow"} />
               </Reveal>
             ))}
           </ul>
           <div className={styles.centerCta}>
-            <ChalkButton href="#bundles" variant="outline" seed={31}>{t.portfolio.cta}</ChalkButton>
+            <ChalkButton href={ctaHref} onClick={() => onCta()} variant="solid" seed={31}>
+              {t.hero.cta}
+            </ChalkButton>
           </div>
         </section>
       )}
 
-      {/* 4. How it works */}
-      <section className={cn("container", styles.section)} aria-labelledby="landing-how">
-        <SectionHeading id="landing-how" title={t.how.title} slot="book" />
-        <ol className={styles.steps}>
-          {pay.steps.map((s, i) => (
-            <Reveal as="li" key={s.title} delay={i * 110}>
-              <ChalkBox className={styles.step} seed={40 + i} wobble={2.6} strokeWidth={2.4}>
-                <span className={cn(styles.stepNum, "chalk")} aria-hidden="true">{i + 1}</span>
-                <h3 className={cn(styles.stepTitle, "chalk-soft")}>{s.title}</h3>
-                <p className="chalk-soft">{s.text}</p>
-              </ChalkBox>
-            </Reveal>
-          ))}
-        </ol>
-        <Reveal className={styles.howPhoto}>
-          <SitePhotoSlot group="landing" index={0} placeholderLabel={t.how.photo} placeholderMessages={photoMessages} ratio={3 / 2} seed={45} sizes="(min-width: 600px) 560px, 100vw" tape="white" />
-        </Reveal>
-        <Reveal>
-          <p className={cn(styles.after, "chalk-soft")}>
-            <ChalkDoodle name="heart" size={24} color="var(--accent-2)" strokeWidth={3} grain={false} /> {pay.after}
-          </p>
-        </Reveal>
-      </section>
-
-      {/* 5. The offer: bundles + what every session includes */}
+      {/* 5. The offer */}
       <section id="bundles" className={cn("container", styles.section)} aria-labelledby="landing-bundles">
-        <SectionHeading id="landing-bundles" title={t.offer.title} subtitle={t.offer.sub} slot="bundles" note={<OfferLine messages={bundleMessages.promo} locale={locale} />} />
-        {available ? (
-          <div className={styles.bundles} style={bundleColumns(bundles.length)}>
-            {bundles.map((b, i) => (
-              // the owner's order everywhere, phones too: cheapest first (owner, Nov 13; it was the family bundle first on phones)
-              <div key={b.id}>
-                <BundleCard bundle={b} index={i} messages={bundleMessages.card} locale={locale} href={scheduleHref(b.id, null, locale)} />
+        <SectionHeading id="landing-bundles" title={t.offer.title} slot="bundles" />
+        {available && shown.length ? (
+          <div className={styles.bundles}>
+            {shown.map((b, i) => (
+              <div key={b.id} onClickCapture={() => onCta(b)}>
+                <BundleCard bundle={{ ...b, cta: t.hero.cta }} index={i} messages={bundleMessages.card} locale={locale} href={withQuery(scheduleHref(b.id, null, locale))} />
               </div>
             ))}
           </div>
         ) : (
           <BookingPaused messages={bundleMessages.paused} />
         )}
-        <p className={cn(styles.bundlesNote, styles.center, "chalk-soft")}>{pay.ctaNote}</p>
-        {/* owner, Nov 13: a quick total for their ZIP code right under the cards */}
-        <QuickPrice messages={priceMessages} locale={locale} headingLevel={3} inline />
-        <NotBornYet messages={dueMessages} locale={locale} headingLevel={3} />
-        <Reveal className={styles.bonusWrap}>
-          <ChalkBox className={styles.bonus} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">
-            <h3 className={cn(styles.bonusTitle, "chalk")}>{t.offer.bonusTitle}</h3>
-            <ul className={styles.bonusList}>
-              {t.offer.bonuses.map((b) => (
-                <li key={b.title}>
-                  <ChalkDoodle name="sparkle" size={24} color="var(--sun-yellow)" strokeWidth={3} grain={false} />
-                  <span className="chalk-soft">
-                    <b>{b.title}.</b> {b.text}
-                  </span>
+        <Reveal>
+          <ChalkBox className={styles.includes} seed={55} wobble={2.6} strokeWidth={2.6} color="var(--sun-yellow)">
+            <h3 className={cn(styles.boxTitle, "chalk")}>{t.offer.includesTitle}</h3>
+            <ul className={styles.ticks}>
+              {t.offer.includes.map((line) => (
+                <li key={line} className="chalk-soft">
+                  <ChalkDoodle name="sparkle" size={22} color="var(--sun-yellow)" strokeWidth={3} grain={false} />
+                  {line}
                 </li>
               ))}
             </ul>
-            <p className={cn(styles.promise, "chalk-soft")}>
+            <p className="chalk-soft">
               <b>{t.offer.promiseTitle}:</b> {t.offer.promise}
             </p>
-            <p className={cn(styles.small, "chalk-soft")}>{t.offer.deliverNote}</p>
+            <p className="chalk-soft">
+              <b>{t.offer.dueTitle}</b> {t.offer.due} {deposit ? depositText({ one: t.offer.dueDeposit, from: t.offer.dueDeposit }, deposit) : ""}
+            </p>
+            {twins && <p className={cn(styles.small, "chalk-soft")}>{fill(t.offer.twins, { price: money(toCents(twins.price)) })}</p>}
+            {travel && <p className={cn(styles.small, "chalk-soft")}>{fill(t.offer.travel, { miles: String(travel.freeMiles), perMile })}</p>}
           </ChalkBox>
         </Reveal>
       </section>
 
-      {/* 6. Meet the photographers */}
-      <section className={cn("container", styles.section)} aria-labelledby="landing-meet">
-        <Reveal>
-          <ChalkBox className={styles.meet} seed={61} wobble={2.6} strokeWidth={2.4}>
-            <ChalkDoodle name="heart" size={44} color="var(--accent-2)" strokeWidth={3} className={styles.meetDoodle} />
-            <div className={styles.meetPhoto}>
-              <SitePhotoSlot group="landing" index={1} placeholderLabel={t.meet.photo} placeholderMessages={photoMessages} ratio={4 / 5} seed={62} sizes="300px" tape="yellow" />
-            </div>
-            <div>
-              <h2 id="landing-meet" className={cn(styles.meetTitle, "chalk")}>{t.meet.title}</h2>
-              {t.meet.paragraphs.map((p) => (
-                <p key={p.slice(0, 20)} className="chalk-soft">{p}</p>
-              ))}
-              <p className={cn(styles.spanishInline, "chalk-soft")}>{t.meet.spanish}</p>
-            </div>
-          </ChalkBox>
-        </Reveal>
-      </section>
-
-      {/* 7. Reviews: only the ones picked in /admin (the family said OK); nothing while there are none */}
-      <Reviews reviews={reviews} messages={reviewMessages} placement="landing" />
-
-      {/* 8. FAQ */}
-      <section className={cn("container", styles.section)} aria-labelledby="landing-faq">
-        <SectionHeading id="landing-faq" title={t.faq.title} slot="portfolio" align="center" />
-        <div className={styles.faq}>
-          {t.faq.items.map((f) => (
-            <details key={f.q} className={styles.faqItem}>
-              <summary className="chalk-soft">{f.q}</summary>
-              <p className="chalk-soft">{faqAnswer(f, noticeHours, travel, deposit, noticeMessages)}</p>
-            </details>
+      {/* 6. How it works (request first) */}
+      <section className={cn("container", styles.section)} aria-labelledby="landing-how">
+        <SectionHeading id="landing-how" title={t.how.title} slot="book" />
+        <ol className={styles.steps}>
+          {t.how.steps.map((s, i) => (
+            <Reveal as="li" key={s.title} delay={i * 90}>
+              <ChalkBox className={styles.step} seed={40 + i} wobble={2.6} strokeWidth={2.4}>
+                <span className={cn(styles.stepNum, "chalk")} aria-hidden="true">
+                  {i + 1}
+                </span>
+                <h3 className={cn(styles.stepTitle, "chalk-soft")}>{s.title}</h3>
+                <p className="chalk-soft">
+                  {s.text}
+                  {i === 1 && deposit ? ` ${fill(depositText(t.how.deposit, deposit), { notice })}` : ""}
+                </p>
+              </ChalkBox>
+            </Reveal>
           ))}
+        </ol>
+      </section>
+
+      {/* 7. Who's coming into your home */}
+      <section className={cn("container", styles.section)} aria-labelledby="landing-meet">
+        <ChalkBox className={cn(styles.meet, !meetPhoto && styles.meetSolo)} seed={61} wobble={2.6} strokeWidth={2.4}>
+          {meetPhoto && (
+            <div className={styles.meetPhoto}>
+              <PinnedPhoto photo={{ ...meetPhoto, alt: altOf(meetPhoto, t.meet.photo) }} seed={62} sizes="(min-width: 900px) 320px, 100vw" showCaption={false} tape="yellow" />
+            </div>
+          )}
+          <div>
+            <h2 id="landing-meet" className={cn(styles.meetTitle, "chalk")}>
+              {t.meet.title}
+            </h2>
+            <p className="chalk-soft">{t.meet.body}</p>
+            <h3 className={cn(styles.boxTitle, "chalk")}>{t.meet.standardsTitle}</h3>
+            <ul className={styles.ticks}>
+              {t.meet.standards.map((line) => (
+                <li key={line} className="chalk-soft">
+                  <ChalkDoodle name="check" size={20} color="var(--sun-yellow)" strokeWidth={3.4} grain={false} />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </ChalkBox>
+        <div className={styles.centerCta}>
+          <ChalkButton href={ctaHref} onClick={() => onCta()} variant="solid" seed={64}>
+            {t.hero.cta}
+          </ChalkButton>
         </div>
       </section>
 
-      {/* 9. Service area */}
-      <section className={cn("container", styles.section)} aria-labelledby="landing-area">
-        <SectionHeading id="landing-area" title={t.area.title} subtitle={t.area.sub} slot="book" />
-        <Reveal>
-          <ul className={styles.cities}>
-            {t.area.cities.map((c) => (
-              <li key={c} className="chalk-soft">{c}</li>
-            ))}
-          </ul>
-          <p className={cn(styles.small, "chalk-soft")}>{t.area.more}</p>
-        </Reveal>
+      {/* 8. Reviews: only the ones picked in /admin (the family said OK) */}
+      <Reviews reviews={reviews} messages={reviewMessages} placement="landing" />
+
+      {/* 9. FAQ */}
+      <section className={cn("container", styles.section)} aria-labelledby="landing-faq">
+        <SectionHeading id="landing-faq" title={t.faq.title} slot="portfolio" align="center" />
+        <div className={styles.faq}>
+          {t.faq.items.map((f) => {
+            const answer = (!deposit && "aNoDeposit" in f ? f.aNoDeposit : undefined) ?? f.a;
+            return (
+              <details key={f.q} className={styles.faqItem}>
+                <summary className="chalk-soft">{f.q}</summary>
+                <p className="chalk-soft">{fill(deposit ? depositText({ one: answer, from: answer }, deposit) : answer, { notice })}</p>
+              </details>
+            );
+          })}
+        </div>
       </section>
 
-      {/* 10. Final call to action, with real reasons to book now */}
+      {/* 10. Where we go: Miami first; the rest of Florida with its fee */}
+      <section className={cn("container", styles.section)} aria-labelledby="landing-area">
+        <SectionHeading id="landing-area" title={t.area.title} slot="book" />
+        <p className={cn(styles.text, "chalk-soft")}>{t.area.based}</p>
+        <ul className={styles.cities}>
+          {t.area.cities.map((c) => (
+            <li key={c} className="chalk-soft">
+              {c}
+            </li>
+          ))}
+        </ul>
+        {travel && (
+          <>
+            <p className={cn(styles.text, "chalk-soft")}>{fill(t.area.free, { miles: String(travel.freeMiles) })}</p>
+            <p className={cn(styles.small, "chalk-soft")}>{fill(t.area.florida, { miles: String(travel.freeMiles), perMile })}</p>
+          </>
+        )}
+      </section>
+
+      {/* 11. Final call */}
       <section className={cn("container", styles.section, styles.finalSection)} aria-labelledby="landing-final">
-        <Reveal>
-          <ChalkBox className={styles.final} seed={71} wobble={3} strokeWidth={3} color="var(--sun-yellow)">
-            <h2 id="landing-final" className={cn(styles.finalTitle, "chalk")}>{t.final.title}</h2>
-            <NextOpenDates bundleId={featured?.id} label={t.final.nextDates} loading={t.final.loading} locale={locale} />
-            <p className="chalk-soft">{t.final.cap}</p>
-            {seasonalOffers.length > 0 && (
-              <p className={cn(styles.small, "chalk-soft")}>
-                {seasonalOffers.map((offer) => `${offer.title}: ${formatLongDate(offer.cutoff, locale)}`).join(" · ")}
-              </p>
-            )}
-            <ChalkButton href={ctaHref} onClick={onFeaturedCta} variant="solid" seed={72}>{t.final.cta}</ChalkButton>
-            <p className={cn(styles.ctaNote, "chalk-soft")}>{pay.finalCtaNote}</p>
-          </ChalkBox>
-        </Reveal>
+        <ChalkBox className={styles.final} seed={71} wobble={3} strokeWidth={3} color="var(--sun-yellow)">
+          <h2 id="landing-final" className={cn(styles.finalTitle, "chalk")}>
+            {t.final.title}
+          </h2>
+          <p className="chalk-soft">{t.final.text}</p>
+          <ChalkButton href={ctaHref} onClick={() => onCta()} variant="solid" seed={72}>
+            {t.hero.cta}
+          </ChalkButton>
+          {priceLine && <p className={cn(styles.priceLine, "chalk-soft")}>{priceLine}</p>}
+          {textUs}
+        </ChalkBox>
       </section>
     </main>
   );

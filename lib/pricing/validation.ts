@@ -22,6 +22,7 @@ export const bundleInputSchema = z
     badge: z.string().trim().max(24).optional().nullable(),
     features: z.array(z.string().trim().min(1).max(80)).max(12),
     active: z.boolean(),
+    showOnLanding: z.boolean().optional(),
     sortOrder: z.number().int().min(0).max(999).optional(),
     offer: z
       .object({ enabled: z.boolean(), price: money, label: z.string().trim().max(30).optional().nullable(), endsOn: dateKey.optional().nullable() })

@@ -298,6 +298,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
     (bundle?.features ?? []).map((_, index) => bundle?.spanish?.features[index] ?? ""),
   );
   const [active, setActive] = useState(bundle?.active !== false);
+  const [onLanding, setOnLanding] = useState(bundle?.showOnLanding !== false);
   const [offerOn, setOfferOn] = useState(Boolean(bundle?.offer?.enabled));
   const [offerPrice, setOfferPrice] = useState(bundle?.offer?.price ? String(bundle.offer.price) : "");
   // "% off" or a set price (owner, Nov 10); a saved offer opens as % when its price is exactly a whole percent off
@@ -351,7 +352,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
       const spanishStarted = [spanish.name, spanish.description, spanish.badge, spanish.offerLabel, ...spanish.features].some(Boolean);
       await onSave({
         id: bundle?.id, name: name.trim(), price: Number(price), description: description.trim() || null, durationMinutes: Number(minutes), photos: photos.trim() || null, badge: badge.trim() || null,
-        features: features.map((f) => f.trim()).filter(Boolean), active, sortOrder: bundle?.sortOrder ?? sortOrder,
+        features: features.map((f) => f.trim()).filter(Boolean), active, showOnLanding: onLanding, sortOrder: bundle?.sortOrder ?? sortOrder,
         offer: offerOn || offerDollars ? { enabled: offerOn, price: offerDollars, label: offerLabel.trim() || null, endsOn: offerEnds || null } : null,
         spanish: spanishStarted ? spanish : null,
         extraBaby: { active: extraBabyOn, price: Number(extraBabyPrice), extraMinutes: Number(extraBabyMinutes), extraPhotos: Number(extraBabyPhotos), maxBabies: Number(maxBabies) },
@@ -408,6 +409,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         )}
       </div>
       <label className={styles.toggle}><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /><span className="chalk-soft">Active (shown on the website)</span></label>
+      <label className={styles.toggle}><input type="checkbox" checked={onLanding} disabled={!active} onChange={(e) => setOnLanding(e.target.checked)} /><span className="chalk-soft">Show on the ad page (/home-sweet-home)</span></label>
       <div className={styles.offerBox}>
         <label className={styles.toggle}><input type="checkbox" checked={extraBabyOn} onChange={(e) => setExtraBabyOn(e.target.checked)} /><span className="chalk-soft">Offer twins/triplets with this bundle</span></label>
         {extraBabyOn && (

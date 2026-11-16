@@ -1,39 +1,49 @@
 import type { Metadata } from "next";
-import en from "@/messages/en.json";
-import { LANDING_PATH } from "@/config/landing";
 import LandingPage from "@/features/landing/LandingPage";
+import { landingParams } from "@/features/landing/params";
+import { LANDING_PATH } from "@/config/landing";
+import { getSpanishPublication } from "@/i18n/publication";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { siteDeposit } from "@/lib/deposit/server";
-import { depositText } from "@/lib/deposit/copy";
+import { pageMetadata } from "@/lib/seo/metadata";
 import { getTravelSettings } from "@/lib/travel/server";
 import { getPublicReviews } from "@/lib/reviews/server";
-import { pageMetadata } from "@/lib/seo/metadata";
-import { getSpanishPublication } from "@/i18n/publication";
+import en from "@/messages/en.json";
 
-/** The description mentions the deposit while there is one (saving it in /admin refreshes this page). */
 export async function generateMetadata(): Promise<Metadata> {
-  const [deposit, spanish] = await Promise.all([siteDeposit(), getSpanishPublication()]);
-  const description = deposit ? depositText(en.deposit.landing.metaDescription, deposit) : en.landing.meta.description;
+  const spanish = await getSpanishPublication();
   return pageMetadata({
     title: en.landing.meta.title,
-    description,
+    description: en.landing.meta.description,
     path: LANDING_PATH,
     translations: spanish.published,
   });
 }
 
-export default async function Page() {
-  const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
+/** The ad landing page (brief 05). ?c=a|b|c picks the headline; the ad's other parameters ride along to /book. */
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [noticeHours, travel, deposit, reviews, search] = await Promise.all([
+    getNoticeHoursSetting(),
+    getTravelSettings(),
+    siteDeposit(),
+    getPublicReviews(),
+    searchParams,
+  ]);
+  const { concept, query } = landingParams(search);
   return (
     <LandingPage
       noticeHours={noticeHours}
       travel={travel}
       deposit={deposit}
       reviews={reviews}
+      concept={concept}
+      query={query}
       messages={en.landing}
       bundleMessages={en.bundlesPage}
-      photoMessages={en.photoPlaceholder}
-      depositMessages={en.deposit.landing}
       noticeMessages={en.policy}
       reviewMessages={en.reviewsSection}
       locale="en"

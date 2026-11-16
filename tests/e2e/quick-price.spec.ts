@@ -55,15 +55,3 @@ test("home page: a bundle and a ZIP code give the total with travel; outside Flo
   const scan = await new AxeBuilder({ page }).include('section[aria-labelledby^="quick-price-"]').withTags(WCAG_AA).analyze();
   expect(scan.violations).toEqual([]);
 });
-
-test("ad page: the quick price box sits right under the bundle cards", async ({ page }) => {
-  await fakeTravel(page);
-  await page.goto("/home-sweet-home");
-  const offer = page.locator("#bundles");
-  const box = offer.getByRole("region", { name: "Get a quick price" });
-  await box.scrollIntoViewIfNeeded();
-  await expect(box.getByRole("heading", { level: 3, name: "Get a quick price" })).toBeVisible();
-  await box.getByLabel("Your ZIP code").fill("33139");
-  await expect(box.locator("dl")).toContainText("Travel to 33139");
-  await expect(box.getByRole("link", { name: /^Book / })).toHaveAttribute("href", /bundle=/);
-});

@@ -13,6 +13,11 @@ export const site = {
     phone: "(786) 222-7194",
     sms: "+17862227194",
   },
+  /**
+   * Cities in the home page's search-engine data (JSON-LD areaServed): the whole area served, Miami to Orlando. The ad
+   * page lists only the Miami areas it advertises (messages landing.area.cities).
+   */
+  areaServed: ["Miami", "Miami Beach", "Aventura", "North Miami", "Coral Gables", "Doral", "Kendall", "Hialeah", "Hollywood", "Fort Lauderdale", "Boca Raton", "West Palm Beach", "Port St. Lucie", "Orlando"],
   /** Intro animation timing (milliseconds). */
   intro: {
     drawMs: 2400,

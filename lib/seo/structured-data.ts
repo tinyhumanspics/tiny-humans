@@ -1,5 +1,4 @@
 import { site } from "@/config/site";
-import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
@@ -7,7 +6,6 @@ import { DEFAULT_SITE_DESCRIPTION, PUBLIC_SITE_URL, SOCIAL_IMAGE } from "./metad
 
 /** Honest service-area business data only; no reviews, hours, prices or street address are invented. */
 export function serviceBusinessJsonLd(locale: AppLocale = "en") {
-  const messages = locale === "es" ? es : en;
   return {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
@@ -26,7 +24,7 @@ export function serviceBusinessJsonLd(locale: AppLocale = "en") {
       addressRegion: "FL",
       addressCountry: "US",
     },
-    areaServed: messages.landing.area.cities.map((name) => ({
+    areaServed: site.areaServed.map((name) => ({
       "@type": "City",
       name,
       containedInPlace: { "@type": "State", name: "Florida" },
