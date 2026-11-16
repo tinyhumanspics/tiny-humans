@@ -29,7 +29,7 @@ export const site = {
 
 export const navigation = [
   { message: "portfolio", href: "/#portfolio" },
-  // Both lead to the bundles page: families pick a bundle, then the calendar.
   { message: "bundles", href: "/bundles" },
-  { message: "book", href: "/bundles", emphasis: true },
+  // straight to /book: the bundles and the calendar are on its first screen (owner, Nov 16; brief 05)
+  { message: "book", href: "/book", emphasis: true },
 ] as const;

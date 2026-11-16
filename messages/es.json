@@ -41,7 +41,7 @@
     },
     "hero": {
       "eyebrow": "La sesión en casa · Miami",
-      "photo": "Foto principal",
+      "photo": "Recién nacido fotografiado en casa",
       "concepts": {
         "a": {
           "title": "Fotos de recién nacido en tu propia sala.",
@@ -342,8 +342,6 @@
       "notBornHelp": "Elige la fecha más cercana a la fecha en que esperan al bebé. Cuando llegue, nos escribes y la movemos entre los días 5 y 14.",
       "dueLabel": "Fecha en que esperan al bebé",
       "dueWindow": "Elige una fecha entre hoy y el {date}.",
-      "bundle": "Tu paquete",
-      "change": "cambiar",
       "chooseBundle": "Elige tu paquete",
       "twins": "¿Gemelos? +{price} por bebé adicional",
       "travel": "Sin costo a menos de {miles} millas de Miami Beach",

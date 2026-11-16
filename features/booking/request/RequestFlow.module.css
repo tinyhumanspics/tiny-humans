@@ -28,45 +28,49 @@
 }
 
 .toggleButton:focus-visible,
-.bundleChoice:focus-visible {
+.compareCard:focus-visible {
   outline: 2px dashed var(--sun-yellow);
   outline-offset: 3px;
 }
 
-.bundleRow { margin: 0 0 14px; }
-
-.bundleLine {
-  margin: 0;
-  font-size: 1.12rem;
-  line-height: 1.5;
-}
-
-.bundleList {
-  display: grid;
-  gap: 8px;
-}
-
-.bundleChoice {
+/* The bundles side by side, always on screen with what each includes (owner, Nov 16: design B) */
+.bundleRow { margin: 0 0 16px; }
+.compare { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: stretch; }
+.compareCard {
   display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   min-height: 44px;
-  padding: 8px 14px;
+  padding: 10px 8px 12px;
   border: 2px dashed color-mix(in srgb, var(--chalk-white) 45%, transparent);
-  border-radius: 10px;
+  border-radius: 12px;
   background: none;
   color: var(--chalk-white);
-  font-family: var(--font-chalk);
-  font-size: 1.2rem;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
 }
-
-.bundleChoiceOn {
-  border-style: solid;
-  border-color: var(--sun-yellow);
-  color: var(--sun-yellow);
+.compareOn { border-style: solid; border-color: var(--sun-yellow); background: color-mix(in srgb, var(--sun-yellow) 12%, transparent); }
+/* the check: an empty circle on every card, filled yellow with a dark tick on the chosen one */
+.compareMark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 60%, transparent);
+  border-radius: 50%;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--chalkboard-dark);
 }
+.compareOn .compareMark { border-color: var(--sun-yellow); background: var(--sun-yellow); }
+.pickBadge { font-family: var(--font-chalk); font-size: 0.95rem; color: var(--cloud-blue); }
+.pickName { font-family: var(--font-chalk); font-size: 1.3rem; line-height: 1.15; }
+.comparePrice { font-family: var(--font-chalk); font-size: clamp(1.4rem, 5vw, 1.8rem); line-height: 1; }
+.compareOn .pickName, .compareOn .comparePrice { color: var(--sun-yellow); }
+.compareFeatures { display: grid; gap: 6px; width: 100%; padding-top: 8px; border-top: 1px dashed color-mix(in srgb, var(--chalk-white) 35%, transparent); font-size: clamp(0.85rem, 3.4vw, 1rem); line-height: 1.25; color: var(--chalk-muted); }
 
 .bundleChoiceName { font-weight: 600; }
 

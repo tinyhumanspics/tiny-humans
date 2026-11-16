@@ -62,7 +62,6 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
 
   const [bundleId, setBundleId] = useState<string | null>(() => (due ? due.summary.bundleId : (getBundle(params.get("bundle"))?.id ?? null)));
   const bundle = getBundle(bundleId);
-  const [choosing, setChoosing] = useState(!bundle);
   // "Not born yet?" buttons elsewhere on the site open this screen on the due date (?when=due)
   const [type, setType] = useState<RequestType>(() => (!due && params.get("when") === "due" ? "due_date" : "date"));
   const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
@@ -285,40 +284,39 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     </div>
   );
 
+  // every bundle side by side with what it includes, cheapest first, the chosen one checked: families compare and
+  // switch right here (owner, Nov 16: design B)
+  const choices = [...bundles].sort((x, y) => priceOf(x, today) - priceOf(y, today));
+  const pick = (b: Bundle) => {
+    setBundleId(b.id);
+    setSlot(null);
+    setError(null);
+    if (!(b.extraBaby?.active && b.extraBaby.maxBabies >= 2)) setBabyCount(1);
+  };
   const bundleRow = (
-    <div className={styles.bundleRow}>
-      {bundle && !choosing ? (
-        <p className={cn(styles.bundleLine, "chalk-soft")}>
-          <span className={flowStyles.chipLabel}>{m.when.bundle}</span> <span className={flowStyles.bundleName}>{bundle.name}</span> · {formatMoney(priceOf(bundle, today))} ·{" "}
-          <button type="button" className={cn(flowStyles.inlineLink, "chalk-soft")} onClick={() => setChoosing(true)} aria-expanded={false}>
-            {m.when.change}
-          </button>
-        </p>
-      ) : (
-        <fieldset className={flowStyles.fieldset}>
-          <legend className={cn(flowStyles.subtle, "chalk-soft")}>{m.when.chooseBundle}</legend>
-          <div className={styles.bundleList}>
-            {bundles.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                className={cn(styles.bundleChoice, "chalk-soft", b.id === bundleId && styles.bundleChoiceOn)}
-                aria-pressed={b.id === bundleId}
-                onClick={() => {
-                  setBundleId(b.id);
-                  setSlot(null);
-                  setChoosing(false);
-                  setError(null);
-                  if (!(b.extraBaby?.active && b.extraBaby.maxBabies >= 2)) setBabyCount(1);
-                }}
-              >
-                <span className={styles.bundleChoiceName}>{b.name}</span> <span>{formatMoney(priceOf(b, today))}</span>
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      )}
-    </div>
+    <fieldset className={cn(flowStyles.fieldset, styles.bundleRow)}>
+      <legend className={cn(flowStyles.subtle, "chalk-soft")}>{m.when.chooseBundle}</legend>
+      <div className={styles.compare}>
+        {choices.map((b) => {
+          const on = b.id === bundleId;
+          return (
+            <button key={b.id} type="button" className={cn(styles.compareCard, "chalk-soft", on && styles.compareOn)} aria-pressed={on} onClick={() => pick(b)}>
+              <span className={styles.compareMark} aria-hidden="true">
+                {on ? "✓" : ""}
+              </span>
+              <span className={styles.pickBadge}>{b.badge ?? "\u00a0"}</span>
+              <span className={styles.pickName}>{b.name}</span>
+              <span className={styles.comparePrice}>{formatMoney(priceOf(b, today))}</span>
+              <span className={styles.compareFeatures}>
+                {b.features.map((f) => (
+                  <span key={f}>{f}</span>
+                ))}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 
   return (

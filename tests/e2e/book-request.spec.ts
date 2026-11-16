@@ -94,21 +94,28 @@ test("Not born yet: a due date instead of a time, and the day 5–14 rule", asyn
   await expect(page.getByText("to confirm your due date (", { exact: false })).toBeVisible();
 });
 
-test("without ?bundle= the family picks a bundle on screen 1; twins add the extra-baby price", async ({ page }) => {
+test("the bundles sit side by side with what they include; without ?bundle= the family picks one; twins add the extra-baby price", async ({ page }) => {
   await page.goto("/book");
   await expect(page.getByText("Choose your bundle")).toBeVisible();
   await page.getByRole("button", { name: "Next: your details" }).click();
   await expect(page.locator("main").getByRole("alert")).toHaveText("Choose a bundle first.");
+  // every bundle with its details, cheapest first (owner, Nov 16)
+  const cards = page.locator("main fieldset button[aria-pressed]");
+  await expect(cards).toHaveCount(3);
+  await expect(cards.first()).toContainText("Little Moments");
+  await expect(cards.first()).toContainText("edited digital photos");
   await page.getByRole("button", { name: /Little Moments/ }).click();
-  await expect(page.getByRole("button", { name: "change" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
   await page.getByText("Twins? +$75 per extra baby").click();
   await pickTime(page, 1);
   await details(page);
   await expect(page.getByText(/· Little Moments · \$/)).toBeVisible();
-  // "change" brings the list back, with the bundle picked
+  // back on screen 1 the bundles are still there, the one picked still checked, and another is one tap away
   await page.getByRole("button", { name: "Back" }).click();
-  await page.getByRole("button", { name: "change" }).click();
   await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: /Our Family Story/ }).click();
+  await expect(page.getByRole("button", { name: /Our Family Story/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("a requested time is held from other families; one taken meanwhile sends them back to the times, details kept", async ({ page, browser }) => {
@@ -296,4 +303,9 @@ test("brief 04: 'Not born yet?' buttons open /book on the due date", async ({ pa
   await hydrated(page, "#request-title");
   await page.getByRole("button", { name: /^Little Moments/ }).click();
   await expect(page.locator("#request-due")).toBeVisible();
+});
+
+test("the menu's Book opens /book (owner, Nov 16)", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.locator("header nav a", { hasText: /^Book$/ })).toHaveAttribute("href", "/book");
 });

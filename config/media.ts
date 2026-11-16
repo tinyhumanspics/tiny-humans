@@ -11,14 +11,15 @@ import { portfolio, portfolioCtas, type FeedBlock, type PortfolioPhoto } from ".
 export const MEDIA_GROUPS = {
   title: {
     label: "Title Pictures",
-    where: "The two pinned photos next to the main title (“Tiny moments. Big memories.”) at the top of the home page.",
+    where: "The two pinned photos next to the main title at the top of the home page.",
     slots: 2,
   },
   landing: {
     label: "Stay-Home Session Page (/home-sweet-home)",
-    where: `The photos on the ad landing page: “${en.landing.why.photo}” next to “${en.landing.why.title}”, “${en.landing.meet.photo}” next to “${en.landing.meet.title}”, and the “${en.landing.hero.photo}” at the top (a real in-home newborn photo; use a family's photo only with their signed release). Until you add one, the first two use the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”) and the hero uses the first photo of “Little moments”.`,
-    // same names as the "photo coming soon" cards on the page; new slots go last (saved choices keep their place)
-    slots: [en.landing.why.photo, en.landing.meet.photo, en.landing.hero.photo],
+    where: `The photos on the ad page: the big photo at the top (a real in-home newborn photo; a family's photo only with their signed release), one next to “${en.landing.why.title}” and one in “${en.landing.meet.title}”. Until you add one, the top photo is the first photo picked for the ad page in “Little moments”, and the other two use the matching About Us photo (“Behind the scenes”, “Adrian & Alondra”).`,
+    // saved choices keep their place (index); `order` is how /admin lists them (the big top photo first)
+    slots: ["Why at home", "Who's coming", "Big top photo"],
+    order: [2, 0, 1],
   },
   about: {
     label: "About Us Page",

@@ -153,8 +153,6 @@
       "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we move it to day 5–14.",
       "dueLabel": "Your due date",
       "dueWindow": "Pick a due date from today to {date}.",
-      "bundle": "Your bundle",
-      "change": "change",
       "chooseBundle": "Choose your bundle",
       "twins": "Twins? +{price} per extra baby",
       "travel": "Free within {miles} miles of Miami Beach",
@@ -619,7 +617,7 @@
     },
     "hero": {
       "eyebrow": "The Stay-Home Session · Miami",
-      "photo": "Hero photo",
+      "photo": "A newborn photographed at home",
       "concepts": {
         "a": {
           "title": "Newborn photos in your own living room.",
