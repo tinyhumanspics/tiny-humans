@@ -44,7 +44,8 @@ export function useLandingOffer({
   const shown = bundles.filter((b) => b.showOnLanding !== false).sort((a, b) => priceCents(a, today) - priceCents(b, today));
   const featured = shown[Math.floor((shown.length - 1) / 2)] ?? bundles[0];
   const withQuery = (href: string) => (query ? `${href}&${query}` : href);
-  const ctaHref = featured ? withQuery(scheduleHref(featured.id, null, locale)) : `${localePath("/book", locale)}${query ? `?${query}` : ""}`;
+  // "Check dates": /book with the middle bundle checked and every bundle side by side to compare (?compare=1)
+  const ctaHref = featured ? withQuery(`${scheduleHref(featured.id, null, locale)}&compare=1`) : `${localePath("/book", locale)}${query ? `?${query}` : ""}`;
   const onCta = (b: Bundle | undefined = featured) => {
     if (b) trackSelectBundle({ id: b.id, name: b.name, value: priceCents(b, today) / 100 });
   };

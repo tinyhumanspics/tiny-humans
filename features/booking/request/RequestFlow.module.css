@@ -65,7 +65,36 @@
   line-height: 1;
   color: var(--chalkboard-dark);
 }
-.compareOn .compareMark { border-color: var(--sun-yellow); background: var(--sun-yellow); }
+.compareOn .compareMark, .compareMark[data-on="true"] { border-color: var(--sun-yellow); background: var(--sun-yellow); }
+
+/* A bundle card was clicked: their pick, with "Change" to open the bundles side by side (owner, Nov 16) */
+.pickedLabel { margin: 0 0 8px; font-size: 1.05rem; color: var(--chalk-muted); }
+.pickedCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 2px solid var(--sun-yellow);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sun-yellow) 12%, transparent);
+}
+.pickedText { display: grid; gap: 4px; flex: 1; min-width: 0; }
+.picked .pickName { color: var(--sun-yellow); }
+.pickedFeatures { font-size: 0.98rem; line-height: 1.35; color: var(--chalk-muted); }
+.pickedChange {
+  flex: none;
+  min-height: 44px;
+  padding: 6px 16px;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 70%, transparent);
+  border-radius: 999px;
+  background: none;
+  color: var(--chalk-white);
+  font-family: var(--font-chalk);
+  font-size: 1.15rem;
+  cursor: pointer;
+}
+.pickedChange:hover { border-color: var(--sun-yellow); color: var(--sun-yellow); }
+.pickedChange:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset: 3px; }
 .pickBadge { font-family: var(--font-chalk); font-size: 0.95rem; color: var(--cloud-blue); }
 .pickName { font-family: var(--font-chalk); font-size: 1.3rem; line-height: 1.15; }
 .comparePrice { font-family: var(--font-chalk); font-size: clamp(1.4rem, 5vw, 1.8rem); line-height: 1; }

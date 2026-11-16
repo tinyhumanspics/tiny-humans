@@ -315,3 +315,19 @@ test("the menu's Book opens /book (owner, Nov 16)", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("header nav a", { hasText: /^Book$/ })).toHaveAttribute("href", "/book");
 });
+
+test("a bundle card's link shows that pick with Change; Check dates (?compare=1) shows every bundle (owner, Nov 16)", async ({ page }) => {
+  await page.goto("/book?bundle=little-moments");
+  await hydrated(page, "#request-title");
+  await expect(page.getByText("Your bundle")).toBeVisible();
+  await expect(page.getByText(/Little Moments · \$/)).toBeVisible();
+  await expect(page.locator("main fieldset button[aria-pressed]")).toHaveCount(0);
+  await page.getByRole("button", { name: "Change" }).click();
+  const cards = page.locator("main fieldset button[aria-pressed]");
+  await expect(cards).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
+
+  await page.goto("/book?bundle=our-little-story&compare=1");
+  await expect(page.locator("main fieldset button[aria-pressed]")).toHaveCount(3);
+  await expect(page.getByRole("button", { name: /Our Little Story/ })).toHaveAttribute("aria-pressed", "true");
+});

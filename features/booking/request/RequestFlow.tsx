@@ -62,6 +62,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
 
   const [bundleId, setBundleId] = useState<string | null>(() => (due ? due.summary.bundleId : (getBundle(params.get("bundle"))?.id ?? null)));
   const bundle = getBundle(bundleId);
+  // a bundle card was clicked (the bundles page, the ad page's cards): their pick with "Change"; "Check dates" (?compare=1)
+  // or no bundle yet: every bundle side by side (owner, Nov 16)
+  const [comparing, setComparing] = useState(() => !bundle || params.get("compare") === "1");
   // "Not born yet?" buttons elsewhere on the site open this screen on the due date (?when=due)
   const [type, setType] = useState<RequestType>(() => (!due && params.get("when") === "due" ? "due_date" : "date"));
   const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
@@ -293,7 +296,25 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     setError(null);
     if (!(b.extraBaby?.active && b.extraBaby.maxBabies >= 2)) setBabyCount(1);
   };
-  const bundleRow = (
+  const bundleRow = bundle && !comparing ? (
+    <div className={cn(styles.bundleRow, styles.picked)}>
+      <p className={cn(styles.pickedLabel, "chalk-soft")}>{m.when.bundle}</p>
+      <div className={styles.pickedCard}>
+        <span className={styles.compareMark} data-on="true" aria-hidden="true">
+          ✓
+        </span>
+        <span className={styles.pickedText}>
+          <span className={cn(styles.pickName, "chalk-soft")}>
+            {bundle.name} · {formatMoney(priceOf(bundle, today))}
+          </span>
+          <span className={cn(styles.pickedFeatures, "chalk-soft")}>{bundle.features.join(" · ")}</span>
+        </span>
+        <button type="button" className={cn(styles.pickedChange, "chalk-soft")} onClick={() => setComparing(true)} aria-expanded={false}>
+          {m.when.change}
+        </button>
+      </div>
+    </div>
+  ) : (
     <fieldset className={cn(flowStyles.fieldset, styles.bundleRow)}>
       <legend className={cn(flowStyles.subtle, "chalk-soft")}>{m.when.chooseBundle}</legend>
       <div className={styles.compare}>
