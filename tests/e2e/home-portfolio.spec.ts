@@ -4,6 +4,8 @@ import { expect, test } from "@playwright/test";
 test("home: the ad page's layout with its own title and one Check dates", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveText(/Tiny moments\.\s*Big memories\./);
+  // the home page's own line on top (owner, Nov 16); the ad page keeps "The Stay-Home Session · Miami"
+  await expect(page.getByText("Miami to Orlando", { exact: true })).toBeVisible();
   const check = page.locator("main a", { hasText: "Check dates" }).first();
   await expect(check).toHaveAttribute("href", /^\/book\?bundle=/);
   // the same sections as the ad page
@@ -38,4 +40,10 @@ test("home and ad page show the same \"Real homes. Real families.\" photos (the 
   const home = await photos("/");
   expect(home.length).toBeGreaterThan(0);
   expect(home).toEqual(await photos("/home-sweet-home"));
+});
+
+test("the ad page keeps its own top line", async ({ page }) => {
+  await page.goto("/home-sweet-home");
+  await expect(page.getByText("The Stay-Home Session · Miami", { exact: true })).toBeVisible();
+  await expect(page.getByText("Miami to Orlando", { exact: true })).toHaveCount(0);
 });

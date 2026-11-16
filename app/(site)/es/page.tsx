@@ -24,7 +24,7 @@ export default async function SpanishHomePage() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd("es")) }} />
       <LandingPage
-        headline={es.home.hero.title}
+        heading={es.home.hero}
         noticeHours={noticeHours}
         travel={travel}
         deposit={deposit}

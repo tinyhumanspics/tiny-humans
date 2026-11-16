@@ -19,14 +19,14 @@ export async function generateMetadata(): Promise<Metadata> {
   });
 }
 
-/** Home (owner, Nov 16): the ad page, with "Tiny moments. Big memories." as its title. */
+/** Home (owner, Nov 16): the ad page, with "Miami to Orlando" on top and "Tiny moments. Big memories." as its title. */
 export default async function HomePage() {
   const [noticeHours, travel, deposit, reviews] = await Promise.all([getNoticeHoursSetting(), getTravelSettings(), siteDeposit(), getPublicReviews()]);
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(serviceBusinessJsonLd()) }} />
       <LandingPage
-        headline={en.home.hero.title}
+        heading={en.home.hero}
         noticeHours={noticeHours}
         travel={travel}
         deposit={deposit}

@@ -47,7 +47,7 @@ export default function LandingPage({
   bundleMessages = en.bundlesPage,
   noticeMessages = en.policy,
   reviewMessages = en.reviewsSection,
-  headline,
+  heading,
   locale = "en",
 }: {
   noticeHours: number;
@@ -60,8 +60,9 @@ export default function LandingPage({
   bundleMessages?: typeof en.bundlesPage;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
   reviewMessages?: typeof en.reviewsSection;
-  /** The home page (owner, Nov 16): the same page with "Tiny moments. Big memories." as the title, one line each. */
-  headline?: string[];
+  /** The home page (owner, Nov 16): the same page with its own line on top ("Miami to Orlando") and "Tiny moments. Big
+   * memories." as the title, one line each. */
+  heading?: { eyebrow: string; title: string[] };
   locale?: AppLocale;
 }) {
   const t = messages;
@@ -91,10 +92,10 @@ export default function LandingPage({
             </div>
           )}
           <div className={styles.heroCopy}>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{t.hero.eyebrow}</p>
+            <p className={cn(styles.eyebrow, "chalk-soft")}>{heading?.eyebrow ?? t.hero.eyebrow}</p>
             <h1 id="landing-title" className={cn(styles.title, "chalk")}>
-              {headline
-                ? headline.map((line) => (
+              {heading
+                ? heading.title.map((line) => (
                     <span key={line} className={styles.titleLine}>
                       {line}
                     </span>
