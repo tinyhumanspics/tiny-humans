@@ -8,14 +8,15 @@ import { ownerRulesOf, slotsForDay } from "@/lib/booking/availability";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
-import { detailsFromRow } from "@/lib/booking/details";
+import { detailsFromRow, homeOf } from "@/lib/booking/details";
 import { BookingError } from "@/lib/booking/errors";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { busyExcluding } from "@/lib/booking/reschedule";
 import { noticeHoursFor } from "@/lib/booking/terms";
 import type { BookingResult } from "@/lib/booking/types";
 import { getDb, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
-import { bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
+import { bookingAccess, bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
+import { formatAddress } from "@/lib/booking/templates";
 import { depositAbandonedEmail, depositLinkEmail, internalDepositUnpaidEmail, ownerBookedEmail, ownerBookedSms } from "@/lib/email";
 import type { OwnerBookedDetails } from "@/emails/OwnerBooked";
 import { todayInZone } from "@/lib/booking/timezone";
@@ -32,7 +33,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
 import { dbReason, depositOf, isMissingTable } from "./server";
-import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState } from "./types";
+import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState, type LinkHome } from "./types";
 import { setupsOf } from "@/config/backdrops";
 import { backdropsFor, saveBackdrops } from "@/lib/booking/backdrops";
 import { getCatalog } from "@/lib/pricing/server";
@@ -158,6 +159,30 @@ export async function payWithLink(reference: string, now = new Date()): Promise<
     log.error("deposit", "Stripe couldn't open the deposit page from the family's link", { reference, code: stripeCode(err) });
     throw new BookingError("server_error", t.error);
   }
+}
+
+/** The home saved on a booking: its address (a request books with "FL <zip>" only) and the gate / parking notes. */
+async function linkHomeOf(row: Booking): Promise<LinkHome> {
+  const [access] = await getDb().select({ notes: bookingAccess.notes }).from(bookingAccess).where(eq(bookingAccess.bookingId, row.id)).limit(1).catch(() => []);
+  return { ...homeOf(row.locationAddress), accessNotes: access?.notes ?? "" };
+}
+
+/**
+ * The family's home on their link, before the deposit (owner, Nov 16: no more texting the address): saved on the booking,
+ * so /admin's Directions, the calendar event (made when the deposit is paid) and the emails all have it. The ZIP stays
+ * the request's (the travel fee was priced on it).
+ */
+export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }): Promise<LinkHome> {
+  const db = getDb();
+  const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
+  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
+  const line = formatAddress({ street: input.street.trim(), city: input.city.trim(), zip: homeOf(row.locationAddress).zip });
+  if (line !== row.locationAddress) await db.update(bookings).set({ locationAddress: line, updatedAt: new Date() }).where(eq(bookings.id, row.id));
+  const notes = input.accessNotes?.trim() ?? "";
+  await (notes
+    ? db.insert(bookingAccess).values({ bookingId: row.id, notes }).onConflictDoUpdate({ target: bookingAccess.bookingId, set: { notes } })
+    : db.delete(bookingAccess).where(eq(bookingAccess.bookingId, row.id)));
+  return { ...homeOf(line), accessNotes: notes };
 }
 
 /** The family's backdrop picks on their link (a booking the owner made, still waiting on its deposit). */
@@ -622,9 +647,9 @@ export async function depositReturnState(reference: string, client: ClientContex
   if (row.status === "pending") {
     const waiting = { state: "waiting" as const, amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };
     if (!isOwnerBooked(row)) return waiting;
-    // booked by the owner: the family picks their backdrops here, then pays
-    const [bundle, saved] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => [])]);
-    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] } };
+    // booked by the owner: the family adds their home address and picks their backdrops here, then pays
+    const [bundle, saved, home] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => []), linkHomeOf(row)]);
+    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] }, home };
   }
   if (deposit?.status === "expired") return { state: "expired", date: row.sessionDate, start, bundleName: row.packageName };
   return { state: "invalid" };

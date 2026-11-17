@@ -89,7 +89,17 @@ export type DepositReturnState =
       payUrl: string | null;
       ownerBooked?: boolean;
       backdrops?: { allowed: number; picks: string[] };
+      /** Their home as saved (owner Nov 16: asked on this page before the deposit; the ZIP comes from the request). */
+      home?: LinkHome;
     }
   /** Never paid: the time was released. */
   | { state: "expired"; date: string; start: string; bundleName: string }
   | { state: "invalid" };
+
+/** A family's home on their deposit link: street (with apt or unit), city, the request's ZIP, gate / parking notes. */
+export interface LinkHome {
+  street: string;
+  city: string;
+  zip: string;
+  accessNotes: string;
+}

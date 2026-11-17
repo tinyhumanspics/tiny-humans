@@ -71,4 +71,5 @@ export const bookingRequestSchema = z.object({
   elapsedMs: z.number().int().nonnegative().optional(),
 });
 
-
+/** A family's home on their links (the Prepare page, the deposit link): street with apt or unit, city, gate notes. */
+export const homeInput = z.object({ street: text(200).min(4, "Add your street address."), city: text(100).min(2, "Add your city."), accessNotes: text(300).optional() });

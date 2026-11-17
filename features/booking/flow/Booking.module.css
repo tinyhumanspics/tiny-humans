@@ -416,3 +416,8 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* step one's line under "About you" (owner, Nov 13) */
 .stepIntro { margin: -4px 0 16px; max-width: 40em; color: var(--sun-yellow); font-size: 1.12rem; line-height: 1.45; }
+
+/* The family's home on their deposit link (owner, Nov 16): full-width boxes, labels on the left like the booking form */
+.ownerHome { display: grid; gap: 12px; text-align: left; }
+.ownerHome .input { width: 100%; }
+.ownerHome .ownerStepNote { margin: 0; text-align: left; }

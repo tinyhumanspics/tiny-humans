@@ -2,7 +2,7 @@ import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { NO_STORE, invalidLink, manageFail, tokenOk, tooMany } from "@/lib/booking/manage-api";
 import { afterBackdropChange, getBackdropView, saveBackdropsWithToken } from "@/lib/booking/backdrop-page";
-import { backdropPicks } from "@/lib/booking/validation";
+import { backdropPicks, homeInput } from "@/lib/booking/validation";
 import { allow, clientIp } from "@/lib/rate-limit";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 
@@ -25,7 +25,7 @@ const body = z.object({
   token: z.string(),
   picks: backdropPicks,
   // "Prepare for your session": the rest of the page (left out = unchanged)
-  home: z.object({ street: line(200).min(4, "Add your street address."), city: line(100).min(2, "Add your city."), accessNotes: line(300).optional() }).optional(),
+  home: homeInput.optional(),
   babyNames: z.array(line(80)).max(3).optional(),
   photos: z.boolean().optional(),
 });
