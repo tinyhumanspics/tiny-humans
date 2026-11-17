@@ -98,7 +98,8 @@ function boardFrom(p: Palette): Record<BoardArea, BoardDoodle[]> {
     // one per bundle card, in the gap just below it
     card: [
       { ...at(0), bottom: "-34px", left: "12%", size: 34, rotate: -10 },
-      { ...at(3), bottom: "-36px", right: "14%", size: 31, rotate: 8 },
+      // left of the gap: on phones the next card's offer sticker takes its top-right corner (owner, Nov 16)
+      { ...at(3), bottom: "-36px", left: "26%", size: 31, rotate: 8 },
       { ...at(4), bottom: "-34px", left: "40%", size: 34, rotate: -4 },
     ],
     // beside the baby-led note on the booking page

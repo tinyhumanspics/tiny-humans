@@ -23,6 +23,11 @@
 }
 
 .doodle { position: absolute; top: -14px; right: 18px; rotate: 12deg; }
+/* while an offer runs, its sticker is the card's decoration: the corner drawing would sit under it (the Spanish sticker
+   spans almost the whole top edge), so it isn't shown; on phones an offer card leaves room above for the drawing in the
+   gap after the card before it (owner, Nov 16) */
+.hasOffer .doodle { display: none; }
+@media (max-width: 899px) { .card.hasOffer { margin-top: 26px; } }
 
 .content { flex: 1; color: var(--chalk-white); }
 
