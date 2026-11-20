@@ -4,7 +4,7 @@ import es from "@/messages/es.json";
 import { formatLongDate, formatShortDate, formatTimeLabel } from "@/lib/booking/dates";
 import { customerBabiesLabel, customerBackdropNames, customerPricingRows, emailChangePolicyText } from "@/lib/email/customer-format";
 import type { PriceQuote } from "@/lib/pricing/engine";
-import { bookingRequestSchema } from "@/lib/booking/validation";
+import { requestSchema } from "@/lib/requests/validation";
 import { bundleInputSchema } from "@/lib/pricing/validation";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
 import type { Bundle } from "@/lib/pricing/types";
@@ -131,16 +131,11 @@ test("Spanish publication blocks owner copy gaps instead of leaking English", as
 
 test("booking requests accept only supported customer languages", async ({}, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "Schema validation only needs one Node project");
-  const base = {
-    bundleId: "little-moments",
-    slot: { date: "2026-12-05", start: "10:00" },
-    contact: { parentName: "Ada Parent", email: "ada@example.com", phone: "3055550123", babyAge: "Newborn (0–2 weeks)" },
-    address: { street: "123 Palm Ave", city: "Miami Beach", zip: "33139" },
-  };
+  const base = { clientId: "client-123456", type: "date", bundleId: "little-moments", babyCount: 1, slot: { date: "2026-12-05", start: "10:00" }, firstName: "Ada", mobile: "305 555 0123", email: "ada@example.com", zip: "33139", textConsent: false };
 
-  expect(bookingRequestSchema.safeParse({ ...base, locale: "en" }).success).toBe(true);
-  expect(bookingRequestSchema.safeParse({ ...base, locale: "es" }).success).toBe(true);
-  expect(bookingRequestSchema.safeParse({ ...base, locale: "fr" }).success).toBe(false);
+  expect(requestSchema.safeParse({ ...base, locale: "en" }).success).toBe(true);
+  expect(requestSchema.safeParse({ ...base, locale: "es" }).success).toBe(true);
+  expect(requestSchema.safeParse({ ...base, locale: "fr" }).success).toBe(false);
 });
 
 test("Spanish bundle drafts are either absent or complete", async ({}, testInfo) => {

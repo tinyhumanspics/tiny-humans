@@ -7,7 +7,6 @@ import { computeQuote } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import en from "@/messages/en.json";
 import { asksFamily, cleanFamily, familyLabel } from "@/lib/booking/family";
-import { bookingRequestSchema } from "@/lib/booking/validation";
 import { customerFamilyLabel } from "@/lib/email/customer-format";
 import { whoLineOf } from "@/lib/shoots/from-bookings";
 import { cleanWho, groupByWho, peopleOf, picksWho, toggleWho, whoLabel, WHO_ALL } from "@/lib/shoots/people";
@@ -21,27 +20,10 @@ vi.mock("server-only", () => ({}));
  * (role + optional name each); twins/family shots by who's in them.
  */
 
-const request = (family: unknown) => ({
-  bundleId: "forever-little",
-  slot: { date: "2026-12-01", start: "10:00" },
-  contact: { parentName: "Ana Morales", email: "ana@example.com", phone: "305 555 0142", babyAge: "Newborn (0–2 weeks)" },
-  address: { street: "1500 Bay Rd", city: "Miami Beach", zip: "33139" },
-  family,
-});
-
 describe("family members on the booking", () => {
   test("only bundles that include the family ask (Our Family Story)", () => {
     expect(asksFamily({ people: "Baby + parents + siblings", features: [] })).toBe(true);
     expect(asksFamily({ people: "", features: ["Up to 1 hour", "Baby only"] })).toBe(false);
-  });
-
-  test("the request: role required, name optional, at most the hard cap", () => {
-    const ok = bookingRequestSchema.safeParse(request([{ role: "mom", name: " Ana " }, { role: "brother", name: "" }]));
-    expect(ok.success && ok.data.family).toEqual([{ role: "mom", name: "Ana" }, { role: "brother", name: undefined }]);
-    expect(bookingRequestSchema.safeParse(request([{ role: "neighbor" }])).success).toBe(false);
-    expect(bookingRequestSchema.safeParse(request(Array.from({ length: MAX_FAMILY_MEMBERS + 1 }, () => ({ role: "cousin" })))).success).toBe(false);
-    // older pages send no family at all
-    expect(bookingRequestSchema.safeParse(request(undefined)).success).toBe(true);
   });
 
   test("whatever comes in is cleaned: unknown roles and empty rows dropped, names trimmed, 5 kept", () => {

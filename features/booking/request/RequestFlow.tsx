@@ -13,6 +13,7 @@ import { addDays, formatLongDate, formatTimeLabel, fromDateKey, startOfDay, toDa
 import { HttpBookingClient } from "@/lib/booking/http-client";
 import { cn } from "@/lib/cn";
 import { dueWindow, type DueSummary } from "@/lib/due-date/types";
+import type { BookingLinkSummary } from "@/lib/booking-links/types";
 import { activeOffer, formatMoney } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import type { RequestSent, RequestType } from "@/lib/requests/types";
@@ -53,7 +54,7 @@ const priceOf = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? Ma
  * `due`: opened from a due-date reservation's schedule link (/book?due=…): its bundle, babies and kept price, their
  * details filled in, a day and start time only; the owner confirms it like any request (no new deposit).
  */
-export default function RequestFlow({ locale, messages, freeMiles, noticeHours, due }: { locale: AppLocale; messages: RequestFlowMessages; freeMiles: number | null; noticeHours: number; due?: { token: string; summary: DueSummary } }) {
+export default function RequestFlow({ locale, messages, freeMiles, noticeHours, due, link }: { locale: AppLocale; messages: RequestFlowMessages; freeMiles: number | null; noticeHours: number; due?: { token: string; summary: DueSummary }; link?: { token: string; summary: BookingLinkSummary; babyLines: string[] } }) {
   const m = messages.request;
   const params = useSearchParams();
   const { bundles, getBundle, today, available, depositFor } = useCatalog();
@@ -64,6 +65,8 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   // calendar shows right away (owner, Nov 16)
   const [bundleId, setBundleId] = useState<string | null>(() => {
     if (due) return due.summary.bundleId;
+    // the owner's booking link: the bundle they agreed (owner, Nov 19)
+    if (link && getBundle(link.summary.bundleId)) return link.summary.bundleId;
     const linked = getBundle(params.get("bundle"))?.id;
     if (linked) return linked;
     const shown = bundles.filter((b) => b.showOnLanding !== false).sort((x, y) => priceOf(x, today) - priceOf(y, today));
@@ -72,19 +75,22 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   const bundle = getBundle(bundleId);
   // a bundle card was clicked (the bundles page, the ad page's cards): their pick with "Change"; "Check dates" (?compare=1)
   // and links without a bundle: every bundle side by side (owner, Nov 16)
-  const [comparing, setComparing] = useState(() => !params.get("bundle") || params.get("compare") === "1");
+  const [comparing, setComparing] = useState(() => !link && (!params.get("bundle") || params.get("compare") === "1"));
   // "Not born yet?" buttons elsewhere on the site open this screen on the due date (?when=due)
-  const [type, setType] = useState<RequestType>(() => (!due && params.get("when") === "due" ? "due_date" : "date"));
-  const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? 1);
+  const [type, setType] = useState<RequestType>(() => (!due && !link && params.get("when") === "due" ? "due_date" : "date"));
+  const [babyCount, setBabyCount] = useState(due?.summary.babyCount ?? link?.summary.babies.length ?? 1);
   const [step, setStep] = useState<Step>("when");
 
   // screen 1: open days and start times (other families' held requests are already left out by the server)
   const earliest = addDays(startOfDay(fromDateKey(today)), bookingSettings.minDaysAhead);
-  const [month, setMonth] = useState(() => new Date(earliest.getFullYear(), earliest.getMonth(), 1));
+  const [month, setMonth] = useState(() => {
+    const first = link ? fromDateKey(link.summary.date) : earliest;
+    return new Date(first.getFullYear(), first.getMonth(), 1);
+  });
   const [daysBy, setDaysBy] = useState<Record<string, Record<DateKey, TimeSlot[]>>>({});
   const [loaded, setLoaded] = useState<Record<string, number>>({});
   const [reload, setReload] = useState(0);
-  const [date, setDate] = useState<DateKey | null>(null);
+  const [date, setDate] = useState<DateKey | null>(() => (link ? (link.summary.date as DateKey) : null));
   const [slot, setSlot] = useState<TimeSlot | null>(null);
   const [dueDate, setDueDate] = useState("");
   const dueRange = dueWindow(today);
@@ -92,7 +98,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   // screen 2
   const [fields, setFields] = useState<Record<Field, string>>(() => {
     const c = due?.summary.contact;
-    return c ? { firstName: c.parentName.split(" ")[0], mobile: c.phone, email: c.email, zip: c.zip } : { firstName: "", mobile: "", email: "", zip: "" };
+    return c ? { firstName: c.parentName.split(" ")[0], mobile: c.phone, email: c.email, zip: c.zip } : { firstName: "", mobile: "", email: "", zip: link?.summary.zip ?? "" };
   });
   // open times per bundle + baby count + home ZIP once typed (trip days) ("choice") and which months of it are loaded:
   // nothing to reset on a change
@@ -133,6 +139,17 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
       live = false;
     };
   }, [type, step, bundleId, babyCount, tripZip, month, choice, monthKey, reload, provider, m.details.errors.generic]);
+
+  // the owner's booking link with a time: that time is picked once the day's times are in (if it's still open)
+  const linkTime = useRef(link?.summary.start ?? null);
+  useEffect(() => {
+    const start = linkTime.current;
+    if (!start || !link || date !== link.summary.date || slot) return;
+    const open = daysBy[choice]?.[date]?.find((s) => s.start === start);
+    if (!open) return;
+    linkTime.current = null;
+    setSlot(open);
+  }, [daysBy, choice, date, slot, link]);
 
   // anonymous step counts (no names, no ids): opened, picked when, saw the details screen; "sent" is counted on the server
   const counted = useRef(new Set<string>());
@@ -232,6 +249,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           zip: fields.zip.trim(),
           textConsent: consent,
           ...(due ? { dueToken: due.token } : {}),
+          ...(link ? { linkToken: link.token } : {}),
           ...(inspirationId ? { inspiration: inspirationId } : {}),
           hp,
           elapsedMs: elapsedSince(openedAt.current),
@@ -384,7 +402,18 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                   <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
                     {m.when.title}
                   </h1>
-                  {due && bundle ? (
+                  {link ? (
+                    <>
+                      <div className={cn(styles.dueNote, "chalk-soft")}>
+                        <p className={styles.bundleChoiceName}>{m.link.title}</p>
+                        {link.babyLines.map((line, i) => (
+                          <p key={i}>{line}</p>
+                        ))}
+                        <p>{m.link.body}</p>
+                      </div>
+                      {bundleRow}
+                    </>
+                  ) : due && bundle ? (
                     <div className={cn(styles.dueNote, "chalk-soft")}>
                       <p className={styles.bundleChoiceName}>{messages.due.title}</p>
                       <p>{fill(messages.due.body, { bundle: bundle.name, price: formatMoney(priceCents) })}</p>
@@ -404,7 +433,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                     </>
                   )}
 
-                  {bundle && extra && !due && (
+                  {bundle && extra && !due && !link && (
                     <label className={cn(styles.twins, "chalk-soft")}>
                       <input type="checkbox" checked={babyCount === 2} onChange={(ev) => (setBabyCount(ev.target.checked ? 2 : 1), setSlot(null))} />{" "}
                       {/* what the extra pays for: this bundle's extra time and photos from /admin (owner, Nov 16) */}

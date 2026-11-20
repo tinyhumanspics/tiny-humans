@@ -6,6 +6,8 @@ import { BookingError } from "@/lib/booking/errors";
 import { getBookingProvider } from "@/lib/booking/server";
 import { getDb } from "@/lib/db/client";
 import { bookings, type BookingRequestRow } from "@/lib/db/schema";
+import { linkForRequest } from "@/lib/booking-links/server";
+import { isOwnerSource } from "@/config/booking";
 import { ownerBookingLink } from "@/lib/deposit/flow";
 import { OWNER_HOLD_HOURS, OWNER_REQUEST_PREFIX } from "@/lib/deposit/types";
 import { dueById, reserveDueForRequest } from "@/lib/due-date/server";
@@ -47,14 +49,17 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
   const locale = localeOf(row);
   // sent from a due-date reservation's link: that reservation is booked (kept price, its paid deposit, its address)
   const due = row.type === "date" && row.dueId ? await dueById(row.dueId) : null;
+  // sent from the owner's booking link (owner, Nov 19): the babies' ages and names it had, and how they reached the owner
+  const link = await linkForRequest(row.id).catch(() => null);
+  const babies = link?.babies.length === row.babyCount ? link.babies : null;
   const booking = await provider.createBooking(
     {
       bundleId: row.bundleId,
       locale,
-      // their baby's age and name, and the street, come later on their "Prepare for your session" page
-      babies: Array.from({ length: row.babyCount }, () => ({ age: "" })),
+      // their baby's age and name (unless the owner's link had them), and the street, come later on their pages
+      babies: babies ? babies.map((b) => ({ age: b.age, ...(b.name ? { name: b.name } : {}) })) : Array.from({ length: row.babyCount }, () => ({ age: "" })),
       slot: { id: `${slot.date}T${slot.start}`, date: slot.date, start: slot.start, end: "", label: formatTimeLabel(slot.start) },
-      contact: { parentName: due?.parentName ?? row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: "" },
+      contact: { parentName: due?.parentName ?? row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: babies?.[0]?.age ?? "", ...(babies?.[0]?.name ? { babyName: babies[0].name } : {}) },
       address: due ? { street: due.street, unit: due.unit ?? undefined, city: due.city, zip: due.zip } : { street: "", city: "", zip: row.zip },
       // one booking per request (a retry returns it); the prefix marks it as booked by the owner
       requestId: `${OWNER_REQUEST_PREFIX}request-${row.id}`,
@@ -67,6 +72,13 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
   );
   const [saved] = await getDb().select({ id: bookings.id }).from(bookings).where(eq(bookings.bookingReference, booking.id)).limit(1);
   if (!saved) throw new BookingError("server_error", "The booking was saved, but the request couldn't be linked to it. Open it in Leads.");
+  if (link && isOwnerSource(link.source)) {
+    await getDb()
+      .update(bookings)
+      .set({ ownerSource: link.source })
+      .where(eq(bookings.id, saved.id))
+      .catch((err) => log.error("requests", "Source not saved", { reference: booking.id, error: err as Error }));
+  }
   if (booking.status === "pending" && booking.deposit?.status === "pending") {
     await linkRequest(row.id, { bookingId: saved.id }, "confirmed");
     const link = await ownerBookingLink(booking.id, { email: true });

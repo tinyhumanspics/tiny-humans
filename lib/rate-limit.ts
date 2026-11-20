@@ -21,6 +21,8 @@ export const RULES = {
   // "Send request" on the new /book (brief 02)
   request: { limit: 12, windowSec: 3600 },
   dueGet: { limit: 40, windowSec: 600 },
+  // a family's booking link from /admin (owner, Nov 19)
+  linkGet: { limit: 40, windowSec: 600 },
   cancelGet: { limit: 30, windowSec: 600 },
   cancelPost: { limit: 10, windowSec: 600 },
   manageGet: { limit: 40, windowSec: 600 },

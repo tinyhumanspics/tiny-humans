@@ -72,6 +72,8 @@ export interface RequestListItem {
   made: { reference: string; date?: string; start?: string } | null;
   /** The "Text" button's message, in their language. */
   hello: string;
+  /** Sent from your booking link (owner, Nov 19): how they reached you and their babies; null = the website. */
+  link: { source: string; babies: { age: string; name?: string }[] } | null;
 }
 
 /** What "Confirm & send pay link" (or "Other time") returns. */

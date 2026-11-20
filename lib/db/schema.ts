@@ -1143,3 +1143,33 @@ export const bookingRequests = pgTable(
 );
 
 export type BookingRequestRow = typeof bookingRequests.$inferSelect;
+
+/**
+ * /admin → Quotes / Booking → "Send a booking link" (owner, Nov 19): the session a family agreed with the owner (by
+ * Instagram, text…): bundle, babies (age, name), home ZIP and day (time optional). The family's link opens /book filled
+ * in; they add their own details and send the request. Only the token's SHA-256 hash is stored. Used once: the
+ * request it made is linked here, and confirming that request carries the babies and the source into the booking.
+ */
+export const bookingLinks = pgTable(
+  "booking_links",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tokenHash: text("token_hash").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    locale: text("locale").notNull().default("en"),
+    bundleId: text("bundle_id").notNull(),
+    /** One per baby, in order: the age option and the name (optional). */
+    babies: jsonb("babies").$type<{ age: string; name?: string }[]>().notNull(),
+    zip: text("zip").notNull(),
+    slotDate: date("slot_date", { mode: "string" }).notNull(),
+    /** "HH:MM"; null = they pick the time that day. */
+    slotStart: text("slot_start"),
+    /** How they reached the owner (config/booking.ts OWNER_SOURCES). */
+    source: text("source").notNull(),
+    requestId: uuid("request_id").references(() => bookingRequests.id, { onDelete: "set null" }),
+    usedAt: timestamp("used_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("booking_links_token_idx").on(t.tokenHash), index("booking_links_request_idx").on(t.requestId), check("booking_links_locale_check", sql`${t.locale} in ('en', 'es')`)],
+);
+
+export type BookingLinkRow = typeof bookingLinks.$inferSelect;

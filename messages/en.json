@@ -111,7 +111,15 @@
       "confirmed": "Hi {name}, you're confirmed for {when}. Here's the link to hold it with the {deposit} deposit: {link}",
       "confirmedDue": "Hi {name}, your spot for your due date ({date}) is saved. Here's the link to hold it with the {deposit} deposit: {link}",
       "booked": "Hi {name}, you're booked for {when}! Your confirmation is in your email.",
-      "reservedDue": "Hi {name}, your spot for your due date ({date}) is reserved! The details are in your email."
+      "reservedDue": "Hi {name}, your spot for your due date ({date}) is reserved! The details are in your email.",
+      "link": "Hi! This is Tiny Humans. Here's your link to book your session for {when}: {link} Just add your name, phone and email and send it, and we'll confirm it."
+    },
+    "link": {
+      "title": "Your session details",
+      "body": "We filled in what you told us. Check the day and time, then tap \"Next: your details\" to add yours.",
+      "baby": "For {name} · {age}",
+      "babyNoName": "For your baby · {age}",
+      "used": "This booking link was already used, or its day has passed. Text us at {phone} and we'll send you a new one."
     },
     "meta": {
       "title": "Book your session",

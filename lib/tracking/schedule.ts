@@ -60,7 +60,7 @@ export function scheduleBooking(row: Booking, actionSource: ScheduleEvent["actio
   });
 }
 
-/** The owner confirmed a booking with nothing to pay (Requests with deposits off, "Book it for them"): by text. */
+/** The owner confirmed a request with nothing to pay (Requests with deposits off): by text. */
 export async function scheduleOwnerBooked(reference: string): Promise<void> {
   const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1).catch(() => []);
   if (row) scheduleBooking(row, "chat");

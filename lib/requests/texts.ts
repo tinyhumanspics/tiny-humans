@@ -20,6 +20,10 @@ export function requestWhenText(r: { type: string; slotDate: string | null; slot
   return slotWhen(r.slotDate ?? "", r.slotStart ?? "", locale);
 }
 
+/** /admin → "Send a booking link" (owner, Nov 19): their link with the day (and time), in their language. */
+export const linkText = (c: { locale: Locale; date: string; start: string | null; link: string }) =>
+  fill(t(c.locale).link, { when: c.start ? slotWhen(c.date, c.start, c.locale) : formatLongDate(c.date, c.locale), link: c.link });
+
 /** "Text": a short hello about their request. */
 export const helloText = (name: string, when: string, locale: Locale) => fill(t(locale).hello, { name, when });
 

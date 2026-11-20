@@ -119,7 +119,7 @@ export default function QuotesPanel({ api }: { api: AdminApi }) {
     <section className={styles.section} aria-labelledby="quotes-title">
       <h2 id="quotes-title" className={cn(styles.h2, "chalk")}>Price for a family</h2>
       <p className={cn(styles.hintSmall, "chalk-soft")}>
-        Booking it for a family who texted you? <a href="#owner-book-title">Go to Book it for them ↓</a>
+        A family messaged you to book? <a href="#booking-link-title">Go to Send a booking link ↓</a>
       </p>
       <p className={cn(styles.muted, "chalk-soft")}>
         Paste the address a family sent you, or just their ZIP code, and you&apos;ll see every bundle&apos;s price today with the travel fee: the same

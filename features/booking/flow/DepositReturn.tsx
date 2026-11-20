@@ -88,7 +88,7 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
           </div>
         );
       case "waiting":
-        // a booking the owner made for them (Requests or "Book it for them"): pick backdrops, then pay
+        // a booking the owner confirmed for them (Requests): their home, backdrops, then pay
         return <OwnerBookedSteps state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
       case "expired":
         return (

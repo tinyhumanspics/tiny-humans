@@ -80,7 +80,7 @@ describe("one Lead per person per 30 days", () => {
 
 describe("no Pixel on pages whose links carry a secret token", () => {
   it("token pages and token links are off; the booking pages are on", () => {
-    for (const [path, search] of [["/pay", "?b=TH-1&s=x"], ["/cancel", "?t=abc"], ["/es/reschedule", "?t=abc"], ["/backdrop", "?t=abc"], ["/pay", "?d=TH-D-1&k=x"], ["/review", "?token=x"], ["/waiver", "?w=x&s=y"], ["/book", "?bundle=a&deposit=TH-1&k=x"], ["/book", "?bundle=a&due=tok"], ["/admin/requests", ""]]) {
+    for (const [path, search] of [["/pay", "?b=TH-1&s=x"], ["/cancel", "?t=abc"], ["/es/reschedule", "?t=abc"], ["/backdrop", "?t=abc"], ["/pay", "?d=TH-D-1&k=x"], ["/review", "?token=x"], ["/waiver", "?w=x&s=y"], ["/book", "?bundle=a&deposit=TH-1&k=x"], ["/book", "?bundle=a&due=tok"], ["/book", "?link=tok"], ["/es/book", "?link=tok"], ["/admin/requests", ""]]) {
       expect(pixelAllowed(path, search), `${path}${search}`).toBe(false);
     }
     for (const [path, search] of [["/", ""], ["/book", "?bundle=our-little-story&utm_source=meta&th_ad=1"], ["/es/book", "?bundle=a"], ["/bundles", "?inspiration=p1"], ["/home-sweet-home", "?fbclid=x"]]) {

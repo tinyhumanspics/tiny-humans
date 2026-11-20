@@ -1,11 +1,9 @@
 import { z } from "@/lib/validation/zod";
-import { babyAgeOptions, babyGenders, familyRoles, MAX_FAMILY_MEMBERS } from "@/config/booking";
 import { BACKDROP_IDS } from "@/config/backdrops";
 import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
-/** Server-side validation of booking requests. Never trust the browser form alone. */
+/** Server-side validation of booking inputs. Never trust the browser form alone. */
 const dateKey = z.string().refine(isDateKey, "Invalid date");
-const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid time");
 const text = (max: number) => z.string().trim().max(max);
 
 export const availabilityQuerySchema = z
@@ -18,58 +16,6 @@ export const backdropPicks = z
   .array(z.enum(BACKDROP_IDS))
   .max(3)
   .refine((a) => new Set(a).size === a.length, "Pick each backdrop only once.");
-
-export const bookingRequestSchema = z.object({
-  bundleId: z.string({ message: "Choose a bundle first." }).trim().min(1, "Choose a bundle first.").max(64),
-  locale: z.enum(["en", "es"]).optional(),
-  babies: z
-    .array(
-      z.object({
-        name: text(80).optional().transform((v) => v || undefined),
-        age: z.enum(babyAgeOptions as unknown as [string, ...string[]], { message: "Choose an age for each baby." }),
-        gender: z.enum(babyGenders).optional(),
-      }),
-    )
-    .min(1)
-    .max(3)
-    .optional(),
-  // who else is in the photos (bundles that include the family; ignored for the others on the server)
-  family: z
-    .array(
-      z.object({
-        role: z.enum(familyRoles, { message: "Choose who each family member is." }),
-        name: text(60).optional().transform((v) => v || undefined),
-      }),
-    )
-    .max(MAX_FAMILY_MEMBERS, `Add up to ${MAX_FAMILY_MEMBERS} family members.`)
-    .optional(),
-  slot: z.object({ date: dateKey, start: hhmm }, { message: "Pick a day and time." }).passthrough(),
-  contact: z.object({
-    parentName: text(120).min(2, "Add the parent or guardian's name."),
-    email: z.string().trim().toLowerCase().max(254).email("Enter a valid email address."),
-    phone: text(40).refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a phone number with at least 10 digits."),
-    babyName: text(80).optional().transform((v) => v || undefined),
-    babyAge: z.enum(babyAgeOptions as unknown as [string, ...string[]], { message: "Choose your baby's age." }),
-    notes: text(1500).optional().transform((v) => v || undefined),
-  }),
-  address: z.object({
-    street: text(200).min(4, "Add the street address."),
-    unit: text(40).optional().transform((v) => v || undefined),
-    city: text(100).min(2, "Add the city."),
-    zip: z.string().trim().regex(/^\d{5}(-\d{4})?$/, "Enter a 5-digit ZIP code."),
-    accessNotes: text(300).optional().transform((v) => v || undefined),
-  }),
-  inspirationPhotoId: text(64).optional(),
-  requestId: z.string().trim().min(8).max(100).optional(),
-  // Only the code text is accepted; prices and discounts are always calculated on the server.
-  discountCode: z.string().trim().max(40).optional().transform((v) => v || undefined),
-  consents: z.object({ sms: z.boolean(), photos: z.boolean() }).optional(),
-  // optional backdrop picks (one per setup; trimmed to the bundle's setups on the server)
-  backdrops: backdropPicks.optional(),
-  // Spam signals (never stored): a hidden field people never see, and how long the form was open.
-  hp: z.string().max(200).optional(),
-  elapsedMs: z.number().int().nonnegative().optional(),
-});
 
 /** A family's home on their links (the Prepare page, the deposit link): street with apt or unit, city, gate notes. */
 export const homeInput = z.object({ street: text(200).min(4, "Add your street address."), city: text(100).min(2, "Add your city."), accessNotes: text(300).optional() });

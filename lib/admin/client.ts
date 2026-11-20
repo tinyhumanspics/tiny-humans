@@ -13,6 +13,7 @@ import type { BundleInput, CodeInput, OfferForAllInput } from "@/lib/pricing/val
 import type { QuoteResult } from "@/lib/quotes/types";
 import type { DueReservationRow } from "@/lib/due-date/types";
 import type { RequestConfirmed, RequestListItem } from "@/lib/requests/types";
+import type { BookingLinkInput, BookingLinkMade } from "@/lib/booking-links/types";
 
 /** /admin → Leads → Due dates. `ready` false = migration 0026 not run yet. */
 export interface DueList {
@@ -22,47 +23,6 @@ export interface DueList {
 }
 
 /** What the owner area needs: the /api/admin routes. */
-/** /admin → Quotes / Booking: the family's price (GET /api/admin/booking/price). */
-export interface OwnerPrice {
-  quote: import("@/lib/booking/types").PriceQuote;
-  travel: { status: string; miles: number | null; feeCents: number } | null;
-  /** Bundle (offer or code) + extras + travel. */
-  totalCents: number;
-  /** Paid with their link; null = deposits off. */
-  depositCents: number | null;
-}
-
-/** /admin → Quotes / Booking: what the owner fills in for a family (the booking form's fields). */
-export interface OwnerBookingInput {
-  bundleId: string;
-  locale: "en" | "es";
-  babies: { age: string; name?: string }[];
-  family: { role: string; name?: string }[];
-  slot: { date: string; start: string };
-  contact: { parentName: string; email: string; phone: string; babyAge: string; babyName?: string; notes?: string };
-  address: { street: string; unit?: string; city: string; zip: string; accessNotes?: string };
-  discountCode?: string;
-  requestId: string;
-  /** Email the family their link now. */
-  email: boolean;
-  /** How they reached the owner (Instagram DM, Text…). */
-  source: import("@/config/booking").OwnerSource;
-}
-
-export interface OwnerBookingResult {
-  reference: string;
-  /** pending = waiting on the deposit (the family's link); confirmed = deposits are off. */
-  status: "pending" | "confirmed";
-  url?: string;
-  holdUntil?: string;
-  /** The same message as a text to copy. */
-  sms?: string;
-  emailed: boolean;
-  emailError?: string;
-  pricing: import("@/lib/booking/types").PriceQuote | null;
-  travel: { feeCents: number | null; miles: number | null } | null;
-}
-
 export interface AdminApi {
   session(): Promise<{ authenticated: boolean; authConfigured: boolean; storageConfigured: boolean }>;
   login(password: string): Promise<{ ok: boolean; error?: string }>;
@@ -130,10 +90,8 @@ export interface AdminApi {
   getQuote(zip: string, babies: number, family: number, percent?: number): Promise<QuoteResult>;
   /** Quotes / Booking: open times for a family (no online minimum notice). */
   ownerSlots(q: { bundle: string; babies: number; from: string; to: string }): Promise<import("@/lib/booking/types").DayAvailability[]>;
-  /** Quotes / Booking: the price as the booking form works it out (offer or code, extras, travel, deposit). */
-  ownerPrice(q: { bundle: string; babies: number; family: number; zip?: string; code?: string; email?: string }): Promise<OwnerPrice>;
-  /** Quotes / Booking: book for a family; with deposits on they get a link (backdrops + deposit) and 48 hours. */
-  ownerBook(input: OwnerBookingInput): Promise<OwnerBookingResult>;
+  /** Quotes / Booking: "Send a booking link" (owner, Nov 19): the family's link and a text with it. */
+  makeBookingLink(input: BookingLinkInput): Promise<BookingLinkMade>;
   /** Requests: the website's booking requests, newest first. `notReady` = migration 0037 not run yet. */
   listRequests(): Promise<{ requests: RequestListItem[]; notReady?: string }>;
   /** Requests: "Confirm & send pay link" (or "Other time" with `slot`): the booking or reservation, its link and the text. */
@@ -213,11 +171,7 @@ const httpApi: AdminApi = {
   deleteDueDate: async (id) => json(await fetch("/api/admin/due-dates", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "delete", id }) })),
   ownerSlots: async (q) =>
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/booking/slots?${new URLSearchParams({ bundle: q.bundle, babies: String(q.babies), from: q.from, to: q.to })}`, { cache: "no-store" }))).days,
-  ownerPrice: async (q) =>
-    json<OwnerPrice>(
-      await fetch(`/api/admin/booking/price?${new URLSearchParams(Object.entries({ bundle: q.bundle, babies: String(q.babies), family: String(q.family), zip: q.zip ?? "", code: q.code ?? "", email: q.email ?? "" }).filter(([, v]) => v))}`, { cache: "no-store" }),
-    ),
-  ownerBook: async (input) => json<OwnerBookingResult>(await fetch("/api/admin/booking", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
+  makeBookingLink: async (input) => json<BookingLinkMade>(await fetch("/api/admin/booking-links", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) })),
   listRequests: async () => json(await fetch("/api/admin/requests", { cache: "no-store" })),
   confirmRequest: async (id, slot) => json(await fetch("/api/admin/requests", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "confirm", id, ...(slot ? { slot } : {}) }) })),
   deleteRequest: async (id) => {

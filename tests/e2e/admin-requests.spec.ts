@@ -35,6 +35,7 @@ const item = (over: Partial<RequestListItem>): RequestListItem => ({
   textConsent: true,
   made: null,
   hello: "Hi Ana! This is Tiny Humans about your session request for Saturday, November 21, 2026, 9:00 am.",
+  link: null,
   ...over,
 });
 

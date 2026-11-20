@@ -1,12 +1,10 @@
 # State (Nov 19, 2026, brief 05 session 1 of 2 done + owner requests)
 
 ## Live now
-- Site EN + /es. Ads paused; they can relaunch after OWNER-ACTIONS 7–9. Briefs 01–04 done (see DECISIONS.md).
-- Ad page /home-sweet-home (+/es): photo first, H1 by `?c=a|b|c`, "Check dates" → /book?bundle=<middle>&compare=1 +
-  the ad's parameters, price line from /admin, review, "Text us", seasonal box (no button). Bundles with "Show on the
-  ad page" on (0042). "Orlando" only in "Where we go".
-- Home (owner Nov 16) = the ad page (LandingPage `heading`): "Miami to Orlando" + "Tiny moments. Big memories.",
-  animated top; same photos as the ad page. JSON-LD keeps its own Miami→Orlando cities.
+- Site EN + /es. Briefs 01–04 done (DECISIONS.md). Ads relaunch after OWNER-ACTIONS 7–9.
+- Ad page /home-sweet-home (+/es): H1 by `?c=a|b|c`, "Check dates" → /book?bundle=<middle>&compare=1 + the ad's
+  parameters, price line, review, "Text us", seasonal box. "Show on the ad page" bundles (0042).
+- Home (owner Nov 16) = the ad page (`heading`): "Tiny moments. Big memories.", animated top.
 - /portfolio (+/es): "Little moments" photo wall. Menu: Home (house icon on phones) · Portfolio · Bundles · Book
   (→ /book). /bundles: "Not born yet? Book with your due date →" under the heading.
 - /book: bundles side by side; a bundle card's link shows that pick + Change; Check dates, the menu and Not born yet
@@ -15,11 +13,13 @@
 - Pay link (owner Nov 16): 1) the family's home (street, city, gate notes; the request's ZIP) 2) backdrops 3) deposit;
   Pay unlocks once it's saved (location_address + booking_access) → /admin Directions, calendar, emails.
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
-  (config/booking.ts `tripDays`); /book applies them once the ZIP is typed; requests and family reschedules
-  re-check; the owner's own bookings aren't limited.
+  (config/booking.ts `tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
+  bookings aren't limited.
 - /admin → Photos by page (Home and Ad Page · Portfolio · About Us · Emails) + "Copy all pictures from" a theme.
-- /admin → Leads (owner Nov 19): Confirmed/Rescheduled show the next session first, then "Date passed"; 10 days
-  after its date a session moves to Past (config/booking.ts `PAST_AFTER_DAYS`).
+- /admin → Leads (owner Nov 19): next session first, then "Date passed"; Past 10 days after (`PAST_AFTER_DAYS`).
+- /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies, ZIP,
+  day, optional time → /book?link= filled in, used once (booking_links, 0043). Requests: "From your link"; confirming
+  carries the babies and the source into the booking.
 
 ## Next: brief 05 session 2
 - Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).
@@ -34,8 +34,8 @@
   Spanish offer label "Offerta de Accion de Gracias" → "Oferta de Acción de Gracias" (/admin → Pricing).
 - "From $179.10" while the 10% Thanksgiving offer runs (ends Nov 23).
 - Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,
-  bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingFlow.errors.tripDay, Privacy
-  step-counter sentence, pay.reserved.
+  bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link,
+  bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)

@@ -11,6 +11,7 @@ import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import type { BookingRequestRow } from "@/lib/db/schema";
 import { depositOfferFor } from "@/lib/deposit/server";
 import { dueByToken } from "@/lib/due-date/server";
+import { markLinkUsed, openLinkByToken } from "@/lib/booking-links/server";
 import { dueWindow } from "@/lib/due-date/types";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { fill } from "@/lib/email/messages";
@@ -83,7 +84,10 @@ export async function createRequest(r: ValidRequest, source: RequestSource = {},
   if (r.dueToken && (!due || due.status !== "reserved" || due.packageId !== r.bundleId || r.type !== "date")) {
     throw new BookingError("invalid_request", fill(messages.bookingFlow.due.used, { phone: site.contact.phone }));
   }
-  const babyCount = due?.babyCount ?? r.babyCount;
+  // sent from the owner's booking link (owner, Nov 19): its babies; used once
+  const link = r.linkToken ? await openLinkByToken(r.linkToken, now) : null;
+  if (r.linkToken && (!link || r.type !== "date")) throw new BookingError("invalid_request", fill(messages.bookingRequest.link.used, { phone: site.contact.phone }));
+  const babyCount = due?.babyCount ?? link?.babies.length ?? r.babyCount;
 
   // price: the bundle (with any running offer) + extra babies, exactly like the booking form; never from the browser
   const pricing = await provider.quote(r.bundleId, undefined, r.email, babyCount, 0, r.dueToken);
@@ -149,6 +153,7 @@ export async function createRequest(r: ValidRequest, source: RequestSource = {},
     throw err;
   }
   log.info("requests", "Request saved", { reference: row.reference, type: row.type });
+  if (link) await markLinkUsed(link.id, row.id).catch((err) => log.error("requests", "Booking link not marked used", { reference: row.reference, error: err as Error }));
   const { lead } = await onRequestCreated(row);
   return { sent: sentOf(row), row, created: true, lead };
 }

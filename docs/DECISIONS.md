@@ -42,7 +42,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Tailwind v4 migration, tokens first, after the cuts · Carlos
 - 2026-11-14 · Texting is manual. Automation waits for a business texting line, carrier registration and lawyer-approved consent wording · Carlos
 - 2026-11-14 · Spanish stays live; fix the /es defects · Carlos
-- 2026-11-14 · Seasonal themes stay, rebuilt to be reusable: one theme = one small data entry (color tokens, optional logo overlay/decorations, optional landing hero photo), switched by hand in Settings. One photo set for the site. Seasonal offer boxes go; the one-line offer in Prices replaces them · Carlos
+- 2026-11-14 · Seasonal themes stay, reusable: one theme = one data entry (colors, logo overlay, hero photo), switched by hand. One photo set; the one-line offer in Prices replaces offer boxes · Carlos
 - 2026-11-14 · Migrations run in the production build; a failure stops the deploy · brief 01
 - 2026-11-14 · Failure alerts + daily health email → ALERT_EMAIL (support@) · owner
 - 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
@@ -53,6 +53,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-16 · Home = ad page + own title; portfolio = /portfolio (photo wall) · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-19 · Leads: sessions move to Past 10 days after their date · owner
+- 2026-11-19 · DMs: the owner sends a prefilled booking link; families type their own details · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

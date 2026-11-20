@@ -21,11 +21,11 @@ export function safeAnalyticsUrl(raw: string): string | null {
 
 /**
  * Pages whose links carry a secret token (pay, including due-date deposits, cancel, reschedule, prepare, review, waiver
- * copy, and /book's deposit-return and due-date schedule links): the Meta Pixel is never loaded or called
+ * copy, and /book's deposit-return, due-date schedule and owner booking links): the Meta Pixel is never loaded or called
  * there, so a token can't reach Meta in a page URL (brief 03).
  */
 const TOKEN_PATHS = ["/pay", "/cancel", "/reschedule", "/backdrop", "/review", "/waiver"];
-const TOKEN_PARAMS = ["t", "k", "s", "token", "deposit", "due", "d", "w", "b"];
+const TOKEN_PARAMS = ["t", "k", "s", "token", "deposit", "due", "link", "d", "w", "b"];
 
 export function pixelAllowed(pathname: string, search = ""): boolean {
   const path = pathname === "/es" ? "/" : pathname.startsWith("/es/") ? pathname.slice(3) : pathname;

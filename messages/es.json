@@ -300,7 +300,15 @@
       "confirmed": "Hola {name}, tu sesión está confirmada para {when}. Aquí está el enlace para apartarla con el depósito de {deposit}: {link}",
       "confirmedDue": "Hola {name}, guardamos tu lugar para tu fecha de parto ({date}). Aquí está el enlace para apartarlo con el depósito de {deposit}: {link}",
       "booked": "Hola {name}, ¡tu sesión quedó reservada para {when}! Te enviamos la confirmación por email.",
-      "reservedDue": "Hola {name}, ¡tu lugar para tu fecha de parto ({date}) quedó reservado! Te enviamos los detalles por email."
+      "reservedDue": "Hola {name}, ¡tu lugar para tu fecha de parto ({date}) quedó reservado! Te enviamos los detalles por email.",
+      "link": "¡Hola! Te escribe Tiny Humans. Aquí tienes tu enlace para reservar tu sesión del {when}: {link} Solo agrega tu nombre, teléfono y correo, envíala y te la confirmamos."
+    },
+    "link": {
+      "title": "Los detalles de tu sesión",
+      "body": "Ya llenamos lo que nos contaste. Revisa el día y la hora, y toca \"Siguiente: tus datos\" para agregar los tuyos.",
+      "baby": "Para {name} · {age}",
+      "babyNoName": "Para tu bebé · {age}",
+      "used": "Este enlace de reserva ya se usó o su día ya pasó. Escríbenos al {phone} y te enviamos uno nuevo."
     },
     "meta": {
       "title": "Reserva tu sesión",

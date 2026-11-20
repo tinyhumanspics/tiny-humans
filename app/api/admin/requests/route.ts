@@ -12,11 +12,14 @@ import { helloText, requestWhenText } from "@/lib/requests/texts";
 import { formatUsMobile, type RequestListItem, type RequestStatus, type RequestType } from "@/lib/requests/types";
 import { BODY_LIMITS, TOO_LARGE, readJson, tooLargeResponse } from "@/lib/security/body";
 import { isDateKey } from "@/lib/validation/date-key";
+import { OWNER_SOURCES, isOwnerSource } from "@/config/booking";
+import { linksForRequests } from "@/lib/booking-links/server";
+import type { BookingLinkRow } from "@/lib/db/schema";
 
 export const dynamic = "force-dynamic";
 const NO_STORE = { "cache-control": "no-store" } as const;
 
-const itemOf = (r: BookingRequestRow, made: RequestListItem["made"]): RequestListItem => {
+const itemOf = (r: BookingRequestRow, made: RequestListItem["made"], link?: BookingLinkRow): RequestListItem => {
   const locale = r.locale === "es" ? "es" : "en";
   return {
     id: r.id,
@@ -43,6 +46,7 @@ const itemOf = (r: BookingRequestRow, made: RequestListItem["made"]): RequestLis
     textConsent: r.textConsent,
     made,
     hello: helloText(r.firstName, requestWhenText(r, locale), locale),
+    link: link ? { source: isOwnerSource(link.source) ? OWNER_SOURCES[link.source] : link.source, babies: link.babies } : null,
   };
 };
 
@@ -51,8 +55,8 @@ export async function GET() {
   if (!(await isAdmin())) return NextResponse.json({ error: "Sign in first." }, { status: 401, headers: NO_STORE });
   try {
     const rows = await listRequests();
-    const made = await madeFor(rows);
-    const requests = rows.map((r) => itemOf(r, (r.bookingId && made.bookings.get(r.bookingId)) || (r.dueId && made.dues.get(r.dueId)) || null));
+    const [made, links] = await Promise.all([madeFor(rows), linksForRequests(rows.map((r) => r.id))]);
+    const requests = rows.map((r) => itemOf(r, (r.bookingId && made.bookings.get(r.bookingId)) || (r.dueId && made.dues.get(r.dueId)) || null, links.get(r.id)));
     return NextResponse.json({ requests }, { headers: NO_STORE });
   } catch (err) {
     if (isUndefinedTable(err)) return NextResponse.json({ requests: [], notReady: "The requests table isn't in the database yet: it arrives with the next deploy." }, { headers: NO_STORE });
