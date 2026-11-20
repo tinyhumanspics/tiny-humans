@@ -3,7 +3,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 
 ## Booking path
 - 2026-11-14 · One booking path: /book and /es/book. Every landing page, ad button, nav "Book" link and "Not born yet?" link goes there · Carlos
-- 2026-11-14 · /book is three screens: When ("Baby is here" → day + start time, or "Not born yet" → due date; bundle preselected and changeable; twins toggle) → Your details (first name, mobile, email, ZIP, all required; text-consent checkbox not pre-ticked; "Send request" on this screen, no review screen) → Request sent · Carlos
+- 2026-11-14 · /book is three screens: When (day + start time, or due date; bundle preselected, changeable; twins) → Your details (first name, mobile, email, ZIP, all required; consent box unticked; "Send request" here, no review) → Request sent · Carlos
 - 2026-11-14 · Request first: nothing is paid in the flow. The owner confirms by text (by hand for now) and sends the $50 pay link · Carlos
 - 2026-11-14 · A "Baby is here" request holds its slot 12 h. Once the owner confirms, the owner-booking 48 h hold and pay link take over · Carlos
 - 2026-11-14 · Due-date $50: if the session can't happen, the parent chooses a refund or moving it to a later session · Carlos
@@ -52,6 +52,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
 - 2026-11-16 · Home = ad page + own title; portfolio = /portfolio (photo wall) · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
+- 2026-11-19 · Leads: sessions move to Past 10 days after their date · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

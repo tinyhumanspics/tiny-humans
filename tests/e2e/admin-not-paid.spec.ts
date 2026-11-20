@@ -63,7 +63,7 @@ async function fake(page: Page) {
     return route.fulfill({
       json: {
         leads,
-        counts: { all: 1, pending: 1, confirmed: 0, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 3 },
+        counts: { all: 1, pending: 1, confirmed: 0, rescheduled: 0, cancelled: 1, completed: 0, past: 0, not_paid: 3 },
         total: leads.length,
         money: { paidThisMonthCents: 0, unpaidCount: 0 },
         ...(notPaid ? { notPaidDue: [DUE] } : {}),

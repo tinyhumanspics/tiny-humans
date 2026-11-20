@@ -133,10 +133,11 @@ export interface Lead {
 }
 
 /**
- * The Leads sections: every active lead, one status, the owner's "Completed", or "Not paid" (families missing the
- * deposit; owner, Nov 11).
+ * The Leads sections: every active lead, one status, the owner's "Completed", "Not paid" (families missing the
+ * deposit; owner, Nov 11), or "Past" (confirmed or rescheduled sessions PAST_AFTER_DAYS after their date; owner,
+ * Nov 19).
  */
-export type LeadFilter = "all" | LeadStatus | "completed" | "not_paid";
+export type LeadFilter = "all" | LeadStatus | "completed" | "not_paid" | "past";
 
 /** A "Not born yet" reservation whose deposit isn't paid (Leads → Not paid, next to the bookings). */
 export interface NotPaidDue {

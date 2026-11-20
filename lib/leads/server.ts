@@ -1,8 +1,8 @@
 import "server-only";
 import { isOwnerBooked } from "@/lib/deposit/types";
-import { and, count, desc, eq, gte, inArray, lte, ne, notInArray, sql } from "drizzle-orm";
-import { bookingRules } from "@/config/booking";
-import { todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
+import { and, count, desc, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm";
+import { PAST_AFTER_DAYS, bookingRules } from "@/config/booking";
+import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb } from "@/lib/db/client";
 import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review } from "@/lib/db/schema";
 import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
@@ -241,6 +241,8 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
 }
 
 const STATUSES: LeadStatus[] = ["pending", "confirmed", "rescheduled", "cancelled"];
+/** Bookings with a session still on: the ones that move to "Past" after their date. */
+const SESSION_STATUSES: LeadStatus[] = ["confirmed", "rescheduled"];
 
 /** Newest first. "all" = every NON-cancelled lead. Counts come from the database (all leads, not this page). */
 /**
@@ -261,24 +263,39 @@ const notPaidWhere = (today: string) => sql`exists (
 
 export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Promise<LeadList> {
   const db = getDb();
+  const today = todayInZone(bookingRules.timeZone);
   // "Completed" (owner, Nov 11): a marked lead moves out of its status section into Completed (All still lists it)
   const doneIds = [...(await completions()).keys()];
+  const notDone = doneIds.length ? notInArray(bookings.id, doneIds) : undefined;
   const active = ne(bookings.status, "cancelled");
-  const notPaid = and(notPaidWhere(todayInZone(bookingRules.timeZone)), doneIds.length ? notInArray(bookings.id, doneIds) : undefined);
+  const notPaid = and(notPaidWhere(today), notDone);
+  // "Past" (owner, Nov 19): a confirmed or rescheduled session leaves its section PAST_AFTER_DAYS after its date
+  const cutoff = addDaysKey(today, -PAST_AFTER_DAYS);
+  const past = and(inArray(bookings.status, SESSION_STATUSES), lt(bookings.sessionDate, cutoff), notDone);
+  const sessions = filter === "confirmed" || filter === "rescheduled";
   const where =
     filter === "all" ? active
     : filter === "not_paid" ? notPaid
     : filter === "completed" ? (doneIds.length ? and(active, inArray(bookings.id, doneIds)) : sql`false`)
-    : filter !== "cancelled" && doneIds.length ? and(eq(bookings.status, filter), notInArray(bookings.id, doneIds))
+    : filter === "past" ? past
+    : sessions ? and(eq(bookings.status, filter), gte(bookings.sessionDate, cutoff), notDone)
+    : filter !== "cancelled" ? and(eq(bookings.status, filter), notDone)
     : eq(bookings.status, filter);
-  const [rows, grouped, groupedDone, [notPaidCount], due] = await Promise.all([
-    db.select().from(bookings).where(where).orderBy(desc(bookings.createdAt)).limit(limit).offset(offset),
+  // Confirmed / Rescheduled: the next session first, then the ones whose date just passed (latest first); Past: latest
+  // first; the rest: newest booking first
+  const order =
+    sessions ? [sql`${bookings.sessionDate} < ${today}`, sql`case when ${bookings.sessionDate} >= ${today} then ${bookings.sessionStart} end asc nulls last`, desc(bookings.sessionStart), desc(bookings.createdAt)]
+    : filter === "past" ? [desc(bookings.sessionStart), desc(bookings.createdAt)]
+    : [desc(bookings.createdAt)];
+  const [rows, grouped, groupedDone, groupedPast, [notPaidCount], due] = await Promise.all([
+    db.select().from(bookings).where(where).orderBy(...order).limit(limit).offset(offset),
     db.select({ status: bookings.status, n: count() }).from(bookings).groupBy(bookings.status),
     doneIds.length ? db.select({ status: bookings.status, n: count() }).from(bookings).where(inArray(bookings.id, doneIds)).groupBy(bookings.status) : Promise.resolve([]),
+    db.select({ status: bookings.status, n: count() }).from(bookings).where(past).groupBy(bookings.status),
     db.select({ n: count() }).from(bookings).where(notPaid),
     notPaidDue(),
   ]);
-  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, not_paid: Number(notPaidCount?.n ?? 0) + due.length } as Record<LeadFilter, number>;
+  const counts = { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: Number(notPaidCount?.n ?? 0) + due.length } as Record<LeadFilter, number>;
   for (const g of grouped) {
     counts[g.status as LeadStatus] = Number(g.n);
     if (g.status !== "cancelled") counts.all += Number(g.n);
@@ -287,6 +304,10 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
     if (g.status === "cancelled") continue;
     counts[g.status as LeadStatus] -= Number(g.n);
     counts.completed += Number(g.n);
+  }
+  for (const g of groupedPast) {
+    counts[g.status as LeadStatus] -= Number(g.n);
+    counts.past += Number(g.n);
   }
   const ids = rows.map((r) => r.id);
   const [history, extras, money, activeContacts] = await Promise.all([
@@ -358,7 +379,7 @@ export async function getLeadRow(reference: string): Promise<Booking | null> {
   return row ?? null;
 }
 
-export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || v === "completed" || v === "not_paid" || STATUSES.includes(v as LeadStatus);
+export const isLeadFilter = (v: unknown): v is LeadFilter => v === "all" || v === "completed" || v === "not_paid" || v === "past" || STATUSES.includes(v as LeadStatus);
 
 /**
  * Permanently delete a lead (admin cleanup, e.g. test bookings). Never leaves an

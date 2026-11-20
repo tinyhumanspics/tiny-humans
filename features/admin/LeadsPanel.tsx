@@ -22,12 +22,16 @@ import { babiesLabel } from "@/lib/booking/extra-babies";
 import { familyLabel } from "@/lib/booking/family";
 import { PUBLIC_REVIEWS_MAX } from "@/lib/reviews/public";
 import { usesSummary } from "@/lib/waiver/text";
+import { PAST_AFTER_DAYS, bookingRules } from "@/config/booking";
+import { addDaysKey, todayInZone } from "@/lib/booking/timezone";
 
 /** "All" = every non-cancelled lead; cancelled leads only appear under Cancelled. */
 const FILTERS: { id: LeadFilter; label: string; alwaysShow: boolean }[] = [
   { id: "all", label: "All", alwaysShow: true },
   { id: "confirmed", label: "Confirmed", alwaysShow: true },
   { id: "rescheduled", label: "Rescheduled", alwaysShow: true },
+  // sessions PAST_AFTER_DAYS after their date leave Confirmed / Rescheduled (owner, Nov 19)
+  { id: "past", label: "Past", alwaysShow: true },
   // past clients the owner marked done (owner, Nov 11: "for email marketing")
   { id: "completed", label: "Completed", alwaysShow: true },
   // families missing the deposit, with a reminder button (owner, Nov 11)
@@ -185,10 +189,12 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     void load(filter);
   };
 
+  const today = todayInZone(bookingRules.timeZone);
   // a lead marked "Completed" (or taken back) moves section: reload the list and counts
   const onCompleted = (lead: Lead) => {
     void load(filter);
-    setSavedNote(lead.completedAt ? `${lead.parentName} moved to Completed.` : `${lead.parentName} moved back to ${STATUS_LABEL[lead.status]}.`);
+    const back = (lead.status === "confirmed" || lead.status === "rescheduled") && lead.sessionDate < addDaysKey(today, -PAST_AFTER_DAYS) ? "Past" : STATUS_LABEL[lead.status];
+    setSavedNote(lead.completedAt ? `${lead.parentName} moved to Completed.` : `${lead.parentName} moved back to ${back}.`);
   };
 
   // a deposit reminder went out: the card's button turns into "✓ Deposit reminder sent"; reload so the count and
@@ -203,10 +209,20 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
     setOpen(lead.reference);
   };
 
+  // Confirmed / Rescheduled: the coming sessions on top, the ones whose date passed under "Date passed" (owner, Nov 19)
+  const leads = data?.leads ?? [];
+  const split = filter === "confirmed" || filter === "rescheduled";
+  const upcoming = split ? leads.filter((l) => l.sessionDate >= today) : leads;
+  const passed = split ? leads.filter((l) => l.sessionDate < today) : [];
+  const card = (lead: Lead) => (
+    <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onCompleted={onCompleted} onDeleted={onDeleted}
+      onReminded={filter === "not_paid" ? onReminded : undefined} />
+  );
+
   return (
     <section className={styles.section} aria-label="Leads">
       <div className={styles.leadsTop}>
-        <p className={cn(styles.muted, "chalk-soft")}>Every booking, newest first. All shows active leads; cancelled ones stay under Cancelled as history.</p>
+        <p className={cn(styles.muted, "chalk-soft")}>{`Every booking. Confirmed and Rescheduled show the next session first; ${PAST_AFTER_DAYS} days after its date a session moves to Past. All shows active leads, newest first; cancelled ones stay under Cancelled as history.`}</p>
         <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={() => load(filter)} disabled={loading}>
           {loading ? "Loading…" : "Refresh"}
         </button>
@@ -231,18 +247,21 @@ export default function LeadsPanel({ api }: { api: AdminApi }) {
       {savedNote && <p className={cn(styles.ok, "chalk-soft")} role="status">{savedNote}</p>}
       {error && <p className={cn(styles.bannerError, "chalk-soft")} role="alert">{error}</p>}
       {filter === "not_paid" && <p className={cn(styles.hintSmall, "chalk-soft")}>{NOT_PAID_INTRO}</p>}
+      {filter === "past" && <p className={cn(styles.hintSmall, "chalk-soft")}>{`Sessions whose date was more than ${PAST_AFTER_DAYS} days ago, latest first. Mark one Completed to keep it with your past clients.`}</p>}
       {data && data.leads.length === 0 && !loading && (filter === "not_paid" ? (
         !data.notPaidDue?.length && <p className={cn(styles.hintSmall, "chalk-soft")}>Everyone has paid their deposit.</p>
       ) : (
         <p className={cn(styles.hintSmall, "chalk-soft")}>No {filter === "all" ? "" : `${filter} `}leads yet.</p>
       ))}
 
-      <ul className={styles.leadList}>
-        {data?.leads.map((lead) => (
-          <LeadCard key={lead.reference} lead={lead} api={api} open={open === lead.reference} onToggle={() => setOpen(open === lead.reference ? null : lead.reference)} onCancelled={onCancelled} onCompleted={onCompleted} onDeleted={onDeleted}
-            onReminded={filter === "not_paid" ? onReminded : undefined} />
-        ))}
-      </ul>
+      <ul className={styles.leadList}>{upcoming.map(card)}</ul>
+      {passed.length > 0 && (
+        <>
+          <h2 className={cn(styles.h3, "chalk")}>Date passed</h2>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>{`Each one moves to Past ${PAST_AFTER_DAYS} days after its date, or now if you mark it Completed.`}</p>
+          <ul className={styles.leadList}>{passed.map(card)}</ul>
+        </>
+      )}
       {filter === "not_paid" && data?.notPaidDue && <NotPaidDueList rows={data.notPaidDue} api={api} onSent={onReminded} />}
       {data && data.leads.length < data.total && (
         <button type="button" className={styles.smallButton} onClick={() => load(filter, data.leads.length)} disabled={loading}>

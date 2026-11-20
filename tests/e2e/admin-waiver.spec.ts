@@ -76,7 +76,7 @@ async function sign(page: Page, label = "Sign here with your finger") {
 test("the parent reads, chooses, signs and taps Done; the owners tap Next back to Leads", async ({ page }) => {
   await page.setViewportSize(IPAD);
   const posted = await fakeWaiver(page);
-  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, not_paid: 0 }, total: 0, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
+  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 0, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
   await page.goto(`/admin/waiver/${REF}`);
 
   await expect(page.getByRole("heading", { name: "Photo and video release", level: 1 })).toBeVisible();
@@ -169,7 +169,7 @@ test("Español: the whole form switches; nothing ticked keeps photos private", a
 test("Cancel takes two taps and goes back to Leads without saving", async ({ page }) => {
   await page.setViewportSize(IPAD);
   const posted = await fakeWaiver(page);
-  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, not_paid: 0 }, total: 0, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
+  await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 0, pending: 0, confirmed: 0, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 0, money: { paidThisMonthCents: 0, unpaidCount: 0 } } }));
   await page.goto(`/admin/waiver/${REF}`);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page).toHaveURL(new RegExp(`/admin/waiver/${REF}$`));
@@ -202,7 +202,7 @@ test("Leads: Waiver signature until signed, then ✓ Signed waiver + Sign a new 
   const familyLead = { ...noDepositLead, reference: "TH-20261008-FAMS", parentName: "Family Story", bundleName: "Our Family Story", waiverKind: "family" as const };
   const familySigned = { ...noDepositLead, reference: "TH-20261008-FAMD", parentName: "Rosa Familia", waiverKind: "family" as const, waiver: { ...SIGNED, id: "6e7f8091-1111-4222-8333-944455556666", kind: "family" as const } };
   const cancelled = { ...noDepositLead, reference: "TH-20261008-GONE", parentName: "Cancelled Family", status: "cancelled" as const };
-  const list: LeadList = { leads: [noDepositLead, signedLead, familyLead, familySigned, cancelled], counts: { all: 5, pending: 0, confirmed: 4, rescheduled: 0, cancelled: 1, completed: 0, not_paid: 0 }, total: 5, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
+  const list: LeadList = { leads: [noDepositLead, signedLead, familyLead, familySigned, cancelled], counts: { all: 5, pending: 0, confirmed: 4, rescheduled: 0, cancelled: 1, completed: 0, past: 0, not_paid: 0 }, total: 5, money: { paidThisMonthCents: 0, unpaidCount: 0 } };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
   await page.goto("/admin/leads");
 

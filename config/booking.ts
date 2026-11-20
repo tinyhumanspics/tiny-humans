@@ -37,6 +37,9 @@ export const MAX_FAMILY_MEMBERS = 14;
  */
 export const tripDays = { tripMiles: 70, sameTripMiles: 30, nextDayUntil: "12:00" } as const;
 
+/** /admin → Leads (owner, Nov 19): a confirmed or rescheduled session moves to "Past" this many days after its date. */
+export const PAST_AFTER_DAYS = 10;
+
 /**
  * Fixed booking settings. The *changeable* rules (weekly hours, notice,
  * booking window, buffer, special dates, time blocks) are managed by the
