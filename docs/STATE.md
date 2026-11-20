@@ -1,4 +1,4 @@
-# State (Nov 19, 2026, brief 05 session 1 of 2 done + owner requests)
+# State (Nov 20, 2026, brief 05 session 1 of 2 done + owner requests)
 
 ## Live now
 - Site EN + /es. Briefs 01–04 done (DECISIONS.md). Ads relaunch after OWNER-ACTIONS 7–9.
@@ -13,13 +13,13 @@
 - Pay link: 1) home (street, city, gate notes; the request's ZIP) + baby name and boy/girl (optional, Nov 19)
   2) backdrops 3) deposit; Pay unlocks once the home is saved → /admin Directions, calendar, emails.
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
-  (config/booking.ts `tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
+  (`tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
   bookings aren't limited.
 - /admin → Photos by page + "Copy all pictures from" a theme.
-- /admin → Leads (owner Nov 19): next session first, then "Date passed"; Past 10 days after (`PAST_AFTER_DAYS`).
+- /admin → Leads opens on Confirmed (Nov 20): next session first, then "Date passed"; Past 10 days after.
 - /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies (age,
   name, boy/girl), ZIP, day, optional time → /book?link= filled in, used once (0043). Confirming carries them over.
-- Boy or girl (owner Nov 19): required on the link form; optional on the pay link and Prepare.
+- Boy or girl (owner Nov 19): required on the link form; optional on the pay link and Prepare; on the Leads card.
 
 ## Next: brief 05 session 2
 - Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).

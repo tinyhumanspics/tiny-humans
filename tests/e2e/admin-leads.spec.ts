@@ -9,15 +9,18 @@ const list = (all: number): LeadList => ({
   money: { paidThisMonthCents: 0, unpaidCount: 0 },
 });
 
-test("a quick filter change keeps the newest leads list", async ({ page }, testInfo) => {
+test("Leads opens on Confirmed (owner, Nov 20); a quick filter change keeps the newest leads list", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
   await page.route("**/api/admin/session", (route) =>
     route.fulfill({ json: { authenticated: true, authConfigured: true, storageConfigured: true } }),
   );
   await page.route("**/api/admin/settings", (route) => route.fulfill({ json: defaultSettings }));
-  // the first ("All") answer is slow; the owner switches to "Confirmed" before it arrives
+  // the first ("Confirmed", where it opens) answer is slow; the owner switches to "All" before it arrives
+  const asked: (string | null)[] = [];
   await page.route("**/api/admin/leads?*", async (route) => {
-    if (new URL(route.request().url()).searchParams.get("status") === "all") {
+    const status = new URL(route.request().url()).searchParams.get("status");
+    asked.push(status);
+    if (status === "confirmed") {
       await new Promise((resolve) => setTimeout(resolve, 2500));
       return route.fulfill({ json: list(7) });
     }
@@ -25,11 +28,13 @@ test("a quick filter change keeps the newest leads list", async ({ page }, testI
   });
 
   await page.goto("/admin/leads");
-  await page.getByRole("button", { name: /^Confirmed/ }).click();
+  await expect(page.getByRole("button", { name: /^Confirmed/ })).toHaveAttribute("aria-pressed", "true");
+  expect(asked[0]).toBe("confirmed");
+  await page.getByRole("button", { name: /^All/ }).click();
   await expect(page.getByRole("button", { name: "All (3)" })).toBeVisible();
   await page.waitForTimeout(3000); // the old filter's answer arrives and must be ignored
   await expect(page.getByRole("button", { name: "All (3)" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Confirmed (0)" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "All (3)" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("Completed: tap the pill before the status and the lead moves to Completed (owner, Nov 11)", async ({ page }, testInfo) => {

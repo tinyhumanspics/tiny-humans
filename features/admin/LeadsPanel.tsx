@@ -18,7 +18,7 @@ import { smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
-import { babiesLabel } from "@/lib/booking/extra-babies";
+import { babiesLabel, babiesShort } from "@/lib/booking/extra-babies";
 import { familyLabel } from "@/lib/booking/family";
 import { PUBLIC_REVIEWS_MAX } from "@/lib/reviews/public";
 import { usesSummary } from "@/lib/waiver/text";
@@ -124,6 +124,12 @@ const duplicateLine = (lead: Lead) => {
     .filter(Boolean)
     .join("; ");
 };
+/** The card's baby part, with boy or girl once the family says (owner, Nov 20): " · Baby: Mia (Girl)", " · 2 babies: Baby 1 (Boy), Baby 2 (Girl)". */
+const babyCard = (lead: Lead): string => {
+  const babies = lead.babies?.length ? lead.babies : [{ name: lead.babyName ?? undefined, age: lead.babyAge }];
+  const said = babiesShort(babies);
+  return babies.length > 1 ? ` · ${babies.length} babies${said ? `: ${said}` : ""}` : said ? ` · Baby: ${said}` : "";
+};
 const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
 /** Reminder emails for the current session time (none in mock mode, where nothing is sent). */
 const reminderRows = (lead: Lead): [string, string][] => {
@@ -134,7 +140,8 @@ const reminderRows = (lead: Lead): [string, string][] => {
 
 /** Owner area: every booking/lead, filterable, with details and admin cancellation. */
 export default function LeadsPanel({ api }: { api: AdminApi }) {
-  const [filter, setFilter] = useState<LeadFilter>("all");
+  // opens on Confirmed, the sessions coming up (owner, Nov 20)
+  const [filter, setFilter] = useState<LeadFilter>("confirmed");
   // "Due dates" ("Not born yet" reservations) shows its own list instead of the bookings (?view=due opens it)
   const [dueView, setDueView] = useState(false);
   const [dueWaiting, setDueWaiting] = useState<number | null>(null);
@@ -409,7 +416,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
       </p>
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {lead.email} · {lead.phone}
-        {lead.babies && lead.babies.length > 1 ? ` · ${lead.babies.length} babies` : lead.babyName ? ` · Baby: ${lead.babyName}` : ""}
+        {babyCard(lead)}
         {lead.family?.length ? ` · +${lead.family.length} family` : ""} · At home in {city}
       </p>
       {onReminded && <DepositReminder lead={lead} api={api} onSent={onReminded} onDelete={() => setConfirmDelete(true)} />}

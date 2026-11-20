@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { babiesLabel } from "@/lib/booking/extra-babies";
+import { babiesLabel, babiesShort } from "@/lib/booking/extra-babies";
 import { bookingBabiesLabel } from "@/lib/booking/customer-page-format";
 import { customerBabiesLabel } from "@/lib/email/customer-format";
 import { sanitizeLogFields } from "@/lib/security/logging";
@@ -19,6 +19,15 @@ describe("baby gender (optional, boy or girl)", () => {
     expect(customerBabiesLabel([{ name: "Mia", age: "", gender: "girl" }], "en")).toBe("Mia (Girl)");
     expect(bookingBabiesLabel([{ name: "Mia", age: "", gender: "girl" }], en.bookingFlow.details)).toBe("Mia (Girl)");
     expect(customerBabiesLabel([{ name: "Mia", age: "" }], "en")).toBe("Mia");
+  });
+
+  test("the Leads card shows names and boy or girl, once the family says (owner, Nov 20)", () => {
+    expect(babiesShort([{ name: "Mia", age: "", gender: "girl" }])).toBe("Mia (Girl)");
+    expect(babiesShort([{ age: "", gender: "boy" }])).toBe("Boy");
+    expect(babiesShort([{ name: "Mia", age: "Newborn (0–2 weeks)" }])).toBe("Mia");
+    expect(babiesShort([{ age: "" }])).toBe("");
+    expect(babiesShort([{ age: "", gender: "boy" }, { age: "", gender: "girl" }])).toBe("Baby 1 (Boy), Baby 2 (Girl)");
+    expect(babiesShort([{ age: "" }, { age: "" }])).toBe("");
   });
 
   test("server logs never keep it", () => {

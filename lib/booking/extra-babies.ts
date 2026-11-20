@@ -93,6 +93,18 @@ export function babiesLabel(babies: BookingBaby[]): string {
     .join(", ");
 }
 
+/** The Leads card's short form: names and boy or girl, no ages ("Mia (Girl)", "Girl", "Baby 1 (Boy), Baby 2 (Girl)"); "" when the family said neither. */
+export function babiesShort(babies: BookingBaby[]): string {
+  if (!babies.some((b) => b.name?.trim() || b.gender)) return "";
+  return babies
+    .map((baby, i) => {
+      const gender = baby.gender ? OWNER_GENDERS[baby.gender] : "";
+      const name = baby.name?.trim() || (babies.length > 1 ? `Baby ${i + 1}` : "");
+      return name && gender ? `${name} (${gender})` : name || gender;
+    })
+    .join(", ");
+}
+
 export function babyNames(babies: BookingBaby[], conjunction = "and"): string | null {
   const names = babies.map((b) => b.name?.trim()).filter((n): n is string => Boolean(n));
   if (!names.length) return null;
