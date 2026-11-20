@@ -10,8 +10,8 @@
 - /book: bundles side by side; a bundle card's link shows that pick + Change; Check dates, the menu and Not born yet
   open the comparison (middle bundle checked, calendar showing). Twins line shows the extra minutes/photos. Timing
   copy: "after baby's first two weeks" (owner).
-- Pay link (owner Nov 16): 1) the family's home (street, city, gate notes; the request's ZIP) 2) backdrops 3) deposit;
-  Pay unlocks once it's saved (location_address + booking_access) → /admin Directions, calendar, emails.
+- Pay link: 1) home (street, city, gate notes; the request's ZIP) + baby name and boy/girl (optional, Nov 19)
+  2) backdrops 3) deposit; Pay unlocks once the home is saved → /admin Directions, calendar, emails.
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
   (config/booking.ts `tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
   bookings aren't limited.
@@ -19,7 +19,7 @@
 - /admin → Leads (owner Nov 19): next session first, then "Date passed"; Past 10 days after (`PAST_AFTER_DAYS`).
 - /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies (age,
   name, boy/girl), ZIP, day, optional time → /book?link= filled in, used once (0043). Confirming carries them over.
-- Boy or girl (owner Nov 19): required on the link form, optional on Prepare (booking_baby_genders).
+- Boy or girl (owner Nov 19): required on the link form; optional on the pay link and Prepare.
 
 ## Next: brief 05 session 2
 - Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).

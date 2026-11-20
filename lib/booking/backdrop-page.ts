@@ -3,14 +3,14 @@ import { and, eq } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { setupsOf } from "@/config/backdrops";
 import { getDb } from "@/lib/db/client";
-import { bookingAccess, bookingBabies, bookingBabyGenders, bookingConsents, bookings, type Booking } from "@/lib/db/schema";
+import { bookingAccess, bookingBabies, bookingConsents, bookings, type Booking } from "@/lib/db/schema";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { internalBackdropEmail } from "@/lib/email";
 import { log } from "@/lib/log";
 import { isMicrosoftConfigured } from "@/lib/microsoft/config";
 import { updateCalendarEventBody } from "@/lib/microsoft/calendar";
 import { accessFor } from "./access";
-import { babiesFor } from "./addons";
+import { babiesFor, saveBabyGenders, type GenderChoice } from "./addons";
 import { backdropsFor, saveBackdrops } from "./backdrops";
 import { findByCancelToken } from "./cancellation";
 import { BookingError } from "./errors";
@@ -44,7 +44,7 @@ export interface BackdropView {
   /** One per baby. */
   babyNames: string[];
   /** Boy or girl per baby ("" = not said); empty when the booking has no baby rows to attach it to. */
-  babyGenders: ("boy" | "girl" | "")[];
+  babyGenders: GenderChoice[];
   /** "OK to feature our photos" (unticked = no). */
   photos: boolean;
 }
@@ -54,7 +54,7 @@ export interface PrepareInput {
   picks: string[];
   home?: { street: string; city: string; accessNotes?: string };
   babyNames?: string[];
-  babyGenders?: ("boy" | "girl" | "")[];
+  babyGenders?: GenderChoice[];
   photos?: boolean;
 }
 
@@ -135,19 +135,7 @@ export async function saveBackdropsWithToken(token: string, input: PrepareInput)
       changed = true;
     }
   }
-  if (input.babyGenders && old.babyGenders.length) {
-    const genders = old.babyGenders.map((g, i) => input.babyGenders![i] ?? g);
-    await Promise.all(
-      genders.map((gender, position) =>
-        gender === old.babyGenders[position]
-          ? null
-          : gender
-            ? db.insert(bookingBabyGenders).values({ bookingId: row.id, position, gender }).onConflictDoUpdate({ target: [bookingBabyGenders.bookingId, bookingBabyGenders.position], set: { gender } })
-            : db.delete(bookingBabyGenders).where(and(eq(bookingBabyGenders.bookingId, row.id), eq(bookingBabyGenders.position, position))),
-      ),
-    );
-    if (genders.join() !== old.babyGenders.join()) changed = true;
-  }
+  if (input.babyGenders && old.babyGenders.length && (await saveBabyGenders(row.id, old.babyGenders, input.babyGenders))) changed = true;
   if (input.photos !== undefined && input.photos !== old.photos) {
     const photosAt = input.photos ? new Date() : null;
     await db.insert(bookingConsents).values({ bookingId: row.id, photos: input.photos, photosAt }).onConflictDoUpdate({ target: bookingConsents.bookingId, set: { photos: input.photos, photosAt } });

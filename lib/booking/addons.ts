@@ -1,5 +1,5 @@
 import "server-only";
-import { inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
 import { isBabyGender } from "@/config/booking";
 import { bookingAddons, bookingBabies, bookingBabyGenders, bookingFamilyMembers } from "@/lib/db/schema";
@@ -27,6 +27,28 @@ export async function saveBookingAddons(bookingId: string, babies: BookingBaby[]
       ? db.insert(bookingBabyGenders).values(genders).onConflictDoNothing().catch((err) => log.error("booking.db", "Baby genders not saved", { reference, error: reason(err) }))
       : null,
   ]);
+}
+
+/** Boy or girl per baby as a family's pages show it ("" = not said). */
+export type GenderChoice = "boy" | "girl" | "";
+
+/**
+ * A family's own boy-or-girl answers (owner, Nov 19: the pay link and the Prepare page), by the baby's position: saved,
+ * changed or cleared. Returns whether anything changed.
+ */
+export async function saveBabyGenders(bookingId: string, before: GenderChoice[], next: GenderChoice[]): Promise<boolean> {
+  const db = getDb();
+  const genders = before.map((g, i) => next[i] ?? g);
+  await Promise.all(
+    genders.map((gender, position) =>
+      gender === before[position]
+        ? null
+        : gender
+          ? db.insert(bookingBabyGenders).values({ bookingId, position, gender }).onConflictDoUpdate({ target: [bookingBabyGenders.bookingId, bookingBabyGenders.position], set: { gender } })
+          : db.delete(bookingBabyGenders).where(and(eq(bookingBabyGenders.bookingId, bookingId), eq(bookingBabyGenders.position, position))),
+    ),
+  );
+  return genders.join() !== before.join();
 }
 
 export async function babiesFor(ids: string[]): Promise<Map<string, BookingBaby[]>> {

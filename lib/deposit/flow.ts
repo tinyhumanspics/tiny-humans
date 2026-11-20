@@ -15,7 +15,8 @@ import { busyExcluding } from "@/lib/booking/reschedule";
 import { noticeHoursFor } from "@/lib/booking/terms";
 import type { BookingResult } from "@/lib/booking/types";
 import { getDb, isOverlapViolation, isUniqueViolation } from "@/lib/db/client";
-import { bookingAccess, bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
+import { bookingAccess, bookingBabies, bookingDeposits, bookingEmails, bookings, discountCodes, type Booking, type BookingDeposit } from "@/lib/db/schema";
+import { babiesFor, saveBabyGenders, type GenderChoice } from "@/lib/booking/addons";
 import { formatAddress } from "@/lib/booking/templates";
 import { depositAbandonedEmail, depositLinkEmail, internalDepositUnpaidEmail, ownerBookedEmail, ownerBookedSms } from "@/lib/email";
 import type { OwnerBookedDetails } from "@/emails/OwnerBooked";
@@ -33,7 +34,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
 import { dbReason, depositOf, isMissingTable } from "./server";
-import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState, type LinkHome } from "./types";
+import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState, type LinkBaby, type LinkHome } from "./types";
 import { setupsOf } from "@/config/backdrops";
 import { backdropsFor, saveBackdrops } from "@/lib/booking/backdrops";
 import { getCatalog } from "@/lib/pricing/server";
@@ -167,12 +168,17 @@ async function linkHomeOf(row: Booking): Promise<LinkHome> {
   return { ...homeOf(row.locationAddress), accessNotes: access?.notes ?? "" };
 }
 
+/** The babies on a link: name and boy or girl, as saved (none = the booking has no baby rows). */
+async function linkBabiesOf(bookingId: string): Promise<LinkBaby[]> {
+  return ((await babiesFor([bookingId])).get(bookingId) ?? []).map((b) => ({ name: b.name ?? "", gender: b.gender ?? "" }));
+}
+
 /**
  * The family's home on their link, before the deposit (owner, Nov 16: no more texting the address): saved on the booking,
  * so /admin's Directions, the calendar event (made when the deposit is paid) and the emails all have it. The ZIP stays
- * the request's (the travel fee was priced on it).
+ * the request's (the travel fee was priced on it). With it, optionally, each baby's name and boy or girl (owner, Nov 19).
  */
-export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }): Promise<LinkHome> {
+export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }, babies?: { name?: string; gender?: GenderChoice }[]): Promise<{ home: LinkHome; babies: LinkBaby[] }> {
   const db = getDb();
   const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
   if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
@@ -182,7 +188,14 @@ export async function saveLinkHome(reference: string, input: { street: string; c
   await (notes
     ? db.insert(bookingAccess).values({ bookingId: row.id, notes }).onConflictDoUpdate({ target: bookingAccess.bookingId, set: { notes } })
     : db.delete(bookingAccess).where(eq(bookingAccess.bookingId, row.id)));
-  return { ...homeOf(line), accessNotes: notes };
+  const before = await linkBabiesOf(row.id);
+  if (babies && before.length) {
+    const names = before.map((b, i) => babies[i]?.name?.trim() ?? b.name);
+    await Promise.all(names.map((name, position) => (name === before[position].name ? null : db.update(bookingBabies).set({ name: name || null }).where(and(eq(bookingBabies.bookingId, row.id), eq(bookingBabies.position, position))))));
+    if (names[0] !== before[0].name) await db.update(bookings).set({ babyName: names[0] || null, updatedAt: new Date() }).where(eq(bookings.id, row.id));
+    await saveBabyGenders(row.id, before.map((b) => b.gender), before.map((b, i) => babies[i]?.gender ?? b.gender));
+  }
+  return { home: { ...homeOf(line), accessNotes: notes }, babies: babies && before.length ? await linkBabiesOf(row.id) : before };
 }
 
 /** The family's backdrop picks on their link (a booking the owner made, still waiting on its deposit). */
@@ -648,8 +661,8 @@ export async function depositReturnState(reference: string, client: ClientContex
     const waiting = { state: "waiting" as const, amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };
     if (!isOwnerBooked(row)) return waiting;
     // booked by the owner: the family adds their home address and picks their backdrops here, then pays
-    const [bundle, saved, home] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => []), linkHomeOf(row)]);
-    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] }, home };
+    const [bundle, saved, home, babies] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => []), linkHomeOf(row), linkBabiesOf(row.id).catch(() => [])]);
+    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] }, home, babies };
   }
   if (deposit?.status === "expired") return { state: "expired", date: row.sessionDate, start, bundleName: row.packageName };
   return { state: "invalid" };

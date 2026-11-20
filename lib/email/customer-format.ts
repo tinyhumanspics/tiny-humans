@@ -27,7 +27,11 @@ export function customerBabiesLabel(babies: BookingBaby[], locale: EmailLocale):
   const m = emailMessages(locale).common;
   const ages = m.ages as Record<string, string>;
   return babies
-    .map((baby, index) => `${baby.name?.trim() || fill(m.babyNumber, { number: String(index + 1) })} (${baby.gender ? `${m.genders[baby.gender]}, ` : ""}${ages[baby.age] ?? baby.age})`)
+    .map((baby, index) => {
+      // a website request has no age yet: "Mia (Girl)", never "Mia (Girl, )"
+      const about = [baby.gender ? m.genders[baby.gender] : "", ages[baby.age] ?? baby.age].filter(Boolean).join(", ");
+      return `${baby.name?.trim() || fill(m.babyNumber, { number: String(index + 1) })}${about ? ` (${about})` : ""}`;
+    })
     .join(", ");
 }
 

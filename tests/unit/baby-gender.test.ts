@@ -15,6 +15,10 @@ describe("baby gender (optional, boy or girl)", () => {
       "Bebé 1 (Niño, 2–6 semanas), Bebé 2 (2–6 semanas)",
     );
     expect(customerBabiesLabel(babies, "es")).toBe("Luna (Niña, Recién nacido (0–2 semanas)), Bebé 2 (Aún no ha nacido)");
+    // a website request has no age yet (owner, Nov 19): no empty slot after the comma
+    expect(customerBabiesLabel([{ name: "Mia", age: "", gender: "girl" }], "en")).toBe("Mia (Girl)");
+    expect(bookingBabiesLabel([{ name: "Mia", age: "", gender: "girl" }], en.bookingFlow.details)).toBe("Mia (Girl)");
+    expect(customerBabiesLabel([{ name: "Mia", age: "" }], "en")).toBe("Mia");
   });
 
   test("server logs never keep it", () => {

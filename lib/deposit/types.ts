@@ -91,10 +91,18 @@ export type DepositReturnState =
       backdrops?: { allowed: number; picks: string[] };
       /** Their home as saved (owner Nov 16: asked on this page before the deposit; the ZIP comes from the request). */
       home?: LinkHome;
+      /** One per baby: the name and boy or girl, both optional (owner, Nov 19); empty = nothing to ask. */
+      babies?: LinkBaby[];
     }
   /** Never paid: the time was released. */
   | { state: "expired"; date: string; start: string; bundleName: string }
   | { state: "invalid" };
+
+/** A baby on the deposit link: the name and boy or girl ("" = not said). */
+export interface LinkBaby {
+  name: string;
+  gender: "boy" | "girl" | "";
+}
 
 /** A family's home on their deposit link: street (with apt or unit), city, the request's ZIP, gate / parking notes. */
 export interface LinkHome {

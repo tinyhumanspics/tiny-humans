@@ -54,7 +54,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-19 · Leads: sessions move to Past 10 days after their date · owner
 - 2026-11-19 · DMs: the owner sends a prefilled booking link; families type their own details · owner
-- 2026-11-19 · Boy or girl: asked on the link form and the Prepare page (optional there) · owner
+- 2026-11-19 · Boy or girl: link form (required), pay link and Prepare page (optional) · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

@@ -421,3 +421,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 .ownerHome { display: grid; gap: 12px; text-align: left; }
 .ownerHome .input { width: 100%; }
 .ownerHome .ownerStepNote { margin: 0; text-align: left; }
+.ownerBabies { display: grid; gap: 12px; margin: 4px 0 0; padding: 0; border: 0; min-width: 0; }
+.ownerBabies > legend { padding: 0; margin-bottom: 8px; }
+.ownerBaby { display: grid; gap: 12px; }

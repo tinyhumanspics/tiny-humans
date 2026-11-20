@@ -17,8 +17,9 @@ export function bookingBabiesLabel(babies: BabyLike[], messages: typeof en.booki
     .map((baby, index) => {
       const ageIndex = babyAgeOptions.indexOf(baby.age as (typeof babyAgeOptions)[number]);
       const age = ageIndex >= 0 ? messages.baby.ageOptions[ageIndex] : baby.age;
-      const gender = baby.gender ? `${messages.baby.genders[baby.gender]}, ` : "";
-      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })} (${gender}${age})`;
+      // a website request has no age yet: "Mia (Girl)", never "Mia (Girl, )"
+      const about = [baby.gender ? messages.baby.genders[baby.gender] : "", age].filter(Boolean).join(", ");
+      return `${baby.name?.trim() || fill(messages.baby.number, { number: String(index + 1) })}${about ? ` (${about})` : ""}`;
     })
     .join(", ");
 }

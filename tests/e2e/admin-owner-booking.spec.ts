@@ -10,14 +10,14 @@ const WCAG_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 const day = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date(Date.now() + 9 * 864e5));
 const LINK = "/book?bundle=our-little-story&deposit=TH-20261112-4459&k=sig";
 
-test("the mom's link: her home address (owner, Nov 16), her backdrops (two for Our Little Story), then the deposit opens Stripe", async ({ page }) => {
-  const waiting: DepositReturnState = { state: "waiting", amountCents: 5000, holdUntil: new Date(Date.now() + 47 * 3_600_000).toISOString(), date: day, start: "13:00", end: "15:00", bundleName: "Our Little Story", payUrl: null, ownerBooked: true, backdrops: { allowed: 2, picks: [] }, home: { street: "", city: "", zip: "33139", accessNotes: "" } };
+test("the mom's link: her home address (owner, Nov 16) and baby (optional, Nov 19), her backdrops (two for Our Little Story), then the deposit opens Stripe", async ({ page }) => {
+  const waiting: DepositReturnState = { state: "waiting", amountCents: 5000, holdUntil: new Date(Date.now() + 47 * 3_600_000).toISOString(), date: day, start: "13:00", end: "15:00", bundleName: "Our Little Story", payUrl: null, ownerBooked: true, backdrops: { allowed: 2, picks: [] }, home: { street: "", city: "", zip: "33139", accessNotes: "" }, babies: [{ name: "", gender: "" }] };
   await page.route("**/api/booking/deposit/status?*", (route) => route.fulfill({ json: waiting }));
   const homes: unknown[] = [];
   await page.route("**/api/booking/deposit/home", (route) => {
-    const body = route.request().postDataJSON() as { b: string; k: string; home: { street: string; city: string; accessNotes: string } };
+    const body = route.request().postDataJSON() as { b: string; k: string; home: { street: string; city: string; accessNotes: string }; babies?: { name: string; gender: string }[] };
     homes.push(body);
-    return route.fulfill({ json: { home: { ...body.home, zip: "33139" } } });
+    return route.fulfill({ json: { home: { ...body.home, zip: "33139" }, babies: body.babies ?? [] } });
   });
   const saved: unknown[] = [];
   await page.route("**/api/booking/deposit/backdrops", (route) => {
@@ -29,11 +29,11 @@ test("the mom's link: her home address (owner, Nov 16), her backdrops (two for O
   await page.route("**/fake-stripe-page", (route) => route.fulfill({ contentType: "text/html", body: '<!doctype html><html lang="en"><title>Stripe</title><h1>Stripe page</h1></html>' }));
   await page.goto(LINK);
   await expect(page.getByRole("heading", { name: "We saved your session!" })).toBeVisible();
-  await expect(page.getByText("Three quick steps to confirm it: tell us where you live, pick your backdrop, then pay the $50 deposit.", { exact: false })).toBeVisible();
+  await expect(page.getByText("Three quick steps to confirm it: tell us where you live (and your baby's name, if you like), pick your backdrop, then pay the $50 deposit.", { exact: false })).toBeVisible();
   const pay = page.getByRole("button", { name: "Pay the $50 deposit" });
   await expect(pay).toBeDisabled();
   // 1. her home: no texting the address (the ZIP is the request's)
-  await expect(page.getByRole("heading", { name: "1. Your home" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "1. Your home and baby" })).toBeVisible();
   await expect(page.getByText("ZIP code 33139.", { exact: false })).toBeVisible();
   await expect(page.getByText("Add your home address above first.")).toBeVisible();
   await page.getByRole("button", { name: "Save and continue" }).first().click();
@@ -41,9 +41,14 @@ test("the mom's link: her home address (owner, Nov 16), her backdrops (two for O
   await page.getByLabel("Street address (and apt or unit)").fill("1500 Bay Rd, Apt 1204");
   await page.getByLabel("City").fill("Miami Beach");
   await page.getByLabel(/Gate code, parking/).fill("Gate 4321");
+  // her baby: optional (owner, Nov 19)
+  await expect(page.getByRole("group", { name: "Your baby (optional)" })).toBeVisible();
+  await page.getByLabel("Baby's name").fill("Mia");
+  await expect(page.getByLabel("Boy or girl").locator("option")).toHaveText(["Choose…", "Boy", "Girl"]);
+  await page.getByLabel("Boy or girl").selectOption({ label: "Girl" });
   await page.getByRole("button", { name: "Save and continue" }).first().click();
-  await expect(page.getByText("We'll come to 1500 Bay Rd, Apt 1204, Miami Beach, FL 33139.")).toBeVisible();
-  expect(homes).toEqual([{ b: "TH-20261112-4459", k: "sig", home: { street: "1500 Bay Rd, Apt 1204", city: "Miami Beach", accessNotes: "Gate 4321" } }]);
+  await expect(page.getByText("We'll come to 1500 Bay Rd, Apt 1204, Miami Beach, FL 33139. For Mia · Girl.")).toBeVisible();
+  expect(homes).toEqual([{ b: "TH-20261112-4459", k: "sig", home: { street: "1500 Bay Rd, Apt 1204", city: "Miami Beach", accessNotes: "Gate 4321" }, babies: [{ name: "Mia", gender: "girl" }] }]);
   await expect(pay).toBeDisabled();
   await expect(page.getByRole("heading", { name: "2. Your backdrops" })).toBeVisible();
   const picker = page.getByRole("group", { name: "Pick your backdrops" });

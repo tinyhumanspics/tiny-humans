@@ -588,8 +588,16 @@
     "depositReturn": {
       "bookedSubtitle": "Tres pasos rápidos y tu sesión queda reservada.",
       "bookedTitle": "¡Guardamos tu sesión!",
-      "bookedText": "{bundle} el {date} a las {time}, en tu casa. Tres pasos rápidos para confirmarla: dinos dónde vives, elige tu fondo y luego paga el depósito de {deposit}. Te la guardamos hasta el {until} (hora de Miami).",
-      "stepHome": "1. Tu casa",
+      "bookedText": "{bundle} el {date} a las {time}, en tu casa. Tres pasos rápidos para confirmarla: dinos dónde vives (y el nombre de tu bebé, si quieres), elige tu fondo y luego paga el depósito de {deposit}. Te la guardamos hasta el {until} (hora de Miami).",
+      "stepHome": "1. Tu casa y tu bebé",
+      "baby": "Tu bebé (opcional)",
+      "babyName": "Nombre del bebé",
+      "babyNameN": "Bebé {n}: nombre",
+      "babyN": "Bebé {n}",
+      "gender": "¿Niño o niña?",
+      "genderN": "Bebé {n}: ¿niño o niña?",
+      "chooseGender": "Elegir…",
+      "babySaved": "Para {list}.",
       "street": "Dirección (y apartamento o unidad)",
       "city": "Ciudad",
       "zip": "Código postal {zip}. ¿Es otro código postal? Escríbenos al {phone}.",
@@ -1129,15 +1137,15 @@
       },
       "booked": {
         "subject": "Guardamos tu sesión de Tiny Humans",
-        "preheader": "Elige tu fondo y paga el depósito de {deposit} para confirmar el {date} a las {time}.",
-        "eyebrow": "Dos pasos rápidos",
+        "preheader": "Agrega tu dirección, elige tu fondo y paga el depósito de {deposit} para confirmar el {date} a las {time}.",
+        "eyebrow": "Tres pasos rápidos",
         "title": "¡Guardamos tu sesión, {name}!",
-        "intro": "{bundle} el {date} a las {time}, en tu casa. Para confirmarla: elige tu fondo y luego paga el depósito de {deposit}. El resto se paga después de tu sesión.",
+        "intro": "{bundle} el {date} a las {time}, en tu casa. Para confirmarla: agrega la dirección de tu casa, elige tu fondo y luego paga el depósito de {deposit}. El resto se paga después de tu sesión.",
         "hold": "Te guardamos este horario hasta el {until} (hora de Miami).",
         "button": "Terminar mi reserva",
         "buttonText": "Termina tu reserva: {url}",
         "help": "¿Preguntas? Responde a este correo o escríbenos al {phone}.",
-        "smsBody": "¡Hola {name}! Guardamos el {date} a las {time} para tu sesión de Tiny Humans. Elige tu fondo y paga el depósito de {deposit} para confirmarla aquí: {url}"
+        "smsBody": "¡Hola {name}! Guardamos el {date} a las {time} para tu sesión de Tiny Humans. Agrega tu dirección, elige tu fondo y paga el depósito de {deposit} para confirmarla aquí: {url}"
       },
       "abandoned": {
         "subject": "Tu sesión de Tiny Humans todavía no está reservada",
