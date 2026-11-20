@@ -17,6 +17,9 @@ import { backdropsFor } from "./backdrops";
 import { canChangeBackdrop } from "./backdrop-page";
 import { addDaysKey, todayInZone } from "./timezone";
 import { depositsFor } from "@/lib/deposit/server";
+import { getCatalog, getPublicCatalog } from "@/lib/pricing/server";
+import type { AppLocale } from "@/i18n/config";
+import { includesSiblings } from "./bundle-traits";
 
 /**
  * Session reminders, sent by a once-a-day cron (Vercel Hobby). Everything is decided at send time from the booking
@@ -99,7 +102,17 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
   if (!due.length) return result;
 
   const dueIds = due.map((d) => d.row.id);
-  const [rules, themeId, terms, access, picks, deposits] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(dueIds), accessFor(dueIds), backdropsFor(dueIds), depositsFor(dueIds)]);
+  const [rules, themeId, terms, access, picks, deposits, catalog] = await Promise.all([getAvailabilityRules(), getSiteSettings().then((s) => s.themeId).catch(() => "default"), termsFor(dueIds), accessFor(dueIds), backdropsFor(dueIds), depositsFor(dueIds), getCatalog().catch(() => [])]);
+  // the 24-hour reminder's family line (owner, Nov 20): bundles that include family, named in the booking's language
+  const names = new Map<string, Promise<Map<string, string>>>();
+  const nameIn = (locale: string, bundleId: string) => {
+    if (!names.has(locale)) names.set(locale, getPublicCatalog(locale as AppLocale).then((c) => new Map(c.bundles.map((b) => [b.id, b.name]))).catch(() => new Map<string, string>()));
+    return names.get(locale)!.then((m) => m.get(bundleId));
+  };
+  const familyBundleOf = async (row: Booking, kind: ReminderKind) => {
+    const bundle = catalog.find((b) => b.id === row.packageId);
+    return kind === "24h" && bundle && includesSiblings(bundle) ? ((await nameIn(row.locale, row.packageId)) ?? row.packageName) : null;
+  };
   for (const { row, kind } of due) {
     const reference = row.bookingReference;
     const [claim] = await db
@@ -127,7 +140,7 @@ export async function runReminders(opts: { secret: string; now?: Date; dryRun?: 
       }
       const mail = await sessionReminderEmail(
         kind,
-        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks, depositPaid: deposits.some((d) => d.bookingId === row.id && d.status === "paid") },
+        { reference, parentName: row.parentName, bundleName: row.packageName, date: row.sessionDate, start: managed.start, end: managed.end, location: row.locationAddress, accessNotes: access.find((a) => a.bookingId === row.id)?.notes, backdrops: picks.find((b) => b.bookingId === row.id)?.picks, depositPaid: deposits.some((d) => d.bookingId === row.id && d.status === "paid"), familyBundle: await familyBundleOf(row, kind) },
         { themeId, today, rescheduleUrl, backdropUrl, rescheduleNoticeHours: managed.rescheduleNoticeHours, locale: row.locale },
       );
       const { id } = await sendEmail({

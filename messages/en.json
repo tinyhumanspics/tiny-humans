@@ -994,8 +994,8 @@
       "title": "Your Home Session Prep Guide",
       "items": [
         "Warm the room you'd like photos in, so baby stays sleepy and comfy.",
-        "Pick the room with your biggest window. Just a little space is all we need.",
-        "Feed baby just before we arrive. A full tummy means a sleepy baby, and we'll pause for more feeds anytime.",
+        "Pick a spot where we can set up, near a window if you have one. It's not a must: we bring all our own lights.",
+        "Save baby's next full feed for when your session starts (about 30 minutes after we arrive). We'll pause for more feeds anytime.",
         "Parents: wear soft, solid colors (no logos or busy patterns) if you'll be in the photos.",
         "Skip perfume and scented lotion on the day.",
         "Want a pet in the photos? Reply to this email and we'll plan for it.",
@@ -1045,12 +1045,33 @@
       "eyebrow": "See you {day}",
       "title": "Almost time, {name}!",
       "intro": "Your session starts {day} at {time}. We bring the lights, backdrops, props and outfits for baby.",
-      "checklistTitle": "A quick checklist",
-      "checklist": [
-        "Warm the room you'd like photos in, so baby stays sleepy and comfy.",
-        "Feed baby just before we arrive.",
-        "Skip perfume and scented lotion on the day."
-      ],
+      "before": {
+        "title": "Before we arrive",
+        "nightTitle": "The night before",
+        "night": [
+          "Pick a spot where we can set up, near a window if you have one. A window isn't a must, because we bring all our own lights. A little open space is all we need.",
+          "Keep your session time free, with no visitors or appointments. Baby sets the pace.",
+          "Gate code or tricky parking? Text us so we're ready."
+        ],
+        "family": "Booked {bundle}? Have everyone who's joining dressed and ready. Soft, solid colors (no logos or busy patterns) look best.",
+        "dayTitle": "On the day",
+        "day": [
+          "No oils, lotions or creams on baby. A little dry skin is easy for us to fix in editing; the shine from lotion isn't. A bath is optional. Skip perfume and scented lotion yourself too.",
+          "Try to keep baby awake and content in the hours before we arrive, and save the next full feed for when the session starts. A full tummy means a sleepy baby.",
+          "Warm up the room. Baby will be in just a diaper and wraps, so a little warmer than feels normal is just right.",
+          "Have these ready: extra milk or a prepared bottle (babies often drink more in a warm room), a pacifier if baby takes one, baby's own soft blanket, and diapers, wipes and burp cloths.",
+          "Wear something light and comfy, since the room will be warm.",
+          "Please keep pets in another room while we work, unless you've told us you'd like them in a photo."
+        ],
+        "arriveTitle": "When we arrive",
+        "arrive": [
+          "We arrive up to 30 minutes early to set up our lights and backdrops, and we wash our hands before we start. Your session time stays the same. You don't need to help, just relax.",
+          "When we're ready, undress baby down to the diaper, wrap them in their blanket and give them that full feed.",
+          "While baby eats, we'll ask you to sign our short photo and video release on our iPad. On it, you choose where we may share your photos, if anywhere.",
+          "Once baby is full and sleepy, we start. We pause for feeds, changes and cuddles anytime, and a parent stays within arm's reach the whole session.",
+          "If baby pees, poops or spits up on something, don't worry, it happens. And if baby just can't settle, we come back once, free, within 14 days."
+        ]
+      },
       "reach": "Running late or need to reach us? Just text us.",
       "today": "today",
       "tomorrow": "tomorrow"

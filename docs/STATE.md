@@ -13,9 +13,10 @@
   (`tripDays`); /book once the ZIP is typed; requests and reschedules re-check; not owner bookings.
 - /admin → Leads opens on Confirmed: next session first, then "Date passed"; Past 10 days after. Each lead: "Emails
   sent to …" = every family email (sendEmail logs it, `sent_emails` 0044) + Resend's delivered/bounced (webhook).
-- /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies (age,
-  name, boy/girl), ZIP, day, optional time → /book?link= filled in, used once (0043). Confirming carries them over.
-- Boy or girl (owner Nov 19): required on the link form; optional on the pay link and Prepare; on the Leads card.
+- /admin → Quotes / Booking → "Send a booking link" (Nov 19): bundle, babies (age, name, boy/girl: required), ZIP,
+  day, optional time → /book?link= filled in, used once (0043). Boy/girl optional on the pay link and Prepare.
+- Day-before email (owner Nov 20): "Before we arrive" (night before, on the day, numbered arrival steps; family line for
+  family bundles; no night heading on a same-day send). Prep guide lines 2–3 updated.
 
 ## Next: brief 05 session 2
 - Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).
@@ -32,7 +33,7 @@
 - "From $179.10" while the 10% Thanksgiving offer runs (ends Nov 23).
 - Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,
   bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link, prep gender,
-  bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved.
+  bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved, emails.reminder24.before + prepGuide 2–3.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)

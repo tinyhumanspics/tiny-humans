@@ -115,6 +115,8 @@ export interface ReminderDetails {
   backdrops?: string[];
   /** A deposit was paid while booking (the payment lines say so). */
   depositPaid?: boolean;
+  /** The bundle's name in the booking's language when the bundle includes family (the 24-hour reminder's family line). */
+  familyBundle?: string | null;
 }
 
 /** What the after-session and gallery emails need. */

@@ -123,7 +123,16 @@ export function ChalkButton({ theme: t, label, href, variant = "solid", caption 
 }
 
 /** A framed list with chalk ticks (prep guide, checklists, "what happens next"). */
-export function ChalkList({ theme: t, title, items, color, mark = "✓" }: { theme: EmailTheme; title: string; items: readonly string[]; color?: string; mark?: string }) {
+/** A titled list for ChalkGroups: bullets (`mark`, "•" by default) or numbered steps ("1.", "2.", …). */
+export interface ChalkGroup {
+  title?: string;
+  items: readonly string[];
+  mark?: string;
+  numbered?: boolean;
+}
+
+/** One dashed chalk box with a title and one or more lists, each with an optional small heading (e.g. "Before we arrive"). */
+export function ChalkGroups({ theme: t, title, groups, color }: { theme: EmailTheme; title: string; groups: ChalkGroup[]; color?: string }) {
   const c = color ?? t.blue;
   return (
     <tr>
@@ -132,24 +141,34 @@ export function ChalkList({ theme: t, title, items, color, mark = "✓" }: { the
           <tr>
             <td style={{ padding: "14px 18px 10px" }}>
               <p style={{ margin: "0 0 6px", fontFamily: CHALK_FONT, fontSize: 22, color: c }}>{title}</p>
-              <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
-                {items.map((item) => (
-                  <tr key={item}>
-                    <td valign="top" style={{ padding: "5px 10px 5px 0", width: 18, fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.3, color: t.yellow }}>
-                      {mark}
-                    </td>
-                    <td valign="top" style={{ padding: "5px 0", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>
-                      {item}
-                    </td>
-                  </tr>
-                ))}
-              </table>
+              {groups.map((g, gi) => (
+                <Fragment key={gi}>
+                  {g.title && <p style={{ margin: gi ? "14px 0 2px" : "4px 0 2px", fontFamily: CHALK_FONT, fontSize: 19, color: t.yellow }}>{g.title}</p>}
+                  <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
+                    {g.items.map((item, i) => (
+                      <tr key={item}>
+                        <td valign="top" style={{ padding: "5px 10px 5px 0", width: g.numbered ? 22 : 18, fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.3, color: t.yellow }}>
+                          {g.numbered ? `${i + 1}.` : (g.mark ?? "•")}
+                        </td>
+                        <td valign="top" style={{ padding: "5px 0", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>
+                          {item}
+                        </td>
+                      </tr>
+                    ))}
+                  </table>
+                </Fragment>
+              ))}
             </td>
           </tr>
         </table>
       </td>
     </tr>
   );
+}
+
+/** One checklist in a dashed chalk box (✓ marks by default). */
+export function ChalkList({ theme, title, items, color, mark = "✓" }: { theme: EmailTheme; title: string; items: readonly string[]; color?: string; mark?: string }) {
+  return <ChalkGroups theme={theme} title={title} color={color} groups={[{ items, mark }]} />;
 }
 
 /** Backdrop swatches with names underneath, 3 per row. Outlook shows the solid color, others a soft glow (or the texture). */

@@ -994,8 +994,8 @@
       "title": "Guía para preparar tu sesión en casa",
       "items": [
         "Calienta la habitación donde te gustaría hacer las fotos para que el bebé esté adormilado y cómodo.",
-        "Elige la habitación con la ventana más grande. Solo necesitamos un poco de espacio.",
-        "Alimenta al bebé justo antes de que lleguemos. Con la pancita llena suele dormir mejor, y haremos pausas para alimentarlo cuando sea necesario.",
+        "Elige un espacio donde podamos montar todo, cerca de una ventana si tienes una. No es obligatorio: llevamos nuestras propias luces.",
+        "Guarda la próxima toma completa del bebé para cuando empiece la sesión (unos 30 minutos después de que lleguemos). Haremos pausas para más tomas cuando haga falta.",
         "Para los padres: usen colores suaves y sólidos, sin logotipos ni estampados llamativos, si van a salir en las fotos.",
         "Ese día, evita el perfume y las lociones con fragancia.",
         "¿Quieres incluir a una mascota? Responde a este correo y lo planificaremos.",
@@ -1045,12 +1045,33 @@
       "eyebrow": "Nos vemos {day}",
       "title": "¡Ya casi es hora, {name}!",
       "intro": "Tu sesión comienza {day} a las {time}. Llevaremos las luces, los fondos, los accesorios y la ropa para el bebé.",
-      "checklistTitle": "Una lista rápida",
-      "checklist": [
-        "Calienta la habitación donde te gustaría hacer las fotos para que el bebé esté adormilado y cómodo.",
-        "Alimenta al bebé justo antes de que lleguemos.",
-        "Ese día, evita el perfume y las lociones con fragancia."
-      ],
+      "before": {
+        "title": "Antes de que lleguemos",
+        "nightTitle": "La noche anterior",
+        "night": [
+          "Elige un espacio donde podamos montar todo, cerca de una ventana si tienes una. La ventana no es obligatoria: llevamos nuestras propias luces. Solo necesitamos un poco de espacio libre.",
+          "Deja libre el horario de tu sesión, sin visitas ni citas. El bebé marca el ritmo.",
+          "¿Tienes código de entrada o es difícil estacionar? Escríbenos para llegar preparados."
+        ],
+        "family": "¿Reservaste {bundle}? Que todos los que van a salir en las fotos estén vestidos y listos. Los colores suaves y lisos (sin logotipos ni estampados llamativos) quedan mejor.",
+        "dayTitle": "El día de la sesión",
+        "day": [
+          "Nada de aceites, lociones ni cremas en el bebé. Un poco de piel reseca es fácil de corregir en la edición; el brillo de la loción no. El baño es opcional. Evita también el perfume y las lociones con fragancia en ti.",
+          "Intenta que el bebé esté despierto y tranquilo en las horas antes de que lleguemos, y guarda su próxima toma completa para cuando empiece la sesión. Con la pancita llena, duerme mejor.",
+          "Calienta la habitación. El bebé estará solo con pañal y mantitas, así que un poco más de calor de lo normal es perfecto.",
+          "Ten a mano: leche extra o un biberón preparado (en una habitación cálida los bebés suelen tomar más), un chupete si lo usa, su propia mantita suave, y pañales, toallitas y paños para eructar.",
+          "Ponte ropa ligera y cómoda: la habitación estará calientita.",
+          "Por favor, deja a las mascotas en otra habitación mientras trabajamos, a menos que nos hayas dicho que quieres incluirlas en una foto."
+        ],
+        "arriveTitle": "Cuando lleguemos",
+        "arrive": [
+          "Llegamos hasta 30 minutos antes para montar las luces y los fondos, y nos lavamos las manos antes de empezar. La hora de tu sesión no cambia. No tienes que ayudar, solo relájate.",
+          "Cuando estemos listos, deja al bebé solo en pañal, envuélvelo en su mantita y dale esa toma completa.",
+          "Mientras come, te pediremos que firmes en nuestro iPad una breve autorización de fotos y video, donde eliges dónde podemos compartir las fotos, si es que quieres.",
+          "Cuando el bebé esté lleno y con sueño, empezamos. Hacemos pausas para comer, cambiar el pañal y dar mimos cuando haga falta, y uno de los padres se queda a un brazo de distancia durante toda la sesión.",
+          "Si el bebé hace pipí, popó o regurgita sobre algo, no te preocupes: pasa en todas las sesiones. Y si el bebé no logra calmarse, volvemos una vez, gratis, dentro de 14 días."
+        ]
+      },
       "reach": "¿Vas a llegar tarde o necesitas comunicarte con nosotros? Solo escríbenos.",
       "today": "hoy",
       "tomorrow": "mañana"

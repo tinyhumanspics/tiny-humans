@@ -11,7 +11,7 @@ import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
 import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
 import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
-import { ChalkButton, ChalkList, Details, Heading, Paragraph } from "./components/blocks";
+import { ChalkButton, ChalkGroups, ChalkList, Details, Heading, Paragraph, type ChalkGroup } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 /** "72h": prep guide + a big reschedule button (lands before the 48 h online cutoff). "24h": logistics. */
@@ -45,6 +45,18 @@ function content(r: ReminderDetails, today: string, locale: EmailLocale) {
     start: formatTimeLabel(r.start, locale),
     time: fill(m.common.timeRange, { start: formatTimeLabel(r.start, locale), end: formatTimeLabel(r.end, locale) }),
   };
+}
+
+/**
+ * The 24-hour reminder's "Before we arrive" (owner, Nov 20): the night before, on the day, and the numbered arrival steps.
+ * Sent on the session day itself, the night-before items lead "On the day" without their own heading. The family line
+ * shows only when the bundle includes family.
+ */
+function beforeWeArrive(r: ReminderDetails, today: string, locale: EmailLocale): { title: string; groups: ChalkGroup[] } {
+  const b = emailMessages(locale).reminder24.before;
+  const night = [...b.night, ...(r.familyBundle ? [fill(b.family, { bundle: r.familyBundle })] : [])];
+  const before: ChalkGroup[] = r.date === today ? [{ title: b.dayTitle, items: [...night, ...b.day] }] : [{ title: b.nightTitle, items: night }, { title: b.dayTitle, items: b.day }];
+  return { title: b.title, groups: [...before, { title: b.arriveTitle, items: b.arrive, numbered: true }] };
 }
 
 export function SessionReminder({
@@ -101,8 +113,7 @@ export function SessionReminder({
         {fill(x.intro, { day, time: start })}
       </Paragraph>
       <Details theme={t} rows={rows} />
-      <Paragraph theme={t} align="center">{m.common.arrival}</Paragraph>
-      <ChalkList theme={t} title={x.checklistTitle} items={x.checklist} />
+      <ChalkGroups theme={t} {...beforeWeArrive(r, today, locale)} />
       <Paragraph theme={t} align="center">
         {payAfterLine(locale, Boolean(r.depositPaid))}
       </Paragraph>
@@ -162,6 +173,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   }
 
   const x = m.reminder24;
+  const before = beforeWeArrive(r, opts.today, locale);
   const text = textLines([
     fill(x.title, { name: first }),
     "",
@@ -169,10 +181,8 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     "",
     ...details(true),
     "",
-    m.common.arrival,
-    "",
-    `${x.checklistTitle}:`,
-    ...x.checklist.map((i) => `- ${i}`),
+    before.title,
+    ...before.groups.flatMap((g) => ["", `${g.title}:`, ...g.items.map((item, i) => (g.numbered ? `${i + 1}. ${item}` : `- ${item}`))]),
     "",
     payAfterLine(locale, Boolean(r.depositPaid)),
     `${x.reach} ${textUs}.`,
