@@ -6,11 +6,13 @@ import { bookings, emailEvents, type Booking, type EmailEvent } from "@/lib/db/s
 import { log } from "@/lib/log";
 import { emailConfig, isTagValue, sendEmail } from "./resend";
 import { internalEmailProblemEmail } from "@/lib/email";
+import { markDelivered, markProblem } from "./sent-log";
 
 /**
- * Email delivery problems from Resend's webhook (/api/resend/webhook): bounced, marked as spam, not sent because the
- * address is on Resend's suppression list, or failed. Saved in `email_events` and shown on the family's lead in /admin;
- * the studio gets one email the first time an address has a problem. Env: RESEND_WEBHOOK_SECRET (`whsec_...`, from the
+ * Email delivery from Resend's webhook (/api/resend/webhook). Delivered: marked on the family's email list in /admin
+ * (`sent_emails`, owner Nov 20). Problems (bounced, marked as spam, not sent because the address is on Resend's
+ * suppression list, or failed): saved in `email_events`, marked on the email too, shown on the family's lead; the studio
+ * gets one email the first time an address has a problem. Env: RESEND_WEBHOOK_SECRET (`whsec_...`, from the
  * webhook's page in Resend).
  */
 export type EmailProblem = "bounced" | "complained" | "suppressed" | "failed";
@@ -22,8 +24,11 @@ const EVENT_TYPES: Record<string, EmailProblem> = {
   "email.failed": "failed",
 };
 
-/** Which email it was, from its "category" tag (the send scope with "." → "_"). */
+/** Which email it was, from its "category" tag (the send scope with "." → "_"): every email a family gets. */
 const EMAIL_NAMES: Record<string, string> = {
+  resend_request_received: "“we got your request” email",
+  resend_request_declined: "request declined email",
+  resend_deposit_link: "pay link email",
   resend_customer: "confirmation email",
   resend_reschedule: "new-time email",
   resend_cancellation: "cancellation email",
@@ -34,6 +39,10 @@ const EMAIL_NAMES: Record<string, string> = {
   resend_payment_link: "payment link email",
   resend_deposit_abandoned: "“not confirmed yet” email",
   resend_day_closed: "schedule-change email",
+  resend_waiver_copy: "signed waiver copy",
+  resend_due_reserved: "due date reserved email",
+  resend_due_deposit_reminder: "due date deposit email",
+  resend_due_deposit_auto: "due date “deposit not paid” email",
 };
 export const emailNameOf = (category: string | null) => (category && EMAIL_NAMES[category]) || "email";
 
@@ -87,14 +96,19 @@ function detailOf(type: EmailProblem, d: NonNullable<ResendEvent["data"]>): stri
  * that family's address. Throws only if it couldn't be saved (the route answers 500, so Resend retries).
  */
 export async function handleResendEvent(event: ResendEvent, webhookId: string): Promise<{ saved: number }> {
-  const type = event.type ? EVENT_TYPES[event.type] : undefined;
   const d = event.data;
+  const at = new Date(event.created_at ?? Date.now());
+  const occurredAt = Number.isNaN(at.getTime()) ? new Date() : at;
+  // reached the family's inbox: the lead's email list says "Delivered"
+  if (event.type === "email.delivered") return { saved: d?.email_id ? await markDelivered(d.email_id, occurredAt) : 0 };
+  const type = event.type ? EVENT_TYPES[event.type] : undefined;
   if (!type || !d) return { saved: 0 };
   const recipients = [d.to ?? []].flat().map((a) => String(a).trim().toLowerCase()).filter(Boolean);
   if (!recipients.length) return { saved: 0 };
   const tags = tagsOf(d.tags);
-  const occurredAt = new Date(event.created_at ?? Date.now());
   const db = getDb();
+  // on the lead's email list too (never stops the problem from being saved below)
+  if (d.email_id) await markProblem(d.email_id, type, detailOf(type, d), occurredAt).catch((err) => log.error("email.delivery", "Problem not marked on the email", { error: err as Error }));
   const rows = await db
     .insert(emailEvents)
     .values(
@@ -106,7 +120,7 @@ export async function handleResendEvent(event: ResendEvent, webhookId: string): 
         bookingReference: isTagValue(tags.booking) ? tags.booking : null,
         category: isTagValue(tags.category) ? tags.category : null,
         detail: detailOf(type, d),
-        occurredAt: Number.isNaN(occurredAt.getTime()) ? new Date() : occurredAt,
+        occurredAt,
       })),
     )
     .onConflictDoNothing()

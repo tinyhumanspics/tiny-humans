@@ -370,6 +370,44 @@ export const emailEvents = pgTable(
 
 export type EmailEvent = typeof emailEvents.$inferSelect;
 
+/**
+ * Every email sent to a family (owner, Nov 20: "every email each client got, and that it was delivered"): logged by
+ * sendEmail; Resend's webhook adds delivered / bounced / spam. Studio and monitoring emails aren't logged. `reference`
+ * is the booking, request or due-date reservation it was about. Earlier records were copied in by migration 0044.
+ */
+export const sentEmails = pgTable(
+  "sent_emails",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    reference: text("reference").notNull(),
+    /** sendEmail's scope, e.g. "resend.customer" (the booking confirmation). */
+    scope: text("scope").notNull(),
+    /** Lowercased address it went to. */
+    recipient: text("recipient").notNull(),
+    subject: text("subject"),
+    /** "sent" (Resend took it) | "failed" (not sent: `error` says why) */
+    status: text("status").notNull(),
+    error: text("error"),
+    resendId: text("resend_id"),
+    /** Copied from an older record (0044): "confirmation:<booking id>", "booking_emails:<id>", … */
+    legacyKey: text("legacy_key"),
+    sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    /** "bounced" | "complained" | "suppressed" | "failed", from Resend's webhook */
+    problem: text("problem"),
+    problemDetail: text("problem_detail"),
+    problemAt: timestamp("problem_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("sent_emails_reference_idx").on(t.reference),
+    uniqueIndex("sent_emails_resend_idx").on(t.resendId),
+    uniqueIndex("sent_emails_legacy_idx").on(t.legacyKey),
+    check("sent_emails_status_check", sql`${t.status} in ('sent', 'failed')`),
+  ],
+);
+
+export type SentEmailRow = typeof sentEmails.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

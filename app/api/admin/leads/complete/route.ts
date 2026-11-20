@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db/client";
 import { bookingCompletions } from "@/lib/db/schema";
 import { leadAction } from "@/lib/admin/lead-action";
 import { BookingError } from "@/lib/booking/errors";
-import { isMissingTable } from "@/lib/deposit/server";
+import { isMissingTable } from "@/lib/db/client";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";

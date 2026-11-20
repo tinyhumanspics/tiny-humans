@@ -3,19 +3,20 @@ import { isOwnerBooked } from "@/lib/deposit/types";
 import { and, count, desc, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm";
 import { PAST_AFTER_DAYS, bookingRules } from "@/config/booking";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
-import { getDb } from "@/lib/db/client";
-import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookings, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review } from "@/lib/db/schema";
+import { getDb, isMissingTable } from "@/lib/db/client";
+import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookings, dueDateReservations, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review, type SentEmailRow } from "@/lib/db/schema";
 import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
+import { sentEmailsFor } from "@/lib/email/sent-log";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
 import { backdropsFor } from "@/lib/booking/backdrops";
 import { amountDueCents, nextCharge } from "@/lib/booking/after-session";
-import { depositPaidCents, depositsFor, isMissingTable } from "@/lib/deposit/server";
+import { depositPaidCents, depositsFor } from "@/lib/deposit/server";
 import { depositPageUrl } from "@/lib/deposit/flow";
 import { getNoticeHoursSetting } from "@/lib/availability/server";
 import { historyFor, localDate } from "@/lib/booking/reschedule";
 import { snapshotOf } from "@/lib/booking/details";
-import type { Lead, LeadDeposit, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
+import type { Lead, LeadDeposit, LeadEmail, LeadFilter, LeadList, LeadStatus, SentEmail } from "./types";
 import { sourceLabel } from "@/lib/tracking/attribution";
 import { OWNER_SOURCES, isOwnerSource } from "@/config/booking";
 import { log } from "@/lib/log";
@@ -35,7 +36,6 @@ const iso = (d: Date | null) => (d ? d.toISOString() : null);
 
 type HistoryRow = Awaited<ReturnType<typeof historyFor>>[number];
 
-const REMINDER_KIND: Record<string, "72h" | "24h"> = { reminder_72h: "72h", reminder_24h: "24h" };
 
 interface Extras {
   emails: BookingEmail[];
@@ -61,7 +61,47 @@ interface Extras {
   completions: Map<string, Date>;
   /** Bundle id → it includes the family (Our Family Story): those bookings get the family photo release. */
   familyBundles: Map<string, boolean>;
+  /** Booking id → every email sent to that family (best effort: none before migration 0044). */
+  sentEmails: Map<string, SentEmailRow[]>;
 }
+
+/**
+ * Every email to these families (owner, Nov 20): about the booking itself, the request it came from, and its "Not born
+ * yet" reservation (with the due-date request that started it). Booking id → newest first.
+ */
+async function sentEmailsByBooking(rows: Booking[]): Promise<Map<string, SentEmailRow[]>> {
+  const ids = rows.map((r) => r.id);
+  const db = getDb();
+  const none = (what: string) => (err: unknown) => (log.error("leads", `Could not load ${what} for the emails`, { error: err as Error }), []);
+  const [requests, dues] = await Promise.all([
+    db.select({ bookingId: bookingRequests.bookingId, reference: bookingRequests.reference }).from(bookingRequests).where(inArray(bookingRequests.bookingId, ids)).catch(none("requests")),
+    db.select({ id: dueDateReservations.id, bookingId: dueDateReservations.bookingId, reference: dueDateReservations.reference }).from(dueDateReservations).where(inArray(dueDateReservations.bookingId, ids)).catch(none("due dates")),
+  ]);
+  const dueRequests = dues.length
+    ? await db.select({ dueId: bookingRequests.dueId, reference: bookingRequests.reference }).from(bookingRequests).where(inArray(bookingRequests.dueId, dues.map((d) => d.id))).catch(none("due-date requests"))
+    : [];
+  const refs = new Map(rows.map((r) => [r.id, new Set([r.bookingReference])]));
+  requests.forEach((q) => q.bookingId && refs.get(q.bookingId)?.add(q.reference));
+  dues.forEach((d) => {
+    const mine = d.bookingId ? refs.get(d.bookingId) : undefined;
+    mine?.add(d.reference);
+    dueRequests.filter((q) => q.dueId === d.id).forEach((q) => mine?.add(q.reference));
+  });
+  const all = await sentEmailsFor([...new Set([...refs.values()].flatMap((s) => [...s]))]);
+  return new Map(rows.map((r) => [r.id, all.filter((e) => refs.get(r.id)!.has(e.reference))]));
+}
+
+const leadEmailOf = (e: SentEmailRow): LeadEmail => ({
+  name: emailNameOf(e.scope.replace(/[^a-zA-Z0-9_-]/g, "_")),
+  subject: e.subject,
+  to: e.recipient,
+  status: e.status === "failed" ? "failed" : "sent",
+  error: e.error,
+  at: e.sentAt.toISOString(),
+  deliveredAt: iso(e.deliveredAt),
+  problem: e.problem ? { kind: e.problem as EmailProblem, detail: e.problemDetail, at: iso(e.problemAt) } : null,
+  tracked: !e.legacyKey,
+});
 
 /** Leads marked "Completed" (owner, Nov 11): booking id → when. Best effort: none before migration 0030. */
 async function completions(bookingIds?: string[]): Promise<Map<string, Date>> {
@@ -76,7 +116,7 @@ async function completions(bookingIds?: string[]): Promise<Map<string, Date>> {
   }
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map(), familyBundles: new Map() };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map(), familyBundles: new Map(), sentEmails: new Map() };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -88,7 +128,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done, catalog] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done, catalog, sentEmails] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -106,9 +146,10 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     categoriesForCodes(rows.map((r) => r.discountCode ?? "")),
     completions(bookingIds),
     getCatalog().catch(() => []),
+    sentEmailsByBooking(rows).catch((err) => (log.error("leads", "Could not load sent emails", { error: err as Error }), new Map<string, SentEmailRow[]>())),
   ]);
   const familyBundles = new Map(catalog.map((b) => [b.id, asksFamily(b)]));
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done, familyBundles };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done, familyBundles, sentEmails };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -166,7 +207,6 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
 }
 
 export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EXTRAS, duplicate?: Lead["duplicate"]): Lead {
-  const emails = x.emails;
   return {
     reference: r.bookingReference,
     status: r.status as LeadStatus,
@@ -194,15 +234,11 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
     notes: r.notes,
     inspirationPhotoId: r.inspirationPhotoId,
     calendarLinked: Boolean(r.outlookEventId) && r.status !== "cancelled",
-    confirmationEmail: { sent: r.confirmationEmailSent, at: iso(r.confirmationEmailSentAt), error: r.confirmationEmailError },
     internalNotification: { sent: r.internalNotificationSent, at: iso(r.internalNotificationSentAt), error: r.internalNotificationError },
     history: history
       .filter((h) => h.bookingId === r.id)
       .map((h) => ({ oldDate: localDate(h.oldSessionStart, r.timezone), oldStart: time(h.oldSessionStart, r.timezone), newDate: localDate(h.newSessionStart, r.timezone), newStart: time(h.newSessionStart, r.timezone), newEnd: time(h.newSessionEnd, r.timezone), by: h.rescheduledBy as "customer" | "admin", at: h.createdAt.toISOString() })),
-    reminders: emails
-      .filter((e) => e.bookingId === r.id && REMINDER_KIND[e.kind] && e.sessionStart.getTime() === r.sessionStart.getTime())
-      .map((e) => ({ kind: REMINDER_KIND[e.kind], status: e.status as "sending" | "sent" | "failed", at: iso(e.sentAt ?? e.updatedAt), error: e.error }))
-      .sort((a, b) => (a.kind === "72h" ? -1 : 1) - (b.kind === "72h" ? -1 : 1)),
+    sentEmails: (x.sentEmails.get(r.id) ?? []).map(leadEmailOf),
     after: afterOf(r, x),
     deposit: leadDepositOf(r, x),
     emailProblems: problemsOf(r, x.emailEvents).map((e) => ({ kind: e.type as EmailProblem, at: e.occurredAt.toISOString(), email: emailNameOf(e.category), detail: e.detail })),
@@ -216,7 +252,6 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
             reason: r.cancellationReason,
             at: iso(r.cancelledAt),
             by: (r.cancelledBy as "customer" | "admin" | null) ?? null,
-            email: { sent: r.cancellationEmailSent, at: iso(r.cancellationEmailSentAt), error: r.cancellationEmailError },
             internal: { sent: r.internalCancellationSent, at: iso(r.internalCancellationSentAt), error: r.internalCancellationError },
           }
         : null,

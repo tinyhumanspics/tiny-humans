@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { defaultSettings } from "@/lib/settings/defaults";
-import type { LeadList } from "@/lib/leads/types";
+import type { Lead, LeadList } from "@/lib/leads/types";
 
 const list = (all: number): LeadList => ({
   leads: [],
@@ -111,4 +111,37 @@ test("Confirmed: the next sessions on top, the ones whose date passed under Date
   await expect(page.getByText("Old Family")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Date passed" })).toHaveCount(0);
   expect(statuses).toContain("past");
+});
+
+test("each lead lists every email the family got and whether it reached them (owner, Nov 20)", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
+  const { noDepositLead, signedInAdmin } = await import("./fixtures/admin");
+  await signedInAdmin(page);
+  const email = (name: string, more: Partial<Lead["sentEmails"][number]>): Lead["sentEmails"][number] => ({ name, subject: null, to: noDepositLead.email, status: "sent", error: null, at: "2026-11-18T20:05:00.000Z", deliveredAt: null, problem: null, tracked: true, ...more });
+  const lead: Lead = {
+    ...noDepositLead,
+    sentEmails: [
+      email("3-day reminder", { subject: "See you Saturday", problem: { kind: "bounced", detail: "Permanent / General", at: "2026-11-18T20:06:00.000Z" } }),
+      email("confirmation email", { subject: "You're booked!", deliveredAt: "2026-11-18T20:05:30.000Z" }),
+      email("pay link email", { status: "failed", error: "network_error" }),
+      email("“we got your request” email", { tracked: false }),
+    ],
+  };
+  await page.route("**/api/admin/leads?*", (route) =>
+    route.fulfill({ json: { leads: [lead], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList }),
+  );
+  await page.goto("/admin/leads");
+  await page.getByRole("button", { name: "View details" }).click();
+  await expect(page.getByText("Emails sent to No (4)")).toBeVisible();
+  const list = page.getByRole("list", { name: "Emails sent to the family" }).getByRole("listitem");
+  await expect(list).toHaveCount(4);
+  await expect(list.nth(0)).toContainText("3-day reminder");
+  await expect(list.nth(0)).toContainText("✗ Bounced: it didn't reach them. Text the family to check their email address. (Permanent / General)");
+  await expect(list.nth(0)).toContainText("“See you Saturday”");
+  await expect(list.nth(1)).toContainText("Confirmation email");
+  await expect(list.nth(1)).toContainText("✓ Delivered");
+  await expect(list.nth(2)).toContainText("✗ Not sent");
+  await expect(list.nth(2)).toContainText("(network_error). Text the family.");
+  await expect(list.nth(3)).toContainText("“We got your request” email");
+  await expect(list.nth(3)).toContainText("sent before delivery tracking");
 });

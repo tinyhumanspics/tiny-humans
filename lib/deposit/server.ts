@@ -1,6 +1,6 @@
 import "server-only";
 import { eq, inArray } from "drizzle-orm";
-import { getDb, isDatabaseConfigured } from "@/lib/db/client";
+import { getDb, isDatabaseConfigured, isMissingTable } from "@/lib/db/client";
 import { bookingDeposits, bundleDeposits, depositSettingsTable, type BookingDeposit } from "@/lib/db/schema";
 import { CATALOG_TAG, getPublicCatalog } from "@/lib/pricing/server";
 import { log } from "@/lib/log";
@@ -11,7 +11,6 @@ import type { SiteDeposit } from "./copy";
 export const dbReason = (err: unknown) => (err instanceof Error ? err : new Error("query failed"));
 
 /** "relation does not exist": the migration hasn't run yet (deposits stay off quietly). */
-export const isMissingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
 
 /** The owner's deposits (switch + per-bundle amounts); off when nothing is saved yet. Null: no database / table missing. */
 export async function getDepositSettings(): Promise<DepositSettings | null> {

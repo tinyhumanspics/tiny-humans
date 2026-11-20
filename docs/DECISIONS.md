@@ -52,9 +52,9 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
 - 2026-11-16 · Home = ad page + own title; portfolio = /portfolio (photo wall) · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
-- 2026-11-19 · Leads: sessions move to Past 10 days after their date; opens on Confirmed (11-20) · owner
-- 2026-11-19 · DMs: the owner sends a prefilled booking link; families type their own details · owner
-- 2026-11-19 · Boy or girl: link form (required), pay link and Prepare page (optional) · owner
+- 2026-11-19 · Leads: opens on Confirmed; Past 10 days after the date; every family email + delivery (11-20) · owner
+- 2026-11-19 · DMs: owner sends a prefilled booking link; families add their details · owner
+- 2026-11-19 · Boy or girl: required on the link form, optional for families · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

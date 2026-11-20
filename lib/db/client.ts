@@ -13,6 +13,9 @@ export function isDatabaseConfigured(): boolean {
   return Boolean(process.env.DATABASE_URL);
 }
 
+/** A table a migration adds isn't there yet (Postgres 42P01). */
+export const isMissingTable = (err: unknown) => (err as { cause?: { code?: string } })?.cause?.code === "42P01" || /does not exist/.test(String((err as Error)?.message ?? ""));
+
 export function getDb() {
   if (!db) {
     const url = process.env.DATABASE_URL;

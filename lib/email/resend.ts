@@ -2,6 +2,7 @@ import "server-only";
 import { Resend } from "resend";
 import { log } from "@/lib/log";
 import { reportFailure } from "@/lib/monitoring/report";
+import { logSentEmail } from "./sent-log";
 
 /** Tag values Resend accepts (ASCII letters, numbers, "_" and "-", up to 256 characters). */
 export const isTagValue = (v: string | undefined): v is string => Boolean(v && /^[A-Za-z0-9_-]{1,256}$/.test(v));
@@ -71,6 +72,7 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
   if (!isResendConfigured()) {
     log.error(email.scope, "Email not sent: RESEND_API_KEY is not set", { reference: email.reference });
     await reportEmailFailure(email, "not_configured");
+    await logSentEmail(email, { error: "not_configured" });
     throw new EmailSendError("not_configured", "RESEND_API_KEY is not set");
   }
   try {
@@ -93,14 +95,18 @@ export async function sendEmail(email: OutgoingEmail): Promise<{ id: string | nu
       const code = (error as { name?: string } | null)?.name ?? "send_failed";
       log.error(email.scope, "Resend rejected the email", { code, reference: email.reference });
       await reportEmailFailure(email, code);
+      await logSentEmail(email, { error: code });
       throw new EmailSendError(code, (error as { message?: string } | null)?.message ?? "Resend send failed");
     }
     log.info(email.scope, "Email sent", { messageId: data.id, reference: email.reference });
+    // the family's lead in /admin lists it (owner, Nov 20)
+    await logSentEmail(email, { resendId: data.id ?? null });
     return { id: data.id ?? null };
   } catch (err) {
     if (err instanceof EmailSendError) throw err;
     log.error(email.scope, "Could not reach Resend", { error: err as Error, reference: email.reference });
     await reportEmailFailure(email, "network_error");
+    await logSentEmail(email, { error: "network_error" });
     throw new EmailSendError("network_error", "Could not reach Resend");
   }
 }

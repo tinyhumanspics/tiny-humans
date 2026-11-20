@@ -5,18 +5,14 @@
 - Ad page /home-sweet-home (+/es): H1 by `?c=a|b|c`, "Check dates" → /book?bundle=<middle>&compare=1 + the ad's
   parameters, price line, review, "Text us", seasonal box. "Show on the ad page" bundles (0042).
 - Home (owner Nov 16) = the ad page (`heading`): "Tiny moments. Big memories.", animated top.
-- /portfolio (+/es): "Little moments" photo wall. Menu: Home (house icon on phones) · Portfolio · Bundles · Book
-  (→ /book). /bundles: "Not born yet? Book with your due date →" under the heading.
-- /book: bundles side by side; a bundle card's link shows that pick + Change; Check dates, the menu and Not born yet
-  open the comparison (middle bundle checked, calendar showing). Twins line shows the extra minutes/photos. Timing
-  copy: "after baby's first two weeks" (owner).
+- /portfolio (+/es): photo wall. Menu: Home · Portfolio · Bundles · Book. /bundles: "Not born yet?" link.
+- /book: bundles side by side (middle checked, calendar showing); a bundle card's link shows that pick + Change.
 - Pay link: 1) home (street, city, gate notes; the request's ZIP) + baby name and boy/girl (optional, Nov 19)
   2) backdrops 3) deposit; Pay unlocks once the home is saved → /admin Directions, calendar, emails.
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
-  (`tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
-  bookings aren't limited.
-- /admin → Photos by page + "Copy all pictures from" a theme.
-- /admin → Leads opens on Confirmed (Nov 20): next session first, then "Date passed"; Past 10 days after.
+  (`tripDays`); /book once the ZIP is typed; requests and reschedules re-check; not owner bookings.
+- /admin → Leads opens on Confirmed: next session first, then "Date passed"; Past 10 days after. Each lead: "Emails
+  sent to …" = every family email (sendEmail logs it, `sent_emails` 0044) + Resend's delivered/bounced (webhook).
 - /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies (age,
   name, boy/girl), ZIP, day, optional time → /book?link= filled in, used once (0043). Confirming carries them over.
 - Boy or girl (owner Nov 19): required on the link form; optional on the pay link and Prepare; on the Leads card.
@@ -29,6 +25,7 @@
 - Brief 06: /api/booking/quote + HttpBookingClient.quote have no UI caller.
 
 ## Waiting on owner
+- Resend → Webhooks: tick `email.delivered` (else emails stay "delivery not confirmed yet").
 - /admin → Photos: "Big top photo"; rename "IMG 6087", "IMG 7378", "UPDATED 10"; Spanish photo names.
 - Geraldine (Dec 10): her address via her link/Prepare page, or an /admin "Edit address" (owner to pick).
   Spanish offer label "Offerta de Accion de Gracias" → "Oferta de Acción de Gracias" (/admin → Pricing).

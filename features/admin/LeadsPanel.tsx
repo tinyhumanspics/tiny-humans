@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import AdminDialog from "./AdminDialog";
 import type { AdminApi } from "@/lib/admin/client";
-import type { EmailStatus, Lead, LeadDeposit, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
+import type { EmailStatus, Lead, LeadDeposit, LeadEmail, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
@@ -130,13 +130,22 @@ const babyCard = (lead: Lead): string => {
   const said = babiesShort(babies);
   return babies.length > 1 ? ` · ${babies.length} babies${said ? `: ${said}` : ""}` : said ? ` · Baby: ${said}` : "";
 };
-const REMINDER_LABEL = { "72h": "Reminder (3 days before)", "24h": "Reminder (day before)" } as const;
-/** Reminder emails for the current session time (none in mock mode, where nothing is sent). */
-const reminderRows = (lead: Lead): [string, string][] => {
-  if (!lead.reminders || lead.status === "cancelled") return [];
-  if (!lead.reminders.length) return [["Reminders", "None sent yet"]];
-  return lead.reminders.map((r) => [REMINDER_LABEL[r.kind], r.status === "sent" ? `Sent ${when(r.at)}` : r.status === "failed" ? `Not sent (${r.error ?? "error"}). Text the family.` : "Sending…"]);
+/** "confirmation email" → "Confirmation email", "“we got your request” email" → "“We got your request” email" */
+const capitalized = (name: string) => name.replace(/^([“"]?)(\p{L})/u, (_, quote: string, letter: string) => quote + letter.toUpperCase());
+const EMAIL_PROBLEM: Record<NonNullable<LeadEmail["problem"]>["kind"], string> = {
+  bounced: "✗ Bounced: it didn't reach them. Text the family to check their email address.",
+  complained: "✗ Marked as spam. Don't email them again: text instead.",
+  suppressed: "✗ Not delivered: this address bounced or marked an email as spam before. Text the family.",
+  failed: "✗ Couldn't be delivered. Text the family.",
 };
+/** What happened to one email to the family, in the owner's words (owner, Nov 20). */
+function emailStatusLine(e: LeadEmail): string {
+  if (e.status === "failed") return `✗ Not sent ${when(e.at)} (${e.error ?? "error"}). Text the family.`;
+  const sent = `Sent ${when(e.at)}`;
+  if (e.problem) return `${sent} · ${EMAIL_PROBLEM[e.problem.kind]}${e.problem.detail ? ` (${e.problem.detail})` : ""}`;
+  if (e.deliveredAt) return `${sent} · ✓ Delivered`;
+  return `${sent} · ${e.tracked ? "delivery not confirmed yet" : "sent before delivery tracking"}`;
+}
 
 /** Owner area: every booking/lead, filterable, with details and admin cancellation. */
 export default function LeadsPanel({ api }: { api: AdminApi }) {
@@ -364,9 +373,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
     ["Inspiration", inspiration || "None"],
     ...consentRows(lead),
     ["Outlook calendar", lead.calendarLinked ? "On the calendar" : lead.status === "cancelled" ? "Removed (cancelled)" : lead.deposit?.status === "pending" ? "Not yet (added once the deposit is paid)" : "Not on the calendar"],
-    ["Confirmation email", emailLine(lead.confirmationEmail)],
     ["Internal notification", emailLine(lead.internalNotification)],
-    ...reminderRows(lead),
     ...problemRows(lead),
     ...(duplicate ? [["Possible duplicate", duplicate] as [string, string]] : []),
     ...(lead.bookedByOwner ? [["Booked by", "You (they got the pay link: their home, backdrops, then the deposit)"] as [string, string]] : []),
@@ -387,8 +394,6 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
     rows.push(
       ["Cancellation reason", lead.cancellation.reason || ""],
       ["Cancelled on", `${when(lead.cancellation.at)}${lead.cancellation.by ? ` (by ${lead.cancellation.by === "admin" ? "Tiny Humans" : "the customer"})` : ""}`],
-      // a time released for an unpaid deposit was never booked: no cancellation email
-      ...(lead.deposit?.status === "expired" ? [] : ([["Cancellation email", emailLine(lead.cancellation.email)]] as [string, string][])),
     );
   }
 
@@ -486,6 +491,25 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
               </ol>
             </div>
           )}
+          {/* every email the family got, newest first, and whether it reached them (owner, Nov 20) */}
+          <div className={styles.history}>
+            <p className={cn(styles.h3, "chalk-soft")}>Emails sent to {lead.parentName.split(" ")[0]} ({lead.sentEmails.length})</p>
+            {lead.sentEmails.length ? (
+              <ol className={styles.historyList} aria-label="Emails sent to the family">
+                {lead.sentEmails.map((e, i) => (
+                  <li key={`${e.at}-${i}`}>
+                    <b className="chalk-soft">{capitalized(e.name)}</b>
+                    <span className="chalk-soft">{emailStatusLine(e)}</span>
+                    {(e.subject || e.to !== lead.email.trim().toLowerCase()) && (
+                      <span className={cn(styles.historyMeta, "chalk-soft")}>{[e.subject && `“${e.subject}”`, e.to !== lead.email.trim().toLowerCase() && `to ${e.to}`].filter(Boolean).join(" · ")}</span>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className={cn(styles.hintSmall, "chalk-soft")}>None yet.</p>
+            )}
+          </div>
           {lead.after && <PaymentPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <DepositLinkPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}

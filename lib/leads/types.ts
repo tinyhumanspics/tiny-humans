@@ -37,6 +37,23 @@ export interface EmailStatus {
   error: string | null;
 }
 
+/** One email to the family and what Resend said about it. */
+export interface LeadEmail {
+  /** "confirmation email", "3-day reminder", … */
+  name: string;
+  subject: string | null;
+  to: string;
+  /** "sent": Resend took it; "failed": not sent (`error`). */
+  status: "sent" | "failed";
+  error: string | null;
+  at: string;
+  /** It reached their inbox (Resend's webhook). */
+  deliveredAt: string | null;
+  problem: { kind: "bounced" | "complained" | "suppressed" | "failed"; detail: string | null; at: string | null } | null;
+  /** Logged since delivery tracking began (Nov 20); older ones were copied from earlier records. */
+  tracked: boolean;
+}
+
 export interface SentEmail {
   status: "sending" | "sent" | "failed";
   at: string | null;
@@ -104,12 +121,11 @@ export interface Lead {
   notes: string | null;
   inspirationPhotoId: string | null;
   calendarLinked: boolean;
-  confirmationEmail: EmailStatus;
   internalNotification: EmailStatus;
   /** Oldest first. Empty if never rescheduled. */
   history: { oldDate: string; oldStart: string; newDate: string; newStart: string; newEnd: string; by: "customer" | "admin"; at: string }[];
-  /** Reminder emails for the current session time (none yet = empty). */
-  reminders?: { kind: "72h" | "24h"; status: "sending" | "sent" | "failed"; at: string | null; error: string | null }[];
+  /** Every email sent to the family (booking, its request, its due-date reservation), newest first (owner, Nov 20). */
+  sentEmails: LeadEmail[];
   /** After-session emails, payment and review (server mode only). */
   after?: AfterSessionStatus;
   /** The deposit (null: booked without one; undefined in mock mode). */
@@ -122,7 +138,7 @@ export interface Lead {
   waiver?: WaiverSummary | null;
   /** The release this booking gets: "family" for Our Family Story (owner, Nov 11), else "baby". */
   waiverKind?: WaiverKind;
-  cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; email: EmailStatus; internal: EmailStatus } | null;
+  cancellation: { reason: string | null; at: string | null; by: "customer" | "admin" | null; internal: EmailStatus } | null;
   /** Where the family came from (first touch). null for bookings made before source tracking. */
   /** Booked by the owner for the family (/admin → Quotes / Booking), not online. */
   bookedByOwner?: boolean;

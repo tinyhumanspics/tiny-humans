@@ -4,7 +4,7 @@ import { log } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
-/** POST: Resend webhook (email.bounced / complained / suppressed / failed). Signature-checked with RESEND_WEBHOOK_SECRET. */
+/** POST: Resend webhook (email.delivered / bounced / complained / suppressed / failed). Signature-checked with RESEND_WEBHOOK_SECRET. */
 export async function POST(req: Request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET ?? "";
   if (!secret) {

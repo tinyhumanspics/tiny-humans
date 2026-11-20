@@ -312,13 +312,13 @@ function mockLead(rec: MockRecord): Lead {
     notes: r.contact.notes ?? null,
     inspirationPhotoId: r.inspirationPhotoId ?? null,
     calendarLinked: false,
-    confirmationEmail: sent,
     internalNotification: sent,
+    sentEmails: [],
     source: r.attribution
       ? { label: sourceLabel(r.attribution), campaign: r.attribution.utmCampaign ?? null, medium: r.attribution.utmMedium ?? null, content: r.attribution.utmContent ?? null, term: r.attribution.utmTerm ?? null, landingPath: r.attribution.landingPath ?? null, referrer: r.attribution.referrer ?? null, metaClick: Boolean(r.attribution.fbclid), at: r.attribution.at }
       : null,
     history: (rec.history ?? []).map((h) => ({ oldDate: h.oldDate, oldStart: h.oldStart, newDate: h.newDate, newStart: h.newStart, newEnd: h.newEnd, by: h.by, at: h.at })),
-    cancellation: rec.cancellation ? { ...rec.cancellation, email: sent, internal: sent } : null,
+    cancellation: rec.cancellation ? { ...rec.cancellation, internal: sent } : null,
     createdAt: rec.result.createdAt,
   };
 }

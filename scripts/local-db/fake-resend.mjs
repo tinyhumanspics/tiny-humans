@@ -4,7 +4,8 @@
 // Addresses containing "fail@" are rejected (422), to test failure handling.
 // Delivery webhooks (like Resend's, Svix-signed): set FAKE_RESEND_WEBHOOK_URL (e.g. http://localhost:3000/api/resend/webhook)
 // and FAKE_RESEND_WEBHOOK_SECRET (= the app's RESEND_WEBHOOK_SECRET, "whsec_<base64>"). Then an address containing
-// "bounce@" gets email.bounced, "spam@" email.complained and "blocked@" email.suppressed, a moment after sending.
+// "bounce@" gets email.bounced, "spam@" email.complained and "blocked@" email.suppressed, a moment after sending; any
+// other address gets email.delivered (the lead's email list in /admin says "Delivered").
 import http from "node:http";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -53,6 +54,7 @@ http
         if (to.includes("bounce@")) setTimeout(() => sendHook("email.bounced", email, id, { bounce: { type: "Permanent", subType: "General", message: "550 5.1.1 mailbox unavailable" } }), 300);
         if (to.includes("spam@")) setTimeout(() => sendHook("email.complained", email, id), 300);
         if (to.includes("blocked@")) setTimeout(() => sendHook("email.suppressed", email, id, { suppressed: { type: "OnAccountSuppressionList", message: "on the suppression list" } }), 300);
+        else if (!/bounce@|spam@/.test(to)) setTimeout(() => sendHook("email.delivered", email, id), 300);
       }
     });
   })

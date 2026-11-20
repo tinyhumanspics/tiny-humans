@@ -43,10 +43,9 @@ export const noDepositLead: Lead = {
   notes: null,
   inspirationPhotoId: null,
   calendarLinked: true,
-  confirmationEmail: { sent: true, at: "2026-10-08T16:00:00.000Z", error: null },
   internalNotification: { sent: true, at: "2026-10-08T16:00:00.000Z", error: null },
   history: [],
-  reminders: [],
+  sentEmails: [],
   after: {
     canSend: true,
     started: false,
