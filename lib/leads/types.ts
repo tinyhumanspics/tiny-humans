@@ -2,6 +2,7 @@ import type { WaiverSummary } from "@/lib/waiver/types";
 import type { WaiverKind } from "@/lib/waiver/text";
 import type { AddonLine, BookingBaby } from "@/lib/booking/extra-babies";
 import type { FamilyMember } from "@/lib/booking/family";
+import type { LeadExtrasOrder } from "@/lib/photo-extras/types";
 
 /** A booking as shown in /admin > Leads (no raw technical ids). */
 export type LeadStatus = "pending" | "confirmed" | "rescheduled" | "cancelled";
@@ -126,6 +127,17 @@ export interface Lead {
   history: { oldDate: string; oldStart: string; newDate: string; newStart: string; newEnd: string; by: "customer" | "admin"; at: string }[];
   /** Every email sent to the family (booking, its request, its due-date reservation), newest first (owner, Nov 20). */
   sentEmails: LeadEmail[];
+  /** Photo extras after the session (owner, Nov 20); undefined in mock mode. */
+  extras?: {
+    /** The family's extras page (null for cancelled or unconfirmed bookings). */
+    link: string | null;
+    orders: LeadExtrasOrder[];
+    /** Paid for extras, all orders. */
+    paidCents: number;
+    /** The booked total (bundle + add-ons + travel) and what the session got paid (deposit + payment). */
+    sessionTotalCents: number;
+    sessionPaidCents: number;
+  };
   /** After-session emails, payment and review (server mode only). */
   after?: AfterSessionStatus;
   /** The deposit (null: booked without one; undefined in mock mode). */

@@ -2,8 +2,9 @@ import "server-only";
 import { and, asc, count, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
-import { getDb } from "@/lib/db/client";
-import { bookingDeposits, bookingEmails, bookingRescheduleHistory, bookings, emailEvents } from "@/lib/db/schema";
+import { getDb, isMissingTable } from "@/lib/db/client";
+import { bookingDeposits, bookingEmails, bookingRescheduleHistory, bookings, emailEvents, photoExtraOrders } from "@/lib/db/schema";
+import { log } from "@/lib/log";
 import type { Dashboard, DashboardSession } from "./dashboard-types";
 import { summarizeBookings, windowStartKey, type DashboardBookingRow } from "./dashboard-summary";
 
@@ -23,7 +24,7 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
   const emailsSince = new Date(now.getTime() - EMAIL_DAYS * 86_400_000);
   const totalCents = sql<number>`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0)`.mapWith(Number);
   const db = getDb();
-  const [rows, upcoming, [reschedules], emailRows, [problems]] = await Promise.all([
+  const [rows, upcoming, [reschedules], emailRows, [problems], [extras]] = await Promise.all([
     db
       .select({
         createdAt: bookings.createdAt,
@@ -63,6 +64,12 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
     db.select({ n: count() }).from(bookingRescheduleHistory).where(gte(bookingRescheduleHistory.createdAt, since)),
     db.select({ status: bookingEmails.status, n: count() }).from(bookingEmails).where(gte(bookingEmails.createdAt, emailsSince)).groupBy(bookingEmails.status),
     db.select({ n: count() }).from(emailEvents).where(gte(emailEvents.occurredAt, emailsSince)),
+    // photo extras paid in the same weeks (none before migration 0045)
+    db
+      .select({ n: count(), cents: sql<number>`coalesce(sum(${photoExtraOrders.totalCents}), 0)`.mapWith(Number) })
+      .from(photoExtraOrders)
+      .where(and(eq(photoExtraOrders.status, "paid"), gte(photoExtraOrders.paidAt, since)))
+      .catch((err) => (isMissingTable(err) || log.error("dashboard", "Could not load photo extras", { error: err as Error }), [{ n: 0, cents: 0 }])),
   ]);
   const summary = summarizeBookings(rows as DashboardBookingRow[], today, timeZone);
   const emailsWith = (status: string) => Number(emailRows.find((r) => r.status === status)?.n ?? 0);
@@ -82,6 +89,7 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
     bundles: summary.bundles,
     sources: summary.sources,
     changes: { cancelled: summary.cancelled, depositNotPaid: summary.depositNotPaid, rescheduled: Number(reschedules?.n ?? 0) },
+    extras: { orders: Number(extras?.n ?? 0), revenueCents: Number(extras?.cents ?? 0) },
     emails: { days: EMAIL_DAYS, sent: emailsWith("sent"), failed: emailsWith("failed"), problems: Number(problems?.n ?? 0) },
   };
 }

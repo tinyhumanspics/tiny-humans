@@ -7,6 +7,7 @@ import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
 import type { Dashboard } from "@/lib/admin/dashboard-types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import type { DepositSettings } from "@/lib/deposit/types";
+import type { ExtrasSettings } from "@/lib/photo-extras/types";
 import type { AdminBundle } from "@/lib/pricing/types";
 import type { DiscountCode } from "@/lib/pricing/types";
 import type { BundleInput, CodeInput, OfferForAllInput } from "@/lib/pricing/validation";
@@ -48,6 +49,9 @@ export interface AdminApi {
   /** Deposits on/off + each bundle's amount (null = the database or its table isn't there). `stripeReady`: Stripe can take them. */
   getDeposit(): Promise<{ settings: DepositSettings | null; stripeReady: boolean; databaseConfigured: boolean }>;
   saveDeposit(s: { enabled: boolean; amounts: Record<string, number> }): Promise<{ settings: DepositSettings | null; stripeReady: boolean }>;
+  /** Photo extras after the session (null = not saved yet: none offered). */
+  getExtras(): Promise<{ settings: ExtrasSettings | null; stripeReady: boolean; databaseConfigured: boolean }>;
+  saveExtras(s: ExtrasSettings): Promise<{ settings: ExtrasSettings | null; stripeReady: boolean }>;
   /* leads (owner only) */
   listLeads(filter: LeadFilter, offset?: number): Promise<LeadList>;
   dashboard(): Promise<Dashboard>;
@@ -69,6 +73,8 @@ export interface AdminApi {
   emailPaymentLink(reference: string): Promise<Lead>;
   /** "Check with Stripe": asks Stripe whether this booking was paid (backup for a missed webhook). */
   checkPayment(reference: string): Promise<Lead>;
+  /** The "Delivered" tick on a paid photo extras order (sends nothing). */
+  setExtrasDelivered(reference: string, orderId: string, delivered: boolean): Promise<Lead>;
   /* pricing & promotions (owner only) */
   getPricing(): Promise<{ bundles: AdminBundle[]; codes: DiscountCode[]; databaseConfigured: boolean }>;
   saveBundle(b: BundleInput): Promise<AdminBundle[]>;
@@ -153,6 +159,8 @@ const httpApi: AdminApi = {
   saveTravel: async (s) => json(await fetch("/api/admin/travel", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   getDeposit: async () => json(await fetch("/api/admin/deposit", { cache: "no-store" })),
   saveDeposit: async (s) => json(await fetch("/api/admin/deposit", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
+  getExtras: async () => json(await fetch("/api/admin/photo-extras", { cache: "no-store" })),
+  saveExtras: async (s) => json(await fetch("/api/admin/photo-extras", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify(s) })),
   leadAvailability: async (reference, from, to) =>
     (await json<{ days: import("@/lib/booking/types").DayAvailability[] }>(await fetch(`/api/admin/leads/availability?${new URLSearchParams({ reference, from, to })}`, { cache: "no-store" }))).days,
   rescheduleLead: async (reference, slot) =>
@@ -204,6 +212,8 @@ const httpApi: AdminApi = {
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-link", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
   checkPayment: async (reference) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/payment-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference }) }))).lead,
+  setExtrasDelivered: async (reference, orderId, delivered) =>
+    (await json<{ lead: Lead }>(await fetch("/api/admin/leads/extras-delivered", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, orderId, delivered }) }))).lead,
 };
 
 export function getAdminApi(): AdminApi {

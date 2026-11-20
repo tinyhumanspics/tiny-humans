@@ -63,7 +63,7 @@ export function ComingUp({ data }: { data: Dashboard }) {
 const BAR_W = 28;
 const CHART_H = 120;
 
-export function WeeklyChart({ weeks }: { weeks: DashboardWeek[] }) {
+export function WeeklyChart({ weeks, extras }: { weeks: DashboardWeek[]; extras?: { orders: number; revenueCents: number } }) {
   const [mode, setMode] = useState<"bookings" | "revenue">("bookings");
   const value = (w: DashboardWeek) => (mode === "bookings" ? w.bookings : w.revenueCents);
   const label = (w: DashboardWeek) => (mode === "bookings" ? String(w.bookings) : shortDollars(w.revenueCents));
@@ -78,6 +78,11 @@ export function WeeklyChart({ weeks }: { weeks: DashboardWeek[] }) {
         Last {weeks.length} weeks: {totalBookings} {totalBookings === 1 ? "booking" : "bookings"} · {dollars(totalCents)} booked. Bookings made each
         week that are still on.
       </p>
+      {extras && (
+        <p className={cn(admin.hintSmall, "chalk-soft")}>
+          Photo extras: {dollars(extras.revenueCents)} paid ({extras.orders} {extras.orders === 1 ? "order" : "orders"}) in the same weeks, on top of the bookings.
+        </p>
+      )}
       <div className={styles.toggle} role="group" aria-label="Show">
         {(["bookings", "revenue"] as const).map((m) => (
           <button key={m} type="button" className={cn(styles.toggleButton, "chalk-soft")} aria-pressed={mode === m} onClick={() => setMode(m)}>
@@ -181,7 +186,7 @@ export function ChangesAndEmails({ data, weeks }: { data: Dashboard; weeks: numb
 export function DashboardCharts({ data }: { data: Dashboard }) {
   return (
     <div className={styles.insights}>
-      <WeeklyChart weeks={data.weeks} />
+      <WeeklyChart weeks={data.weeks} extras={data.extras} />
       <ShareBars id="dash-bundles" title="By bundle" hint={`Bookings still on, made in the last ${data.weeks.length} weeks.`} items={data.bundles} />
       <ShareBars id="dash-sources" title="Where bookings come from" hint="Same bookings, by how the family first found the website." items={data.sources} />
     </div>

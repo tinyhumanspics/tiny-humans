@@ -81,6 +81,7 @@ test("the dashboard shows sessions coming up, weekly bookings, shares and change
     bundles: [{ label: "Little Moments", bookings: 3, revenueCents: 44700 }, { label: "Our Little Story", bookings: 1, revenueCents: 34900 }],
     sources: [{ label: "Meta ads", bookings: 3, revenueCents: 54700 }, { label: "Direct", bookings: 1, revenueCents: 24900 }],
     changes: { cancelled: 1, depositNotPaid: 2, rescheduled: 1 },
+    extras: { orders: 0, revenueCents: 0 },
     emails: { days: 30, sent: 5, failed: 0, problems: 1 },
   };
   await page.route("**/api/admin/dashboard", (route) => route.fulfill({ json: dashboard }));

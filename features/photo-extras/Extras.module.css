@@ -1,0 +1,58 @@
+/* The photo extras page (owner, Nov 20): theme variables only, so every seasonal theme reaches it. */
+.page { padding-top: clamp(28px, 6vw, 64px); padding-bottom: clamp(56px, 8vw, 96px); }
+.panel { max-width: 640px; margin: 0 auto; padding: clamp(22px, 5vw, 40px) clamp(18px, 5vw, 40px); background: color-mix(in srgb, var(--chalkboard-dark) 35%, transparent); border-radius: 10px; }
+.eyebrow { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--cloud-blue); }
+.title { margin: 4px 0 12px; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; color: var(--chalk-white); outline: none; }
+.text { margin: 12px 0; font-size: 1.15rem; line-height: 1.5; color: var(--chalk-muted); }
+.done { display: grid; justify-items: start; gap: 4px; }
+.actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 22px; }
+
+.options { display: grid; gap: 14px; margin-top: 18px; }
+.option {
+  display: grid; gap: 6px; padding: 14px 16px;
+  border: 2px dashed color-mix(in srgb, var(--chalk-white) 35%, transparent); border-radius: 8px 12px 9px 11px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 45%, transparent);
+}
+.chosen { border-style: solid; border-color: var(--sun-yellow); }
+.optionHead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 12px; }
+.optionTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.35rem; line-height: 1.2; color: var(--chalk-white); }
+.price { font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
+.hint { margin: 0; font-size: 1rem; line-height: 1.45; color: var(--chalk-muted); }
+.credit { font-size: 1rem; color: var(--cloud-blue); }
+
+.stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.step {
+  width: 44px; height: 44px; border: 2px solid var(--chalk-white); border-radius: 50%;
+  background: transparent; color: var(--chalk-white); font-family: var(--font-chalk); font-size: 1.6rem; line-height: 1; cursor: pointer;
+}
+.step:disabled { opacity: 0.4; cursor: not-allowed; }
+.step:focus-visible { outline: 2px solid var(--sun-yellow); outline-offset: 3px; }
+.count { min-width: 2ch; text-align: center; font-family: var(--font-chalk); font-size: 1.8rem; color: var(--chalk-white); }
+
+.check { grid-template-columns: auto 1fr; align-items: start; column-gap: 12px; cursor: pointer; }
+.check input { width: 22px; height: 22px; margin-top: 4px; accent-color: var(--sun-yellow); }
+.check input:disabled { cursor: not-allowed; }
+.check:has(input:disabled) { cursor: default; opacity: 0.75; }
+.check input:focus-visible { outline: 2px solid var(--sun-yellow); outline-offset: 3px; }
+.checkText { display: grid; gap: 4px; min-width: 0; }
+
+.label { display: block; margin-top: 20px; font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
+.textarea {
+  width: 100%; margin-top: 8px; padding: 10px 14px; min-height: 90px; resize: vertical;
+  border: 2px solid color-mix(in srgb, var(--chalk-white) 40%, transparent); border-radius: 6px 10px 7px 9px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 60%, transparent); font-family: var(--font-hand); font-size: 1.15rem; color: var(--chalk-white);
+}
+.textarea:focus-visible { outline: none; border-color: var(--sun-yellow); box-shadow: 0 0 0 3px color-mix(in srgb, var(--sun-yellow) 25%, transparent); }
+
+.totalRow { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-top: 20px; padding-top: 12px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 35%, transparent); }
+.totalLabel { font-family: var(--font-chalk); font-size: 1.35rem; color: var(--chalk-muted); }
+.total { font-family: var(--font-chalk); font-size: 2rem; color: var(--chalk-white); }
+.error { margin: 10px 0 0; color: var(--chalk-error); font-size: 1.05rem; }
+
+.receipt { width: 100%; margin: 6px 0 10px; display: grid; }
+.receipt > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; padding: 8px 0; border-bottom: 1px dashed color-mix(in srgb, var(--chalk-white) 25%, transparent); }
+.receipt dt { font-size: 1.05rem; color: var(--chalk-white); }
+.receipt dd { margin: 0; font-size: 1.05rem; color: var(--chalk-muted); }
+.receiptTotal dt, .receiptTotal dd { font-family: var(--font-chalk); font-size: 1.35rem; color: var(--chalk-white); }
+
+@media (prefers-reduced-motion: reduce) { .step { transition: none; } }

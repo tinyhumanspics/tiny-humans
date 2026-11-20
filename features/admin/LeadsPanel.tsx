@@ -6,6 +6,7 @@ import AdminDialog from "./AdminDialog";
 import type { AdminApi } from "@/lib/admin/client";
 import type { EmailStatus, Lead, LeadDeposit, LeadEmail, LeadFilter, LeadList, SentEmail } from "@/lib/leads/types";
 import { formatMoney } from "@/lib/pricing/engine";
+import { lineName } from "@/lib/photo-extras/format";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { ACCESS_LABEL, travelOwnerLine } from "@/lib/booking/templates";
 import { backdropNames } from "@/lib/booking/backdrop-names";
@@ -511,6 +512,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
             )}
           </div>
           {lead.after && <PaymentPanel lead={lead} api={api} onUpdated={onCancelled} />}
+          {lead.extras && (lead.extras.link || lead.extras.orders.length > 0) && <ExtrasPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <DepositLinkPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.after && <AfterSessionPanel lead={lead} api={api} onUpdated={onCancelled} />}
           {lead.consents && lead.status !== "cancelled" && <ConsentButtons lead={lead} api={api} onUpdated={onCancelled} />}
@@ -781,6 +783,104 @@ const miamiToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "America/N
  * A deposit still waiting (time held) or one whose 30 minutes ran out (time released): email, text or copy the
  * family's deposit link. A released time is held again for 30 minutes first, if it's still free.
  */
+const EXTRAS_STATUS = { open: "Not paid yet (the family opened the payment page)", paid: "Paid", refunded: "Refunded" } as const;
+
+/**
+ * Photo extras after the session (owner, Nov 20): the session total, what the extras added and the total paid overall;
+ * each order with its lines, status, note and a "Delivered" tick; and the family's extras link to text or copy.
+ */
+function ExtrasPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
+  const x = lead.extras!;
+  const [busy, setBusy] = useState<string | null>(null);
+  // the tick shows at once; the saved lead replaces it (or it goes back if saving failed)
+  const [ticked, setTicked] = useState<Record<string, boolean>>({});
+  const [note, setNote] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const first = lead.parentName.split(" ")[0];
+  const tick = async (orderId: string, delivered: boolean) => {
+    setBusy(orderId);
+    setTicked((t) => ({ ...t, [orderId]: delivered }));
+    setErr(null);
+    setNote(null);
+    try {
+      onUpdated(await api.setExtrasDelivered(lead.reference, orderId, delivered));
+      setNote(delivered ? "Marked as delivered." : "Marked as not delivered yet.");
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Couldn't save. Please try again.");
+    } finally {
+      setTicked(({ [orderId]: _done, ...rest }) => rest);
+      setBusy(null);
+    }
+  };
+  const copy = async () => {
+    setErr(null);
+    try {
+      await navigator.clipboard.writeText(x.link!);
+      setNote("Extras link copied.");
+    } catch {
+      setNote(null);
+      setErr("Couldn't copy. Press and hold the link below to copy it.");
+    }
+  };
+  return (
+    <div className={styles.history}>
+      <p className={cn(styles.h3, "chalk-soft")}>Photo extras</p>
+      <dl>
+        <div>
+          <dt className="chalk-soft">Session total</dt>
+          <dd className="chalk-soft">{formatMoney(x.sessionTotalCents)} ({formatMoney(x.sessionPaidCents)} paid)</dd>
+        </div>
+        <div>
+          <dt className="chalk-soft">Photo extras paid</dt>
+          <dd className="chalk-soft">{formatMoney(x.paidCents)}</dd>
+        </div>
+        <div>
+          <dt className="chalk-soft">Total paid overall</dt>
+          <dd className="chalk-soft"><b>{formatMoney(x.sessionPaidCents + x.paidCents)}</b></dd>
+        </div>
+      </dl>
+      {x.orders.length === 0 ? (
+        <p className={cn(styles.hintSmall, "chalk-soft")}>No extras yet.</p>
+      ) : (
+        <ol className={styles.historyList} aria-label="Photo extras orders">
+          {x.orders.map((o) => (
+            <li key={o.id}>
+              <b className="chalk-soft">{o.lines.map((l) => `${lineName(l, en.extras)} (${formatMoney(l.totalCents)})`).join(", ")}</b>
+              {o.creditCents > 0 && <span className="chalk-soft">Credit for extras paid before: −{formatMoney(o.creditCents)}</span>}
+              <span className="chalk-soft">
+                {o.status === "paid" ? `Paid ${formatMoney(o.totalCents)}${o.paidAt ? ` on ${when(o.paidAt)}` : ""}` : `${EXTRAS_STATUS[o.status]}: ${formatMoney(o.totalCents)}`}
+              </span>
+              {o.note && <span className={cn(styles.historyMeta, "chalk-soft")}>Their note: “{o.note}”</span>}
+              {o.status === "paid" && (
+                <label className={styles.toggle}>
+                  <input type="checkbox" checked={ticked[o.id] ?? Boolean(o.deliveredAt)} disabled={busy !== null} onChange={(e) => tick(o.id, e.target.checked)} />
+                  <span className="chalk-soft">{o.deliveredAt ? `Delivered ${when(o.deliveredAt)}` : "Delivered"}</span>
+                </label>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      {x.link && (
+        <>
+          <p className={cn(styles.hintSmall, "chalk-soft")}>The sneak-peek email includes this link. It never changes; the page closes after the days set in Pricing.</p>
+          <div className={styles.photoBarRight}>
+            <a className={styles.smallButton} href={smsHref(lead.phone, en.extras.sms.replace("{name}", first).replace("{url}", x.link))}>
+              Text the extras link
+            </a>
+            <button type="button" className={styles.smallButton} onClick={copy}>
+              Copy extras link
+            </button>
+          </div>
+          <input className={styles.input} readOnly value={x.link} aria-label="Photo extras link" onFocus={(e) => e.currentTarget.select()} />
+        </>
+      )}
+      {note && <p className={cn(styles.hintSmall, "chalk-soft")} role="status">{note}</p>}
+      {err && <p className={cn(styles.error, "chalk-soft")} role="alert">{err}</p>}
+    </div>
+  );
+}
+
 function DepositLinkPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
   const d = lead.deposit;
   const [busy, setBusy] = useState<"email" | "hold" | null>(null);

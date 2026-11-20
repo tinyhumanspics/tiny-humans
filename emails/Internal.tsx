@@ -383,3 +383,35 @@ export async function internalNewRequestEmail(r: BookingRequestRow, adminUrl: st
   const html = await renderHtml(<InternalLayout banner="NEW REQUEST: TEXT TO CONFIRM" bannerBg={C.yellow} bannerFg={C.ink} summary={summary} rows={rows} footer={`Reply to this email to write to ${r.firstName} directly.`} />);
   return { subject: `New request: ${r.firstName} · ${r.type === "due_date" ? `due ${formatLongDate(r.dueDate ?? "")}` : when} · ${r.bundleName}`, html, text: text(["NEW REQUEST: TEXT TO CONFIRM", "", summary], rows), attachments: [] };
 }
+
+/** A family paid for photo extras after their session (owner, Nov 20): what they added, the total and their note. */
+export async function internalPhotoExtrasEmail(p: { reference: string; parentName: string; email: string; phone: string; bundleName: string; lines: { name: string; amountCents: number; when: string }[]; creditCents: number; totalCents: number; note: string | null; leadsUrl: string }): Promise<RenderedEmail> {
+  const first = firstName(p.parentName);
+  const rows: [string, string][] = [
+    ["Booking reference", p.reference],
+    ["Customer name", p.parentName],
+    ["Email", p.email],
+    ["Phone", p.phone],
+    ["Bundle", p.bundleName],
+    ...p.lines.map((l): [string, string] => [l.name, `${formatMoney(l.amountCents)} · deliver within ${l.when}`]),
+    ...(p.creditCents > 0 ? [["Credit (extras paid before)", `−${formatMoney(p.creditCents)}`] as [string, string]] : []),
+    ["Total paid", formatMoney(p.totalCents)],
+    ["Their note", p.note || "None"],
+    ["Open the lead", p.leadsUrl],
+  ];
+  const html = await renderHtml(
+    <InternalLayout
+      banner="PHOTO EXTRAS PAID"
+      bannerBg={C.yellow}
+      bannerFg={C.ink}
+      summary={
+        <>
+          <b>{p.parentName}</b> paid <b>{formatMoney(p.totalCents)}</b> for photo extras: {p.lines.map((l) => l.name).join(", ")}. Tick &ldquo;Delivered&rdquo; on their lead in /admin → Leads once you&apos;ve sent them.
+        </>
+      }
+      rows={rows}
+      footer={`Reply to this email to contact ${first} directly. ${first} got a thank-you with what they added and when it arrives.`}
+    />,
+  );
+  return { subject: `New photo extras: ${p.reference} — ${p.parentName} (${formatMoney(p.totalCents)})`, html, text: text(["PHOTO EXTRAS PAID", "", `${p.parentName} paid ${formatMoney(p.totalCents)} for photo extras.`], rows), attachments: [] };
+}

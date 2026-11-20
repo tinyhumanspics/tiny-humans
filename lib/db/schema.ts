@@ -408,6 +408,71 @@ export const sentEmails = pgTable(
 
 export type SentEmailRow = typeof sentEmails.$inferSelect;
 
+/**
+ * Photo extras the family can buy after the session (owner, Nov 20): prices, the cap and the delivery promises, edited in
+ * /admin → Pricing. One row (id 1); no row or "off" = no extras offered.
+ */
+export const photoExtrasSettings = pgTable(
+  "photo_extras_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    enabled: boolean("enabled").notNull().default(false),
+    extraPhotoCents: integer("extra_photo_cents").notNull(),
+    /** Most extra edited photos per booking, across all its orders (more = the full gallery). */
+    maxExtras: integer("max_extras").notNull(),
+    fullGalleryCents: integer("full_gallery_cents").notNull(),
+    rawFilesCents: integer("raw_files_cents").notNull(),
+    /** Days the extras page stays open after the sneak-peek email. */
+    openDays: integer("open_days").notNull(),
+    extrasDeliveryHours: integer("extras_delivery_hours").notNull(),
+    fullDeliveryDays: integer("full_delivery_days").notNull(),
+    rawDeliveryHours: integer("raw_delivery_hours").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("photo_extras_settings_single_row", sql`${t.id} = 1`),
+    check("photo_extras_settings_prices_check", sql`${t.extraPhotoCents} between 100 and 100000 and ${t.fullGalleryCents} between 100 and 1000000 and ${t.rawFilesCents} between 100 and 1000000`),
+    check("photo_extras_settings_limits_check", sql`${t.maxExtras} between 1 and 100 and ${t.openDays} between 1 and 365`),
+    check("photo_extras_settings_delivery_check", sql`${t.extrasDeliveryHours} between 1 and 720 and ${t.fullDeliveryDays} between 1 and 90 and ${t.rawDeliveryHours} between 1 and 720`),
+  ],
+);
+
+/**
+ * One purchase of photo extras (owner, Nov 20). The lines are copied in at checkout (kind, quantity, unit price, total,
+ * delivery promise), so a later price change never changes an old order. At most one open (unpaid) order per booking:
+ * opening the page again reuses it.
+ */
+export const photoExtraOrders = pgTable(
+  "photo_extra_orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+    /** [{ kind: "extra_photos" | "full_gallery" | "unedited_files", quantity, unitCents, totalCents, delivery: { amount, unit } }] */
+    lines: jsonb("lines").notNull(),
+    /** Taken off the full gallery: what earlier orders paid for extra photos. */
+    creditCents: integer("credit_cents").notNull().default(0),
+    totalCents: integer("total_cents").notNull(),
+    note: text("note"),
+    /** "open" | "paid" | "refunded" */
+    status: text("status").notNull().default("open"),
+    stripeSessionId: text("stripe_session_id"),
+    stripePaymentIntent: text("stripe_payment_intent"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("photo_extra_orders_booking_idx").on(t.bookingId),
+    uniqueIndex("photo_extra_orders_open_idx").on(t.bookingId).where(sql`${t.status} = 'open'`),
+    uniqueIndex("photo_extra_orders_session_idx").on(t.stripeSessionId),
+    check("photo_extra_orders_status_check", sql`${t.status} in ('open', 'paid', 'refunded')`),
+    check("photo_extra_orders_total_check", sql`${t.totalCents} > 0 and ${t.creditCents} >= 0`),
+  ],
+);
+
+export type PhotoExtraOrder = typeof photoExtraOrders.$inferSelect;
+
 /** A family's review of their session (from the link in the gallery email). The owner picks which to use publicly. */
 export const reviews = pgTable(
   "reviews",

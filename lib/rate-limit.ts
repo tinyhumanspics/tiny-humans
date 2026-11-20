@@ -35,6 +35,9 @@ export const RULES = {
   pay: { limit: 30, windowSec: 600 },
   reviewGet: { limit: 40, windowSec: 600 },
   reviewPost: { limit: 10, windowSec: 600 },
+  // photo extras after the session (owner, Nov 20): the page, and opening its payment page
+  extrasGet: { limit: 60, windowSec: 600 },
+  extrasPost: { limit: 15, windowSec: 600 },
   // anonymous step counts on /book
   funnel: { limit: 60, windowSec: 600 },
   // browser Content-Security-Policy reports (a page with several blocked items sends several)

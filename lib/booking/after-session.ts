@@ -13,6 +13,7 @@ import { createCancelToken, hashCancelToken, looksLikeCancelToken } from "./canc
 import { depositOf, depositPaidCents } from "@/lib/deposit/server";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
+import { extrasOfferFor } from "@/lib/photo-extras/server";
 
 /**
  * Emails the owner sends from /admin after a session: "Send sneak peek" (thank-you + Pixieset gallery to choose their
@@ -110,14 +111,18 @@ async function deliver(row: Booking, kind: AfterKind, build: (token: string, the
 const detailsOf = (row: Booking) => ({ reference: row.bookingReference, parentName: row.parentName, babyName: row.babyName, bundleName: row.packageName });
 
 /**
- * "Send sneak peek": thank-you + the Pixieset gallery + "choose your N favorites". The pay button is included only if
- * the session isn't paid yet when the email is sent (e.g. no button if they already paid with the payment link).
+ * "Send sneak peek": thank-you + the Pixieset gallery + "choose your N favorites" + more photos to add (photo extras).
+ * The pay button is included only if the session isn't paid yet when the email is sent (e.g. no button if they
+ * already paid with the payment link).
  */
 export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favorites: string) {
   const amountCents = await balanceDueCents(row);
   const paid = await isPaid(row.id);
+  // "Want more photos?" (owner, Nov 20), while extras are on and something is left to buy
+  const offer = await extrasOfferFor(row).catch(() => null);
+  const extras = offer ? { url: offer.url, left: offer.left, prices: offer.settings } : undefined;
   return deliver(row, AFTER_KINDS.afterSession, (token, themeId) =>
-    sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined, locale: row.locale }),
+    sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined, extras, locale: row.locale }),
   );
 }
 

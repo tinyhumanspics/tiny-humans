@@ -66,8 +66,10 @@ export function createCheckoutSession(input: {
   idempotencyKey: string;
   /** Separate full-price add-on/travel lines on the payment page. */
   extraLines?: { name: string; amountCents: number }[];
-  /** "deposit" (paid while booking) or "balance" (the payment link); the webhook tells them apart by this. */
-  kind?: "deposit" | "balance" | "due_deposit";
+  /** "deposit" (paid while booking), "balance" (the payment link) or "photo_extras"; the webhook tells them apart by this. */
+  kind?: "deposit" | "balance" | "due_deposit" | "photo_extras";
+  /** More metadata on the page and its payment (e.g. the photo extras order id). */
+  metadata?: Record<string, string>;
   /** When the page expires (epoch seconds, 30 min to 24 h from now; Stripe's default is 24 h). */
   expiresAt?: number;
   /** "book" labels the button "Book"; default "pay". */
@@ -103,6 +105,7 @@ export function createCheckoutSession(input: {
       "metadata[booking_id]": input.bookingId,
       "metadata[booking_reference]": input.reference,
       ...(input.kind ? { "metadata[kind]": input.kind, "payment_intent_data[metadata][kind]": input.kind } : {}),
+      ...Object.fromEntries(Object.entries(input.metadata ?? {}).flatMap(([k, v]) => [[`metadata[${k}]`, v], [`payment_intent_data[metadata][${k}]`, v]])),
       ...(input.expiresAt ? { expires_at: String(input.expiresAt) } : {}),
       ...(input.submitMessage ? { "custom_text[submit][message]": input.submitMessage } : {}),
       "payment_intent_data[description]": input.description,

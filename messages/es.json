@@ -1096,7 +1096,15 @@
       "payButton": "Pagar {amount}",
       "payText": "Paga {amount} con tarjeta: {url}",
       "paid": "Tu sesión está pagada por completo. ¡Gracias!",
-      "nothingDue": "No hay nada que pagar por esta sesión. ¡Gracias!"
+      "nothingDue": "No hay nada que pagar por esta sesión. ¡Gracias!",
+      "extrasTitle": "¿Quieres más fotos?",
+      "extrasIntro": "¿Te encantan más de {count}? Puedes agregar más antes de que empecemos a editar:",
+      "extrasExtra": "Fotos editadas extra: {price} cada una, hasta {max}",
+      "extrasFull": "Tu galería completa, con corrección de color y retoque: {price}",
+      "extrasRaw": "Tus archivos sin editar (cada foto tal como se tomó, JPEG): {price}",
+      "extrasButton": "Agregar fotos",
+      "extrasHeart": "Marca también con un corazón tus fotos extra en la galería, para saber cuáles son.",
+      "extrasText": "Agregar fotos: {url}"
     },
     "gallery": {
       "subject": "¡Tu galería de Tiny Humans está lista, {name}!",
@@ -1118,6 +1126,18 @@
       "payReminder": "Saldo pendiente: {amount}. Puedes pagar con tarjeta cuando quieras usando el botón de abajo.",
       "payButton": "Pagar {amount}",
       "payText": "Paga {amount} con tarjeta: {url}"
+    },
+    "extrasPaid": {
+      "subject": "¡Tus fotos extra van en camino, {name}!",
+      "preheader": "Esto es lo que agregaste y cuándo llega.",
+      "eyebrow": "Fotos extra",
+      "title": "¡Gracias, {name}!",
+      "intro": "Recibimos tu pago. Esto es lo que agregaste y cuándo llega:",
+      "listTitle": "Lo que agregaste",
+      "line": "{amount} · llega en {when}",
+      "credit": "Ya pagado por fotos extra",
+      "paid": "Pagado",
+      "note": "Te avisaremos cuando estén listas."
     },
     "paymentLink": {
       "subject": "Tu enlace de pago de Tiny Humans",
@@ -1179,6 +1199,71 @@
         "buttonText": "Elige un horario: {url}",
         "help": "¿Hubo algún problema con el pago? Responde a este correo y te ayudaremos."
       }
+    }
+  },
+  "extras": {
+    "sms": "¡Hola, {name}! Aquí puedes agregar más fotos de tu sesión: {url}",
+    "metaTitle": "Agrega más fotos",
+    "loading": "Cargando tus opciones…",
+    "eyebrow": "¡Hola, {name}!",
+    "title": "Agrega más fotos",
+    "intro": "{bundle} incluye {count} fotos editadas. ¿Quieres más? Elige abajo lo que te gustaría.",
+    "introNoCount": "¿Quieres más fotos de tu sesión? Elige abajo lo que te gustaría.",
+    "extra": {
+      "title": "Fotos editadas extra",
+      "price": "{price} cada una",
+      "left": "Hasta {n}",
+      "less": "Una menos",
+      "more": "Una más",
+      "count": "Fotos editadas extra: {n}",
+      "moreThan": "¿Quieres más de {max}? Elige tu galería completa.",
+      "inFull": "Todas están en tu galería completa.",
+      "noneLeft": "Ya agregaste el máximo de fotos extra. ¿Quieres más? Elige tu galería completa."
+    },
+    "full": {
+      "title": "Galería completa, con corrección de color y retoque",
+      "text": "Todas las fotos buenas de tu sesión.",
+      "credit": "−{amount} ya pagado por fotos extra"
+    },
+    "raw": {
+      "title": "Archivos sin editar",
+      "text": "Cada foto tal como se tomó, sin nuestra corrección de color ni retoque (JPEG). No muestran nuestro trabajo final, así que por favor no nos etiquetes en ellas."
+    },
+    "owned": "Ya es tuyo",
+    "noteLabel": "¿Algo que debamos saber? (por ejemplo, cuáles fotos)",
+    "total": "Total",
+    "pay": "Pagar {total}",
+    "paying": "Abriendo la página de pago…",
+    "secure": "Pagarás con tarjeta en la página segura de Stripe.",
+    "pickSomething": "Elige al menos una opción.",
+    "changed": "Algo cambió desde que abriste esta página. Por favor, revisa tus opciones otra vez.",
+    "failed": "Algo salió mal. Inténtalo de nuevo o escríbenos al {phone}.",
+    "paidTitle": "¡Gracias!",
+    "paidText": "Esto es lo que agregaste y cuándo llega:",
+    "paidLine": "{amount} · llega en {when}",
+    "paidCredit": "Ya pagado por fotos extra",
+    "paidTotal": "Pagado",
+    "paidNote": "También te enviamos un correo con estos detalles.",
+    "addMore": "Agregar algo más",
+    "nothingTitle": "Ya tienes todo",
+    "nothingText": "Ya agregaste tu galería completa y tus archivos sin editar. ¡Gracias!",
+    "closedTitle": "Esta página está cerrada",
+    "closedText": "Ya no se pueden agregar fotos en línea para esta sesión. Escríbenos al {phone} y te ayudamos.",
+    "invalidTitle": "Este enlace no funciona",
+    "invalidText": "Abre otra vez el enlace de tu correo, o escríbenos al {phone}.",
+    "home": "Volver a Tiny Humans",
+    "lines": {
+      "extra_photos": "Fotos editadas extra × {n}",
+      "full_gallery": "Galería completa, con corrección de color y retoque",
+      "unedited_files": "Archivos sin editar (JPEG)"
+    },
+    "within": {
+      "hours": "{n} horas",
+      "days": "{n} días"
+    },
+    "stripe": {
+      "description": "Fotos extra · {reference}",
+      "creditLine": "{name} (−{amount} ya pagado por fotos extra)"
     }
   },
   "review": {
@@ -1435,7 +1520,7 @@
     },
     "privacy": {
       "title": "Política de privacidad",
-      "lastUpdated": "15 de noviembre de 2026",
+      "lastUpdated": "20 de noviembre de 2026",
       "intro": "Tiny Humans es un estudio de fotografía de recién nacidos y bebés en Miami, Florida, que lleva el estudio hasta tu hogar. Esta política explica qué información recopilamos cuando visitas nuestro sitio web o reservas una sesión, cómo la usamos y qué opciones tienes. Lo mantenemos sencillo: solo recopilamos lo necesario para atender la sesión de tu familia.",
       "sections": [
         {
@@ -1478,7 +1563,7 @@
           "heading": "Con quién compartimos información",
           "body": [
             "Solo compartimos información con servicios de confianza que nos ayudan a operar Tiny Humans, y únicamente lo que necesitan para hacer su trabajo:",
-            { "list": ["Alojamiento y almacenamiento del sitio web (Vercel)", "Nuestra base de datos de reservas (Neon)", "Nuestro calendario (Microsoft 365 / Outlook)", "Nuestro servicio de entrega de correos electrónicos (Resend)", "Nuestro procesador de pagos (Stripe), que recibe el pago de tu tarjeta en su propia página segura. Compartimos con Stripe tu correo electrónico, paquete, monto pendiente y referencia de reserva; nunca vemos ni almacenamos el número de tu tarjeta", "Un servicio de seguridad que limita las solicitudes repetidas a nuestro sitio web (Upstash), el cual procesa brevemente direcciones IP", "Meta Platforms, para la medición publicitaria descrita anteriormente", "El servicio de galería en línea que usamos para entregar tus fotos"] },
+            { "list": ["Alojamiento y almacenamiento del sitio web (Vercel)", "Nuestra base de datos de reservas (Neon)", "Nuestro calendario (Microsoft 365 / Outlook)", "Nuestro servicio de entrega de correos electrónicos (Resend)", "Nuestro procesador de pagos (Stripe), que recibe el pago de tu tarjeta en su propia página segura. Compartimos con Stripe tu correo electrónico, paquete, monto pendiente, las fotos extra que compres y referencia de reserva; nunca vemos ni almacenamos el número de tu tarjeta", "Un servicio de seguridad que limita las solicitudes repetidas a nuestro sitio web (Upstash), el cual procesa brevemente direcciones IP", "Meta Platforms, para la medición publicitaria descrita anteriormente", "El servicio de galería en línea que usamos para entregar tus fotos"] },
             "También podemos compartir información si la ley lo exige o para proteger la seguridad de nuestros clientes, nuestro equipo u otras personas."
           ]
         },
@@ -1525,8 +1610,8 @@
     },
     "terms": {
       "title": "Términos del servicio",
-      "lastUpdated": "7 de octubre de 2026",
-      "lastUpdatedIso": "2026-10-07",
+      "lastUpdated": "20 de noviembre de 2026",
+      "lastUpdatedIso": "2026-11-20",
       "intro": "Estos términos explican cómo funcionan las reservas y las sesiones con Tiny Humans, un estudio de fotografía de recién nacidos y bebés en Miami, Florida. Al usar nuestro sitio web o reservar una sesión, aceptas estos términos. Si algo no está claro, pregúntanos antes de reservar.",
       "sections": [
         {
@@ -1558,7 +1643,7 @@
         {
           "id": "photos",
           "heading": "Tus fotos",
-          "body": ["Elegimos y editamos cuidadosamente tus fotos y las entregamos mediante una galería privada en línea. La cantidad de fotos editadas depende de tu paquete. El estilo de edición forma parte de nuestro trabajo artístico, y no entregamos archivos sin editar ni archivos RAW."
+          "body": ["Elegimos y editamos cuidadosamente tus fotos y las entregamos mediante una galería privada en línea. La cantidad de fotos editadas depende de tu paquete. Después de tu sesión puedes agregar más fotos: fotos editadas extra, tu galería completa con corrección de color y retoque, o tus archivos sin editar, a los precios que aparecen en tu página de extras. Los archivos sin editar se entregan tal como se tomaron, sin nuestra corrección de color ni retoque, por lo que no representan nuestro trabajo final: por favor, no etiquetes ni menciones a Tiny Humans en ellos. Los extras se pagan con tarjeta y no son reembolsables una vez entregados."
           ]
         },
         {

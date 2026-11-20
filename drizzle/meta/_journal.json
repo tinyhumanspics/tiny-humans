@@ -316,6 +316,13 @@
       "when": 1795213938758,
       "tag": "0044_sent_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1795217218614,
+      "tag": "0045_photo_extras",
+      "breakpoints": true
     }
   ]
 }

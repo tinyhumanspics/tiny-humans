@@ -131,8 +131,8 @@ export interface ChalkGroup {
   numbered?: boolean;
 }
 
-/** One dashed chalk box with a title and one or more lists, each with an optional small heading (e.g. "Before we arrive"). */
-export function ChalkGroups({ theme: t, title, groups, color }: { theme: EmailTheme; title: string; groups: ChalkGroup[]; color?: string }) {
+/** One dashed chalk box with a title (and an optional line under it) and one or more lists, each with an optional small heading (e.g. "Before we arrive"). */
+export function ChalkGroups({ theme: t, title, intro, groups, color }: { theme: EmailTheme; title: string; intro?: string; groups: ChalkGroup[]; color?: string }) {
   const c = color ?? t.blue;
   return (
     <tr>
@@ -141,6 +141,7 @@ export function ChalkGroups({ theme: t, title, groups, color }: { theme: EmailTh
           <tr>
             <td style={{ padding: "14px 18px 10px" }}>
               <p style={{ margin: "0 0 6px", fontFamily: CHALK_FONT, fontSize: 22, color: c }}>{title}</p>
+              {intro && <p style={{ margin: "0 0 4px", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>{intro}</p>}
               {groups.map((g, gi) => (
                 <Fragment key={gi}>
                   {g.title && <p style={{ margin: gi ? "14px 0 2px" : "4px 0 2px", fontFamily: CHALK_FONT, fontSize: 19, color: t.yellow }}>{g.title}</p>}

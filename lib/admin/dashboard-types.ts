@@ -37,6 +37,8 @@ export interface Dashboard {
   sources: DashboardShare[];
   /** Over the same weeks: cancelled sessions, time holds released because the deposit wasn't paid, reschedules. */
   changes: { cancelled: number; depositNotPaid: number; rescheduled: number };
+  /** Photo extras paid over the same weeks (owner, Nov 20): their own line, so the session numbers don't change. */
+  extras: { orders: number; revenueCents: number };
   /** Over the last `days` days: reminder/after-session emails sent or failed, delivery problems reported by Resend. */
   emails: { days: number; sent: number; failed: number; problems: number };
 }

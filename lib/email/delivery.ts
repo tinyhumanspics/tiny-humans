@@ -40,6 +40,7 @@ const EMAIL_NAMES: Record<string, string> = {
   resend_deposit_abandoned: "“not confirmed yet” email",
   resend_day_closed: "schedule-change email",
   resend_waiver_copy: "signed waiver copy",
+  resend_extras_paid: "photo extras thank-you",
   resend_due_reserved: "due date reserved email",
   resend_due_deposit_reminder: "due date deposit email",
   resend_due_deposit_auto: "due date “deposit not paid” email",

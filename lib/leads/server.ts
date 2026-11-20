@@ -7,6 +7,8 @@ import { getDb, isMissingTable } from "@/lib/db/client";
 import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookings, dueDateReservations, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review, type SentEmailRow } from "@/lib/db/schema";
 import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
 import { sentEmailsFor } from "@/lib/email/sent-log";
+import { extrasForBookings } from "@/lib/photo-extras/server";
+import type { LeadExtrasOrder } from "@/lib/photo-extras/types";
 import { photosLabelOf, termsFor } from "@/lib/booking/terms";
 import { accessFor } from "@/lib/booking/access";
 import { backdropsFor } from "@/lib/booking/backdrops";
@@ -20,7 +22,7 @@ import type { Lead, LeadDeposit, LeadEmail, LeadFilter, LeadList, LeadStatus, Se
 import { sourceLabel } from "@/lib/tracking/attribution";
 import { OWNER_SOURCES, isOwnerSource } from "@/config/booking";
 import { log } from "@/lib/log";
-import { bookingPayUrl } from "@/lib/payments/link";
+import { bookingPayUrl, extrasUrl } from "@/lib/payments/link";
 import { BookingError } from "@/lib/booking/errors";
 import { duplicateBookingsFor } from "./duplicates";
 import { addonsFor, babiesFor, familyFor } from "@/lib/booking/addons";
@@ -63,6 +65,8 @@ interface Extras {
   familyBundles: Map<string, boolean>;
   /** Booking id → every email sent to that family (best effort: none before migration 0044). */
   sentEmails: Map<string, SentEmailRow[]>;
+  /** Booking id → its photo extras orders, newest first (best effort: none before migration 0045). */
+  extras: Map<string, LeadExtrasOrder[]>;
 }
 
 /**
@@ -116,7 +120,7 @@ async function completions(bookingIds?: string[]): Promise<Map<string, Date>> {
   }
 }
 
-const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map(), familyBundles: new Map(), sentEmails: new Map() };
+const NO_EXTRAS: Extras = { emails: [], payments: [], reviews: [], consents: [], terms: [], access: [], backdrops: [], deposits: [], emailEvents: [], babies: new Map(), family: new Map(), addons: new Map(), waivers: new Map(), noticeHours: 48, codeCategories: new Map(), completions: new Map(), familyBundles: new Map(), sentEmails: new Map(), extras: new Map() };
 
 /** Reminder/after-session emails, payments and reviews of these bookings (empty if a table isn't there yet). */
 async function extrasFor(rows: Booking[]): Promise<Extras> {
@@ -128,7 +132,7 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
       log.error("leads", `Could not load ${what}`, { error: err as Error });
       return [] as T[];
     });
-  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done, catalog, sentEmails] = await Promise.all([
+  const [emails, payments, revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, done, catalog, sentEmails, extras] = await Promise.all([
     safe("emails", db.select().from(bookingEmails).where(inArray(bookingEmails.bookingId, bookingIds))),
     safe("payments", db.select().from(bookingPayments).where(inArray(bookingPayments.bookingId, bookingIds))),
     safe("reviews", db.select().from(reviews).where(inArray(reviews.bookingId, bookingIds))),
@@ -147,9 +151,10 @@ async function extrasFor(rows: Booking[]): Promise<Extras> {
     completions(bookingIds),
     getCatalog().catch(() => []),
     sentEmailsByBooking(rows).catch((err) => (log.error("leads", "Could not load sent emails", { error: err as Error }), new Map<string, SentEmailRow[]>())),
+    extrasForBookings(bookingIds),
   ]);
   const familyBundles = new Map(catalog.map((b) => [b.id, asksFamily(b)]));
-  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done, familyBundles, sentEmails };
+  return { emails, payments, reviews: revs, consents, terms, access, backdrops, deposits, emailEvents, babies, family, addons, waivers, noticeHours, codeCategories, completions: done, familyBundles, sentEmails, extras };
 }
 
 const sent = (e: BookingEmail | undefined): SentEmail | null => (e ? { status: e.status as SentEmail["status"], at: iso(e.sentAt ?? e.updatedAt), error: e.error } : null);
@@ -206,6 +211,23 @@ function leadDepositOf(r: Booking, x: Extras): LeadDeposit | null {
   };
 }
 
+/**
+ * Photo extras (owner, Nov 20): the page's link, the orders, and the money: the session total, what the session got
+ * paid (deposit + payment), what the extras got paid.
+ */
+function extrasOf(r: Booking, x: Extras): Lead["extras"] {
+  const orders = x.extras.get(r.id) ?? [];
+  const payment = x.payments.find((p) => p.bookingId === r.id);
+  const deposit = x.deposits.find((d) => d.bookingId === r.id) ?? null;
+  return {
+    link: r.status === "confirmed" || r.status === "rescheduled" ? extrasUrl(r.bookingReference, r.locale) : null,
+    orders,
+    paidCents: orders.filter((o) => o.status === "paid").reduce((sum, o) => sum + o.totalCents, 0),
+    sessionTotalCents: (r.finalPriceCents ?? r.packagePrice * 100) + (r.addonsTotalCents ?? 0) + (r.travelFeeCents ?? 0),
+    sessionPaidCents: (payment?.status === "paid" ? payment.amountCents : 0) + depositPaidCents(deposit),
+  };
+}
+
 export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EXTRAS, duplicate?: Lead["duplicate"]): Lead {
   return {
     reference: r.bookingReference,
@@ -239,6 +261,7 @@ export function toLead(r: Booking, history: HistoryRow[] = [], x: Extras = NO_EX
       .filter((h) => h.bookingId === r.id)
       .map((h) => ({ oldDate: localDate(h.oldSessionStart, r.timezone), oldStart: time(h.oldSessionStart, r.timezone), newDate: localDate(h.newSessionStart, r.timezone), newStart: time(h.newSessionStart, r.timezone), newEnd: time(h.newSessionEnd, r.timezone), by: h.rescheduledBy as "customer" | "admin", at: h.createdAt.toISOString() })),
     sentEmails: (x.sentEmails.get(r.id) ?? []).map(leadEmailOf),
+    extras: extrasOf(r, x),
     after: afterOf(r, x),
     deposit: leadDepositOf(r, x),
     emailProblems: problemsOf(r, x.emailEvents).map((e) => ({ kind: e.type as EmailProblem, at: e.occurredAt.toISOString(), email: emailNameOf(e.category), detail: e.detail })),

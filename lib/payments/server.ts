@@ -12,6 +12,7 @@ import { formatMoney } from "@/lib/pricing/engine";
 import { addonsFor } from "@/lib/booking/addons";
 import { bookingDeposits, type BookingDeposit } from "@/lib/db/schema";
 import { log } from "@/lib/log";
+import { handleExtrasEvent } from "@/lib/photo-extras/server";
 import { verifyPayLink } from "./link";
 import { BookingError } from "@/lib/booking/errors";
 import { fill } from "@/lib/email/messages";
@@ -196,13 +197,16 @@ export async function checkPaymentWithStripe(row: Booking): Promise<void> {
 
 /**
  * Stripe webhook (safe to receive twice). A finished payment page marks the booking paid; a deposit page (metadata
- * kind "deposit") records the deposit and confirms a pending booking, and an expired deposit page frees its time.
+ * kind "deposit") records the deposit and confirms a pending booking, and an expired deposit page frees its time; a
+ * photo extras page (kind "photo_extras") marks its order paid.
  * Throws (→ 500, Stripe delivers it again later) when a paid booking couldn't be confirmed yet.
  */
 export async function handleStripeEvent(event: { type?: string; data?: { object?: CheckoutSession } }): Promise<void> {
   const session = event.data?.object;
   const bookingId = session?.metadata?.booking_id;
   if (!session || !bookingId) return;
+  // photo extras after the session (owner, Nov 20): their own orders, never the session payment or the deposit
+  if (session.metadata?.kind === "photo_extras") return handleExtrasEvent(event);
   // "Not born yet" deposits: the id is the due-date reservation's, never a booking's
   if (session.metadata?.kind === "due_deposit") {
     if (event.type === "checkout.session.expired") await dueDepositExpired(bookingId);

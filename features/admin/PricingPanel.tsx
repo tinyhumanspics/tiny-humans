@@ -15,6 +15,7 @@ import { bookingRules, FAMILY_INCLUDED_PEOPLE } from "@/config/booking";
 import { asksFamily } from "@/lib/booking/family";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import { DEFAULT_DEPOSIT_CENTS } from "@/lib/deposit/types";
+import type { ExtrasSettings } from "@/lib/photo-extras/types";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 
@@ -98,6 +99,7 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
           )}
 
           <Deposits api={api} bundles={bundles} />
+          <PhotoExtras api={api} />
 
           <h2 className={cn(styles.h2, "chalk")}>Discount Codes</h2>
           <p className={cn(styles.muted, "chalk-soft")}>Customers can enter one code on the booking review step. Only one saving ever applies: if a bundle has a special offer, the better of the two is used.</p>
@@ -171,6 +173,102 @@ export default function PricingPanel({ api }: { api: AdminApi }) {
 const toCodeInput = (c: DiscountCode): CodeInput => ({ id: c.id, code: c.code, type: c.type, value: c.value, bundleIds: c.bundleIds, active: c.active, expiresOn: c.expiresOn, maxUses: c.maxUses, onePerEmail: c.onePerEmail, internalNote: c.internalNote, category: c.category });
 
 const OTHER_CATEGORY = "__other__";
+
+type ExtrasField = Exclude<keyof ExtrasSettings, "enabled">;
+/** The photo extras form: dollar fields are shown in dollars and saved in cents. */
+const EXTRAS_FIELDS: { key: ExtrasField; label: string; dollars?: boolean }[] = [
+  { key: "extraPhotoCents", label: "Price per extra edited photo ($)", dollars: true },
+  { key: "maxExtras", label: "Most extra photos per booking" },
+  { key: "fullGalleryCents", label: "Full gallery, color-corrected and retouched ($)", dollars: true },
+  { key: "rawFilesCents", label: "Unedited files ($)", dollars: true },
+  { key: "openDays", label: "Page stays open (days after the sneak peek)" },
+  { key: "extrasDeliveryHours", label: "Extra photos delivered within (hours)" },
+  { key: "fullDeliveryDays", label: "Full gallery delivered within (days)" },
+  { key: "rawDeliveryHours", label: "Unedited files delivered within (hours)" },
+];
+
+/** Photo extras after the session (owner, Nov 20): on/off, prices, the cap, how long the page stays open, delivery promises. */
+function PhotoExtras({ api }: { api: AdminApi }) {
+  const [enabled, setEnabled] = useState(false);
+  const [values, setValues] = useState<Record<ExtrasField, string> | null>(null);
+  const [stripeReady, setStripeReady] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState<Note>(null);
+  const show = (s: ExtrasSettings | null) => {
+    setEnabled(s?.enabled ?? false);
+    setValues(Object.fromEntries(EXTRAS_FIELDS.map((f) => [f.key, s ? String(f.dollars ? s[f.key] / 100 : s[f.key]) : ""])) as Record<ExtrasField, string>);
+  };
+
+  useEffect(() => {
+    api
+      .getExtras()
+      .then((r) => (setStripeReady(r.stripeReady), show(r.settings)))
+      .catch((e) => setNote({ kind: "error", text: errText(e, "Couldn't load the photo extras.") }));
+  }, [api]);
+
+  const save = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!values) return;
+    const numbers = Object.fromEntries(EXTRAS_FIELDS.map((f) => [f.key, f.dollars ? Math.round(Number(values[f.key]) * 100) : Number(values[f.key])])) as Record<ExtrasField, number>;
+    const bad = EXTRAS_FIELDS.find((f) => !Number.isFinite(numbers[f.key]) || numbers[f.key] < (f.dollars ? 100 : 1) || !Number.isInteger(numbers[f.key]));
+    if (bad) return setNote({ kind: "error", text: `Check "${bad.label}": ${bad.dollars ? "at least $1" : "a whole number, at least 1"}.` });
+    setBusy(true);
+    try {
+      const r = await api.saveExtras({ enabled, ...numbers });
+      show(r.settings);
+      setStripeReady(r.stripeReady);
+      setNote({ kind: "ok", text: enabled ? "Saved. The next sneak-peek emails offer these extras; earlier orders keep the prices they were bought at." : "Saved. Photo extras are off: sneak-peek emails don't offer them and the extras page says it's closed." });
+    } catch (err) {
+      setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className={styles.availBlock}>
+      <h2 className={cn(styles.h2, "chalk")}>Photo extras</h2>
+      <p className={cn(styles.muted, "chalk-soft")}>
+        The sneak-peek email offers more photos: extra edited photos (up to the most per booking, across all their orders), the full gallery
+        (it replaces extra photos and costs less what they already paid for them) and the unedited files. Families pick and pay on Stripe from
+        the link in that email; each lead shows what they added. Price changes apply to new orders only.
+      </p>
+      {!stripeReady && <p className={cn(styles.bannerError, "chalk-soft")}>Stripe isn&apos;t connected (STRIPE_SECRET_KEY in Vercel), so families can&apos;t pay for extras.</p>}
+      {values && (
+        <form onSubmit={save} noValidate>
+          <label className={styles.toggle}>
+            <input type="checkbox" checked={enabled} onChange={(e) => (setEnabled(e.target.checked), setNote(null))} />
+            <span className="chalk-soft">Offer photo extras in the sneak-peek email</span>
+          </label>
+          <div className={styles.rulesGrid}>
+            {EXTRAS_FIELDS.map((f) => (
+              <div key={f.key} className={styles.ruleField}>
+                <label className={cn(styles.label, "chalk-soft")} htmlFor={`extras-${f.key}`}>{f.label}</label>
+                <input
+                  id={`extras-${f.key}`}
+                  className={cn(styles.input, styles.timeInput)}
+                  type="number"
+                  min={1}
+                  step={f.dollars ? 0.01 : 1}
+                  value={values[f.key]}
+                  onChange={(e) => (setValues((v) => (v ? { ...v, [f.key]: e.target.value } : v)), setNote(null))}
+                />
+              </div>
+            ))}
+          </div>
+          <ChalkButton type="submit" variant="outline" disabled={busy} seed={887}>
+            {busy ? "Saving…" : "Save photo extras"}
+          </ChalkButton>
+        </form>
+      )}
+      {note && (
+        <p className={cn(note.kind === "ok" ? styles.ok : styles.error, "chalk-soft")} role={note.kind === "error" ? "alert" : "status"}>
+          {note.text}
+        </p>
+      )}
+    </div>
+  );
+}
 
 /** Deposits on/off and each bundle's amount (new bookings only). */
 function Deposits({ api, bundles }: { api: AdminApi; bundles: Bundle[] }) {
