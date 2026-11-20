@@ -1158,8 +1158,8 @@ export const bookingLinks = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     locale: text("locale").notNull().default("en"),
     bundleId: text("bundle_id").notNull(),
-    /** One per baby, in order: the age option and the name (optional). */
-    babies: jsonb("babies").$type<{ age: string; name?: string }[]>().notNull(),
+    /** One per baby, in order: the age option, the name and boy or girl (both optional). */
+    babies: jsonb("babies").$type<{ age: string; name?: string; gender?: "boy" | "girl" }[]>().notNull(),
     zip: text("zip").notNull(),
     slotDate: date("slot_date", { mode: "string" }).notNull(),
     /** "HH:MM"; null = they pick the time that day. */

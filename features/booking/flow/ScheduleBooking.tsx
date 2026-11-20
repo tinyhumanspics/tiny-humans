@@ -89,10 +89,10 @@ export default function ScheduleBooking({ locale = "en", messages, request, insp
   if (linkToken) {
     if (link?.token !== linkToken) return null; // checking the link
     if (!link.summary) return notValid(request.request.link.used);
-    // "For Mia · Newborn (0–2 weeks)", the age in the page's language
+    // "For Mia · Girl · Newborn (0–2 weeks)", in the page's language
     const ages = messages.details.baby.ageOptions;
     const babyLines = link.summary.babies.map((b) => {
-      const age = ages[babyAgeOptions.indexOf(b.age as (typeof babyAgeOptions)[number])] ?? b.age;
+      const age = [b.gender ? messages.details.baby.genders[b.gender] : "", ages[babyAgeOptions.indexOf(b.age as (typeof babyAgeOptions)[number])] ?? b.age].filter(Boolean).join(" · ");
       return b.name ? fill(request.request.link.baby, { name: b.name, age }) : fill(request.request.link.babyNoName, { age });
     });
     return flow(undefined, { token: link.token, summary: link.summary, babyLines });

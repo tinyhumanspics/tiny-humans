@@ -15,11 +15,11 @@
 - Trip days (owner Nov 16): 70+ miles takes the day, same trip within 30 miles, next morning free until 12 PM
   (config/booking.ts `tripDays`); /book once the ZIP is typed; requests and reschedules re-check; owner
   bookings aren't limited.
-- /admin → Photos by page (Home and Ad Page · Portfolio · About Us · Emails) + "Copy all pictures from" a theme.
+- /admin → Photos by page + "Copy all pictures from" a theme.
 - /admin → Leads (owner Nov 19): next session first, then "Date passed"; Past 10 days after (`PAST_AFTER_DAYS`).
-- /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies, ZIP,
-  day, optional time → /book?link= filled in, used once (booking_links, 0043). Requests: "From your link"; confirming
-  carries the babies and the source into the booking.
+- /admin → Quotes / Booking → "Send a booking link" (owner Nov 19; "Book it for them" deleted): bundle, babies (age,
+  name, boy/girl), ZIP, day, optional time → /book?link= filled in, used once (0043). Confirming carries them over.
+- Boy or girl (owner Nov 19): required on the link form, optional on Prepare (booking_baby_genders).
 
 ## Next: brief 05 session 2
 - Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).
@@ -34,7 +34,7 @@
   Spanish offer label "Offerta de Accion de Gracias" → "Oferta de Acción de Gracias" (/admin → Pricing).
 - "From $179.10" while the 10% Thanksgiving offer runs (ends Nov 23).
 - Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,
-  bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link,
+  bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link, prep gender,
   bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 

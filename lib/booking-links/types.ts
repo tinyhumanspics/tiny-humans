@@ -1,4 +1,4 @@
-import { babyAgeOptions, isOwnerSource } from "@/config/booking";
+import { babyAgeOptions, babyGenders, isOwnerSource, type BabyGender } from "@/config/booking";
 import { isDateKey } from "@/lib/validation/date-key";
 import { z } from "@/lib/validation/zod";
 
@@ -10,6 +10,8 @@ export interface LinkBaby {
   /** One of config/booking.ts babyAgeOptions. */
   age: string;
   name?: string;
+  /** Boy or girl (owner, Nov 19); left out = not sure yet. */
+  gender?: BabyGender;
 }
 
 /** What a family's link fills in on /book (GET /api/booking/link). */
@@ -27,7 +29,7 @@ export interface BookingLinkSummary {
 export const bookingLinkInput = z.object({
   bundleId: z.string().trim().min(1).max(64),
   babies: z
-    .array(z.object({ age: z.enum(babyAgeOptions, "Pick the baby's age."), name: z.string().trim().max(80).optional() }))
+    .array(z.object({ age: z.enum(babyAgeOptions, "Pick the baby's age."), name: z.string().trim().max(80).optional(), gender: z.enum(babyGenders).optional() }))
     .min(1)
     .max(3),
   zip: z.string().trim().regex(/^\d{5}$/, "Add their 5-digit ZIP code."),

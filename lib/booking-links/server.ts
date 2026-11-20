@@ -27,7 +27,7 @@ export async function createBookingLink(input: BookingLinkInput): Promise<{ url:
       tokenHash: hash,
       locale: input.locale,
       bundleId: input.bundleId,
-      babies: input.babies.map((b) => (b.name ? { age: b.age, name: b.name } : { age: b.age })),
+      babies: input.babies.map((b) => ({ age: b.age, ...(b.name ? { name: b.name } : {}), ...(b.gender ? { gender: b.gender } : {}) })),
       zip: input.zip,
       slotDate: input.date,
       slotStart: input.start ?? null,

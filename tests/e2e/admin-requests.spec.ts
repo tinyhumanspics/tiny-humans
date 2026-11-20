@@ -119,7 +119,7 @@ test("Requests: each new request with its hold; Text, Confirm (pay link text), O
   const dialog = page.getByRole("alertdialog", { name: "Decline Sofía's request?" });
   await expect(dialog).toContainText("Their time is released for other families");
   await dialog.getByRole("button", { name: "Decline and email them" }).click();
-  expect(posted.at(-1)).toEqual({ action: "decline", id: "00000000-0000-4000-8000-000000000003", email: true });
+  await expect.poll(() => posted.at(-1)).toEqual({ action: "decline", id: "00000000-0000-4000-8000-000000000003", email: true });
   await expect(page.getByRole("heading", { name: "Nothing new" })).toBeVisible();
   await page.getByRole("button", { name: "Show answered requests (1)" }).click();
   await expect(page.getByRole("list", { name: "Answered requests" })).toContainText("Declined");

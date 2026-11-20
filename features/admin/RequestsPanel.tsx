@@ -189,7 +189,7 @@ function RequestCard({ r, api, now, onChanged }: { r: RequestListItem; api: Admi
       <p className={cn(styles.leadLine, "chalk-soft")}>
         {`${r.bundleName}${r.babyCount === 2 ? " · twins" : r.babyCount === 3 ? " · triplets" : ""} · ${formatMoney(total)} · ZIP ${r.zip}, ${travelOf(r)}`}
       </p>
-      {r.link && <p className={cn(styles.leadLine, "chalk-soft")}>{`${r.link.babies.map((b) => (b.name ? `${b.name}, ${b.age}` : b.age)).join(" · ")} · came by ${r.link.source}`}</p>}
+      {r.link && <p className={cn(styles.leadLine, "chalk-soft")}>{`${r.link.babies.map((b) => [b.name, b.gender === "boy" ? "Boy" : b.gender === "girl" ? "Girl" : "", b.age].filter(Boolean).join(", ")).join(" · ")} · came by ${r.link.source}`}</p>}
       <p className={cn(styles.leadMeta, "chalk-soft")}>
         {[`${r.mobile} · ${r.email}`, r.textConsent ? "OK to text: yes" : "OK to text: not ticked", `sent ${ago(r.createdAt, now)}`].join(" · ")}
       </p>

@@ -26,6 +26,9 @@ describe("calendar date validation", () => {
     const link = { bundleId: "little-moments", babies: [{ age: "Newborn (0–2 weeks)" }], zip: "33139", date: "2026-02-30", locale: "en", source: "instagram_dm" };
     expect(bookingLinkInput.safeParse(link).success).toBe(false);
     expect(bookingLinkInput.safeParse({ ...link, date: "2026-03-02" }).success).toBe(true);
+    // boy or girl only (owner, Nov 19); left out = not sure yet
+    expect(bookingLinkInput.safeParse({ ...link, date: "2026-03-02", babies: [{ age: "Newborn (0–2 weeks)", gender: "girl" }] }).success).toBe(true);
+    expect(bookingLinkInput.safeParse({ ...link, date: "2026-03-02", babies: [{ age: "Newborn (0–2 weeks)", gender: "other" }] }).success).toBe(false);
 
     const bundle = {
       name: "Test Bundle",

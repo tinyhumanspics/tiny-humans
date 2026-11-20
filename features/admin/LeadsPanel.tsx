@@ -362,7 +362,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
     ...reminderRows(lead),
     ...problemRows(lead),
     ...(duplicate ? [["Possible duplicate", duplicate] as [string, string]] : []),
-    ...(lead.bookedByOwner ? [["Booked by", "You, in Quotes / Booking (they got the link to pick backdrops and pay)"] as [string, string]] : []),
+    ...(lead.bookedByOwner ? [["Booked by", "You (they got the pay link: their home, backdrops, then the deposit)"] as [string, string]] : []),
     ...(lead.source
       ? ([
           ["Source", lead.source.label + (lead.source.metaClick ? " (Meta click id)" : "")],

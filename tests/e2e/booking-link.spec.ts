@@ -58,6 +58,8 @@ test("Quotes / Booking → Send a booking link: only the session; the link and a
   await expect(bundle.locator("option")).toHaveText([/^Little Moments · \$\d/, /^Our Little Story · \$\d/, /^Our Family Story · \$\d/]);
   await bundle.selectOption({ index: 1 });
   await form.getByLabel("Baby's name (optional)").fill("Mia");
+  // boy or girl is asked every time (owner, Nov 19)
+  await expect(form.getByLabel("Boy or girl").locator("option")).toHaveText(["Choose…", "Boy", "Girl", "Not sure yet"]);
   await expect(form.getByText("Add their ZIP code to see the calendar", { exact: false })).toBeVisible();
   await form.getByLabel("Their ZIP code").fill("33139");
   const calendar = form.getByRole("grid");
@@ -78,11 +80,15 @@ test("Quotes / Booking → Send a booking link: only the session; the link and a
   expect(scan.violations).toEqual([]);
 
   await form.getByRole("button", { name: "Make their link" }).click();
+  await expect(form.getByRole("alert")).toHaveText("Pick boy or girl (or Not sure yet).");
+  await form.getByLabel("Boy or girl").selectOption({ label: "Girl" });
+  await form.getByRole("button", { name: "Make their link" }).click();
   await expect(form.getByRole("alert")).toHaveText("Pick how they reached you.");
   await form.getByLabel("How did they reach you?").selectOption({ label: "Instagram DM" });
   await form.getByRole("button", { name: "Make their link" }).click();
   await expect(form.getByRole("heading", { name: "✓ Their link is ready" })).toBeVisible();
-  expect(sent).toMatchObject({ bundleId: "our-little-story", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia" }], zip: "33139", start: "13:00", locale: "en", source: "instagram_dm" });
+  expect(sent).toMatchObject({ bundleId: "our-little-story", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia", gender: "girl" }], zip: "33139", start: "13:00", locale: "en", source: "instagram_dm" });
+  await expect(form).toContainText("Mia, Girl, Newborn (0–2 weeks)");
   expect(String(sent!.date)).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   await expect(form.getByLabel("Their link")).toHaveValue(URL_);
   await form.getByRole("button", { name: "Copy their link" }).click();
@@ -107,9 +113,9 @@ test("the family's link: their bundle, baby, day and time are filled in; they ad
     body = route.request().postDataJSON() as Record<string, unknown>;
     return route.fulfill({ status: 201, json: { request: { reference: "TH-R-1", firstName: "Ana", mobile: "(305) 555-0133", type: "date", slot: { date, start: "13:00" } }, lead: false } });
   });
-  await openLink(page, { bundleId: "our-little-story", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia" }], zip: "33139", date, start: "13:00", locale: "en" });
+  await openLink(page, { bundleId: "our-little-story", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia", gender: "girl" }], zip: "33139", date, start: "13:00", locale: "en" });
   await expect(page.getByText("Your session details")).toBeVisible();
-  await expect(page.getByText("For Mia · Newborn (0–2 weeks)")).toBeVisible();
+  await expect(page.getByText("For Mia · Girl · Newborn (0–2 weeks)")).toBeVisible();
   // their bundle with Change, no "Not born yet", no twins box
   await expect(page.getByRole("button", { name: "Not born yet" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Change" })).toBeVisible();
@@ -162,11 +168,11 @@ test("Requests: a request from your link says so, with the baby and how they rea
     textConsent: true,
     made: null,
     hello: "Hi Ana!",
-    link: { source: "Instagram DM", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia" }] },
+    link: { source: "Instagram DM", babies: [{ age: "Newborn (0–2 weeks)", name: "Mia", gender: "girl" }] },
   };
   await page.route("**/api/admin/requests", (route) => route.fulfill({ json: { requests: [item] } }));
   await page.goto("/admin/requests");
   const card = page.locator(`#request-${item.reference}`);
   await expect(card.getByText("From your link")).toBeVisible();
-  await expect(card).toContainText("Mia, Newborn (0–2 weeks) · came by Instagram DM");
+  await expect(card).toContainText("Mia, Girl, Newborn (0–2 weeks) · came by Instagram DM");
 });

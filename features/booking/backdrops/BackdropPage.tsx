@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { Fragment, useEffect, useState, type FormEvent } from "react";
 import { site } from "@/config/site";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { backdropNames } from "@/lib/booking/backdrop-names";
@@ -35,6 +35,7 @@ export default function BackdropPage({ locale = "en", messages = en.backdropPage
   const [picks, setPicks] = useState<string[]>([]);
   const [home, setHome] = useState({ street: "", city: "", accessNotes: "" });
   const [names, setNames] = useState<string[]>([]);
+  const [genders, setGenders] = useState<("boy" | "girl" | "")[]>([]);
   const [photos, setPhotos] = useState(false);
   const [state, setState] = useState<"loading" | "invalid" | "ready" | "saving" | "saved">(token ? "loading" : "invalid");
   const [message, setMessage] = useState(token ? "" : fill(t.invalid, phone));
@@ -44,6 +45,7 @@ export default function BackdropPage({ locale = "en", messages = en.backdropPage
     setPicks(v.picks);
     setHome({ street: v.home.street, city: v.home.city, accessNotes: v.home.accessNotes });
     setNames(v.babyNames);
+    setGenders(v.babyGenders);
     setPhotos(v.photos);
   };
 
@@ -68,7 +70,7 @@ export default function BackdropPage({ locale = "en", messages = en.backdropPage
     setState("saving");
     setMessage("");
     try {
-      const res = await fetch("/api/booking/backdrop", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, picks, home, babyNames: names, photos }) });
+      const res = await fetch("/api/booking/backdrop", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, picks, home, babyNames: names, ...(genders.length ? { babyGenders: genders } : {}), photos }) });
       const j = (await res.json().catch(() => null)) as { backdrop?: BackdropView; code?: string } | null;
       if (!res.ok || !j?.backdrop) {
         if (j?.code === "reschedule_closed") setView((v) => (v ? { ...v, canChange: false } : v));
@@ -123,9 +125,23 @@ export default function BackdropPage({ locale = "en", messages = en.backdropPage
                 {names.length > 0 && (
                   <fieldset className={cn(flowStyles.fieldset, requestStyles.fields)}>
                     <legend className={cn(styles.currentTitle, pickerStyles.sectionTitle, "chalk")}>{p.baby}</legend>
-                    {names.map((name, i) =>
-                      field(`prep-baby-${i}`, names.length > 1 ? fill(p.babyNameN, { n: String(i + 1) }) : p.babyName, <input id={`prep-baby-${i}`} className={flowStyles.input} maxLength={80} value={name} onChange={(e) => setNames((l) => l.map((x, j) => (j === i ? e.target.value : x)))} />),
-                    )}
+                    {names.map((name, i) => (
+                      <Fragment key={i}>
+                        {field(`prep-baby-${i}`, names.length > 1 ? fill(p.babyNameN, { n: String(i + 1) }) : p.babyName, <input id={`prep-baby-${i}`} className={flowStyles.input} maxLength={80} value={name} onChange={(e) => setNames((l) => l.map((x, j) => (j === i ? e.target.value : x)))} />)}
+                        {/* boy or girl (owner, Nov 19), optional */}
+                        {genders.length === names.length &&
+                          field(
+                            `prep-gender-${i}`,
+                            names.length > 1 ? fill(p.babyGenderN, { n: String(i + 1) }) : p.babyGender,
+                            <select id={`prep-gender-${i}`} className={flowStyles.input} value={genders[i]} onChange={(e) => setGenders((l) => l.map((x, j) => (j === i ? (e.target.value as "boy" | "girl" | "") : x)))}>
+                              <option value="">{p.chooseGender}</option>
+                              {(["boy", "girl"] as const).map((g) => (
+                                <option key={g} value={g}>{bookingMessages.details.baby.genders[g]}</option>
+                              ))}
+                            </select>,
+                          )}
+                      </Fragment>
+                    ))}
                   </fieldset>
                 )}
                 <h2 className={cn(styles.currentTitle, pickerStyles.sectionTitle, "chalk")}>{many ? t.titleMany : t.title}</h2>

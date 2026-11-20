@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { setupsOf } from "@/config/backdrops";
 import { getDb } from "@/lib/db/client";
-import { bookingAccess, bookingBabies, bookingConsents, bookings, type Booking } from "@/lib/db/schema";
+import { bookingAccess, bookingBabies, bookingBabyGenders, bookingConsents, bookings, type Booking } from "@/lib/db/schema";
 import { emailConfig, sendEmail } from "@/lib/email/resend";
 import { internalBackdropEmail } from "@/lib/email";
 import { log } from "@/lib/log";
@@ -23,7 +23,8 @@ import { fill } from "@/lib/email/messages";
 
 /**
  * "Prepare for your session" (/backdrop?t=<management token>, brief 02): the details that left the booking form. The
- * home's street, gate/parking notes, the baby's name, the backdrops and the photo-use permission, saved where the
+ * home's street, gate/parking notes, the baby's name and boy or girl (owner, Nov 19), the backdrops and the photo-use
+ * permission, saved where the
  * booking keeps them (Leads, the Outlook event and the emails show them as usual). Open until the day before.
  */
 export interface BackdropView {
@@ -42,6 +43,8 @@ export interface BackdropView {
   home: { street: string; city: string; zip: string; accessNotes: string };
   /** One per baby. */
   babyNames: string[];
+  /** Boy or girl per baby ("" = not said); empty when the booking has no baby rows to attach it to. */
+  babyGenders: ("boy" | "girl" | "")[];
   /** "OK to feature our photos" (unticked = no). */
   photos: boolean;
 }
@@ -51,6 +54,7 @@ export interface PrepareInput {
   picks: string[];
   home?: { street: string; city: string; accessNotes?: string };
   babyNames?: string[];
+  babyGenders?: ("boy" | "girl" | "")[];
   photos?: boolean;
 }
 
@@ -81,6 +85,7 @@ async function viewOf(row: Booking, now = new Date()): Promise<BackdropView> {
     status,
     home: { ...homeOf(row.locationAddress), accessNotes: access?.notes ?? "" },
     babyNames: (babies.get(row.id) ?? [{ name: row.babyName ?? undefined }]).map((b) => b.name ?? ""),
+    babyGenders: (babies.get(row.id) ?? []).map((b) => b.gender ?? ""),
     photos: Boolean(consent?.photos),
   };
 }
@@ -129,6 +134,19 @@ export async function saveBackdropsWithToken(token: string, input: PrepareInput)
       [row] = await db.update(bookings).set({ babyName: names[0] || null, updatedAt: new Date() }).where(eq(bookings.id, row.id)).returning();
       changed = true;
     }
+  }
+  if (input.babyGenders && old.babyGenders.length) {
+    const genders = old.babyGenders.map((g, i) => input.babyGenders![i] ?? g);
+    await Promise.all(
+      genders.map((gender, position) =>
+        gender === old.babyGenders[position]
+          ? null
+          : gender
+            ? db.insert(bookingBabyGenders).values({ bookingId: row.id, position, gender }).onConflictDoUpdate({ target: [bookingBabyGenders.bookingId, bookingBabyGenders.position], set: { gender } })
+            : db.delete(bookingBabyGenders).where(and(eq(bookingBabyGenders.bookingId, row.id), eq(bookingBabyGenders.position, position))),
+      ),
+    );
+    if (genders.join() !== old.babyGenders.join()) changed = true;
   }
   if (input.photos !== undefined && input.photos !== old.photos) {
     const photosAt = input.photos ? new Date() : null;

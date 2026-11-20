@@ -27,10 +27,11 @@ const body = z.object({
   // "Prepare for your session": the rest of the page (left out = unchanged)
   home: homeInput.optional(),
   babyNames: z.array(line(80)).max(3).optional(),
+  babyGenders: z.array(z.enum(["boy", "girl", ""])).max(3).optional(),
   photos: z.boolean().optional(),
 });
 
-/** POST {token, picks, home?, babyNames?, photos?}: the family prepares their session (until the day before it). */
+/** POST {token, picks, home?, babyNames?, babyGenders?, photos?}: the family prepares their session (until the day before it). */
 export async function POST(req: Request) {
   if (!(await allow("managePost", clientIp(req)))) return tooMany();
   const input = await readJson(req, BODY_LIMITS.small);

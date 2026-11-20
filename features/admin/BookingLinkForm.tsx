@@ -29,7 +29,10 @@ const monthStart = (key: string) => {
   const d = fromDateKey(key);
   return new Date(d.getFullYear(), d.getMonth(), 1);
 };
-const NO_BABY = { age: babyAgeOptions[0] as string, name: "" };
+/** Boy or girl is asked every time (owner, Nov 19); "unsure" = they don't know yet (saved as nothing). */
+type GenderPick = "" | "boy" | "girl" | "unsure";
+const GENDER_LABEL: Record<Exclude<GenderPick, "">, string> = { boy: "Boy", girl: "Girl", unsure: "Not sure yet" };
+const NO_BABY = { age: babyAgeOptions[0] as string, name: "", gender: "" as GenderPick };
 
 /**
  * /admin → Quotes / Booking → "Send a booking link" (owner, Nov 19: "I just send them the booking page with the bundle
@@ -43,7 +46,7 @@ export default function BookingLinkForm({ api }: { api: AdminApi }) {
   const active = bundles.filter((b) => b.active !== false);
   const [bundleId, setBundleId] = useState(() => active[0]?.id ?? "");
   const bundle = active.find((b) => b.id === bundleId);
-  const [babies, setBabies] = useState<{ age: string; name: string }[]>([NO_BABY]);
+  const [babies, setBabies] = useState<{ age: string; name: string; gender: GenderPick }[]>([NO_BABY]);
   const [zip, setZip] = useState("");
   const [locale, setLocale] = useState<"en" | "es">("en");
   // how they reached you (Leads → Source; brief 03): picked every time
@@ -87,7 +90,7 @@ export default function BookingLinkForm({ api }: { api: AdminApi }) {
     };
   }, [booking, calQuery, bundleId, babies.length, zip, monthKey, month, todayKey]);
 
-  const setBabyCount = (n: number) => setBabies((list) => Array.from({ length: n }, (_, i) => list[i] ?? { age: list[0]?.age ?? NO_BABY.age, name: "" }));
+  const setBabyCount = (n: number) => setBabies((list) => Array.from({ length: n }, (_, i) => list[i] ?? { age: list[0]?.age ?? NO_BABY.age, name: "", gender: "" }));
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -95,19 +98,20 @@ export default function BookingLinkForm({ api }: { api: AdminApi }) {
     if (!bundle) return setError("Pick a bundle.");
     if (!zipOk) return setError("Add their 5-digit ZIP code.");
     if (!date) return setError("Pick the day.");
+    if (babies.some((b) => !b.gender)) return setError(babies.length > 1 ? "Pick boy or girl for each baby (or Not sure yet)." : "Pick boy or girl (or Not sure yet).");
     if (!isOwnerSource(source)) return setError("Pick how they reached you.");
     setBusy(true);
     try {
       const made = await api.makeBookingLink({
         bundleId,
-        babies: babies.map((b) => ({ age: b.age as (typeof babyAgeOptions)[number], ...(b.name.trim() ? { name: b.name.trim() } : {}) })),
+        babies: babies.map((b) => ({ age: b.age as (typeof babyAgeOptions)[number], ...(b.name.trim() ? { name: b.name.trim() } : {}), ...(b.gender === "boy" || b.gender === "girl" ? { gender: b.gender } : {}) })),
         zip,
         date,
         ...(start ? { start } : {}),
         locale,
         source,
       });
-      const who = babies.map((b) => (b.name.trim() ? `${b.name.trim()}, ${b.age}` : b.age)).join(" · ");
+      const who = babies.map((b) => [b.name.trim(), b.gender === "boy" || b.gender === "girl" ? GENDER_LABEL[b.gender] : "", b.age].filter(Boolean).join(", ")).join(" · ");
       setDone({ ...made, summary: [bundle.name, who, formatLongDate(date), start ? formatTimeLabel(start) : "they pick the time", `ZIP ${zip}`].join(" · ") });
     } catch (err) {
       setError(errText(err, "Couldn't make the link. Please try again."));
@@ -205,6 +209,15 @@ export default function BookingLinkForm({ api }: { api: AdminApi }) {
               <label className={cn(styles.label, "chalk-soft")}>
                 {babies.length > 1 ? `Baby ${i + 1}: name (optional)` : "Baby's name (optional)"}
                 <input className={styles.input} value={b.name} maxLength={80} onChange={(e) => setBabies((l) => l.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />
+              </label>
+              <label className={cn(styles.label, "chalk-soft")}>
+                {babies.length > 1 ? `Baby ${i + 1}: boy or girl` : "Boy or girl"}
+                <select className={styles.input} value={b.gender} onChange={(e) => setBabies((l) => l.map((x, j) => (j === i ? { ...x, gender: e.target.value as GenderPick } : x)))}>
+                  <option value="">Choose…</option>
+                  {(["boy", "girl", "unsure"] as const).map((g) => (
+                    <option key={g} value={g}>{GENDER_LABEL[g]}</option>
+                  ))}
+                </select>
               </label>
             </div>
           ))}

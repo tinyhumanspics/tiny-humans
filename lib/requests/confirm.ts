@@ -7,7 +7,7 @@ import { getBookingProvider } from "@/lib/booking/server";
 import { getDb } from "@/lib/db/client";
 import { bookings, type BookingRequestRow } from "@/lib/db/schema";
 import { linkForRequest } from "@/lib/booking-links/server";
-import { isOwnerSource } from "@/config/booking";
+import { isBabyGender, isOwnerSource } from "@/config/booking";
 import { ownerBookingLink } from "@/lib/deposit/flow";
 import { OWNER_HOLD_HOURS, OWNER_REQUEST_PREFIX } from "@/lib/deposit/types";
 import { dueById, reserveDueForRequest } from "@/lib/due-date/server";
@@ -57,7 +57,7 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
       bundleId: row.bundleId,
       locale,
       // their baby's age and name (unless the owner's link had them), and the street, come later on their pages
-      babies: babies ? babies.map((b) => ({ age: b.age, ...(b.name ? { name: b.name } : {}) })) : Array.from({ length: row.babyCount }, () => ({ age: "" })),
+      babies: babies ? babies.map((b) => ({ age: b.age, ...(b.name ? { name: b.name } : {}), ...(isBabyGender(b.gender) ? { gender: b.gender } : {}) })) : Array.from({ length: row.babyCount }, () => ({ age: "" })),
       slot: { id: `${slot.date}T${slot.start}`, date: slot.date, start: slot.start, end: "", label: formatTimeLabel(slot.start) },
       contact: { parentName: due?.parentName ?? row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: babies?.[0]?.age ?? "", ...(babies?.[0]?.name ? { babyName: babies[0].name } : {}) },
       address: due ? { street: due.street, unit: due.unit ?? undefined, city: due.city, zip: due.zip } : { street: "", city: "", zip: row.zip },

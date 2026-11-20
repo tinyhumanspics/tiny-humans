@@ -13,14 +13,14 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
 - 2026-11-16 · Sessions after week 2; a due date moves there too · owner
 - 2026-11-16 · Pay link asks the home address before the deposit · owner
-- 2026-11-14 · Delete what the new path leaves unused: unfinished-booking capture and follow-ups, the in-flow Stripe deposit and its 30-min hold, the in-flow backdrop step, the in-flow discount box · Carlos
+- 2026-11-14 · Delete what the new path leaves unused (unfinished-booking follow-ups, in-flow deposit, backdrop step, discount box) · Carlos
 - 2026-11-14 · Requests may share a minute, bookings never · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link on landing pages; it fires Contact and isn't a booking path · Carlos
 
 ## Tracking
 - 2026-11-14 · Meta's checkout-start event is retired: nothing fires when /book merely opens · Carlos
 - 2026-11-14 · Lead fires when a request is saved: browser + Conversions API with a shared event_id, once per person per 30 days. It's the optimization event · Carlos
-- 2026-11-14 · Every request saves full attribution (first and last touch, Meta ad / ad set / campaign IDs from URL parameters, fbp/fbc/IP/user agent); bookings link to their request · Carlos
+- 2026-11-14 · Every request saves full attribution (first/last touch, Meta ad ids, fbp/fbc/IP/UA); bookings link to it · Carlos
 - 2026-11-14 · Schedule stays as the booking event: it fires when the pay-link deposit is paid or the owner marks a booking booked, and reuses the request's match data · Carlos
 - 2026-11-14 · Nothing-to-pay Schedule: action_source chat · brief 03
 
@@ -54,6 +54,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-19 · Leads: sessions move to Past 10 days after their date · owner
 - 2026-11-19 · DMs: the owner sends a prefilled booking link; families type their own details · owner
+- 2026-11-19 · Boy or girl: asked on the link form and the Prepare page (optional there) · owner
 - 2026-11-11 · Valentine's theme runs Feb 1 – Mar 1 each year, switched by hand by the owner · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner
