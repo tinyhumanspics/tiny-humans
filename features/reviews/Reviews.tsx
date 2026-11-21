@@ -8,17 +8,19 @@ import SectionHeading from "@/components/layout/SectionHeading/SectionHeading";
 import { reviewPreview, type PublicReview } from "@/lib/reviews/public";
 import { fill } from "@/lib/email/messages";
 import { cn } from "@/lib/cn";
+import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";
 import styles from "./Reviews.module.css";
 
 type Messages = typeof en.reviewsSection;
+type Langs = typeof en.landing.proofLang;
 
 /**
  * "What families say": the reviews the owner picked in /admin → Leads ("Use on the website"; only reviews the family
  * said OK to show), between the photographers and the questions on the ad page and the home page. Renders nothing while
- * there are none.
+ * there are none. A review in the other language is shown as written, labelled ("en inglés", brief 05).
  */
-export default function Reviews({ reviews, messages = en.reviewsSection }: { reviews: PublicReview[]; messages?: Messages }) {
+export default function Reviews({ reviews, messages = en.reviewsSection, locale = "en", langs = en.landing.proofLang }: { reviews: PublicReview[]; messages?: Messages; locale?: AppLocale; langs?: Langs }) {
   if (!reviews.length) return null;
   const id = "reviews-title";
   return (
@@ -27,7 +29,7 @@ export default function Reviews({ reviews, messages = en.reviewsSection }: { rev
       <ul className={styles.list} data-count={reviews.length}>
         {reviews.map((review, i) => (
           <Reveal as="li" key={`${i}-${review.displayName}`} className={styles.item} delay={(i % 3) * 90}>
-            <ReviewCard review={review} index={i} messages={messages} />
+            <ReviewCard review={review} index={i} messages={messages} lang={review.lang !== locale ? langs[review.lang] : null} />
           </Reveal>
         ))}
       </ul>
@@ -35,7 +37,7 @@ export default function Reviews({ reviews, messages = en.reviewsSection }: { rev
   );
 }
 
-function ReviewCard({ review, index, messages }: { review: PublicReview; index: number; messages: Messages }) {
+function ReviewCard({ review, index, messages, lang }: { review: PublicReview; index: number; messages: Messages; lang: string | null }) {
   const [open, setOpen] = useState(false);
   const textId = useId();
   const preview = reviewPreview(review.body);
@@ -66,7 +68,10 @@ function ReviewCard({ review, index, messages }: { review: PublicReview; index: 
             <span className="chalk-soft">{open ? messages.less : messages.more}</span>
           </button>
         )}
-        <figcaption className={cn(styles.name, "chalk")}>{fill(messages.signature, { name: review.displayName })}</figcaption>
+        <figcaption className={cn(styles.name, "chalk")}>
+          {fill(messages.signature, { name: review.displayName })}
+          {lang ? ` (${lang})` : ""}
+        </figcaption>
       </figure>
     </ChalkBox>
   );

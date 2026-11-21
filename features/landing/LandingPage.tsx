@@ -248,7 +248,7 @@ export default function LandingPage({
       </section>
 
       {/* 8. Reviews: only the ones picked in /admin (the family said OK) */}
-      <Reviews reviews={reviews} messages={reviewMessages} />
+      <Reviews reviews={reviews} messages={reviewMessages} locale={locale} langs={t.proofLang} />
 
       {/* 9. FAQ */}
       <section className={cn("container", styles.section)} aria-labelledby="landing-faq">

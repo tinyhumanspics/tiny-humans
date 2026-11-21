@@ -48,4 +48,11 @@ describe("seasonal offers (owner, Nov 10: shown on the ad page and the home page
     expect(activeSeasonalOffers(offers, "default", "2027-03-01")).toEqual([]);
     expect(activeSeasonalOffers(offers, "thanksgiving", "2026-11-10", "es").map((o) => o.title)).toEqual(["Muestra amor a tu pequeño"]);
   });
+
+  test("Spanish pages leave out an offer whose Spanish is a copy of the English (brief 05: no English block on /es)", () => {
+    const copied = { ...valentines, spanish: { title: valentines.title, description: valentines.description } };
+    const halfCopied = { ...valentines, id: "offer-half", spanish: { title: "Muestra amor a tu pequeño", description: valentines.description } };
+    expect(activeSeasonalOffers([copied, halfCopied], "default", "2026-11-10", "es")).toEqual([]);
+    expect(activeSeasonalOffers([copied, halfCopied], "default", "2026-11-10").map((o) => o.id)).toEqual(["offer-valentines", "offer-half"]);
+  });
 });
