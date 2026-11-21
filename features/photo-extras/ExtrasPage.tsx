@@ -68,6 +68,9 @@ export default function ExtrasPage({ locale = "en", messages = en.extras }: { lo
   else if (view.state === "paid") body = <Paid view={view} m={m} home={home} again={() => (setView({ state: "loading" }), window.history.replaceState(null, "", `?${new URLSearchParams({ b, s })}`), void load(false))} title={title} />;
   else {
     const { prices: p, left } = view;
+    // when each option arrives (owner, Nov 20): the full gallery in its days; extra photos with the finished gallery
+    // until it's delivered, then in their own hours
+    const arrives = (key: keyof typeof view.delivery) => <span className={cn(styles.when, "chalk-soft")}>{fill(m.arrives, { when: deliveryText(view.delivery[key], m) })}</span>;
     const fullPrice = p.fullGalleryCents - left.fullCreditCents;
     const count = full ? 0 : extras;
     const total = count * p.extraPhotoCents + (full ? fullPrice : 0) + (raw ? p.rawFilesCents : 0);
@@ -111,6 +114,7 @@ export default function ExtrasPage({ locale = "en", messages = en.extras }: { lo
               {!full && left.extrasLeft > 0 && <span className={cn(styles.hint, "chalk-soft")}>{fill(m.extra.left, { n: String(left.extrasLeft) })}</span>}
             </div>
             <p className={cn(styles.hint, "chalk-soft")}>{extrasHint}</p>
+            {!full && left.extrasLeft > 0 && arrives("extras")}
           </section>
 
           <label className={cn(styles.option, styles.check, full && styles.chosen)}>
@@ -121,6 +125,7 @@ export default function ExtrasPage({ locale = "en", messages = en.extras }: { lo
                 <span className={cn(styles.price, "chalk-soft")}>{left.canFull ? formatMoney(fullPrice) : m.owned}</span>
               </span>
               <span className={cn(styles.hint, "chalk-soft")}>{m.full.text}</span>
+              {left.canFull && arrives("full")}
               {left.canFull && left.fullCreditCents > 0 && <span className={cn(styles.credit, "chalk-soft")}>{fill(m.full.credit, { amount: formatMoney(left.fullCreditCents) })}</span>}
             </span>
           </label>
@@ -133,6 +138,7 @@ export default function ExtrasPage({ locale = "en", messages = en.extras }: { lo
                 <span className={cn(styles.price, "chalk-soft")}>{left.canRaw ? formatMoney(p.rawFilesCents) : m.owned}</span>
               </span>
               <span className={cn(styles.hint, "chalk-soft")}>{m.raw.text}</span>
+              {left.canRaw && arrives("raw")}
             </span>
           </label>
         </div>

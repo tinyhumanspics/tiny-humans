@@ -20,10 +20,21 @@ export interface ExtrasSettings {
 export type ExtraKind = "extra_photos" | "full_gallery" | "unedited_files";
 export const EXTRA_KINDS: readonly ExtraKind[] = ["extra_photos", "full_gallery", "unedited_files"];
 
-/** When a line arrives after payment, as promised when it was bought. */
+/**
+ * When a line arrives, as promised when it was bought (owner, Nov 20). Extra photos ordered before the finished gallery
+ * is delivered come with it, on the time first promised (`withGallery`); after it, they take `amount` more hours.
+ */
 export interface Delivery {
   amount: number;
   unit: "hours" | "days";
+  withGallery?: boolean;
+}
+
+/** When each option would arrive if bought now. */
+export interface Deliveries {
+  extras: Delivery;
+  full: Delivery;
+  raw: Delivery;
 }
 
 /** One line of an order, copied in at checkout. */
@@ -86,6 +97,7 @@ export type ExtrasView =
       included: string | null;
       prices: Pick<ExtrasSettings, "extraPhotoCents" | "maxExtras" | "fullGalleryCents" | "rawFilesCents">;
       left: ExtrasLeft;
+      delivery: Deliveries;
       /** Shown after paying ("paid"): the newest paid order. */
       paidOrder?: { lines: ExtraLine[]; creditCents: number; totalCents: number };
     };

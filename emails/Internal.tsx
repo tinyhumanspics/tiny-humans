@@ -393,7 +393,7 @@ export async function internalPhotoExtrasEmail(p: { reference: string; parentNam
     ["Email", p.email],
     ["Phone", p.phone],
     ["Bundle", p.bundleName],
-    ...p.lines.map((l): [string, string] => [l.name, `${formatMoney(l.amountCents)} · deliver within ${l.when}`]),
+    ...p.lines.map((l): [string, string] => [l.name, `${formatMoney(l.amountCents)} · deliver ${l.when}`]),
     ...(p.creditCents > 0 ? [["Credit (extras paid before)", `−${formatMoney(p.creditCents)}`] as [string, string]] : []),
     ["Total paid", formatMoney(p.totalCents)],
     ["Their note", p.note || "None"],

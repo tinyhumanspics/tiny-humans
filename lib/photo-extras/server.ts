@@ -12,8 +12,9 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { sendExtrasPaidEmails } from "./emails";
 import { lineName } from "./format";
-import { boughtFrom, NO_PURCHASES, priceOrder, whatsLeft, type PriceError } from "./math";
-import type { ExtraLine, ExtrasChoice, ExtrasLeft, ExtrasSettings, ExtrasView, LeadExtrasOrder } from "./types";
+import { boughtFrom, deliveries, NO_PURCHASES, priceOrder, whatsLeft, type PriceError } from "./math";
+import type { EmailExtras } from "@/emails/components/ExtrasOffer";
+import type { ExtraLine, ExtrasChoice, ExtrasSettings, ExtrasView, LeadExtrasOrder } from "./types";
 
 /**
  * Photo extras after the session (owner, Nov 20). The sneak-peek email links a signed page (/extras?b=…&s=…) where
@@ -83,18 +84,22 @@ export async function setExtrasDelivered(bookingId: string, orderId: string, del
 
 // ---------- the page ----------
 
-/** The page stays open `openDays` after the sneak-peek email (or after the session, if that email wasn't sent). */
-async function isOpen(row: Booking, s: ExtrasSettings, now: Date): Promise<boolean> {
-  if (!s.enabled) return false;
-  const [sneak] = await getDb()
-    .select({ sentAt: bookingEmails.sentAt })
+/** The after-session emails sent (sneak peek, finished gallery): when the page opened, and whether the gallery is out. */
+async function afterEmails(row: Booking): Promise<{ lastOffer: Date | null; galleryDelivered: boolean }> {
+  const sent = await getDb()
+    .select({ kind: bookingEmails.kind, sentAt: bookingEmails.sentAt })
     .from(bookingEmails)
-    .where(and(eq(bookingEmails.bookingId, row.id), eq(bookingEmails.kind, "after_session"), eq(bookingEmails.status, "sent")))
-    .orderBy(desc(bookingEmails.sentAt))
-    .limit(1);
-  const start = sneak?.sentAt ?? row.sessionStart;
-  return now.getTime() <= start.getTime() + s.openDays * 86_400_000;
+    .where(and(eq(bookingEmails.bookingId, row.id), inArray(bookingEmails.kind, ["after_session", "gallery_delivered"]), eq(bookingEmails.status, "sent")));
+  const times = sent.map((e) => e.sentAt?.getTime() ?? 0).filter(Boolean);
+  return { lastOffer: times.length ? new Date(Math.max(...times)) : null, galleryDelivered: sent.some((e) => e.kind === "gallery_delivered") };
 }
+
+/**
+ * The page stays open `openDays` after the last email that offered it (the sneak peek or the finished gallery), or
+ * after the session if neither was sent yet.
+ */
+const isOpen = (row: Booking, s: ExtrasSettings, sent: { lastOffer: Date | null }, now: Date) =>
+  s.enabled && now.getTime() <= (sent.lastOffer ?? row.sessionStart).getTime() + s.openDays * 86_400_000;
 
 async function bookingForLink(reference: unknown, signature: unknown): Promise<Booking | null> {
   if (typeof reference !== "string" || typeof signature !== "string" || !verifyExtrasLink(reference, signature)) return null;
@@ -113,8 +118,8 @@ async function confirmWithStripe(order: PhotoExtraOrder | undefined): Promise<vo
 export async function extrasView(reference: unknown, signature: unknown, paid: boolean, now = new Date()): Promise<ExtrasView> {
   const row = await bookingForLink(reference, signature);
   if (!row) return { state: "invalid" };
-  const settings = await getExtrasSettings();
-  if (!settings || !(await isOpen(row, settings, now))) return { state: "closed" };
+  const [settings, sent] = await Promise.all([getExtrasSettings(), afterEmails(row)]);
+  if (!settings || !isOpen(row, settings, sent, now)) return { state: "closed" };
   if (paid) await confirmWithStripe((await ordersOf(row.id)).find((o) => o.status === "open"));
   const orders = await ordersOf(row.id);
   const left = whatsLeft(settings, boughtOf(orders));
@@ -127,6 +132,7 @@ export async function extrasView(reference: unknown, signature: unknown, paid: b
     included: photosLabelOf(row, terms),
     prices: { extraPhotoCents: settings.extraPhotoCents, maxExtras: settings.maxExtras, fullGalleryCents: settings.fullGalleryCents, rawFilesCents: settings.rawFilesCents },
     left,
+    delivery: deliveries(settings, sent.galleryDelivered),
     ...(paid && newestPaid ? { paidOrder: { lines: linesOf(newestPaid), creditCents: newestPaid.creditCents, totalCents: newestPaid.totalCents } } : {}),
   };
 }
@@ -140,15 +146,16 @@ export type CheckoutOutcome = { url: string } | { error: "invalid" | "closed" | 
 export async function startExtrasCheckout(reference: unknown, signature: unknown, choice: ExtrasChoice, note: string, now = new Date()): Promise<CheckoutOutcome> {
   const row = await bookingForLink(reference, signature);
   if (!row) return { error: "invalid" };
-  const settings = await getExtrasSettings();
-  if (!settings || !(await isOpen(row, settings, now))) return { error: "closed" };
+  const [settings, sent] = await Promise.all([getExtrasSettings(), afterEmails(row)]);
+  if (!settings || !isOpen(row, settings, sent, now)) return { error: "closed" };
   if (!isStripeConfigured()) {
     log.error("photo-extras", "Extras checkout opened but STRIPE_SECRET_KEY is not set", { reference: row.bookingReference });
     return { error: "stripe" };
   }
   await confirmWithStripe((await ordersOf(row.id)).find((o) => o.status === "open"));
   const orders = await ordersOf(row.id);
-  const priced = priceOrder(settings, boughtOf(orders), choice);
+  // extra photos come with the finished gallery until it's delivered; after that they take their own hours (owner, Nov 20)
+  const priced = priceOrder(settings, boughtOf(orders), choice, sent.galleryDelivered);
   if ("error" in priced) return priced;
   const db = getDb();
   const values = { lines: priced.lines, creditCents: priced.creditCents, totalCents: priced.totalCents, note: note.trim().slice(0, 500) || null, updatedAt: now };
@@ -216,11 +223,14 @@ export async function handleExtrasEvent(event: { type?: string; data?: { object?
 
 // ---------- the sneak-peek email ----------
 
-/** What the sneak-peek email offers: null when extras are off or nothing is left to buy. */
-export async function extrasOfferFor(row: Booking): Promise<{ settings: ExtrasSettings; left: ExtrasLeft; url: string } | null> {
+/**
+ * What the sneak-peek and finished-gallery emails offer (owner, Nov 20): null when extras are off or nothing is left
+ * to buy. `galleryDelivered`: the gallery email (extra photos then take their own hours, not "with your gallery").
+ */
+export async function extrasOfferFor(row: Booking, galleryDelivered: boolean): Promise<EmailExtras | null> {
   const settings = await getExtrasSettings();
   const url = extrasUrl(row.bookingReference, row.locale);
   if (!settings?.enabled || !url) return null;
   const left = whatsLeft(settings, await ordersOf(row.id).then(boughtOf).catch(() => NO_PURCHASES));
-  return left.nothingLeft ? null : { settings, left, url };
+  return left.nothingLeft ? null : { url, left, prices: settings, delivery: deliveries(settings, galleryDelivered) };
 }

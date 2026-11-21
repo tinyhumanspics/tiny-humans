@@ -1099,9 +1099,10 @@
       "nothingDue": "No hay nada que pagar por esta sesión. ¡Gracias!",
       "extrasTitle": "¿Quieres más fotos?",
       "extrasIntro": "¿Te encantan más de {count}? Puedes agregar más antes de que empecemos a editar:",
-      "extrasExtra": "Fotos editadas extra: {price} cada una, hasta {max}",
-      "extrasFull": "Tu galería completa, con corrección de color y retoque: {price}",
-      "extrasRaw": "Tus archivos RAW sin editar (cada foto tal como se tomó): {price}",
+      "extrasIntroAfter": "¿Quieres más fotos de tu sesión? Todavía puedes agregarlas:",
+      "extrasExtra": "Fotos editadas extra: {price} cada una, hasta {max} (llegan {when})",
+      "extrasFull": "Tu galería completa, con corrección de color y retoque: {price} (llega {when})",
+      "extrasRaw": "Tus archivos RAW sin editar, cada foto tal como se tomó: {price} (llegan {when})",
       "extrasButton": "Agregar fotos",
       "extrasHeart": "Marca también con un corazón tus fotos extra en la galería, para saber cuáles son.",
       "extrasText": "Agregar fotos: {url}"
@@ -1134,7 +1135,7 @@
       "title": "¡Gracias, {name}!",
       "intro": "Recibimos tu pago. Esto es lo que agregaste y cuándo llega:",
       "listTitle": "Lo que agregaste",
-      "line": "{amount} · llega en {when}",
+      "line": "{amount} · llega {when}",
       "credit": "Ya pagado por fotos extra",
       "paid": "Pagado",
       "note": "Te avisaremos cuando estén listas."
@@ -1240,7 +1241,8 @@
     "failed": "Algo salió mal. Inténtalo de nuevo o escríbenos al {phone}.",
     "paidTitle": "¡Gracias!",
     "paidText": "Esto es lo que agregaste y cuándo llega:",
-    "paidLine": "{amount} · llega en {when}",
+    "paidLine": "{amount} · llega {when}",
+    "arrives": "Llega {when}.",
     "paidCredit": "Ya pagado por fotos extra",
     "paidTotal": "Pagado",
     "paidNote": "También te enviamos un correo con estos detalles.",
@@ -1258,8 +1260,9 @@
       "unedited_files": "Archivos RAW sin editar"
     },
     "within": {
-      "hours": "{n} horas",
-      "days": "{n} días"
+      "hours": "en {n} horas",
+      "days": "en {n} días",
+      "withGallery": "con tu galería final"
     },
     "stripe": {
       "description": "Fotos extra · {reference}",

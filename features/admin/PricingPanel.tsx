@@ -182,7 +182,7 @@ const EXTRAS_FIELDS: { key: ExtrasField; label: string; dollars?: boolean }[] = 
   { key: "fullGalleryCents", label: "Full gallery, color-corrected and retouched ($)", dollars: true },
   { key: "rawFilesCents", label: "Unedited files ($)", dollars: true },
   { key: "openDays", label: "Page stays open (days after the sneak peek)" },
-  { key: "extrasDeliveryHours", label: "Extra photos delivered within (hours)" },
+  { key: "extrasDeliveryHours", label: "Extra photos ordered after the finished gallery: delivered within (hours)" },
   { key: "fullDeliveryDays", label: "Full gallery delivered within (days)" },
   { key: "rawDeliveryHours", label: "Unedited files delivered within (hours)" },
 ];
@@ -217,7 +217,7 @@ function PhotoExtras({ api }: { api: AdminApi }) {
       const r = await api.saveExtras({ enabled, ...numbers });
       show(r.settings);
       setStripeReady(r.stripeReady);
-      setNote({ kind: "ok", text: enabled ? "Saved. The next sneak-peek emails offer these extras; earlier orders keep the prices they were bought at." : "Saved. Photo extras are off: sneak-peek emails don't offer them and the extras page says it's closed." });
+      setNote({ kind: "ok", text: enabled ? "Saved. The next sneak-peek and gallery emails offer these extras; earlier orders keep the prices they were bought at." : "Saved. Photo extras are off: the emails don't offer them and the extras page says it's closed." });
     } catch (err) {
       setNote({ kind: "error", text: errText(err, "Couldn't save. Please try again.") });
     } finally {
@@ -229,9 +229,10 @@ function PhotoExtras({ api }: { api: AdminApi }) {
     <div className={styles.availBlock}>
       <h2 className={cn(styles.h2, "chalk")}>Photo extras</h2>
       <p className={cn(styles.muted, "chalk-soft")}>
-        The sneak-peek email offers more photos: extra edited photos (up to the most per booking, across all their orders), the full gallery
-        (it replaces extra photos and costs less what they already paid for them) and the unedited files. Families pick and pay on Stripe from
-        the link in that email; each lead shows what they added. Price changes apply to new orders only.
+        The sneak-peek and finished-gallery emails offer more photos: extra edited photos (up to the most per booking, across all their
+        orders), the full gallery (it replaces extra photos and costs less what they already paid for them) and the unedited RAW files.
+        Extra photos ordered before the finished gallery come with it; ordered after it, they take the hours below. Families pick and pay on
+        Stripe from the link in those emails; each lead shows what they added. Price changes apply to new orders only.
       </p>
       {!stripeReady && <p className={cn(styles.bannerError, "chalk-soft")}>Stripe isn&apos;t connected (STRIPE_SECRET_KEY in Vercel), so families can&apos;t pay for extras.</p>}
       {values && (

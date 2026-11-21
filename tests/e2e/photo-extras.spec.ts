@@ -5,7 +5,8 @@ import type { ExtraLine, ExtrasView } from "@/lib/photo-extras/types";
 // Photo extras after the session (owner, Nov 20). The server is faked here: it prices again and talks to Stripe.
 const prices = { extraPhotoCents: 1300, maxExtras: 6, fullGalleryCents: 25000, rawFilesCents: 11500 };
 const fresh = { extrasLeft: 6, canFull: true, canRaw: true, fullCreditCents: 0, nothingLeft: false };
-const view = (over: Partial<Extract<ExtrasView, { firstName: string }>> = {}): ExtrasView => ({ state: "open", firstName: "Sofia", bundleName: "Our Little Story", included: "20", prices, left: fresh, ...over });
+const delivery = { extras: { amount: 72, unit: "hours" as const, withGallery: true }, full: { amount: 5, unit: "days" as const }, raw: { amount: 48, unit: "hours" as const } };
+const view = (over: Partial<Extract<ExtrasView, { firstName: string }>> = {}): ExtrasView => ({ state: "open", firstName: "Sofia", bundleName: "Our Little Story", included: "20", prices, left: fresh, delivery, ...over });
 const bought: ExtraLine[] = [
   { kind: "extra_photos", quantity: 4, unitCents: 1300, totalCents: 5200, delivery: { amount: 72, unit: "hours" } },
   { kind: "unedited_files", quantity: 1, unitCents: 11500, totalCents: 11500, delivery: { amount: 48, unit: "hours" } },
@@ -29,6 +30,10 @@ test("pick 4 extra photos and the unedited files, pay, and see when they arrive"
   await page.goto(LINK);
   await expect(page.getByRole("heading", { name: "Add more photos" })).toBeVisible();
   await expect(page.getByText("Our Little Story includes 20 edited photos.")).toBeVisible();
+  // when each arrives (owner, Nov 20)
+  await expect(page.getByText("Arrives with your finished gallery.")).toBeVisible();
+  await expect(page.getByText("Arrives within 5 days.")).toBeVisible();
+  await expect(page.getByText("Arrives within 48 hours.")).toBeVisible();
   await expect(page.getByRole("button", { name: /^Pay/ })).toBeDisabled();
   for (let i = 0; i < 4; i++) await page.getByRole("button", { name: "One more" }).click();
   await page.getByRole("checkbox", { name: /Unedited files/ }).check();
@@ -51,8 +56,10 @@ test("pick 4 extra photos and the unedited files, pay, and see when they arrive"
 });
 
 test("opening the link again shows only what's left, with the credit on the full gallery", async ({ page }) => {
-  await fakeServer(page, { get: () => view({ left: { extrasLeft: 2, canFull: true, canRaw: false, fullCreditCents: 5200, nothingLeft: false } }) });
+  // after the finished gallery: extra photos take their own 72 hours
+  await fakeServer(page, { get: () => view({ left: { extrasLeft: 2, canFull: true, canRaw: false, fullCreditCents: 5200, nothingLeft: false }, delivery: { ...delivery, extras: { amount: 72, unit: "hours" } } }) });
   await page.goto(LINK);
+  await expect(page.getByText("Arrives within 72 hours.")).toBeVisible();
   await expect(page.getByText("Up to 2")).toBeVisible();
   for (let i = 0; i < 2; i++) await page.getByRole("button", { name: "One more" }).click();
   await expect(page.getByRole("button", { name: "One more" })).toBeDisabled();

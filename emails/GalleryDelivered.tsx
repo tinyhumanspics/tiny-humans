@@ -8,6 +8,7 @@ import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
 import { BODY_FONT, CHALK_FONT, ChalkButton, Heading, Paragraph } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
+import { ExtrasOffer, extrasOfferText, type EmailExtras } from "./components/ExtrasOffer";
 
 interface Options {
   themeId: string;
@@ -19,6 +20,8 @@ interface Options {
   downloadPin?: string;
   /** Still unpaid: amount + our /pay link. */
   pay?: { amountCents: number; url: string } | null;
+  /** "Want more photos?" (owner, Nov 20): while extras are on and something is left to buy. */
+  extras?: EmailExtras;
   images?: ImageMode;
   locale?: EmailLocale;
 }
@@ -44,7 +47,7 @@ function PinBox({ theme: t, title, text }: { theme: EmailTheme; title: string; t
   );
 }
 
-export function GalleryDelivered({ details: d, theme: t, images, locale, reviewUrl, galleryUrl, downloadPin, pay }: { details: AfterSessionDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale } & Omit<Options, "themeId" | "images" | "locale">) {
+export function GalleryDelivered({ details: d, theme: t, images, locale, reviewUrl, galleryUrl, downloadPin, pay, extras }: { details: AfterSessionDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale } & Omit<Options, "themeId" | "images" | "locale">) {
   const m = emailMessages(locale);
   const x = m.gallery;
   const first = d.parentName.split(" ")[0];
@@ -62,6 +65,7 @@ export function GalleryDelivered({ details: d, theme: t, images, locale, reviewU
         </Paragraph>
       )}
       {downloadPin && <PinBox theme={t} title={fill(x.pinTitle, { pin: downloadPin })} text={x.pinText} />}
+      {extras && <ExtrasOffer theme={t} locale={locale} extras={extras} count="" />}
       <Paragraph theme={t} align="center">
         <span style={{ display: "block", marginTop: 14, fontSize: 20, fontWeight: "bold" }}>{x.reviewTitle}</span>
         {x.reviewText}
@@ -93,7 +97,7 @@ export async function galleryDeliveredEmail(d: AfterSessionDetails, opts: Option
   const m = emailMessages(locale);
   const x = m.gallery;
   const first = d.parentName.split(" ")[0];
-  const html = await renderHtml(<GalleryDelivered details={d} theme={theme} images={images} locale={locale} reviewUrl={opts.reviewUrl} galleryUrl={opts.galleryUrl} downloadPin={opts.downloadPin} pay={opts.pay} />);
+  const html = await renderHtml(<GalleryDelivered details={d} theme={theme} images={images} locale={locale} reviewUrl={opts.reviewUrl} galleryUrl={opts.galleryUrl} downloadPin={opts.downloadPin} pay={opts.pay} extras={opts.extras} />);
   const text = textLines([
     fill(x.title, { name: first }),
     "",
@@ -101,6 +105,7 @@ export async function galleryDeliveredEmail(d: AfterSessionDetails, opts: Option
     opts.galleryUrl ? fill(x.galleryText, { url: opts.galleryUrl }) : x.pixieset,
     !!opts.downloadPin && `${fill(x.pinTitle, { pin: opts.downloadPin })}\n${x.pinText}`,
     "",
+    ...(opts.extras ? extrasOfferText(locale, opts.extras, "") : []),
     x.reviewTitle,
     x.reviewText,
     fill(x.reviewTextLine, { url: opts.reviewUrl }),

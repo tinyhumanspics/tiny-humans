@@ -8,5 +8,5 @@ type ExtrasMessages = typeof en.extras;
 export const lineName = (line: Pick<ExtraLine, "kind" | "quantity">, m: ExtrasMessages) =>
   line.kind === "extra_photos" ? m.lines.extra_photos.replace("{n}", String(line.quantity)) : m.lines[line.kind];
 
-/** "72 hours", "7 days". */
-export const deliveryText = (d: Delivery, m: ExtrasMessages) => m.within[d.unit].replace("{n}", String(d.amount));
+/** "within 72 hours", "within 5 days", "with your finished gallery". */
+export const deliveryText = (d: Delivery, m: ExtrasMessages) => (d.withGallery ? m.within.withGallery : m.within[d.unit].replace("{n}", String(d.amount)));

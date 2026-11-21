@@ -1,25 +1,34 @@
 import { describe, expect, test, vi } from "vitest";
-import { boughtFrom, NO_PURCHASES, priceOrder, whatsLeft } from "@/lib/photo-extras/math";
+import { boughtFrom, deliveries, NO_PURCHASES, priceOrder, whatsLeft } from "@/lib/photo-extras/math";
 import type { ExtrasSettings } from "@/lib/photo-extras/types";
 import { sneakPeekEmail } from "@/emails/AfterSession";
 import { photoExtrasPaidEmail } from "@/emails/PhotoExtrasPaid";
+import { galleryDeliveredEmail } from "@/emails/GalleryDelivered";
 
 vi.mock("server-only", () => ({}));
 
 // the owner's prices (Nov 20); tests only: the live ones come from /admin → Pricing
-const s: ExtrasSettings = { enabled: true, extraPhotoCents: 1300, maxExtras: 6, fullGalleryCents: 25000, rawFilesCents: 11500, openDays: 30, extrasDeliveryHours: 72, fullDeliveryDays: 7, rawDeliveryHours: 48 };
+const s: ExtrasSettings = { enabled: true, extraPhotoCents: 1300, maxExtras: 6, fullGalleryCents: 25000, rawFilesCents: 11500, openDays: 30, extrasDeliveryHours: 72, fullDeliveryDays: 5, rawDeliveryHours: 48 };
 
 describe("photo extras price math (owner, Nov 20)", () => {
   test("4 extras + unedited files, prices and delivery promises copied into the lines", () => {
     const o = priceOrder(s, NO_PURCHASES, { extras: 4, full: false, raw: true });
     expect(o).toEqual({
       lines: [
-        { kind: "extra_photos", quantity: 4, unitCents: 1300, totalCents: 5200, delivery: { amount: 72, unit: "hours" } },
+        // before the finished gallery is delivered, extra photos come with it (owner, Nov 20)
+        { kind: "extra_photos", quantity: 4, unitCents: 1300, totalCents: 5200, delivery: { amount: 72, unit: "hours", withGallery: true } },
         { kind: "unedited_files", quantity: 1, unitCents: 11500, totalCents: 11500, delivery: { amount: 48, unit: "hours" } },
       ],
       creditCents: 0,
       totalCents: 16700,
     });
+  });
+
+  test("after the finished gallery, extra photos take their own 72 hours; the full gallery 5 days", () => {
+    const o = priceOrder(s, NO_PURCHASES, { extras: 2, full: false, raw: false }, true);
+    expect(o).toMatchObject({ lines: [{ kind: "extra_photos", delivery: { amount: 72, unit: "hours" } }] });
+    expect("error" in o ? null : o.lines[0].delivery.withGallery).toBeUndefined();
+    expect(deliveries(s, true).full).toEqual({ amount: 5, unit: "days" });
   });
 
   test("the cap of 6 counts every earlier order", () => {
@@ -61,18 +70,25 @@ describe("the emails", () => {
   const base = { themeId: "default", galleryUrl: "https://example.com/g", favorites: "20", amountCents: 0, paid: true, images: "inline" as const };
   test("the sneak peek offers what's left, with the saved prices", async () => {
     const left = whatsLeft(s, NO_PURCHASES);
-    const mail = await sneakPeekEmail(details, { ...base, extras: { url: "https://example.com/extras", left, prices: s } });
-    expect(mail.text).toContain("Want more photos?\nLove more than 20? You can add more before we start editing:\n- Extra edited photos: $13 each, up to 6\n- Your full gallery, color-corrected and retouched: $250\n- Your unedited RAW files (every photo as taken): $115\nAdd photos: https://example.com/extras");
+    const mail = await sneakPeekEmail(details, { ...base, extras: { url: "https://example.com/extras", left, prices: s, delivery: deliveries(s, false) } });
+    expect(mail.text).toContain(
+      "Want more photos?\nLove more than 20? You can add more before we start editing:\n- Extra edited photos: $13 each, up to 6 (they arrive with your finished gallery)\n- Your full gallery, color-corrected and retouched: $250 (it arrives within 5 days)\n- Your unedited RAW files, every photo as taken: $115 (they arrive within 48 hours)\nAdd photos: https://example.com/extras",
+    );
     expect(mail.html).toContain("Add photos");
     const none = await sneakPeekEmail(details, base);
     expect(none.text).not.toContain("Want more photos?");
+  });
+
+  test("the finished-gallery email offers them too: extra photos then take 72 hours", async () => {
+    const mail = await galleryDeliveredEmail(details, { themeId: "christmas", reviewUrl: "https://example.com/review", images: "inline", extras: { url: "https://example.com/extras", left: whatsLeft(s, NO_PURCHASES), prices: s, delivery: deliveries(s, true) } });
+    expect(mail.text).toContain("Want more photos?\nWant more photos from your session? You can still add them:\n- Extra edited photos: $13 each, up to 6 (they arrive within 72 hours)");
   });
 
   test("the thank-you lists each line, when it arrives and what they paid", async () => {
     const o = priceOrder(s, { ...NO_PURCHASES, extras: 4, extrasPaidCents: 5200 }, { extras: 0, full: true, raw: true });
     if ("error" in o) throw new Error(o.error);
     const mail = await photoExtrasPaidEmail(details, { themeId: "thanksgiving", ...o, images: "inline", locale: "es" });
-    expect(mail.text).toContain("Galería completa, con corrección de color y retoque: $250 · llega en 7 días");
+    expect(mail.text).toContain("Galería completa, con corrección de color y retoque: $250 · llega en 5 días");
     expect(mail.text).toContain("Archivos RAW sin editar: $115 · llega en 48 horas");
     expect(mail.text).toContain("Ya pagado por fotos extra: −$52");
     expect(mail.text).toContain("Pagado: $313");

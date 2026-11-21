@@ -25,7 +25,7 @@ export async function sendExtrasPaidEmails(row: Booking, order: PhotoExtraOrder)
     email: row.email,
     phone: row.phone,
     bundleName: row.packageName,
-    lines: lines.map((l) => ({ name: lineName(l, en.extras), amountCents: l.totalCents, when: deliveryText(l.delivery, en.extras) })),
+    lines: lines.map((l) => ({ name: lineName(l, en.extras), amountCents: l.totalCents, when: l.delivery.withGallery ? "with their finished gallery" : deliveryText(l.delivery, en.extras) })),
     creditCents: order.creditCents,
     totalCents: order.totalCents,
     note: order.note,

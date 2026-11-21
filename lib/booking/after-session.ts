@@ -119,8 +119,7 @@ export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favor
   const amountCents = await balanceDueCents(row);
   const paid = await isPaid(row.id);
   // "Want more photos?" (owner, Nov 20), while extras are on and something is left to buy
-  const offer = await extrasOfferFor(row).catch(() => null);
-  const extras = offer ? { url: offer.url, left: offer.left, prices: offer.settings } : undefined;
+  const extras = (await extrasOfferFor(row, false).catch(() => null)) ?? undefined;
   return deliver(row, AFTER_KINDS.afterSession, (token, themeId) =>
     sneakPeekEmail(detailsOf(row), { themeId, galleryUrl, favorites, amountCents, paid, payUrl: amountCents > 0 && !paid ? payUrl(row, token) : undefined, extras, locale: row.locale }),
   );
@@ -130,8 +129,10 @@ export async function sendSneakPeekEmail(row: Booking, galleryUrl: string, favor
 export async function sendGalleryEmail(row: Booking, galleryUrl?: string, downloadPin?: string) {
   const amountCents = await balanceDueCents(row);
   const unpaid = amountCents > 0 && !(await isPaid(row.id));
+  // "Want more photos?" here too (owner, Nov 20): extra photos bought now take their own hours
+  const extras = (await extrasOfferFor(row, true).catch(() => null)) ?? undefined;
   return deliver(row, AFTER_KINDS.gallery, (token, themeId) =>
-    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token, row.locale), galleryUrl, downloadPin, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, locale: row.locale }),
+    galleryDeliveredEmail(detailsOf(row), { themeId, reviewUrl: reviewUrl(token, row.locale), galleryUrl, downloadPin, pay: unpaid ? { amountCents, url: payUrl(row, token) } : null, extras, locale: row.locale }),
   );
 }
 

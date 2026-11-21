@@ -1099,9 +1099,10 @@
       "nothingDue": "Nothing to pay for this session. Thank you!",
       "extrasTitle": "Want more photos?",
       "extrasIntro": "Love more than {count}? You can add more before we start editing:",
-      "extrasExtra": "Extra edited photos: {price} each, up to {max}",
-      "extrasFull": "Your full gallery, color-corrected and retouched: {price}",
-      "extrasRaw": "Your unedited RAW files (every photo as taken): {price}",
+      "extrasIntroAfter": "Want more photos from your session? You can still add them:",
+      "extrasExtra": "Extra edited photos: {price} each, up to {max} (they arrive {when})",
+      "extrasFull": "Your full gallery, color-corrected and retouched: {price} (it arrives {when})",
+      "extrasRaw": "Your unedited RAW files, every photo as taken: {price} (they arrive {when})",
       "extrasButton": "Add photos",
       "extrasHeart": "Heart your extra picks in the gallery too, so we know which ones.",
       "extrasText": "Add photos: {url}"
@@ -1134,7 +1135,7 @@
       "title": "Thank you, {name}!",
       "intro": "We got your payment. Here's what you added and when it arrives:",
       "listTitle": "What you added",
-      "line": "{amount} · arrives within {when}",
+      "line": "{amount} · arrives {when}",
       "credit": "Already paid for extra photos",
       "paid": "Paid",
       "note": "We'll let you know when they're ready."
@@ -1240,7 +1241,8 @@
     "failed": "Something went wrong. Please try again, or text us at {phone}.",
     "paidTitle": "Thank you!",
     "paidText": "Here's what you added and when it arrives:",
-    "paidLine": "{amount} · arrives within {when}",
+    "paidLine": "{amount} · arrives {when}",
+    "arrives": "Arrives {when}.",
     "paidCredit": "Already paid for extra photos",
     "paidTotal": "Paid",
     "paidNote": "We also sent you an email with these details.",
@@ -1258,8 +1260,9 @@
       "unedited_files": "Unedited RAW files"
     },
     "within": {
-      "hours": "{n} hours",
-      "days": "{n} days"
+      "hours": "within {n} hours",
+      "days": "within {n} days",
+      "withGallery": "with your finished gallery"
     },
     "stripe": {
       "description": "Photo extras · {reference}",

@@ -19,6 +19,7 @@
 .price { font-family: var(--font-chalk); font-size: 1.25rem; color: var(--sun-yellow); }
 .hint { margin: 0; font-size: 1rem; line-height: 1.45; color: var(--chalk-muted); }
 .credit { font-size: 1rem; color: var(--cloud-blue); }
+.when { display: block; margin: 0; font-size: 1rem; color: var(--cloud-blue); }
 
 .stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .step {

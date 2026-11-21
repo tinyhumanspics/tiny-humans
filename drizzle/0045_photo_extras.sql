@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS "photo_extras_settings" (
 );
 --> statement-breakpoint
 INSERT INTO "photo_extras_settings" ("id", "enabled", "extra_photo_cents", "max_extras", "full_gallery_cents", "raw_files_cents", "open_days", "extras_delivery_hours", "full_delivery_days", "raw_delivery_hours")
-VALUES (1, true, 1300, 6, 25000, 11500, 30, 72, 7, 48)
+VALUES (1, true, 1300, 6, 25000, 11500, 30, 72, 5, 48)
 ON CONFLICT ("id") DO NOTHING;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "photo_extra_orders" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
