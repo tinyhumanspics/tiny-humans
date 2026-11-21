@@ -83,7 +83,6 @@ export default function Confirmation({
   return (
     <div className={styles.confirm} role="status">
       <ChalkDoodle name="heart" size={84} color="var(--sun-yellow)" strokeWidth={3} className={styles.confirmHeart} />
-      <p className={cn(styles.confirmEyebrow, "chalk-soft")}>{messages.confirmation.eyebrow}</p>
       <h2 ref={headingRef} tabIndex={-1} className={cn(styles.confirmTitle, "chalk")}>
         {fill(messages.confirmation.title, { name: firstName })}
       </h2>
@@ -173,7 +172,7 @@ function MockPreviews({ result, locale, messages }: { result: BookingResult; loc
     const { bookingConfirmationEmail } = await import("@/emails/BookingConfirmation");
     const r = result.request;
     const pricing = result.pricing!;
-    const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "", cta: "" }) as Bundle;
+    const bundle = (getBundle(r.bundleId) ?? { id: r.bundleId, name: pricing.bundleName, price: pricing.regularCents / 100, duration: "", durationMinutes: 60, people: "", setups: "", photos: "", features: [], locationNote: "" }) as Bundle;
     const mail = await bookingConfirmationEmail(
       { reference: result.id, bundle, pricing, date: r.slot.date, start: r.slot.start, end: r.slot.end, contact: r.contact, babies: r.babies ?? [{ name: r.contact.babyName, age: r.contact.babyAge }], family: cleanFamily(r.family), address: r.address, inspirationTitle: findPhoto(photos, r.inspirationPhotoId)?.title },
       { themeId: theme.id, cancelUrl: cancelPath, rescheduleUrl: reschedulePath, rescheduleNoticeHours: result.rescheduleNoticeHours, images: "inline", locale },

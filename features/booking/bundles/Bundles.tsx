@@ -18,7 +18,7 @@ import styles from "./Bundles.module.css";
  * Step one of booking: pick a bundle. Each card leads to the calendar. Due dates: one line under the heading (owner, Nov 16).
  * The same bundles as the home page and the ad page, in the same order (brief 05).
  */
-export default function Bundles({ messages, locale }: { messages: typeof en.bundlesPage; locale: AppLocale }) {
+export default function Bundles({ messages, cta, locale }: { messages: typeof en.bundlesPage; cta: string; locale: AppLocale }) {
   const id = "bundles";
   const { inspirationId } = useBookingSelection();
   const { bundles: all, today, available } = useCatalog();
@@ -39,7 +39,7 @@ export default function Bundles({ messages, locale }: { messages: typeof en.bund
           <>
             <div className={styles.grid} style={bundleColumns(bundles.length)}>
               {bundles.map((bundle, i) => (
-                <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} href={scheduleHref(bundle.id, inspirationId, locale)} headingLevel={2} />
+                <BundleCard key={bundle.id} bundle={bundle} index={i} messages={messages.card} locale={locale} cta={cta} href={scheduleHref(bundle.id, inspirationId, locale)} headingLevel={2} />
               ))}
             </div>
           </>

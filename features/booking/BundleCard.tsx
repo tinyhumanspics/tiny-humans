@@ -21,7 +21,8 @@ interface Props {
   index: number;
   messages: typeof en.bundlesPage.card;
   locale: AppLocale;
-  /** Where "Choose …" goes: the booking calendar for this bundle. */
+  /** The button: "Check dates" (brief 05b), going to /book with this bundle picked. */
+  cta: string;
   href: string;
   /** 2 when the cards sit directly under the page's main heading (the /bundles page). */
   headingLevel?: 2 | 3;
@@ -31,7 +32,7 @@ const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
 
 /** A package box drawn on the board. Every word inside is chalk. */
-export default function BundleCard({ bundle, index, messages, locale, href, headingLevel = 3 }: Props) {
+export default function BundleCard({ bundle, index, messages, locale, cta, href, headingLevel = 3 }: Props) {
   const Name = headingLevel === 2 ? "h2" : "h3";
   const { theme } = useSiteSettings();
   const { today, depositFor } = useCatalog();
@@ -101,7 +102,7 @@ export default function BundleCard({ bundle, index, messages, locale, href, head
           seed={60 + index}
           aria-describedby={titleId}
         >
-          {bundle.cta}
+          {cta}
         </ChalkButton>
       </ChalkBox>
     </article>

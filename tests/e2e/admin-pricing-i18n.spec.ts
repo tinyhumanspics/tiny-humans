@@ -15,7 +15,6 @@ const bundle: AdminBundle = {
   photos: "8",
   features: ["Up to 1 hour", "8 edited digital photos"],
   locationNote: "We bring the studio to your home",
-  cta: "Choose Little Moments",
   badge: "Most loved",
   active: true,
   sortOrder: 0,

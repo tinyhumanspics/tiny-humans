@@ -12,7 +12,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 
 const bundle = (id: string, name: string, price: number, offer?: Bundle["offer"]): Bundle => ({
-  id, name, price, duration: "Up to 1 hour", durationMinutes: 60, people: "", setups: "", photos: "5–8", features: [], locationNote: "", cta: "", active: true, offer,
+  id, name, price, duration: "Up to 1 hour", durationMinutes: 60, people: "", setups: "", photos: "5–8", features: [], locationNote: "", active: true, offer,
   extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
 });
 const pct = (b: Bundle, p: number, label = "Thanksgiving offer", endsOn = "2026-11-30"): Bundle => ({ ...b, offer: { enabled: true, price: percentOffCents(Math.round(b.price * 100), p) / 100, label, endsOn } });

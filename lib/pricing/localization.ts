@@ -54,7 +54,6 @@ export function localizeCatalog(catalog: Bundle[], locale: AppLocale, translatio
       duration: spanishDuration(bundle.durationMinutes),
       features: translated.features.map((feature) => feature.text.trim()),
       locationNote: es.catalog.locationNote,
-      cta: es.catalog.choose.replace("{name}", name),
       offer: bundle.offer
         ? {
             ...bundle.offer,

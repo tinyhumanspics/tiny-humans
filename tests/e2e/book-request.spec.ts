@@ -203,7 +203,8 @@ test("a gallery picture picked as inspiration shows on /book and goes with the r
   const viewer = page.getByRole("dialog", { name: "Photo viewer" });
   await viewer.getByRole("link", { name: "Use this one as my inspiration" }).click();
   await expect(page).toHaveURL(new RegExp(`/bundles\\?inspiration=${picture.id}$`));
-  await page.getByRole("link", { name: /Choose Little Moments/i }).click();
+  // each bundle card's button is "Check dates" (brief 05b)
+  await page.locator("article", { has: page.getByRole("heading", { name: "Little Moments" }) }).getByRole("link", { name: "Check dates" }).click();
   await expect(page).toHaveURL(new RegExp(`/book\\?bundle=little-moments&inspiration=${picture.id}$`));
   await expect(page.getByText(`You picked “${picture.title}”`)).toBeVisible();
   await pickTime(page, 5);

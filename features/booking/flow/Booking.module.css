@@ -386,7 +386,6 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 }
 
 /* ---------- confirmation details + payment ---------- */
-.confirmEyebrow { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; letter-spacing: 0.04em; color: var(--cloud-blue); }
 .confirmDetails, .paymentRows { margin: 0; width: 100%; max-width: 460px; display: grid; gap: 0; text-align: left; }
 .confirmRow { display: grid; grid-template-columns: 140px 1fr; gap: 4px 12px; padding: 7px 0; border-bottom: 2px dashed color-mix(in srgb, var(--chalk-white) 14%, transparent); }
 .confirmRow:last-child { border-bottom: 0; }

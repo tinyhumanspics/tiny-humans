@@ -24,7 +24,6 @@ export default function AboutPage({ messages = en.about, photoMessages = en.phot
       {/* Hello */}
       <section className={cn("container", styles.hero)}>
         <div className={styles.heroText}>
-          <p className={cn(styles.eyebrow, "chalk-soft")}>{t.hero.eyebrow}</p>
           <h1 className={cn(styles.title, "chalk")}>{t.hero.title}</h1>
           <ChalkDoodle name="underline" size={220} color="var(--accent)" strokeWidth={3} className={styles.underline} />
           <p className={cn(styles.lead, "chalk-soft")}>{t.hero.intro}</p>

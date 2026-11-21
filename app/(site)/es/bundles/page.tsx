@@ -15,7 +15,7 @@ export default function BundlesPage() {
       <Suspense fallback={null}><InspirationFromUrl /></Suspense>
       <main id="top" className="book-page">
         <InspirationBanner messages={es.bundlesPage.inspiration} />
-        <Bundles messages={es.bundlesPage} locale="es" />
+        <Bundles messages={es.bundlesPage} cta={es.landing.hero.cta} locale="es" />
       </main>
     </BookingSelectionProvider>
   );

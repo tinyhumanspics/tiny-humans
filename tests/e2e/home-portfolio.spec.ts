@@ -4,8 +4,8 @@ import { expect, test } from "@playwright/test";
 test("home: the ad page's layout with its own title and one Check dates", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("h1")).toHaveText(/Tiny moments\.\s*Big memories\./);
-  // the home page's own line on top (owner, Nov 16); the ad page keeps "The Stay-Home Session · Miami"
-  await expect(page.getByText("Miami to Orlando", { exact: true })).toBeVisible();
+  // no small line above the title on any public page (brief 05b)
+  await expect(page.getByText("Miami to Orlando", { exact: true })).toHaveCount(0);
   const check = page.locator("main a", { hasText: "Check dates" }).first();
   await expect(check).toHaveAttribute("href", /^\/book\?bundle=/);
   // the same sections as the ad page
@@ -42,8 +42,14 @@ test("home and ad page show the same \"Real homes. Real families.\" photos (the 
   expect(home).toEqual(await photos("/home-sweet-home"));
 });
 
-test("the ad page keeps its own top line", async ({ page }) => {
+test("the ad page: no menu, a plain logo, the language switch only; no line above the title (brief 05b)", async ({ page }) => {
   await page.goto("/home-sweet-home");
-  await expect(page.getByText("The Stay-Home Session · Miami", { exact: true })).toBeVisible();
-  await expect(page.getByText("Miami to Orlando", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator("header nav")).toHaveCount(0);
+  await expect(page.locator("header a", { hasText: /^(Home|Portfolio|Bundles|Book)$/ })).toHaveCount(0);
+  await expect(page.locator("header").getByRole("link", { name: /Tiny Humans/ })).toHaveCount(0);
+  await expect(page.getByText("The Stay-Home Session · Miami", { exact: true })).toHaveCount(0);
+  // every other page keeps the menu
+  await page.goto("/bundles");
+  await expect(page.locator("header nav a", { hasText: /^Book$/ })).toBeVisible();
 });

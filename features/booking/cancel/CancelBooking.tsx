@@ -108,7 +108,6 @@ export default function CancelBooking({ locale = "en", messages = en.cancelPage,
 
         {view === "closed" && booking && (
           <>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(messages.greeting, { name: booking.parentFirstName })}</p>
             <h1 id="cancel-title" className={cn(styles.title, "chalk")}>{policyMessages.closedCancelTitle}</h1>
             {info}
             <p className={cn(styles.text, "chalk-soft")}>{cancelClosedText(booking.noticeHours, policyMessages)}</p>
@@ -121,7 +120,6 @@ export default function CancelBooking({ locale = "en", messages = en.cancelPage,
 
         {view === "form" && booking && (
           <form onSubmit={submit} noValidate>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(messages.greeting, { name: booking.parentFirstName })}</p>
             <h1 id="cancel-title" className={cn(styles.title, "chalk")}>{messages.title}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{messages.intro}</p>
             {info}
@@ -152,7 +150,6 @@ export default function CancelBooking({ locale = "en", messages = en.cancelPage,
         {view === "done" && booking && (
           <div className={styles.done} role="status">
             <ChalkDoodle name="heart" size={64} color="var(--cloud-blue)" strokeWidth={3} />
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{messages.doneEyebrow}</p>
             <h1 id="cancel-title" className={cn(styles.title, "chalk")} tabIndex={-1}>{messages.doneTitle}</h1>
             {info}
             <p className={cn(styles.text, "chalk-soft")}>{messages.doneText}</p>

@@ -7,7 +7,6 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Miami to Orlando",
       "title": ["Tiny moments.", "Big memories."]
     },
     "portfolio": {
@@ -38,7 +37,6 @@
   },
   "catalog": {
     "locationNote": "We bring the studio to your home",
-    "choose": "Choose {name}",
     "specialOffer": "Special offer",
     "durationMinutes": "Up to {minutes} minutes",
     "durationHour": "Up to 1 hour",
@@ -377,8 +375,7 @@
       }
     },
     "confirmation": {
-      "eyebrow": "Booking confirmed",
-      "title": "See you soon, {name}!",
+      "title": "You're booked, {name}!",
       "home": "We'll bring the whole studio to your home in {city}.",
       "namedBabies": " We can't wait to meet {names}.",
       "oneBaby": " We can't wait to meet your little one.",
@@ -498,7 +495,6 @@
       "description": "Meet Adrian and Alondra, the parents behind Tiny Humans: newborn photos at home in Miami."
     },
     "hero": {
-      "eyebrow": "Our story",
       "title": "Hi, we're Adrian & Alondra",
       "intro": "We're the husband-and-wife team behind Tiny Humans, and parents ourselves. We bring the studio to your home, so your little one can stay warm, fed and comfy while we capture these first weeks.",
       "photo": "Adrian & Alondra"
@@ -611,12 +607,11 @@
       "description": "Newborn photos in your own living room in Miami. Pick a time or your due date and send a request; nothing to pay until we text you to confirm."
     },
     "hero": {
-      "eyebrow": "The Stay-Home Session · Miami",
       "photo": "A newborn photographed at home",
       "concepts": {
         "a": {
           "title": "Newborn photos in your own living room.",
-          "sub": "No car seat, no studio, no packing. We bring the lights, backdrops and wraps to your home in Miami, and your baby sets the pace. You see your photos the next day. Not born yet? You can book with your due date."
+          "sub": "We bring the lights, backdrops and wraps to your home in Miami. You skip the car seat and the studio, and your baby sets the pace. You see your photos the next day. Not born yet? You can book with your due date."
         },
         "b": {
           "title": "Reserve your newborn session ahead. We move the date when baby arrives.",
@@ -1216,8 +1211,7 @@
     "sms": "Hi {name}! You can add more photos from your session here: {url}",
     "metaTitle": "Add more photos",
     "loading": "Loading your options…",
-    "eyebrow": "Hi, {name}!",
-    "title": "Add more photos",
+    "title": "{name}, add more photos",
     "intro": "{bundle} includes {count} edited photos. Want more? Pick what you'd like below.",
     "introNoCount": "Want more photos from your session? Pick what you'd like below.",
     "extra": {
@@ -1281,8 +1275,7 @@
   },
   "review": {
     "metaTitle": "Share your experience",
-    "eyebrow": "Hi {name}",
-    "title": "How was your session?",
+    "title": "{name}, how was your session?",
     "intro": "Thank you for letting us photograph your family. A few words from you mean the world to us.",
     "loading": "Opening your review…",
     "ratingLabel": "Your rating",
@@ -1376,7 +1369,6 @@
     "alreadyText": "Nothing else to do. If you'd like to book another session, we'd love to see you.",
     "pastText": "It can't be cancelled online anymore. Please reply to your confirmation email.",
     "book": "Book a session",
-    "greeting": "Hi {name}",
     "title": "Cancel your session?",
     "intro": "Here's the session you're about to cancel:",
     "reasonLabel": "Reason for cancellation",
@@ -1385,7 +1377,6 @@
     "keep": "Keep My Booking",
     "cancelling": "Cancelling…",
     "confirm": "Confirm Cancellation",
-    "doneEyebrow": "Booking cancelled",
     "doneTitle": "Your session has been cancelled",
     "doneText": "We're sorry we won't get to capture these little moments this time. A confirmation is on its way to your inbox. If you'd like to book another session in the future, we'd love to see you.",
     "bookAnother": "Book another session",
@@ -1401,7 +1392,6 @@
     "invalidTitle": "We couldn't open this link",
     "invalid": "This link isn't valid anymore. Please use the link in your most recent Tiny Humans email, or reply to it and we'll help.",
     "home": "Back to Tiny Humans",
-    "greeting": "Hi {name}",
     "title": "Reschedule your session",
     "currentTitle": "Your Current Session",
     "newTitle": "Your New Session",
@@ -1416,8 +1406,7 @@
     "cancelled": "This booking has already been cancelled.",
     "past": "This session has already taken place.",
     "intro": "You can change the day and time. Everything else stays the same.",
-    "doneEyebrow": "Booking rescheduled",
-    "doneTitle": "You're all set!",
+    "doneTitle": "Your session is rescheduled",
     "doneText": "Your Tiny Humans session has been successfully rescheduled. We've updated your appointment and can't wait to capture these little moments with you.",
     "previous": "Previously: {date}, {time}",
     "doneLinks": "A confirmation with new links to manage your booking is on its way to your inbox.",

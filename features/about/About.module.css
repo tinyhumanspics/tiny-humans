@@ -9,7 +9,6 @@
 }
 .heroPhoto { width: min(100%, 420px); justify-self: center; }
 
-.eyebrow { margin: 0 0 6px; font-family: var(--font-chalk); font-size: 1.3rem; color: var(--sun-yellow); }
 
 .title {
   margin: 0;

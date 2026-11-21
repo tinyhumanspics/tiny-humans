@@ -106,7 +106,6 @@ export default function ReschedulePage({
 
         {view === "ready" && booking && (
           <>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(messages.greeting, { name: booking.parentFirstName })}</p>
             <h1 id="rs-title" className={cn(styles.title, "chalk")}>{messages.title}</h1>
             {session(booking, messages.currentTitle)}
             {booking.status === "cancelled" ? (
@@ -136,7 +135,6 @@ export default function ReschedulePage({
         {view === "done" && booking && (
           <div role="status">
             <ChalkDoodle name="star" size={60} color="var(--sun-yellow)" strokeWidth={3} />
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{messages.doneEyebrow}</p>
             <h1 id="rs-title" className={cn(styles.title, "chalk")}>{messages.doneTitle}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{messages.doneText}</p>
             {previous && <p className={cn(styles.muted, "chalk-soft")}>{fill(messages.previous, { date: formatLongDate(previous.date, locale), time: formatTimeLabel(previous.start, locale) })}</p>}

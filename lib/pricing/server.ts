@@ -77,7 +77,6 @@ export async function getCatalog(): Promise<Bundle[]> {
     photos: r.photosLabel ?? "",
     features: inc.filter((i) => i.bundleId === r.id).map((i) => i.text),
     locationNote: LOCATION,
-    cta: `Choose ${r.name}`,
     badge: r.badge ?? undefined,
     description: r.description ?? undefined,
     active: r.active,

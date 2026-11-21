@@ -88,8 +88,7 @@ export default function ReviewForm({ locale = "en", messages = en.review }: { lo
 
         {view === "form" && (
           <form onSubmit={submit} noValidate>
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(m.eyebrow, { name: firstName })}</p>
-            <h1 id="review-title" className={cn(styles.title, "chalk")}>{m.title}</h1>
+            <h1 id="review-title" className={cn(styles.title, "chalk")}>{fill(m.title, { name: firstName })}</h1>
             <p className={cn(styles.text, "chalk-soft")}>{m.intro}</p>
 
             <fieldset className={styles.stars} aria-describedby={errors.rating ? "review-rating-error" : undefined}>

@@ -97,8 +97,7 @@ export default function ExtrasPage({ locale = "en", messages = en.extras }: { lo
     const extrasHint = full ? m.extra.inFull : left.extrasLeft === 0 ? (left.canFull ? m.extra.noneLeft : m.extra.inFull) : fill(m.extra.moreThan, { max: String(p.maxExtras) });
     body = (
       <form onSubmit={pay} noValidate>
-        <p className={cn(styles.eyebrow, "chalk-soft")}>{fill(m.eyebrow, { name: view.firstName })}</p>
-        {title(m.title)}
+        {title(fill(m.title, { name: view.firstName }))}
         <p className={cn(styles.text, "chalk-soft")}>{view.included ? fill(m.intro, { bundle: view.bundleName, count: view.included }) : m.introNoCount}</p>
 
         <div className={styles.options}>

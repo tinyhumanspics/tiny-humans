@@ -17,7 +17,6 @@ export const devBundles: Bundle[] = [
     photos: "8",
     features: ["Up to 1 hour", "Baby only", "1 setup", "8 edited digital photos"],
     locationNote: "We bring the studio to your home",
-    cta: "Choose Little Moments",
     extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
   },
   {
@@ -31,7 +30,6 @@ export const devBundles: Bundle[] = [
     photos: "20",
     features: ["Up to 2 hours", "Baby only", "2 setups", "20 edited digital photos"],
     locationNote: "We bring the studio to your home",
-    cta: "Choose Our Little Story",
     badge: "Most loved",
     extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
   },
@@ -46,7 +44,6 @@ export const devBundles: Bundle[] = [
     photos: "35",
     features: ["Up to 3 hours", "Baby + parents + siblings", "3 setups", "35 edited digital photos"],
     locationNote: "We bring the studio to your home",
-    cta: "Choose Our Family Story",
     extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
     extraPerson: { active: true, price: 75, maxExtra: 5 },
   },

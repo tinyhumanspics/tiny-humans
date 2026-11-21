@@ -4,6 +4,7 @@ import { useRef, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { navigation, site } from "@/config/site";
+import { LANDING_PATH } from "@/config/landing";
 import type en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
 import { localePath } from "@/i18n/path";
@@ -30,6 +31,16 @@ export default function Header({ messages, languageMessages, locale, showLanguag
   // static builds report "/bundles/" (trailing slash); normalize it
   const pathname = usePathname().replace(/(.)\/$/, "$1");
   const homeHref = localePath("/", locale);
+  // the ad page (brief 05b): no menu and a plain logo, so "Check dates" is the only way on; the language switch stays
+  const adPage = pathname === LANDING_PATH || pathname === `/es${LANDING_PATH}`;
+  const languageSwitch = showLanguageSwitcher && !pathname.startsWith("/admin") ? <LanguageSwitcher locale={locale} messages={languageMessages} /> : null;
+  const logoArt = (
+    <span className={styles.logoSlot} style={{ "--logo-aspect": logo.drawing.height / logo.drawing.width } as React.CSSProperties}>
+      <div ref={logoRef} className={styles.logoMover}>
+        <TinyHumansLogo logo={logo} state={drawState} />
+      </div>
+    </span>
+  );
 
   // On the home page the logo scrolls to the top; elsewhere it links home.
   const onLogoClick = (e: MouseEvent<HTMLAnchorElement>) => {
@@ -44,42 +55,42 @@ export default function Header({ messages, languageMessages, locale, showLanguag
       <div className={styles.introOverlay} aria-hidden="true" />
       <header className={styles.header} data-locale={locale}>
         <div className={cn("container", styles.bar)}>
-          <Link href={homeHref} className={styles.logoLink} onClick={onLogoClick} aria-label={fill(messages.logoHome, { brand: site.name })}>
-            <span className={styles.logoSlot} style={{ "--logo-aspect": logo.drawing.height / logo.drawing.width } as React.CSSProperties}>
-              <div ref={logoRef} className={styles.logoMover}>
-                <TinyHumansLogo logo={logo} state={drawState} />
-              </div>
-            </span>
-          </Link>
-          <nav aria-label={messages.navigationLabel} className={styles.nav}>
-            <ul>
-              {navigation.map((item) => (
-                <li key={item.message}>
-                  <Link
-                    href={localePath(item.href, locale)}
-                    className={cn(styles.link, "emphasis" in item && item.emphasis ? styles.emphasis : "")}>
-                    {item.message === "home" ? (
-                      // phones: a small chalk house (the word stays for screen readers), so four items fit (owner, Nov 16)
-                      <>
-                        <span className={cn(styles.homeWord, "chalk-soft")}>{messages.home}</span>
-                        <ChalkDoodle name="house" className={styles.homeIcon} color="var(--chalk-white)" strokeWidth={3} size={28} />
-                      </>
-                    ) : (
-                      <span className="chalk-soft">{messages[item.message]}</span>
-                    )}
-                    {"emphasis" in item && item.emphasis && (
-                      <ChalkDoodle name="circle" className={styles.circle} color="var(--sun-yellow)" strokeWidth={2.6} size="100%" />
-                    )}
-                  </Link>
-                </li>
-              ))}
-              {showLanguageSwitcher && !pathname.startsWith("/admin") && (
-                <li className={styles.languageItem}>
-                  <LanguageSwitcher locale={locale} messages={languageMessages} />
-                </li>
-              )}
-            </ul>
-          </nav>
+          {adPage ? (
+            <span className={styles.logoLink}>{logoArt}</span>
+          ) : (
+            <Link href={homeHref} className={styles.logoLink} onClick={onLogoClick} aria-label={fill(messages.logoHome, { brand: site.name })}>
+              {logoArt}
+            </Link>
+          )}
+          {adPage ? (
+            languageSwitch && <div className={styles.languageOnly}>{languageSwitch}</div>
+          ) : (
+            <nav aria-label={messages.navigationLabel} className={styles.nav}>
+              <ul>
+                {navigation.map((item) => (
+                  <li key={item.message}>
+                    <Link
+                      href={localePath(item.href, locale)}
+                      className={cn(styles.link, "emphasis" in item && item.emphasis ? styles.emphasis : "")}>
+                      {item.message === "home" ? (
+                        // phones: a small chalk house (the word stays for screen readers), so four items fit (owner, Nov 16)
+                        <>
+                          <span className={cn(styles.homeWord, "chalk-soft")}>{messages.home}</span>
+                          <ChalkDoodle name="house" className={styles.homeIcon} color="var(--chalk-white)" strokeWidth={3} size={28} />
+                        </>
+                      ) : (
+                        <span className="chalk-soft">{messages[item.message]}</span>
+                      )}
+                      {"emphasis" in item && item.emphasis && (
+                        <ChalkDoodle name="circle" className={styles.circle} color="var(--sun-yellow)" strokeWidth={2.6} size="100%" />
+                      )}
+                    </Link>
+                  </li>
+                ))}
+                {languageSwitch && <li className={styles.languageItem}>{languageSwitch}</li>}
+              </ul>
+            </nav>
+          )}
         </div>
       </header>
     </>

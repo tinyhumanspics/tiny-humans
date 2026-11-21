@@ -60,6 +60,8 @@
 }
 
 .languageItem { margin-left: 2px; }
+/* the ad page: the language switch alone on the right (no menu, brief 05b) */
+.languageOnly { margin-left: auto; }
 
 @media (max-width: 767px) {
   .nav { position: relative; }

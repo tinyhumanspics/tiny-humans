@@ -15,7 +15,6 @@ export interface Bundle {
   photos: string;
   features: string[];
   locationNote: string;
-  cta: string;
   /** Optional small chalk label, e.g. "Most loved". */
   badge?: string;
   /** Optional short description (owner-editable). */

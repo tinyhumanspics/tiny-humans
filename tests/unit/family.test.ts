@@ -42,7 +42,7 @@ describe("family members on the booking", () => {
 describe("extra family members are charged like an extra baby", () => {
   const family: Bundle = {
     id: "forever-little", name: "Our Family Story", price: 399, duration: "Up to 3 hours", durationMinutes: 180, people: "", setups: "", photos: "35",
-    features: ["Up to 3 hours", "Baby + parents + siblings", "3 setups"], locationNote: "", cta: "",
+    features: ["Up to 3 hours", "Baby + parents + siblings", "3 setups"], locationNote: "",
     extraBaby: { active: true, price: 75, extraMinutes: 30, extraPhotos: 5, maxBabies: 3 },
     extraPerson: { active: true, price: 75, maxExtra: 5 },
   };

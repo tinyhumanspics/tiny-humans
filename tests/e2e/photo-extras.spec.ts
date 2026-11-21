@@ -29,7 +29,7 @@ test("pick 4 extra photos and the unedited files, pay, and see when they arrive"
   let paid = false;
   const posted = await fakeServer(page, { get: (back) => (back && paid ? view({ state: "paid", left: { ...fresh, extrasLeft: 2, canRaw: false, fullCreditCents: 5200 }, paidOrder: { lines: bought, creditCents: 0, totalCents: 16700 } }) : view()), post: () => ((paid = true), { url: `${LINK}&paid=1` }) });
   await page.goto(LINK);
-  await expect(page.getByRole("heading", { name: "Add more photos" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Sofia, add more photos" })).toBeVisible();
   await expect(page.getByText("Our Little Story includes 20 edited photos.")).toBeVisible();
   // when each arrives (owner, Nov 20)
   await expect(page.getByText("Arrives with your finished gallery.")).toBeVisible();

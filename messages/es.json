@@ -7,7 +7,6 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "De Miami a Orlando",
       "title": ["Momentos pequeñitos.", "Grandes recuerdos."]
     },
     "portfolio": {
@@ -38,12 +37,11 @@
       "description": "Fotos de recién nacido en tu propia sala, en Miami. Elige un horario o tu fecha de parto y envía una solicitud; no pagas nada hasta que te escribamos para confirmar."
     },
     "hero": {
-      "eyebrow": "La sesión en casa · Miami",
       "photo": "Recién nacido fotografiado en casa",
       "concepts": {
         "a": {
           "title": "Fotos de recién nacido en tu propia sala.",
-          "sub": "Sin silla del carro, sin estudio, sin empacar. Llevamos luces, fondos y mantitas a tu casa en Miami, y tu bebé marca el ritmo. Ves tus fotos al día siguiente. ¿Tu bebé aún no nace? También puedes reservar con tu fecha de parto."
+          "sub": "Llevamos las luces, los fondos y las mantas a tu casa en Miami. Te ahorras la silla del carro y el estudio, y tu bebé marca el ritmo. Ves tus fotos al día siguiente. ¿Tu bebé aún no nace? También puedes reservar con tu fecha de parto."
         },
         "b": {
           "title": "Reserva tu sesión de recién nacido con tiempo. Movemos la fecha cuando llegue el bebé.",
@@ -225,7 +223,6 @@
   },
   "catalog": {
     "locationNote": "Llevamos el estudio a tu hogar",
-    "choose": "Elegir {name}",
     "specialOffer": "Oferta especial",
     "durationMinutes": "Hasta {minutes} minutos",
     "durationHour": "Hasta 1 hora",
@@ -564,8 +561,7 @@
       }
     },
     "confirmation": {
-      "eyebrow": "Reserva confirmada",
-      "title": "¡Nos vemos pronto, {name}!",
+      "title": "¡Tu sesión está reservada, {name}!",
       "home": "Llevaremos todo el estudio a tu hogar en {city}.",
       "namedBabies": " Tenemos muchas ganas de conocer a {names}.",
       "oneBaby": " Tenemos muchas ganas de conocer a tu pequeño.",
@@ -685,7 +681,6 @@
       "description": "Conoce a Adrian y Alondra, los padres detrás de Tiny Humans: fotos de recién nacidos en casa en Miami."
     },
     "hero": {
-      "eyebrow": "Nuestra historia",
       "title": "Hola, somos Adrian y Alondra",
       "intro": "Somos el matrimonio detrás de Tiny Humans y también somos padres. Llevamos el estudio a tu hogar para que tu bebé pueda estar calientito, alimentado y cómodo mientras capturamos estas primeras semanas.",
       "photo": "Adrian y Alondra"
@@ -1216,8 +1211,7 @@
     "sms": "¡Hola, {name}! Aquí puedes agregar más fotos de tu sesión: {url}",
     "metaTitle": "Agrega más fotos",
     "loading": "Cargando tus opciones…",
-    "eyebrow": "¡Hola, {name}!",
-    "title": "Agrega más fotos",
+    "title": "{name}, agrega más fotos",
     "intro": "{bundle} incluye {count} fotos editadas. ¿Quieres más? Elige abajo lo que te gustaría.",
     "introNoCount": "¿Quieres más fotos de tu sesión? Elige abajo lo que te gustaría.",
     "extra": {
@@ -1281,8 +1275,7 @@
   },
   "review": {
     "metaTitle": "Comparte tu experiencia",
-    "eyebrow": "Hola, {name}",
-    "title": "¿Cómo fue tu sesión?",
+    "title": "{name}, ¿cómo fue tu sesión?",
     "intro": "Gracias por permitirnos fotografiar a tu familia. Tus palabras significan muchísimo para nosotros.",
     "loading": "Abriendo tu reseña…",
     "ratingLabel": "Tu calificación",
@@ -1376,7 +1369,6 @@
     "alreadyText": "No tienes que hacer nada más. Si quieres reservar otra sesión, nos encantará verte.",
     "pastText": "Ya no se puede cancelar en línea. Responde a tu correo de confirmación.",
     "book": "Reservar una sesión",
-    "greeting": "Hola, {name}",
     "title": "¿Quieres cancelar tu sesión?",
     "intro": "Esta es la sesión que estás a punto de cancelar:",
     "reasonLabel": "Motivo de la cancelación",
@@ -1385,7 +1377,6 @@
     "keep": "Conservar mi reserva",
     "cancelling": "Cancelando…",
     "confirm": "Confirmar cancelación",
-    "doneEyebrow": "Reserva cancelada",
     "doneTitle": "Tu sesión fue cancelada",
     "doneText": "Sentimos no poder capturar estos pequeños momentos esta vez. Te enviaremos una confirmación por correo. Si quieres reservar otra sesión en el futuro, nos encantará verte.",
     "bookAnother": "Reservar otra sesión",
@@ -1401,7 +1392,6 @@
     "invalidTitle": "No pudimos abrir este enlace",
     "invalid": "Este enlace ya no es válido. Usa el enlace de nuestro correo más reciente o responde al correo y te ayudaremos.",
     "home": "Volver a Tiny Humans",
-    "greeting": "Hola, {name}",
     "title": "Reprograma tu sesión",
     "currentTitle": "Tu sesión actual",
     "newTitle": "Tu nueva sesión",
@@ -1416,8 +1406,7 @@
     "cancelled": "Esta reserva ya fue cancelada.",
     "past": "Esta sesión ya se realizó.",
     "intro": "Puedes cambiar el día y la hora. Todo lo demás seguirá igual.",
-    "doneEyebrow": "Reserva reprogramada",
-    "doneTitle": "¡Todo listo!",
+    "doneTitle": "Tu sesión fue reprogramada",
     "doneText": "Tu sesión de Tiny Humans fue reprogramada. Actualizamos tu cita y tenemos muchas ganas de capturar estos pequeños momentos contigo.",
     "previous": "Antes: {date}, {time}",
     "doneLinks": "Te enviaremos por correo una confirmación con nuevos enlaces para administrar tu reserva.",

@@ -174,7 +174,6 @@ test("the Spanish public catalog never falls back to partial English bundle copy
     photos: "8",
     features: ["Up to 1 hour", "8 edited digital photos"],
     locationNote: "We bring the studio to your home",
-    cta: "Choose Little Moments",
     badge: "Most loved",
     active: true,
     offer: { enabled: true, price: 129, label: null, endsOn: "2026-12-05" },
@@ -193,7 +192,6 @@ test("the Spanish public catalog never falls back to partial English bundle copy
     duration: "Hasta 1 hora",
     features: ["Hasta 1 hora", "8 fotos digitales editadas"],
     locationNote: "Llevamos el estudio a tu hogar",
-    cta: "Elegir Pequeños Momentos",
     offer: { label: "Oferta especial" },
   });
   expect(() => localizeCatalog([bundle], "es", [])).toThrow(IncompleteCatalogTranslationError);

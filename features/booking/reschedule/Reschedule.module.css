@@ -1,6 +1,5 @@
 .page { padding-top: clamp(28px, 6vw, 64px); padding-bottom: clamp(56px, 8vw, 96px); }
 .panel { max-width: 720px; margin: 0 auto; padding: clamp(22px, 5vw, 40px) clamp(16px, 5vw, 40px); background: color-mix(in srgb, var(--chalkboard-dark) 35%, transparent); border-radius: 10px; }
-.eyebrow { margin: 0; font-family: var(--font-chalk); font-size: 1.15rem; color: var(--cloud-blue); }
 .title { margin: 4px 0 12px; font-family: var(--font-chalk); font-weight: 400; font-size: clamp(1.9rem, 6vw, 2.6rem); line-height: 1.1; color: var(--chalk-white); }
 .text { margin: 12px 0; font-size: 1.15rem; line-height: 1.5; color: var(--chalk-muted); }
 .muted { color: var(--chalk-muted); font-size: 1.1rem; }

@@ -61,9 +61,8 @@ export default function LandingPage({
   bundleMessages?: typeof en.bundlesPage;
   noticeMessages?: Pick<typeof en.policy, "hour" | "hours">;
   reviewMessages?: typeof en.reviewsSection;
-  /** The home page (owner, Nov 16): the same page with its own line on top ("Miami to Orlando") and "Tiny moments. Big
-   * memories." as the title, one line each. */
-  heading?: { eyebrow: string; title: string[] };
+  /** The home page (owner, Nov 16): the same page with "Tiny moments. Big memories." as the title, one line each. */
+  heading?: { title: string[] };
   locale?: AppLocale;
 }) {
   const t = messages;
@@ -84,7 +83,6 @@ export default function LandingPage({
   // the photos ticked "on the ad page" in /admin: the same on the ad page and the home page (owner, Nov 16)
   const gallery = media.gallery.slice(0, 9);
 
-
   return (
     <main id="top" className={styles.page}>
       {/* 1. Hero: a real photo, what it is, the price, one proof line, one button */}
@@ -98,7 +96,6 @@ export default function LandingPage({
           )}
           <div className={styles.heroCopy}>
             <BoardDoodles area="hero" />
-            <p className={cn(styles.eyebrow, "chalk-soft")}>{heading?.eyebrow ?? t.hero.eyebrow}</p>
             <h1 id="landing-title" className={cn(styles.title, "chalk")}>
               {heading
                 ? heading.title.map((line) => (
@@ -162,7 +159,7 @@ export default function LandingPage({
           <div className={styles.bundles}>
             {shown.map((b, i) => (
               <div key={b.id} onClickCapture={() => onCta(b)}>
-                <BundleCard bundle={{ ...b, cta: t.hero.cta }} index={i} messages={bundleMessages.card} locale={locale} href={withQuery(scheduleHref(b.id, null, locale))} />
+                <BundleCard bundle={b} cta={t.hero.cta} index={i} messages={bundleMessages.card} locale={locale} href={withQuery(scheduleHref(b.id, null, locale))} />
               </div>
             ))}
           </div>
