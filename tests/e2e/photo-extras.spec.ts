@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { Lead, LeadList } from "@/lib/leads/types";
 import type { ExtraLine, ExtrasView } from "@/lib/photo-extras/types";
+import { noDepositLead, signedInAdmin } from "./fixtures/admin";
 
 // Photo extras after the session (owner, Nov 20). The server is faked here: it prices again and talks to Stripe.
 const prices = { extraPhotoCents: 1300, maxExtras: 6, fullGalleryCents: 25000, rawFilesCents: 11500 };
@@ -84,7 +85,6 @@ test("closed, nothing left, and a link that doesn't work", async ({ page }) => {
 
 test("a lead shows its extras, the totals, and the Delivered tick", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
-  const { noDepositLead, signedInAdmin } = await import("./fixtures/admin");
   await signedInAdmin(page);
   const order = { id: "0b8f2a52-6d0e-4a8e-9f3e-2f1c5c0b7a11", lines: bought, creditCents: 0, totalCents: 16700, note: "The one with the teddy", status: "paid" as const, createdAt: "2026-11-20T20:00:00.000Z", paidAt: "2026-11-20T20:05:00.000Z", deliveredAt: null as string | null };
   const lead = (deliveredAt: string | null): Lead => ({ ...noDepositLead, extras: { link: `https://example.com${LINK}`, orders: [{ ...order, deliveredAt }], paidCents: 16700, sessionTotalCents: 14900, sessionPaidCents: 14900 } });
@@ -117,7 +117,6 @@ test("a lead shows its extras, the totals, and the Delivered tick", async ({ pag
 
 test("a lead card shows extras a family started but didn't pay, and nothing when they bought none", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
-  const { noDepositLead, signedInAdmin } = await import("./fixtures/admin");
   await signedInAdmin(page);
   const started: Lead = { ...noDepositLead, extras: { link: null, orders: [{ id: "1d3c6c2a-7a7e-4f2b-9c1e-5b0f3c8d9e10", lines: bought.slice(0, 1), creditCents: 0, totalCents: 5200, note: null, status: "open", createdAt: "2026-11-20T20:00:00.000Z", paidAt: null, deliveredAt: null }], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
   const none: Lead = { ...noDepositLead, reference: "TH-20261008-NONE", parentName: "No Extras Family", extras: { link: null, orders: [], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
