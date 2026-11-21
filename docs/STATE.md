@@ -1,37 +1,31 @@
-# State (Nov 21, 2026, brief 05 done)
+# State (Nov 21, 2026, brief 05b session 1 of 2 done)
 
 From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the owner", ask Carlos.
 
 ## Live now
-- Site EN + /es. Briefs 01–05 done (DECISIONS.md). Ads relaunch after OWNER-ACTIONS 7–9.
-- Ad page /home-sweet-home (+/es): H1 by `?c=a|b|c`, "Check dates" → /book?bundle=<middle>&compare=1 + ad params.
-  Lighthouse mobile (Nov 21, production, warm): LCP 1.4 s, perf 100, a11y 100; home the same.
-- Home = the ad page with "Tiny moments. Big memories."; chalk intro only here, once per visitor (localStorage).
-- /bundles = the same "Show on the home page, the ad page and Bundles" tiers, cheapest first (`shownBundles`).
-- /portfolio photo wall; /book bundles side by side; pay link: home + baby age, name, boy/girl → backdrops → deposit.
-- Trip days (70+ miles takes the day). /admin → Leads (Confirmed first, Past after 10 days, emails + delivery),
-  Quotes / Booking → "Send a booking link", day-before "Before we arrive", photo extras (0045).
-- Alt text: file-name photo names fall back to a description (`altOf`, config/media); stand-in pictures never show
-  once photos are saved. /es: no seasonal box whose Spanish is a copy of the English; other-language reviews labelled.
+- Site EN + /es. Briefs 01–05 done; 05b session 1 (tasks 1–8). Ads relaunch after OWNER-ACTIONS 7–9.
+- Ad page /home-sweet-home (+/es): no menu (plain logo, EN | ES), H1 by `?c=a|b|c`, 200 px photo on phones;
+  photo, H1, line, Check dates, price and a 2-line review fit 390 × 664. No eyebrows on any public page.
+- Home = the ad page with "Tiny moments. Big memories."; chalk intro only here, once per visitor.
+- /bundles: the ad page's tiers, cheapest first; cards say "Check dates" → /book?bundle=<id>.
+- /book: bundles as a radio group (phone rows, "Most loved" badge on the border, includes line), 2-column times,
+  screen 2 a form (Enter on ZIP sends), new Request sent screen; month header fits 390 × 664.
+- Timing everywhere: best days 5–14, up to 4 weeks. Seasonal offer boxes are off public pages (Carlos #26).
+- Pay link: home + ages → backdrops → deposit (session 2 reorders it). Trip days, Leads, booking links, extras.
 
-## Next: brief 05b, session 1 (tasks 1–8)
-- Its owner steps (Adrian, /admin → Pricing) don't block building: new bundle prices/hours/photos, Spanish features.
-- After 05b session 2: "Next: wait for Carlos's updated brief 06". Don't start the old brief 06.
+## Next: brief 05b, session 2 (tasks 9–12)
+- 9 pay link $50 first; 10 lead_source; 11 Thanksgiving offer gone (ends Nov 23); 12 Spanish list.
+- Spanish strings go in docs/spanish-review.md with key + EN + ES (Carlos, Nov 21); STATE.md only points there.
+- docs/DECISIONS.md is 6.0 of 6 KB (doc-sizes test): shorten a line for each one you add.
+- After session 2: "Next: wait for Carlos's updated brief 06". Pre-render/page speed goes into brief 06 (Carlos).
 
 ## Waiting on owner (Carlos)
-- Pre-render public pages as their own slice after 05b (Carlos, Nov 21): every page renders per request (the root
-  layout reads the language header), so first byte is 0.3–1.8 s and a cold server can push LCP past 2.5 s.
+- Adrian, /admin → Pricing (05b owner steps 1–2): new bundle prices/hours/photos; Spanish features.
+- Spanish review: docs/spanish-review.md (Adrian or Alondra).
 - /admin → Photos: "Big top photo"; rename "IMG 7378", "UPDATED 10", "Adrian BTS", "Alondra BTS"; Spanish photo
-  names ("Bebe en una manda acogedora" → "manta", accents in "Bebé", "Detrás", "Cálido").
-- /admin → Seasonal: type the Christmas box's Spanish, or /es shows no box (automatic translation is off: needs a
-  translation key in Vercel, a paid service, ask first).
+  names ("manda" → "manta"; accents in "Bebé", "Detrás", "Cálido").
 - Geraldine (Dec 10): her address via her link/Prepare page, or an /admin "Edit address" (owner to pick).
-- Policy words ("your baby sets the pace" in hero subs) → brief 06.
-- Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, home.portfolio.photoAlt, header.home,
-  bundlesPage.section.due, bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change),
-  bookingRequest.link + texts.link, prep gender, bookingFlow.errors.tripDay, Privacy step-counter sentence,
-  pay.reserved, emails.reminder24.before + prepGuide 2–3, extras, emails.extrasPaid + afterSession.extras*,
-  Terms photos + Privacy Stripe line, depositReturn age*.
+- Policy words ("your baby sets the pace" in hero subs) → brief 06. /admin Seasonal screen → brief 06.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)
@@ -43,4 +37,4 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - iCloud folder: never git stash/switch there (use a worktree). Owner's dev server on :3000: stop yours by port.
   `next dev` may append to AGENTS.md (agent rules): revert it.
 - e2e: hydrated() first; calendarReady() (one grid); a day per browser; no Spanish, no Pixel, no database. Fixture
-  dates age (a lead turns Past 10 days after its date): date by today. Local WebKit: `npx playwright install webkit`.
+  dates age: date by today. Local WebKit: `npx playwright install webkit`. Run unit tests after docs edits too.
