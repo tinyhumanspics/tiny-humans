@@ -39,7 +39,9 @@ test("Leads opens on Confirmed (owner, Nov 20); a quick filter change keeps the 
 
 test("Completed: tap the pill before the status and the lead moves to Completed (owner, Nov 11)", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
-  const { noDepositLead, signedInAdmin } = await import("./fixtures/admin");
+  const { noDepositLead: fixture, signedInAdmin } = await import("./fixtures/admin");
+  // dated today: 10 days after its date a session would move back to Past instead of Confirmed (owner, Nov 19)
+  const noDepositLead = { ...fixture, sessionDate: new Date().toISOString().slice(0, 10) };
   await signedInAdmin(page);
   let completedAt: string | null = null;
   const posted: unknown[] = [];
