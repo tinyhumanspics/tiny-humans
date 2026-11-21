@@ -71,6 +71,16 @@ export function activeOffer(b: Bundle, today: string) {
   return { cents, label: o.label?.trim() || "Special offer", endsOn: o.endsOn ?? null, percent: offerPercent(toCents(b.price), cents) };
 }
 
+/** What a family pays at least today: a bundle at its running offer if any. */
+export const todayPriceCents = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? toCents(b.price);
+
+/**
+ * The bundles switched on for the home page, the ad page and the bundles page (/admin → "Show on the home page, the ad
+ * page and Bundles"), cheapest first: the same tiers in the same order everywhere (brief 05).
+ */
+export const shownBundles = (bundles: Bundle[], today: string) =>
+  bundles.filter((b) => b.showOnLanding !== false).sort((a, b) => todayPriceCents(a, today) - todayPriceCents(b, today));
+
 export function codeDiscountCents(regularCents: number, c: CodeTerms): number {
   const d = c.type === "percent" ? Math.round((regularCents * Math.min(100, Math.max(0, c.value))) / 100) : Math.max(0, c.value);
   return Math.min(regularCents, d);

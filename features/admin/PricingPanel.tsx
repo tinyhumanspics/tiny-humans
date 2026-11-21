@@ -508,7 +508,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         )}
       </div>
       <label className={styles.toggle}><input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} /><span className="chalk-soft">Active (shown on the website)</span></label>
-      <label className={styles.toggle}><input type="checkbox" checked={onLanding} disabled={!active} onChange={(e) => setOnLanding(e.target.checked)} /><span className="chalk-soft">Show on the ad page (/home-sweet-home)</span></label>
+      <label className={styles.toggle}><input type="checkbox" checked={onLanding} disabled={!active} onChange={(e) => setOnLanding(e.target.checked)} /><span className="chalk-soft">Show on the home page, the ad page and Bundles</span></label>
       <div className={styles.offerBox}>
         <label className={styles.toggle}><input type="checkbox" checked={extraBabyOn} onChange={(e) => setExtraBabyOn(e.target.checked)} /><span className="chalk-soft">Offer twins/triplets with this bundle</span></label>
         {extraBabyOn && (

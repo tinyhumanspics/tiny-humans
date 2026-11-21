@@ -14,7 +14,7 @@ import { HttpBookingClient } from "@/lib/booking/http-client";
 import { cn } from "@/lib/cn";
 import { dueWindow, type DueSummary } from "@/lib/due-date/types";
 import type { BookingLinkSummary } from "@/lib/booking-links/types";
-import { activeOffer, formatMoney } from "@/lib/pricing/engine";
+import { formatMoney, shownBundles, todayPriceCents } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import type { RequestSent, RequestType } from "@/lib/requests/types";
 import { looksLikeEmail, usMobile } from "@/lib/requests/types";
@@ -46,8 +46,6 @@ export interface RequestFlowMessages {
   due: typeof en.bookingFlow.due;
 }
 
-const priceOf = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? Math.round(b.price * 100);
-
 /**
  * The new /book (brief 02): 1) When ("Baby is here" → day + start time, or "Not born yet" → due date; bundle and twins)
  * 2) Your details (first name, mobile, email, ZIP; "Send request") 3) Request sent. Nothing is paid here.
@@ -69,7 +67,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     if (link && getBundle(link.summary.bundleId)) return link.summary.bundleId;
     const linked = getBundle(params.get("bundle"))?.id;
     if (linked) return linked;
-    const shown = bundles.filter((b) => b.showOnLanding !== false).sort((x, y) => priceOf(x, today) - priceOf(y, today));
+    const shown = shownBundles(bundles, today);
     return shown[Math.floor((shown.length - 1) / 2)]?.id ?? null;
   });
   const bundle = getBundle(bundleId);
@@ -198,7 +196,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   // a due-date reservation paid its deposit already: nothing more to hold the date
   const deposit = bundle && !due ? depositFor(bundle.id) : null;
   const depositText = deposit ? formatMoney(deposit) : null;
-  const bundleCents = due ? due.summary.bundlePriceCents : bundle ? priceOf(bundle, today) : 0;
+  const bundleCents = due ? due.summary.bundlePriceCents : bundle ? todayPriceCents(bundle, today) : 0;
   const priceCents = bundle ? bundleCents + (babyCount > 1 && extra ? Math.round(extra.price * 100) * (babyCount - 1) : 0) : 0;
   const hint = travel ? travelHint(travel, messages.travel) : null;
   const whenLabel = type === "date" && date && slot ? `${formatLongDate(date, locale)} · ${formatTimeLabel(slot.start, locale)}` : type === "due_date" && dueDate ? fill(m.details.due, { date: formatLongDate(dueDate, locale) }) : "";
@@ -315,7 +313,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
 
   // every bundle side by side with what it includes, cheapest first, the chosen one checked: families compare and
   // switch right here (owner, Nov 16: design B)
-  const choices = [...bundles].sort((x, y) => priceOf(x, today) - priceOf(y, today));
+  const choices = [...bundles].sort((x, y) => todayPriceCents(x, today) - todayPriceCents(y, today));
   const pick = (b: Bundle) => {
     setBundleId(b.id);
     setSlot(null);
@@ -331,7 +329,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
         </span>
         <span className={styles.pickedText}>
           <span className={cn(styles.pickName, "chalk-soft")}>
-            {bundle.name} · {formatMoney(priceOf(bundle, today))}
+            {bundle.name} · {formatMoney(todayPriceCents(bundle, today))}
           </span>
           <span className={cn(styles.pickedFeatures, "chalk-soft")}>{bundle.features.join(" · ")}</span>
         </span>
@@ -353,7 +351,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
               </span>
               <span className={styles.pickBadge}>{b.badge ?? "\u00a0"}</span>
               <span className={styles.pickName}>{b.name}</span>
-              <span className={styles.comparePrice}>{formatMoney(priceOf(b, today))}</span>
+              <span className={styles.comparePrice}>{formatMoney(todayPriceCents(b, today))}</span>
               <span className={styles.compareFeatures}>
                 {b.features.map((f) => (
                   <span key={f}>{f}</span>

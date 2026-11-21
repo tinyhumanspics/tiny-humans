@@ -8,13 +8,10 @@ import { localePath } from "@/i18n/path";
 import { noticeLabel } from "@/lib/booking/reschedule-policy";
 import { depositText, type SiteDeposit } from "@/lib/deposit/copy";
 import { fill } from "@/lib/email/messages";
-import { activeOffer, formatMoney, toCents } from "@/lib/pricing/engine";
+import { formatMoney, shownBundles, todayPriceCents } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import { trackSelectBundle } from "@/lib/tracking/client";
 import type { TravelSettings } from "@/lib/travel/types";
-
-/** What a family pays at least today: a bundle at its running offer if any. */
-export const priceCents = (b: Bundle, today: string) => activeOffer(b, today)?.cents ?? toCents(b.price);
 
 /**
  * The "Check dates" path of the ad page and the home page (the same page): the bundles shown there (switched on in /admin,
@@ -41,15 +38,15 @@ export function useLandingOffer({
 }) {
   const { bundles, today, available } = useCatalog();
   const notice = noticeLabel(noticeHours, noticeMessages);
-  const shown = bundles.filter((b) => b.showOnLanding !== false).sort((a, b) => priceCents(a, today) - priceCents(b, today));
+  const shown = shownBundles(bundles, today);
   const featured = shown[Math.floor((shown.length - 1) / 2)] ?? bundles[0];
   const withQuery = (href: string) => (query ? `${href}&${query}` : href);
   // "Check dates": /book with the middle bundle checked and every bundle side by side to compare (?compare=1)
   const ctaHref = featured ? withQuery(`${scheduleHref(featured.id, null, locale)}&compare=1`) : `${localePath("/book", locale)}${query ? `?${query}` : ""}`;
   const onCta = (b: Bundle | undefined = featured) => {
-    if (b) trackSelectBundle({ id: b.id, name: b.name, value: priceCents(b, today) / 100 });
+    if (b) trackSelectBundle({ id: b.id, name: b.name, value: todayPriceCents(b, today) / 100 });
   };
-  const lowest = shown.length ? Math.min(...shown.map((b) => priceCents(b, today))) : null;
+  const lowest = shown.length ? Math.min(...shown.map((b) => todayPriceCents(b, today))) : null;
   const priceLine = [
     lowest !== null ? fill(priceMessages.from, { price: formatMoney(lowest) }) : null,
     deposit ? fill(depositText(priceMessages.deposit, deposit), { notice }) : null,

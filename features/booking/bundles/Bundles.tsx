@@ -11,13 +11,18 @@ import OfferLine from "@/features/booking/OfferLine";
 import { useBookingSelection } from "@/features/booking/flow/BookingSelectionContext";
 import BookingPaused from "@/features/booking/BookingPaused";
 import { bundleColumns } from "@/lib/pricing/columns";
+import { shownBundles } from "@/lib/pricing/engine";
 import styles from "./Bundles.module.css";
 
-/** Step one of booking: pick a bundle. Each card leads to the calendar. Due dates: one line under the heading (owner, Nov 16). */
+/**
+ * Step one of booking: pick a bundle. Each card leads to the calendar. Due dates: one line under the heading (owner, Nov 16).
+ * The same bundles as the home page and the ad page, in the same order (brief 05).
+ */
 export default function Bundles({ messages, locale }: { messages: typeof en.bundlesPage; locale: AppLocale }) {
   const id = "bundles";
   const { inspirationId } = useBookingSelection();
-  const { bundles, available } = useCatalog();
+  const { bundles: all, today, available } = useCatalog();
+  const bundles = shownBundles(all, today);
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
