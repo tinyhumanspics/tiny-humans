@@ -411,6 +411,7 @@ function LeadCard({ lead, api, open, onToggle, onCancelled, onCompleted, onDelet
           )}
           <span className={cn(styles.statusPill, styles[`status_${lead.status}`])}>{statusLabel(lead)}</span>
           <PaidTag lead={lead} />
+          <ExtrasTag lead={lead} />
           {duplicate && <span className={cn(styles.statusPill, styles.duplicatePill)}>Possible duplicate</span>}
           {lead.emailProblems?.[0] && <span className={cn(styles.statusPill, styles.unpaidPill)}>{PROBLEM_TAG[lead.emailProblems[0].kind]}</span>}
         </span>
@@ -614,6 +615,21 @@ function PaidTag({ lead }: { lead: Lead }) {
   if (a.payment.status === "paid") return <span className={cn(styles.statusPill, styles.paidPill)}>Paid {formatMoney(a.payment.amountCents + deposit)}</span>;
   if (a.ended) return <span className={cn(styles.statusPill, styles.unpaidPill)}>Not paid</span>;
   return deposit ? <span className={cn(styles.statusPill, styles.paidPill)}>Deposit {formatMoney(deposit)}</span> : null;
+}
+
+/**
+ * Photo extras on the lead card (owner, Nov 20): what the family paid for extras and whether something is still to
+ * deliver, or an order they started but didn't pay. Nothing when they haven't bought any.
+ */
+function ExtrasTag({ lead }: { lead: Lead }) {
+  const x = lead.extras;
+  const paid = x?.orders.filter((o) => o.status === "paid") ?? [];
+  if (!paid.length) return x?.orders.some((o) => o.status === "open") ? <span className={cn(styles.statusPill, styles.extrasOpenPill)}>Extras not paid</span> : null;
+  return (
+    <span className={cn(styles.statusPill, styles.extrasPill)}>
+      Extras {formatMoney(x!.paidCents)} · {paid.some((o) => !o.deliveredAt) ? "to deliver" : "delivered"}
+    </span>
+  );
 }
 
 const sentLine = (e: SentEmail) => (e.status === "sent" ? `Sent ${when(e.at)}` : e.status === "failed" ? `Not sent (${e.error ?? "error"})` : "Sending…");

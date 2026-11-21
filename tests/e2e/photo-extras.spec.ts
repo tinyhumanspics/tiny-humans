@@ -100,6 +100,8 @@ test("a lead shows its extras, the totals, and the Delivered tick", async ({ pag
     return route.fulfill({ json: { lead: lead(delivered) } });
   });
   await page.goto("/admin/leads");
+  // the card says it before opening the lead (owner, Nov 20)
+  await expect(page.getByText("Extras $167 · to deliver")).toBeVisible();
   await page.getByRole("button", { name: "View details" }).click();
   await expect(page.getByText("$149 ($149 paid)")).toBeVisible();
   await expect(page.getByText("$167", { exact: true })).toBeVisible();
@@ -108,6 +110,21 @@ test("a lead shows its extras, the totals, and the Delivered tick", async ({ pag
   await expect(page.getByText("Their note: “The one with the teddy”")).toBeVisible();
   await page.getByRole("checkbox", { name: "Delivered" }).check();
   await expect(page.getByText(/^Delivered Nov 21/)).toBeVisible();
+  await expect(page.getByText("Extras $167 · delivered")).toBeVisible();
   expect(ticks).toEqual([{ reference: noDepositLead.reference, orderId: order.id, delivered: true }]);
   await expect(page.getByRole("link", { name: "Text the extras link" })).toBeVisible();
+});
+
+test("a lead card shows extras a family started but didn't pay, and nothing when they bought none", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "desktop-chrome", "One browser covers the owner area");
+  const { noDepositLead, signedInAdmin } = await import("./fixtures/admin");
+  await signedInAdmin(page);
+  const started: Lead = { ...noDepositLead, extras: { link: null, orders: [{ id: "1d3c6c2a-7a7e-4f2b-9c1e-5b0f3c8d9e10", lines: bought.slice(0, 1), creditCents: 0, totalCents: 5200, note: null, status: "open", createdAt: "2026-11-20T20:00:00.000Z", paidAt: null, deliveredAt: null }], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
+  const none: Lead = { ...noDepositLead, reference: "TH-20261008-NONE", parentName: "No Extras Family", extras: { link: null, orders: [], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
+  await page.route("**/api/admin/leads?*", (route) =>
+    route.fulfill({ json: { leads: [started, none], counts: { all: 2, pending: 0, confirmed: 2, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 2, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList }),
+  );
+  await page.goto("/admin/leads");
+  await expect(page.getByRole("listitem").filter({ hasText: noDepositLead.parentName }).getByText("Extras not paid")).toBeVisible();
+  await expect(page.getByRole("listitem").filter({ hasText: "No Extras Family" }).getByText(/^Extras/)).toHaveCount(0);
 });
