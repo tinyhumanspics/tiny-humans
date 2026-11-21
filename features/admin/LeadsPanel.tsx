@@ -792,7 +792,7 @@ const EXTRAS_STATUS = { open: "Not paid yet (the family opened the payment page)
 function ExtrasPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {
   const x = lead.extras!;
   const [busy, setBusy] = useState<string | null>(null);
-  // the tick shows at once; the saved lead replaces it (or it goes back if saving failed)
+  // the tick shows at once and stays while the list reloads; it goes back only if saving failed
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [note, setNote] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -806,9 +806,9 @@ function ExtrasPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUp
       onUpdated(await api.setExtrasDelivered(lead.reference, orderId, delivered));
       setNote(delivered ? "Marked as delivered." : "Marked as not delivered yet.");
     } catch (e) {
+      setTicked(({ [orderId]: _failed, ...rest }) => rest);
       setErr(e instanceof Error ? e.message : "Couldn't save. Please try again.");
     } finally {
-      setTicked(({ [orderId]: _done, ...rest }) => rest);
       setBusy(null);
     }
   };
