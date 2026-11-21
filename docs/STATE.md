@@ -15,6 +15,8 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 
 ## Next: brief 05b, session 2 (tasks 9–12)
 - 9 pay link $50 first; 10 lead_source; 11 Thanksgiving offer gone (ends Nov 23); 12 Spanish list.
+- Spanish at 390 × 664 (production, Nov 21): /es ad page review ends at 680 px (fold 664), /es/book month header at
+  719 px (help 3 lines, bundle names wrap with offer cents). EN fits. Fix before ticking the acceptance.
 - Spanish strings go in docs/spanish-review.md with key + EN + ES (Carlos, Nov 21); STATE.md only points there.
 - docs/DECISIONS.md is 6.0 of 6 KB (doc-sizes test): shorten a line for each one you add.
 - After session 2: "Next: wait for Carlos's updated brief 06". Pre-render/page speed goes into brief 06 (Carlos).
