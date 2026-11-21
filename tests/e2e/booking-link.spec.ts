@@ -130,7 +130,7 @@ test("the family's link: their bundle, baby, day and time are filled in; they ad
   await page.locator("#request-firstName").fill("Ana");
   await page.locator("#request-mobile").fill("3055550133");
   await page.locator("#request-email").fill("ana@example.com");
-  await page.getByRole("button", { name: "Send request" }).click();
+  await page.getByRole("button", { name: "Request this time" }).click();
   await expect(page.getByRole("heading", { name: /Ana/ })).toBeVisible();
   expect(body).toMatchObject({ linkToken: TOKEN, bundleId: "our-little-story", babyCount: 1, slot: { date, start: "13:00" }, zip: "33139", firstName: "Ana", email: "ana@example.com" });
 });

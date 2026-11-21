@@ -15,13 +15,15 @@ interface Props {
   detail?: ReactNode;
   aside?: ReactNode;
   seed: number;
+  /** Start times (brief 05b): a 44 px button, no check circle; the start large, the end small under it. */
+  compact?: boolean;
 }
 
 /** Accessible radio option drawn as a chalk box. */
-export default function ChoiceCard({ name, value, checked, onSelect, title, detail, aside, seed }: Props) {
+export default function ChoiceCard({ name, value, checked, onSelect, title, detail, aside, seed, compact = false }: Props) {
   const id = `${name}-${value}`;
   return (
-    <div className={cn(styles.choice, checked ? styles.choiceChecked : "")}>
+    <div className={cn(styles.choice, checked ? styles.choiceChecked : "", compact && styles.choiceCompact)}>
       <input
         id={id}
         className={styles.choiceInput}

@@ -324,6 +324,9 @@
       "bundle": "Tu paquete",
       "change": "Cambiar",
       "chooseBundle": "Elige tu paquete",
+      "includes": "{bundle} incluye: {features}",
+      "rowHours": "{hours} h",
+      "rowPhotos": "{photos} fotos",
       "twins": "¿Gemelos? +{price} por bebé adicional",
       "twinsPerks": "¿Gemelos? +{price} por bebé adicional: +{minutes} min y +{photos} fotos editadas",
       "travel": "Sin costo a menos de {miles} millas de Miami Beach",
@@ -336,44 +339,48 @@
       "title": "¿A dónde te escribimos?",
       "firstName": "Nombre",
       "mobile": "Celular",
+      "mobileHint": "Te escribimos para confirmar. Solo sobre tu sesión.",
       "email": "Correo",
+      "emailHint": "Para tu confirmación.",
       "zip": "Código postal",
+      "zipHint": "Para calcular el traslado. Gratis a menos de {miles} millas de Miami Beach.",
+      "zipHintPlain": "Para calcular el traslado.",
       "consent": "Envíenme mensajes sobre esta solicitud. Pueden aplicar tarifas. Responde STOP para dejar de recibirlos.",
       "due": "Fecha esperada: {date}",
-      "send": "Enviar solicitud",
+      "send": "Solicitar este horario",
+      "sendDue": "Solicitar mi lugar",
       "sending": "Enviando…",
-      "nothingToPay": "No pagas nada ahora. Te escribimos para confirmar y luego, con un enlace de {deposit}, apartas tu fecha.",
       "nothingToPayPlain": "No pagas nada ahora. Te escribimos para confirmar.",
-      "holdLine": "Con {deposit} apartas tu fecha · reembolsable hasta {hours} h antes.",
-      "dueLine": "Si la sesión no puede hacerse, tú eliges: te devolvemos los {deposit} o los usas para una sesión cuando el bebé sea más grande.",
+      "under": "No pagas nada ahora. Cuando te confirmemos por mensaje, un depósito de {deposit} aparta tu fecha. Te lo devolvemos si cancelas hasta {hours} h antes.",
+      "underDue": "No pagas nada ahora. Cuando te confirmemos por mensaje, un depósito de {deposit} guarda tu lugar. Si tu sesión no puede hacerse, tú eliges: te devolvemos los {deposit} o los usas para una sesión cuando tu bebé sea más grande.",
       "back": "Atrás",
       "errors": {
         "firstName": "Escribe tu nombre.",
-        "mobile": "Escribe un celular de EE. UU. (10 dígitos).",
-        "email": "Escribe un correo válido.",
+        "mobile": "Escribe un celular de EE. UU. de 10 dígitos, por ejemplo 305 555 0100.",
+        "email": "Revisa tu correo. Necesita una @ y un punto, como ana@gmail.com.",
         "zip": "Escribe un código postal de 5 dígitos.",
-        "slotTaken": "Alguien acaba de tomar esa hora. Por favor elige otra.",
+        "slotTaken": "Alguien acaba de tomar esa hora. Elige otra. Lo que escribiste se guardó.",
         "check": "Revisa tus datos e inténtalo de nuevo.",
-        "generic": "No pudimos enviar tu solicitud. Inténtalo de nuevo o escríbenos al (786) 222-7194.",
+        "generic": "No pudimos enviar tu solicitud. Inténtalo de nuevo o escríbenos al (786) 222-7194. Tus respuestas siguen aquí.",
         "rateLimited": "Demasiadas solicitudes desde esta conexión. Espera un poco o escríbenos al (786) 222-7194."
       }
     },
     "sent": {
       "title": "Solicitud enviada, {name}.",
-      "textYou": "Te escribimos al {mobile} en minutos (de 8 a.m. a 8 p.m.) para confirmar {when}.",
-      "whenDue": "tu fecha de parto ({date})",
-      "next": "Lo que sigue:",
+      "textYou": "Adrian o Alondra te escribirán al {mobile} para confirmar {when}. Respondemos de 8 a. m. a 8 p. m., casi siempre en minutos. Te guardamos este horario por {hours} horas.",
+      "textYouDue": "Adrian o Alondra te escribirán al {mobile} para guardar tu lugar cerca del {date}. Cuando nazca tu bebé, escríbenos y elegimos un día entre el día 5 y el 14.",
+      "next": "Qué sigue:",
       "steps": [
-        "Confirmamos por mensaje.",
-        "Con un enlace de {deposit} apartas tu fecha.",
-        "Llevamos el estudio."
+        "Te confirmamos por mensaje (también te llega un correo).",
+        "Pagas el depósito de {deposit} con nuestro enlace para reservar.",
+        "Llegamos a tu casa con luces, fondos y mantas."
       ],
       "stepsPlain": [
-        "Confirmamos por mensaje.",
-        "Recibes la confirmación por correo.",
-        "Llevamos el estudio."
+        "Te confirmamos por mensaje (también te llega un correo).",
+        "Llegamos a tu casa con luces, fondos y mantas."
       ],
-      "question": "¿Alguna pregunta? Escríbenos al {phone}."
+      "noText": "¿Aún no te escribimos?",
+      "question": "Escríbenos al {phone}."
     }
   },
   "bookingFlow": {

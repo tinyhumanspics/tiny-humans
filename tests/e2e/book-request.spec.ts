@@ -3,7 +3,7 @@ import { BUILT_IN } from "@/config/media";
 import { hydrated } from "./fixtures/hydration";
 
 /**
- * /book (brief 02): 1) When 2) Your details (4 boxes, "Send request")
+ * /book (brief 02): 1) When 2) Your details (4 boxes, "Request this time" / "Request my spot")
  * 3) Request sent. Nothing is paid. Mock provider: requests live in the test server's memory; a requested time is
  * held from other visitors for 12 hours.
  */
@@ -58,7 +58,7 @@ async function details(page: Page, who = { firstName: "Dana", mobile: "305-555-0
 async function send(page: Page) {
   // the server refuses requests sent faster than a person (3 s)
   await page.waitForTimeout(3200);
-  await page.getByRole("button", { name: "Send request" }).click();
+  await page.getByRole("button", { name: /^(Request this time|Request my spot)$/ }).click();
 }
 
 test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", async ({ page }) => {
@@ -74,7 +74,8 @@ test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", a
   await expect(page.getByText(new RegExp(`${time.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} · Our Little Story · \\$`))).toBeVisible();
   await send(page);
   await expect(page.getByRole("heading", { name: "Request sent, Dana." })).toBeFocused();
-  await expect(page.getByText("We'll text you at (305) 555-0122 within minutes (8 a.m.–8 p.m.) to confirm", { exact: false })).toBeVisible();
+  await expect(page.getByText("Adrian or Alondra will text you at (305) 555-0122 to confirm", { exact: false })).toBeVisible();
+  await expect(page.getByText("We're holding this time for you for 12 hours.", { exact: false })).toBeVisible();
   await expect(page.getByRole("link", { name: "(786) 222-7194" })).toHaveAttribute("href", "sms:+17862227194");
   expect(posted).toHaveLength(1);
   expect(posted[0]).toMatchObject({ type: "date", bundleId: "our-little-story", babyCount: 1, firstName: "Dana", mobile: "305-555-0122", zip: "33139", textConsent: false });
@@ -97,32 +98,33 @@ test("Not born yet: a due date instead of a time; a day between days 5 and 14 on
   await expect(page.getByText(/Due date: .* · Little Moments · \$/)).toBeVisible();
   await send(page);
   await expect(page.getByRole("heading", { name: "Request sent, Maya." })).toBeVisible();
-  await expect(page.getByText("to confirm your due date (", { exact: false })).toBeVisible();
+  await expect(page.getByText("to save your spot near", { exact: false })).toBeVisible();
 });
 
 test("the menu's /book: the bundles side by side with the middle one checked and the calendar showing; twins add the extra-baby price", async ({ page }) => {
   await page.goto("/book");
   await expect(page.getByText("Choose your bundle")).toBeVisible();
   // like "Check dates": the middle bundle is checked, so the calendar is already there (owner, Nov 16)
-  await expect(page.getByRole("button", { name: /Our Little Story/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("radio", { name: /Our Little Story/ })).toBeChecked();
   await expect(page.locator('[role="grid"]')).toBeVisible();
-  // every bundle with its details, cheapest first (owner, Nov 16)
-  const cards = page.locator("main fieldset button[aria-pressed]");
+  // every bundle with its details, cheapest first (owner, Nov 16), as a radio group (brief 05b)
+  const cards = page.locator('main fieldset label:has(input[type="radio"])');
   await expect(cards).toHaveCount(3);
   await expect(cards.first()).toContainText("Little Moments");
   await expect(cards.first()).toContainText("edited digital photos");
-  await page.getByRole("button", { name: /Little Moments/ }).click();
-  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("radio", { name: /Little Moments/ }).check();
+  // phones show one "includes" line under the rows; from 640 px every card lists its features
+  await expect(page.locator("main fieldset p[aria-live]")).toContainText("Little Moments includes:");
   await page.getByText("Twins? +$75 per extra baby").click();
   await pickTime(page, 1);
   await details(page);
   await expect(page.getByText(/· Little Moments · \$/)).toBeVisible();
   // back on screen 1 the bundles are still there, the one picked still checked, and another is one tap away
   await page.getByRole("button", { name: "Back" }).click();
-  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: /Our Family Story/ }).click();
-  await expect(page.getByRole("button", { name: /Our Family Story/ })).toHaveAttribute("aria-pressed", "true");
-  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "false");
+  await expect(page.getByRole("radio", { name: /Little Moments/ })).toBeChecked();
+  await page.getByRole("radio", { name: /Our Family Story/ }).check();
+  await expect(page.getByRole("radio", { name: /Our Family Story/ })).toBeChecked();
+  await expect(page.getByRole("radio", { name: /Little Moments/ })).not.toBeChecked();
 });
 
 test("a requested time is held from other families; one taken meanwhile sends them back to the times, details kept", async ({ page, browser }) => {
@@ -167,7 +169,7 @@ test("a requested time is held from other families; one taken meanwhile sends th
   // family A sends: that time is gone, so back to screen 1 with the reason; their details are still there
   await send(page);
   await expect(page.getByRole("heading", { name: "When should we come?" })).toBeFocused();
-  await expect(page.locator("main").getByRole("alert")).toHaveText("That time was just taken. Please pick another one.");
+  await expect(page.locator("main").getByRole("alert")).toHaveText("Someone just booked that time. Pick another one. What you typed is saved.");
   await pickTime(page, 3);
   await page.getByRole("button", { name: "Next: your details" }).click();
   await expect(page.locator("#request-firstName")).toHaveValue("Ana");
@@ -180,13 +182,13 @@ test("wrong boxes are explained in words; a ZIP outside Florida stops the reques
   await details(page, { firstName: " ", mobile: "12345", email: "not-an-email", zip: "331" });
   await send(page);
   await expect(page.getByText("Add your first name.")).toBeVisible();
-  await expect(page.getByText("Enter a US mobile number (10 digits).")).toBeVisible();
-  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+  await expect(page.getByText("Enter a 10-digit US mobile number, like 305 555 0100.")).toBeVisible();
+  await expect(page.getByText("Check your email. It needs an @ and a dot, like ana@gmail.com.")).toBeVisible();
   await expect(page.getByText("Enter a 5-digit ZIP code.")).toBeVisible();
   await expect(page.locator("#request-firstName")).toBeFocused();
   for (const [k, v] of Object.entries({ firstName: "Lee", mobile: "3055550111", email: "lee@example.com", zip: "10001" })) await page.fill(`#request-${k}`, v);
   await expect(page.getByText("We only come to homes in Florida.", { exact: false })).toBeVisible();
-  await page.getByRole("button", { name: "Send request" }).click();
+  await page.getByRole("button", { name: "Request this time" }).click();
   await expect(page.locator("main").getByRole("alert")).toContainText("We only come to homes in Florida.");
   await expect(page.getByRole("heading", { name: "Where should we text you?" })).toBeVisible();
 });
@@ -303,7 +305,7 @@ test("the bundles page's 'Not born yet? Book with your due date' line opens /boo
   await expect(page.getByRole("button", { name: "Not born yet" })).toHaveAttribute("aria-pressed", "true");
   // no bundle in the link: they choose one, then the due date
   await hydrated(page, "#request-title");
-  await page.getByRole("button", { name: /^Little Moments/ }).click();
+  await page.getByRole("radio", { name: /^Little Moments/ }).check();
   await expect(page.locator("#request-due")).toBeVisible();
 });
 
@@ -317,13 +319,12 @@ test("a bundle card's link shows that pick with Change; Check dates (?compare=1)
   await hydrated(page, "#request-title");
   await expect(page.getByText("Your bundle")).toBeVisible();
   await expect(page.getByText(/Little Moments · \$/)).toBeVisible();
-  await expect(page.locator("main fieldset button[aria-pressed]")).toHaveCount(0);
+  await expect(page.locator('main fieldset input[type="radio"]')).toHaveCount(0);
   await page.getByRole("button", { name: "Change" }).click();
-  const cards = page.locator("main fieldset button[aria-pressed]");
-  await expect(cards).toHaveCount(3);
-  await expect(page.getByRole("button", { name: /Little Moments/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('main fieldset input[type="radio"]')).toHaveCount(3);
+  await expect(page.getByRole("radio", { name: /Little Moments/ })).toBeChecked();
 
   await page.goto("/book?bundle=our-little-story&compare=1");
-  await expect(page.locator("main fieldset button[aria-pressed]")).toHaveCount(3);
-  await expect(page.getByRole("button", { name: /Our Little Story/ })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('main fieldset input[type="radio"]')).toHaveCount(3);
+  await expect(page.getByRole("radio", { name: /Our Little Story/ })).toBeChecked();
 });

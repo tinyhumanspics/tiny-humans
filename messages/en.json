@@ -137,6 +137,9 @@
       "bundle": "Your bundle",
       "change": "Change",
       "chooseBundle": "Choose your bundle",
+      "includes": "{bundle} includes: {features}",
+      "rowHours": "{hours} h",
+      "rowPhotos": "{photos} photos",
       "twins": "Twins? +{price} per extra baby",
       "twinsPerks": "Twins? +{price} per extra baby: +{minutes} min and +{photos} edited photos",
       "travel": "Free within {miles} miles of Miami Beach",
@@ -148,45 +151,49 @@
     "details": {
       "title": "Where should we text you?",
       "firstName": "First name",
-      "mobile": "Mobile",
+      "mobile": "Mobile number",
+      "mobileHint": "We text you to confirm. Only about your session.",
       "email": "Email",
+      "emailHint": "For your confirmation.",
       "zip": "ZIP code",
+      "zipHint": "So we can check travel. Free within {miles} miles of Miami Beach.",
+      "zipHintPlain": "So we can check travel.",
       "consent": "Text me about this request. Msg & data rates may apply. Reply STOP to stop.",
       "due": "Due date: {date}",
-      "send": "Send request",
+      "send": "Request this time",
+      "sendDue": "Request my spot",
       "sending": "Sending…",
-      "nothingToPay": "Nothing to pay now. We'll text you to confirm, then a {deposit} link holds your date.",
       "nothingToPayPlain": "Nothing to pay now. We'll text you to confirm.",
-      "holdLine": "{deposit} holds your date · fully refundable up to {hours} h before.",
-      "dueLine": "If your session can't happen, you choose: get your {deposit} back or put it toward a session when baby is older.",
+      "under": "Nothing to pay now. After we confirm by text, a {deposit} deposit holds your date. Refundable up to {hours} h before.",
+      "underDue": "Nothing to pay now. After we confirm by text, a {deposit} deposit saves your spot. If your session can't happen, you choose: get your {deposit} back or put it toward a session when baby is older.",
       "back": "Back",
       "errors": {
         "firstName": "Add your first name.",
-        "mobile": "Enter a US mobile number (10 digits).",
-        "email": "Enter a valid email address.",
+        "mobile": "Enter a 10-digit US mobile number, like 305 555 0100.",
+        "email": "Check your email. It needs an @ and a dot, like ana@gmail.com.",
         "zip": "Enter a 5-digit ZIP code.",
-        "slotTaken": "That time was just taken. Please pick another one.",
+        "slotTaken": "Someone just booked that time. Pick another one. What you typed is saved.",
         "check": "Please check your details and try again.",
-        "generic": "We couldn't send your request just now. Please try again, or text us at (786) 222-7194.",
+        "generic": "We couldn't send your request just now. Please try again, or text us at (786) 222-7194. Your answers are still here.",
         "rateLimited": "Too many requests from this connection. Please wait a little, or text us at (786) 222-7194."
       }
     },
     "sent": {
       "title": "Request sent, {name}.",
-      "textYou": "We'll text you at {mobile} within minutes (8 a.m.–8 p.m.) to confirm {when}.",
-      "whenDue": "your due date ({date})",
+      "textYou": "Adrian or Alondra will text you at {mobile} to confirm {when}. We reply 8 a.m.–8 p.m., usually within minutes. We're holding this time for you for {hours} hours.",
+      "textYouDue": "Adrian or Alondra will text you at {mobile} to save your spot near {date}. When baby arrives, text us and we'll set a day between days 5 and 14.",
       "next": "What happens next:",
       "steps": [
-        "We confirm by text.",
-        "A {deposit} link holds your date.",
-        "We bring the studio."
+        "We confirm by text (you'll get an email too).",
+        "Pay the {deposit} deposit from our link to book it.",
+        "We come to your home with lights, backdrops and wraps."
       ],
       "stepsPlain": [
-        "We confirm by text.",
-        "You get your confirmation by email.",
-        "We bring the studio."
+        "We confirm by text (you'll get an email too).",
+        "We come to your home with lights, backdrops and wraps."
       ],
-      "question": "Got a question now? Text {phone}."
+      "noText": "No text from us yet?",
+      "question": "Text {phone}."
     }
   },
   "bookingFlow": {

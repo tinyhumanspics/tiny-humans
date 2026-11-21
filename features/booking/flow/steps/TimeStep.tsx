@@ -8,7 +8,7 @@ import ChoiceCard from "../ChoiceCard";
 import styles from "../Booking.module.css";
 import { cn } from "@/lib/cn";
 
-/** Step 2: the open start times of the chosen day (undefined = still loading). */
+/** The open start times of the chosen day (undefined = still loading), two columns of buttons (brief 05b). */
 export default function TimeStep({ date, slots, selectedId, onSelect, locale, messages }: { date: DateKey; slots: TimeSlot[] | undefined; selectedId: string | undefined; onSelect: (slot: TimeSlot) => void; locale: AppLocale; messages: typeof en.bookingFlow.time }) {
   return (
     <fieldset className={styles.fieldset}>
@@ -29,6 +29,7 @@ export default function TimeStep({ date, slots, selectedId, onSelect, locale, me
               onSelect={() => onSelect(slot)}
               title={formatTimeLabel(slot.start, locale)}
               detail={fill(messages.until, { time: formatTimeLabel(slot.end, locale) })}
+              compact
             />
           ))}
         </div>

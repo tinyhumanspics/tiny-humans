@@ -109,7 +109,7 @@ test.describe("manual accessibility regression checks", () => {
     await page.keyboard.press("Space");
     await tabTo(page.getByRole("button", { name: "Next: your details" }));
     await page.keyboard.press("Enter");
-    // screen 2: the four boxes, then "Send request"
+    // screen 2: the four boxes; Enter in the ZIP box sends it (a real form, brief 05b)
     for (const [field, value] of [
       ["#request-firstName", "Kim"],
       ["#request-mobile", "305 555 0142"],
@@ -120,7 +120,7 @@ test.describe("manual accessibility regression checks", () => {
       await page.keyboard.type(value);
     }
     await page.waitForTimeout(3200); // the server refuses requests sent faster than a person
-    await tabTo(page.getByRole("button", { name: "Send request" }));
+    await expect(page.locator("#request-zip")).toHaveAttribute("enterkeyhint", "send");
     await page.keyboard.press("Enter");
     await expect(page.getByRole("heading", { name: "Request sent, Kim." })).toBeVisible();
   });

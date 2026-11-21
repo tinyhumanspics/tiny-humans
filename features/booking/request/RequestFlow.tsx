@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { useCatalog } from "@/components/providers/CatalogProvider";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
@@ -17,7 +17,7 @@ import type { BookingLinkSummary } from "@/lib/booking-links/types";
 import { formatMoney, shownBundles, todayPriceCents } from "@/lib/pricing/engine";
 import type { Bundle } from "@/lib/pricing/types";
 import type { RequestSent, RequestType } from "@/lib/requests/types";
-import { looksLikeEmail, usMobile } from "@/lib/requests/types";
+import { looksLikeEmail, REQUEST_HOLD_HOURS, usMobile } from "@/lib/requests/types";
 import { travelHint } from "@/lib/travel/format";
 import type { TravelQuote } from "@/lib/travel/types";
 import { trackLead } from "@/lib/tracking/client";
@@ -33,6 +33,13 @@ const fill = (template: string, values: Record<string, string>) => template.repl
 /** How long the form has been open (the server refuses requests faster than a person). */
 const elapsedSince = (t: number | null) => (t === null ? undefined : Date.now() - t);
 const newId = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
+
+/** "{hours} h · {who} · {photos} photos" from the bundle's /admin fields; "who" is the feature naming who's in the photos. */
+function rowHint(b: Bundle, locale: AppLocale, w: { rowHours: string; rowPhotos: string }) {
+  const hours = b.durationMinutes > 0 ? new Intl.NumberFormat(locale === "es" ? "es-US" : "en-US", { maximumFractionDigits: 1 }).format(b.durationMinutes / 60) : "";
+  const who = b.people.trim() || b.features.find((f) => /(^|[^a-z])(baby|beb[eé])/i.test(f)) || "";
+  return [hours && fill(w.rowHours, { hours }), who && who.charAt(0).toLowerCase() + who.slice(1), b.photos.trim() && fill(w.rowPhotos, { photos: b.photos.trim() })].filter(Boolean).join(" · ");
+}
 
 type Step = "when" | "details" | "sent";
 type Field = "firstName" | "mobile" | "email" | "zip";
@@ -221,7 +228,8 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     return e;
   };
 
-  const send = async () => {
+  const send = async (ev: FormEvent<HTMLFormElement>) => {
+    ev.preventDefault();
     setError(null);
     const e = validate();
     setErrors(e);
@@ -280,11 +288,16 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     }
   };
 
-  const field = (name: Field, label: string, opts: { type: string; autoComplete: string; inputMode?: "tel" | "email" | "numeric" | "text"; maxLength: number }) => (
+  const field = (name: Field, label: string, opts: { type: string; autoComplete: string; inputMode?: "tel" | "email" | "numeric" | "text"; maxLength: number; enterKeyHint: "next" | "send"; hint?: string }) => (
     <div className={flowStyles.field}>
       <label htmlFor={`request-${name}`} className={cn(flowStyles.label, "chalk-soft")}>
         {label}
       </label>
+      {opts.hint && (
+        <p id={`request-${name}-hint`} className={cn(styles.fieldHint, "chalk-soft")}>
+          {opts.hint}
+        </p>
+      )}
       <input
         id={`request-${name}`}
         name={name}
@@ -293,6 +306,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
         inputMode={opts.inputMode}
         autoComplete={opts.autoComplete}
         maxLength={opts.maxLength}
+        enterKeyHint={opts.enterKeyHint}
         value={fields[name]}
         onChange={(ev) => {
           const value = ev.target.value;
@@ -300,7 +314,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           if (errors[name]) setErrors((x) => ({ ...x, [name]: undefined }));
         }}
         aria-invalid={Boolean(errors[name])}
-        aria-describedby={errors[name] ? `request-${name}-error` : undefined}
+        aria-describedby={[opts.hint && `request-${name}-hint`, errors[name] && `request-${name}-error`].filter(Boolean).join(" ") || undefined}
         required
       />
       {errors[name] && (
@@ -311,8 +325,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     </div>
   );
 
-  // every bundle side by side with what it includes, cheapest first, the chosen one checked: families compare and
-  // switch right here (owner, Nov 16: design B)
+  // the bundles to choose from, cheapest first, as a radio group: one row each on phones (name, "2 h · baby + parents ·
+  // 20 photos", price), three columns with every feature from 640 px; the "Most loved" one highlighted with its badge on
+  // the border (brief 05b)
   const choices = [...bundles].sort((x, y) => todayPriceCents(x, today) - todayPriceCents(y, today));
   const pick = (b: Bundle) => {
     setBundleId(b.id);
@@ -320,6 +335,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     setError(null);
     if (!(b.extraBaby?.active && b.extraBaby.maxBabies >= 2)) setBabyCount(1);
   };
+  const [includesLead, includesRest = ""] = m.when.includes.split("{features}");
   const bundleRow = bundle && !comparing ? (
     <div className={cn(styles.bundleRow, styles.picked)}>
       <p className={cn(styles.pickedLabel, "chalk-soft")}>{m.when.bundle}</p>
@@ -340,54 +356,70 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     </div>
   ) : (
     <fieldset className={cn(flowStyles.fieldset, styles.bundleRow)}>
-      <legend className={cn(flowStyles.subtle, "chalk-soft")}>{m.when.chooseBundle}</legend>
+      <legend className={cn(flowStyles.subtle, styles.legend, "chalk-soft")}>{m.when.chooseBundle}</legend>
       <div className={styles.compare}>
         {choices.map((b) => {
           const on = b.id === bundleId;
           return (
-            <button key={b.id} type="button" className={cn(styles.compareCard, "chalk-soft", on && styles.compareOn)} aria-pressed={on} onClick={() => pick(b)}>
-              <span className={styles.compareMark} aria-hidden="true">
-                {on ? "✓" : ""}
+            <label key={b.id} className={cn(styles.compareCard, on && styles.compareOn, b.badge && styles.hot)}>
+              <input type="radio" name="request-bundle" value={b.id} checked={on} onChange={() => pick(b)} className={styles.compareRadio} />
+              {b.badge && <span className={styles.pickBadge}>{b.badge}</span>}
+              <span className={cn(styles.compareText, "chalk-soft")}>
+                <span className={styles.pickName}>{b.name}</span>
+                <span className={styles.rowHint}>{rowHint(b, locale, m.when)}</span>
               </span>
-              <span className={styles.pickBadge}>{b.badge ?? "\u00a0"}</span>
-              <span className={styles.pickName}>{b.name}</span>
-              <span className={styles.comparePrice}>{formatMoney(todayPriceCents(b, today))}</span>
-              <span className={styles.compareFeatures}>
+              <span className={cn(styles.comparePrice, "chalk-soft")}>{formatMoney(todayPriceCents(b, today))}</span>
+              <span className={cn(styles.compareFeatures, "chalk-soft")}>
                 {b.features.map((f) => (
                   <span key={f}>{f}</span>
                 ))}
               </span>
-            </button>
+            </label>
           );
         })}
       </div>
+      {bundle && (
+        <p className={cn(styles.includes, "chalk-soft")} aria-live="polite">
+          <b>{fill(includesLead, { bundle: bundle.name })}</b>
+          {bundle.features.join(" · ")}
+          {includesRest}
+        </p>
+      )}
     </fieldset>
   );
 
   return (
-    <section className={flowStyles.section} aria-labelledby="request-title">
+    <section className={cn(flowStyles.section, styles.tight)} aria-labelledby="request-title">
       <div className="container">
         <div ref={panelRef} className={flowStyles.panelAnchor}>
-          <ChalkBox className={flowStyles.panel} seed={7} wobble={4} strokeWidth={3}>
+          <ChalkBox className={cn(flowStyles.panel, styles.panel)} seed={7} wobble={4} strokeWidth={3}>
             {step === "sent" && sent ? (
               <div className={flowStyles.stepBody}>
-                <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, styles.title, "chalk")}>
                   {fill(m.sent.title, { name: sent.firstName })}
                 </h1>
-                <p className={cn(styles.lead, "chalk-soft")}>
-                  {fill(m.sent.textYou, {
-                    mobile: sent.mobile,
-                    when: sent.type === "due_date" && sent.dueDate ? fill(m.sent.whenDue, { date: formatLongDate(sent.dueDate, locale) }) : sent.slot ? `${formatLongDate(sent.slot.date, locale)}, ${formatTimeLabel(sent.slot.start, locale)}` : "",
-                  })}
-                </p>
-                <p className={cn(styles.nextTitle, "chalk")}>{m.sent.next}</p>
-                <ol className={cn(styles.nextSteps, "chalk-soft")}>
-                  {(depositText ? m.sent.steps.map((s) => fill(s, { deposit: depositText })) : m.sent.stepsPlain).map((s) => (
-                    <li key={s}>{s}</li>
-                  ))}
-                </ol>
+                {sent.type === "due_date" && sent.dueDate ? (
+                  <p className={cn(styles.lead, "chalk-soft")}>{fill(m.sent.textYouDue, { mobile: sent.mobile, date: formatLongDate(sent.dueDate, locale) })}</p>
+                ) : (
+                  <>
+                    <p className={cn(styles.lead, "chalk-soft")}>
+                      {fill(m.sent.textYou, {
+                        mobile: sent.mobile,
+                        when: sent.slot ? `${formatLongDate(sent.slot.date, locale)}, ${formatTimeLabel(sent.slot.start, locale)}` : "",
+                        hours: String(REQUEST_HOLD_HOURS),
+                      })}
+                    </p>
+                    <p className={cn(styles.nextTitle, "chalk")}>{m.sent.next}</p>
+                    <ol className={cn(styles.nextSteps, "chalk-soft")}>
+                      {(depositText ? m.sent.steps.map((s) => fill(s, { deposit: depositText })) : m.sent.stepsPlain).map((s) => (
+                        <li key={s}>{s}</li>
+                      ))}
+                    </ol>
+                  </>
+                )}
+                {/* the number to text, both kinds of request: an sms: link (Meta's Contact event, brief 03) */}
                 <p className={cn(styles.question, "chalk-soft")}>
-                  {m.sent.question.split("{phone}")[0]}
+                  <strong>{m.sent.noText}</strong> {m.sent.question.split("{phone}")[0]}
                   <a href={`sms:${site.contact.sms}`} className={flowStyles.inlineLink}>
                     {site.contact.phone}
                   </a>
@@ -397,7 +429,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
             ) : step === "when" ? (
               <>
                 <div className={flowStyles.stepBody}>
-                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, styles.title, "chalk")}>
                     {m.when.title}
                   </h1>
                   {link ? (
@@ -426,7 +458,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                           </button>
                         ))}
                       </div>
-                      <p className={cn(flowStyles.stepIntro, "chalk-soft")}>{type === "date" ? m.when.hereHelp : m.when.notBornHelp}</p>
+                      <p className={cn(flowStyles.stepIntro, styles.help, "chalk-soft")}>{type === "date" ? m.when.hereHelp : m.when.notBornHelp}</p>
                       {bundleRow}
                     </>
                   )}
@@ -471,17 +503,17 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                 </div>
               </>
             ) : (
-              <>
+              <form onSubmit={send} noValidate>
                 <div className={flowStyles.stepBody}>
-                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, "chalk")}>
+                  <h1 id="request-title" ref={headingRef} tabIndex={-1} className={cn(flowStyles.stepTitle, styles.title, "chalk")}>
                     {m.details.title}
                   </h1>
                   <p className={cn(styles.summary, "chalk-soft")}>{summary}</p>
                   <div className={styles.fields}>
-                    {field("firstName", m.details.firstName, { type: "text", autoComplete: "given-name", maxLength: 60 })}
-                    {field("mobile", m.details.mobile, { type: "tel", autoComplete: "tel", inputMode: "tel", maxLength: 30 })}
-                    {field("email", m.details.email, { type: "email", autoComplete: "email", inputMode: "email", maxLength: 254 })}
-                    {field("zip", m.details.zip, { type: "text", autoComplete: "postal-code", inputMode: "numeric", maxLength: 5 })}
+                    {field("firstName", m.details.firstName, { type: "text", autoComplete: "given-name", maxLength: 60, enterKeyHint: "next" })}
+                    {field("mobile", m.details.mobile, { type: "tel", autoComplete: "tel", inputMode: "tel", maxLength: 30, enterKeyHint: "next", hint: m.details.mobileHint })}
+                    {field("email", m.details.email, { type: "email", autoComplete: "email", inputMode: "email", maxLength: 254, enterKeyHint: "next", hint: m.details.emailHint })}
+                    {field("zip", m.details.zip, { type: "text", autoComplete: "postal-code", inputMode: "numeric", maxLength: 5, enterKeyHint: "send", hint: freeMiles !== null ? fill(m.details.zipHint, { miles: String(freeMiles) }) : m.details.zipHintPlain })}
                   </div>
                   {hint && <p className={cn(hint.blocking ? flowStyles.error : styles.travelNote, "chalk-soft")}>{hint.text}</p>}
                   {/* never seen by people: a filled box marks a robot */}
@@ -501,15 +533,14 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                   <ChalkButton variant="outline" onClick={() => (setStep("when"), setError(null))} seed={81}>
                     {m.details.back}
                   </ChalkButton>
-                  <ChalkButton variant="solid" onClick={send} disabled={sending} seed={83}>
-                    {sending ? m.details.sending : m.details.send}
+                  <ChalkButton type="submit" variant="solid" disabled={sending} seed={83}>
+                    {sending ? m.details.sending : type === "due_date" ? m.details.sendDue : m.details.send}
                   </ChalkButton>
                 </div>
-                <div className={cn(styles.underButton, "chalk-soft")}>
-                  <p>{depositText ? fill(m.details.nothingToPay, { deposit: depositText }) : m.details.nothingToPayPlain}</p>
-                  {depositText && <p>{type === "due_date" ? fill(m.details.dueLine, { deposit: depositText }) : fill(m.details.holdLine, { deposit: depositText, hours: String(noticeHours) })}</p>}
-                </div>
-              </>
+                <p className={cn(styles.underButton, "chalk-soft")}>
+                  {depositText ? fill(type === "due_date" ? m.details.underDue : m.details.under, { deposit: depositText, hours: String(noticeHours) }) : m.details.nothingToPayPlain}
+                </p>
+              </form>
             )}
           </ChalkBox>
         </div>
