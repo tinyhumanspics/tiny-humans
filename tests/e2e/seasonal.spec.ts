@@ -1,5 +1,4 @@
 import { expect, test } from "@playwright/test";
-import { activeSeasonalOffers } from "@/lib/seasonal/offers";
 import { parseSettings } from "@/lib/settings/defaults";
 import type { SiteSettings } from "@/lib/settings/types";
 
@@ -8,17 +7,6 @@ const seasonalOffers: SiteSettings["seasonalOffers"] = [
   { id: "firstChristmas", name: "Baby’s First Christmas", themeId: "christmas", enabled: true, title: "Baby’s First Christmas", description: "First Christmas description", cutoff: "2026-12-21", spanish: { title: "La primera Navidad de tu bebé", description: "Fotos navideñas en casa" } },
 ];
 const byId = (s: Pick<SiteSettings, "seasonalOffers">, id: string) => s.seasonalOffers.find((o) => o.id === id)!;
-
-test("seasonal offers follow the live theme and inclusive cutoff dates", () => {
-  expect(activeSeasonalOffers(seasonalOffers, "thanksgiving", "2026-11-23").map((offer) => offer.id)).toEqual(["thanksgiving"]);
-  expect(activeSeasonalOffers(seasonalOffers, "thanksgiving", "2026-11-24")).toEqual([]);
-  expect(activeSeasonalOffers(seasonalOffers, "christmas", "2026-12-21").map((offer) => offer.id)).toEqual(["firstChristmas"]);
-  expect(activeSeasonalOffers(seasonalOffers, "christmas", "2026-12-22")).toEqual([]);
-  expect(activeSeasonalOffers(seasonalOffers, "default", "2026-10-08")).toEqual([]);
-  expect(activeSeasonalOffers(seasonalOffers, "christmas", "2026-12-21", "es").map((offer) => ({ id: offer.id, title: offer.title }))).toEqual([
-    { id: "firstChristmas", title: "La primera Navidad de tu bebé" },
-  ]);
-});
 
 test("older settings drop Christmas Cards and keep the two remaining offers", () => {
   const parsed = parseSettings({

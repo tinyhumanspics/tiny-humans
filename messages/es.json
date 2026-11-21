@@ -200,8 +200,6 @@
       "text": "Elige un horario o una fecha cerca de tu fecha de parto. Te escribimos para confirmar."
     },
     "seasonalOffers": {
-      "eyebrow": "Sesiones de temporada en casa",
-      "cutoff": "Últimas sesiones: {date}",
       "defaults": {
         "thanksgiving": {
           "title": "El primer Día de Acción de Gracias de tu bebé en casa",

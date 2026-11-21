@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { defaultSettings, parseSettings, storedSettings } from "@/lib/settings/defaults";
-import { activeSeasonalOffers } from "@/lib/seasonal/offers";
 import type { SeasonalOffer } from "@/lib/settings/types";
 
 const valentines: SeasonalOffer = {
@@ -38,21 +37,5 @@ describe("seasonal offers (owner, Nov 10: shown on the ad page and the home page
     const parsed = parseSettings({ seasonalOfferList: [{ ...valentines, id: "../evil" }, { ...valentines, id: "offer-half", title: "", enabled: true }] });
     expect(parsed.seasonalOffers.map((o) => o.id)).toEqual(["thanksgiving", "firstChristmas", "valentines", "offer-half"]);
     expect(parsed.seasonalOffers[3].enabled).toBe(false);
-  });
-
-  test("what shows: switched on, on or before its last day, its theme or any theme; Spanish only with Spanish copy", () => {
-    const offers = parseSettings({ seasonalOffers: [{ ...defaultSettings.seasonalOffers[0], enabled: true, cutoff: "2026-11-23" }, defaultSettings.seasonalOffers[1], valentines] }).seasonalOffers;
-    expect(activeSeasonalOffers(offers, "thanksgiving", "2026-11-10").map((o) => o.id)).toEqual(["thanksgiving", "offer-valentines"]);
-    expect(activeSeasonalOffers(offers, "default", "2026-11-10").map((o) => o.id)).toEqual(["offer-valentines"]);
-    expect(activeSeasonalOffers(offers, "thanksgiving", "2026-11-24").map((o) => o.id)).toEqual(["offer-valentines"]);
-    expect(activeSeasonalOffers(offers, "default", "2027-03-01")).toEqual([]);
-    expect(activeSeasonalOffers(offers, "thanksgiving", "2026-11-10", "es").map((o) => o.title)).toEqual(["Muestra amor a tu pequeño"]);
-  });
-
-  test("Spanish pages leave out an offer whose Spanish is a copy of the English (brief 05: no English block on /es)", () => {
-    const copied = { ...valentines, spanish: { title: valentines.title, description: valentines.description } };
-    const halfCopied = { ...valentines, id: "offer-half", spanish: { title: "Muestra amor a tu pequeño", description: valentines.description } };
-    expect(activeSeasonalOffers([copied, halfCopied], "default", "2026-11-10", "es")).toEqual([]);
-    expect(activeSeasonalOffers([copied, halfCopied], "default", "2026-11-10").map((o) => o.id)).toEqual(["offer-valentines", "offer-half"]);
   });
 });

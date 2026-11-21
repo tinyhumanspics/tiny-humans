@@ -766,8 +766,6 @@
       "text": "Pick a time, or a date near your due date. We'll text you to confirm."
     },
     "seasonalOffers": {
-      "eyebrow": "Seasonal sessions at home",
-      "cutoff": "Last sessions: {date}",
       "defaults": {
         "thanksgiving": {
           "title": "Baby’s First Thanksgiving",
