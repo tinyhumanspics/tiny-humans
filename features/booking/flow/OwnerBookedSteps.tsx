@@ -2,6 +2,7 @@
 
 import { useState, type RefObject } from "react";
 import { site } from "@/config/site";
+import { babyAgeOptions } from "@/config/booking";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import BackdropPicker from "@/features/booking/backdrops/BackdropPicker";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking";
@@ -20,7 +21,8 @@ const miamiDateTime = (iso: string, locale: AppLocale) =>
 
 /**
  * A family's link for a session the owner confirmed for them (/admin → Requests): 1) their home address (owner Nov 16: no
- * texting it; the ZIP is the request's) and, optional, each baby's name and boy or girl (owner Nov 19), 2) their backdrops
+ * texting it; the ZIP is the request's), each baby's age (required, owner Nov 20: it tells us which outfits to bring)
+ * and, optional, the name and boy or girl (owner Nov 19), 2) their backdrops
  * (as many as the bundle's setups, or "not sure yet"), 3) the deposit on Stripe, which confirms it.
  */
 export default function OwnerBookedSteps({ state, reference, signature, locale, messages, headingRef }: { state: Waiting; reference: string; signature: string; locale: AppLocale; messages: typeof en.bookingFlow; headingRef: RefObject<HTMLHeadingElement | null> }) {
@@ -33,10 +35,14 @@ export default function OwnerBookedSteps({ state, reference, signature, locale, 
   const [saved, setSaved] = useState<string[] | null>(savedAtStart.length ? savedAtStart : null);
   // the home: saved when it has a street (a request books with the ZIP only)
   const [home, setHome] = useState({ street: state.home?.street ?? "", city: state.home?.city ?? "", accessNotes: state.home?.accessNotes ?? "" });
-  const [homeSaved, setHomeSaved] = useState<LinkHome | null>(state.home?.street ? state.home : null);
-  // their babies (optional): asked with the home, saved with it
+  // saved once it has a street and every baby's age (an address saved before the age was asked opens again)
+  const [homeSaved, setHomeSaved] = useState<LinkHome | null>(state.home?.street && (state.babies ?? []).every((b) => b.age) ? state.home : null);
+  // their babies: the age (required), the name and boy or girl (optional); asked with the home, saved with it
   const [babies, setBabies] = useState<LinkBaby[]>(state.babies ?? []);
+  const [ageMissing, setAgeMissing] = useState(false);
   const genders = messages.details.baby.genders;
+  const ageLabels = messages.details.baby.ageOptions;
+  const ageLabel = (age: string) => ageLabels[(babyAgeOptions as readonly string[]).indexOf(age)] ?? age;
   const [busy, setBusy] = useState<"home" | "save" | "pay" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const deposit = formatMoney(state.amountCents);
@@ -57,6 +63,14 @@ export default function OwnerBookedSteps({ state, reference, signature, locale, 
 
   const saveHome = async () => {
     if (home.street.trim().length < 4 || home.city.trim().length < 2) return setError(t.missingHome);
+    const missing = babies.findIndex((b) => !b.age);
+    if (missing >= 0) {
+      // said right under the age box, where the family is looking
+      setAgeMissing(true);
+      setError(null);
+      document.getElementById(`link-age-${missing}`)?.focus();
+      return;
+    }
     setBusy("home");
     setError(null);
     try {
@@ -70,9 +84,9 @@ export default function OwnerBookedSteps({ state, reference, signature, locale, 
     }
   };
   const homeLine = (h: LinkHome) => [h.street, h.city, h.zip ? `FL ${h.zip}` : ""].filter(Boolean).join(", ");
-  // "Mia · Girl", "Baby 2 · Boy": only what they told us
+  // "Mia · Girl · Newborn (0–2 weeks)", "Baby 2 · 2–6 weeks": what they told us
   const babyLine = babies
-    .map((b, i) => [b.name.trim() || (b.gender && babies.length > 1 ? fill(t.babyN, { n: String(i + 1) }) : ""), b.gender ? genders[b.gender] : ""].filter(Boolean).join(" · "))
+    .map((b, i) => [b.name.trim() || (babies.length > 1 ? fill(t.babyN, { n: String(i + 1) }) : ""), b.gender ? genders[b.gender] : "", b.age ? ageLabel(b.age) : ""].filter(Boolean).join(" · "))
     .filter(Boolean)
     .join(", ");
   const field = (id: string, label: string, input: React.ReactNode) => (
@@ -127,6 +141,29 @@ export default function OwnerBookedSteps({ state, reference, signature, locale, 
                 <legend className={cn(styles.label, "chalk-soft")}>{t.baby}</legend>
                 {babies.map((b, i) => (
                   <div key={i} className={styles.ownerBaby}>
+                    {field(
+                      `link-age-${i}`,
+                      babies.length > 1 ? fill(t.ageN, { n: String(i + 1) }) : t.age,
+                      <select
+                        id={`link-age-${i}`}
+                        className={styles.input}
+                        required
+                        aria-invalid={ageMissing && !b.age}
+                        aria-describedby={ageMissing && !b.age ? `link-age-${i}-error` : undefined}
+                        value={b.age}
+                        onChange={(e) => (setBabies((l) => l.map((x, j) => (j === i ? { ...x, age: e.target.value } : x))), setError(null))}
+                      >
+                        <option value="">{t.chooseAge}</option>
+                        {babyAgeOptions.map((age, k) => (
+                          <option key={age} value={age}>{ageLabels[k] ?? age}</option>
+                        ))}
+                      </select>,
+                    )}
+                    {ageMissing && !b.age && (
+                      <p id={`link-age-${i}-error`} className={cn(styles.error, "chalk-soft")} role={i === babies.findIndex((x) => !x.age) ? "alert" : undefined}>
+                        {t.missingAge}
+                      </p>
+                    )}
                     {field(`link-baby-${i}`, babies.length > 1 ? fill(t.babyNameN, { n: String(i + 1) }) : t.babyName, <input id={`link-baby-${i}`} className={styles.input} maxLength={80} value={b.name} onChange={(e) => setBabies((l) => l.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} />)}
                     {field(
                       `link-gender-${i}`,

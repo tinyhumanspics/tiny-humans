@@ -3,7 +3,7 @@ import { and, desc, eq, gt, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { scheduleHref } from "@/config/booking";
 import { site } from "@/config/site";
 import { getAvailabilityRules } from "@/lib/availability/server";
-import { bookingRules } from "@/config/booking";
+import { babyAgeOptions, bookingRules } from "@/config/booking";
 import { ownerRulesOf, slotsForDay } from "@/lib/booking/availability";
 import { manageTokenFor } from "@/lib/booking/cancel-token";
 import { confirmBookingRow } from "@/lib/booking/confirm";
@@ -143,6 +143,8 @@ export async function payWithLink(reference: string, now = new Date()): Promise<
   if (!row || !d) throw new BookingError("invalid_request", t.invalidTitle);
   if (d.status === "paid" || row.status === "confirmed" || row.status === "rescheduled") throw new BookingError("invalid_request", t.confirmingTitle);
   if (row.status !== "pending" || d.status !== "pending" || !d.holdUntil || d.holdUntil.getTime() <= now.getTime()) throw new BookingError("invalid_request", t.expiredTitle);
+  // a booking the owner confirmed: the baby's age comes first (owner, Nov 20)
+  if (isOwnerBooked(row) && (await linkBabiesOf(row.id)).some((b) => !isBabyAge(b.age))) throw new BookingError("invalid_request", t.missingAge);
   const open = await reopenDeposit(row).catch(() => null);
   if (open?.url) return open.url;
   if (!isStripeConfigured()) throw new BookingError("server_error", t.error);
@@ -170,29 +172,43 @@ async function linkHomeOf(row: Booking): Promise<LinkHome> {
 
 /** The babies on a link: name and boy or girl, as saved (none = the booking has no baby rows). */
 async function linkBabiesOf(bookingId: string): Promise<LinkBaby[]> {
-  return ((await babiesFor([bookingId])).get(bookingId) ?? []).map((b) => ({ name: b.name ?? "", gender: b.gender ?? "" }));
+  return ((await babiesFor([bookingId])).get(bookingId) ?? []).map((b) => ({ name: b.name ?? "", gender: b.gender ?? "", age: b.age ?? "" }));
 }
+
+/** One of the booking form's ages ("Newborn (0–2 weeks)" … "Not born yet"). */
+const isBabyAge = (age: string | undefined): age is string => (babyAgeOptions as readonly string[]).includes(age ?? "");
 
 /**
  * The family's home on their link, before the deposit (owner, Nov 16: no more texting the address): saved on the booking,
  * so /admin's Directions, the calendar event (made when the deposit is paid) and the emails all have it. The ZIP stays
- * the request's (the travel fee was priced on it). With it, optionally, each baby's name and boy or girl (owner, Nov 19).
+ * the request's (the travel fee was priced on it). With it each baby's age (required, owner Nov 20) and, optionally, the
+ * name and boy or girl (owner, Nov 19).
  */
-export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }, babies?: { name?: string; gender?: GenderChoice }[]): Promise<{ home: LinkHome; babies: LinkBaby[] }> {
+export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }, babies?: { name?: string; gender?: GenderChoice; age?: string }[]): Promise<{ home: LinkHome; babies: LinkBaby[] }> {
   const db = getDb();
   const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
-  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
+  const t = (row?.locale === "es" ? es : en).bookingFlow.depositReturn;
+  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", t.invalidTitle);
+  // every baby's age is required (owner, Nov 20: "otherwise we won't know what clothes to bring")
+  const before = await linkBabiesOf(row.id);
+  const ages = before.map((b, i) => babies?.[i]?.age ?? b.age);
+  if (ages.some((age) => !isBabyAge(age))) throw new BookingError("invalid_request", t.missingAge);
   const line = formatAddress({ street: input.street.trim(), city: input.city.trim(), zip: homeOf(row.locationAddress).zip });
   if (line !== row.locationAddress) await db.update(bookings).set({ locationAddress: line, updatedAt: new Date() }).where(eq(bookings.id, row.id));
   const notes = input.accessNotes?.trim() ?? "";
   await (notes
     ? db.insert(bookingAccess).values({ bookingId: row.id, notes }).onConflictDoUpdate({ target: bookingAccess.bookingId, set: { notes } })
     : db.delete(bookingAccess).where(eq(bookingAccess.bookingId, row.id)));
-  const before = await linkBabiesOf(row.id);
   if (babies && before.length) {
     const names = before.map((b, i) => babies[i]?.name?.trim() ?? b.name);
-    await Promise.all(names.map((name, position) => (name === before[position].name ? null : db.update(bookingBabies).set({ name: name || null }).where(and(eq(bookingBabies.bookingId, row.id), eq(bookingBabies.position, position))))));
-    if (names[0] !== before[0].name) await db.update(bookings).set({ babyName: names[0] || null, updatedAt: new Date() }).where(eq(bookings.id, row.id));
+    await Promise.all(
+      before.map((b, position) =>
+        names[position] === b.name && ages[position] === b.age
+          ? null
+          : db.update(bookingBabies).set({ name: names[position] || null, age: ages[position] }).where(and(eq(bookingBabies.bookingId, row.id), eq(bookingBabies.position, position))),
+      ),
+    );
+    if (names[0] !== before[0].name || ages[0] !== before[0].age) await db.update(bookings).set({ babyName: names[0] || null, babyAge: ages[0], updatedAt: new Date() }).where(eq(bookings.id, row.id));
     await saveBabyGenders(row.id, before.map((b) => b.gender), before.map((b, i) => babies[i]?.gender ?? b.gender));
   }
   return { home: { ...homeOf(line), accessNotes: notes }, babies: babies && before.length ? await linkBabiesOf(row.id) : before };

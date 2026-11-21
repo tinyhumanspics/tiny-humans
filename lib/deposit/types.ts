@@ -98,10 +98,12 @@ export type DepositReturnState =
   | { state: "expired"; date: string; start: string; bundleName: string }
   | { state: "invalid" };
 
-/** A baby on the deposit link: the name and boy or girl ("" = not said). */
+/** A baby on the deposit link: the name and boy or girl ("" = not said), and the age (required, owner Nov 20). */
 export interface LinkBaby {
   name: string;
   gender: "boy" | "girl" | "";
+  /** One of babyAgeOptions; "" until the family says (required before paying, owner Nov 20). */
+  age: string;
 }
 
 /** A family's home on their deposit link: street (with apt or unit), city, the request's ZIP, gate / parking notes. */

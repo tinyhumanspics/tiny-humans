@@ -14,10 +14,10 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/booking/deposit/home { b, k, home, babies? }: a family adds their home address on the link the owner sent them,
- * before the deposit (owner, Nov 16), so /admin's Directions opens their door; and, optionally, each baby's name and boy
- * or girl (owner, Nov 19).
+ * before the deposit (owner, Nov 16), so /admin's Directions opens their door; each baby's age (required, owner Nov 20)
+ * and, optionally, the name and boy or girl (owner, Nov 19).
  */
-const babiesInput = z.array(z.object({ name: z.string().trim().max(80).optional(), gender: z.enum(["boy", "girl", ""]).optional() })).max(3).optional();
+const babiesInput = z.array(z.object({ name: z.string().trim().max(80).optional(), gender: z.enum(["boy", "girl", ""]).optional(), age: z.string().max(40).optional() })).max(3).optional();
 
 export async function POST(req: Request) {
   if (!(await allow("depositPost", clientIp(req)))) return NextResponse.json({ error: "Too many requests. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
