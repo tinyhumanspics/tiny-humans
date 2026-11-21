@@ -94,7 +94,7 @@ export default function LandingPage({
         <div className={cn("container", styles.heroGrid)}>
           {hero && (
             <div className={styles.heroPhoto}>
-              <Image src={hero.src} alt={altOf(hero, t.hero.photo)} fill priority sizes="(min-width: 900px) 46vw, 100vw" className={styles.heroImg} />
+              <Image src={hero.src} alt={altOf(hero, t.hero.photo)} fill loading="eager" fetchPriority="high" sizes="(min-width: 900px) 46vw, 100vw" className={styles.heroImg} />
             </div>
           )}
           <div className={styles.heroCopy}>
