@@ -130,8 +130,8 @@
       "title": "When should we come?",
       "here": "Baby is here",
       "notBorn": "Not born yet",
-      "hereHelp": "Pick a day and a start time. Sessions are best after baby's first two weeks.",
-      "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we move it to after baby's first two weeks.",
+      "hereHelp": "Pick a day and a start time. Best in the first two weeks (days 5–14). We can still come up to 4 weeks.",
+      "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we'll set a day between days 5 and 14.",
       "dueLabel": "Your due date",
       "dueWindow": "Pick a due date from today to {date}.",
       "bundle": "Your bundle",
@@ -488,7 +488,7 @@
   "about": {
     "meta": {
       "title": "Our story",
-      "description": "Meet Adrian and Alondra, the parents behind Tiny Humans: newborn and baby photos at home, anywhere from Miami to Orlando."
+      "description": "Meet Adrian and Alondra, the parents behind Tiny Humans: newborn photos at home in Miami."
     },
     "hero": {
       "eyebrow": "Our story",
@@ -613,7 +613,7 @@
         },
         "b": {
           "title": "Reserve your newborn session ahead. We move the date when baby arrives.",
-          "sub": "Pick a date near your due date now. When baby arrives, text us and we come to your home after baby's first two weeks."
+          "sub": "Pick a date near your due date now. When baby arrives, text us and we come to your home between days 5 and 14."
         },
         "c": {
           "title": "Newborn photos at home, by Adrian and Alondra.",
@@ -718,7 +718,7 @@
         },
         {
           "q": "When is the best time?",
-          "a": "After baby's first two weeks. Many families reserve ahead with a date near their due date, and we move it when baby arrives."
+          "a": "Best in the first two weeks (days 5–14), and we can still come up to 4 weeks. Many families reserve ahead with a date near their due date, and we move it when baby arrives."
         },
         {
           "q": "What if baby comes early or late, or won't settle?",

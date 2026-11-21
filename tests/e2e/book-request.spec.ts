@@ -80,12 +80,12 @@ test("a family sends a request in 3 screens and 4 boxes, with nothing to pay", a
   expect(posted[0]).toMatchObject({ type: "date", bundleId: "our-little-story", babyCount: 1, firstName: "Dana", mobile: "305-555-0122", zip: "33139", textConsent: false });
 });
 
-test("Not born yet: a due date instead of a time, moved to after the first two weeks (owner, Nov 16)", async ({ page }) => {
+test("Not born yet: a due date instead of a time; a day between days 5 and 14 once baby arrives (brief 05b)", async ({ page }) => {
   await page.goto("/book?bundle=little-moments");
   await expect(page.getByRole("heading", { name: "When should we come?" })).toBeVisible();
   await hydrated(page, "#request-title");
   await page.getByRole("button", { name: "Not born yet" }).click();
-  await expect(page.getByText("When baby arrives, text us and we move it to after baby's first two weeks.")).toBeVisible();
+  await expect(page.getByText("Pick the date closest to your due date. When baby arrives, text us and we'll set a day between days 5 and 14.")).toBeVisible();
   // a date too far ahead stops screen 1
   const max = await page.locator("#request-due").getAttribute("max");
   await page.getByRole("button", { name: "Next: your details" }).click();
