@@ -20,8 +20,8 @@ interface Props {
  * Entrance behavior:
  *  - When a page opens, whatever is on screen is chalk-drawn once
  *    (soft chalk wipe + chalk frames drawing their lines).
- *  - After that, elements simply fade in and out as they scroll
- *    into and out of view, in either direction.
+ *  - After that, elements fade in once as they scroll into view, and
+ *    stay (brief 05: never fade out).
  *
  * Without JavaScript, or with reduced motion, content is simply visible.
  */
@@ -45,14 +45,9 @@ export default function Reveal({ children, as: Tag = "div", className, delay = 0
             firstCheck = false;
             el.dataset.revealMode = entry.isIntersecting ? "draw" : "fade";
           }
-          if (entry.isIntersecting) {
-            if (el.dataset.reveal !== "hidden") return;
-            el.dataset.reveal = "shown";
-          } else {
-            if (el.dataset.reveal === "hidden") return;
-            el.dataset.revealMode = "fade";
-            el.dataset.reveal = "hidden";
-          }
+          if (!entry.isIntersecting) return;
+          el.dataset.reveal = "shown";
+          io?.disconnect();
         },
         { threshold: 0, rootMargin: "-6% 0px -6% 0px" },
       );

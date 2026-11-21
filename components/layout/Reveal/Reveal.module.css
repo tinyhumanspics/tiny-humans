@@ -1,6 +1,6 @@
 /*
  * Page open: a soft chalk wipe draws what is on screen (once).
- * While scrolling: a smooth fade in and out.
+ * While scrolling: a smooth fade in, once (it never fades back out).
  */
 .reveal { transition: opacity 0.6s ease; }
 
@@ -8,9 +8,6 @@
 .reveal[data-reveal] { will-change: opacity; }
 
 .reveal[data-reveal="hidden"] { opacity: 0; }
-
-/* fading back out happens a little quicker than fading in */
-.reveal[data-reveal="hidden"][data-reveal-mode="fade"] { transition-duration: 0.45s; }
 
 .reveal[data-reveal="shown"][data-reveal-mode="fade"] {
   opacity: 1;

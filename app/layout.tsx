@@ -4,7 +4,6 @@ import { getTheme, themeCssVariables } from "@/config/themes";
 import { getSiteSettings } from "@/lib/settings/server";
 import ChalkFilters from "@/components/chalk/ChalkFilters/ChalkFilters";
 import VercelInsights from "@/components/layout/VercelInsights";
-import { LANDING_PATH } from "@/config/landing";
 import { siteMetadata } from "@/lib/seo/metadata";
 import { getPublicLocale } from "@/i18n/publication";
 import "@/styles/globals.css";
@@ -21,16 +20,15 @@ export async function generateViewport(): Promise<Viewport> {
   return { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: getTheme(settings.themeId).colors.chalkboard };
 }
 
-/** Pages families open straight from an email or from Stripe: they see their page at once, never the intro. */
-const NO_INTRO_PATHS = ["/review", "/pay", "/cancel", "/reschedule", "/backdrop", "/waiver", "/book", "/extras"];
+/** Set in the visitor's browser once the chalk intro has played. */
+const INTRO_SEEN_KEY = "th-intro-seen";
 
 /**
- * Runs before first paint: decides whether the chalk intro plays.
- * Skipped in the owner area and on NO_INTRO_PATHS. On the ad landing page it's skipped too (paid visitors see content
- * at once); preview the alternatives with ?intro=short (logo slides in, ~0.6 s) or ?intro=full. Without JavaScript the
- * site simply shows.
+ * Runs before first paint: decides whether the chalk intro plays. Only on the home page (/ and /es), at most once per
+ * visitor (brief 05); every other page, and home after that first time, shows at once. Reduced motion gets the short
+ * version. Without JavaScript or browser storage the site simply shows.
  */
-const introScript = `(function(){try{var p=location.pathname;if(p.indexOf('/admin')===0)return;var q=p==='/es'?'/':(p.indexOf('/es/')===0?p.slice(3):p);var n=${JSON.stringify(NO_INTRO_PATHS)};for(var k=0;k<n.length;k++){if(q===n[k]||q.indexOf(n[k]+'/')===0)return;}var d=document.documentElement;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var i=new URLSearchParams(location.search).get('intro');if(q.indexOf('${LANDING_PATH}')===0&&i!=='full'){if(i==='short')d.setAttribute('data-intro','reduced');return;}d.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
+const introScript = `(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/es')return;var s=window.localStorage;if(s.getItem('${INTRO_SEEN_KEY}'))return;s.setItem('${INTRO_SEEN_KEY}','1');var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;document.documentElement.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
 /**
  * The one root layout: the document (html/body), fonts, theme colors, intro script and viewport. The site's shell

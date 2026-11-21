@@ -78,9 +78,6 @@ test("unknown pages show the chalkboard 404", async ({ page }) => {
   const res = await page.goto("/book/schedule?bundle=little-moments");
   expect(res?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: /This page wandered off/ })).toBeVisible();
-  // The chalk logo intro plays here and returns the page to the top as it ends: a click aimed during it can land on
-  // the wrong spot (seen on slow CI WebKit). Visitors wait for it too, so wait until it has finished.
-  await expect(page.locator("html")).not.toHaveAttribute("data-intro");
   await page.getByRole("link", { name: "Back to the home page" }).click();
   await expect(page).toHaveURL(/\/$/);
 });

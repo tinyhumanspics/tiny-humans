@@ -191,11 +191,6 @@ test("wrong boxes are explained in words; a ZIP outside Florida stops the reques
   await expect(page.getByRole("heading", { name: "Where should we text you?" })).toBeVisible();
 });
 
-test("no chalk intro on /book", async ({ page }) => {
-  await page.goto("/book?bundle=little-moments");
-  await expect(page.locator("html")).not.toHaveAttribute("data-intro", /.+/);
-});
-
 test("a gallery picture picked as inspiration shows on /book and goes with the request (owner, Nov 11)", async ({ page }) => {
   // the second picture of the one "Little moments" gallery
   const picture = BUILT_IN.sections.flatMap((x) => x.photos)[1];
