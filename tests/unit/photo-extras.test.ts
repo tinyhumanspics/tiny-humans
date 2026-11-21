@@ -62,7 +62,7 @@ describe("the emails", () => {
   test("the sneak peek offers what's left, with the saved prices", async () => {
     const left = whatsLeft(s, NO_PURCHASES);
     const mail = await sneakPeekEmail(details, { ...base, extras: { url: "https://example.com/extras", left, prices: s } });
-    expect(mail.text).toContain("Want more photos?\nLove more than 20? You can add more before we start editing:\n- Extra edited photos: $13 each, up to 6\n- Your full gallery, color-corrected and retouched: $250\n- Your unedited files (every photo as taken, JPEG): $115\nAdd photos: https://example.com/extras");
+    expect(mail.text).toContain("Want more photos?\nLove more than 20? You can add more before we start editing:\n- Extra edited photos: $13 each, up to 6\n- Your full gallery, color-corrected and retouched: $250\n- Your unedited RAW files (every photo as taken): $115\nAdd photos: https://example.com/extras");
     expect(mail.html).toContain("Add photos");
     const none = await sneakPeekEmail(details, base);
     expect(none.text).not.toContain("Want more photos?");
@@ -73,7 +73,7 @@ describe("the emails", () => {
     if ("error" in o) throw new Error(o.error);
     const mail = await photoExtrasPaidEmail(details, { themeId: "thanksgiving", ...o, images: "inline", locale: "es" });
     expect(mail.text).toContain("Galería completa, con corrección de color y retoque: $250 · llega en 7 días");
-    expect(mail.text).toContain("Archivos sin editar (JPEG): $115 · llega en 48 horas");
+    expect(mail.text).toContain("Archivos RAW sin editar: $115 · llega en 48 horas");
     expect(mail.text).toContain("Ya pagado por fotos extra: −$52");
     expect(mail.text).toContain("Pagado: $313");
   });

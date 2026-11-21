@@ -97,7 +97,7 @@ test("a lead shows its extras, the totals, and the Delivered tick", async ({ pag
   await expect(page.getByText("$149 ($149 paid)")).toBeVisible();
   await expect(page.getByText("$167", { exact: true })).toBeVisible();
   await expect(page.getByText("$316")).toBeVisible();
-  await expect(page.getByText("Extra edited photos × 4 ($52), Unedited files (JPEG) ($115)")).toBeVisible();
+  await expect(page.getByText("Extra edited photos × 4 ($52), Unedited RAW files ($115)")).toBeVisible();
   await expect(page.getByText("Their note: “The one with the teddy”")).toBeVisible();
   await page.getByRole("checkbox", { name: "Delivered" }).check();
   await expect(page.getByText(/^Delivered Nov 21/)).toBeVisible();

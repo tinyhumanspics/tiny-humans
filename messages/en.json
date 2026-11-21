@@ -1101,7 +1101,7 @@
       "extrasIntro": "Love more than {count}? You can add more before we start editing:",
       "extrasExtra": "Extra edited photos: {price} each, up to {max}",
       "extrasFull": "Your full gallery, color-corrected and retouched: {price}",
-      "extrasRaw": "Your unedited files (every photo as taken, JPEG): {price}",
+      "extrasRaw": "Your unedited RAW files (every photo as taken): {price}",
       "extrasButton": "Add photos",
       "extrasHeart": "Heart your extra picks in the gallery too, so we know which ones.",
       "extrasText": "Add photos: {url}"
@@ -1227,7 +1227,7 @@
     },
     "raw": {
       "title": "Unedited files",
-      "text": "Every photo as taken, without our color correction or retouching (JPEG). They don't show our finished work, so please don't tag us on them."
+      "text": "Every photo as taken, as RAW files, without our color correction or retouching. They don't show our finished work, so please don't tag us on them."
     },
     "owned": "Already yours",
     "noteLabel": "Anything we should know? (for example, which photos)",
@@ -1255,7 +1255,7 @@
     "lines": {
       "extra_photos": "Extra edited photos × {n}",
       "full_gallery": "Full gallery, color-corrected and retouched",
-      "unedited_files": "Unedited files (JPEG)"
+      "unedited_files": "Unedited RAW files"
     },
     "within": {
       "hours": "{n} hours",

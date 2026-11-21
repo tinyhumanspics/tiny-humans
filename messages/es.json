@@ -1101,7 +1101,7 @@
       "extrasIntro": "¿Te encantan más de {count}? Puedes agregar más antes de que empecemos a editar:",
       "extrasExtra": "Fotos editadas extra: {price} cada una, hasta {max}",
       "extrasFull": "Tu galería completa, con corrección de color y retoque: {price}",
-      "extrasRaw": "Tus archivos sin editar (cada foto tal como se tomó, JPEG): {price}",
+      "extrasRaw": "Tus archivos RAW sin editar (cada foto tal como se tomó): {price}",
       "extrasButton": "Agregar fotos",
       "extrasHeart": "Marca también con un corazón tus fotos extra en la galería, para saber cuáles son.",
       "extrasText": "Agregar fotos: {url}"
@@ -1227,7 +1227,7 @@
     },
     "raw": {
       "title": "Archivos sin editar",
-      "text": "Cada foto tal como se tomó, sin nuestra corrección de color ni retoque (JPEG). No muestran nuestro trabajo final, así que por favor no nos etiquetes en ellas."
+      "text": "Cada foto tal como se tomó, en archivos RAW, sin nuestra corrección de color ni retoque. No muestran nuestro trabajo final, así que por favor no nos etiquetes en ellas."
     },
     "owned": "Ya es tuyo",
     "noteLabel": "¿Algo que debamos saber? (por ejemplo, cuáles fotos)",
@@ -1255,7 +1255,7 @@
     "lines": {
       "extra_photos": "Fotos editadas extra × {n}",
       "full_gallery": "Galería completa, con corrección de color y retoque",
-      "unedited_files": "Archivos sin editar (JPEG)"
+      "unedited_files": "Archivos RAW sin editar"
     },
     "within": {
       "hours": "{n} horas",

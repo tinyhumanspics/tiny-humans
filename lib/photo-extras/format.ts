@@ -4,7 +4,7 @@ import type { Delivery, ExtraLine } from "./types";
 /** The family's words for the extras (page, Stripe, emails), from the page's messages (`messages.extras`). */
 type ExtrasMessages = typeof en.extras;
 
-/** "Extra edited photos × 4", "Full gallery, color-corrected and retouched", "Unedited files (JPEG)". */
+/** "Extra edited photos × 4", "Full gallery, color-corrected and retouched", "Unedited RAW files". */
 export const lineName = (line: Pick<ExtraLine, "kind" | "quantity">, m: ExtrasMessages) =>
   line.kind === "extra_photos" ? m.lines.extra_photos.replace("{n}", String(line.quantity)) : m.lines[line.kind];
 
