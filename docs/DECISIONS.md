@@ -10,6 +10,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · /quick and /due-date (+ /es) are retired with no redirects and their code deleted, after the link checklist in brief 04 · Carlos
 - 2026-11-15 · Due-date deposits pay at /pay?d=; Not born yet → /book?when=due · brief 04
 - 2026-11-15 · Ad page bundles: on in /admin, cheapest first · brief 05
+- 2026-11-21 · /bundles shows the same bundles as home and the ad page, cheapest first · brief 05
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
 - 2026-11-16 · Sessions after week 2; a due date moves there too · owner
 - 2026-11-16 · Pay link asks the home address before the deposit · owner
@@ -57,5 +58,9 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-19 · Pay link: baby's age required (11-20); boy/girl optional, required on link form · owner
 - 2026-11-20 · Day-before "Before we arrive" steps; photo extras after the session (RAW too) · owner
 - 2026-11-11 · Valentine's theme Feb 1 – Mar 1 yearly, switched by hand · owner
+- 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
+- 2026-11-21 · Chalk intro only on home, once per visitor; entrance animations never fade out · brief 05
+- 2026-11-21 · Public pages never show the built-in stand-in pictures once the owner has photos · brief 05
+- 2026-11-21 · /es leaves out a seasonal box whose Spanish is a copy of the English · brief 05
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

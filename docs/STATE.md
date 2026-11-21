@@ -1,37 +1,37 @@
-# State (Nov 20, 2026, brief 05 session 1 of 2 done + owner requests)
+# State (Nov 21, 2026, brief 05 done)
+
+From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the owner", ask Carlos.
 
 ## Live now
-- Site EN + /es. Briefs 01–04 done (DECISIONS.md). Ads relaunch after OWNER-ACTIONS 7–9.
+- Site EN + /es. Briefs 01–05 done (DECISIONS.md). Ads relaunch after OWNER-ACTIONS 7–9.
 - Ad page /home-sweet-home (+/es): H1 by `?c=a|b|c`, "Check dates" → /book?bundle=<middle>&compare=1 + ad params.
-- Home (owner Nov 16) = the ad page (`heading`): "Tiny moments. Big memories.", animated top.
-- /portfolio (+/es): photo wall. Menu: Home · Portfolio · Bundles · Book. /bundles: "Not born yet?" link.
-- /book: bundles side by side (middle checked, calendar showing); a bundle card's link shows that pick + Change.
-- Pay link: 1) home + baby age (required, Nov 20; deposit waits for it), name, boy/girl (optional) 2) backdrops 3) deposit.
-- Trip days (Nov 16, `tripDays`): 70+ miles takes the day; /book, requests and reschedules check it; not owner bookings.
-- /admin → Leads opens on Confirmed: next session first, then "Date passed"; Past 10 days after. Each lead: "Emails
-  sent to …" = every family email (sendEmail logs it, `sent_emails` 0044) + Resend's delivered/bounced (webhook).
-- /admin → Quotes / Booking → "Send a booking link" (Nov 19): bundle, babies, ZIP, day, time → /book?link= (0043).
-- Day-before email (Nov 20): "Before we arrive" (night before, on the day, numbered steps; family line for family bundles).
-- Photo extras (owner Nov 20, 0045): sneak-peek + gallery emails → signed /extras → Stripe (kind photo_extras) → order
-  paid, family + studio emails. Extra photos (capped) come with the finished gallery, after it in their own hours; full
-  gallery (− extras paid); RAW files. Prices/promises/open days: /admin → Pricing. Lead block: totals, Delivered tick.
+  Lighthouse mobile (Nov 21, production, warm): LCP 1.4 s, perf 100, a11y 100; home the same.
+- Home = the ad page with "Tiny moments. Big memories."; chalk intro only here, once per visitor (localStorage).
+- /bundles = the same "Show on the home page, the ad page and Bundles" tiers, cheapest first (`shownBundles`).
+- /portfolio photo wall; /book bundles side by side; pay link: home + baby age, name, boy/girl → backdrops → deposit.
+- Trip days (70+ miles takes the day). /admin → Leads (Confirmed first, Past after 10 days, emails + delivery),
+  Quotes / Booking → "Send a booking link", day-before "Before we arrive", photo extras (0045).
+- Alt text: file-name photo names fall back to a description (`altOf`, config/media); stand-in pictures never show
+  once photos are saved. /es: no seasonal box whose Spanish is a copy of the English; other-language reviews labelled.
 
-## Next: brief 05 session 2
-- Bundles page = same `showOnLanding` tiers and order (then the /admin switch label adds it).
-- Chalk intro never on /book, /bundles, /about, once per visitor on home; Reveal fades in once, never out.
-- /es: English seasonal block, "Offerta de Accion de Gracias", review "en inglés" in Reviews, React #418.
-- Real alts site-wide; logo layers; Lighthouse LCP ≤ 2.5 s + axe on the ad page and home; policy words → brief 06.
-- Brief 06: /api/booking/quote + HttpBookingClient.quote have no UI caller.
+## Next: brief 05b, session 1 (tasks 1–8)
+- Its owner steps (Adrian, /admin → Pricing) don't block building: new bundle prices/hours/photos, Spanish features.
+- After 05b session 2: "Next: wait for Carlos's updated brief 06". Don't start the old brief 06.
 
-## Waiting on owner
-- /admin → Photos: "Big top photo"; rename "IMG 6087", "IMG 7378", "UPDATED 10"; Spanish photo names.
+## Waiting on owner (Carlos)
+- Pre-render public pages as their own slice after 05b (Carlos, Nov 21): every page renders per request (the root
+  layout reads the language header), so first byte is 0.3–1.8 s and a cold server can push LCP past 2.5 s.
+- /admin → Photos: "Big top photo"; rename "IMG 7378", "UPDATED 10", "Adrian BTS", "Alondra BTS"; Spanish photo
+  names ("Bebe en una manda acogedora" → "manta", accents in "Bebé", "Detrás", "Cálido").
+- /admin → Seasonal: type the Christmas box's Spanish, or /es shows no box (automatic translation is off: needs a
+  translation key in Vercel, a paid service, ask first).
 - Geraldine (Dec 10): her address via her link/Prepare page, or an /admin "Edit address" (owner to pick).
-  Spanish offer label "Offerta de Accion de Gracias" → "Oferta de Acción de Gracias" (/admin → Pricing).
-- "From $179.10" while the 10% Thanksgiving offer runs (ends Nov 23).
-- Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,
-  bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link, prep gender,
-  bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved, emails.reminder24.before + prepGuide 2–3,
-  extras, emails.extrasPaid + afterSession.extras*, Terms photos + Privacy Stripe line, depositReturn age*.
+- Policy words ("your baby sets the pace" in hero subs) → brief 06.
+- Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, home.portfolio.photoAlt, header.home,
+  bundlesPage.section.due, bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change),
+  bookingRequest.link + texts.link, prep gender, bookingFlow.errors.tripDay, Privacy step-counter sentence,
+  pay.reserved, emails.reminder24.before + prepGuide 2–3, extras, emails.extrasPaid + afterSession.extras*,
+  Terms photos + Privacy Stripe line, depositReturn age*.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)
@@ -42,4 +42,5 @@
 - ADMIN_SESSION_SECRET signs pay, due-date, extras and waiver-copy links: never rotate it.
 - iCloud folder: never git stash/switch there (use a worktree). Owner's dev server on :3000: stop yours by port.
   `next dev` may append to AGENTS.md (agent rules): revert it.
-- e2e: hydrated() first; calendarReady() (one grid); a day per browser; no Spanish, no Pixel, no database.
+- e2e: hydrated() first; calendarReady() (one grid); a day per browser; no Spanish, no Pixel, no database. Fixture
+  dates age (a lead turns Past 10 days after its date): date by today. Local WebKit: `npx playwright install webkit`.
