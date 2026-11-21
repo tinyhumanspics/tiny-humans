@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { BUILT_IN, buildFeedFromMedia, chunkSections, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type MediaSection } from "@/config/media";
+import { altOf, BUILT_IN, buildFeedFromMedia, chunkSections, emptyThemeMedia, fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type MediaSection } from "@/config/media";
 import { portfolio, type PortfolioPhoto } from "@/config/portfolio";
 import { defaultSettings, parseSettings, SettingsInputError, storedSettings } from "@/lib/settings/defaults";
 import { spanishOwnerCopyIssues } from "@/i18n/publication-audit";
 import type { SiteSettings } from "@/lib/settings/types";
+import { liveMedia } from "@/components/providers/SiteSettingsProvider";
 import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 
@@ -183,5 +184,30 @@ describe("one Little moments list (owner, Nov 11)", () => {
     expect(sections.every((s) => s.prompt === false && s.promptPhotoId === null && s.spanish === null)).toBe(true);
     expect(feedPhotos(resolveMedia({ ...emptyThemeMedia(), sections })).map((p) => p.id)).toEqual(list.map((p) => p.id));
     expect(chunkSections([], previous)).toEqual([]);
+  });
+});
+
+describe("public pages (brief 05)", () => {
+  const standIn = portfolio.find((p) => p.id === "tummy-time")!;
+
+  test("once the owner has saved photos, the built-in stand-ins never show, in any slot", () => {
+    const media = { ...emptyThemeMedia(), about: [standIn, photo(1)], sections: chunkSections([photo(2), standIn, photo(3)]) };
+    const live = liveMedia(settingsWith({ default: media }));
+    expect(feedPhotos(live).map((p) => p.id)).toEqual(["photo-2", "photo-3"]);
+    expect(live.about.slice(0, 2).map((p) => p?.id ?? null)).toEqual([null, "photo-1"]);
+    // no title photos saved: the built-in ones are stand-ins too
+    expect(live.title).toEqual([]);
+    expect(live.gallery.map((p) => p.id)).toEqual(["photo-2", "photo-3"]);
+  });
+
+  test("a site with no photos saved yet (local, tests) still shows the built-in ones", () => {
+    expect(feedPhotos(liveMedia(settingsWith({}))).length).toBeGreaterThan(0);
+  });
+
+  test("file-name alts and the placeholder tag never reach a page", () => {
+    expect(altOf({ ...photo(1), alt: "IMG 6087" }, "Adrian & Alondra")).toBe("Adrian & Alondra");
+    expect(altOf({ ...photo(1), alt: "UPDATED 10" }, "fallback")).toBe("fallback");
+    expect(altOf(standIn, "fallback")).toBe("Baby during tummy time on a cream blanket");
+    expect(altOf({ ...photo(1), alt: "Newborn David" }, "fallback")).toBe("Newborn David");
   });
 });

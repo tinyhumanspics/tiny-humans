@@ -7,6 +7,7 @@ import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
 import PortfolioLightbox from "@/features/home/PortfolioLightbox";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import { fill } from "@/lib/email/messages";
+import { altOf } from "@/config/media";
 import type { AppLocale } from "@/i18n/config";
 import en from "@/messages/en.json";
 import { cn } from "@/lib/cn";
@@ -24,7 +25,8 @@ export default function Portfolio({ messages = en.home.portfolio, locale = "en" 
   const id = "portfolio";
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
-  const { photos: portfolio } = useSiteSettings();
+  const { photos } = useSiteSettings();
+  const portfolio = photos.map((photo) => ({ ...photo, alt: altOf(photo, messages.photoAlt) }));
 
   const close = () => {
     const i = openIndex;

@@ -23,7 +23,8 @@ import { formatMoney, toCents } from "@/lib/pricing/engine";
 import type { PublicReview } from "@/lib/reviews/public";
 import type { TravelSettings } from "@/lib/travel/types";
 import styles from "./Landing.module.css";
-import { altOf, ProofLine, TextUs } from "./HeroBits";
+import { ProofLine, TextUs } from "./HeroBits";
+import { altOf } from "@/config/media";
 import WhyAtHome from "./WhyAtHome";
 import { useLandingOffer } from "./offer";
 

@@ -6,7 +6,7 @@ import Reveal from "@/components/layout/Reveal/Reveal";
 import PinnedPhoto from "@/components/ui/PinnedPhoto/PinnedPhoto";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
-import { altOf } from "./HeroBits";
+import { altOf } from "@/config/media";
 import styles from "./Landing.module.css";
 
 /**

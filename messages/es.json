@@ -20,6 +20,7 @@
       ],
       "ctaLabel": "Reserva un recuerdo como este",
       "pickHint": "Toca cualquier foto para verla completa y usarla como inspiración para tu sesión.",
+      "photoAlt": "Foto de una sesión en casa de Tiny Humans",
       "openPhoto": "Abrir foto {current} de {total}: {alt}",
       "viewer": {
         "label": "Visor de fotos",

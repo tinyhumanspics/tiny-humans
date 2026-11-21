@@ -1,16 +1,9 @@
 import { site } from "@/config/site";
-import type { PortfolioPhoto } from "@/config/portfolio";
 import type { AppLocale } from "@/i18n/config";
 import { cn } from "@/lib/cn";
 import type { PublicReview } from "@/lib/reviews/public";
 import en from "@/messages/en.json";
 import styles from "./Landing.module.css";
-
-export /** Admin photo names that are file names ("IMG 6087", "UPDATED 10") never become alt text, nor a "(placeholder)" tag. */
-const altOf = (photo: PortfolioPhoto, fallback: string) => {
-  const alt = photo.alt.replace(/\s*\((placeholder|foto provisional)\)\s*$/i, "").trim();
-  return !alt || /^(img|dsc|updated|photo)[\s_-]*\d+$/i.test(alt) ? fallback : alt;
-};
 
 /** One real review under "Check dates" (picked in /admin; the family said OK), shortened, with its language when it differs. */
 export function ProofLine({ review, locale, langs = en.landing.proofLang }: { review: PublicReview | undefined; locale: AppLocale; langs?: typeof en.landing.proofLang }) {

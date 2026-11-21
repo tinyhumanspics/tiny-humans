@@ -215,6 +215,28 @@ export function photographersEmailPhoto(all: Partial<Record<string, ThemeMedia>>
   return own?.email?.[0] ?? base?.email?.[0] ?? own?.about?.[0] ?? base?.about?.[0] ?? null;
 }
 
+/** Admin photo names that are file names ("IMG 6087", "UPDATED 10") never become alt text, nor a "(placeholder)" tag. */
+export const altOf = (photo: PortfolioPhoto, fallback: string) => {
+  const alt = photo.alt.replace(/\s*\((placeholder|foto provisional)\)\s*$/i, "").trim();
+  return !alt || /^(img|dsc|updated|photo)[\s_-]*\d+$/i.test(alt) ? fallback : alt;
+};
+
+const standIns = new Set(portfolio.map((p) => p.src));
+const real = (p: PortfolioPhoto | null): p is PortfolioPhoto => Boolean(p && !standIns.has(p.src));
+
+/**
+ * Only the owner's own photos, never the built-in stand-ins in /public/portfolio (blurred shapes from before the first
+ * upload, which an owner's saved list can still hold): "every photo was taken in a family's own home" has to be true
+ * (brief 05). An empty slot then shows its chalk placeholder, or nothing.
+ */
+export const withoutStandIns = (r: ResolvedMedia): ResolvedMedia => ({
+  title: r.title.filter(real),
+  landing: r.landing.map((p) => (real(p) ? p : null)),
+  about: r.about.map((p) => (real(p) ? p : null)),
+  sections: r.sections.map((s) => ({ photos: s.photos.filter(real), prompt: s.prompt && real(s.prompt.photo) ? s.prompt : null })),
+  gallery: r.gallery.filter(real),
+});
+
 /** The owner's "Show the boxes" switch off (Photos / Media): the same pictures, no "Book a memory like this one" boxes. */
 export const withoutBoxes = (r: ResolvedMedia): ResolvedMedia => ({ ...r, sections: r.sections.map((s) => ({ ...s, prompt: null })) });
 

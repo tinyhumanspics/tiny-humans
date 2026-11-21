@@ -20,6 +20,7 @@
       ],
       "ctaLabel": "Book a memory like this one",
       "pickHint": "Tap any picture to see it whole, and use it as the inspiration for your session.",
+      "photoAlt": "A photo from a Tiny Humans home session",
       "openPhoto": "Open photo {current} of {total}: {alt}",
       "viewer": {
         "label": "Photo viewer",

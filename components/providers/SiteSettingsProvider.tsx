@@ -1,6 +1,6 @@
 "use client";
 
-import { fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, type ResolvedMedia } from "@/config/media";
+import { fallbackMediaFor, feedPhotos, resolveMedia, withoutBoxes, withoutStandIns, type ResolvedMedia } from "@/config/media";
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from "react";
 import { getTheme, themeCssVariables, type ThemeDefinition, type TinyHumansTheme } from "@/config/themes";
 import type { PortfolioPhoto } from "@/config/portfolio";
@@ -70,11 +70,15 @@ export function useSiteSettings(): Ctx {
   return ctx;
 }
 
-/** Pictures for the theme visitors see (empty slots show the Default theme's picture). */
+/**
+ * Pictures for the theme visitors see (empty slots show the Default theme's picture). Once the owner has saved photos,
+ * the built-in stand-ins never show; a site with none saved yet (local, tests) keeps them.
+ */
 export function liveMedia(s: SiteSettings, locale: AppLocale = "en"): ResolvedMedia {
+  const own = s.media[s.themeId] ?? fallbackMediaFor(s.themeId, s.media);
   const media = resolveMedia(s.media[s.themeId], fallbackMediaFor(s.themeId, s.media), locale);
   // one gallery, no "Book a memory like this one" boxes (owner, Nov 11): a parent taps any picture to use it as inspo
-  return withoutBoxes(media);
+  return withoutBoxes(own ? withoutStandIns(media) : media);
 }
 
 export function findPhoto(photos: PortfolioPhoto[], id: string | null | undefined): PortfolioPhoto | undefined {
