@@ -50,11 +50,11 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-09 · Empty Spanish fields fill from the English on save (owner marketing text only, never family data); typed Spanish is kept · owner
 - 2026-11-10 · Shoot videos are links that play in the site's own player; no video uploads · owner
 - 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
-- 2026-11-16 · Home = ad page + own title; portfolio = /portfolio (photo wall) · owner
+- 2026-11-16 · Home = ad page + own title; portfolio = /portfolio · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
-- 2026-11-19 · Leads: opens on Confirmed; Past after 10 days; family emails + delivery · owner
-- 2026-11-19 · DMs: a prefilled booking link · owner
-- 2026-11-19 · Boy/girl: required on link form, optional for families · owner
+- 2026-11-19 · Leads: opens on Confirmed; Past after 10 days; emails + delivery · owner
+- 2026-11-19 · DMs: prefilled booking link · owner
+- 2026-11-19 · Pay link: baby's age required (11-20); boy/girl optional, required on link form · owner
 - 2026-11-20 · Day-before "Before we arrive" steps; photo extras after the session (RAW too) · owner
 - 2026-11-11 · Valentine's theme Feb 1 – Mar 1 yearly, switched by hand · owner
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02

@@ -6,7 +6,7 @@
 - Home (owner Nov 16) = the ad page (`heading`): "Tiny moments. Big memories.", animated top.
 - /portfolio (+/es): photo wall. Menu: Home · Portfolio · Bundles · Book. /bundles: "Not born yet?" link.
 - /book: bundles side by side (middle checked, calendar showing); a bundle card's link shows that pick + Change.
-- Pay link: 1) home + baby name, boy/girl (optional) 2) backdrops 3) deposit (Pay unlocks once the home is saved).
+- Pay link: 1) home + baby age (required, Nov 20; deposit waits for it), name, boy/girl (optional) 2) backdrops 3) deposit.
 - Trip days (Nov 16, `tripDays`): 70+ miles takes the day; /book, requests and reschedules check it; not owner bookings.
 - /admin → Leads opens on Confirmed: next session first, then "Date passed"; Past 10 days after. Each lead: "Emails
   sent to …" = every family email (sendEmail logs it, `sent_emails` 0044) + Resend's delivered/bounced (webhook).
@@ -31,7 +31,7 @@
 - Spanish review: es.json `landing`, home.hero.eyebrow, portfolioPage, header.home, bundlesPage.section.due,
   bookingRequest.when (twinsPerks, hereHelp, notBornHelp, bundle, change), bookingRequest.link + texts.link, prep gender,
   bookingFlow.errors.tripDay, Privacy step-counter sentence, pay.reserved, emails.reminder24.before + prepGuide 2–3,
-  extras, emails.extrasPaid + afterSession.extras*, Terms photos + Privacy Stripe line.
+  extras, emails.extrasPaid + afterSession.extras*, Terms photos + Privacy Stripe line, depositReturn age*.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)
