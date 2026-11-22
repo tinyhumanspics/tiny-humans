@@ -44,6 +44,8 @@ async function pickTime(page: Page, k: number) {
   await expect(time).toBeVisible();
   const label = (await time.innerText()).split("\n")[0].trim();
   await time.click();
+  // the time is picked before the test moves on, so a missed tap fails here, not at "Next"
+  await expect(page.locator('input[id^="time-"]:checked')).toHaveCount(1);
   return label;
 }
 

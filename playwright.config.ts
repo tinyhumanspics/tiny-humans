@@ -17,6 +17,8 @@ export default defineConfig({
     timezoneId: "America/Los_Angeles",
     locale: "en-US",
     trace: "retain-on-failure",
+    // no smooth scrolling (the site turns scroll-behavior off for reduced motion): a tap made mid-scroll can miss
+    reducedMotion: "reduce",
     // sandboxes with a preinstalled Chromium can point at it (PW_CHROMIUM_PATH); normally unset
     ...(process.env.PW_CHROMIUM_PATH ? { launchOptions: { executablePath: process.env.PW_CHROMIUM_PATH } } : {}),
   },
