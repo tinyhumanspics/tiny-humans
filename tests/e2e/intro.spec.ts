@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
 /** The chalk logo intro: only on the home page, at most once per visitor (brief 05). */
+// the full drawing, not the short reduced-motion version the rest of the suite runs with
+test.use({ reducedMotion: "no-preference" });
+
 test("the intro plays on a visitor's first home page, then never again", async ({ page }) => {
   await page.goto("/", { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("data-intro", /.+/);
