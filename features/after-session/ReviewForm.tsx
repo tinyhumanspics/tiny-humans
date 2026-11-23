@@ -11,6 +11,7 @@ import { fill } from "@/lib/email/messages";
 import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
 import styles from "./AfterSession.module.css";
+import { scrollBehavior } from "@/lib/scroll";
 
 type View = "loading" | "invalid" | "form" | "done";
 type Field = "rating" | "body" | "name";
@@ -65,7 +66,7 @@ export default function ReviewForm({ locale = "en", messages = en.review }: { lo
       if (res.status === 404) return setView("invalid");
       if (!res.ok) throw new Error(m.errors.failed);
       setView("done");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
     } catch (err) {
       setErrors({ form: err instanceof Error ? err.message : m.errors.failed });
     } finally {

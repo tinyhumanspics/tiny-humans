@@ -16,6 +16,7 @@ import { fill } from "@/lib/email/messages";
 import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
 import { useCatalog } from "@/components/providers/CatalogProvider";
+import { scrollBehavior } from "@/lib/scroll";
 
 type View = "loading" | "invalid" | "form" | "done" | "already" | "past" | "closed";
 
@@ -58,7 +59,7 @@ export default function CancelBooking({ locale = "en", messages = en.cancelPage,
     try {
       setBooking(await getBookingClient().cancelWithToken(token, reason.trim()));
       setView("done");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: scrollBehavior() });
     } catch (err) {
       if (err instanceof BookingApiError && err.code === "cancel_closed") {
         setBooking((current) => (current ? { ...current, canCancel: false } : current));

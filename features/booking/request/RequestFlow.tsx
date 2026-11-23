@@ -28,6 +28,7 @@ import Calendar from "../flow/Calendar";
 import TimeStep from "../flow/steps/TimeStep";
 import flowStyles from "../flow/Booking.module.css";
 import styles from "./RequestFlow.module.css";
+import { scrollBehavior } from "@/lib/scroll";
 
 const fill = (template: string, values: Record<string, string>) => template.replace(/\{(\w+)\}/g, (m, k: string) => values[k] ?? m);
 /** How long the form has been open (the server refuses requests faster than a person). */
@@ -176,7 +177,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
       return;
     }
     headingRef.current?.focus({ preventScroll: true });
-    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    panelRef.current?.scrollIntoView({ behavior: scrollBehavior(), block: "start" });
   }, [step]);
 
   // the travel line under the ZIP box, once it's 5 digits

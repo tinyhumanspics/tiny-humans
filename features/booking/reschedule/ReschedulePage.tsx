@@ -16,6 +16,7 @@ import { localePath } from "@/i18n/path";
 import type { AppLocale } from "@/i18n/config";
 import { site } from "@/config/site";
 import en from "@/messages/en.json";
+import { scrollBehavior } from "@/lib/scroll";
 
 type View = "loading" | "invalid" | "ready" | "done";
 
@@ -64,7 +65,7 @@ export default function ReschedulePage({
         setPrevious(booking);
         setBooking(updated);
         setView("done");
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        window.scrollTo({ top: 0, behavior: scrollBehavior() });
       } catch (e) {
         if (e instanceof BookingApiError && e.code === "slot_unavailable") throw Object.assign(new Error(messages.errors.taken), { code: "slot_unavailable" });
         if (e instanceof BookingApiError && e.code === "reschedule_closed") {

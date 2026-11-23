@@ -15,10 +15,7 @@ import LanguageSwitcher from "@/components/layout/LanguageSwitcher/LanguageSwitc
 import { useIntroAnimation } from "./useIntroAnimation";
 import styles from "./Header.module.css";
 import { cn } from "@/lib/cn";
-
-function prefersReducedMotion() {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+import { scrollBehavior } from "@/lib/scroll";
 
 const fill = (template: string, values: Record<string, string>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => values[key] ?? match);
@@ -46,7 +43,7 @@ export default function Header({ messages, languageMessages, locale, showLanguag
   const onLogoClick = (e: MouseEvent<HTMLAnchorElement>) => {
     if (pathname !== homeHref) return;
     e.preventDefault();
-    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior() });
     history.replaceState(null, "", window.location.pathname + window.location.search);
   };
 
