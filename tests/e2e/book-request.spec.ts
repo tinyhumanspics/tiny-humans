@@ -280,7 +280,7 @@ test("brief 03: one Lead per person (browser, same id as the server), Contact on
   const body = (await (await answer).json()) as { request: { reference: string }; lead: boolean };
   await expect(page.getByRole("heading", { name: "Request sent, Lea." })).toBeVisible();
   expect(body.lead).toBe(true);
-  expect((await calls()).filter((c) => c[1] === "Lead")).toEqual([["track", "Lead", { content_name: "request", content_ids: ["little-moments"] }, { eventID: body.request.reference }]]);
+  expect((await calls()).filter((c) => c[1] === "Lead")).toEqual([["track", "Lead", { content_name: "request", content_ids: ["little-moments"], lead_source: "website" }, { eventID: body.request.reference }]]);
   // Contact: the tap-to-text number on the Request sent screen
   await page.getByRole("link", { name: "(786) 222-7194" }).click();
   expect((await calls()).filter((c) => c[1] === "Contact")).toEqual([["track", "Contact", { content_name: "text" }]]);

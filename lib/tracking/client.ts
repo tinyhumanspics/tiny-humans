@@ -69,7 +69,8 @@ export function trackLead(l: { eventId: string; bundleId: string; firstName: str
   for (const k of Object.keys(am)) if (!am[k]) delete am[k];
   if (pixelId()) fbq("init", pixelId(), am);
   const id = neutralId(l.bundleId);
-  fbq("track", "Lead", { content_name: "request", ...(id ? { content_ids: [id] } : {}) }, { eventID: l.eventId });
+  // "website" only: booking-link pages carry a token, so the Pixel never loads there (their Lead is server-only)
+  fbq("track", "Lead", { content_name: "request", ...(id ? { content_ids: [id] } : {}), lead_source: "website" }, { eventID: l.eventId });
 }
 
 /** A tap on a "text us" or "call us" link (sms: / tel:). */

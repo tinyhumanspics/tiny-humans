@@ -22,15 +22,15 @@ describe("customer details are normalized before hashing", () => {
 
   it("the Lead carries hashed em/ph/fn/zp/country/external_id, the browser's fbp/fbc/IP/UA, no value, neutral names", () => {
     const p = leadPayload(
-      { eventId: "TH-R-20261114-1234", eventSourceUrl: "https://www.tinyhumans.photography/book", bundleId: "our-little-story", person: { email: " Ana@Example.com", phone: "+13055550142", name: "Ana", zip: "33139" }, client: { ip: "203.0.113.9", userAgent: "UA", fbp: "fb.1.1.2", fbc: "fb.1.3.abc" } },
+      { eventId: "TH-R-20261114-1234", eventSourceUrl: "https://www.tinyhumans.photography/book", bundleId: "our-little-story", leadSource: "website", person: { email: " Ana@Example.com", phone: "+13055550142", name: "Ana", zip: "33139" }, client: { ip: "203.0.113.9", userAgent: "UA", fbp: "fb.1.1.2", fbc: "fb.1.3.abc" } },
       new Date("2026-11-14T15:00:00Z"),
     );
-    expect(p).toMatchObject({ event_name: "Lead", event_id: "TH-R-20261114-1234", action_source: "website", event_source_url: "https://www.tinyhumans.photography/book", custom_data: { content_name: "request", content_ids: ["our-little-story"] } });
+    expect(p).toMatchObject({ event_name: "Lead", event_id: "TH-R-20261114-1234", action_source: "website", event_source_url: "https://www.tinyhumans.photography/book", custom_data: { content_name: "request", content_ids: ["our-little-story"], lead_source: "website" } });
     expect(p.user_data).toMatchObject({ em: [sha("ana@example.com")], ph: [sha("13055550142")], fn: [sha("ana")], zp: [sha("33139")], country: [sha("us")], external_id: [sha("ana@example.com")], client_ip_address: "203.0.113.9", client_user_agent: "UA", fbp: "fb.1.1.2", fbc: "fb.1.3.abc" });
     expect(p.custom_data).not.toHaveProperty("value");
     expect(JSON.stringify(p)).not.toMatch(/due|pregnan|baby|newborn/i);
     // an owner's bundle id that names a baby is left out
-    expect(leadPayload({ eventId: "x", eventSourceUrl: "u", bundleId: "newborn-mini", person: { email: "a@b.co", phone: "", name: "A", zip: "" }, client: {} }).custom_data).toEqual({ content_name: "request" });
+    expect(leadPayload({ eventId: "x", eventSourceUrl: "u", bundleId: "newborn-mini", leadSource: "website", person: { email: "a@b.co", phone: "", name: "A", zip: "" }, client: {} }).custom_data).toEqual({ content_name: "request", lead_source: "website" });
     expect(neutralId("our-family-story")).toBe("our-family-story");
   });
 

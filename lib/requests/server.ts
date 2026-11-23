@@ -154,7 +154,7 @@ export async function createRequest(r: ValidRequest, source: RequestSource = {},
   }
   log.info("requests", "Request saved", { reference: row.reference, type: row.type });
   if (link) await markLinkUsed(link.id, row.id).catch((err) => log.error("requests", "Booking link not marked used", { reference: row.reference, error: err as Error }));
-  const { lead } = await onRequestCreated(row);
+  const { lead } = await onRequestCreated(row, link ? "booking_link" : "website");
   return { sent: sentOf(row), row, created: true, lead };
 }
 

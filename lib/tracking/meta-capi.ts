@@ -62,12 +62,16 @@ function userData(p: MetaPerson, client: MetaClient) {
   };
 }
 
+/** Where a request came from: /book ("website") or the owner's "Send a booking link" ("booking_link"). */
+export type LeadSource = "website" | "booking_link";
+
 export interface LeadEvent {
   /** The request's reference (the browser Pixel's eventID). */
   eventId: string;
   /** /book (or /es/book), never a URL with a token. */
   eventSourceUrl: string;
   bundleId: string;
+  leadSource: LeadSource;
   person: MetaPerson;
   client: MetaClient;
 }
@@ -82,7 +86,7 @@ export function leadPayload(e: LeadEvent, now = new Date()) {
     action_source: "website",
     event_source_url: e.eventSourceUrl,
     user_data: userData(e.person, e.client),
-    custom_data: { content_name: "request", ...(id ? { content_ids: [id] } : {}) },
+    custom_data: { content_name: "request", ...(id ? { content_ids: [id] } : {}), lead_source: e.leadSource },
   };
 }
 
@@ -127,7 +131,7 @@ export function isCapiConfigured(): boolean {
   return Boolean(process.env.NEXT_PUBLIC_META_PIXEL_ID && process.env.META_CAPI_ACCESS_TOKEN);
 }
 
-async function send(name: "Lead" | "Schedule", event: object): Promise<void> {
+async function send(name: "Lead" | "Schedule", event: object, logged: Record<string, string> = {}): Promise<void> {
   if (!isCapiConfigured()) return;
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID!;
   const testCode = process.env.META_TEST_EVENT_CODE?.trim();
@@ -141,12 +145,12 @@ async function send(name: "Lead" | "Schedule", event: object): Promise<void> {
       await reportFailure("meta_capi", `${name} event rejected (HTTP ${res.status}, code ${data.error?.code ?? "?"}/${data.error?.error_subcode ?? "-"})`);
       return;
     }
-    log.info("meta.capi", `${name} event sent`, { received: data.events_received, fbtrace: data.fbtrace_id, test: Boolean(testCode) });
+    log.info("meta.capi", `${name} event sent`, { received: data.events_received, fbtrace: data.fbtrace_id, test: Boolean(testCode), ...logged });
   } catch (err) {
     log.error("meta.capi", `${name} event not sent`, { error: err as Error });
     await reportFailure("meta_capi", `${name} event not sent (${errorCode(err)})`);
   }
 }
 
-export const sendLeadEvent = (e: LeadEvent) => send("Lead", leadPayload(e));
+export const sendLeadEvent = (e: LeadEvent) => send("Lead", leadPayload(e), { leadSource: e.leadSource });
 export const sendScheduleEvent = (e: ScheduleEvent) => send("Schedule", schedulePayload(e));
