@@ -3,13 +3,35 @@
 Spanish copy shipped as a draft for a native speaker to check (AGENTS rule 7). Reply with changes per key; a session
 updates messages/es.json and takes the key off this list. Sessions don't load this file; STATE.md points here.
 
+## Brief 05b, session 2 (Nov 22, 2026)
+
+The pay link now takes the $50 first; the home, ages and backdrops come right after, on the same page. In
+`holdText`, "hasta el {until}" keeps the "el" because {until} starts with the weekday ("lunes, 24 de noviembre…").
+
+| Key | English | Spanish |
+|---|---|---|
+| `bookingRequest.when.hereHelp` | Pick a day and a start time. Best at days 5–14, up to 4 weeks. | Elige un día y una hora. Lo ideal: del día 5 al 14, hasta 4 semanas. |
+| `bookingFlow.depositReturn.holdTitle` | Your time is saved, {name}. | Guardamos tu horario, {name}. |
+| `bookingFlow.depositReturn.holdText` | {bundle} · {date} at {time} · at your home. Total {total} (travel included). Pay the {deposit} deposit to book it. The rest is paid after your session. We're holding this time until {until} (Miami time). | {bundle} · {date} a las {time} · en tu casa. Total {total} (traslado incluido). Paga el depósito de {deposit} para reservar. El resto se paga después de tu sesión. Te guardamos este horario hasta el {until} (hora de Miami). |
+| `bookingFlow.depositReturn.refund` | Refundable up to {hours} h before your session. Card payment on Stripe. | Te devolvemos el depósito si cancelas hasta {hours} h antes. Pago con tarjeta en Stripe. |
+| `bookingFlow.depositReturn.payNow` | Pay {deposit} and book my session | Pagar {deposit} y reservar mi sesión |
+| `bookingFlow.depositReturn.paidTitle` | You're booked! | ¡Tu sesión está reservada! |
+| `bookingFlow.depositReturn.paidText` | Two quick things so we come ready: your home address and your baby's age (it tells us which outfits to bring). Backdrops can wait. | Dos cosas rápidas para llegar listos: tu dirección y la edad de tu bebé (así sabemos qué ropita llevar). Los fondos pueden esperar. |
+| `bookingFlow.depositReturn.expiredText` | The deposit for {date} at {time} wasn't paid, so we released the time. You're welcome to pick a time again. | El depósito para el {date} a las {time} no fue pagado, así que liberamos el horario. Puedes elegir otra hora cuando quieras. |
+| `emails.deposit.booked.preheader` | Pay the {deposit} deposit to book {date} at {time}. Then add your address, your baby's age and your backdrop. | Paga el depósito de {deposit} para reservar el {date} a las {time}. Luego agrega tu dirección, la edad de tu bebé y tu fondo. |
+| `emails.deposit.booked.intro` | {bundle} on {date} at {time}, at your home. To book it, pay the {deposit} deposit. Then add your home address and your baby's age, and pick your backdrop. The rest is paid after your session. | {bundle} el {date} a las {time}, en tu casa. Para reservarla, paga el depósito de {deposit}. Luego agrega la dirección de tu casa y la edad de tu bebé, y elige tu fondo. El resto se paga después de tu sesión. |
+| `emails.deposit.booked.smsBody` | Hi {name}! We saved {date} at {time} for your Tiny Humans session. Pay the {deposit} deposit to book it, then add your address, your baby's age and your backdrop here: {url} | ¡Hola {name}! Guardamos el {date} a las {time} para tu sesión de Tiny Humans. Paga el depósito de {deposit} para reservarla y luego agrega tu dirección, la edad de tu bebé y tu fondo aquí: {url} |
+| `emails.addHome.title` | Two quick things so we come ready | Dos cosas rápidas para llegar listos |
+| `emails.addHome.text` | Your home address and your baby's age (it tells us which outfits to bring). | Tu dirección y la edad de tu bebé (así sabemos qué ropita llevar). |
+| `emails.addHome.button` | Add them now | Agregarlas ahora |
+| `emails.addHome.textLine` | Two quick things so we come ready: your home address and your baby's age. Add them here: {url} | Dos cosas rápidas para llegar listos: tu dirección y la edad de tu bebé. Agrégalas aquí: {url} |
+
 ## Brief 05b, session 1 (Nov 21, 2026)
 
 `{name}`, `{deposit}` and similar are filled in by the site. Keep them as they are.
 
 | Key | English | Spanish |
 |---|---|---|
-| `bookingRequest.when.hereHelp` | Pick a day and a start time. Best in the first two weeks (days 5–14). We can still come up to 4 weeks. | Elige un día y una hora de inicio. Lo ideal es en las primeras dos semanas (del día 5 al 14). También podemos ir hasta las 4 semanas. |
 | `bookingRequest.when.notBornHelp` | Pick the date closest to your due date. When baby arrives, text us and we'll set a day between days 5 and 14. | Elige la fecha más cercana a tu fecha de parto. Cuando nazca tu bebé, escríbenos y elegimos un día entre el día 5 y el 14. |
 | `bookingRequest.when.includes` | {bundle} includes: {features} | {bundle} incluye: {features} |
 | `bookingRequest.when.rowPhotos` | {photos} photos | {photos} fotos |

@@ -13,7 +13,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-21 · /bundles shows the same bundles as home and the ad page, cheapest first · brief 05
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
 - 2026-11-21 · Session timing: best days 5–14, up to 4 weeks; a due date moves into days 5–14 · Carlos
-- 2026-11-16 · Pay link asks the home address before the deposit · owner
+- 2026-11-22 · Pay link: the $50 first; home, ages, backdrops after (#22); both reminders ask till saved · Carlos
 - 2026-11-14 · Delete what the new path leaves unused · Carlos
 - 2026-11-14 · Requests may share a minute, bookings never · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link; it fires Contact, not a booking path · Carlos
