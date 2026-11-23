@@ -1,10 +1,11 @@
-# State (Nov 23, 2026, brief 05b session 2 of 2 done; task 11 waits for Nov 24)
+# State (Nov 23, 2026, brief 05b all built; Nov 24 confirms the offer is gone and ticks acceptance)
 
 From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the owner", ask Carlos.
 
 ## Live now
-- Site EN + /es. Briefs 01–05 and 05b done (05b task 11 on Nov 24). Ads relaunch after OWNER-ACTIONS 7–9.
+- Site EN + /es. Briefs 01–05 and 05b done (05b's production check on Nov 24). Ads relaunch after OWNER-ACTIONS 7–9.
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
+  /es price line: "Traslado gratis hasta 30 millas de Miami Beach" (Carlos, Nov 23: fits the first screen).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
 - Pay link (decision #22): the $50 first (total with travel, refund line above the button); after paying, the same
   page asks home + ages (required) + backdrops, each a form; saves rebuild the Outlook event. Both reminders ask for
@@ -13,21 +14,21 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - Smooth scrolling only without reduced motion (lib/scroll.ts) on /book, cancel, reschedule, review and the logo.
 
 ## Next
-- Nov 24: check the offer is gone (task 11): ad page, home, /bundles, /book, EN + ES: no offer box, was/now, "Offer
-  ends" or cents prices. Then re-measure /es at 390 × 664 and tick 05b's acceptance.
+- Nov 24 (after midnight Miami): on production, ad page, home, /bundles, /book, EN + ES: no "Offer ends", was/now,
+  offer badge or cents price. No code change needed (task 11 audit, Nov 23): every surface goes through
+  `activeOffer(bundle, today in Miami)`, pages render per request, no seasonal box renders any more. Then measure
+  the 4 first screens at 390 × 664 and tick 05b's acceptance.
 - Then wait for Carlos's updated brief 06. Pre-render/page speed goes into brief 06 (Carlos).
 
-## Spanish first screen at 390 × 664 (iPhone WebKit, production; fold 664)
-- Before (Nov 22, 05b s1 live): /es ad page review ends 680 px (price line 3 lines with "$179.10");
-  /es/book month header 719 px (help 3 lines; rows end 589 px, names wrap beside offer cents). EN: 660 / 655.
-- After (Nov 23, session 2 live): /es ad page review 680 px (unchanged; price line still 3 lines); /es/book month
-  header 699 px (help 2 lines; rows end 569 px). EN: 660 / 635. Both /es screens still don't fit.
-- Review was already 2 lines; what's left is the price line and the bundle rows. The offer's cents end Nov 23 and
-  Adrian's Pricing step changes the rows: measure again on Nov 24 before changing any layout.
+## First phone screen at 390 × 664 (iPhone WebKit, production; fold 664)
+- Nov 23 (offer live): /es ad page review ends 680 px (price line 3 lines); /es/book month header 699 px. EN 660 / 635.
+- Nov 24 forecast (live page, offer prices swapped for regular ones, new travel line): /es ad page 660 (2 lines),
+  /es/book 655 (cents were what wrapped the rows); EN 660 / 635. All fit. Adrian's Pricing rows (05b owner step)
+  forecast the same 655. 4–9 px to spare: re-measure after Spanish copy or bundle changes.
 
 ## Waiting on owner (Carlos)
 - Adrian, /admin → Pricing (05b owner steps 1–2): new bundle prices/hours/photos; Spanish features.
-- Spanish review: docs/spanish-review.md (Adrian or Alondra), session 2 strings added.
+- Spanish review: docs/spanish-review.md (Adrian or Alondra), session 2 strings + the travel line added.
 - /admin → Photos: "Big top photo"; rename "IMG 7378", "UPDATED 10", "Adrian BTS", "Alondra BTS"; Spanish photo
   names ("manda" → "manta"; accents in "Bebé", "Detrás", "Cálido").
 - Geraldine (Dec 10): her address via her link/Prepare page, or an /admin "Edit address" (owner to pick).
