@@ -314,7 +314,7 @@
       "title": "¿Cuándo vamos?",
       "here": "Ya nació",
       "notBorn": "Todavía no nace",
-      "hereHelp": "Elige un día y una hora de inicio. Lo ideal es en las primeras dos semanas (del día 5 al 14). También podemos ir hasta las 4 semanas.",
+      "hereHelp": "Elige un día y una hora. Lo ideal: del día 5 al 14, hasta 4 semanas.",
       "notBornHelp": "Elige la fecha más cercana a tu fecha de parto. Cuando nazca tu bebé, escríbenos y elegimos un día entre el día 5 y el 14.",
       "dueLabel": "Fecha en que esperan al bebé",
       "dueWindow": "Elige una fecha entre hoy y el {date}.",

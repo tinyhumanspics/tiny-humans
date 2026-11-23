@@ -128,7 +128,7 @@
       "title": "When should we come?",
       "here": "Baby is here",
       "notBorn": "Not born yet",
-      "hereHelp": "Pick a day and a start time. Best in the first two weeks (days 5–14). We can still come up to 4 weeks.",
+      "hereHelp": "Pick a day and a start time. Best at days 5–14, up to 4 weeks.",
       "notBornHelp": "Pick the date closest to your due date. When baby arrives, text us and we'll set a day between days 5 and 14.",
       "dueLabel": "Your due date",
       "dueWindow": "Pick a due date from today to {date}.",
