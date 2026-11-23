@@ -34,7 +34,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { refundDeposit } from "./refund";
 import { dbReason, depositOf } from "./server";
-import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState, type LinkBaby, type LinkHome } from "./types";
+import { DEPOSIT_HOLD_MINUTES, isOwnerBooked, payPageWindow, type DepositReturnState, type LinkBaby, type LinkDetails, type LinkHome } from "./types";
 import { setupsOf } from "@/config/backdrops";
 import { backdropsFor, saveBackdrops } from "@/lib/booking/backdrops";
 import { getCatalog } from "@/lib/pricing/server";
@@ -43,7 +43,8 @@ import { markRequestBooked } from "@/lib/requests/store";
 /**
  * The deposit, paid from the family's link after the owner confirms (brief 02: nothing is paid on /book):
  * 1. The owner's booking is saved as "pending" (it blocks its time like any booking) with a booking_deposits row held
- *    48 h; the family's link asks for their backdrops and opens a Stripe page when they press Pay (`payWithLink`).
+ *    48 h; the family's link shows the session and its total, and opens a Stripe page when they press Pay
+ *    (`payWithLink`). Once it's paid, the same page asks for their home, ages and backdrops (decision #22).
  * 2. Paid (webhook, or the page they come back to, whichever is first) → the booking is confirmed: Outlook event,
  *    confirmation + studio emails, Meta "Schedule", and its website request marked booked. A short lease on the
  *    deposit row makes one request do it.
@@ -114,8 +115,8 @@ export async function reopenDeposit(row: Booking): Promise<NonNullable<BookingRe
 
 /**
  * A booking the owner made for a family (/admin → Quotes / Booking, owner Nov 12): its time is held `holdHours` (48)
- * for the family's link, which asks for their backdrops and opens a Stripe page when they press Pay
- * (`payWithLink`). No page is opened now: Stripe pages close within 24 hours, and the family may open the link later.
+ * for the family's link, which opens a Stripe page when they press Pay (`payWithLink`). No page is opened now: Stripe
+ * pages close within 24 hours, and the family may open the link later.
  */
 export async function openOwnerDeposit(row: Booking, amountCents: number, holdHours: number, now = new Date()): Promise<NonNullable<BookingResult["deposit"]> | null> {
   const reference = row.bookingReference;
@@ -143,8 +144,6 @@ export async function payWithLink(reference: string, now = new Date()): Promise<
   if (!row || !d) throw new BookingError("invalid_request", t.invalidTitle);
   if (d.status === "paid" || row.status === "confirmed" || row.status === "rescheduled") throw new BookingError("invalid_request", t.confirmingTitle);
   if (row.status !== "pending" || d.status !== "pending" || !d.holdUntil || d.holdUntil.getTime() <= now.getTime()) throw new BookingError("invalid_request", t.expiredTitle);
-  // a booking the owner confirmed: the baby's age comes first (owner, Nov 20)
-  if (isOwnerBooked(row) && (await linkBabiesOf(row.id)).some((b) => !isBabyAge(b.age))) throw new BookingError("invalid_request", t.missingAge);
   const open = await reopenDeposit(row).catch(() => null);
   if (open?.url) return open.url;
   if (!isStripeConfigured()) throw new BookingError("server_error", t.error);
@@ -178,17 +177,28 @@ async function linkBabiesOf(bookingId: string): Promise<LinkBaby[]> {
 /** One of the booking form's ages ("Newborn (0–2 weeks)" … "Not born yet"). */
 const isBabyAge = (age: string | undefined): age is string => (babyAgeOptions as readonly string[]).includes(age ?? "");
 
+/** A family's link takes their home, ages and backdrops (a booking the owner made) while it stands, until the session starts. */
+const linkOpen = (row: Booking, now = new Date()) => isOwnerBooked(row) && ["pending", "confirmed", "rescheduled"].includes(row.status) && row.sessionStart.getTime() > now.getTime();
+
+/** What the family's link shows after the deposit: their first name, backdrops (allowed + picked), home and babies. */
+async function linkDetailsOf(row: Booking): Promise<LinkDetails> {
+  const [bundle, saved, home, babies] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => []), linkHomeOf(row), linkBabiesOf(row.id).catch(() => [])]);
+  return { name: row.parentName.split(" ")[0], backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] }, home, babies };
+}
+
+const reload = async (id: string) => (await getDb().select().from(bookings).where(eq(bookings.id, id)).limit(1))[0];
+
 /**
- * The family's home on their link, before the deposit (owner, Nov 16: no more texting the address): saved on the booking,
- * so /admin's Directions, the calendar event (made when the deposit is paid) and the emails all have it. The ZIP stays
- * the request's (the travel fee was priced on it). With it each baby's age (required, owner Nov 20) and, optionally, the
- * name and boy or girl (owner, Nov 19).
+ * The family's home on their link, right after the deposit (decision #22; owner, Nov 16: no more texting the address):
+ * saved on the booking, so /admin's Directions, the calendar event (the caller rebuilds it, see afterBackdropChange) and
+ * the emails all have it. The ZIP stays the request's (the travel fee was priced on it). With it each baby's age
+ * (required, owner Nov 20) and, optionally, the name and boy or girl (owner, Nov 19). Returns the booking as saved.
  */
-export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }, babies?: { name?: string; gender?: GenderChoice; age?: string }[]): Promise<{ home: LinkHome; babies: LinkBaby[] }> {
+export async function saveLinkHome(reference: string, input: { street: string; city: string; accessNotes?: string }, babies?: { name?: string; gender?: GenderChoice; age?: string }[]): Promise<{ home: LinkHome; babies: LinkBaby[]; row: Booking }> {
   const db = getDb();
   const [row] = await db.select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
   const t = (row?.locale === "es" ? es : en).bookingFlow.depositReturn;
-  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", t.invalidTitle);
+  if (!row || !linkOpen(row)) throw new BookingError("invalid_request", t.invalidTitle);
   // every baby's age is required (owner, Nov 20: "otherwise we won't know what clothes to bring")
   const before = await linkBabiesOf(row.id);
   const ages = before.map((b, i) => babies?.[i]?.age ?? b.age);
@@ -211,18 +221,19 @@ export async function saveLinkHome(reference: string, input: { street: string; c
     if (names[0] !== before[0].name || ages[0] !== before[0].age) await db.update(bookings).set({ babyName: names[0] || null, babyAge: ages[0], updatedAt: new Date() }).where(eq(bookings.id, row.id));
     await saveBabyGenders(row.id, before.map((b) => b.gender), before.map((b, i) => babies[i]?.gender ?? b.gender));
   }
-  return { home: { ...homeOf(line), accessNotes: notes }, babies: babies && before.length ? await linkBabiesOf(row.id) : before };
+  return { home: { ...homeOf(line), accessNotes: notes }, babies: babies && before.length ? await linkBabiesOf(row.id) : before, row: (await reload(row.id)) ?? row };
 }
 
-/** The family's backdrop picks on their link (a booking the owner made, still waiting on its deposit). */
-export async function saveLinkBackdrops(reference: string, picks: string[]): Promise<string[]> {
+/** The family's backdrop picks on their link (a booking the owner made). Returns them, the picks before and the booking. */
+export async function saveLinkBackdrops(reference: string, picks: string[]): Promise<{ picks: string[]; before: string[]; row: Booking }> {
   const [row] = await getDb().select().from(bookings).where(eq(bookings.bookingReference, reference)).limit(1);
-  if (!row || row.status !== "pending" || !isOwnerBooked(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
+  if (!row || !linkOpen(row)) throw new BookingError("invalid_request", (row?.locale === "es" ? es : en).bookingFlow.depositReturn.invalidTitle);
   const bundle = (await getCatalog()).find((b) => b.id === row.packageId);
   const allowed = bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1;
   const kept = [...new Set(picks)].slice(0, allowed);
+  const before = (await backdropsFor([row.id]).catch(() => []))[0]?.picks ?? [];
   await saveBackdrops(row.id, kept, "family");
-  return kept;
+  return { picks: kept, before, row };
 }
 
 export type PaidOutcome = "confirmed" | "confirming" | "failed" | "recorded" | "unknown";
@@ -671,14 +682,27 @@ export async function depositReturnState(reference: string, client: ClientContex
   }
   if (!row) return { state: "invalid" };
   const start = localTime(row.sessionStart, row.timezone);
-  if (row.status === "confirmed" || row.status === "rescheduled") return { state: "confirmed", booking: await resultOf(row) };
+  if (row.status === "confirmed" || row.status === "rescheduled") {
+    // booked by the owner: right after paying, the same page asks for their home, ages and backdrops (decision #22)
+    const [booking, link] = await Promise.all([resultOf(row), linkOpen(row) ? linkDetailsOf(row) : undefined]);
+    return link ? { state: "confirmed", booking, link } : { state: "confirmed", booking };
+  }
   if (row.status === "pending" && deposit?.status === "paid") return { state: "confirming" };
   if (row.status === "pending") {
-    const waiting = { state: "waiting" as const, amountCents: deposit?.amountCents ?? 0, holdUntil: deposit?.holdUntil?.toISOString() ?? null, date: row.sessionDate, start, end: localTime(row.sessionEnd, row.timezone), bundleName: row.packageName, payUrl };
-    if (!isOwnerBooked(row)) return waiting;
-    // booked by the owner: the family adds their home address and picks their backdrops here, then pays
-    const [bundle, saved, home, babies] = await Promise.all([getCatalog().then((all) => all.find((b) => b.id === row!.packageId)).catch(() => undefined), backdropsFor([row.id]).catch(() => []), linkHomeOf(row), linkBabiesOf(row.id).catch(() => [])]);
-    return { ...waiting, ownerBooked: true, backdrops: { allowed: bundle ? setupsOf([bundle.setups, ...bundle.features]) : 1, picks: saved[0]?.picks ?? [] }, home, babies };
+    const rules = await getAvailabilityRules();
+    return {
+      state: "waiting",
+      amountCents: deposit?.amountCents ?? 0,
+      holdUntil: deposit?.holdUntil?.toISOString() ?? null,
+      date: row.sessionDate,
+      start,
+      end: localTime(row.sessionEnd, row.timezone),
+      bundleName: row.packageName,
+      payUrl,
+      name: row.parentName.split(" ")[0],
+      totalCents: totalCents(row),
+      noticeHours: await noticeHoursFor(row, rules.limits.rescheduleNoticeHours),
+    };
   }
   if (deposit?.status === "expired") return { state: "expired", date: row.sessionDate, start, bundleName: row.packageName };
   return { state: "invalid" };

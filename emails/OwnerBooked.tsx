@@ -24,7 +24,7 @@ export interface OwnerBookedDetails {
 
 interface Options {
   themeId: string;
-  /** The family's signed link: pick backdrops, then pay the deposit. */
+  /** The family's signed link: pay the deposit, then their home, ages and backdrops. */
   url: string;
   images?: ImageMode;
   locale?: EmailLocale;

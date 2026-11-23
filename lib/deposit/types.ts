@@ -69,15 +69,28 @@ export interface DepositOffer {
   noticeHours: number;
 }
 
+/**
+ * What a family adds on their link once the deposit is paid (decision #22: the $50 first, these right after, on the
+ * same page): their home, each baby's age (and, optional, name and boy or girl), their backdrops.
+ */
+export interface LinkDetails {
+  /** Their first name. */
+  name: string;
+  /** How many backdrops the bundle allows + what's picked. */
+  backdrops: { allowed: number; picks: string[] };
+  /** Their home as saved (the ZIP comes from the request). */
+  home: LinkHome;
+  /** One per baby; empty = nothing to ask. */
+  babies: LinkBaby[];
+}
+
 /** GET /api/booking/deposit/status: the booking page after Stripe. */
 export type DepositReturnState =
-  | { state: "confirmed"; booking: BookingResult }
+  /** `link`: a booking the owner made for them, before its session: the page asks for their home, ages and backdrops. */
+  | { state: "confirmed"; booking: BookingResult; link?: LinkDetails }
   /** Paid; the calendar event and emails are still being done (or retried). */
   | { state: "confirming" }
-  /**
-   * Not paid yet; the time is held until `holdUntil`. `ownerBooked`: the owner booked it for them, so the page asks for
-   * their backdrops (`backdrops`: how many the bundle allows + what's picked) and then the deposit.
-   */
+  /** Not paid yet; the time is held until `holdUntil`. The page shows the session, its total and the Pay button. */
   | {
       state: "waiting";
       amountCents: number;
@@ -87,12 +100,12 @@ export type DepositReturnState =
       end: string;
       bundleName: string;
       payUrl: string | null;
-      ownerBooked?: boolean;
-      backdrops?: { allowed: number; picks: string[] };
-      /** Their home as saved (owner Nov 16: asked on this page before the deposit; the ZIP comes from the request). */
-      home?: LinkHome;
-      /** One per baby: the name and boy or girl, both optional (owner, Nov 19); empty = nothing to ask. */
-      babies?: LinkBaby[];
+      /** Their first name. */
+      name: string;
+      /** Bundle + extra babies + travel (cents). */
+      totalCents: number;
+      /** Cancelling at least this many hours before refunds the deposit. */
+      noticeHours: number;
     }
   /** Never paid: the time was released. */
   | { state: "expired"; date: string; start: string; bundleName: string }

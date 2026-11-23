@@ -413,6 +413,8 @@ select.input option { background: var(--chalkboard-dark); color: var(--chalk-whi
 
 /* A family's link for a session the owner booked for them: 1) backdrops, 2) the deposit (OwnerBookedSteps) */
 .ownerStep { display: grid; gap: 10px; justify-items: center; width: 100%; margin-top: 18px; padding-top: 16px; border-top: 2px dashed color-mix(in srgb, var(--chalk-white) 18%, transparent); }
+/* the backdrop step's form: the step's own layout, without its border */
+.ownerForm { display: grid; gap: 10px; justify-items: center; width: 100%; }
 .ownerStepTitle { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.4rem; color: var(--sun-yellow); }
 .ownerStepNote { margin: 0; font-size: 1rem; color: var(--chalk-muted); text-align: center; }
 .ownerStepChange { padding: 0 2px; border: 0; background: none; color: var(--cloud-blue); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

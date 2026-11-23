@@ -22,8 +22,8 @@ const fill = (template: string, values: Record<string, string>) => template.repl
 /**
  * /book (brief 02): the request flow (when → your details → request sent), for ?bundle= or a bundle picked on screen.
  * It also opens the two links families get from us:
- * - ?deposit=<reference>&k=<signature>: a booking the owner made (Requests): home, backdrops, then the
- *   deposit, then its status;
+ * - ?deposit=<reference>&k=<signature>: a booking the owner made (Requests): the deposit first, then their home,
+ *   ages and backdrops (decision #22);
  * - ?due=<token>: a due-date reservation's schedule link: the request flow for its bundle, kept price and details;
  * - ?link=<token>: the owner's booking link (owner, Nov 19): the request flow filled in with the session they agreed.
  * ?inspiration=<photo id> (a portfolio photo) shows at the top and goes with the request.

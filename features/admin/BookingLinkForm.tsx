@@ -158,7 +158,7 @@ export default function BookingLinkForm({ api }: { api: AdminApi }) {
             <ChalkButton variant="outline" onClick={() => copy("text")} seed={972}>{copied === "text" ? "Text copied ✓" : "Copy a text message"}</ChalkButton>
           </div>
           <p className={cn(styles.muted, "chalk-soft")}>
-            Their page opens with all of this filled in: they add their name, phone and email and send it. It shows up in Requests as &ldquo;From your link&rdquo;: confirm it there and they get the pay link (home address, backdrop, deposit). The link works once, until that day.
+            Their page opens with all of this filled in: they add their name, phone and email and send it. It shows up in Requests as &ldquo;From your link&rdquo;: confirm it there and they get the pay link (deposit, then home address, ages and backdrop). The link works once, until that day.
           </p>
           <p className={cn(styles.hintSmall, "chalk-soft")}>
             <Link href="/admin/requests">Open Requests</Link> · <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={again}>Make another link</button>

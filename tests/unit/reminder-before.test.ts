@@ -43,3 +43,27 @@ describe("day-before reminder: Before we arrive (owner, Nov 20)", () => {
     expect(mail.text).toContain(`- Booked Our Family Story? Have everyone who's joining dressed and ready. Soft, solid colors (no logos or busy patterns) look best.\n- ${b.day[0]}`);
   });
 });
+
+describe("both reminders ask for the home and baby's age until they're saved (decision #22: the $50 first)", () => {
+  const homeUrl = "https://www.tinyhumans.photography/book?bundle=our-little-story&deposit=TH-20261205-4821&k=sig";
+
+  test("with their link: the ask and its button, in the HTML and the plain text, EN and ES, 72 h and 24 h", async () => {
+    for (const kind of ["72h", "24h"] as const) {
+      const mail = await sessionReminderEmail(kind, details, { ...opts, homeUrl });
+      expect(mail.html).toContain(en.emails.addHome.title);
+      expect(mail.html).toContain(en.emails.addHome.button);
+      expect(mail.html).toContain(`href="${homeUrl.replaceAll("&", "&amp;")}"`);
+      expect(mail.text).toContain(`Two quick things so we come ready: your home address and your baby's age. Add them here: ${homeUrl}`);
+    }
+    const es72 = await sessionReminderEmail("72h", details, { ...opts, homeUrl, locale: "es" });
+    expect(es72.text).toContain(`Agrégalas aquí: ${homeUrl}`);
+  });
+
+  test("once both are saved (no link given), nothing is asked", async () => {
+    for (const kind of ["72h", "24h"] as const) {
+      const mail = await sessionReminderEmail(kind, details, opts);
+      expect(mail.html).not.toContain(en.emails.addHome.title);
+      expect(mail.text).not.toContain("Two quick things");
+    }
+  });
+});

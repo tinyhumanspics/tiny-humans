@@ -25,6 +25,8 @@ interface Options {
   rescheduleUrl?: string;
   /** Backdrop page (pick or change), while it's still more than a day away. */
   backdropUrl?: string;
+  /** Their pay link, while their street or a baby's age is still missing (a booking the owner made, decision #22). */
+  homeUrl?: string;
   rescheduleNoticeHours?: number;
   images?: ImageMode;
   locale?: EmailLocale;
@@ -59,6 +61,21 @@ function beforeWeArrive(r: ReminderDetails, today: string, locale: EmailLocale):
   return { title: b.title, groups: [...before, { title: b.arriveTitle, items: b.arrive, numbered: true }] };
 }
 
+/** "Two quick things so we come ready" + a button to their link, until their home and every baby's age are saved. */
+function AddHome({ theme: t, locale, url }: { theme: EmailTheme; locale: EmailLocale; url: string }) {
+  const x = emailMessages(locale).addHome;
+  return (
+    <>
+      <Paragraph theme={t} align="center">
+        <b>{x.title}</b>
+        <br />
+        {x.text}
+      </Paragraph>
+      <ChalkButton theme={t} label={x.button} href={url} variant="solid" />
+    </>
+  );
+}
+
 export function SessionReminder({
   kind,
   details: r,
@@ -69,8 +86,9 @@ export function SessionReminder({
   rescheduleUrl,
   rescheduleNoticeHours,
   backdropUrl,
+  homeUrl,
   swatches,
-}: { kind: ReminderKind; details: ReminderDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; today: string; rescheduleUrl?: string; rescheduleNoticeHours?: number; backdropUrl?: string; swatches: EmailSwatch[] }) {
+}: { kind: ReminderKind; details: ReminderDetails; theme: EmailTheme; images: EmailImageSet; locale: EmailLocale; today: string; rescheduleUrl?: string; rescheduleNoticeHours?: number; backdropUrl?: string; homeUrl?: string; swatches: EmailSwatch[] }) {
   const { m, first, day, weekday, date, start, time } = content(r, today, locale);
   const rows: [string, string][] = [
     [m.common.date, date],
@@ -91,6 +109,7 @@ export function SessionReminder({
           {x.intro}
         </Paragraph>
         <Details theme={t} rows={rows} />
+        {homeUrl && <AddHome theme={t} locale={locale} url={homeUrl} />}
         <ChalkList theme={t} title={m.prepGuide.title} items={prepGuideItems(locale, Boolean(r.depositPaid))} />
         <BackdropChoice theme={t} locale={locale} picks={r.backdrops ?? []} swatches={swatches} url={backdropUrl} reminder />
         <Paragraph theme={t} align="center">
@@ -113,6 +132,7 @@ export function SessionReminder({
         {fill(x.intro, { day, time: start })}
       </Paragraph>
       <Details theme={t} rows={rows} />
+      {homeUrl && <AddHome theme={t} locale={locale} url={homeUrl} />}
       <ChalkGroups theme={t} {...beforeWeArrive(r, today, locale)} />
       <Paragraph theme={t} align="center">
         {payAfterLine(locale, Boolean(r.depositPaid))}
@@ -137,7 +157,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   const backdrop = kind === "72h" ? backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined) : { swatches: [], attachments: [] };
   const { m, first, day, weekday, date, start, time } = content(r, opts.today, locale);
   const html = await renderHtml(
-    <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} backdropUrl={opts.backdropUrl} swatches={backdrop.swatches} />,
+    <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} backdropUrl={opts.backdropUrl} homeUrl={opts.homeUrl} swatches={backdrop.swatches} />,
   );
   const details = (withAccess: boolean): (string | false)[] => [
     `${m.common.date}: ${date}`,
@@ -149,6 +169,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   ];
   const textUs = fill(m.common.textUs, { phone: site.contact.phone });
   const signature = fill(m.layout.signature, { email: site.contact.email ?? "" });
+  const addHome: (string | false)[] = opts.homeUrl ? ["", fill(m.addHome.textLine, { url: opts.homeUrl })] : [];
 
   if (kind === "72h") {
     const x = m.reminder72;
@@ -158,6 +179,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       x.intro,
       "",
       ...details(false),
+      ...addHome,
       "",
       `${m.prepGuide.title}:`,
       ...prepGuideItems(locale, Boolean(r.depositPaid)).map((i) => `- ${i}`),
@@ -180,6 +202,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     fill(x.intro, { day, time: start }),
     "",
     ...details(true),
+    ...addHome,
     "",
     before.title,
     ...before.groups.flatMap((g) => ["", `${g.title}:`, ...g.items.map((item, i) => (g.numbered ? `${i + 1}. ${item}` : `- ${item}`))]),

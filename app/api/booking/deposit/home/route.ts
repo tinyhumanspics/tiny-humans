@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { z } from "zod";
 import { isDatabaseConfigured } from "@/lib/db/client";
+import { afterBackdropChange } from "@/lib/booking/backdrop-page";
 import { BookingError } from "@/lib/booking/errors";
 import { homeInput } from "@/lib/booking/validation";
 import { saveLinkHome } from "@/lib/deposit/flow";
@@ -14,8 +15,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/booking/deposit/home { b, k, home, babies? }: a family adds their home address on the link the owner sent them,
- * before the deposit (owner, Nov 16), so /admin's Directions opens their door; each baby's age (required, owner Nov 20)
- * and, optionally, the name and boy or girl (owner, Nov 19).
+ * right after the deposit (decision #22), so /admin's Directions opens their door; each baby's age (required, owner
+ * Nov 20) and, optionally, the name and boy or girl (owner, Nov 19). A paid booking's Outlook event follows.
  */
 const babiesInput = z.array(z.object({ name: z.string().trim().max(80).optional(), gender: z.enum(["boy", "girl", ""]).optional(), age: z.string().max(40).optional() })).max(3).optional();
 
@@ -31,7 +32,10 @@ export async function POST(req: Request) {
   const babies = babiesInput.safeParse(body?.babies);
   if (!babies.success) return NextResponse.json({ error: en.bookingFlow.depositReturn.error, code: "invalid_request" }, { status: 400 });
   try {
-    return NextResponse.json(await saveLinkHome(reference, home.data, babies.data), { headers: { "cache-control": "no-store" } });
+    const saved = await saveLinkHome(reference, home.data, babies.data);
+    // the calendar event (once paid) gets the address; same picks before and after, so no backdrop email
+    after(() => afterBackdropChange(saved.row, [], []));
+    return NextResponse.json({ home: saved.home, babies: saved.babies }, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.deposit", "Link home not saved", { reference, error: err as Error });

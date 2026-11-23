@@ -41,11 +41,11 @@ describe("owner bookings: the family's email and the text to copy", () => {
   const d = { parentName: "Ana Rivera", bundleName: "Our Little Story", date: "2026-11-20", start: "12:00", untilDate: "2026-11-14", untilTime: "20:12", amountCents: 5000 };
   const url = "https://www.tinyhumans.photography/book?bundle=our-little-story&deposit=TH-20261112-4459&k=sig";
 
-  test("English: saved, two steps, held until a day and time, one button to their link", async () => {
+  test("English: saved, the $50 first then home, age and backdrop (decision #22), held until a day and time, one button to their link", async () => {
     const mail = await ownerBookedEmail(d, { themeId: "default", url });
     expect(mail.subject).toBe("We saved your Tiny Humans session");
     expect(mail.text).toContain("We saved your session, Ana!");
-    expect(mail.text).toContain("Our Little Story on Friday, November 20, 2026 at 12:00 pm, at your home. To confirm it: add your home address and your baby's age, pick your backdrop, then pay the $50 deposit.");
+    expect(mail.text).toContain("Our Little Story on Friday, November 20, 2026 at 12:00 pm, at your home. To book it, pay the $50 deposit. Then add your home address and your baby's age, and pick your backdrop.");
     expect(mail.text).toContain("We're holding this time for you until Saturday, November 14, 2026, 8:12 pm (Miami time).");
     expect(mail.text).toContain(`Finish your booking: ${url}`);
     expect(mail.html).toContain(`href="${url.replaceAll("&", "&amp;")}"`);
@@ -58,7 +58,7 @@ describe("owner bookings: the family's email and the text to copy", () => {
     expect(mail.subject).toBe("Guardamos tu sesión de Tiny Humans");
     expect(mail.text).toContain("¡Guardamos tu sesión, Ana!");
     expect(mail.html).toContain("Terminar mi reserva");
-    expect(ownerBookedSms(d, url, "en")).toBe(`Hi Ana! We saved Friday, November 20, 2026 at 12:00 pm for your Tiny Humans session. Add your address and your baby's age, pick your backdrop and pay the $50 deposit to confirm it here: ${url}`);
+    expect(ownerBookedSms(d, url, "en")).toBe(`Hi Ana! We saved Friday, November 20, 2026 at 12:00 pm for your Tiny Humans session. Pay the $50 deposit to book it, then add your address, your baby's age and your backdrop here: ${url}`);
     expect(ownerBookedSms(d, url, "es")).toMatch(/^¡Hola Ana! Guardamos el viernes, 20 de noviembre de 2026 a las 12:00 p\. m\./);
   });
 });

@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { isDatabaseConfigured } from "@/lib/db/client";
+import { afterBackdropChange } from "@/lib/booking/backdrop-page";
 import { BookingError } from "@/lib/booking/errors";
 import { backdropPicks } from "@/lib/booking/validation";
 import { saveLinkBackdrops } from "@/lib/deposit/flow";
@@ -13,7 +14,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/booking/deposit/backdrops { b, k, picks }: a family picks their backdrops on the link the owner sent them
- * (a booking made in /admin → Quotes / Booking, still waiting on its deposit). At most the bundle's setups count.
+ * (a booking made in /admin → Quotes / Booking), right after the deposit. At most the bundle's setups count. A change
+ * emails the studio and updates the Outlook event, as on the Prepare page.
  */
 export async function POST(req: Request) {
   if (!(await allow("depositPost", clientIp(req)))) return NextResponse.json({ error: "Too many requests. Please wait a few minutes.", code: "rate_limited" }, { status: 429 });
@@ -25,7 +27,9 @@ export async function POST(req: Request) {
   if (!reference || !isDatabaseConfigured()) return NextResponse.json({ error: en.bookingFlow.depositReturn.invalidTitle, code: "invalid_request" }, { status: 400 });
   if (!picks.success) return NextResponse.json({ error: picks.error.issues[0]?.message ?? "Pick a backdrop.", code: "invalid_request" }, { status: 400 });
   try {
-    return NextResponse.json({ picks: await saveLinkBackdrops(reference, picks.data) }, { headers: { "cache-control": "no-store" } });
+    const saved = await saveLinkBackdrops(reference, picks.data);
+    after(() => afterBackdropChange(saved.row, saved.before, saved.picks));
+    return NextResponse.json({ picks: saved.picks }, { headers: { "cache-control": "no-store" } });
   } catch (err) {
     if (err instanceof BookingError) return NextResponse.json({ error: err.message, code: err.code }, { status: err.status });
     log.error("api.deposit", "Link backdrops not saved", { reference, error: err as Error });

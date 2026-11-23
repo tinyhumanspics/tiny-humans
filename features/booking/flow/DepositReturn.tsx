@@ -16,6 +16,7 @@ import type { AppLocale } from "@/i18n/config";
 import type en from "@/messages/en.json";
 import Confirmation from "./Confirmation";
 import OwnerBookedSteps from "./OwnerBookedSteps";
+import PayDeposit from "./PayDeposit";
 import styles from "./Booking.module.css";
 
 const POLL_MS = 2500;
@@ -26,9 +27,9 @@ const PAID_RETRIES = 6;
 
 
 /**
- * The booking page after the deposit's Stripe page (/book?bundle=…&deposit=<reference>&k=<signature>[&paid=1]):
- * the confirmation once it's paid, "your date isn't confirmed yet" while the time is still held, or "this time is no
- * longer held" after it was released.
+ * The family's pay link and the page after its Stripe page (/book?bundle=…&deposit=<reference>&k=<signature>[&paid=1]):
+ * the session and the Pay button while the time is held, then (paid) their home, ages and backdrops for a booking the
+ * owner made, else the confirmation; or "this time is no longer held" after it was released.
  */
 export default function DepositReturn({ bundleId, reference, signature, paid, locale, messages }: { bundleId: string; reference: string; signature: string; paid: boolean; locale: AppLocale; messages: typeof en.bookingFlow }) {
   const id = "book";
@@ -78,6 +79,8 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
     if (!state) return <p className={cn(styles.confirmText, "chalk-soft")}>{error ?? t.checking}</p>;
     switch (state.state) {
       case "confirmed":
+        // a booking the owner made for them: right after paying, their home, ages and backdrops (decision #22)
+        if (state.link) return <OwnerBookedSteps link={state.link} reference={reference} signature={signature} messages={messages} headingRef={headingRef} />;
         return <Confirmation result={state.booking} headingRef={headingRef} onReset={() => router.push(bundlesHref(undefined, locale))} locale={locale} messages={messages} />;
       case "confirming":
         return (
@@ -88,8 +91,8 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
           </div>
         );
       case "waiting":
-        // a booking the owner confirmed for them (Requests): their home, backdrops, then pay
-        return <OwnerBookedSteps state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
+        // the time is held: the $50 first (decision #22)
+        return <PayDeposit state={state} reference={reference} signature={signature} locale={locale} messages={messages} headingRef={headingRef} />;
       case "expired":
         return (
           <div className={styles.confirm}>
@@ -112,7 +115,8 @@ export default function DepositReturn({ bundleId, reference, signature, paid, lo
   return (
     <section id={id} className={styles.section} aria-labelledby={`${id}-title`}>
       <div className="container">
-        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={state?.state === "waiting" && state.ownerBooked ? t.bookedSubtitle : messages.section.subtitle} slot="book" level={1} />
+        {/* the pay link's own title says it all; "Pick a day and time…" fits only picking a time */}
+        <SectionHeading id={`${id}-title`} title={messages.section.title} subtitle={state?.state === "waiting" || (state?.state === "confirmed" && state.link) ? undefined : messages.section.subtitle} slot="book" level={1} />
         <div className={styles.panelAnchor} data-booking-panel>
           <ChalkBox className={styles.panel} seed={7} wobble={4} strokeWidth={3}>
             <div aria-live="polite">{body()}</div>
