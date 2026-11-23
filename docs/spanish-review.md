@@ -25,6 +25,7 @@ The pay link now takes the $50 first; the home, ages and backdrops come right af
 | `emails.addHome.text` | Your home address and your baby's age (it tells us which outfits to bring). | Tu dirección y la edad de tu bebé (así sabemos qué ropita llevar). |
 | `emails.addHome.button` | Add them now | Agregarlas ahora |
 | `emails.addHome.textLine` | Two quick things so we come ready: your home address and your baby's age. Add them here: {url} | Dos cosas rápidas para llegar listos: tu dirección y la edad de tu bebé. Agrégalas aquí: {url} |
+| `landing.price.travel` (Nov 23, Carlos: fits the ad page's first phone screen) | Free travel within {miles} miles of Miami Beach | Traslado gratis hasta {miles} millas de Miami Beach |
 
 ## Brief 05b, session 1 (Nov 21, 2026)
 

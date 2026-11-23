@@ -60,7 +60,7 @@
         "one": "Con {deposit} apartas tu fecha, reembolsable hasta {notice} antes",
         "from": "Con un depósito desde {deposit} apartas tu fecha, reembolsable hasta {notice} antes"
       },
-      "travel": "Traslado sin costo a menos de {miles} millas de Miami Beach"
+      "travel": "Traslado gratis hasta {miles} millas de Miami Beach"
     },
     "proofLang": {"en": "en inglés", "es": "en español"},
     "textUs": "¿Preguntas? Escríbenos:",
