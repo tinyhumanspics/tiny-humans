@@ -665,7 +665,7 @@ function TravelFees({ api }: { api: AdminApi }) {
         </div>
         <div className={styles.ruleField}>
           <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-free">Free miles</label>
-          <input id="tf-free" className={cn(styles.input, styles.timeInput)} type="number" min={0} max={500} value={form.freeMiles} onChange={(e) => set("freeMiles", e.target.value)} placeholder="e.g. 30" />
+          <input id="tf-free" className={cn(styles.input, styles.timeInput)} type="number" min={0} max={500} value={form.freeMiles} onChange={(e) => set("freeMiles", e.target.value)} placeholder="e.g. 20" />
         </div>
         <div className={styles.ruleField}>
           <label className={cn(styles.label, "chalk-soft")} htmlFor="tf-price">Price per extra mile ($)</label>

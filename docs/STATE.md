@@ -6,7 +6,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
 - Owner (Nov 23–24): chalk intro on / and /es at every load; Shoots → Signature poses; no footer in /admin.
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
-  /es price line: "Traslado gratis hasta 30 millas de Miami Beach" (Carlos, Nov 23: fits the first screen).
+  /es price line: "Traslado gratis hasta 20 millas de Miami Beach" (fits the first screen; 20 free mi since Nov 24).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
 - Pay link (decision #22): the $50 first; after paying, the same
   page asks home + ages (required) + backdrops, each a form; saves rebuild the Outlook event. Both reminders ask for
