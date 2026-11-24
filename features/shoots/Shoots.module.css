@@ -75,10 +75,18 @@
 @media (max-width: 520px) { .doneCard { grid-template-columns: 1fr; } .doneCta { justify-self: start; } }
 
 /* what we always bring */
-.sections { display: grid; gap: 16px; max-width: 720px; margin-top: 16px; }
+/* side by side when there's room (owner, Nov 24: less scrolling); one column on phones */
+.sections { display: grid; gap: 16px; margin-top: 16px; align-items: start; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
 .items { resize: vertical; }
 .sectionFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
-.addRow { margin-top: 16px; }
+/* "+ Add a section" / "+ Add a pose" and the save line, pinned to the bottom of the screen while the list scrolls */
+.addBar {
+  position: sticky; bottom: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; margin-top: 16px;
+  padding: 10px 0 calc(10px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--chalkboard) 92%, transparent); backdrop-filter: blur(6px);
+  border-top: 2px dashed var(--chalk-faint);
+}
+.addBar .saved { margin: 0; }
 .saved { margin: 12px 0 0; min-height: 1.5em; font-size: 1rem; color: var(--chalk-muted); }
 .savedError { color: var(--chalk-error); }
 
@@ -300,7 +308,7 @@ a.linkVis:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset:
 
 /* ---------- signature poses (owner, Nov 24) ---------- */
 /* editing them (Shoots → Signature poses) */
-.poses { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 16px; max-width: 760px; }
+.poses { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 16px; align-items: start; grid-template-columns: repeat(auto-fill, minmax(min(100%, 360px), 1fr)); }
 .posesEmpty { margin-top: 16px; }
 .poseEdit { display: grid; gap: 12px; }
 .poseNum { margin: 0; font-family: var(--font-chalk); font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--chalk-muted); }

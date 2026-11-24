@@ -84,14 +84,15 @@ export default function BringLists() {
               <SectionCard key={s.id} section={s} focus={focusId === s.id} onState={onState} onRemoved={removed} />
             ))}
           </div>
-          <div className={css.addRow}>
+          {/* pinned to the bottom of the screen: no scrolling down to add one (owner, Nov 24) */}
+          <div className={css.addBar}>
             <button ref={addRef} type="button" className={cn(styles.addButton, css.addReset)} onClick={add} disabled={adding}>
               {adding ? "Adding…" : "+ Add a section"}
             </button>
+            <p className={cn(css.saved, pageState.kind === "error" ? css.savedError : "", "chalk-soft")} role="status">
+              {note ?? saveText(pageState)}
+            </p>
           </div>
-          <p className={cn(css.saved, pageState.kind === "error" ? css.savedError : "", "chalk-soft")} role="status">
-            {note ?? saveText(pageState)}
-          </p>
         </>
       )}
     </div>

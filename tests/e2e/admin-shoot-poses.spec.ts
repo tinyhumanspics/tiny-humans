@@ -85,7 +85,7 @@ test("Signature poses: name, photos, how to set it up, order and remove", async 
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
 
   // order: Taco first
-  await taco.getByRole("button", { name: "Move up (Taco)" }).click();
+  await taco.getByRole("button", { name: "← Move earlier (Taco)" }).click();
   await expect.poll(() => state.orders).toEqual([[TACO.id, CHIN.id]]);
   await expect(page.getByRole("listitem").filter({ has: page.getByLabel("Pose name") }).first()).toHaveAttribute("aria-label", "Taco");
 

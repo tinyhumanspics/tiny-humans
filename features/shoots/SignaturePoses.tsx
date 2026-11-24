@@ -83,7 +83,7 @@ export default function SignaturePoses() {
     setNote(null);
     try {
       await shootsApi.orderPoses(next.map((p) => p.id));
-      setNote(`Moved ${poseTitle(next[to])} ${step < 0 ? "up" : "down"}.`);
+      setNote(`Moved ${poseTitle(next[to])} ${step < 0 ? "earlier" : "later"}.`);
     } catch (err) {
       setPoses(before);
       setNote((err as Error).message);
@@ -139,7 +139,8 @@ export default function SignaturePoses() {
               ))}
             </ol>
           )}
-          <div className={css.addRow}>
+          {/* pinned to the bottom of the screen: no scrolling down to add one (owner, Nov 24) */}
+          <div className={css.addBar}>
             {poses.length >= POSE_LIMITS.poses ? (
               <p className={cn(styles.hintSmall, "chalk-soft")}>That&apos;s the most poses ({POSE_LIMITS.poses}).</p>
             ) : (
@@ -147,10 +148,10 @@ export default function SignaturePoses() {
                 {adding ? "Adding…" : "+ Add a pose"}
               </button>
             )}
+            <p className={cn(css.saved, pageState.kind === "error" ? css.savedError : "", "chalk-soft")} role="status">
+              {note ?? saveText(pageState)}
+            </p>
           </div>
-          <p className={cn(css.saved, pageState.kind === "error" ? css.savedError : "", "chalk-soft")} role="status">
-            {note ?? saveText(pageState)}
-          </p>
         </>
       )}
 
@@ -263,10 +264,10 @@ function PoseCard({
         <div className={css.sectionFoot}>
           <span className={css.moveRow}>
             <button type="button" className={styles.smallButton} onClick={() => onMove(-1)} disabled={!canUp}>
-              Move up<span className={styles.visuallyHidden}> ({title})</span>
+              ← Move earlier<span className={styles.visuallyHidden}> ({title})</span>
             </button>
             <button type="button" className={styles.smallButton} onClick={() => onMove(1)} disabled={!canDown}>
-              Move down<span className={styles.visuallyHidden}> ({title})</span>
+              Move later →<span className={styles.visuallyHidden}> ({title})</span>
             </button>
           </span>
           <button type="button" className={cn(styles.linkButton, "chalk-soft")} onClick={remove} disabled={removing}>
