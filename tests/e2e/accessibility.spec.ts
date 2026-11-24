@@ -188,14 +188,14 @@ test.describe("manual accessibility regression checks", () => {
     }, [es.header.portfolio, es.header.bundles, es.header.book]);
     for (const width of [320, 340, 351, 360, 374, 375, 390]) {
       await page.setViewportSize({ width, height: 800 });
-      // the header's phone layout applies on the next frame after a resize
-      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-      const widths = await page.evaluate(() => {
-        const circle = document.querySelector("header nav svg")!.getBoundingClientRect();
-        return { page: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, circleRight: circle.right };
-      });
-      expect(widths.page, `Spanish header at ${width}px`).toBeLessThanOrEqual(widths.viewport + 1);
-      expect(widths.circleRight, `Spanish Book circle at ${width}px`).toBeLessThanOrEqual(widths.viewport);
+      // the header's phone layout applies a frame or more after a resize (slower on CI): measure once it has settled
+      const overflow = () =>
+        page.evaluate(() => {
+          const circle = document.querySelector("header nav svg")!.getBoundingClientRect();
+          const viewport = document.documentElement.clientWidth;
+          return { page: Math.max(0, document.documentElement.scrollWidth - viewport - 1), circle: Math.max(0, circle.right - viewport) };
+        });
+      await expect.poll(overflow, { message: `Spanish header at ${width}px`, timeout: 5_000 }).toEqual({ page: 0, circle: 0 });
     }
   });
 
