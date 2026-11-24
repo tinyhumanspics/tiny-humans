@@ -13,6 +13,8 @@ import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import Reveal from "@/components/layout/Reveal/Reveal";
 import BoardDoodles from "@/components/chalk/BoardDoodles/BoardDoodles";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
+import { featuresWithLooks, looksOf } from "@/lib/pricing/looks";
+import BundleLooks from "./BundleLooks";
 import styles from "./BundleCard.module.css";
 import { cn } from "@/lib/cn";
 
@@ -42,6 +44,8 @@ export default function BundleCard({ bundle, index, messages, locale, cta, href,
   const doodle = theme.decorations.cards[index % 3];
   const featured = Boolean(bundle.badge);
   const titleId = `bundle-${bundle.id}`;
+  // what the bundle includes, look by look (owner, Nov 24): it replaces the "2 setups" line
+  const looks = looksOf(bundle.description);
   return (
     <Reveal delay={index * 120} className={styles.revealWrap}>
     <BoardDoodles area="card" only={index} />
@@ -61,7 +65,6 @@ export default function BundleCard({ bundle, index, messages, locale, cta, href,
             </p>
           )}
           <Name id={titleId} className={styles.name}>{bundle.name}</Name>
-          {bundle.description && <p className={styles.description}>{bundle.description}</p>}
           {offer ? (
             <>
               <p className={styles.price}>
@@ -80,13 +83,14 @@ export default function BundleCard({ bundle, index, messages, locale, cta, href,
           <ChalkDoodle grain={false} name="underline" size={120} color="var(--sun-yellow)" strokeWidth={3} className={styles.priceLine} />
           {deposit ? <p className={styles.deposit}>{fill(messages.deposit, { deposit: formatMoney(deposit) })}</p> : null}
           <ul className={styles.features}>
-            {bundle.features.map((f, fi) => (
+            {featuresWithLooks(bundle.features, looks, "drop").map((f, fi) => (
               <li key={`${fi}-${f}`}>
                 <ChalkDoodle grain={false} name="check" size={24} color="var(--sun-yellow)" strokeWidth={4.6} className={styles.check} />
                 <span>{f}</span>
               </li>
             ))}
           </ul>
+          {looks && <BundleLooks looks={looks} />}
           <p className={styles.location}>
             <ChalkDoodle grain={false} name="house" size={24} color="var(--cloud-blue)" strokeWidth={3.6} />
             <span>{bundle.locationNote}</span>

@@ -189,6 +189,8 @@
   gap: 4px 18px;
 }
 
+/* prop ideas (bundles with 2+ setups): the whole width, under the four fields */
+.propsField { margin-top: 12px; }
 .fieldHint { margin: -2px 0 6px; font-size: 0.98rem; line-height: 1.35; color: var(--chalk-muted); }
 
 @media (min-width: 720px) {

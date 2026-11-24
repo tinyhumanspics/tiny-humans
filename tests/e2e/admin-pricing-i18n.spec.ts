@@ -42,7 +42,7 @@ test("the owner can save every Spanish bundle-copy field", async ({ page }, test
   await page.getByRole("button", { name: "Edit" }).click();
   await page.getByLabel("Bundle name (Spanish)").fill("Pequeños Momentos");
   await page.getByLabel(/Small label \(Spanish\)/).fill("El favorito");
-  await page.getByLabel(/Description \(Spanish\)/).fill("Una primera sesión sencilla");
+  await page.getByLabel(/Looks \(Spanish\)/).fill("Una primera sesión sencilla");
   await page.getByLabel("Included item 1 (Spanish)").fill("Hasta 1 hora");
   await page.getByLabel("Included item 2 (Spanish)").fill("8 fotos digitales editadas");
   if (visualCapture) await page.screenshot({ path: `.screenshots/admin-pricing-spanish/${testInfo.project.name}.png`, fullPage: true });

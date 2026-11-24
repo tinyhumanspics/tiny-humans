@@ -156,6 +156,8 @@
       "zip": "ZIP code",
       "zipHint": "So we can check travel. Free within {miles} miles of Miami Beach.",
       "zipHintPlain": "So we can check travel.",
+      "props": "Prop ideas (optional)",
+      "propsHint": "A basket, a tiny bed, colors you love? Tell us, or paste a Pinterest link.",
       "consent": "Text me about this request. Msg & data rates may apply. Reply STOP to stop.",
       "due": "Due date: {date}",
       "send": "Request this time",

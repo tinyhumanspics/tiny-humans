@@ -3,6 +3,16 @@
 Spanish copy shipped as a draft for a native speaker to check (AGENTS rule 7). Reply with changes per key; a session
 updates messages/es.json and takes the key off this list. Sessions don't load this file; STATE.md points here.
 
+## Owner, Nov 24, 2026: prop ideas on /book (bundles with 2+ setups)
+
+The bundle looks in Spanish (Arropadito, Nidito, Dulces Sueños, Abrazo en Familia) are the owner's own words, in
+/admin → Pricing → each bundle → Looks (Spanish).
+
+| Key | English | Spanish |
+|---|---|---|
+| `bookingRequest.details.props` | Prop ideas (optional) | Ideas para los accesorios (opcional) |
+| `bookingRequest.details.propsHint` | A basket, a tiny bed, colors you love? Tell us, or paste a Pinterest link. | ¿Una canastita, una camita, colores que te encantan? Cuéntanos o pega un enlace de Pinterest. |
+
 ## Brief 05b, session 2 (Nov 22, 2026)
 
 The pay link now takes the $50 first; the home, ages and backdrops come right after, on the same page. In

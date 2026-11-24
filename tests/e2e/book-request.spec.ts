@@ -115,8 +115,9 @@ test("the menu's /book: the bundles side by side with the middle one checked and
   await expect(cards.first()).toContainText("Little Moments");
   await expect(cards.first()).toContainText("edited digital photos");
   await page.getByRole("radio", { name: /Little Moments/ }).check();
-  // phones show one "includes" line under the rows; from 640 px every card lists its features
-  await expect(page.locator("main fieldset p[aria-live]")).toContainText("Little Moments includes:");
+  // under the rows: the picked bundle's looks (owner, Nov 24); from 640 px every card also lists its features
+  await expect(page.locator("main fieldset [aria-live]")).toContainText("Little Moments · 1 look");
+  await expect(page.locator("main fieldset [aria-live]")).toContainText("Cozy Wrap: baby swaddled and sleeping on your choice of backdrop.");
   await page.getByText("Twins? +$75 per extra baby").click();
   await pickTime(page, 1);
   await details(page);

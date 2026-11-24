@@ -118,4 +118,3 @@
 /* a little smaller than a regular price (owner, Nov 10: "$134.10" with cents read too big next to the chalk) */
 .offerPrice { color: var(--sun-yellow); font-size: 0.82em; }
 .offerEnds { margin: -6px 0 6px; font-size: 1.02rem; color: var(--cloud-blue); }
-.description { margin: -2px 0 6px; font-size: 1.05rem; color: var(--chalk-muted); line-height: 1.4; }

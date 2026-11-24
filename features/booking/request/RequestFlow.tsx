@@ -12,6 +12,9 @@ import type { AppLocale } from "@/i18n/config";
 import { addDays, formatLongDate, formatTimeLabel, fromDateKey, startOfDay, toDateKey, type DateKey, type TimeSlot } from "@/lib/booking";
 import { HttpBookingClient } from "@/lib/booking/http-client";
 import { cn } from "@/lib/cn";
+import { featuresWithLooks, looksOf } from "@/lib/pricing/looks";
+import { setupsOf } from "@/config/backdrops";
+import BundleLooks from "@/features/booking/BundleLooks";
 import { dueWindow, type DueSummary } from "@/lib/due-date/types";
 import type { BookingLinkSummary } from "@/lib/booking-links/types";
 import { formatMoney, shownBundles, todayPriceCents } from "@/lib/pricing/engine";
@@ -79,6 +82,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     return shown[Math.floor((shown.length - 1) / 2)]?.id ?? null;
   });
   const bundle = getBundle(bundleId);
+  const asksProps = Boolean(bundle && setupsOf(bundle.features) >= 2);
   // a bundle card was clicked (the bundles page, the ad page's cards): their pick with "Change"; "Check dates" (?compare=1)
   // and links without a bundle: every bundle side by side (owner, Nov 16)
   const [comparing, setComparing] = useState(() => !link && (!params.get("bundle") || params.get("compare") === "1"));
@@ -116,6 +120,8 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [consent, setConsent] = useState(false);
   const [hp, setHp] = useState("");
+  // bundles with 2+ setups: prop ideas for the second look, optional (owner, Nov 24)
+  const [propIdeas, setPropIdeas] = useState("");
   // the travel answer for the ZIP it was asked for (a ZIP changed since shows nothing)
   const [travelFor, setTravelFor] = useState<{ zip: string; quote: TravelQuote | null } | null>(null);
   const [sending, setSending] = useState(false);
@@ -258,6 +264,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           ...(due ? { dueToken: due.token } : {}),
           ...(link ? { linkToken: link.token } : {}),
           ...(inspirationId ? { inspiration: inspirationId } : {}),
+          ...(asksProps && propIdeas.trim() ? { propIdeas: propIdeas.trim() } : {}),
           hp,
           elapsedMs: elapsedSince(openedAt.current),
         }),
@@ -337,6 +344,9 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
     if (!(b.extraBaby?.active && b.extraBaby.maxBabies >= 2)) setBabyCount(1);
   };
   const [includesLead, includesRest = ""] = m.when.includes.split("{features}");
+  // the picked bundle's looks (owner, Nov 24): "Our Little Story · 2 looks", then each look
+  const looks = looksOf(bundle?.description);
+  const looksBox = bundle && looks ? <BundleLooks looks={looks} heading={looks.title ? `${bundle.name} · ${looks.title}` : bundle.name} picked /> : null;
   const bundleRow = bundle && !comparing ? (
     <div className={cn(styles.bundleRow, styles.picked)}>
       <p className={cn(styles.pickedLabel, "chalk-soft")}>{m.when.bundle}</p>
@@ -348,12 +358,13 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           <span className={cn(styles.pickName, "chalk-soft")}>
             {bundle.name} · {formatMoney(todayPriceCents(bundle, today))}
           </span>
-          <span className={cn(styles.pickedFeatures, "chalk-soft")}>{bundle.features.join(" · ")}</span>
+          <span className={cn(styles.pickedFeatures, "chalk-soft")}>{featuresWithLooks(bundle.features, looks, "drop").join(" · ")}</span>
         </span>
         <button type="button" className={cn(styles.pickedChange, "chalk-soft")} onClick={() => setComparing(true)} aria-expanded={false}>
           {m.when.change}
         </button>
       </div>
+      {looksBox}
     </div>
   ) : (
     <fieldset className={cn(flowStyles.fieldset, styles.bundleRow)}>
@@ -371,7 +382,7 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
               </span>
               <span className={cn(styles.comparePrice, "chalk-soft")}>{formatMoney(todayPriceCents(b, today))}</span>
               <span className={cn(styles.compareFeatures, "chalk-soft")}>
-                {b.features.map((f) => (
+                {featuresWithLooks(b.features, looksOf(b.description), "swap").map((f) => (
                   <span key={f}>{f}</span>
                 ))}
               </span>
@@ -379,13 +390,14 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
           );
         })}
       </div>
-      {bundle && (
-        <p className={cn(styles.includes, "chalk-soft")} aria-live="polite">
-          <b>{fill(includesLead, { bundle: bundle.name })}</b>
-          {bundle.features.join(" · ")}
-          {includesRest}
-        </p>
-      )}
+      {looksBox ??
+        (bundle && (
+          <p className={cn(styles.includes, "chalk-soft")} aria-live="polite">
+            <b>{fill(includesLead, { bundle: bundle.name })}</b>
+            {bundle.features.join(" · ")}
+            {includesRest}
+          </p>
+        ))}
     </fieldset>
   );
 
@@ -517,6 +529,28 @@ export default function RequestFlow({ locale, messages, freeMiles, noticeHours, 
                     {field("zip", m.details.zip, { type: "text", autoComplete: "postal-code", inputMode: "numeric", maxLength: 5, enterKeyHint: "send", hint: freeMiles !== null ? fill(m.details.zipHint, { miles: String(freeMiles) }) : m.details.zipHintPlain })}
                   </div>
                   {hint && <p className={cn(hint.blocking ? flowStyles.error : styles.travelNote, "chalk-soft")}>{hint.text}</p>}
+                  {asksProps && (
+                    <div className={styles.propsField}>
+                    <div className={flowStyles.field}>
+                      <label htmlFor="request-props" className={cn(flowStyles.label, "chalk-soft")}>
+                        {m.details.props}
+                      </label>
+                      <p id="request-props-hint" className={cn(styles.fieldHint, "chalk-soft")}>
+                        {m.details.propsHint}
+                      </p>
+                      <textarea
+                        id="request-props"
+                        name="propIdeas"
+                        className={cn(flowStyles.input, flowStyles.textarea)}
+                        rows={3}
+                        maxLength={500}
+                        value={propIdeas}
+                        aria-describedby="request-props-hint"
+                        onChange={(ev) => setPropIdeas(ev.target.value)}
+                      />
+                    </div>
+                    </div>
+                  )}
                   {/* never seen by people: a filled box marks a robot */}
                   <div className={styles.hp} aria-hidden="true">
                     <input id="request-hp" name="th-leave-empty" type="text" tabIndex={-1} autoComplete="off" value={hp} onChange={(ev) => setHp(ev.target.value)} />

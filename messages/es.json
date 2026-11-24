@@ -342,6 +342,8 @@
       "zip": "Código postal",
       "zipHint": "Para calcular el traslado. Gratis a menos de {miles} millas de Miami Beach.",
       "zipHintPlain": "Para calcular el traslado.",
+      "props": "Ideas para los accesorios (opcional)",
+      "propsHint": "¿Una canastita, una camita, colores que te encantan? Cuéntanos o pega un enlace de Pinterest.",
       "consent": "Envíenme mensajes sobre esta solicitud. Pueden aplicar tarifas. Responde STOP para dejar de recibirlos.",
       "due": "Fecha esperada: {date}",
       "send": "Solicitar este horario",

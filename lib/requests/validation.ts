@@ -22,6 +22,8 @@ export const requestSchema = z
     /** Sent from the owner's booking link (owner, Nov 19): its babies and source go with the request. */
     linkToken: z.string().trim().max(200).optional(),
     inspiration: z.string().trim().max(80).optional(),
+    /** Bundles with 2+ setups (owner, Nov 24): prop ideas, optional. */
+    propIdeas: z.string().trim().max(500).optional(),
     hp: z.string().max(200).optional(),
     elapsedMs: z.number().int().nonnegative().optional(),
   })

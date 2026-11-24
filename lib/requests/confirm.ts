@@ -19,6 +19,9 @@ import { confirmText, requestWhenText } from "./texts";
 import { scheduleOwnerBooked } from "@/lib/tracking/schedule";
 import { formatUsMobile, type RequestConfirmed } from "./types";
 
+/** How a family's prop ideas start the booking's notes (read by the owners, so always English). */
+const PROP_IDEAS_LABEL = "Prop ideas";
+
 /**
  * The owner's buttons on a request (/admin → Requests, brief 02). "Confirm & send pay link" books it through the
  * existing owner path: a day and time → a booking held 48 h with the family's pay link (backdrops + deposit), the
@@ -59,7 +62,15 @@ async function bookSlot(row: BookingRequestRow, slot: { date: string; start: str
       // their baby's age and name (unless the owner's link had them), and the street, come later on their pages
       babies: babies ? babies.map((b) => ({ age: b.age, ...(b.name ? { name: b.name } : {}), ...(isBabyGender(b.gender) ? { gender: b.gender } : {}) })) : Array.from({ length: row.babyCount }, () => ({ age: "" })),
       slot: { id: `${slot.date}T${slot.start}`, date: slot.date, start: slot.start, end: "", label: formatTimeLabel(slot.start) },
-      contact: { parentName: due?.parentName ?? row.firstName, email: row.email, phone: formatUsMobile(row.mobile), babyAge: babies?.[0]?.age ?? "", ...(babies?.[0]?.name ? { babyName: babies[0].name } : {}) },
+      contact: {
+        parentName: due?.parentName ?? row.firstName,
+        email: row.email,
+        phone: formatUsMobile(row.mobile),
+        babyAge: babies?.[0]?.age ?? "",
+        ...(babies?.[0]?.name ? { babyName: babies[0].name } : {}),
+        // their prop ideas start the shoot's "What the family asked for" (owner, Nov 24)
+        ...(row.propIdeas ? { notes: `${PROP_IDEAS_LABEL}: ${row.propIdeas}` } : {}),
+      },
       address: due ? { street: due.street, unit: due.unit ?? undefined, city: due.city, zip: due.zip } : { street: "", city: "", zip: row.zip },
       // one booking per request (a retry returns it); the prefix marks it as booked by the owner
       requestId: `${OWNER_REQUEST_PREFIX}request-${row.id}`,

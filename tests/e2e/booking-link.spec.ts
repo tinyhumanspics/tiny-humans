@@ -146,6 +146,7 @@ test("Requests: a request from your link says so, with the baby and how they rea
   const item: RequestListItem = {
     id: "00000000-0000-4000-8000-000000000009",
     reference: "TH-R-20261119-4242",
+    propIdeas: null,
     createdAt: new Date(Date.now() - 60_000).toISOString(),
     locale: "en",
     type: "date",

@@ -472,7 +472,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         <label className={cn(styles.label, "chalk-soft")}>Session length (minutes)<input className={styles.input} type="number" min={15} max={480} step={15} value={minutes} onChange={(e) => setMinutes(e.target.value)} /></label>
         <label className={cn(styles.label, "chalk-soft")}>Edited photos (e.g. 5–8)<input className={styles.input} value={photos} maxLength={20} onChange={(e) => setPhotos(e.target.value)} /></label>
         <label className={cn(styles.label, "chalk-soft")}>Small label (optional, e.g. Most loved)<input className={styles.input} value={badge} maxLength={24} onChange={(e) => setBadge(e.target.value)} /></label>
-        <label className={cn(styles.label, "chalk-soft")}>Description (optional)<input className={styles.input} value={description} maxLength={200} onChange={(e) => setDescription(e.target.value)} /></label>
+        <label className={cn(styles.label, "chalk-soft")}>Looks (optional, one per line: “2 looks”, then “Cozy Wrap: …”)<textarea className={styles.input} rows={4} value={description} maxLength={200} onChange={(e) => setDescription(e.target.value)} /></label>
       </div>
       <p className={cn(styles.label, "chalk-soft")}>What&apos;s included</p>
       <ul className={styles.incList}>
@@ -492,7 +492,7 @@ function BundleEditor({ bundle, sortOrder, onSave, onCancel, onDelete }: { bundl
         <div className={styles.editorGrid}>
           <label className={cn(styles.label, "chalk-soft")}>Bundle name (Spanish)<input className={styles.input} value={spanishName} maxLength={60} onChange={(e) => setSpanishName(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Small label (Spanish){badge ? ` · English: ${badge}` : " · optional"}<input className={styles.input} value={spanishBadge} maxLength={24} onChange={(e) => setSpanishBadge(e.target.value)} /></label>
-          <label className={cn(styles.label, "chalk-soft")}>Description (Spanish){description ? "" : " · optional"}<input className={styles.input} value={spanishDescription} maxLength={200} onChange={(e) => setSpanishDescription(e.target.value)} /></label>
+          <label className={cn(styles.label, "chalk-soft")}>Looks (Spanish){description ? "" : " · optional"}<textarea className={styles.input} rows={4} value={spanishDescription} maxLength={200} onChange={(e) => setSpanishDescription(e.target.value)} /></label>
           <label className={cn(styles.label, "chalk-soft")}>Offer label (Spanish){offerLabel ? ` · English: ${offerLabel}` : " · optional"}<input className={styles.input} value={spanishOfferLabel} maxLength={30} onChange={(e) => setSpanishOfferLabel(e.target.value)} /></label>
         </div>
         {features.length > 0 && (

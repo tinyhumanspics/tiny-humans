@@ -4,9 +4,10 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 
 ## Live now
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
-- Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer.
+- Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer;
+  bundle looks (0048) on cards + /book; /book prop ideas → booking notes.
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
-  /es price line: "Traslado gratis hasta 20 millas de Miami Beach" (fits the first screen; 20 free mi since Nov 24).
+  /es price line: "Traslado gratis hasta 20 millas de Miami Beach" (20 free mi, Nov 24).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
 - Pay link (decision #22): the $50 first; after paying, the same
   page asks home + ages (required) + backdrops, each a form; saves rebuild the Outlook event. Both reminders ask for
@@ -22,8 +23,8 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - Then wait for Carlos's updated brief 06 (+ pre-render/page speed).
 
 ## First phone screen at 390 × 664 (iPhone WebKit, production; fold 664)
-- Nov 23 (offer live): /es ad page review ends 680 px (price line 3 lines); /es/book month header 699 px. EN 660 / 635.
-- Nov 24 forecast (live page, offer prices swapped for regular ones, new travel line): /es ad page 660 (2 lines),
+- Nov 24 owner: /book looks box (~140 px): menu /book month header ~750 (below fold); from a card ~640.
+- Nov 24 forecast (regular prices, new travel line): /es ad page 660 (2 lines),
   /es/book 655 (cents were what wrapped the rows); EN 660 / 635. All fit. Adrian's Pricing rows (05b owner step)
   forecast the same 655. 4–9 px to spare: re-measure after Spanish copy or bundle changes.
 

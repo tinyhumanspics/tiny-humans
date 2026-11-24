@@ -1253,6 +1253,8 @@ export const bookingRequests = pgTable(
     dueId: uuid("due_id").references(() => dueDateReservations.id, { onDelete: "set null" }),
     /** The portfolio photo the family picked as inspiration ("Book a memory like this one"), passed to the booking. */
     inspirationId: text("inspiration_id"),
+    /** Bundles with 2+ setups (owner, Nov 24): the family's prop ideas from /book; they become the booking's notes. */
+    propIdeas: text("prop_ideas"),
     /* where the family came from (brief 03): first touch (th_src) and the visit that produced the request (th_last) */
     firstTouch: jsonb("first_touch").$type<Attribution>(),
     lastTouch: jsonb("last_touch").$type<Attribution>(),

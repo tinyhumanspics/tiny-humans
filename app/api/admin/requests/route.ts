@@ -43,6 +43,7 @@ const itemOf = (r: BookingRequestRow, made: RequestListItem["made"], link?: Book
     mobile: formatUsMobile(r.mobile),
     email: r.email,
     zip: r.zip,
+    propIdeas: r.propIdeas,
     textConsent: r.textConsent,
     made,
     hello: helloText(r.firstName, requestWhenText(r, locale), locale),

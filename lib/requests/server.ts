@@ -141,6 +141,7 @@ export async function createRequest(r: ValidRequest, source: RequestSource = {},
     consentVersion: TEXT_CONSENT_VERSION,
     dueId: due?.id ?? null,
     inspirationId: r.inspiration || null,
+    propIdeas: r.propIdeas || null,
     ...sourceValues(source),
   };
   let row: BookingRequestRow;

@@ -337,6 +337,20 @@
       "when": 1795502606821,
       "tag": "0047_family_inspo",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1795503495661,
+      "tag": "0048_bundle_looks",
+      "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1795503573386,
+      "tag": "0049_request_prop_ideas",
+      "breakpoints": true
     }
   ]
 }

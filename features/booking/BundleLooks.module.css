@@ -1,0 +1,16 @@
+/* A bundle's looks (owner, Nov 24): "2 looks", then one short line per look. */
+.looks { margin: 16px 0 0; text-align: left; }
+/* under the bundle picked on /book: its own soft box */
+.picked {
+  margin: 12px 0 4px; padding: 10px 14px; border-radius: 12px 14px 11px 13px;
+  border: 2px dashed color-mix(in srgb, var(--sun-yellow) 55%, transparent);
+  background: color-mix(in srgb, var(--sun-yellow) 6%, transparent);
+}
+.title { margin: 0 0 4px; font-family: var(--font-chalk); font-size: 1.2rem; line-height: 1.2; color: var(--sun-yellow); }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 1rem; line-height: 1.35; color: var(--chalk-white); }
+.list li { position: relative; padding-left: 16px; }
+.list li::before { content: "•"; position: absolute; left: 2px; top: 0; color: var(--sun-yellow); }
+.name {
+  font-weight: 400; color: var(--chalk-white);
+  text-decoration: underline; text-decoration-style: wavy; text-decoration-color: color-mix(in srgb, var(--sun-yellow) 70%, transparent); text-underline-offset: 3px;
+}

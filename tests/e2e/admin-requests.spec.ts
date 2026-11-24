@@ -13,6 +13,7 @@ const PAY = "http://localhost:3100/book?bundle=our-little-story&deposit=TH-20261
 const item = (over: Partial<RequestListItem>): RequestListItem => ({
   id: "00000000-0000-4000-8000-000000000001",
   reference: "TH-R-20261114-1234",
+  propIdeas: null,
   createdAt: new Date(Date.now() - 4 * 60_000).toISOString(),
   locale: "en",
   type: "date",

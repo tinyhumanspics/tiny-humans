@@ -23,6 +23,7 @@ vi.mock("@/lib/deposit/server", () => ({ depositOfferFor: async () => 5000 }));
 const row = (over: Partial<BookingRequestRow> = {}): BookingRequestRow => ({
   id: "00000000-0000-4000-8000-000000000001",
   reference: "TH-R-20261114-1234",
+  propIdeas: null,
   clientId: "client-0001",
   createdAt: new Date("2026-11-14T15:00:00Z"),
   updatedAt: new Date("2026-11-14T15:00:00Z"),
