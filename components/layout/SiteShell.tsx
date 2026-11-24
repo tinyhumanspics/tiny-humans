@@ -17,9 +17,10 @@ import es from "@/messages/es.json";
 
 /**
  * The site's frame: settings + catalog providers, seasonal decor, header, footer and Meta Pixel. Drawn by the (site)
- * and (admin) layouts, and by `app/not-found.tsx` (the 404 renders inside the root layout only).
+ * and (admin) layouts, and by `app/not-found.tsx` (the 404 renders inside the root layout only). The owner area leaves
+ * the footer out (`footer={false}`, owner Nov 24): it's for the public website.
  */
-export default async function SiteShell({ children }: { children: React.ReactNode }) {
+export default async function SiteShell({ children, footer = true }: { children: React.ReactNode; footer?: boolean }) {
   const [settings, englishCatalog, spanishPublication, deposits, locale] = await Promise.all([
     getSiteSettings(),
     getPublicCatalog(),
@@ -36,7 +37,7 @@ export default async function SiteShell({ children }: { children: React.ReactNod
         {/* Header lives in a layout so the logo intro never replays between pages. */}
         <Header messages={messages.header} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
         {children}
-        <Footer messages={messages.footer} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />
+        {footer && <Footer messages={messages.footer} languageMessages={messages.language} locale={locale} showLanguageSwitcher={spanishPublication.published} />}
         {/* reads the query string (no Pixel on secret-token links): its own boundary keeps pages static */}
         <Suspense fallback={null}>
           <MetaPixel />

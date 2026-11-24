@@ -48,7 +48,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Seasonal themes stay: one theme = one data entry (colors, logo overlay, hero photo), switched by hand · Carlos
 - 2026-11-14 · Migrations run in the production build; a failure stops the deploy · brief 01
 - 2026-11-14 · Failure alerts + daily health email → ALERT_EMAIL (support@) · owner
-- 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
+- 2026-10-15 · /admin: chalkboard design, no light/dark mode, no site footer (Nov 24) · owner
 - 2026-10-22 · Chalk drawings: always whole, never on letters, buttons or photos · owner
 - 2026-11-09 · Empty Spanish fields fill from the English on save (owner marketing text, never family data) · owner
 - 2026-11-10 · Shoot videos: links played in our own player; no uploads · owner
@@ -61,8 +61,8 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-20 · Day-before "Before we arrive" steps; photo extras (RAW too) · owner
 - 2026-11-11 · Valentine's theme Feb 1 – Mar 1 yearly, switched by hand · owner
 - 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
-- 2026-11-23 · Chalk intro on / and /es at every load; entrance animations never fade out · owner
-- 2026-11-24 · Shoots → Signature poses (photos + setup steps), in every folder, ticked per family · owner
+- 2026-11-23 · Chalk intro on / and /es at every load; reveals never fade out · owner
+- 2026-11-24 · Shoots → Signature poses (photos + setup) in every folder, ticked per family · owner
 - 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner
