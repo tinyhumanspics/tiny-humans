@@ -1,5 +1,5 @@
 import { z } from "@/lib/validation/zod";
-import { BACKDROP_IDS } from "@/config/backdrops";
+import { OFFERED_BACKDROP_IDS } from "@/config/backdrops";
 import { daysBetweenDateKeys, isDateKey } from "@/lib/validation/date-key";
 
 /** Server-side validation of booking inputs. Never trust the browser form alone. */
@@ -11,9 +11,9 @@ export const availabilityQuerySchema = z
   .refine((q) => q.from <= q.to, "from must be before to")
   .refine((q) => (daysBetweenDateKeys(q.from, q.to) ?? Infinity) <= 62, "Range too long");
 
-/** Backdrop picks: known ids, no repeats, at most 3. */
+/** Backdrop picks: backdrops offered now, no repeats, at most 3. */
 export const backdropPicks = z
-  .array(z.enum(BACKDROP_IDS))
+  .array(z.enum(OFFERED_BACKDROP_IDS))
   .max(3)
   .refine((a) => new Set(a).size === a.length, "Pick each backdrop only once.");
 

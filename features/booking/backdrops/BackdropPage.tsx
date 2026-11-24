@@ -18,6 +18,7 @@ import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
 import type { AppLocale } from "@/i18n/config";
 import { useCatalog } from "@/components/providers/CatalogProvider";
+import { offeredOnly } from "@/config/backdrops";
 
 const phone = { phone: site.contact.phone };
 
@@ -42,7 +43,7 @@ export default function BackdropPage({ locale = "en", messages = en.backdropPage
 
   const show = (v: BackdropView) => {
     setView(v);
-    setPicks(v.picks);
+    setPicks(offeredOnly(v.picks));
     setHome({ street: v.home.street, city: v.home.city, accessNotes: v.home.accessNotes });
     setNames(v.babyNames);
     setGenders(v.babyGenders);

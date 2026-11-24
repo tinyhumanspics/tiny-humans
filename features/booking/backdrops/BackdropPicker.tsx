@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { BACKDROPS, type Backdrop } from "@/config/backdrops";
+import { OFFERED_BACKDROPS, type Backdrop } from "@/config/backdrops";
 import { backdropName } from "@/lib/booking/backdrop-names";
 import ChalkDoodle from "@/components/chalk/ChalkDoodle/ChalkDoodle";
 import { cn } from "@/lib/cn";
@@ -23,7 +23,7 @@ export default function BackdropPicker({ max, value, onChange, label, names }: {
   };
   return (
     <div role="group" aria-label={label} className={styles.grid}>
-      {BACKDROPS.map((b) => {
+      {OFFERED_BACKDROPS.map((b) => {
         const on = value.includes(b.id);
         return (
           <button key={b.id} type="button" aria-pressed={on} className={cn(styles.item, on && styles.on)} onClick={() => toggle(b.id)}>

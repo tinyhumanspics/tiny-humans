@@ -12,6 +12,7 @@ The bundle looks in Spanish (Arropadito, Nidito, Dulces Sueños, Abrazo en Famil
 |---|---|---|
 | `bookingRequest.details.props` | Prop ideas (optional) | Ideas para los accesorios (opcional) |
 | `bookingRequest.details.propsHint` | A basket, a tiny bed, colors you love? Tell us, or paste a Pinterest link. | ¿Una canastita, una camita, colores que te encantan? Cuéntanos o pega un enlace de Pinterest. |
+| `backdrops.names.darkGreen` (2 places) | Sage Green | Verde Salvia |
 
 ## Brief 05b, session 2 (Nov 22, 2026)
 

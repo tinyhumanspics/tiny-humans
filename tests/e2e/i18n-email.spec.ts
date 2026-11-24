@@ -9,7 +9,7 @@ import { bundleInputSchema } from "@/lib/pricing/validation";
 import { IncompleteCatalogTranslationError, localizeCatalog } from "@/lib/pricing/localization";
 import type { Bundle } from "@/lib/pricing/types";
 import { babyAgeOptions, bundlesHref, scheduleHref } from "@/config/booking";
-import { BACKDROP_IDS } from "@/config/backdrops";
+import { BACKDROPS } from "@/config/backdrops";
 import { localePath, publicPathname, switchLocalePath } from "@/i18n/path";
 import { backdropNames } from "@/lib/booking/backdrop-names";
 import { bookingBabiesLabel, bookingPricingRows } from "@/lib/booking/customer-page-format";
@@ -68,8 +68,8 @@ test("Spanish catalog messages match the English schema", async ({}, testInfo) =
   expect(es.legal.terms.sections.map((section) => section.id)).toEqual(en.legal.terms.sections.map((section) => section.id));
   expect(en.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
   expect(es.bookingFlow.details.baby.ageOptions).toHaveLength(babyAgeOptions.length);
-  expect(Object.keys(en.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
-  expect(Object.keys(es.bookingFlow.details.backdrops.names).sort()).toEqual([...BACKDROP_IDS].sort());
+  expect(Object.keys(en.bookingFlow.details.backdrops.names).sort()).toEqual(BACKDROPS.map((b) => b.id).sort());
+  expect(Object.keys(es.bookingFlow.details.backdrops.names).sort()).toEqual(BACKDROPS.map((b) => b.id).sort());
   expect(formatShortDate("2026-12-05", "es")).toBe("sáb, 5 dic");
 });
 

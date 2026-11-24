@@ -10,6 +10,7 @@ import { fill } from "@/lib/email/messages";
 import { cn } from "@/lib/cn";
 import type en from "@/messages/en.json";
 import styles from "./Booking.module.css";
+import { offeredOnly } from "@/config/backdrops";
 
 /**
  * A family's link once the deposit is paid (decision #22: the $50 first, these right after, on the same page), for a
@@ -22,7 +23,7 @@ export default function OwnerBookedSteps({ link, reference, signature, messages,
   const names = messages.details.backdrops.names as Record<string, string>;
   const allowed = link.backdrops.allowed;
   const savedAtStart = link.backdrops.picks;
-  const [picks, setPicks] = useState<string[]>(savedAtStart);
+  const [picks, setPicks] = useState<string[]>(() => offeredOnly(savedAtStart));
   // null = still choosing; [] = "not sure yet"; else what was saved
   const [saved, setSaved] = useState<string[] | null>(savedAtStart.length ? savedAtStart : null);
   // the home: saved when it has a street (a request books with the ZIP only)

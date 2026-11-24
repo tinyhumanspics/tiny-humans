@@ -5,7 +5,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 ## Live now
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
 - Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer;
-  bundle looks (0048) on cards + /book; /book prop ideas → booking notes.
+  bundle looks (0048) on cards + /book; /book prop ideas → notes; Cream retired, darkGreen = Sage Green.
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
   /es price line: "Traslado gratis hasta 20 millas de Miami Beach" (20 free mi, Nov 24).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
@@ -13,7 +13,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
   page asks home + ages (required) + backdrops, each a form; saves rebuild the Outlook event. Both reminders ask for
   home + ages (button to the link) until saved. Owner email/text name the new order.
 - Every Lead carries `lead_source` ("website" / "booking_link"): Conversions API, browser Pixel and the CAPI log line.
-- Smooth scrolling only without reduced motion (lib/scroll.ts) on /book, cancel, reschedule, review and the logo.
+- Smooth scrolling only without reduced motion (lib/scroll.ts).
 
 ## Next
 - Nov 24 (after midnight Miami): on production, ad page, home, /bundles, /book, EN + ES: no "Offer ends", was/now,

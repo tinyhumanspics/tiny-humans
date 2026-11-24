@@ -10,21 +10,31 @@ export interface Backdrop {
   glow: string;
   edge: string;
   image?: string;
+  /** Not offered for now: families can't pick it, but a pick made before still shows on their booking. */
+  retired?: boolean;
 }
 
 export const BACKDROPS = [
   { id: "blueAura", color: "#93b6d9", glow: "#c7dcee", edge: "#6f98c2" },
   { id: "burgundy", color: "#75293a", glow: "#8e3a4a", edge: "#5c1f2b" },
-  { id: "darkGreen", color: "#2e5a3d", glow: "#407050", edge: "#23462f" },
+  // the id is from when this was Dark Green, so picks saved before stay valid; it's a sage green backdrop now (owner, Nov 24)
+  { id: "darkGreen", color: "#9caf88", glow: "#bfcdae", edge: "#7d9269" },
   { id: "pink", color: "#d88fa1", glow: "#f2bcc8", edge: "#b96f82" },
-  { id: "cream", color: "#efe3cc", glow: "#f7eedd", edge: "#e3d2b4" },
+  // not offered for now (owner, Nov 24: we don't have it); turn it back on by removing `retired`
+  { id: "cream", color: "#efe3cc", glow: "#f7eedd", edge: "#e3d2b4", retired: true },
   { id: "white", color: "#f7f7f4", glow: "#ffffff", edge: "#e7e7e1" },
   { id: "beige", color: "#d3bc99", glow: "#e4d3b8", edge: "#bfa57f" },
   { id: "wooden", color: "#9a6a42", glow: "#b07e52", edge: "#7c5233", image: "/backdrops/wooden.jpg" },
 ] as const satisfies readonly Backdrop[];
 
 export type BackdropId = (typeof BACKDROPS)[number]["id"];
-export const BACKDROP_IDS = BACKDROPS.map((b) => b.id) as [BackdropId, ...BackdropId[]];
+
+/** The backdrops families can pick now (the picker, the emails' list of options, what a save accepts). */
+export const OFFERED_BACKDROPS: readonly Backdrop[] = BACKDROPS.filter((b: Backdrop) => !b.retired);
+export const OFFERED_BACKDROP_IDS = OFFERED_BACKDROPS.map((b) => b.id) as [BackdropId, ...BackdropId[]];
+
+/** Saved picks without the ones not offered any more (they choose again when they reopen their picks). */
+export const offeredOnly = (ids: readonly string[]) => ids.filter((id) => OFFERED_BACKDROPS.some((b) => b.id === id));
 
 /** How many backdrops a bundle gets: one per setup/montaje in its localized details, at least 1, at most 3. */
 export function setupsOf(texts: (string | null | undefined)[]): number {

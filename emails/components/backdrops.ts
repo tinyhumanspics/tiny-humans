@@ -1,4 +1,4 @@
-import { BACKDROPS } from "@/config/backdrops";
+import { BACKDROPS, OFFERED_BACKDROPS } from "@/config/backdrops";
 import { BACKDROP_IMAGES } from "@/lib/email/backdrop-assets";
 import { emailMessages, type EmailLocale } from "@/lib/email/messages";
 import type { EmailAttachment, ImageMode } from "@/lib/email/types";
@@ -12,11 +12,14 @@ export interface EmailSwatch {
   image?: string;
 }
 
-/** The backdrop swatches (all, or only `only`) with names in the email's language, plus the texture attachments. */
+/**
+ * The backdrop swatches (every one offered now, or the family's picks `only`, even one no longer offered) with names
+ * in the email's language, plus the texture attachments.
+ */
 export function backdropSwatches(locale: EmailLocale, mode: ImageMode = "cid", only?: readonly string[]): { swatches: EmailSwatch[]; attachments: EmailAttachment[] } {
   const names = emailMessages(locale).backdrops.names as Record<string, string>;
   const attachments: EmailAttachment[] = [];
-  const swatches = BACKDROPS.filter((b) => !only || only.includes(b.id)).map((b) => {
+  const swatches = (only ? BACKDROPS.filter((b) => only.includes(b.id)) : OFFERED_BACKDROPS).map((b) => {
     const img = BACKDROP_IMAGES[b.id];
     let image: string | undefined;
     if (img) {
@@ -32,9 +35,9 @@ export function backdropSwatches(locale: EmailLocale, mode: ImageMode = "cid", o
   return { swatches, attachments };
 }
 
-/** A localized, human-readable list of every available backdrop (plain-text versions). */
+/** A localized, human-readable list of every backdrop offered now (plain-text versions). */
 export function backdropList(locale: EmailLocale): string {
   const m = emailMessages(locale).backdrops;
-  const names = BACKDROPS.map((b) => (m.names as Record<string, string>)[b.id] ?? b.id);
+  const names = OFFERED_BACKDROPS.map((b) => (m.names as Record<string, string>)[b.id] ?? b.id);
   return `${names.slice(0, -1).join(", ")} ${m.or} ${names[names.length - 1]}`;
 }
