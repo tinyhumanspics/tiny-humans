@@ -179,6 +179,8 @@ test.describe("manual accessibility regression checks", () => {
     test.skip(testInfo.project.name !== "desktop-chrome", "One narrow-viewport pass is enough.");
     // Spanish routes are gated off in the isolated test build: give the real header the Spanish labels and locale hook.
     await page.goto("/", { waitUntil: "networkidle" });
+    // the logo intro plays on every home page load: measure the real header, after it
+    await expect(page.locator("html")).not.toHaveAttribute("data-intro", /.+/);
     await page.evaluate((labels) => {
       const header = document.querySelector("header")!;
       header.dataset.locale = "es";
@@ -186,6 +188,8 @@ test.describe("manual accessibility regression checks", () => {
     }, [es.header.portfolio, es.header.bundles, es.header.book]);
     for (const width of [320, 340, 351, 360, 374, 375, 390]) {
       await page.setViewportSize({ width, height: 800 });
+      // the header's phone layout applies on the next frame after a resize
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
       const widths = await page.evaluate(() => {
         const circle = document.querySelector("header nav svg")!.getBoundingClientRect();
         return { page: document.documentElement.scrollWidth, viewport: document.documentElement.clientWidth, circleRight: circle.right };
