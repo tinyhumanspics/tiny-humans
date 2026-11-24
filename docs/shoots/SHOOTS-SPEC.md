@@ -42,6 +42,7 @@ updated after each one, no push / migration on production / new paid usage witho
 | Videos | Links first; video uploads only after the owner approves Blob cost (§5) |
 | Standard list contents | The template's lists are a draft; the owners edit them on "What we always bring" |
 | Signature poses | Owner, Nov 24: Shoots → **Signature poses** (name, photos to follow, setup steps; tables `shoot_signature_poses` + `shoot_signature_photos`, migration 0046). Every folder lists them; the day sheet ticks each one per shoot (`pose:<shoot key>:<pose id>`) |
+| Family photos | Owner, Nov 24: shoots whose bundle includes the family (`booking.siblings`) get a **Family photos** inspo list (`shoot_inspo.group = 'family'`, migration 0047) in the folder and on the day sheet, after the signature poses. No owner sections there |
 
 ## 2. Where it lives
 

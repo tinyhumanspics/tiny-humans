@@ -330,6 +330,13 @@
       "when": 1795498110882,
       "tag": "0046_signature_poses",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1795502606821,
+      "tag": "0047_family_inspo",
+      "breakpoints": true
     }
   ]
 }

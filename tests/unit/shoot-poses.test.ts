@@ -81,3 +81,27 @@ describe("signature poses: database step", () => {
     expect(sql).toMatch(/CREATE INDEX IF NOT EXISTS/);
   });
 });
+
+describe("family photo inspo (owner, Nov 24)", () => {
+  test("only bundles with the family get the list; a shoot that already has some keeps it", async () => {
+    const { showsFamilyPhotos } = await import("@/lib/shoots/sections");
+    const booking = (siblings: boolean) => ({ siblings }) as never;
+    expect(showsFamilyPhotos({ booking: booking(true), inspo: [] })).toBe(true);
+    expect(showsFamilyPhotos({ booking: booking(false), inspo: [] })).toBe(false);
+    expect(showsFamilyPhotos({ booking: null, inspo: [] })).toBe(false);
+    expect(showsFamilyPhotos({ booking: booking(false), inspo: [{ group: "family" }] as never })).toBe(true);
+  });
+
+  test("family shots can be added, but the owner's own sections stay in Inspo and BTS", async () => {
+    const { newInspoSchema, newSectionSchema } = await import("@/lib/shoots/validation");
+    expect(newInspoSchema.safeParse({ type: "note", group: "family", caption: "" }).success).toBe(true);
+    expect(newSectionSchema.safeParse({ group: "family", name: "Outfit 2" }).success).toBe(false);
+  });
+
+  test("migration 0047 only widens the check, and says so for the deploy", async () => {
+    const sql = readFileSync("drizzle/0047_family_inspo.sql", "utf8");
+    expect(sql).toMatch(/^--\s*destructive-ok:\s*\S/m);
+    expect(sql).toMatch(/in \('inspo', 'bts', 'family'\)/);
+    expect(sql).not.toMatch(/^\s*(delete|update|truncate|drop table)\b/im);
+  });
+});

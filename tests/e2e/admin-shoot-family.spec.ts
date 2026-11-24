@@ -10,7 +10,7 @@ const DATE = "2026-11-18";
 const KEY = "b-TH-20261104-5150";
 const API = `**/api/admin/shoots/${KEY}`;
 
-const item = (id: string, caption: string, who: string[], group: "inspo" | "bts" = "inspo"): InspoItem => ({
+const item = (id: string, caption: string, who: string[], group: InspoItem["group"] = "inspo"): InspoItem => ({
   id, group, type: "note", mediaUrl: null, contentType: null, width: null, height: null, linkUrl: null, platform: null, caption, who, sectionId: null, sort: 0,
 });
 
@@ -110,4 +110,46 @@ test("day sheet: who's in the photos, then the shots in sections by who's in the
 
   const results = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
   expect(results.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+});
+
+// Owner, Nov 24: bundles with the family get a "Family photos" inspo list (folder + day sheet); baby-only ones don't.
+const FAMILY_SHOT = item("aaaaaaaa-0000-4000-8000-000000000007", "Mom kissing the twins", ["baby:0", "baby:1", "fam:0"], "family");
+const WITH_FAMILY: ShootDetail = { ...RIVERAS, inspo: [...RIVERAS.inspo, FAMILY_SHOT] };
+
+test("Our Family Story: a Family photos list in the folder and on the day sheet", async ({ page }) => {
+  const added: unknown[] = [];
+  await page.route(API, (route) => route.fulfill({ json: { shoot: WITH_FAMILY } }));
+  await page.route(`${API}/inspo`, (route) => {
+    added.push(route.request().postDataJSON());
+    return route.fulfill({ status: 201, json: { item: item("aaaaaaaa-0000-4000-8000-000000000008", "", [], "family") } });
+  });
+  await page.goto(`/admin/shoots/folder/${KEY}`);
+  const family = page.getByRole("region", { name: "Family photos" });
+  await expect(family.getByText("Inspo for the shots with Mom (Ana), Dad, Brother (Leo).", { exact: false })).toBeVisible();
+  await expect(family.getByText("Drop family photo inspo here")).toBeVisible();
+  await expect(family.getByLabel("What's the shot?")).toHaveValue("Mom kissing the twins");
+  await expect(family.getByRole("group", { name: "Who's in it?" })).toHaveCount(1);
+  await family.getByRole("button", { name: "+ A family shot with no photo" }).click();
+  await expect.poll(() => added).toEqual([{ type: "note", group: "family", caption: "" }]);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  const sheet: DaySheet = { date: DATE, sunset: "17:30", shoots: [WITH_FAMILY], bring: { backdrops: [], extras: [], sections: [] }, poses: [], ticks: [], ticked: 0, total: 7 };
+  await page.route(`**/api/admin/shoots/day/${DATE}`, (route) => route.fulfill({ json: { day: sheet } }));
+  await page.route("**/api/admin/shoots/ticks", (route) => route.fulfill({ status: 204 }));
+  await page.goto(`/admin/shoots/${DATE}`);
+  await expect(page.getByRole("heading", { level: 3, name: "Family photos 0/1" })).toBeVisible();
+  await page.getByRole("button", { name: "Done: Mom kissing the twins" }).click();
+  await expect(page.getByRole("heading", { level: 3, name: "Family photos 1/1" })).toBeVisible();
+
+  const results = await new AxeBuilder({ page }).withTags(WCAG_AA).analyze();
+  expect(results.violations.map((v) => `${v.id}: ${v.nodes.length}`)).toEqual([]);
+});
+
+test("a baby-only bundle has no Family photos list", async ({ page }) => {
+  const babyOnly: ShootDetail = { ...RIVERAS, booking: { ...RIVERAS.booking!, people: "Baby only", siblings: false, family: [] } };
+  await page.route(API, (route) => route.fulfill({ json: { shoot: babyOnly } }));
+  await page.goto(`/admin/shoots/folder/${KEY}`);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("The Rivera family");
+  await expect(page.getByRole("region", { name: "BTS on phones" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Family photos" })).toHaveCount(0);
 });

@@ -1,4 +1,4 @@
-import type { InspoGroup, InspoItem, ShootSection } from "./types";
+import type { InspoGroup, InspoItem, ShootDetail, ShootSection } from "./types";
 
 /**
  * The owner's own sections inside a shoot's Inspo and BTS (owner, Nov 12: "Inspo for David · Section 2", e.g. another
@@ -16,8 +16,11 @@ export interface SectionBlock {
   items: InspoItem[];
 }
 
+/** Shoots whose bundle includes the family get "Family photos" (owner, Nov 24); any shoot that already has some keeps them. */
+export const showsFamilyPhotos = (shoot: Pick<ShootDetail, "booking" | "inspo">) => Boolean(shoot.booking?.siblings) || shoot.inspo.some((i) => i.group === "family");
+
 /** The main title of a group. */
-export const groupTitle = (group: InspoGroup, inspoTitle: string) => (group === "inspo" ? inspoTitle : "BTS on phones");
+export const groupTitle = (group: InspoGroup, inspoTitle: string) => (group === "inspo" ? inspoTitle : group === "family" ? "Family photos" : "BTS on phones");
 
 /** The group's sections in order. */
 export const sectionsIn = (sections: ShootSection[], group: InspoGroup) =>

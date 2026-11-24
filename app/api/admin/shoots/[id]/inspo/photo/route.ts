@@ -34,7 +34,7 @@ export async function POST(req: Request, { params }: Ctx) {
   const file = form?.get("file");
   const group = form?.get("group");
   if (!(file instanceof File)) return NextResponse.json({ error: "No photo received." }, { status: 400, headers: NO_STORE });
-  if (group !== "inspo" && group !== "bts") return NextResponse.json({ error: "Pick Inspo or BTS." }, { status: 400, headers: NO_STORE });
+  if (group !== "inspo" && group !== "bts" && group !== "family") return NextResponse.json({ error: "Pick Inspo, Family photos or BTS." }, { status: 400, headers: NO_STORE });
   // the owner's section it was dropped in (none = the main one)
   const sectionField = form?.get("section");
   const section = typeof sectionField === "string" && sectionField ? sectionIdSchema.safeParse(sectionField) : null;

@@ -62,7 +62,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-11 · Valentine's theme Feb 1 – Mar 1 yearly, switched by hand · owner
 - 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
 - 2026-11-23 · Chalk intro on / and /es at every load; reveals never fade out · owner
-- 2026-11-24 · Shoots → Signature poses (photos + setup) in every folder, ticked per family · owner
+- 2026-11-24 · Shoots: Signature poses on every shoot; Family photos inspo on family bundles · owner
 - 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

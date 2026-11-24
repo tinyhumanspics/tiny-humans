@@ -1,5 +1,5 @@
 import { autoConfirmOf, bookingKeyOf, bundleLine, inspoTitleOf, whoLineOf } from "./from-bookings";
-import type { InspoItem, ShootBookingFacts, ShootDetail, ShootSection, ShootSummary } from "./types";
+import type { InspoGroup, InspoItem, ShootBookingFacts, ShootDetail, ShootSection, ShootSummary } from "./types";
 
 /** The owners' saved notes for a shoot (a `shoots` row); null fields fall back to the booking. */
 export interface ShootRow {
@@ -17,14 +17,17 @@ export interface ShootRow {
 
 const orDefault = (value: string | null | undefined, fallback: string) => (value?.trim() ? value.trim() : fallback);
 
+const GROUP_ORDER: Record<InspoGroup, number> = { inspo: 0, family: 1, bts: 2 };
+
 /**
  * A booking shoot (facts + its row once edited) or a shoot without a booking (row only) → its folder/day-sheet view.
  * Date and time always come from the booking, so a reschedule moves the shoot.
  */
 export function shootDetail(facts: ShootBookingFacts | null, row: ShootRow | null, inspo: InspoItem[], sections: ShootSection[] = []): ShootDetail {
   if (!facts && !row) throw new Error("shootDetail needs a booking or a row");
-  const sorted = [...inspo].sort((a, b) => (a.group === b.group ? a.sort - b.sort : a.group === "inspo" ? -1 : 1));
-  const counts = { inspoCount: sorted.filter((i) => i.group === "inspo").length, btsCount: sorted.filter((i) => i.group === "bts").length };
+  const sorted = [...inspo].sort((a, b) => (a.group === b.group ? a.sort - b.sort : GROUP_ORDER[a.group] - GROUP_ORDER[b.group]));
+  // family photo inspo counts as inspo ("6 inspo · 3 BTS ideas")
+  const counts = { inspoCount: sorted.filter((i) => i.group !== "bts").length, btsCount: sorted.filter((i) => i.group === "bts").length };
   const confirm = row?.confirm ?? [];
   const bringExtra = row?.bringExtra ?? [];
   if (facts) {

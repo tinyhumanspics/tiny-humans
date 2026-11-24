@@ -2,7 +2,8 @@
 import type { FamilyMember } from "@/lib/booking/family";
 
 export type ShootKind = "booking" | "styled";
-export type InspoGroup = "inspo" | "bts";
+/** "family": photo inspo for the family shots, on shoots whose bundle includes the family (owner, Nov 24). */
+export type InspoGroup = "inspo" | "bts" | "family";
 export type InspoType = "image" | "video" | "link" | "note";
 
 /** Bookings that become shoots (cancelled ones never show on a day sheet; a folder can still be opened). */

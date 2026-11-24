@@ -18,6 +18,7 @@ import css from "./Shoots.module.css";
 const WORDS = {
   inspo: { label: "What's the shot?", placeholder: "e.g. Basket nap, sleepy curl", note: "+ A shot with no photo", tile: "Shot idea", empty: "Nothing here yet.", drop: "Drop inspo photos here" },
   bts: { label: "What's the idea?", placeholder: "e.g. Camera-back reveal", note: "+ Write an idea (no photo)", tile: "Idea", empty: "No ideas yet.", drop: "Drop a reference photo" },
+  family: { label: "What's the shot?", placeholder: "e.g. Mom and Dad kissing baby's cheeks", note: "+ A family shot with no photo", tile: "Family shot", empty: "No family photos yet.", drop: "Drop family photo inspo here" },
 } as const;
 
 const isVisual = (i: InspoItem) => (i.type === "image" || i.type === "video") && Boolean(i.mediaUrl);
@@ -215,7 +216,7 @@ export default function InspoDrop({
                   focus={focusId === item.id}
                   onRemove={onRemove}
                   onOpen={() => setViewing(photos.findIndex((p) => p.id === item.id))}
-                  people={group === "inspo" && picksWho(people) ? people : null}
+                  people={group !== "bts" && picksWho(people) ? people : null}
                   moveTo={moveTo.length > 1 && onMoved ? moveTo : null}
                   onMoved={onMoved}
                 />

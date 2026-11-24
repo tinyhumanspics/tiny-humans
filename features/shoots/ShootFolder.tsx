@@ -8,12 +8,13 @@ import styles from "@/features/admin/Admin.module.css";
 import { cn } from "@/lib/cn";
 import { shootsApi, ShootsApiError } from "@/lib/shoots/client";
 import { clock, shortDay } from "@/lib/shoots/format";
-import { groupTitle, MAX_SECTIONS_PER_GROUP, newSectionName, sectionBlocks } from "@/lib/shoots/sections";
+import { groupTitle, MAX_SECTIONS_PER_GROUP, newSectionName, sectionBlocks, showsFamilyPhotos } from "@/lib/shoots/sections";
 import type { InspoGroup, InspoItem, ShootDetail, ShootSection, SignaturePose } from "@/lib/shoots/types";
 import InspoDrop, { type MoveTarget } from "./InspoDrop";
 import InspoLightbox from "./InspoLightbox";
 import PoseGrid, { posePhotos } from "./PoseGrid";
 import { peopleOf, picksWho } from "@/lib/shoots/people";
+import { familyLabel } from "@/lib/booking/family";
 import NotReady from "./NotReady";
 import { saveText, useAutosave } from "./useAutosave";
 import { useAutoHeight } from "./useAutoHeight";
@@ -138,6 +139,15 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
             <GroupSections shoot={shoot} group="inspo" people={people} fresh={fresh} onAdd={added} onRemove={removed} onMoved={moved} onSectionAdded={sectionAdded} onSectionRenamed={sectionRenamed} onSectionRemoved={sectionRemoved} />
           </section>
           <FolderPoses />
+          {showsFamilyPhotos(shoot) && (
+            <section className={css.block} aria-labelledby="family-title">
+              <h2 id="family-title" className={cn(styles.h2, "chalk")}>Family photos</h2>
+              <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>
+                Inspo for the shots with {b?.family.length ? familyLabel(b.family) : "the family"}. Say what each shot is{picksWho(people) ? " and who's in it" : ""}.
+              </p>
+              <InspoDrop shootKey={shoot.key} group="family" items={shoot.inspo.filter((i) => i.group === "family")} onAdd={added} onRemove={removed} people={people} compact />
+            </section>
+          )}
           <section className={css.block} aria-labelledby="bts-title">
             <h2 id="bts-title" className={cn(styles.h2, "chalk")}>BTS on phones</h2>
             <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>Your own ideas for clips and phone photos for Instagram.</p>

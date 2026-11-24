@@ -59,7 +59,9 @@ export const newStyledShootSchema = z
   .strict();
 export type NewStyledShoot = z.infer<typeof newStyledShootSchema>;
 
-const group = z.enum(["inspo", "bts"]);
+const group = z.enum(["inspo", "bts", "family"]);
+/** The owner's own sections exist in Inspo and BTS only. */
+const sectionGroup = z.enum(["inspo", "bts"]);
 /** One of the owner's sections (lib/shoots/sections.ts); null / missing = the group's main section. */
 const sectionId = z.string().regex(UUID, "Pick a section from this shoot.").nullable().optional();
 const caption = z.string().trim().max(500, "Keep it under 500 characters.");
@@ -101,7 +103,7 @@ export const inspoPatchSchema = z
 
 /** "+ Add a section" ({ group, name }) and renaming one ({ name }). */
 const sectionName = z.string().trim().min(1, "Give the section a name.").max(SECTION_NAME_MAX, `Keep the name under ${SECTION_NAME_MAX} characters.`);
-export const newSectionSchema = z.object({ group, name: sectionName }).strict();
+export const newSectionSchema = z.object({ group: sectionGroup, name: sectionName }).strict();
 export const sectionPatchSchema = z.object({ name: sectionName }).strict();
 export const sectionIdSchema = z.string().regex(UUID, "Unknown section.");
 

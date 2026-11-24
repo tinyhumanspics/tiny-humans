@@ -10,7 +10,7 @@ import type { BringLine, InspoItem, ShootDetail, SignaturePose } from "@/lib/sho
 import { InspoTile } from "./InspoDrop";
 import { byKind, inShownOrder, KIND_LABEL } from "@/lib/shoots/kinds";
 import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
-import { sectionBlocks } from "@/lib/shoots/sections";
+import { sectionBlocks, showsFamilyPhotos } from "@/lib/shoots/sections";
 import InspoLightbox, { type LightboxPhoto, viewerItems } from "./InspoLightbox";
 import NotReady from "./NotReady";
 import PoseGrid, { posePhotos } from "./PoseGrid";
@@ -295,10 +295,10 @@ function ShootBlock({
         </div>
       )}
 
-      {(["inspo", "bts"] as const).map((g) => {
+      {(showsFamilyPhotos(s) ? (["inspo", "family", "bts"] as const) : (["inspo", "bts"] as const)).map((g) => {
         // the group's main list, then the owner's own sections (owner, Nov 12), each with its own count
         const blocks = sectionBlocks(g, s.inspo, s.sections, s.inspoTitle);
-        const whoSections = (items: InspoItem[]) => (g === "inspo" ? sectionsFor(items) : null);
+        const whoSections = (items: InspoItem[]) => (g !== "bts" ? sectionsFor(items) : null);
         // photos and videos open in the order they're shown: block by block, by who's in them, photos before videos
         const ordered = blocks.flatMap((b) => {
           const who = whoSections(b.items);
@@ -338,6 +338,10 @@ function ShootBlock({
                     </>
                   ) : b.id ? (
                     <p className={cn(styles.hintSmall, "chalk-soft")}>Nothing in this section yet.</p>
+                  ) : g === "family" ? (
+                    <p className={cn(styles.hintSmall, "chalk-soft")}>
+                      No family photos yet. <Link href={`/admin/shoots/folder/${s.key}`}>Open the folder</Link> to add them.
+                    </p>
                   ) : g === "inspo" ? (
                     <p className={cn(css.empty, "chalk-soft")}>
                       No inspo yet. <Link href={`/admin/shoots/folder/${s.key}`}>Open the folder</Link> to drop in what the family sends.

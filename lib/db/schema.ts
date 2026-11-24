@@ -1045,7 +1045,7 @@ export const shootInspo = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     shootId: uuid("shoot_id").notNull().references(() => shoots.id, { onDelete: "cascade" }),
-    /** "inspo" | "bts" */
+    /** "inspo" | "bts" | "family" (family photo inspo, bundles with the family: owner, Nov 24) */
     group: text("group").notNull(),
     /** "image" | "video" | "link" | "note" */
     type: text("type").notNull(),
@@ -1067,7 +1067,7 @@ export const shootInspo = pgTable(
   },
   (t) => [
     index("shoot_inspo_shoot_idx").on(t.shootId, t.group, t.sort),
-    check("shoot_inspo_group_check", sql`${t.group} in ('inspo', 'bts')`),
+    check("shoot_inspo_group_check", sql`${t.group} in ('inspo', 'bts', 'family')`),
     check("shoot_inspo_type_check", sql`${t.type} in ('image', 'video', 'link', 'note')`),
     check(
       "shoot_inspo_content_check",
