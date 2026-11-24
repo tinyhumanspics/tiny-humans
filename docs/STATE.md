@@ -4,11 +4,11 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 
 ## Live now
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
-- Chalk logo intro: / and /es, every open and reload (owner, Nov 23).
+- Owner: chalk intro on / and /es at every load (Nov 23); Shoots → Signature poses, ticked per family (Nov 24).
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
   /es price line: "Traslado gratis hasta 30 millas de Miami Beach" (Carlos, Nov 23: fits the first screen).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
-- Pay link (decision #22): the $50 first (total with travel, refund line above the button); after paying, the same
+- Pay link (decision #22): the $50 first; after paying, the same
   page asks home + ages (required) + backdrops, each a form; saves rebuild the Outlook event. Both reminders ask for
   home + ages (button to the link) until saved. Owner email/text name the new order.
 - Every Lead carries `lead_source` ("website" / "booking_link"): Conversions API, browser Pixel and the CAPI log line.

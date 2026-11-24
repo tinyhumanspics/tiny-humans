@@ -5,14 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import styles from "@/features/admin/Admin.module.css";
 import { cn } from "@/lib/cn";
 import { clock, dayParts, plural } from "@/lib/shoots/format";
-import { inspoKey, progressOf } from "@/lib/shoots/ticks";
-import type { BringLine, InspoItem, ShootDetail } from "@/lib/shoots/types";
+import { inspoKey, poseKey, progressOf } from "@/lib/shoots/ticks";
+import type { BringLine, InspoItem, ShootDetail, SignaturePose } from "@/lib/shoots/types";
 import { InspoTile } from "./InspoDrop";
 import { byKind, inShownOrder, KIND_LABEL } from "@/lib/shoots/kinds";
 import { groupByWho, peopleOf, picksWho } from "@/lib/shoots/people";
 import { sectionBlocks } from "@/lib/shoots/sections";
 import InspoLightbox, { type LightboxPhoto, viewerItems } from "./InspoLightbox";
 import NotReady from "./NotReady";
+import PoseGrid, { posePhotos } from "./PoseGrid";
 import { useDayTicks } from "./useDayTicks";
 import { useTwoTap } from "./useTwoTap";
 import css from "./Shoots.module.css";
@@ -21,12 +22,14 @@ const sectionId = (key: string) => `s-${key.replace(/[^A-Za-z0-9_-]/g, "")}`;
 
 /**
  * /admin/shoots/[date]: the sheet for a shoot day, phone first (template: "Shoot day sheet"). Who's on camera,
- * Still to confirm, each family (address, backdrops, what they asked for, inspo + BTS to tick), then What to bring.
+ * Still to confirm, each family (address, backdrops, what they asked for, inspo + signature poses + BTS to tick), then
+ * What to bring.
  * Ticks show on both phones (useDayTicks).
  */
 export default function DaySheet({ date }: { date: string }) {
   const { day, error, isTicked, toggle, clearAll, retrying } = useDayTicks(date);
-  const [viewing, setViewing] = useState<{ photos: LightboxPhoto[]; index: number; tick: boolean } | null>(null);
+  // keyOf: the tick behind each photo ("Mark as done" in the viewer); none for their pick
+  const [viewing, setViewing] = useState<{ photos: LightboxPhoto[]; index: number; keyOf?: (photoId: string) => string } | null>(null);
   const [current, setCurrent] = useState<string | null>(null);
   const chipsRef = useRef<HTMLElement>(null);
   const p = dayParts(date);
@@ -35,7 +38,7 @@ export default function DaySheet({ date }: { date: string }) {
     if (!day) return [];
     const b = day.bring;
     return [
-      ...day.shoots.flatMap((s) => s.inspo.map((i) => inspoKey(i.id))),
+      ...day.shoots.flatMap((s) => [...s.inspo.map((i) => inspoKey(i.id)), ...day.poses.map((p) => poseKey(s.key, p.id))]),
       ...b.backdrops.map((x) => x.key),
       ...b.extras.map((x) => x.key),
       ...b.sections.flatMap((s) => s.items.map((x) => x.key)),
@@ -158,7 +161,7 @@ export default function DaySheet({ date }: { date: string }) {
           )}
 
           {day.shoots.map((s, i) => (
-            <ShootBlock key={s.key} shoot={s} n={i + 1} isTicked={isTicked} toggle={toggle} onView={(photos, index, tick) => setViewing({ photos, index, tick })} />
+            <ShootBlock key={s.key} shoot={s} n={i + 1} poses={day.poses} isTicked={isTicked} toggle={toggle} onView={(photos, index, keyOf) => setViewing({ photos, index, keyOf })} />
           ))}
 
           <section id="sec-bring" data-tabsec className={css.sheetBlock} aria-labelledby="bring-title">
@@ -182,7 +185,7 @@ export default function DaySheet({ date }: { date: string }) {
           index={viewing.index}
           onIndex={(index) => setViewing((v) => (v ? { ...v, index } : v))}
           onClose={() => setViewing(null)}
-          done={viewing.tick ? { isDone: (id) => isTicked(inspoKey(id)), toggle: (id) => toggle(inspoKey(id)) } : undefined}
+          done={viewing.keyOf ? { isDone: (id) => isTicked(viewing.keyOf!(id)), toggle: (id) => toggle(viewing.keyOf!(id)) } : undefined}
         />
       )}
     </div>
@@ -192,15 +195,17 @@ export default function DaySheet({ date }: { date: string }) {
 function ShootBlock({
   shoot: s,
   n,
+  poses,
   isTicked,
   toggle,
   onView,
 }: {
   shoot: ShootDetail;
   n: number;
+  poses: SignaturePose[];
   isTicked: (key: string) => boolean;
   toggle: (key: string) => void;
-  onView: (photos: LightboxPhoto[], index: number, tick: boolean) => void;
+  onView: (photos: LightboxPhoto[], index: number, keyOf?: (photoId: string) => string) => void;
 }) {
   const b = s.booking;
   const mapUrl = b?.mapUrl ?? (s.place ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.place)}` : null);
@@ -224,7 +229,7 @@ function ShootBlock({
         const done = isTicked(key);
         return (
           <li key={item.id} className={cn(css.shotCard, done ? css.shotDone : "")}>
-            <InspoTile item={item} linkHint="Open the link" onOpen={() => onView(photos, Math.max(0, photos.findIndex((x) => x.id === item.id)), true)} />
+            <InspoTile item={item} linkHint="Open the link" onOpen={() => onView(photos, Math.max(0, photos.findIndex((x) => x.id === item.id)), inspoKey)} />
             <button type="button" className={css.phTick} aria-pressed={done} onClick={() => toggle(key)}>
               <span className={styles.visuallyHidden}>Done: {item.caption || "this one"}</span>
             </button>
@@ -279,7 +284,7 @@ function ShootBlock({
           {s.said && <p className="chalk-soft">{s.said}</p>}
           {b?.pick && (
             <p className={css.pick}>
-              <button type="button" className={css.pickButton} onClick={() => onView([{ id: b.pick!.id, src: b.pick!.src, caption: `Their pick: ${b.pick!.title}` }], 0, false)}>
+              <button type="button" className={css.pickButton} onClick={() => onView([{ id: b.pick!.id, src: b.pick!.src, caption: `Their pick: ${b.pick!.title}` }], 0)}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- a small site photo shown as a thumbnail */}
                 <img src={b.pick.src} alt="" />
                 <span className={styles.visuallyHidden}>See their pick big</span>
@@ -343,6 +348,7 @@ function ShootBlock({
                 </div>
               );
             })}
+            {g === "inspo" && <SignatureBlock shootKey={s.key} poses={poses} isTicked={isTicked} toggle={toggle} onView={onView} />}
           </div>
         );
       })}
@@ -350,6 +356,39 @@ function ShootBlock({
         <Link href={`/admin/shoots/folder/${s.key}`}>Open the {s.tabLabel} folder →</Link>
       </p>
     </section>
+  );
+}
+
+/** The signature poses for one family (the same poses for every shoot, each ticked here). */
+function SignatureBlock({
+  shootKey,
+  poses,
+  isTicked,
+  toggle,
+  onView,
+}: {
+  shootKey: string;
+  poses: SignaturePose[];
+  isTicked: (key: string) => boolean;
+  toggle: (key: string) => void;
+  onView: (photos: LightboxPhoto[], index: number, keyOf?: (photoId: string) => string) => void;
+}) {
+  if (!poses.length) return null;
+  const keys = poses.map((p) => poseKey(shootKey, p.id));
+  const c = progressOf(keys, keys.filter(isTicked));
+  const photos = posePhotos(poses);
+  const poseOfPhoto = new Map(poses.flatMap((p) => p.photos.map((photo) => [photo.id, p.id] as const)));
+  return (
+    <div>
+      <h3 className={css.orderH}>
+        Signature poses <span className={cn(css.orderCount, "chalk-soft")}>{c.ticked}/{c.total}</span>
+      </h3>
+      <PoseGrid
+        poses={poses}
+        onOpen={(photoId) => onView(photos, Math.max(0, photos.findIndex((x) => x.id === photoId)), (id) => poseKey(shootKey, poseOfPhoto.get(id) ?? ""))}
+        tick={{ isDone: (id) => isTicked(poseKey(shootKey, id)), toggle: (id) => toggle(poseKey(shootKey, id)) }}
+      />
+    </div>
   );
 }
 

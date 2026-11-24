@@ -1,5 +1,5 @@
 import type { Player } from "./players";
-import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail, ShootSection } from "./types";
+import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootDay, ShootDetail, ShootSection, SignaturePhoto, SignaturePose } from "./types";
 
 /** Browser calls for /admin → Shoots (owner only; the routes check the session). */
 
@@ -78,4 +78,19 @@ export const shootsApi = {
   saveSection: async (id: string, patch: { name?: string; items?: string; sort?: number }) =>
     (await call<{ section: BringSection }>(`/api/admin/shoots/bring/${id}`, { method: "PATCH", body: body(patch) })).section,
   removeSection: (id: string) => call<void>(`/api/admin/shoots/bring/${id}`, { method: "DELETE" }),
+
+  poses: async () => (await call<{ poses: SignaturePose[] }>("/api/admin/shoots/poses")).poses,
+  addPose: async () => (await call<{ pose: SignaturePose }>("/api/admin/shoots/poses", { method: "POST", body: body({}) })).pose,
+  savePose: (id: string, patch: { name?: string; steps?: string }) => call<void>(`/api/admin/shoots/poses/${id}`, { method: "PATCH", body: body(patch) }),
+  removePose: (id: string) => call<void>(`/api/admin/shoots/poses/${id}`, { method: "DELETE" }),
+  orderPoses: (order: string[]) => call<void>("/api/admin/shoots/poses", { method: "PUT", body: body({ order }) }),
+  /** One photo, already shrunk in the browser (preparePhoto). */
+  uploadPosePhoto: async (id: string, photo: { blob: Blob; width: number; height: number }) => {
+    const form = new FormData();
+    form.append("file", photo.blob, "photo.jpg");
+    form.append("width", String(photo.width));
+    form.append("height", String(photo.height));
+    return (await call<{ photo: SignaturePhoto }>(`/api/admin/shoots/poses/${id}/photo`, { method: "POST", body: form })).photo;
+  },
+  removePosePhoto: (id: string, photoId: string) => call<void>(`/api/admin/shoots/poses/${id}/photo/${photoId}`, { method: "DELETE" }),
 };

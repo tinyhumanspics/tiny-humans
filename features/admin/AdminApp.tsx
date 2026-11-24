@@ -19,6 +19,7 @@ import BringLists from "@/features/shoots/BringLists";
 import DaySheet from "@/features/shoots/DaySheet";
 import ShootFolder from "@/features/shoots/ShootFolder";
 import ShootsList from "@/features/shoots/ShootsList";
+import SignaturePoses from "@/features/shoots/SignaturePoses";
 import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import QuotesBooking from "./QuotesBooking";
@@ -35,10 +36,10 @@ type Note = { kind: "ok" | "error"; text: string } | null;
 
 /**
  * Owner area shell: sign-in, settings, navigation, then one section. `view` picks a screen inside a section
- * (Shoots: "days" = Shoot days, "bring" = What we always bring, "folder" = the shoot `shootKey`, "day" = the day sheet
+ * (Shoots: "days" = Shoot days, "bring" = What we always bring, "poses" = Signature poses, "folder" = the shoot `shootKey`, "day" = the day sheet
  * of `date`; the folder and the day sheet draw their own main heading).
  */
-export default function AdminApp({ section = "dashboard", view, shootKey, date }: { section?: AdminSection; view?: "days" | "bring" | "folder" | "day"; shootKey?: string; date?: string }) {
+export default function AdminApp({ section = "dashboard", view, shootKey, date }: { section?: AdminSection; view?: "days" | "bring" | "poses" | "folder" | "day"; shootKey?: string; date?: string }) {
   const api = useMemo(() => getAdminApi(), []);
   const { applySettings } = useSiteSettings();
   const [status, setStatus] = useState<Status>("loading");
@@ -105,7 +106,7 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
         {section === "dashboard" && <Dashboard api={api} settings={settings} />}
         {section === "requests" && <RequestsPanel api={api} />}
         {section === "leads" && <LeadsPanel api={api} />}
-        {section === "shoots" && (view === "bring" ? <BringLists /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
+        {section === "shoots" && (view === "bring" ? <BringLists /> : view === "poses" ? <SignaturePoses /> : view === "folder" && shootKey ? <ShootFolder shootKey={shootKey} /> : view === "day" && date ? <DaySheet date={date} /> : <ShootsList />)}
         {section === "availability" && <AvailabilityPanel api={api} />}
         {section === "pricing" && <PricingPanel api={api} />}
         {section === "quotes" && <QuotesBooking api={api} />}

@@ -9,8 +9,10 @@ import { cn } from "@/lib/cn";
 import { shootsApi, ShootsApiError } from "@/lib/shoots/client";
 import { clock, shortDay } from "@/lib/shoots/format";
 import { groupTitle, MAX_SECTIONS_PER_GROUP, newSectionName, sectionBlocks } from "@/lib/shoots/sections";
-import type { InspoGroup, InspoItem, ShootDetail, ShootSection } from "@/lib/shoots/types";
+import type { InspoGroup, InspoItem, ShootDetail, ShootSection, SignaturePose } from "@/lib/shoots/types";
 import InspoDrop, { type MoveTarget } from "./InspoDrop";
+import InspoLightbox from "./InspoLightbox";
+import PoseGrid, { posePhotos } from "./PoseGrid";
 import { peopleOf, picksWho } from "@/lib/shoots/people";
 import NotReady from "./NotReady";
 import { saveText, useAutosave } from "./useAutosave";
@@ -135,6 +137,7 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
             </p>
             <GroupSections shoot={shoot} group="inspo" people={people} fresh={fresh} onAdd={added} onRemove={removed} onMoved={moved} onSectionAdded={sectionAdded} onSectionRenamed={sectionRenamed} onSectionRemoved={sectionRemoved} />
           </section>
+          <FolderPoses />
           <section className={css.block} aria-labelledby="bts-title">
             <h2 id="bts-title" className={cn(styles.h2, "chalk")}>BTS on phones</h2>
             <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>Your own ideas for clips and phone photos for Instagram.</p>
@@ -146,6 +149,36 @@ export default function ShootFolder({ shootKey }: { shootKey: string }) {
         </aside>
       </div>
     </div>
+  );
+}
+
+/**
+ * The signature poses (owner, Nov 24): every shoot gets them, so the folder only shows them; they're changed on
+ * Shoots → Signature poses and ticked on the day sheet. Hidden if they can't be loaded (the rest of the folder works).
+ */
+function FolderPoses() {
+  const [poses, setPoses] = useState<SignaturePose[] | null>(null);
+  const [viewing, setViewing] = useState<number | null>(null);
+  useEffect(() => {
+    shootsApi
+      .poses()
+      .then(setPoses)
+      .catch(() => setPoses(null));
+  }, []);
+  if (!poses) return null;
+  const photos = posePhotos(poses);
+  return (
+    <section className={css.block} aria-labelledby="poses-title">
+      <h2 id="poses-title" className={cn(styles.h2, "chalk")}>Signature poses</h2>
+      <p className={cn(styles.hintSmall, css.sectionLead, "chalk-soft")}>
+        {poses.length ? "Every shoot gets these. Tick them off on the day sheet. " : "No signature poses yet. "}
+        <Link href="/admin/shoots/poses">{poses.length ? "Change them in Signature poses" : "Add them in Signature poses"}</Link>
+      </p>
+      {poses.length > 0 && <PoseGrid poses={poses} onOpen={(photoId) => setViewing(Math.max(0, photos.findIndex((p) => p.id === photoId)))} />}
+      {viewing !== null && photos.length > 0 && (
+        <InspoLightbox photos={photos} index={Math.min(viewing, photos.length - 1)} onIndex={setViewing} onClose={() => setViewing(null)} />
+      )}
+    </section>
   );
 }
 

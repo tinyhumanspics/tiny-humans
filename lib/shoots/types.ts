@@ -158,6 +158,26 @@ export interface BringLists {
   sections: { id: string; name: string; items: BringLine[] }[];
 }
 
+/** One photo of a signature pose (shown only in /admin). */
+export interface SignaturePhoto {
+  id: string;
+  url: string;
+  width: number | null;
+  height: number | null;
+}
+
+/**
+ * A signature pose (owner, Nov 24): every shoot gets these. The photos to follow (the first is its cover) and how to
+ * set it up (where the pillows go, one step per line). Ticked per shoot on the day sheet.
+ */
+export interface SignaturePose {
+  id: string;
+  name: string;
+  steps: string[];
+  photos: SignaturePhoto[];
+  sort: number;
+}
+
 export interface ShootDay {
   date: string;
   /** "HH:MM" (24 h, Miami), null if the sun doesn't set (never in Florida). */
@@ -172,6 +192,8 @@ export interface DaySheet {
   sunset: string | null;
   shoots: ShootDetail[];
   bring: BringLists;
+  /** The signature poses, the same for every shoot (each shoot ticks its own). */
+  poses: SignaturePose[];
   /** Ticked keys on this day. */
   ticks: string[];
   ticked: number;

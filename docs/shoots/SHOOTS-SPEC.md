@@ -41,6 +41,7 @@ updated after each one, no push / migration on production / new paid usage witho
 | Shoots without a booking | Supported ("+ Shoot without a booking": title, day, start, place) |
 | Videos | Links first; video uploads only after the owner approves Blob cost (§5) |
 | Standard list contents | The template's lists are a draft; the owners edit them on "What we always bring" |
+| Signature poses | Owner, Nov 24: Shoots → **Signature poses** (name, photos to follow, setup steps; tables `shoot_signature_poses` + `shoot_signature_photos`, migration 0046). Every folder lists them; the day sheet ticks each one per shoot (`pose:<shoot key>:<pose id>`) |
 
 ## 2. Where it lives
 

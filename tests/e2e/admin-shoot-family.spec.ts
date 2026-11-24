@@ -89,7 +89,7 @@ test("folder: each baby and family member listed; each shot idea says who's in i
 
 test("day sheet: who's in the photos, then the shots in sections by who's in them", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const sheet: DaySheet = { date: DATE, sunset: "17:30", shoots: [RIVERAS], bring: { backdrops: [], extras: [], sections: [] }, ticks: [], ticked: 0, total: 6 };
+  const sheet: DaySheet = { date: DATE, sunset: "17:30", shoots: [RIVERAS], bring: { backdrops: [], extras: [], sections: [] }, poses: [], ticks: [], ticked: 0, total: 6 };
   await page.route(`**/api/admin/shoots/day/${DATE}`, (route) => route.fulfill({ json: { day: sheet } }));
   await page.route("**/api/admin/shoots/ticks", (route) => route.fulfill({ status: 204 }));
   await page.goto(`/admin/shoots/${DATE}`);

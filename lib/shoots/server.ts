@@ -1,17 +1,18 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, lte, max, sql } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, like, lte, max, sql } from "drizzle-orm";
 import { getDb, isDatabaseConfigured, isUndefinedTable } from "@/lib/db/client";
 import { log } from "@/lib/log";
-import { shootBringSections, shootInspo, shootTicks, shoots, type Shoot, type ShootInspo as InspoRow } from "@/lib/db/schema";
+import { shootBringSections, shootInspo, shootSignaturePhotos, shootSignaturePoses, shootTicks, shoots, type Shoot, type ShootInspo as InspoRow } from "@/lib/db/schema";
 import { bookingShootByReference, bookingShootsBetween, bookingShootsById } from "./booking-source";
 import { referenceOfKey } from "./from-bookings";
 import { LIST_LIMITS } from "./lists";
 import { platformOf } from "./links";
+import { POSE_LIMITS } from "./poses";
 import { MAX_SECTIONS_PER_GROUP } from "./sections";
 import { sunsetOn } from "./sunset";
 import { bringLists, dayKeys, inspoKey, progressOf } from "./ticks";
-import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootBookingFacts, ShootDay, ShootDetail, ShootSection } from "./types";
-import type { BringSectionPatch, NewInspo, NewStyledShoot, ShootPatch } from "./validation";
+import type { BringSection, DaySheet, InspoGroup, InspoItem, ShootBookingFacts, ShootDay, ShootDetail, ShootSection, SignaturePhoto, SignaturePose } from "./types";
+import type { BringSectionPatch, NewInspo, NewStyledShoot, PosePatch, ShootPatch } from "./validation";
 import { byStart, shootDetail, shootSummary, type ShootRow } from "./view";
 
 /**
@@ -258,15 +259,16 @@ async function shootsBetween(from: string, to: string): Promise<ShootDetail[]> {
 /** Shoot days between two dates (GET /api/admin/shoots): cards with each shoot, sunset and tick progress. */
 export async function listShootDays(from: string, to: string): Promise<ShootDay[]> {
   return guard(async () => {
-    const [all, sections, ticks] = await Promise.all([
+    const [all, sections, poses, ticks] = await Promise.all([
       shootsBetween(from, to),
       sectionsRaw(),
+      posesForSheets(),
       getDb().select({ date: shootTicks.date, key: shootTicks.key }).from(shootTicks).where(and(gte(shootTicks.date, from), lte(shootTicks.date, to))),
     ]);
     const dates = [...new Set(all.map((s) => s.date))].sort();
     return dates.map((date) => {
       const day = all.filter((s) => s.date === date).sort(byStart);
-      const progress = progressOf(dayKeys(date, day, sections), ticks.filter((t) => t.date === date).map((t) => t.key));
+      const progress = progressOf(dayKeys(date, day, sections, poses), ticks.filter((t) => t.date === date).map((t) => t.key));
       return { date, sunset: sunsetOn(date), shoots: day.map(shootSummary), ...progress };
     });
   });
@@ -275,10 +277,10 @@ export async function listShootDays(from: string, to: string): Promise<ShootDay[
 /** Everything a day sheet shows (GET /api/admin/shoots/day/[date]). */
 export async function getDaySheet(date: string): Promise<DaySheet> {
   return guard(async () => {
-    const [day, sections, ticks] = await Promise.all([shootsBetween(date, date), sectionsRaw(), getTicks(date)]);
+    const [day, sections, poses, ticks] = await Promise.all([shootsBetween(date, date), sectionsRaw(), posesForSheets(), getTicks(date)]);
     day.sort(byStart);
-    const progress = progressOf(dayKeys(date, day, sections), ticks);
-    return { date, sunset: sunsetOn(date), shoots: day, bring: bringLists(date, day, sections), ticks, ...progress };
+    const progress = progressOf(dayKeys(date, day, sections, poses), ticks);
+    return { date, sunset: sunsetOn(date), shoots: day, bring: bringLists(date, day, sections), poses, ticks, ...progress };
   });
 }
 
@@ -504,6 +506,146 @@ export async function deleteBringSection(id: string): Promise<void> {
   return guard(async () => {
     await getDb().delete(shootBringSections).where(eq(shootBringSections.id, id));
   });
+}
+
+/* ---------- Signature poses (owner, Nov 24) ---------- */
+
+const POSES_NOT_READY = "Signature poses need one database step first (migration 0046). Everything else works as before.";
+
+/** Runs a signature-pose query; a database without migration 0046 gets the plain-English "run the step" message. */
+async function posesStep<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isUndefinedTable(err)) {
+      log.error("shoots.db", "Signature poses step missing (run migration 0046)", { error: err as Error });
+      throw new ShootInputError(POSES_NOT_READY);
+    }
+    throw err;
+  }
+}
+
+const photoOf = (r: typeof shootSignaturePhotos.$inferSelect): SignaturePhoto => ({ id: r.id, url: r.blobUrl, width: r.width, height: r.height });
+
+async function posesRaw(): Promise<SignaturePose[]> {
+  const db = getDb();
+  const [poses, photos] = await Promise.all([
+    db.select().from(shootSignaturePoses).orderBy(asc(shootSignaturePoses.sort), asc(shootSignaturePoses.createdAt)),
+    db.select().from(shootSignaturePhotos).orderBy(asc(shootSignaturePhotos.sort), asc(shootSignaturePhotos.createdAt)),
+  ]);
+  return poses.map((p) => ({ id: p.id, name: p.name, steps: listOf(p.steps), sort: p.sort, photos: photos.filter((x) => x.poseId === p.id).map(photoOf) }));
+}
+
+/** Day sheets and shoot days: before migration 0046 there are simply no poses (nothing else changes). */
+async function posesForSheets(): Promise<SignaturePose[]> {
+  try {
+    return await posesRaw();
+  } catch (err) {
+    if (!isUndefinedTable(err)) throw err;
+    log.warn("shoots.db", "Signature poses not loaded (run migration 0046)", { error: err as Error });
+    return [];
+  }
+}
+
+export async function listSignaturePoses(): Promise<SignaturePose[]> {
+  return guard(() => posesStep(posesRaw));
+}
+
+/** "+ Add a pose": an empty card at the end. */
+export async function createSignaturePose(): Promise<SignaturePose> {
+  return guard(() =>
+    posesStep(async () => {
+      const db = getDb();
+      const [{ count, top }] = await db.select({ count: sql<number>`count(*)::int`, top: max(shootSignaturePoses.sort) }).from(shootSignaturePoses);
+      if (count >= POSE_LIMITS.poses) throw new ShootInputError(`You already have ${POSE_LIMITS.poses} signature poses.`);
+      const [row] = await db.insert(shootSignaturePoses).values({ name: "", steps: [], sort: (top ?? -1) + 1 }).returning();
+      return { id: row.id, name: row.name, steps: listOf(row.steps), sort: row.sort, photos: [] };
+    }),
+  );
+}
+
+/** A pose's name and how to set it up. */
+export async function updateSignaturePose(id: string, patch: PosePatch): Promise<void> {
+  return guard(() =>
+    posesStep(async () => {
+      const set: Partial<typeof shootSignaturePoses.$inferInsert> = { updatedAt: new Date() };
+      if (patch.name !== undefined) set.name = patch.name;
+      if (patch.steps !== undefined) set.steps = patch.steps;
+      const [row] = await getDb().update(shootSignaturePoses).set(set).where(eq(shootSignaturePoses.id, id)).returning({ id: shootSignaturePoses.id });
+      if (!row) throw new ShootNotFoundError("That pose was already removed.");
+    }),
+  );
+}
+
+/** "Move up" / "Move down": the poses in their new order (every pose, once). */
+export async function orderSignaturePoses(order: string[]): Promise<void> {
+  return guard(() =>
+    posesStep(async () => {
+      const db = getDb();
+      const ids = (await db.select({ id: shootSignaturePoses.id }).from(shootSignaturePoses)).map((r) => r.id);
+      if (ids.length !== order.length || !ids.every((id) => order.includes(id))) throw new ShootInputError("The poses changed meanwhile. Refresh the page.");
+      const [first, ...rest] = order.map((id, sort) => db.update(shootSignaturePoses).set({ sort }).where(eq(shootSignaturePoses.id, id)));
+      await db.batch([first, ...rest]);
+    }),
+  );
+}
+
+/** Removes a pose: its photo files first, then the pose (its photos go with it) and its ticks on every day. */
+export async function deleteSignaturePose(id: string, removeFiles: RemoveFiles): Promise<void> {
+  return guard(() =>
+    posesStep(async () => {
+      const db = getDb();
+      const files = await db.select({ pathname: shootSignaturePhotos.blobPathname }).from(shootSignaturePhotos).where(eq(shootSignaturePhotos.poseId, id));
+      if (files.length) await removeFiles(files.map((f) => f.pathname));
+      await db.batch([db.delete(shootSignaturePoses).where(eq(shootSignaturePoses.id, id)), db.delete(shootTicks).where(like(shootTicks.key, `pose:%:${id}`))]);
+    }),
+  );
+}
+
+/** Before an upload: the pose exists and has room for one more photo. */
+export async function checkPoseRoom(poseId: string): Promise<void> {
+  return guard(() =>
+    posesStep(async () => {
+      const db = getDb();
+      const [pose] = await db.select({ id: shootSignaturePoses.id }).from(shootSignaturePoses).where(eq(shootSignaturePoses.id, poseId)).limit(1);
+      if (!pose) throw new ShootNotFoundError("That pose was already removed.");
+      const [{ count }] = await db.select({ count: sql<number>`count(*)::int` }).from(shootSignaturePhotos).where(eq(shootSignaturePhotos.poseId, poseId));
+      if (count >= POSE_LIMITS.photos) throw new ShootInputError(`A pose can have ${POSE_LIMITS.photos} photos. Remove one first.`);
+    }),
+  );
+}
+
+/** An uploaded photo of a pose (the upload route checks the file and stores it in Blob first). */
+export async function addSignaturePhoto(
+  poseId: string,
+  file: { blobUrl: string; blobPathname: string; contentType: string; bytes: number; width: number | null; height: number | null },
+): Promise<SignaturePhoto> {
+  return guard(() =>
+    posesStep(async () => {
+      await checkPoseRoom(poseId);
+      const db = getDb();
+      const [{ top }] = await db.select({ top: max(shootSignaturePhotos.sort) }).from(shootSignaturePhotos).where(eq(shootSignaturePhotos.poseId, poseId));
+      const [row] = await db.insert(shootSignaturePhotos).values({ poseId, ...file, sort: (top ?? -1) + 1 }).returning();
+      return photoOf(row);
+    }),
+  );
+}
+
+/** Removes one photo of a pose: the file first, then the row. */
+export async function deleteSignaturePhoto(poseId: string, photoId: string, removeFiles: RemoveFiles): Promise<void> {
+  return guard(() =>
+    posesStep(async () => {
+      const db = getDb();
+      const [row] = await db
+        .select()
+        .from(shootSignaturePhotos)
+        .where(and(eq(shootSignaturePhotos.id, photoId), eq(shootSignaturePhotos.poseId, poseId)))
+        .limit(1);
+      if (!row) return;
+      await removeFiles([row.blobPathname]);
+      await db.delete(shootSignaturePhotos).where(eq(shootSignaturePhotos.id, row.id));
+    }),
+  );
 }
 
 /* ---------- ticks ---------- */

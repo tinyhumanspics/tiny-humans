@@ -2,6 +2,7 @@ import { z } from "@/lib/validation/zod";
 import { BOOKING_KEY } from "./from-bookings";
 import { LIST_LIMITS, linesOf } from "./lists";
 import { MAX_LINK_LENGTH, normalizeLink } from "./links";
+import { POSE_LIMITS } from "./poses";
 import { SECTION_NAME_MAX } from "./sections";
 import { TICK_KEY } from "./ticks";
 
@@ -114,6 +115,22 @@ export const bringSectionPatchSchema = z
   })
   .strict();
 export type BringSectionPatch = z.infer<typeof bringSectionPatchSchema>;
+
+/** Signature poses: a pose's name and how to set it up (one step per line). */
+export const posePatchSchema = z
+  .object({
+    name: line(POSE_LIMITS.nameLength).optional(),
+    steps: lines(POSE_LIMITS.steps, POSE_LIMITS.stepLength).optional(),
+  })
+  .strict()
+  .refine((p) => p.name !== undefined || p.steps !== undefined, "Nothing to save.");
+export type PosePatch = z.infer<typeof posePatchSchema>;
+
+/** Signature poses in their new order (every pose, once). */
+export const poseOrderSchema = z
+  .object({ order: z.array(z.string().regex(UUID, "Not found.")).min(1).max(POSE_LIMITS.poses) })
+  .strict()
+  .refine((o) => new Set(o.order).size === o.order.length, "Each pose once.");
 
 /** A tick on a day sheet ({ date, key, on }). */
 export const tickSchema = z

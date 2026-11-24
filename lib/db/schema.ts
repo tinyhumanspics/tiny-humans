@@ -1088,6 +1088,42 @@ export const shootTicks = pgTable(
   },
   (t) => [primaryKey({ columns: [t.date, t.key] })],
 );
+/**
+ * Signature poses (owner, Nov 24, migration 0046): the poses every shoot gets, each with the photos to follow and how to
+ * set it up (the pillows under baby, one step per line). Managed once in /admin → Shoots → Signature poses; every
+ * shoot folder and day sheet lists them, ticked per shoot.
+ */
+export const shootSignaturePoses = pgTable("shoot_signature_poses", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull().default(""),
+  steps: jsonb("steps").$type<string[]>().notNull().default(sql`'[]'::jsonb`),
+  sort: integer("sort").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type ShootSignaturePose = typeof shootSignaturePoses.$inferSelect;
+
+/** A signature pose's photos (Vercel Blob at shoots/poses/<pose id>/…, only ever shown in /admin); the first is its cover. */
+export const shootSignaturePhotos = pgTable(
+  "shoot_signature_photos",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    poseId: uuid("pose_id").notNull().references(() => shootSignaturePoses.id, { onDelete: "cascade" }),
+    blobUrl: text("blob_url").notNull(),
+    blobPathname: text("blob_pathname").notNull(),
+    contentType: text("content_type").notNull(),
+    bytes: integer("bytes").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    sort: integer("sort").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("shoot_signature_photos_pose_idx").on(t.poseId, t.sort)],
+);
+
+export type ShootSignaturePhoto = typeof shootSignaturePhotos.$inferSelect;
+
 /* ---------------- photo and video release (/admin → Leads, migration 0023) ---------------- */
 
 /**

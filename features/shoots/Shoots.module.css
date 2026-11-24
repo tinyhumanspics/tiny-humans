@@ -297,3 +297,36 @@ a.linkVis:focus-visible { outline: 2px dashed var(--sun-yellow); outline-offset:
 .kindH { margin: 12px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1rem; letter-spacing: 0.03em; color: var(--chalk-muted); }
 .whoH { margin: 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.2rem; color: var(--sun-yellow); }
 .whoDetail { margin: 0; font-size: 0.95rem; color: var(--chalk-muted); }
+
+/* ---------- signature poses (owner, Nov 24) ---------- */
+/* editing them (Shoots → Signature poses) */
+.poses { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 16px; max-width: 760px; }
+.posesEmpty { margin-top: 16px; }
+.poseEdit { display: grid; gap: 12px; }
+.poseNum { margin: 0; font-family: var(--font-chalk); font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--chalk-muted); }
+.posePhotos { list-style: none; margin: 4px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; }
+.posePhoto { position: relative; display: grid; gap: 2px; justify-items: start; }
+/* on the first photo, like the photo count on the shoot list */
+.firstTag {
+  position: absolute; left: 5px; top: 5px; max-width: calc(100% - 10px); padding: 1px 7px; border-radius: 999px; pointer-events: none;
+  background: color-mix(in srgb, var(--chalkboard-dark) 82%, transparent); color: var(--sun-yellow); font-size: 0.8rem; line-height: 1.4;
+}
+.addPhoto {
+  display: grid; place-items: center; align-content: center; gap: 4px; width: 100%; aspect-ratio: 3 / 4; padding: 8px;
+  border: 3px dashed var(--sun-yellow); border-radius: 10px 13px 11px 12px; text-align: center; cursor: pointer;
+  background: color-mix(in srgb, var(--sun-yellow) 5%, transparent);
+}
+.addPhoto:focus-within { outline: 2px dashed var(--sun-yellow); outline-offset: 4px; }
+.addPhoto .dropBig { font-size: 1.2rem; }
+.moveRow { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* showing them (shoot folder, day sheet) */
+.poseGrid { list-style: none; margin: 8px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px 12px; }
+.poseCard { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.poseName { font-family: var(--font-chalk); font-size: 1.15rem; color: var(--chalk-white); }
+.poseSteps { margin: 0; padding-left: 18px; display: grid; gap: 2px; font-size: 0.92rem; line-height: 1.3; color: var(--chalk-muted); }
+.shotDone .poseSteps { opacity: 0.55; }
+.photoCount {
+  position: absolute; left: 6px; bottom: 6px; padding: 1px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--chalkboard-dark) 80%, transparent); color: var(--chalk-white); font-size: 0.82rem;
+}

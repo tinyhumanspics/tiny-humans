@@ -51,17 +51,18 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-10-15 · /admin keeps the chalkboard design, no light/dark mode · owner
 - 2026-10-22 · Chalk drawings: always whole, never on letters, buttons or photos · owner
 - 2026-11-09 · Empty Spanish fields fill from the English on save (owner marketing text, never family data) · owner
-- 2026-11-10 · Shoot videos are links that play in the site's own player; no video uploads · owner
+- 2026-11-10 · Shoot videos: links played in our own player; no uploads · owner
 - 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
 - 2026-11-16 · Home = ad page + own title; portfolio = /portfolio · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-19 · Leads: opens on Confirmed; Past after 10 days; emails + delivery · owner
 - 2026-11-19 · DMs: prefilled booking link · owner
 - 2026-11-19 · Pay link: baby's age required (11-20); boy/girl optional, required on link form · owner
-- 2026-11-20 · Day-before "Before we arrive" steps; photo extras after the session (RAW too) · owner
+- 2026-11-20 · Day-before "Before we arrive" steps; photo extras (RAW too) · owner
 - 2026-11-11 · Valentine's theme Feb 1 – Mar 1 yearly, switched by hand · owner
 - 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
-- 2026-11-23 · Chalk intro on home (/ and /es) at every open and reload; entrance animations never fade out · owner
+- 2026-11-23 · Chalk intro on / and /es at every load; entrance animations never fade out · owner
+- 2026-11-24 · Shoots → Signature poses (photos + setup steps), in every folder, ticked per family · owner
 - 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

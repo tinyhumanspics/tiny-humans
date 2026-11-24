@@ -45,6 +45,7 @@ const SHEET: DaySheet = {
     extras: [{ key: "bring:2026-11-16:b-TH-20261103-4821:1abc", text: "Small stool for Leo", who: "Morales" }],
     sections: [{ id: "11111111-2222-4333-8444-555555555555", name: "Studio kit", items: [{ key: "bring:2026-11-16:11111111-2222-4333-8444-555555555555:9xyz", text: "Space heater" }] }],
   },
+  poses: [],
   ticks: [],
   ticked: 0,
   total: 6,

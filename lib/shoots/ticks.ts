@@ -1,4 +1,4 @@
-import type { BringLists, BringSection, ShootDetail } from "./types";
+import type { BringLists, BringSection, ShootDetail, SignaturePose } from "./types";
 
 /**
  * Day sheet ticks. Every tickable line has a key, saved per Miami day in `shoot_ticks` (spec §4):
@@ -6,6 +6,7 @@ import type { BringLists, BringSection, ShootDetail } from "./types";
  * - a "What we always bring" item: `bring:<date>:<section id>:<hash of the item>`
  * - a backdrop:                    `bring:<date>:bd:<shoot key>:<backdrop id>`
  * - a family's extra / add-on:     `bring:<date>:<shoot key>:<hash>`
+ * - a signature pose of a shoot:   `pose:<shoot key>:<pose id>`
  * The shoot key is stable ("b-<reference>" for bookings), and item keys come from the item's text, so renaming an
  * item un-ticks it while reordering keeps the tick.
  */
@@ -23,9 +24,14 @@ export const sectionItemKey = (date: string, sectionId: string, text: string) =>
 export const backdropKey = (date: string, shootKey: string, backdropId: string) => `bring:${date}:bd:${shootKey}:${backdropId}`;
 export const extraKey = (date: string, shootKey: string, text: string) => `bring:${date}:${shootKey}:${hashText(text)}`;
 export const addonKey = (date: string, shootKey: string, name: string) => extraKey(date, shootKey, `addon:${name}`);
+export const poseKey = (shootKey: string, poseId: string) => `pose:${shootKey}:${poseId}`;
+
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
 /** Keys the API accepts (anything else is refused before it reaches the database). */
-export const TICK_KEY = /^(inspo:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|bring:\d{4}-\d{2}-\d{2}:[A-Za-z0-9_-]{1,64}(:[A-Za-z0-9_-]{1,64}){1,2})$/;
+export const TICK_KEY = new RegExp(
+  `^(inspo:${UUID}|bring:\\d{4}-\\d{2}-\\d{2}:[A-Za-z0-9_-]{1,64}(:[A-Za-z0-9_-]{1,64}){1,2}|pose:(b-TH-\\d{8}-\\d{4}|${UUID}):${UUID})$`,
+);
 
 type BringShoot = Pick<ShootDetail, "key" | "tabLabel" | "booking" | "bringExtra">;
 
@@ -52,11 +58,11 @@ export function bringLists(date: string, shoots: BringShoot[], sections: BringSe
   return { backdrops, extras, sections: listed };
 }
 
-/** Every tickable key on a day: each card of each shoot, then What to bring. */
-export function dayKeys(date: string, shoots: (BringShoot & Pick<ShootDetail, "inspo">)[], sections: BringSection[]): string[] {
+/** Every tickable key on a day: each card and signature pose of each shoot, then What to bring. */
+export function dayKeys(date: string, shoots: (BringShoot & Pick<ShootDetail, "inspo">)[], sections: BringSection[], poses: Pick<SignaturePose, "id">[] = []): string[] {
   const bring = bringLists(date, shoots, sections);
   const keys = [
-    ...shoots.flatMap((s) => s.inspo.map((i) => inspoKey(i.id))),
+    ...shoots.flatMap((s) => [...s.inspo.map((i) => inspoKey(i.id)), ...poses.map((p) => poseKey(s.key, p.id))]),
     ...bring.backdrops.map((b) => b.key),
     ...bring.extras.map((b) => b.key),
     ...bring.sections.flatMap((s) => s.items.map((i) => i.key)),
