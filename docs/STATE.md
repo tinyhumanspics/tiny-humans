@@ -1,9 +1,10 @@
-# State (Nov 23, 2026, brief 05b all built; Nov 24 confirms the offer is gone and ticks acceptance)
+# State (Nov 23, 2026: brief 05b built; Nov 24 checks the offer is gone, ticks acceptance)
 
 From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the owner", ask Carlos.
 
 ## Live now
-- Site EN + /es. Briefs 01–05 and 05b done (05b's production check on Nov 24). Ads relaunch after OWNER-ACTIONS 7–9.
+- Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
+- Chalk logo intro: / and /es, every open and reload (owner, Nov 23).
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
   /es price line: "Traslado gratis hasta 30 millas de Miami Beach" (Carlos, Nov 23: fits the first screen).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
@@ -18,7 +19,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
   offer badge or cents price. No code change needed (task 11 audit, Nov 23): every surface goes through
   `activeOffer(bundle, today in Miami)`, pages render per request, no seasonal box renders any more. Then measure
   the 4 first screens at 390 × 664 and tick 05b's acceptance.
-- Then wait for Carlos's updated brief 06. Pre-render/page speed goes into brief 06 (Carlos).
+- Then wait for Carlos's updated brief 06 (+ pre-render/page speed).
 
 ## First phone screen at 390 × 664 (iPhone WebKit, production; fold 664)
 - Nov 23 (offer live): /es ad page review ends 680 px (price line 3 lines); /es/book month header 699 px. EN 660 / 635.

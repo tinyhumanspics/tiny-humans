@@ -20,15 +20,12 @@ export async function generateViewport(): Promise<Viewport> {
   return { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: getTheme(settings.themeId).colors.chalkboard };
 }
 
-/** Set in the visitor's browser once the chalk intro has played. */
-const INTRO_SEEN_KEY = "th-intro-seen";
-
 /**
- * Runs before first paint: decides whether the chalk intro plays. Only on the home page (/ and /es), at most once per
- * visitor (brief 05); every other page, and home after that first time, shows at once. Reduced motion gets the short
- * version. Without JavaScript or browser storage the site simply shows.
+ * Runs before first paint: decides whether the chalk intro plays. Only on the home page (/ and /es), every time it is
+ * opened or reloaded (owner, Nov 23); every other page shows at once. Reduced motion gets the short version. Without
+ * JavaScript the site simply shows.
  */
-const introScript = `(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/es')return;var s=window.localStorage;if(s.getItem('${INTRO_SEEN_KEY}'))return;s.setItem('${INTRO_SEEN_KEY}','1');var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;document.documentElement.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
+const introScript = `(function(){try{var p=location.pathname;if(p!=='/'&&p!=='/es')return;var r=window.matchMedia('(prefers-reduced-motion: reduce)').matches;document.documentElement.setAttribute('data-intro',r?'reduced':'play');}catch(e){}})();`;
 
 /**
  * The one root layout: the document (html/body), fonts, theme colors, intro script and viewport. The site's shell
