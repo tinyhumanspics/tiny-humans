@@ -124,9 +124,12 @@ export function ChalkButton({ theme: t, label, href, variant = "solid", caption 
 
 /** A framed list with chalk ticks (prep guide, checklists, "what happens next"). */
 /** A titled list for ChalkGroups: bullets (`mark`, "•" by default) or numbered steps ("1.", "2.", …). */
+/** A list line: plain text, or a bold name and its text ("Cozy Wrap: swaddled and sleeping…"). */
+export type ChalkItem = string | { name: string | null; text: string };
+
 export interface ChalkGroup {
   title?: string;
-  items: readonly string[];
+  items: readonly ChalkItem[];
   mark?: string;
   numbered?: boolean;
 }
@@ -147,12 +150,21 @@ export function ChalkGroups({ theme: t, title, intro, groups, color }: { theme: 
                   {g.title && <p style={{ margin: gi ? "14px 0 2px" : "4px 0 2px", fontFamily: CHALK_FONT, fontSize: 19, color: t.yellow }}>{g.title}</p>}
                   <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" border={0}>
                     {g.items.map((item, i) => (
-                      <tr key={item}>
+                      <tr key={i}>
                         <td valign="top" style={{ padding: "5px 10px 5px 0", width: g.numbered ? 22 : 18, fontFamily: CHALK_FONT, fontSize: 18, lineHeight: 1.3, color: t.yellow }}>
                           {g.numbered ? `${i + 1}.` : (g.mark ?? "•")}
                         </td>
                         <td valign="top" style={{ padding: "5px 0", fontFamily: BODY_FONT, fontSize: 15, lineHeight: 1.5, color: t.chalk }}>
-                          {item}
+                          {typeof item === "string" ? (
+                            item
+                          ) : item.name ? (
+                            <>
+                              <b>{`${item.name}:`}</b>
+                              {` ${item.text}`}
+                            </>
+                          ) : (
+                            item.text
+                          )}
                         </td>
                       </tr>
                     ))}

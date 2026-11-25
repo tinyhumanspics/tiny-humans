@@ -3,6 +3,16 @@
 Spanish copy shipped as a draft for a native speaker to check (AGENTS rule 7). Reply with changes per key; a session
 updates messages/es.json and takes the key off this list. Sessions don't load this file; STATE.md points here.
 
+## Owner, Nov 25, 2026: reminder emails (bundle looks; the day-before backdrop ask)
+
+| Key | English | Spanish |
+|---|---|---|
+| `emails.looks.title` | What your bundle includes | Lo que incluye tu paquete |
+| `emails.backdrops.stillTitle` / `stillTitleMany` | We still need your backdrop(s) | Todavía nos falta tu fondo / nos faltan tus fondos |
+| `emails.backdrops.stillText` | Reply to this email or text us your pick as soon as you can, so we pack the right one. | Responde a este correo o envíanos un mensaje de texto con tu elección lo antes posible, para llevar el correcto. |
+| `emails.backdrops.stillTextMany` | Your bundle includes {count} backdrops. Reply … your picks … the right ones. | Tu paquete incluye {count} fondos. Responde … con tus elecciones … para llevar los correctos. |
+| `emails.backdrops.stillLine` / `stillLineMany` | We still need your (count) backdrop(s): reply or text us … ({list}). | Todavía nos falta(n) tu(s) fondo(s): responde o envíanos un mensaje de texto … ({list}). |
+
 ## Owner, Nov 24, 2026: prop ideas on /book (bundles with 2+ setups)
 
 The bundle looks in Spanish (Arropadito, Nidito, Dulces Sueños, Abrazo en Familia) are the owner's own words, in

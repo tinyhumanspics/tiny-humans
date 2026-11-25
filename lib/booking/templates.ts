@@ -1,4 +1,5 @@
 import type { Bundle } from "@/lib/pricing/types";
+import type { BundleLooks } from "@/lib/pricing/looks";
 import { formatMoney, type PriceQuote } from "@/lib/pricing/engine";
 import type { BookingConsents, BookingContact, SessionAddress } from "./types";
 import type { BookingTravel } from "@/lib/travel/types";
@@ -111,12 +112,16 @@ export interface ReminderDetails {
   location: string;
   /** Gate code, parking, concierge (the family's own notes; shown in the 24-hour reminder). */
   accessNotes?: string | null;
-  /** Backdrop picks (ids), if they chose already (72-hour reminder). */
+  /** Backdrop picks (ids), if they chose already. With none, the 24-hour reminder asks for them (owner, Nov 25). */
   backdrops?: string[];
+  /** How many backdrops the bundle gets (one per setup), for that ask. */
+  setups?: number;
   /** A deposit was paid while booking (the payment lines say so). */
   depositPaid?: boolean;
   /** The bundle's name in the booking's language when the bundle includes family (the 24-hour reminder's family line). */
   familyBundle?: string | null;
+  /** What the bundle includes, look by look, with its name in the booking's language (both reminders, owner Nov 25). */
+  looks?: { bundle: string; looks: BundleLooks } | null;
 }
 
 /** What the after-session and gallery emails need. */

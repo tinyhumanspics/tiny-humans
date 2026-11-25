@@ -1038,7 +1038,16 @@
         "wooden": "Wooden"
       },
       "replyText": "Reply to this email with your pick, and we'll bring it to your session.",
-      "replyLine": "Pick your backdrop: reply with {list}."
+      "replyLine": "Pick your backdrop: reply with {list}.",
+      "stillTitle": "We still need your backdrop",
+      "stillTitleMany": "We still need your backdrops",
+      "stillText": "Reply to this email or text us your pick as soon as you can, so we pack the right one.",
+      "stillTextMany": "Your bundle includes {count} backdrops. Reply to this email or text us your picks as soon as you can, so we pack the right ones.",
+      "stillLine": "We still need your backdrop: reply or text us your pick as soon as you can ({list}).",
+      "stillLineMany": "We still need your {count} backdrops: reply or text us your picks as soon as you can ({list})."
+    },
+    "looks": {
+      "title": "What your bundle includes"
     },
     "reminder72": {
       "subject": "Your Tiny Humans session is coming up: {date} at {time}",

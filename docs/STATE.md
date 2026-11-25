@@ -6,6 +6,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
 - Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer;
   bundle looks (0048) on cards + /book; /book prop ideas → notes; Cream retired, darkGreen = Sage Green.
+  Nov 25: both reminders list the bundle's looks; the 24 h one asks for backdrops (reply/text) while none is picked.
 - Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review capped at 2 lines on phones.
   /es price line: "Traslado gratis hasta 20 millas de Miami Beach" (20 free mi, Nov 24).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
@@ -24,9 +25,8 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 
 ## First phone screen at 390 × 664 (iPhone WebKit, production; fold 664)
 - Nov 24 owner: /book looks box (~140 px): menu /book month header ~750 (below fold); from a card ~640.
-- Nov 24 forecast (regular prices, new travel line): /es ad page 660 (2 lines),
-  /es/book 655 (cents were what wrapped the rows); EN 660 / 635. All fit. Adrian's Pricing rows (05b owner step)
-  forecast the same 655. 4–9 px to spare: re-measure after Spanish copy or bundle changes.
+- Nov 24 forecast: /es ad page 660 (2 lines), /es/book 655; EN 660 / 635. All fit, 4–9 px to spare:
+  re-measure after Spanish copy or bundle changes.
 
 ## Waiting on owner (Carlos)
 - Adrian, /admin → Pricing (05b owner steps 1–2): new bundle prices/hours/photos; Spanish features.

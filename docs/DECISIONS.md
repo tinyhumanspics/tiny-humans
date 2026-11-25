@@ -9,8 +9,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Due-date $50: if the session can't happen, the parent chooses a refund or moving it to a later session · Carlos
 - 2026-11-14 · /quick and /due-date (+ /es) retired, no redirects, code deleted · Carlos
 - 2026-11-15 · Due-date deposits pay at /pay?d=; Not born yet → /book?when=due · brief 04
-- 2026-11-15 · Ad page bundles: on in /admin, cheapest first · brief 05
-- 2026-11-21 · /bundles shows the same bundles as home and the ad page, cheapest first · brief 05
+- 2026-11-21 · Ad page, home and /bundles: the same bundles (on in /admin), cheapest first · brief 05
 - 2026-11-16 · Trip days: 70+ mi takes the day (same trip ≤30 mi; next day from 12 PM), no /admin · owner
 - 2026-11-21 · Session timing: best days 5–14, up to 4 weeks; a due date moves into days 5–14 · Carlos
 - 2026-11-22 · Pay link: the $50 first; home, ages, backdrops after (#22); both reminders ask till saved · Carlos
@@ -52,7 +51,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-10-22 · Chalk drawings: always whole, never on letters, buttons or photos · owner
 - 2026-11-09 · Empty Spanish fields fill from the English on save (owner marketing text, never family data) · owner
 - 2026-11-10 · Shoot videos: links in our own player · owner
-- 2026-11-11 · A signed photo release is never edited or deleted; new wording = a new version. Bundles with siblings get the family release · owner
+- 2026-11-11 · Signed releases: never edited or deleted (new wording = new version); sibling bundles get the family one · owner
 - 2026-11-16 · Home = ad page + own title; portfolio = /portfolio · owner
 - 2026-11-13 · Customer wording never says we're shooting elsewhere; a closed day is "not available" · owner
 - 2026-11-19 · Leads open on Confirmed; Past after 10 days; emails log · owner
@@ -63,6 +62,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
 - 2026-11-23 · Chalk intro on / and /es at every load; reveals never fade out · owner
 - 2026-11-24 · Signature poses; Family photos; bundle looks = description; /book prop ideas; Cream retired; darkGreen = Sage · owner
+- 2026-11-25 · Reminders list bundle looks; the 24 h one asks for backdrops if none · owner
 - 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

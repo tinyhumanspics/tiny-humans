@@ -9,9 +9,9 @@ import { payAfterLine, prepGuideItems } from "@/lib/email/payment";
 import { renderHtml, textLines } from "@/lib/email/render";
 import { emailTheme, type EmailTheme } from "@/lib/email/theme";
 import type { ImageMode, RenderedEmail } from "@/lib/email/types";
-import { backdropSwatches, type EmailSwatch } from "./components/backdrops";
+import { backdropList, backdropSwatches, type EmailSwatch } from "./components/backdrops";
 import { BackdropChoice, backdropTextLine } from "./components/BackdropChoice";
-import { ChalkButton, ChalkGroups, ChalkList, Details, Heading, Paragraph, type ChalkGroup } from "./components/blocks";
+import { ChalkButton, ChalkGroups, ChalkList, Details, Heading, Paragraph, Swatches, type ChalkGroup } from "./components/blocks";
 import { ChalkLayout } from "./components/ChalkLayout";
 
 /** "72h": prep guide + a big reschedule button (lands before the 48 h online cutoff). "24h": logistics. */
@@ -59,6 +59,36 @@ function beforeWeArrive(r: ReminderDetails, today: string, locale: EmailLocale):
   const night = [...b.night, ...(r.familyBundle ? [fill(b.family, { bundle: r.familyBundle })] : [])];
   const before: ChalkGroup[] = r.date === today ? [{ title: b.dayTitle, items: [...night, ...b.day] }] : [{ title: b.nightTitle, items: night }, { title: b.dayTitle, items: b.day }];
   return { title: b.title, groups: [...before, { title: b.arriveTitle, items: b.arrive, numbered: true }] };
+}
+
+type Looks = NonNullable<ReminderDetails["looks"]>;
+const looksIntro = (l: Looks) => [l.bundle, l.looks.title].filter(Boolean).join(" · ");
+
+/** What their bundle includes (owner, Nov 25): "Our Little Story · 2 looks", then each look, its name in bold. */
+function LooksBox({ theme: t, locale, looks }: { theme: EmailTheme; locale: EmailLocale; looks: Looks }) {
+  return <ChalkGroups theme={t} title={emailMessages(locale).looks.title} intro={looksIntro(looks)} groups={[{ items: looks.looks.items, mark: "✓" }]} color={t.yellow} />;
+}
+
+function looksLines(locale: EmailLocale, looks: Looks | null | undefined): string[] {
+  if (!looks) return [];
+  return ["", `${emailMessages(locale).looks.title}: ${looksIntro(looks)}`, ...looks.looks.items.map((i) => `- ${i.name ? `${i.name}: ` : ""}${i.text}`)];
+}
+
+/**
+ * The 24-hour reminder, when no backdrop is picked yet (owner, Nov 25): the backdrop page has closed by then, so they
+ * reply or text their pick (one per setup).
+ */
+const backdropAsk = (r: ReminderDetails, kind: ReminderKind) => kind === "24h" && !r.backdrops?.length;
+
+function BackdropAsk({ theme: t, locale, setups, swatches }: { theme: EmailTheme; locale: EmailLocale; setups: number; swatches: EmailSwatch[] }) {
+  const m = emailMessages(locale).backdrops;
+  const many = setups > 1;
+  return <Swatches theme={t} title={many ? m.stillTitleMany : m.stillTitle} text={many ? fill(m.stillTextMany, { count: String(setups) }) : m.stillText} swatches={swatches} />;
+}
+
+function backdropAskLine(locale: EmailLocale, setups: number): string {
+  const m = emailMessages(locale).backdrops;
+  return fill(setups > 1 ? m.stillLineMany : m.stillLine, { count: String(setups), list: backdropList(locale) });
 }
 
 /** "Two quick things so we come ready" + a button to their link, until their home and every baby's age are saved. */
@@ -110,6 +140,7 @@ export function SessionReminder({
         </Paragraph>
         <Details theme={t} rows={rows} />
         {homeUrl && <AddHome theme={t} locale={locale} url={homeUrl} />}
+        {r.looks && <LooksBox theme={t} locale={locale} looks={r.looks} />}
         <ChalkList theme={t} title={m.prepGuide.title} items={prepGuideItems(locale, Boolean(r.depositPaid))} />
         <BackdropChoice theme={t} locale={locale} picks={r.backdrops ?? []} swatches={swatches} url={backdropUrl} reminder />
         <Paragraph theme={t} align="center">
@@ -133,6 +164,13 @@ export function SessionReminder({
       </Paragraph>
       <Details theme={t} rows={rows} />
       {homeUrl && <AddHome theme={t} locale={locale} url={homeUrl} />}
+      {r.looks && <LooksBox theme={t} locale={locale} looks={r.looks} />}
+      {backdropAsk(r, kind) && (
+        <>
+          <BackdropAsk theme={t} locale={locale} setups={r.setups ?? 1} swatches={swatches} />
+          {textUs}
+        </>
+      )}
       <ChalkGroups theme={t} {...beforeWeArrive(r, today, locale)} />
       <Paragraph theme={t} align="center">
         {payAfterLine(locale, Boolean(r.depositPaid))}
@@ -153,8 +191,8 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
   const theme = emailTheme(opts.themeId);
   const images = emailImageSet(theme.id, opts.images ?? "cid");
   const picks = r.backdrops ?? [];
-  // the swatches (and their texture attachments) only go in the 72-hour email
-  const backdrop = kind === "72h" ? backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined) : { swatches: [], attachments: [] };
+  // the swatches (and their texture attachments): the 72-hour email, and the 24-hour one while none is picked
+  const backdrop = kind === "72h" || backdropAsk(r, kind) ? backdropSwatches(locale, opts.images ?? "cid", picks.length ? picks : undefined) : { swatches: [], attachments: [] };
   const { m, first, day, weekday, date, start, time } = content(r, opts.today, locale);
   const html = await renderHtml(
     <SessionReminder kind={kind} details={r} theme={theme} images={images} locale={locale} today={opts.today} rescheduleUrl={opts.rescheduleUrl} rescheduleNoticeHours={opts.rescheduleNoticeHours} backdropUrl={opts.backdropUrl} homeUrl={opts.homeUrl} swatches={backdrop.swatches} />,
@@ -180,6 +218,7 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
       "",
       ...details(false),
       ...addHome,
+      ...looksLines(locale, r.looks),
       "",
       `${m.prepGuide.title}:`,
       ...prepGuideItems(locale, Boolean(r.depositPaid)).map((i) => `- ${i}`),
@@ -203,6 +242,8 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     "",
     ...details(true),
     ...addHome,
+    ...looksLines(locale, r.looks),
+    ...(backdropAsk(r, kind) ? ["", `${backdropAskLine(locale, r.setups ?? 1)} ${textUs}.`] : []),
     "",
     before.title,
     ...before.groups.flatMap((g) => ["", `${g.title}:`, ...g.items.map((item, i) => (g.numbered ? `${i + 1}. ${item}` : `- ${item}`))]),
@@ -212,5 +253,5 @@ export async function sessionReminderEmail(kind: ReminderKind, r: ReminderDetail
     "",
     signature,
   ]);
-  return { subject: fill(x.subject, { day, time: start }), html, text, attachments: images.attachments };
+  return { subject: fill(x.subject, { day, time: start }), html, text, attachments: [...images.attachments, ...backdrop.attachments] };
 }

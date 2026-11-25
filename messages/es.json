@@ -1038,7 +1038,16 @@
         "wooden": "Madera"
       },
       "replyText": "Responde a este correo con tu elección y la llevaremos a tu sesión.",
-      "replyLine": "Elige tu fondo: responde con {list}."
+      "replyLine": "Elige tu fondo: responde con {list}.",
+      "stillTitle": "Todavía nos falta tu fondo",
+      "stillTitleMany": "Todavía nos faltan tus fondos",
+      "stillText": "Responde a este correo o envíanos un mensaje de texto con tu elección lo antes posible, para llevar el correcto.",
+      "stillTextMany": "Tu paquete incluye {count} fondos. Responde a este correo o envíanos un mensaje de texto con tus elecciones lo antes posible, para llevar los correctos.",
+      "stillLine": "Todavía nos falta tu fondo: responde o envíanos un mensaje de texto con tu elección lo antes posible ({list}).",
+      "stillLineMany": "Todavía nos faltan tus {count} fondos: responde o envíanos un mensaje de texto con tus elecciones lo antes posible ({list})."
+    },
+    "looks": {
+      "title": "Lo que incluye tu paquete"
     },
     "reminder72": {
       "subject": "Tu sesión de Tiny Humans se acerca: {date} a las {time}",
