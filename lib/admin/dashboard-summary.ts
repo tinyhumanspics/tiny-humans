@@ -1,9 +1,7 @@
-import { addDaysKey, todayInZone } from "@/lib/booking/timezone";
+import { todayInZone } from "@/lib/booking/timezone";
 import { sourceLabel } from "@/lib/tracking/attribution";
-import type { DashboardShare, DashboardWeek } from "./dashboard-types";
-
-/** Weeks of history on the dashboard (this week included). */
-export const DASHBOARD_WEEKS = 12;
+import { bucketKey, bucketStarts, type BucketUnit, type DashboardPeriod } from "./dashboard-period";
+import type { DashboardBucket, DashboardShare, DashboardTotals } from "./dashboard-types";
 
 /** A booking as the dashboard counts it (see lib/admin/dashboard.ts for the query). */
 export interface DashboardBookingRow {
@@ -21,20 +19,26 @@ export interface DashboardBookingRow {
   depositStatus: string | null;
 }
 
-/** Monday of the week that contains a studio date (YYYY-MM-DD). */
-export function weekStartKey(dateKey: string): string {
-  const [y, m, d] = dateKey.split("-").map(Number);
-  const weekday = new Date(Date.UTC(y, m - 1, d)).getUTCDay(); // 0 = Sunday
-  return addDaysKey(dateKey, -((weekday + 6) % 7));
+/** A request from /book or a booking link: a lead. */
+export interface DashboardRequestRow {
+  createdAt: Date;
+  mobile: string;
+  email: string;
+  /** new (waiting for the owner) · confirmed (waiting for the deposit) · booked · declined · expired */
+  status: string;
 }
 
-/** First studio date the weekly numbers cover: the Monday DASHBOARD_WEEKS weeks back (this week included). */
-export function windowStartKey(today: string): string {
-  return addDaysKey(weekStartKey(today), -7 * (DASHBOARD_WEEKS - 1));
+/** Money that came in: a card payment for the session, a deposit kept, or photo extras. */
+export interface DashboardPaymentRow {
+  paidAt: Date;
+  cents: number;
+  kind: "session" | "deposit" | "extras";
 }
 
 const isOn = (r: DashboardBookingRow) => r.status === "confirmed" || r.status === "rescheduled";
 const depositNotPaid = (r: DashboardBookingRow) => r.depositStatus === "expired" || r.depositStatus === "unpaid";
+/** One lead per family: the same mobile (its last 10 digits; or, without one, the same email) sending twice counts once. */
+const familyOf = (r: DashboardRequestRow) => r.mobile.replace(/\D/g, "").slice(-10) || r.email.trim().toLowerCase();
 
 function shares(rows: DashboardBookingRow[], labelOf: (r: DashboardBookingRow) => string): DashboardShare[] {
   const byLabel = new Map<string, DashboardShare>();
@@ -48,21 +52,68 @@ function shares(rows: DashboardBookingRow[], labelOf: (r: DashboardBookingRow) =
   return [...byLabel.values()].sort((a, b) => b.bookings - a.bookings || b.revenueCents - a.revenueCents || a.label.localeCompare(b.label));
 }
 
-/** Weekly bookings + revenue, bundle and source shares, and cancellations (studio dates, `timeZone`). */
-export function summarizeBookings(rows: DashboardBookingRow[], today: string, timeZone: string) {
-  const start = windowStartKey(today);
-  const weeks: DashboardWeek[] = Array.from({ length: DASHBOARD_WEEKS }, (_, i) => ({ weekStart: addDaysKey(start, 7 * i), bookings: 0, revenueCents: 0 }));
-  const byWeek = new Map(weeks.map((w) => [w.weekStart, w]));
-  const booked = rows.filter((r) => isOn(r) && todayInZone(timeZone, r.createdAt) >= start);
-  for (const r of booked) {
-    const week = byWeek.get(weekStartKey(todayInZone(timeZone, r.createdAt)));
-    if (!week) continue;
-    week.bookings += 1;
-    week.revenueCents += r.totalCents;
+/**
+ * The period's numbers (studio dates in `timeZone`): money paid, sessions booked (made in the period and still on),
+ * leads (families who sent a request), each by day, week or month; bookings by bundle and source; cancellations.
+ */
+export function summarizePeriod(
+  input: { bookings: DashboardBookingRow[]; requests: DashboardRequestRow[]; payments: DashboardPaymentRow[] },
+  period: DashboardPeriod,
+  unit: BucketUnit,
+  timeZone: string,
+) {
+  const dayOf = (d: Date) => todayInZone(timeZone, d);
+  const inPeriod = (d: Date | null): d is Date => !!d && dayOf(d) >= period.from && dayOf(d) <= period.to;
+  const buckets: DashboardBucket[] = bucketStarts(period, unit).map((start) => ({ start, paidCents: 0, bookedCents: 0, bookings: 0, leads: 0 }));
+  const bucketOf = new Map(buckets.map((b) => [b.start, b]));
+  const bar = (d: Date) => bucketOf.get(bucketKey(dayOf(d), unit));
+
+  const totals: DashboardTotals = { paidCents: 0, paid: { depositCents: 0, sessionCents: 0, extrasCents: 0, extrasOrders: 0 }, bookedCents: 0, bookings: 0, leads: 0, leadsBooked: 0, leadsWaiting: 0 };
+
+  for (const p of input.payments.filter((p) => inPeriod(p.paidAt))) {
+    totals.paidCents += p.cents;
+    if (p.kind === "deposit") totals.paid.depositCents += p.cents;
+    else if (p.kind === "session") totals.paid.sessionCents += p.cents;
+    else {
+      totals.paid.extrasCents += p.cents;
+      totals.paid.extrasOrders += 1;
+    }
+    const b = bar(p.paidAt);
+    if (b) b.paidCents += p.cents;
   }
-  const cancelled = rows.filter((r) => r.status === "cancelled" && r.cancelledAt && todayInZone(timeZone, r.cancelledAt) >= start);
+
+  const booked = input.bookings.filter((r) => isOn(r) && inPeriod(r.createdAt));
+  for (const r of booked) {
+    totals.bookings += 1;
+    totals.bookedCents += r.totalCents;
+    const b = bar(r.createdAt);
+    if (b) {
+      b.bookings += 1;
+      b.bookedCents += r.totalCents;
+    }
+  }
+
+  // a family counts once, on the day of its first request in the period; booked if any of its requests got booked
+  const families = new Map<string, { first: Date; booked: boolean; waiting: boolean }>();
+  for (const r of [...input.requests].filter((r) => inPeriod(r.createdAt)).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
+    const key = familyOf(r);
+    const f = families.get(key) ?? { first: r.createdAt, booked: false, waiting: false };
+    f.booked ||= r.status === "booked";
+    f.waiting ||= r.status === "new";
+    families.set(key, f);
+  }
+  for (const f of families.values()) {
+    totals.leads += 1;
+    if (f.booked) totals.leadsBooked += 1;
+    else if (f.waiting) totals.leadsWaiting += 1;
+    const b = bar(f.first);
+    if (b) b.leads += 1;
+  }
+
+  const cancelled = input.bookings.filter((r) => r.status === "cancelled" && inPeriod(r.cancelledAt));
   return {
-    weeks,
+    totals,
+    buckets,
     bundles: shares(booked, (r) => r.bundleName),
     sources: shares(booked, (r) =>
       sourceLabel({ utmSource: r.utmSource ?? undefined, utmMedium: r.utmMedium ?? undefined, fbclid: r.fbclid ?? undefined, referrer: r.referrer ?? undefined }),

@@ -4,6 +4,7 @@ import { parseSettings } from "@/lib/settings/defaults";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import type { AvailabilityRules, BookingLimits, CloseDayResult, ClosedDayImpact, DateOverride, TimeBlock, WeeklyDay } from "@/lib/availability/types";
 import type { Lead, LeadFilter, LeadList } from "@/lib/leads/types";
+import type { DashboardPeriod } from "@/lib/admin/dashboard-period";
 import type { Dashboard } from "@/lib/admin/dashboard-types";
 import type { TravelExample, TravelSettings } from "@/lib/travel/types";
 import type { DepositSettings } from "@/lib/deposit/types";
@@ -54,7 +55,8 @@ export interface AdminApi {
   saveExtras(s: ExtrasSettings): Promise<{ settings: ExtrasSettings | null; stripeReady: boolean }>;
   /* leads (owner only) */
   listLeads(filter: LeadFilter, offset?: number): Promise<LeadList>;
-  dashboard(): Promise<Dashboard>;
+  /** The dashboard: this month, or `period` (Miami dates, both included). */
+  dashboard(period?: DashboardPeriod): Promise<Dashboard>;
   cancelLead(reference: string, reason: string, refundDeposit?: boolean): Promise<Lead>;
   /** Refund a paid deposit by hand (e.g. after a refund failed, or a kept deposit the owner gives back). */
   refundDeposit(reference: string): Promise<Lead>;
@@ -191,7 +193,7 @@ const httpApi: AdminApi = {
     await json(await fetch("/api/admin/leads/delete", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, confirm: "DELETE" }) }));
   },
   listLeads: async (filter, offset = 0) => json(await fetch(`/api/admin/leads?status=${filter}&offset=${offset}`, { cache: "no-store" })),
-  dashboard: async () => json(await fetch("/api/admin/dashboard", { cache: "no-store" })),
+  dashboard: async (period) => json(await fetch(`/api/admin/dashboard${period ? `?${new URLSearchParams({ from: period.from, to: period.to })}` : ""}`, { cache: "no-store" })),
   cancelLead: async (reference, reason, refundDeposit) =>
     (await json<{ lead: Lead }>(await fetch("/api/admin/leads/cancel", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reference, reason, refundDeposit }) }))).lead,
   refundDeposit: async (reference) =>

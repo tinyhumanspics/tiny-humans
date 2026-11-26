@@ -2,7 +2,7 @@ import "server-only";
 import { isOwnerBooked } from "@/lib/deposit/types";
 import { and, count, desc, eq, gte, inArray, lt, lte, ne, notInArray, sql } from "drizzle-orm";
 import { PAST_AFTER_DAYS, bookingRules } from "@/config/booking";
-import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
+import { addDaysKey, todayInZone } from "@/lib/booking/timezone";
 import { getDb, isMissingTable } from "@/lib/db/client";
 import { bookingCompletions, bookingConsents, bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookings, dueDateReservations, reviews, type Booking, type BookingAccess, type BookingBackdrops, type BookingConsent, type BookingDeposit, type BookingEmail, type BookingPayment, type BookingTerm, type EmailEvent, type Review, type SentEmailRow } from "@/lib/db/schema";
 import { emailEventsFor, emailNameOf, problemsOf, type EmailProblem } from "@/lib/email/delivery";
@@ -379,38 +379,25 @@ export async function listLeads(filter: LeadFilter, limit = 50, offset = 0): Pro
   return { leads: rows.map((r) => toLead(r, history, extras, duplicates.get(r.bookingReference))), counts, total, money, ...(filter === "not_paid" ? { notPaidDue: due } : {}) };
 }
 
-/** Dashboard: card payments (+ deposits kept) received this month (Miami time) and finished sessions still unpaid. */
+/** Dashboard ("Right now"): finished sessions still unpaid. */
 async function moneyTotals(now = new Date()): Promise<LeadList["money"]> {
-  const tz = bookingRules.timeZone;
-  const monthStart = zonedTimeToUtc(`${todayInZone(tz, now).slice(0, 7)}-01`, "00:00", tz);
   const db = getDb();
   try {
-    const [[paid], [deposits], [unpaid]] = await Promise.all([
-      db
-        .select({ cents: sql<number>`coalesce(sum(${bookingPayments.amountCents}), 0)`.mapWith(Number) })
-        .from(bookingPayments)
-        .where(and(eq(bookingPayments.status, "paid"), gte(bookingPayments.paidAt, monthStart))),
-      // deposits kept (paid, not refunded) paid this month
-      db
-        .select({ cents: sql<number>`coalesce(sum(${bookingDeposits.amountCents}), 0)`.mapWith(Number) })
-        .from(bookingDeposits)
-        .where(and(eq(bookingDeposits.status, "paid"), gte(bookingDeposits.paidAt, monthStart))),
-      db
-        .select({ n: count() })
-        .from(bookings)
-        .leftJoin(bookingPayments, eq(bookingPayments.bookingId, bookings.id))
-        .leftJoin(bookingDeposits, and(eq(bookingDeposits.bookingId, bookings.id), eq(bookingDeposits.status, "paid")))
-        .where(
-          and(
-            inArray(bookings.status, ["confirmed", "rescheduled"]),
-            lte(bookings.sessionEnd, now),
-            // something still owed after a paid deposit
-            sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0) - coalesce(${bookingDeposits.amountCents}, 0) > 0`,
-            sql`${bookingPayments.status} is distinct from 'paid'`,
-          ),
+    const [unpaid] = await db
+      .select({ n: count() })
+      .from(bookings)
+      .leftJoin(bookingPayments, eq(bookingPayments.bookingId, bookings.id))
+      .leftJoin(bookingDeposits, and(eq(bookingDeposits.bookingId, bookings.id), eq(bookingDeposits.status, "paid")))
+      .where(
+        and(
+          inArray(bookings.status, ["confirmed", "rescheduled"]),
+          lte(bookings.sessionEnd, now),
+          // something still owed after a paid deposit
+          sql`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0) - coalesce(${bookingDeposits.amountCents}, 0) > 0`,
+          sql`${bookingPayments.status} is distinct from 'paid'`,
         ),
-    ]);
-    return { paidThisMonthCents: (paid?.cents ?? 0) + (deposits?.cents ?? 0), unpaidCount: Number(unpaid?.n ?? 0) };
+      );
+    return { unpaidCount: Number(unpaid?.n ?? 0) };
   } catch (err) {
     log.error("leads", "Could not load payment totals", { error: err as Error });
     return null;

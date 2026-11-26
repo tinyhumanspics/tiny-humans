@@ -1,19 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { themes, THEME_IDS, type TinyHumansTheme } from "@/config/themes";
 import type { SiteSettings, SpanishPublicationStatus } from "@/lib/settings/types";
 import { getAdminApi } from "@/lib/admin/client";
 import type { LeadList } from "@/lib/leads/types";
+import type { DashboardPeriod } from "@/lib/admin/dashboard-period";
 import type { Dashboard as DashboardData } from "@/lib/admin/dashboard-types";
-import { formatMoney } from "@/lib/pricing/engine";
 import { useSiteSettings } from "@/components/providers/SiteSettingsProvider";
 import TinyHumansLogo from "@/components/chalk/TinyHumansLogo/TinyHumansLogo";
 import ChalkBox from "@/components/ui/ChalkBox/ChalkBox";
 import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import AvailabilityPanel from "./AvailabilityPanel";
-import { ChangesAndEmails, ComingUp, DashboardCharts } from "./DashboardInsights";
+import { ChangesAndEmails, ComingUp, DashboardCharts, PeriodNumbers } from "./DashboardInsights";
 import LeadsPanel from "./LeadsPanel";
 import BringLists from "@/features/shoots/BringLists";
 import DaySheet from "@/features/shoots/DaySheet";
@@ -133,31 +133,60 @@ function Dashboard({ api, settings }: { api: ReturnType<typeof getAdminApi>; set
   const [leadsError, setLeadsError] = useState(false);
   const [dash, setDash] = useState<DashboardData | null>(null);
   const [dashError, setDashError] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [pickError, setPickError] = useState<string | null>(null);
+  // only the newest period's answer is shown when the arrows are tapped quickly
+  const latest = useRef(0);
+  const loaded = useRef(false);
+  const fetchPeriod = useCallback(
+    (period?: DashboardPeriod) => {
+      const id = ++latest.current;
+      api
+        .dashboard(period)
+        .then((d) => {
+          if (id !== latest.current) return;
+          loaded.current = true;
+          setDash(d);
+        })
+        .catch((e: unknown) => {
+          if (id !== latest.current) return;
+          if (loaded.current) setPickError(e instanceof Error ? e.message : "Couldn't load these numbers. Please try again.");
+          else setDashError(true);
+        })
+        .finally(() => id === latest.current && setBusy(false));
+    },
+    [api],
+  );
+  const pick = (period: DashboardPeriod | null) => {
+    setBusy(true);
+    setPickError(null);
+    fetchPeriod(period ?? undefined);
+  };
   useEffect(() => {
     api.listLeads("all").then(setLeads).catch(() => setLeadsError(true));
-    api.dashboard().then(setDash).catch(() => setDashError(true));
-  }, [api]);
+    // the dashboard always opens on this month (owner, Nov 25)
+    fetchPeriod();
+  }, [api, fetchPeriod]);
   const theme = themes[settings.themeId];
   const stat = (n: number | undefined) => (leads ? String(n ?? 0) : leadsError ? "–" : "…");
-  const money = (show: (m: NonNullable<LeadList["money"]>) => string) => (leads ? (leads.money ? show(leads.money) : "–") : leadsError ? "–" : "…");
+  const unpaid = leads ? (leads.money ? String(leads.money.unpaidCount) : "–") : leadsError ? "–" : "…";
   return (
     <section className={styles.section} aria-label="Dashboard">
-      {dash ? <ComingUp data={dash} /> : <p className={cn(styles.hintSmall, "chalk-soft")}>{dashError ? "Sessions and charts appear once the database is connected." : "Loading sessions…"}</p>}
+      {dash ? <ComingUp data={dash} /> : <p className={cn(styles.hintSmall, "chalk-soft")}>{dashError ? "Sessions and numbers appear once the database is connected." : "Loading sessions…"}</p>}
+      {dash && (
+        <>
+          <PeriodNumbers key={`${dash.period.from}/${dash.period.to}`} data={dash} busy={busy} error={pickError} onPick={pick} />
+          <DashboardCharts data={dash} />
+          <ChangesAndEmails data={dash} />
+        </>
+      )}
+      <h2 className={cn(styles.h3, styles.rightNow, "chalk")}>Right now</h2>
       <div className={styles.stats}>
         <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.all)}</span><span className="chalk-soft">Active leads</span></div>
-        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.rescheduled)}</span><span className="chalk-soft">Rescheduled</span></div>
-        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{stat(leads?.counts.cancelled)}</span><span className="chalk-soft">Cancelled</span></div>
-        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{money((m) => formatMoney(m.paidThisMonthCents))}</span><span className="chalk-soft">Paid this month</span></div>
-        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{money((m) => String(m.unpaidCount))}</span><span className="chalk-soft">Sessions not paid yet</span></div>
+        <div className={styles.stat}><span className={cn(styles.statNum, "chalk")}>{unpaid}</span><span className="chalk-soft">Sessions not paid yet</span></div>
         <div className={styles.stat}><span className={cn(styles.statNum, styles.statTheme, "chalk")}>{theme.label}</span><span className="chalk-soft">Current theme</span></div>
       </div>
       {leadsError && <p className={cn(styles.hintSmall, "chalk-soft")}>Lead numbers appear once the database is connected.</p>}
-      {dash && (
-        <>
-          <DashboardCharts data={dash} />
-          <ChangesAndEmails data={dash} weeks={dash.weeks.length} />
-        </>
-      )}
       <ul className={styles.dashCards}>
         {ADMIN_NAV.filter((n) => n.id !== "dashboard").map((n) => (
           <li key={n.id}>

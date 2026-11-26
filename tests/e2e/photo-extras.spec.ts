@@ -92,7 +92,7 @@ test("a lead shows its extras, the totals, and the Delivered tick", async ({ pag
   let delivered: string | null = null;
   // the list reloads after the tick: it answers with what's saved
   await page.route("**/api/admin/leads?*", (route) =>
-    route.fulfill({ json: { leads: [lead(delivered)], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 1, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList }),
+    route.fulfill({ json: { leads: [lead(delivered)], counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 1, money: { unpaidCount: 0 } } satisfies LeadList }),
   );
   await page.route("**/api/admin/leads/extras-delivered", (route) => {
     ticks.push(route.request().postDataJSON());
@@ -121,7 +121,7 @@ test("a lead card shows extras a family started but didn't pay, and nothing when
   const started: Lead = { ...noDepositLead, extras: { link: null, orders: [{ id: "1d3c6c2a-7a7e-4f2b-9c1e-5b0f3c8d9e10", lines: bought.slice(0, 1), creditCents: 0, totalCents: 5200, note: null, status: "open", createdAt: "2026-11-20T20:00:00.000Z", paidAt: null, deliveredAt: null }], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
   const none: Lead = { ...noDepositLead, reference: "TH-20261008-NONE", parentName: "No Extras Family", extras: { link: null, orders: [], paidCents: 0, sessionTotalCents: 14900, sessionPaidCents: 0 } };
   await page.route("**/api/admin/leads?*", (route) =>
-    route.fulfill({ json: { leads: [started, none], counts: { all: 2, pending: 0, confirmed: 2, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 2, money: { paidThisMonthCents: 0, unpaidCount: 0 } } satisfies LeadList }),
+    route.fulfill({ json: { leads: [started, none], counts: { all: 2, pending: 0, confirmed: 2, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 }, total: 2, money: { unpaidCount: 0 } } satisfies LeadList }),
   );
   await page.goto("/admin/leads");
   await expect(page.getByRole("listitem").filter({ hasText: noDepositLead.parentName }).getByText("Extras not paid")).toBeVisible();

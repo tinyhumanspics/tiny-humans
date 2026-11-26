@@ -1,4 +1,5 @@
-/** The owner dashboard (/admin): sessions coming up, bookings over time, where they come from, changes and emails. */
+/** The owner dashboard (/admin): sessions coming up, then a month (or dates) of money, bookings, leads and changes. */
+import type { BucketUnit, DashboardPeriod } from "./dashboard-period";
 
 export interface DashboardSession {
   reference: string;
@@ -13,11 +14,14 @@ export interface DashboardSession {
   status: "pending" | "confirmed" | "rescheduled";
 }
 
-export interface DashboardWeek {
-  /** Monday of the week (studio date). */
-  weekStart: string;
+/** One bar of the chart: a day, a week (from Monday) or a month of the period. */
+export interface DashboardBucket {
+  /** First studio date of the bar. */
+  start: string;
+  paidCents: number;
+  bookedCents: number;
   bookings: number;
-  revenueCents: number;
+  leads: number;
 }
 
 export interface DashboardShare {
@@ -26,19 +30,33 @@ export interface DashboardShare {
   revenueCents: number;
 }
 
+export interface DashboardTotals {
+  /** Money that came in: card payments for sessions, deposits kept (bookings and due dates), photo extras. */
+  paidCents: number;
+  paid: { depositCents: number; sessionCents: number; extrasCents: number; extrasOrders: number };
+  /** Sessions booked in the period that are still on, and their full price (bundle + extra babies + travel). */
+  bookedCents: number;
+  bookings: number;
+  /** Families who sent a request (one each); how many of them booked; how many still wait for the owner. */
+  leads: number;
+  leadsBooked: number;
+  leadsWaiting: number;
+}
+
 export interface Dashboard {
   today: string;
   /** Sessions from today through the next 6 days (not cancelled), soonest first. */
   upcoming: DashboardSession[];
-  /** Bookings made each week that are still on (confirmed or rescheduled), oldest week first. */
-  weeks: DashboardWeek[];
-  /** The same bookings by bundle and by source, most first. */
+  /** The dates the numbers below cover (owner, Nov 25: this month unless another is picked). */
+  period: DashboardPeriod & { unit: BucketUnit };
+  totals: DashboardTotals;
+  /** The same numbers by day, week or month, oldest first. */
+  buckets: DashboardBucket[];
+  /** The period's bookings by bundle and by source, most first. */
   bundles: DashboardShare[];
   sources: DashboardShare[];
-  /** Over the same weeks: cancelled sessions, time holds released because the deposit wasn't paid, reschedules. */
+  /** In the period: cancelled sessions, time holds released because the deposit wasn't paid, reschedules. */
   changes: { cancelled: number; depositNotPaid: number; rescheduled: number };
-  /** Photo extras paid over the same weeks (owner, Nov 20): their own line, so the session numbers don't change. */
-  extras: { orders: number; revenueCents: number };
-  /** Over the last `days` days: reminder/after-session emails sent or failed, delivery problems reported by Resend. */
-  emails: { days: number; sent: number; failed: number; problems: number };
+  /** In the period: reminder/after-session emails sent or failed, delivery problems reported by Resend. */
+  emails: { sent: number; failed: number; problems: number };
 }

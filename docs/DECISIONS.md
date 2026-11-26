@@ -16,7 +16,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-14 · Delete what the new path leaves unused · Carlos
 - 2026-11-14 · Requests may share a minute, bookings never · brief 02
 - 2026-11-14 · "Questions? Text us" (sms:) is a secondary link; it fires Contact, not a booking path · Carlos
-- 2026-11-21 · /book bundles: a radio group, one row each on phones, "Most loved" badge on the border; screen 2 is a form · Carlos
+- 2026-11-21 · /book bundles: radio group, a row each on phones, "Most loved" badge on the border; screen 2 is a form · Carlos
 - 2026-11-21 · Ad page: no menu (plain logo, EN | ES only); no eyebrows on public pages · Carlos
 
 ## Tracking
@@ -62,7 +62,7 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-21 · Carlos builds the site; "ask the owner" means ask Carlos · Carlos
 - 2026-11-23 · Chalk intro on / and /es at every load; reveals never fade out · owner
 - 2026-11-24 · Signature poses; Family photos; bundle looks = description; /book prop ideas; Cream retired; darkGreen = Sage · owner
-- 2026-11-25 · Reminders list bundle looks; the 24 h one asks for backdrops if none · owner
+- 2026-11-25 · Reminders show looks, ask backdrops; dashboard by month, 1 lead per family · owner
 - 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner

@@ -1,30 +1,41 @@
 import "server-only";
-import { and, asc, count, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, isNull, lt, lte, or, sql, type Column } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb, isMissingTable } from "@/lib/db/client";
-import { bookingDeposits, bookingEmails, bookingRescheduleHistory, bookings, emailEvents, photoExtraOrders } from "@/lib/db/schema";
+import { bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookingRescheduleHistory, bookings, dueDateReservations, emailEvents, photoExtraOrders } from "@/lib/db/schema";
 import { log } from "@/lib/log";
+import { monthOf, unitFor, type DashboardPeriod } from "./dashboard-period";
 import type { Dashboard, DashboardSession } from "./dashboard-types";
-import { summarizeBookings, windowStartKey, type DashboardBookingRow } from "./dashboard-summary";
+import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow } from "./dashboard-summary";
 
-/** Days of email history on the dashboard. */
-export const EMAIL_DAYS = 30;
 /** Today plus the next six days. */
 const UPCOMING_DAYS = 7;
 
 const hhmm = (instant: Date, timeZone: string) =>
   new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(instant);
 
-/** Everything the owner dashboard shows, read fresh from Neon (owner only; never cached). */
-export async function getDashboard(now = new Date()): Promise<Dashboard> {
+/** A table added by a later migration reads as empty until it exists; any other failure is logged and reads as empty. */
+const orNone = <T,>(what: string) => (err: unknown): T[] => {
+  if (!isMissingTable(err)) log.error("dashboard", `Could not load ${what}`, { error: err as Error });
+  return [];
+};
+
+/**
+ * Everything the owner dashboard shows, read fresh from Neon (owner only; never cached): the sessions of the next 7
+ * days and the numbers of `period` (studio dates, this month when none is given).
+ */
+export async function getDashboard(period?: DashboardPeriod, now = new Date()): Promise<Dashboard> {
   const timeZone = bookingRules.timeZone;
   const today = todayInZone(timeZone, now);
-  const since = zonedTimeToUtc(windowStartKey(today), "00:00", timeZone);
-  const emailsSince = new Date(now.getTime() - EMAIL_DAYS * 86_400_000);
+  const p = period ?? monthOf(today);
+  const unit = unitFor(p);
+  const start = zonedTimeToUtc(p.from, "00:00", timeZone);
+  const end = zonedTimeToUtc(addDaysKey(p.to, 1), "00:00", timeZone);
+  const within = (col: Column) => and(gte(col, start), lt(col, end));
   const totalCents = sql<number>`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0)`.mapWith(Number);
   const db = getDb();
-  const [rows, upcoming, [reschedules], emailRows, [problems], [extras]] = await Promise.all([
+  const [rows, upcoming, [reschedules], emailRows, [problems], requests, sessionPaid, depositsKept, dueDeposits, extras] = await Promise.all([
     db
       .select({
         createdAt: bookings.createdAt,
@@ -40,7 +51,7 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
       })
       .from(bookings)
       .leftJoin(bookingDeposits, eq(bookingDeposits.bookingId, bookings.id))
-      .where(or(gte(bookings.createdAt, since), gte(bookings.cancelledAt, since))),
+      .where(or(within(bookings.createdAt), within(bookings.cancelledAt))),
     db
       .select({
         reference: bookings.bookingReference,
@@ -61,17 +72,42 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
         ),
       )
       .orderBy(asc(bookings.sessionStart)),
-    db.select({ n: count() }).from(bookingRescheduleHistory).where(gte(bookingRescheduleHistory.createdAt, since)),
-    db.select({ status: bookingEmails.status, n: count() }).from(bookingEmails).where(gte(bookingEmails.createdAt, emailsSince)).groupBy(bookingEmails.status),
-    db.select({ n: count() }).from(emailEvents).where(gte(emailEvents.occurredAt, emailsSince)),
-    // photo extras paid in the same weeks (none before migration 0045)
+    db.select({ n: count() }).from(bookingRescheduleHistory).where(within(bookingRescheduleHistory.createdAt)),
+    db.select({ status: bookingEmails.status, n: count() }).from(bookingEmails).where(within(bookingEmails.createdAt)).groupBy(bookingEmails.status),
+    db.select({ n: count() }).from(emailEvents).where(within(emailEvents.occurredAt)),
+    // leads: requests from /book and booking links (migration 0037)
     db
-      .select({ n: count(), cents: sql<number>`coalesce(sum(${photoExtraOrders.totalCents}), 0)`.mapWith(Number) })
+      .select({ createdAt: bookingRequests.createdAt, mobile: bookingRequests.mobile, email: bookingRequests.email, status: bookingRequests.status })
+      .from(bookingRequests)
+      .where(within(bookingRequests.createdAt))
+      .catch(orNone<DashboardRequestRow>("requests")),
+    // money in: card payments for sessions, deposits kept, due-date deposits not moved to a booking yet, photo extras
+    db
+      .select({ paidAt: bookingPayments.paidAt, cents: bookingPayments.amountCents })
+      .from(bookingPayments)
+      .where(and(eq(bookingPayments.status, "paid"), within(bookingPayments.paidAt)))
+      .catch(orNone<{ paidAt: Date | null; cents: number }>("card payments")),
+    db
+      .select({ paidAt: bookingDeposits.paidAt, cents: bookingDeposits.amountCents })
+      .from(bookingDeposits)
+      .where(and(eq(bookingDeposits.status, "paid"), within(bookingDeposits.paidAt)))
+      .catch(orNone<{ paidAt: Date | null; cents: number }>("deposits")),
+    db
+      .select({ paidAt: dueDateReservations.depositPaidAt, cents: dueDateReservations.depositCents })
+      .from(dueDateReservations)
+      // once the session is booked, the deposit is the booking's (carryDueDeposit) and counted above
+      .where(and(eq(dueDateReservations.depositStatus, "paid"), isNull(dueDateReservations.bookingId), within(dueDateReservations.depositPaidAt)))
+      .catch(orNone<{ paidAt: Date | null; cents: number }>("due-date deposits")),
+    db
+      .select({ paidAt: photoExtraOrders.paidAt, cents: photoExtraOrders.totalCents })
       .from(photoExtraOrders)
-      .where(and(eq(photoExtraOrders.status, "paid"), gte(photoExtraOrders.paidAt, since)))
-      .catch((err) => (isMissingTable(err) || log.error("dashboard", "Could not load photo extras", { error: err as Error }), [{ n: 0, cents: 0 }])),
+      .where(and(eq(photoExtraOrders.status, "paid"), within(photoExtraOrders.paidAt)))
+      .catch(orNone<{ paidAt: Date | null; cents: number }>("photo extras")),
   ]);
-  const summary = summarizeBookings(rows as DashboardBookingRow[], today, timeZone);
+  const paid = (list: { paidAt: Date | null; cents: number }[], kind: DashboardPaymentRow["kind"]): DashboardPaymentRow[] =>
+    list.flatMap((r) => (r.paidAt ? [{ paidAt: r.paidAt, cents: r.cents, kind }] : []));
+  const payments = [...paid(sessionPaid, "session"), ...paid(depositsKept, "deposit"), ...paid(dueDeposits, "deposit"), ...paid(extras, "extras")];
+  const summary = summarizePeriod({ bookings: rows as DashboardBookingRow[], requests, payments }, p, unit, timeZone);
   const emailsWith = (status: string) => Number(emailRows.find((r) => r.status === status)?.n ?? 0);
   return {
     today,
@@ -85,11 +121,12 @@ export async function getDashboard(now = new Date()): Promise<Dashboard> {
       location: s.location,
       status: s.status as DashboardSession["status"],
     })),
-    weeks: summary.weeks,
+    period: { ...p, unit },
+    totals: summary.totals,
+    buckets: summary.buckets,
     bundles: summary.bundles,
     sources: summary.sources,
     changes: { cancelled: summary.cancelled, depositNotPaid: summary.depositNotPaid, rescheduled: Number(reschedules?.n ?? 0) },
-    extras: { orders: Number(extras?.n ?? 0), revenueCents: Number(extras?.cents ?? 0) },
-    emails: { days: EMAIL_DAYS, sent: emailsWith("sent"), failed: emailsWith("failed"), problems: Number(problems?.n ?? 0) },
+    emails: { sent: emailsWith("sent"), failed: emailsWith("failed"), problems: Number(problems?.n ?? 0) },
   };
 }

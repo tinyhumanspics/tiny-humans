@@ -192,5 +192,5 @@ export interface LeadList {
   /** "Not paid" list only: the "Not born yet" families missing the deposit (counted in counts.not_paid too). */
   notPaidDue?: NotPaidDue[];
   /** Dashboard money numbers ("all" list only; null if the payments table isn't there). */
-  money?: { paidThisMonthCents: number; unpaidCount: number } | null;
+  money?: { unpaidCount: number } | null;
 }

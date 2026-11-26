@@ -39,7 +39,7 @@ test("a deposits-off lead is confirmed and keeps its permanent payment and email
     leads: [noDepositLead],
     counts: { all: 1, pending: 0, confirmed: 1, rescheduled: 0, cancelled: 0, completed: 0, past: 0, not_paid: 0 },
     total: 1,
-    money: { paidThisMonthCents: 0, unpaidCount: 0 },
+    money: { unpaidCount: 0 },
   };
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: list }));
 

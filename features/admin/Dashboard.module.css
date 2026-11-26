@@ -1,4 +1,5 @@
-/* Owner dashboard sections: sessions coming up, bookings by week, shares, changes and emails (chalk look, phone first). */
+/* Owner dashboard sections: sessions coming up, the period (month or dates) with its totals, chart, shares, changes and
+   emails (chalk look, phone first). */
 .block { margin-top: 30px; }
 .insights { display: grid; column-gap: 48px; }
 @media (min-width: 960px) {
@@ -16,6 +17,16 @@
 .sessionWhere { font-size: 0.98rem; color: var(--chalk-muted); overflow-wrap: anywhere; }
 .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; font-size: 0.9rem; color: var(--chalkboard); background: var(--sun-yellow); }
 .more { display: inline-block; margin-top: 10px; min-height: 44px; line-height: 44px; font-family: var(--font-chalk); font-size: 1.2rem; color: var(--cloud-blue); }
+
+/* the period: month arrows, "Pick dates", the totals */
+.periodBar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+.dates { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin: 12px 0 0; max-width: 560px; }
+.dateField { display: grid; gap: 4px; flex: 1 1 140px; }
+.dates > p { flex-basis: 100%; }
+.block .periodStats { margin-top: 12px; }
+@media (min-width: 760px) { .block .periodStats { grid-template-columns: repeat(4, 1fr); } }
+.statSub { font-size: 0.92rem; line-height: 1.25; }
+.loading { opacity: 0.5; }
 
 .toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
 .toggleButton { min-height: 44px; padding: 0 16px; border: 2px dashed color-mix(in srgb, var(--chalk-white) 30%, transparent); border-radius: 999px; background: none; color: var(--chalk-muted); font-family: var(--font-chalk); font-size: 1.1rem; cursor: pointer; }
