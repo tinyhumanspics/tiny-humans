@@ -68,7 +68,7 @@ test("a pricing confirmation deletes only after Delete Permanently", async ({ pa
 });
 
 test("the dashboard opens on this month, steps to other months and picks dates", async ({ page }) => {
-  const day = (start: string, b: Partial<DashboardBucket> = {}): DashboardBucket => ({ start, paidCents: 0, bookedCents: 0, bookings: 0, leads: 0, ...b });
+  const day = (start: string, b: Partial<DashboardBucket> = {}): DashboardBucket => ({ start, paidCents: 0, bookedCents: 0, bookings: 0, leads: 0, shoots: 0, ...b });
   const month = (from: string, days: number, totals: Partial<Dashboard["totals"]>, buckets: Record<string, Partial<DashboardBucket>> = {}): Dashboard => ({
     today: "2026-11-25",
     upcoming: [
@@ -76,7 +76,7 @@ test("the dashboard opens on this month, steps to other months and picks dates",
       { reference: "TH-2", date: "2026-11-26", start: "13:00", end: "15:00", parentName: "Ana Diaz", bundleName: "Our Little Story", location: "10 Ocean Dr, Miami Beach, FL 33139", status: "rescheduled" },
     ],
     period: { from, to: addDaysKey(from, days - 1), unit: days <= 31 ? "day" : "week" },
-    totals: { paidCents: 0, paid: { depositCents: 0, sessionCents: 0, extrasCents: 0, extrasOrders: 0 }, bookedCents: 0, bookings: 0, leads: 0, leadsBooked: 0, leadsWaiting: 0, ...totals },
+    totals: { paidCents: 0, paid: { depositCents: 0, sessionCents: 0, extrasCents: 0, extrasOrders: 0 }, bookedCents: 0, bookings: 0, leads: 0, leadsBooked: 0, leadsWaiting: 0, shoots: 0, shootsCents: 0, toCollectCents: 0, ...totals },
     buckets: Array.from({ length: days <= 31 ? days : Math.ceil(days / 7) }, (_, i) => {
       const start = addDaysKey(from, days <= 31 ? i : 7 * i);
       return day(start, buckets[start]);
@@ -93,12 +93,14 @@ test("the dashboard opens on this month, steps to other months and picks dates",
     { "2026-11-14": { paidCents: 19900, bookings: 2, bookedCents: 49800, leads: 3 } },
   );
   const october = month("2026-10-01", 31, { paidCents: 25000, paid: { depositCents: 5000, sessionCents: 20000, extrasCents: 0, extrasOrders: 0 }, bookedCents: 24900, bookings: 1, leads: 3, leadsBooked: 1, leadsWaiting: 0 });
+  const december = month("2026-12-01", 31, { shoots: 2, shootsCents: 74800, toCollectCents: 64800 }, { "2026-12-05": { shoots: 1 }, "2026-12-12": { shoots: 1 } });
   const asked: string[] = [];
   await page.route("**/api/admin/dashboard*", (route) => {
     const q = new URL(route.request().url()).searchParams;
     asked.push(q.toString());
     if (!q.has("from")) return route.fulfill({ json: november });
     if (q.get("from") === "2026-10-01") return route.fulfill({ json: october });
+    if (q.get("from") === "2026-12-01") return route.fulfill({ json: december });
     return route.fulfill({ json: month(q.get("from")!, 45, { paidCents: 59400, bookings: 5, leads: 12 }) });
   });
   await page.route("**/api/admin/leads?*", (route) => route.fulfill({ json: { leads: [], counts: { all: 4, pending: 0, confirmed: 3, rescheduled: 1, cancelled: 1, completed: 0, past: 0, not_paid: 0 }, total: 4, money: { unpaidCount: 2 } } }));
@@ -115,7 +117,7 @@ test("the dashboard opens on this month, steps to other months and picks dates",
   await expect(numbers.getByText("$796", { exact: true })).toBeVisible();
   await expect(numbers.getByText("4 booked · 2 waiting for you")).toBeVisible();
   await expect(numbers.getByText(/Paid: \$100 deposits · \$199 session payments · \$45 photo extras \(1 order\)/)).toBeVisible();
-  await expect(numbers.getByRole("button", { name: "Next month: December 2026" })).toBeDisabled();
+  await expect(numbers.getByRole("button", { name: "Next month: December 2026" })).toBeEnabled();
   await expect(numbers.getByRole("button", { name: "This month" })).toHaveCount(0);
   expect(asked).toEqual([""]);
 
@@ -151,4 +153,14 @@ test("the dashboard opens on this month, steps to other months and picks dates",
   // and back
   await range.getByRole("button", { name: "This month" }).click();
   await expect(page.getByRole("region", { name: "November 2026" }).getByText("Paid this month", { exact: true })).toBeVisible();
+
+  // a coming month shows the shoots already on the calendar (owner, Nov 25)
+  await page.getByRole("region", { name: "November 2026" }).getByRole("button", { name: "Next month: December 2026" }).click();
+  const decemberNumbers = page.getByRole("region", { name: "December 2026" });
+  await expect(decemberNumbers.getByText("Shoots in December", { exact: true })).toBeVisible();
+  await expect(decemberNumbers.getByText("$648", { exact: true })).toBeVisible();
+  await expect(decemberNumbers.getByText(/Still to come/)).toBeVisible();
+  expect(asked.at(-1)).toBe("from=2026-12-01&to=2026-12-31");
+  await page.getByRole("region", { name: "By day" }).getByRole("button", { name: "Shoots" }).click();
+  await expect(page.getByRole("region", { name: "By day" }).getByText("Shoots on your calendar each day.")).toBeVisible();
 });

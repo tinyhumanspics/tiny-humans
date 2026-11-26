@@ -24,7 +24,7 @@
 .dateField { display: grid; gap: 4px; flex: 1 1 140px; }
 .dates > p { flex-basis: 100%; }
 .block .periodStats { margin-top: 12px; }
-@media (min-width: 760px) { .block .periodStats { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 760px) { .block .periodStats { grid-template-columns: repeat(3, 1fr); } }
 .statSub { font-size: 0.92rem; line-height: 1.25; }
 .loading { opacity: 0.5; }
 

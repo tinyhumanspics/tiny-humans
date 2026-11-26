@@ -22,6 +22,8 @@ export interface DashboardBucket {
   bookedCents: number;
   bookings: number;
   leads: number;
+  /** Shoots on the calendar that day, week or month (by the day of the session). */
+  shoots: number;
 }
 
 export interface DashboardShare {
@@ -41,6 +43,13 @@ export interface DashboardTotals {
   leads: number;
   leadsBooked: number;
   leadsWaiting: number;
+  /**
+   * Shoots on the calendar in the period (by the day of the session, still on; owner, Nov 25: so coming months show
+   * something), their full price, and what's still to collect from them (full price minus deposit and card payment).
+   */
+  shoots: number;
+  shootsCents: number;
+  toCollectCents: number;
 }
 
 export interface Dashboard {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bucketLabel, bucketStarts, monthOf, parsePeriod, periodLabel, shiftMonth, unitFor, weekStartKey } from "@/lib/admin/dashboard-period";
-import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow } from "@/lib/admin/dashboard-summary";
+import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "@/lib/admin/dashboard-summary";
 
 const tz = "America/New_York";
 const row = (r: Partial<DashboardBookingRow>): DashboardBookingRow => ({
@@ -99,6 +99,14 @@ describe("summarizePeriod", () => {
         // paid Oct 31 at 9 pm in Miami: October's
         pay("2026-11-01T01:00:00Z", 5000, "deposit"),
       ],
+      shoots: [
+        // on the calendar Nov 28: $50 deposit kept, the rest still to collect
+        { sessionDate: "2026-11-28", totalCents: 29900, depositCents: 5000, paidInFull: false },
+        // Nov 12, paid in full by card
+        { sessionDate: "2026-11-12", totalCents: 19900, depositCents: 5000, paidInFull: true },
+        // a December shoot: not November's
+        { sessionDate: "2026-12-03", totalCents: 44900, depositCents: 0, paidInFull: false },
+      ],
     },
     november,
     "day",
@@ -124,11 +132,25 @@ describe("summarizePeriod", () => {
   it("puts each number on its day", () => {
     expect(s.buckets).toHaveLength(30);
     const day = (key: string) => s.buckets.find((b) => b.start === key)!;
-    expect(day("2026-11-10")).toEqual({ start: "2026-11-10", paidCents: 0, bookedCents: 0, bookings: 0, leads: 1 });
-    expect(day("2026-11-12")).toEqual({ start: "2026-11-12", paidCents: 5000, bookedCents: 0, bookings: 0, leads: 0 });
-    expect(day("2026-11-13")).toEqual({ start: "2026-11-13", paidCents: 0, bookedCents: 24900, bookings: 1, leads: 0 });
+    expect(day("2026-11-10")).toEqual({ start: "2026-11-10", paidCents: 0, bookedCents: 0, bookings: 0, leads: 1, shoots: 0 });
+    expect(day("2026-11-12")).toEqual({ start: "2026-11-12", paidCents: 5000, bookedCents: 0, bookings: 0, leads: 0, shoots: 1 });
+    expect(day("2026-11-13")).toEqual({ start: "2026-11-13", paidCents: 0, bookedCents: 24900, bookings: 1, leads: 0, shoots: 0 });
+    expect(day("2026-11-28")).toMatchObject({ shoots: 1 });
     expect(day("2026-11-30")).toMatchObject({ bookings: 1, bookedCents: 17900 });
     expect(s.buckets.reduce((n, b) => n + b.paidCents, 0)).toBe(s.totals.paidCents);
+  });
+
+  it("counts the shoots on the calendar and what's still to collect from them (owner, Nov 25)", () => {
+    expect(s.totals.shoots).toBe(2);
+    expect(s.totals.shootsCents).toBe(29900 + 19900);
+    expect(s.totals.toCollectCents).toBe(24900);
+  });
+
+  it("shows a coming month by its shoots, with nothing paid or booked yet", () => {
+    const shoots: DashboardShootRow[] = [{ sessionDate: "2027-01-09", totalCents: 44900, depositCents: 5000, paidInFull: false }];
+    const january = summarizePeriod({ bookings: [], requests: [], payments: [], shoots }, { from: "2027-01-01", to: "2027-01-31" }, "day", tz);
+    expect(january.totals).toMatchObject({ paidCents: 0, bookedCents: 0, leads: 0, shoots: 1, shootsCents: 44900, toCollectCents: 39900 });
+    expect(january.buckets.find((b) => b.start === "2027-01-09")?.shoots).toBe(1);
   });
 
   it("splits the same bookings by bundle and by source", () => {
@@ -145,8 +167,8 @@ describe("summarizePeriod", () => {
   });
 
   it("groups a longer range by week", () => {
-    const fall = summarizePeriod({ bookings: [row({})], requests: [], payments: [pay("2026-11-14T20:00:00Z", 19900, "session")] }, { from: "2026-09-01", to: "2026-11-30" }, "week", tz);
+    const fall = summarizePeriod({ bookings: [row({})], requests: [], payments: [pay("2026-11-14T20:00:00Z", 19900, "session")], shoots: [] }, { from: "2026-09-01", to: "2026-11-30" }, "week", tz);
     expect(fall.buckets[0].start).toBe("2026-08-31");
-    expect(fall.buckets.find((b) => b.start === "2026-11-09")).toEqual({ start: "2026-11-09", paidCents: 19900, bookedCents: 24900, bookings: 1, leads: 0 });
+    expect(fall.buckets.find((b) => b.start === "2026-11-09")).toEqual({ start: "2026-11-09", paidCents: 19900, bookedCents: 24900, bookings: 1, leads: 0, shoots: 0 });
   });
 });

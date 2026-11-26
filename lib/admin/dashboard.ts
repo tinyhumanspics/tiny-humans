@@ -7,7 +7,7 @@ import { bookingDeposits, bookingEmails, bookingPayments, bookingRequests, booki
 import { log } from "@/lib/log";
 import { monthOf, unitFor, type DashboardPeriod } from "./dashboard-period";
 import type { Dashboard, DashboardSession } from "./dashboard-types";
-import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow } from "./dashboard-summary";
+import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "./dashboard-summary";
 
 /** Today plus the next six days. */
 const UPCOMING_DAYS = 7;
@@ -35,7 +35,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
   const within = (col: Column) => and(gte(col, start), lt(col, end));
   const totalCents = sql<number>`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0)`.mapWith(Number);
   const db = getDb();
-  const [rows, upcoming, [reschedules], emailRows, [problems], requests, sessionPaid, depositsKept, dueDeposits, extras] = await Promise.all([
+  const [rows, upcoming, [reschedules], emailRows, [problems], requests, sessionPaid, depositsKept, dueDeposits, extras, shoots] = await Promise.all([
     db
       .select({
         createdAt: bookings.createdAt,
@@ -103,11 +103,24 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
       .from(photoExtraOrders)
       .where(and(eq(photoExtraOrders.status, "paid"), within(photoExtraOrders.paidAt)))
       .catch(orNone<{ paidAt: Date | null; cents: number }>("photo extras")),
+    // shoots on the calendar in the period (any month, coming ones too), with what was paid for them so far
+    db
+      .select({
+        sessionDate: bookings.sessionDate,
+        totalCents,
+        depositCents: sql<number>`coalesce(${bookingDeposits.amountCents}, 0)`.mapWith(Number),
+        paidInFull: sql<boolean>`coalesce(${bookingPayments.status} = 'paid', false)`.mapWith(Boolean),
+      })
+      .from(bookings)
+      .leftJoin(bookingDeposits, and(eq(bookingDeposits.bookingId, bookings.id), eq(bookingDeposits.status, "paid")))
+      .leftJoin(bookingPayments, eq(bookingPayments.bookingId, bookings.id))
+      .where(and(gte(bookings.sessionDate, p.from), lte(bookings.sessionDate, p.to), inArray(bookings.status, ["confirmed", "rescheduled"])))
+      .catch(orNone<DashboardShootRow>("shoots")),
   ]);
   const paid = (list: { paidAt: Date | null; cents: number }[], kind: DashboardPaymentRow["kind"]): DashboardPaymentRow[] =>
     list.flatMap((r) => (r.paidAt ? [{ paidAt: r.paidAt, cents: r.cents, kind }] : []));
   const payments = [...paid(sessionPaid, "session"), ...paid(depositsKept, "deposit"), ...paid(dueDeposits, "deposit"), ...paid(extras, "extras")];
-  const summary = summarizePeriod({ bookings: rows as DashboardBookingRow[], requests, payments }, p, unit, timeZone);
+  const summary = summarizePeriod({ bookings: rows as DashboardBookingRow[], requests, payments, shoots }, p, unit, timeZone);
   const emailsWith = (status: string) => Number(emailRows.find((r) => r.status === status)?.n ?? 0);
   return {
     today,

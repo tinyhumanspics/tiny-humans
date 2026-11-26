@@ -118,7 +118,7 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
             <button type="button" className={admin.smallButton} onClick={() => onPick(prev)} aria-label={`Previous month: ${periodLabel(prev)}`}>
               ‹ {shortDate(prev.from, { month: "short" })}
             </button>
-            <button type="button" className={admin.smallButton} onClick={() => onPick(next)} disabled={next.from > data.today} aria-label={`Next month: ${periodLabel(next)}`}>
+            <button type="button" className={admin.smallButton} onClick={() => onPick(next)} aria-label={`Next month: ${periodLabel(next)}`}>
               {shortDate(next.from, { month: "short" })} ›
             </button>
           </>
@@ -147,7 +147,13 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
         </form>
       )}
       <p className={cn(admin.hintSmall, "chalk-soft")} aria-live="polite">
-        {busy ? "Loading…" : isThisMonth ? `Month so far, through today (${shortDate(data.today, { month: "short", day: "numeric" })}). Miami time.` : "Miami time."}
+        {busy
+          ? "Loading…"
+          : isThisMonth
+            ? `Month so far, through today (${shortDate(data.today, { month: "short", day: "numeric" })}). Miami time.`
+            : data.period.from > data.today
+              ? "Still to come: the shoots already on your calendar. Paid, booked and leads fill in as the days come."
+              : "Miami time."}
       </p>
       {error && <p className={admin.error} role="alert">{error}</p>}
       <div className={cn(admin.stats, styles.periodStats, busy && styles.loading)}>
@@ -155,10 +161,12 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
         {tile(dollars(t.bookedCents), `Booked ${when}`, `Full price of ${plural(t.bookings, "session")} booked`)}
         {tile(String(t.leads), "New leads", t.leads ? `${t.leadsBooked} booked · ${t.leadsWaiting} waiting for you` : "Families who sent a request")}
         {tile(String(t.bookings), "Sessions booked", "Still on (not cancelled)")}
+        {tile(String(t.shoots), `Shoots ${when}`, `On your calendar · ${dollars(t.shootsCents)} full price`)}
+        {tile(dollars(t.toCollectCents), "Still to collect", `From the shoots ${when}, after deposits and payments`)}
       </div>
       <p className={cn(admin.hintSmall, "chalk-soft")}>
         {parts.length ? `Paid: ${parts.join(" · ")}.` : `Nothing paid ${when}.`} New leads: families who sent a request on the website or from your booking link (each family
-        once); booked = they paid the deposit.
+        once); booked = they paid the deposit. Shoots count by the day of the session.
       </p>
     </section>
   );
@@ -166,12 +174,13 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
 
 /* ---------------- the period by day, week or month ---------------- */
 
-type ChartMode = "paid" | "booked" | "leads" | "sessions";
+type ChartMode = "paid" | "booked" | "leads" | "sessions" | "shoots";
 const MODES: { id: ChartMode; label: string; hint: (unit: string) => string }[] = [
   { id: "paid", label: "Paid", hint: (u) => `Money that came in each ${u}.` },
   { id: "booked", label: "Booked", hint: (u) => `Full price of the sessions booked each ${u}.` },
   { id: "leads", label: "Leads", hint: (u) => `New leads each ${u} (each family once).` },
   { id: "sessions", label: "Sessions", hint: (u) => `Sessions booked each ${u}, still on.` },
+  { id: "shoots", label: "Shoots", hint: (u) => `Shoots on your calendar each ${u}.` },
 ];
 const CHART_H = 120;
 /** Rough width of one character of the chalk labels (11 px), to keep labels from overlapping. */
@@ -184,7 +193,8 @@ export function PeriodChart({ data }: { data: Dashboard }) {
   const { buckets, period, today } = data;
   const unit = period.unit;
   const money = mode === "paid" || mode === "booked";
-  const value = (b: DashboardBucket) => (mode === "paid" ? b.paidCents : mode === "booked" ? b.bookedCents : mode === "leads" ? b.leads : b.bookings);
+  const value = (b: DashboardBucket) =>
+    mode === "paid" ? b.paidCents : mode === "booked" ? b.bookedCents : mode === "leads" ? b.leads : mode === "shoots" ? b.shoots : b.bookings;
   const text = (v: number) => (money ? shortDollars(v) : String(v));
   const n = buckets.length;
   const slot = n <= 6 ? 48 : n <= 12 ? 28 : n <= 26 ? 16 : 12;
@@ -235,10 +245,10 @@ export function PeriodChart({ data }: { data: Dashboard }) {
         </svg>
         <figcaption className="visually-hidden">
           <table>
-            <thead><tr><th>{unit === "day" ? "Day" : unit === "week" ? "Week of" : "Month"}</th><th>Paid</th><th>Booked</th><th>Leads</th><th>Sessions</th></tr></thead>
+            <thead><tr><th>{unit === "day" ? "Day" : unit === "week" ? "Week of" : "Month"}</th><th>Paid</th><th>Booked</th><th>Leads</th><th>Sessions</th><th>Shoots</th></tr></thead>
             <tbody>
               {buckets.map((b) => (
-                <tr key={b.start}><td>{unit === "month" ? shortDate(b.start, { month: "long", year: "numeric" }) : formatLongDate(b.start)}</td><td>{dollars(b.paidCents)}</td><td>{dollars(b.bookedCents)}</td><td>{b.leads}</td><td>{b.bookings}</td></tr>
+                <tr key={b.start}><td>{unit === "month" ? shortDate(b.start, { month: "long", year: "numeric" }) : formatLongDate(b.start)}</td><td>{dollars(b.paidCents)}</td><td>{dollars(b.bookedCents)}</td><td>{b.leads}</td><td>{b.bookings}</td><td>{b.shoots}</td></tr>
               ))}
             </tbody>
           </table>
