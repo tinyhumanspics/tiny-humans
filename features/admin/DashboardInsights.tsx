@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { bucketKey, bucketLabel, daysBetween, isWholeMonth, MAX_PERIOD_DAYS, monthOf, periodLabel, shiftMonth, type DashboardPeriod } from "@/lib/admin/dashboard-period";
-import type { Dashboard, DashboardBucket, DashboardSession, DashboardShare } from "@/lib/admin/dashboard-types";
+import type { Dashboard, DashboardBucket, DashboardLeadMonth, DashboardSession, DashboardShare } from "@/lib/admin/dashboard-types";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { roughRectPath } from "@/lib/chalk/rough";
@@ -66,7 +66,16 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 function periodWords(data: Dashboard) {
   const thisMonth = monthOf(data.today);
   const isThisMonth = data.period.from === thisMonth.from && data.period.to === thisMonth.to;
-  return { isThisMonth, whole: isWholeMonth(data.period), when: isThisMonth ? "this month" : isWholeMonth(data.period) ? `in ${monthName(data.period.from, data.today)}` : "in these dates" };
+  const whole = isWholeMonth(data.period);
+  const name = isThisMonth ? "this month" : whole ? monthName(data.period.from, data.today) : "these dates";
+  return {
+    isThisMonth,
+    whole,
+    /** "this month", "December", "these dates" */
+    name,
+    when: isThisMonth ? "this month" : `in ${name}`,
+    during: isThisMonth ? "This month so far" : `During ${name}`,
+  };
 }
 
 /**
@@ -78,7 +87,7 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
   const [from, setFrom] = useState(data.period.from);
   const [to, setTo] = useState(data.period.to);
   const [formError, setFormError] = useState<string | null>(null);
-  const { isThisMonth, whole, when } = periodWords(data);
+  const { isThisMonth, whole, name, when, during } = periodWords(data);
   const prev = shiftMonth(data.period.from, -1);
   const next = shiftMonth(data.period.from, 1);
   const t = data.totals;
@@ -156,19 +165,51 @@ export function PeriodNumbers({ data, busy, error, onPick }: { data: Dashboard; 
               : "Miami time."}
       </p>
       {error && <p className={admin.error} role="alert">{error}</p>}
+      <h3 className={cn(styles.groupTitle, "chalk")}>For {name}</h3>
+      <p className={cn(admin.hintSmall, "chalk-soft")}>The shoots on your calendar then, and the families who asked for a day then, whenever they booked or wrote.</p>
       <div className={cn(admin.stats, styles.periodStats, busy && styles.loading)}>
-        {tile(dollars(t.paidCents), `Paid ${when}`, "Deposits, session payments and photo extras")}
-        {tile(dollars(t.bookedCents), `Booked ${when}`, `Full price of ${plural(t.bookings, "session")} booked`)}
-        {tile(String(t.leads), "New leads", t.leads ? `${t.leadsBooked} booked · ${t.leadsWaiting} waiting for you` : "Families who sent a request")}
-        {tile(String(t.bookings), "Sessions booked", "Still on (not cancelled)")}
-        {tile(String(t.shoots), `Shoots ${when}`, `On your calendar · ${dollars(t.shootsCents)} full price`)}
-        {tile(dollars(t.toCollectCents), "Still to collect", `From the shoots ${when}, after deposits and payments`)}
+        {tile(String(t.shoots), "Shoots", `${dollars(t.shootsCents)} full price`)}
+        {tile(dollars(t.toCollectCents), "Still to collect", "After deposits and payments")}
+        {tile(String(t.leadsFor), `Leads for ${name}`, t.leadsFor ? `${t.leadsForBooked} booked · ${t.leadsForWaiting} waiting for you` : "Families who asked for a day then")}
       </div>
+      <h3 className={cn(styles.groupTitle, "chalk")}>{during}</h3>
+      <p className={cn(admin.hintSmall, "chalk-soft")}>What came in, by the day it happened.</p>
+      <div className={cn(admin.stats, styles.periodStats, busy && styles.loading)}>
+        {tile(dollars(t.paidCents), "Paid", "Deposits, session payments and photo extras")}
+        {tile(String(t.bookings), "Sessions booked", `${dollars(t.bookedCents)} full price, still on`)}
+        {tile(String(t.leads), "New leads", t.leads ? `${t.leadsBooked} booked · ${t.leadsWaiting} waiting for you` : "Families who sent a request")}
+      </div>
+      <p className={cn(admin.hintSmall, "chalk-soft")}>{parts.length ? `Paid: ${parts.join(" · ")}.` : `Nothing paid ${when}.`}</p>
+      {data.leadMonths.length > 0 && <LeadMonths months={data.leadMonths} today={data.today} busy={busy} />}
       <p className={cn(admin.hintSmall, "chalk-soft")}>
-        {parts.length ? `Paid: ${parts.join(" · ")}.` : `Nothing paid ${when}.`} New leads: families who sent a request on the website or from your booking link (each family
-        once); booked = they paid the deposit. Shoots count by the day of the session.
+        New leads: families who sent a request on the website or from your booking link (each family once); booked = they paid the deposit. A
+        &quot;Not born yet&quot; family counts in the month of its due date.
       </p>
     </section>
+  );
+}
+
+/** The period's new leads by the month they asked for (owner, Nov 25: "new leads 5, next month 6"). */
+function LeadMonths({ months, today, busy }: { months: DashboardLeadMonth[]; today: string; busy: boolean }) {
+  const max = Math.max(1, ...months.map((m) => m.leads));
+  return (
+    <div className={cn(styles.leadMonths, busy && styles.loading)}>
+      <h3 className={cn(styles.groupTitle, "chalk")}>The month they want</h3>
+      <p className={cn(admin.hintSmall, "chalk-soft")}>The new leads above, by the month of the day they asked for.</p>
+      <ul className={styles.shares} aria-label="New leads by the month they want">
+        {months.map((m) => (
+          <li key={m.month} className={styles.share}>
+            <span className={cn(styles.shareLabel, "chalk-soft")}>{monthName(`${m.month}-01`, today)}</span>
+            <span className={styles.shareTrack} aria-hidden="true">
+              <span className={cn(styles.shareFill, "chalk-grain")} style={{ width: `${Math.max(6, (m.leads / max) * 100)}%` }} />
+            </span>
+            <span className={cn(styles.shareValue, "chalk-soft")}>
+              {plural(m.leads, "lead")} · {m.booked} booked
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

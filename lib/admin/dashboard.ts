@@ -75,11 +75,17 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
     db.select({ n: count() }).from(bookingRescheduleHistory).where(within(bookingRescheduleHistory.createdAt)),
     db.select({ status: bookingEmails.status, n: count() }).from(bookingEmails).where(within(bookingEmails.createdAt)).groupBy(bookingEmails.status),
     db.select({ n: count() }).from(emailEvents).where(within(emailEvents.occurredAt)),
-    // leads: requests from /book and booking links (migration 0037)
+    // leads: requests from /book and booking links (migration 0037), sent in the period or asking for a day in it
     db
-      .select({ createdAt: bookingRequests.createdAt, mobile: bookingRequests.mobile, email: bookingRequests.email, status: bookingRequests.status })
+      .select({
+        createdAt: bookingRequests.createdAt,
+        wantedDate: sql<string | null>`to_char(coalesce(${bookingRequests.slotDate}, ${bookingRequests.dueDate}), 'YYYY-MM-DD')`,
+        mobile: bookingRequests.mobile,
+        email: bookingRequests.email,
+        status: bookingRequests.status,
+      })
       .from(bookingRequests)
-      .where(within(bookingRequests.createdAt))
+      .where(or(within(bookingRequests.createdAt), and(gte(sql`coalesce(${bookingRequests.slotDate}, ${bookingRequests.dueDate})`, p.from), lte(sql`coalesce(${bookingRequests.slotDate}, ${bookingRequests.dueDate})`, p.to))))
       .catch(orNone<DashboardRequestRow>("requests")),
     // money in: card payments for sessions, deposits kept, due-date deposits not moved to a booking yet, photo extras
     db
@@ -136,6 +142,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
     })),
     period: { ...p, unit },
     totals: summary.totals,
+    leadMonths: summary.leadMonths,
     buckets: summary.buckets,
     bundles: summary.bundles,
     sources: summary.sources,

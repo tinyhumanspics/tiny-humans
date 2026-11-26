@@ -7,15 +7,15 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer;
   bundle looks (0048) on cards + /book; /book prop ideas → notes; Cream retired, darkGreen = Sage Green.
   Nov 25: reminders list bundle looks; the 24 h one asks for backdrops till picked. /admin dashboard opens on
-  this month (any month, Pick dates): paid, booked, leads (1/family), shoots, to collect
-- Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review ≤ 2 lines on phones.
+  this month (any month, dates): For it (shoots, to collect, leads) + During (paid, booked, leads)
+- Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review ≤ 2 lines.
   /es price line: "Traslado gratis hasta 30 millas…" (30 free mi, then $1.50/mi).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
 - Pay link (#22): the $50 first; after paying, the same page asks home + ages (required) + backdrops, each a form;
   saves rebuild the Outlook event. Both reminders ask for home + ages (button to the link) until saved.
   Owner email/text name the new order.
 - Every Lead carries `lead_source` ("website" / "booking_link"): CAPI, Pixel and the CAPI log line.
-- Smooth scrolling only without reduced motion (lib/scroll.ts).
+- Smooth scroll only without reduced motion (lib/scroll.ts).
 
 ## Next
 - Nov 24 (after midnight Miami): on production, ad page, home, /bundles, /book, EN + ES: no "Offer ends", was/now,

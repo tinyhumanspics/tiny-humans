@@ -26,6 +26,11 @@
 .block .periodStats { margin-top: 12px; }
 @media (min-width: 760px) { .block .periodStats { grid-template-columns: repeat(3, 1fr); } }
 .statSub { font-size: 0.92rem; line-height: 1.25; }
+/* "For December" / "During November" / "The month they want" (owner, Nov 25) */
+.groupTitle { margin: 22px 0 0; font-family: var(--font-chalk); font-weight: 400; font-size: 1.3rem; color: var(--sun-yellow); }
+.leadMonths { max-width: 560px; }
+/* phones: the first number of each group gets the whole row, the other two share the next */
+@media (max-width: 759px) { .block .periodStats > :first-child { grid-column: 1 / -1; } }
 .loading { opacity: 0.5; }
 
 .toggle { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }

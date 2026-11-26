@@ -50,6 +50,20 @@ export interface DashboardTotals {
   shoots: number;
   shootsCents: number;
   toCollectCents: number;
+  /**
+   * Leads for the period (owner, Nov 25): families who asked for a day in it (a "Not born yet" family: its due date),
+   * whenever they sent the request; how many booked; how many still wait for the owner.
+   */
+  leadsFor: number;
+  leadsForBooked: number;
+  leadsForWaiting: number;
+}
+
+/** The period's new leads by the month they asked for (YYYY-MM), soonest month first. */
+export interface DashboardLeadMonth {
+  month: string;
+  leads: number;
+  booked: number;
 }
 
 export interface Dashboard {
@@ -59,6 +73,7 @@ export interface Dashboard {
   /** The dates the numbers below cover (owner, Nov 25: this month unless another is picked). */
   period: DashboardPeriod & { unit: BucketUnit };
   totals: DashboardTotals;
+  leadMonths: DashboardLeadMonth[];
   /** The same numbers by day, week or month, oldest first. */
   buckets: DashboardBucket[];
   /** The period's bookings by bundle and by source, most first. */

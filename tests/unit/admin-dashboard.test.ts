@@ -16,7 +16,7 @@ const row = (r: Partial<DashboardBookingRow>): DashboardBookingRow => ({
   depositStatus: null,
   ...r,
 });
-const request = (r: Partial<DashboardRequestRow>): DashboardRequestRow => ({ createdAt: new Date("2026-11-10T15:00:00Z"), mobile: "+13055550142", email: "sofia@example.com", status: "new", ...r });
+const request = (r: Partial<DashboardRequestRow>): DashboardRequestRow => ({ createdAt: new Date("2026-11-10T15:00:00Z"), wantedDate: "2026-11-28", mobile: "+13055550142", email: "sofia@example.com", status: "new", ...r });
 const pay = (at: string, cents: number, kind: DashboardPaymentRow["kind"]): DashboardPaymentRow => ({ paidAt: new Date(at), cents, kind });
 
 describe("dashboard dates (owner, Nov 25: this month by default, other months or any dates)", () => {
@@ -83,14 +83,14 @@ describe("summarizePeriod", () => {
       ],
       requests: [
         // Sofia sent two requests: one lead, booked
-        request({ status: "declined" }),
-        request({ createdAt: new Date("2026-11-12T15:00:00Z"), mobile: "(305) 555-0142", status: "booked" }),
+        request({ status: "declined", wantedDate: "2026-11-20" }),
+        request({ createdAt: new Date("2026-11-12T15:00:00Z"), wantedDate: "2026-12-05", mobile: "(305) 555-0142", status: "booked" }),
         // Ana is waiting for the owner
-        request({ createdAt: new Date("2026-11-20T15:00:00Z"), mobile: "+17865550100", email: "ana@example.com" }),
+        request({ createdAt: new Date("2026-11-20T15:00:00Z"), wantedDate: "2026-12-12", mobile: "+17865550100", email: "ana@example.com" }),
         // Lucia's deposit link is out
         request({ createdAt: new Date("2026-11-21T15:00:00Z"), mobile: "+17865550199", email: "lucia@example.com", status: "confirmed" }),
-        // October's request
-        request({ createdAt: new Date("2026-10-30T15:00:00Z"), mobile: "+17865550111", email: "old@example.com" }),
+        // sent in October, for a day in November
+        request({ createdAt: new Date("2026-10-30T15:00:00Z"), wantedDate: "2026-11-27", mobile: "+17865550111", email: "old@example.com" }),
       ],
       payments: [
         pay("2026-11-12T16:00:00Z", 5000, "deposit"),
@@ -127,6 +127,20 @@ describe("summarizePeriod", () => {
     expect(s.totals.leads).toBe(3);
     expect(s.totals.leadsBooked).toBe(1);
     expect(s.totals.leadsWaiting).toBe(1);
+  });
+
+  it("splits the new leads by the month they want: the booked request's, else the newest (owner, Nov 25)", () => {
+    expect(s.leadMonths).toEqual([
+      { month: "2026-11", leads: 1, booked: 0 },
+      { month: "2026-12", leads: 2, booked: 1 },
+    ]);
+  });
+
+  it("counts the leads for the month: a day asked in it, whenever the request was sent", () => {
+    // Sofia's first request (Nov 20), Lucia (Nov 28) and the October request for Nov 27
+    expect(s.totals.leadsFor).toBe(3);
+    expect(s.totals.leadsForBooked).toBe(0);
+    expect(s.totals.leadsForWaiting).toBe(1);
   });
 
   it("puts each number on its day", () => {
