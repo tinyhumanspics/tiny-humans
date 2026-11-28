@@ -12,9 +12,5 @@ export function spanishOwnerCopyIssues(settings: SiteSettings): string[] {
 
   // (the "Book a memory like this one" boxes are gone since Nov 11, so their wording isn't needed)
 
-  for (const offer of Object.values(settings.seasonalOffers)) {
-    if (offer.enabled && (!offer.spanish?.title.trim() || !offer.spanish.description.trim())) issues.add("Spanish copy for enabled seasonal offers");
-  }
-
   return [...issues];
 }

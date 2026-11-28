@@ -24,7 +24,6 @@ import MediaPanel from "./MediaPanel";
 import PricingPanel from "./PricingPanel";
 import QuotesBooking from "./QuotesBooking";
 import RequestsPanel from "./RequestsPanel";
-import SeasonalPanel from "./SeasonalPanel";
 import AdminMenu from "./AdminMenu";
 import { ADMIN_NAV, type AdminSection } from "./nav";
 import { addPasskey, listPasskeys, passkeySignInAvailable, passkeysSupported, removePasskey, signInWithPasskey, signOutOtherDevices, type PasskeyList } from "@/lib/admin/passkeys-client";
@@ -99,7 +98,7 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
       <AdminMenu section={section} onSignOut={signOut}>
         {!(section === "shoots" && (view === "folder" || view === "day")) && <h1 className={cn(styles.h1, "chalk")}>{current.label}</h1>}
 
-        {!storageReady && (section === "photos" || section === "theme" || section === "seasonal") && (
+        {!storageReady && (section === "photos" || section === "theme") && (
           <p className={cn(styles.bannerError, "chalk-soft")} role="alert">Storage isn&apos;t connected yet, so changes can&apos;t be saved. Connect a Vercel Blob store to this project (see README).</p>
         )}
 
@@ -110,7 +109,6 @@ export default function AdminApp({ section = "dashboard", view, shootKey, date }
         {section === "availability" && <AvailabilityPanel api={api} />}
         {section === "pricing" && <PricingPanel api={api} />}
         {section === "quotes" && <QuotesBooking api={api} />}
-        {section === "seasonal" && <SeasonalPanel settings={settings} onSave={save} />}
         {section === "photos" && <MediaPanel settings={settings} onSave={save} upload={(b) => api.uploadPhoto(b)} />}
         {section === "theme" && <ThemePanel settings={settings} onSave={save} />}
         {section === "settings" && spanishStatus && (

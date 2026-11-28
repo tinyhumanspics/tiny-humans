@@ -4,7 +4,7 @@ import type { SiteSettings } from "@/lib/settings/types";
 
 /**
  * Fills the Spanish side of whatever the owner adds in /admin, at save time (owner, Nov 9): a new photo's title,
- * description and caption, a prompt box, a seasonal offer, a bundle's name, description, small label, offer label
+ * description and caption, a prompt box, a bundle's name, description, small label, offer label
  * and included items. Only EMPTY Spanish fields are filled; anything the owner typed in Spanish is kept as is.
  * `translate` turns English into Spanish (lib/i18n/autotranslate.ts; it copies the English when translation is off).
  * Pure apart from `translate`, so it's unit tested with a fake.
@@ -44,9 +44,9 @@ class Batch {
 const empty = (v: string | null | undefined) => !v?.trim();
 
 /**
- * Settings (photos in every theme and section, prompt boxes, seasonal offers): the Spanish of anything new.
+ * Settings (photos in every theme and section, prompt boxes): the Spanish of anything new.
  * Field limits match lib/settings/defaults.ts parseSettings (Spanish title 60, description 160, caption 40;
- * prompt title 60 / text 120; offer title 90 / description 240).
+ * prompt title 60 / text 120).
  */
 export async function autofillSettingsSpanish(input: SiteSettings, translate: Translate): Promise<{ settings: SiteSettings; filled: number }> {
   const settings: SiteSettings = structuredClone(input);
@@ -73,15 +73,6 @@ export async function autofillSettingsSpanish(input: SiteSettings, translate: Tr
       if (empty(next.title)) batch.add(section.title, (es) => (next.title = fit(es, section.title!, 60)));
       if (empty(next.text)) batch.add(section.text, (es) => (next.text = fit(es, section.text!, 120)));
     }
-  }
-
-  for (const offer of Object.values(settings.seasonalOffers)) {
-    if (!offer.title.trim() || !offer.description.trim()) continue;
-    if (offer.spanish && !empty(offer.spanish.title) && !empty(offer.spanish.description)) continue;
-    const next = { title: offer.spanish?.title ?? "", description: offer.spanish?.description ?? "" };
-    offer.spanish = next;
-    if (empty(next.title)) batch.add(offer.title, (es) => (next.title = fit(es, offer.title, 90)));
-    if (empty(next.description)) batch.add(offer.description, (es) => (next.description = fit(es, offer.description, 240)));
   }
 
   const filled = batch.size;

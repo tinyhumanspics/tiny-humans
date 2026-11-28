@@ -22,7 +22,7 @@ export async function PUT(req: Request) {
   if (input === undefined) return NextResponse.json({ error: "Couldn't read the settings. Please try again." }, { status: 400 });
   try {
     const previous = await readSettingsFresh();
-    // anything new without Spanish (a photo's title/description/caption, a prompt box, a seasonal offer) gets its
+    // anything new without Spanish (a photo's title/description/caption, a prompt box) gets its
     // Spanish filled in now, so the Spanish site never gets stuck on an empty field (owner, Nov 9)
     const { settings: parsed } = await autofillSettingsSpanish(parseSettings(input), toSpanish);
     // The dedicated Spanish endpoint validates readiness before changing this safety-critical switch.

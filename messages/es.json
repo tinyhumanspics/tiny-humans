@@ -196,25 +196,6 @@
     "final": {
       "title": "Solo son así de chiquitos unas semanas.",
       "text": "Elige un horario o una fecha cerca de tu fecha de parto. Te escribimos para confirmar."
-    },
-    "seasonalOffers": {
-      "defaults": {
-        "thanksgiving": {
-          "title": "El primer Día de Acción de Gracias de tu bebé en casa",
-          "description": "Una acogedora sesión en casa para bebés que celebran su primer Día de Acción de Gracias.",
-          "cutoff": "2026-11-23"
-        },
-        "firstChristmas": {
-          "title": "La primera Navidad de tu bebé en casa",
-          "description": "Una acogedora sesión de recuerdo para la primera Navidad de tu bebé.",
-          "cutoff": "2026-12-21"
-        },
-        "valentines": {
-          "title": "Muestra amor a tu pequeño",
-          "description": "Una sesión tierna en casa todo febrero, para tu bebé y sus personas favoritas.",
-          "cutoff": "2027-02-28"
-        }
-      }
     }
   },
   "photoPlaceholder": {

@@ -4,8 +4,8 @@ import { log } from "@/lib/log";
 import { looksLikeCode } from "./spanish-autofill";
 
 /**
- * English → Spanish for the owner's own website words (photo titles and descriptions, bundle copy, prompt boxes,
- * seasonal offers) when a Spanish field was left empty (owner, Nov 9: "just translate it automatically… if I need
+ * English → Spanish for the owner's own website words (photo titles and descriptions, bundle copy, prompt boxes)
+ * when a Spanish field was left empty (owner, Nov 9: "just translate it automatically… if I need
  * to change something specific, I will do it myself").
  *
  * With ANTHROPIC_API_KEY set, one batched request to Claude per save. Without it, or if the request fails or is

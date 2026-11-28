@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 /**
- * Owner only: "Fill in Spanish for me" in Photos / Media and Seasonal Landing (owner, Nov 11: "I have to be
+ * Owner only: "Fill in Spanish for me" in Photos / Media (owner, Nov 11: "I have to be
  * translating myself"). The same translator as the save-time fill-in (lib/i18n/autotranslate.ts): only the owner's
  * own website words are sent, never family data. Without ANTHROPIC_API_KEY it answers `on: false` and the English.
  */
