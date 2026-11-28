@@ -12,6 +12,11 @@ export interface DashboardSession {
   location: string;
   /** "pending" = the time is held while the family pays the deposit. */
   status: "pending" | "confirmed" | "rescheduled";
+  /** For the Call / Text / Email buttons (owner, Nov 28: the same buttons as Leads). */
+  phone: string;
+  email: string;
+  /** The signed photo release, if any ("✓ Signed waiver"); null shows "Waiver signature". */
+  waiver: { id: string; family: boolean } | null;
 }
 
 /** One bar of the chart: a day, a week (from Monday) or a month of the period. */

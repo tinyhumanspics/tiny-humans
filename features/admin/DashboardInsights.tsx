@@ -10,6 +10,7 @@ import { roughRectPath } from "@/lib/chalk/rough";
 import admin from "./Admin.module.css";
 import styles from "./Dashboard.module.css";
 import { cn } from "@/lib/cn";
+import { mapsHref, smsHref, telHref } from "./contact-links";
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
 /** "$1,317.20" ("$249" when there are no cents). */
@@ -44,6 +45,7 @@ export function ComingUp({ data }: { data: Dashboard }) {
                     {s.status !== "confirmed" && <span className={styles.tag}>{s.status === "pending" ? "Waiting for deposit" : "Rescheduled"}</span>}
                   </span>
                   <span className={cn(styles.sessionWhere, "chalk-soft")}>{s.location}</span>
+                  <SessionActions s={s} />
                 </li>
               ))}
             </ul>
@@ -52,6 +54,29 @@ export function ComingUp({ data }: { data: Dashboard }) {
       )}
       <Link href="/admin/leads" className={cn(styles.more, "chalk-soft")}>See all bookings</Link>
     </section>
+  );
+}
+
+/** The buttons a lead card has (owner, Nov 28): call, text, email, directions, the shoot folder and the waiver. */
+function SessionActions({ s }: { s: DashboardSession }) {
+  const first = s.parentName.split(" ")[0];
+  return (
+    <p className={admin.contactActions}>
+      <a className={admin.smallButton} href={telHref(s.phone)} aria-label={`Call ${s.parentName}`}>Call</a>
+      <a className={admin.smallButton} href={smsHref(s.phone, "")} aria-label={`Text ${s.parentName}`}>Text</a>
+      <a className={admin.smallButton} href={`mailto:${s.email}`} aria-label={`Email ${s.parentName}`}>Email</a>
+      <a className={admin.smallButton} href={mapsHref(s.location)} target="_blank" rel="noopener noreferrer" aria-label={`Directions to ${first}'s home (opens Maps)`}>
+        Directions
+      </a>
+      <Link className={admin.smallButton} href={`/admin/shoots/folder/b-${s.reference}`} aria-label={`Open ${first}'s shoot folder`}>Shoot folder</Link>
+      {s.waiver ? (
+        <Link className={cn(admin.smallButton, admin.signedWaiver)} href={`/admin/waiver/signed/${s.waiver.id}`} aria-label={`${first}'s signed waiver`}>
+          ✓ Signed {s.waiver.family ? "family " : ""}waiver
+        </Link>
+      ) : (
+        <Link className={admin.smallButton} href={`/admin/waiver/${encodeURIComponent(s.reference)}`} aria-label={`${first}'s waiver signature`}>Waiver signature</Link>
+      )}
+    </p>
   );
 }
 

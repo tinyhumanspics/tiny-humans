@@ -5,6 +5,7 @@ import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone"
 import { getDb, isMissingTable } from "@/lib/db/client";
 import { bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookingRescheduleHistory, bookings, dueDateReservations, emailEvents, photoExtraOrders } from "@/lib/db/schema";
 import { log } from "@/lib/log";
+import { waiversForBookings } from "@/lib/waiver/server";
 import { monthOf, unitFor, type DashboardPeriod } from "./dashboard-period";
 import type { Dashboard, DashboardSession } from "./dashboard-types";
 import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "./dashboard-summary";
@@ -54,6 +55,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
       .where(or(within(bookings.createdAt), within(bookings.cancelledAt))),
     db
       .select({
+        id: bookings.id,
         reference: bookings.bookingReference,
         date: bookings.sessionDate,
         start: bookings.sessionStart,
@@ -62,6 +64,8 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
         bundleName: bookings.packageName,
         location: bookings.locationAddress,
         status: bookings.status,
+        phone: bookings.phone,
+        email: bookings.email,
       })
       .from(bookings)
       .where(
@@ -126,6 +130,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
   const paid = (list: { paidAt: Date | null; cents: number }[], kind: DashboardPaymentRow["kind"]): DashboardPaymentRow[] =>
     list.flatMap((r) => (r.paidAt ? [{ paidAt: r.paidAt, cents: r.cents, kind }] : []));
   const payments = [...paid(sessionPaid, "session"), ...paid(depositsKept, "deposit"), ...paid(dueDeposits, "deposit"), ...paid(extras, "extras")];
+  const waivers = await waiversForBookings(upcoming.map((s) => s.id));
   const summary = summarizePeriod({ bookings: rows as DashboardBookingRow[], requests, payments, shoots }, p, unit, timeZone);
   const emailsWith = (status: string) => Number(emailRows.find((r) => r.status === status)?.n ?? 0);
   return {
@@ -139,6 +144,9 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
       bundleName: s.bundleName,
       location: s.location,
       status: s.status as DashboardSession["status"],
+      phone: s.phone,
+      email: s.email,
+      waiver: ((w) => (w?.status === "signed" ? { id: w.id, family: w.kind === "family" } : null))(waivers.get(s.id)),
     })),
     period: { ...p, unit },
     totals: summary.totals,

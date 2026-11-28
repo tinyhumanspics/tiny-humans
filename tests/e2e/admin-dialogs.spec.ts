@@ -72,8 +72,8 @@ test("the dashboard opens on this month, steps to other months and picks dates",
   const month = (from: string, days: number, totals: Partial<Dashboard["totals"]>, buckets: Record<string, Partial<DashboardBucket>> = {}, leadMonths: Dashboard["leadMonths"] = []): Dashboard => ({
     today: "2026-11-25",
     upcoming: [
-      { reference: "TH-1", date: "2026-11-25", start: "09:00", end: "10:00", parentName: "Maria Lopez", bundleName: "Little Moments", location: "1500 Bay Rd, Miami Beach, FL 33139", status: "confirmed" },
-      { reference: "TH-2", date: "2026-11-26", start: "13:00", end: "15:00", parentName: "Ana Diaz", bundleName: "Our Little Story", location: "10 Ocean Dr, Miami Beach, FL 33139", status: "rescheduled" },
+      { reference: "TH-1", date: "2026-11-25", start: "09:00", end: "10:00", parentName: "Maria Lopez", bundleName: "Little Moments", location: "1500 Bay Rd, Miami Beach, FL 33139", status: "confirmed", phone: "(305) 555-0142", email: "maria@example.com", waiver: { id: "w-1", family: false } },
+      { reference: "TH-2", date: "2026-11-26", start: "13:00", end: "15:00", parentName: "Ana Diaz", bundleName: "Our Little Story", location: "10 Ocean Dr, Miami Beach, FL 33139", status: "rescheduled", phone: "+13055550199", email: "ana@example.com", waiver: null },
     ],
     period: { from, to: addDaysKey(from, days - 1), unit: days <= 31 ? "day" : "week" },
     totals: { paidCents: 0, paid: { depositCents: 0, sessionCents: 0, extrasCents: 0, extrasOrders: 0 }, bookedCents: 0, bookings: 0, leads: 0, leadsBooked: 0, leadsWaiting: 0, shoots: 0, shootsCents: 0, toCollectCents: 0, leadsFor: 0, leadsForBooked: 0, leadsForWaiting: 0, ...totals },
@@ -114,6 +114,14 @@ test("the dashboard opens on this month, steps to other months and picks dates",
   const comingUp = page.getByRole("region", { name: "Coming up" });
   await expect(comingUp.getByRole("heading", { name: "Today" })).toBeVisible();
   await expect(comingUp.getByText("Rescheduled", { exact: true })).toBeVisible();
+  // the Leads buttons on each session (owner, Nov 28)
+  await expect(comingUp.getByRole("link", { name: "Call Maria Lopez" })).toHaveAttribute("href", "tel:+13055550142");
+  await expect(comingUp.getByRole("link", { name: "Text Ana Diaz" })).toHaveAttribute("href", /^sms:\+13055550199/);
+  await expect(comingUp.getByRole("link", { name: "Email Maria Lopez" })).toHaveAttribute("href", "mailto:maria@example.com");
+  await expect(comingUp.getByRole("link", { name: /Directions to Ana's home/ })).toHaveAttribute("href", /google\.com\/maps.*10%20Ocean%20Dr/);
+  await expect(comingUp.getByRole("link", { name: "Open Maria's shoot folder" })).toHaveAttribute("href", "/admin/shoots/folder/b-TH-1");
+  await expect(comingUp.getByRole("link", { name: "Maria's signed waiver" })).toHaveText("✓ Signed waiver");
+  await expect(comingUp.getByRole("link", { name: "Ana's waiver signature" })).toHaveAttribute("href", "/admin/waiver/TH-2");
 
   // this month first: money, bookings and leads
   const numbers = page.getByRole("region", { name: "November 2026" });

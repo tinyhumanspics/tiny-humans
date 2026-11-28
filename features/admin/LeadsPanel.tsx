@@ -15,7 +15,7 @@ import ChalkButton from "@/components/ui/ChalkButton/ChalkButton";
 import RescheduleFlow from "@/features/booking/RescheduleFlow";
 import DueDatesPanel from "./DueDatesPanel";
 import { DepositReminder, NOT_PAID_INTRO, NotPaidDueList } from "./NotPaid";
-import { smsHref, telHref } from "./contact-links";
+import { mapsHref, smsHref, telHref } from "./contact-links";
 import styles from "./Admin.module.css";
 import { cn } from "@/lib/cn";
 import en from "@/messages/en.json";
@@ -980,7 +980,6 @@ function DepositLinkPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi;
 }
 
 /** Google Maps search link (opens the Maps app on a phone): https://developers.google.com/maps/documentation/urls/get-started */
-const mapsHref = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
 /** Payment: status + the booking's payment link (never expires) to text, copy or email — before or after the session. */
 function PaymentPanel({ lead, api, onUpdated }: { lead: Lead; api: AdminApi; onUpdated: (l: Lead) => void }) {

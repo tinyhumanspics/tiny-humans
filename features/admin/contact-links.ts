@@ -10,3 +10,6 @@ export function smsHref(phone: string, body: string): string {
 }
 
 export const telHref = (phone: string) => `tel:${dialNumber(phone)}`;
+
+/** Google Maps directions search for a home address (opens the Maps app on phones). */
+export const mapsHref = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
