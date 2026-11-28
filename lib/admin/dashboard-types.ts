@@ -71,6 +71,21 @@ export interface DashboardLeadMonth {
   booked: number;
 }
 
+/** A family's email that didn't arrive (Resend: bounced, marked as spam, not sent, failed), for "who was it?" (owner, Nov 26). */
+export interface DashboardEmailProblem {
+  /** When Resend reported it (ISO). */
+  at: string;
+  kind: "bounced" | "complained" | "suppressed" | "failed";
+  email: string;
+  /** Their booking's name, else their request's first name; "Your studio inbox" for your own address; null if unknown. */
+  name: string | null;
+  /** Which email it was ("confirmation email"). */
+  emailName: string;
+  reference: string | null;
+  /** Resend's short reason. */
+  detail: string | null;
+}
+
 export interface Dashboard {
   today: string;
   /** Sessions from today through the next 6 days (not cancelled), soonest first. */
@@ -88,4 +103,6 @@ export interface Dashboard {
   changes: { cancelled: number; depositNotPaid: number; rescheduled: number };
   /** In the period: reminder/after-session emails sent or failed, delivery problems reported by Resend. */
   emails: { sent: number; failed: number; problems: number };
+  /** The period's delivery problems, newest first (up to 20). */
+  emailProblems: DashboardEmailProblem[];
 }

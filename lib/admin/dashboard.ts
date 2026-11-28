@@ -1,14 +1,16 @@
 import "server-only";
-import { and, asc, count, eq, gte, inArray, isNull, lt, lte, or, sql, type Column } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, inArray, isNull, lt, lte, or, sql, type Column } from "drizzle-orm";
 import { bookingRules } from "@/config/booking";
 import { addDaysKey, todayInZone, zonedTimeToUtc } from "@/lib/booking/timezone";
 import { getDb, isMissingTable } from "@/lib/db/client";
 import { bookingDeposits, bookingEmails, bookingPayments, bookingRequests, bookingRescheduleHistory, bookings, dueDateReservations, emailEvents, photoExtraOrders } from "@/lib/db/schema";
+import { emailNameOf } from "@/lib/email/delivery";
+import { emailConfig } from "@/lib/email/resend";
 import { log } from "@/lib/log";
 import { waiversForBookings } from "@/lib/waiver/server";
 import { monthOf, unitFor, type DashboardPeriod } from "./dashboard-period";
-import type { Dashboard, DashboardSession } from "./dashboard-types";
-import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "./dashboard-summary";
+import type { Dashboard, DashboardEmailProblem, DashboardSession } from "./dashboard-types";
+import { problemRows, summarizePeriod, type DashboardBookingRow, type DashboardEmailEventRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "./dashboard-summary";
 
 /** Today plus the next six days. */
 const UPCOMING_DAYS = 7;
@@ -21,6 +23,31 @@ const orNone = <T,>(what: string) => (err: unknown): T[] => {
   if (!isMissingTable(err)) log.error("dashboard", `Could not load ${what}`, { error: err as Error });
   return [];
 };
+
+/** The period's delivery problems (newest 20) with who they were about (owner, Nov 26: "check for who it was"). */
+async function emailProblemsIn(where: ReturnType<typeof and>): Promise<DashboardEmailProblem[]> {
+  const db = getDb();
+  const events: DashboardEmailEventRow[] = await db
+    .select({ occurredAt: emailEvents.occurredAt, type: emailEvents.type, recipient: emailEvents.recipient, bookingReference: emailEvents.bookingReference, category: emailEvents.category, detail: emailEvents.detail })
+    .from(emailEvents)
+    .where(where)
+    .orderBy(desc(emailEvents.occurredAt))
+    .limit(20);
+  if (!events.length) return [];
+  const emails = [...new Set(events.map((e) => e.recipient.trim().toLowerCase()))];
+  const [people, requests] = await Promise.all([
+    db
+      .select({ email: bookings.email, name: bookings.parentName, reference: bookings.bookingReference, createdAt: bookings.createdAt })
+      .from(bookings)
+      .where(inArray(sql`lower(${bookings.email})`, emails)),
+    db
+      .select({ email: bookingRequests.email, firstName: bookingRequests.firstName, createdAt: bookingRequests.createdAt })
+      .from(bookingRequests)
+      .where(inArray(sql`lower(${bookingRequests.email})`, emails))
+      .catch(orNone<{ email: string; firstName: string; createdAt: Date }>("requests for email problems")),
+  ]);
+  return problemRows(events, { bookings: people, requests }, emailConfig().notify, emailNameOf);
+}
 
 /**
  * Everything the owner dashboard shows, read fresh from Neon (owner only; never cached): the sessions of the next 7
@@ -36,7 +63,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
   const within = (col: Column) => and(gte(col, start), lt(col, end));
   const totalCents = sql<number>`coalesce(${bookings.finalPriceCents}, ${bookings.packagePrice} * 100) + coalesce(${bookings.addonsTotalCents}, 0) + coalesce(${bookings.travelFeeCents}, 0)`.mapWith(Number);
   const db = getDb();
-  const [rows, upcoming, [reschedules], emailRows, [problems], requests, sessionPaid, depositsKept, dueDeposits, extras, shoots] = await Promise.all([
+  const [rows, upcoming, [reschedules], emailRows, [problems], requests, sessionPaid, depositsKept, dueDeposits, extras, shoots, emailProblems] = await Promise.all([
     db
       .select({
         createdAt: bookings.createdAt,
@@ -126,6 +153,7 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
       .leftJoin(bookingPayments, eq(bookingPayments.bookingId, bookings.id))
       .where(and(gte(bookings.sessionDate, p.from), lte(bookings.sessionDate, p.to), inArray(bookings.status, ["confirmed", "rescheduled"])))
       .catch(orNone<DashboardShootRow>("shoots")),
+    emailProblemsIn(within(emailEvents.occurredAt)).catch(orNone<DashboardEmailProblem>("email problems")),
   ]);
   const paid = (list: { paidAt: Date | null; cents: number }[], kind: DashboardPaymentRow["kind"]): DashboardPaymentRow[] =>
     list.flatMap((r) => (r.paidAt ? [{ paidAt: r.paidAt, cents: r.cents, kind }] : []));
@@ -156,5 +184,6 @@ export async function getDashboard(period?: DashboardPeriod, now = new Date()): 
     sources: summary.sources,
     changes: { cancelled: summary.cancelled, depositNotPaid: summary.depositNotPaid, rescheduled: Number(reschedules?.n ?? 0) },
     emails: { sent: emailsWith("sent"), failed: emailsWith("failed"), problems: Number(problems?.n ?? 0) },
+    emailProblems,
   };
 }

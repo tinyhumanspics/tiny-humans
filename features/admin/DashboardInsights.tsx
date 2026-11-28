@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { bucketKey, bucketLabel, daysBetween, isWholeMonth, MAX_PERIOD_DAYS, monthOf, periodLabel, shiftMonth, type DashboardPeriod } from "@/lib/admin/dashboard-period";
-import type { Dashboard, DashboardBucket, DashboardLeadMonth, DashboardSession, DashboardShare } from "@/lib/admin/dashboard-types";
+import type { Dashboard, DashboardBucket, DashboardEmailProblem, DashboardLeadMonth, DashboardSession, DashboardShare } from "@/lib/admin/dashboard-types";
 import { addDaysKey } from "@/lib/booking/timezone";
 import { formatLongDate, formatTimeLabel } from "@/lib/booking/dates";
 import { roughRectPath } from "@/lib/chalk/rough";
@@ -374,7 +374,39 @@ export function ChangesAndEmails({ data }: { data: Dashboard }) {
         {tile(data.emails.failed, "Emails that failed", true)}
         {tile(data.emails.problems, "Delivery problems (bounced, spam)", true)}
       </div>
+      {data.emailProblems.length > 0 && <EmailProblems problems={data.emailProblems} />}
     </section>
+  );
+}
+
+const PROBLEM_LABEL: Record<DashboardEmailProblem["kind"], string> = { bounced: "Bounced", complained: "Marked as spam", suppressed: "Not sent (blocked address)", failed: "Failed" };
+const problemWhen = (iso: string) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(iso));
+
+/** Who each delivery problem was about (owner, Nov 26): the tile alone didn't say. */
+function EmailProblems({ problems }: { problems: DashboardEmailProblem[] }) {
+  return (
+    <>
+      <h3 className={cn(styles.groupTitle, "chalk")}>Delivery problems</h3>
+      <p className={cn(admin.hintSmall, "chalk-soft")}>Emails that didn&apos;t reach the family. Text them to check their email address.</p>
+      <ul className={styles.sessions} aria-label="Delivery problems">
+        {problems.map((p) => (
+          <li key={`${p.at}/${p.email}`} className={styles.session}>
+            <span className={cn(styles.sessionTime, "chalk")}>
+              {PROBLEM_LABEL[p.kind]} · {problemWhen(p.at)}
+            </span>
+            <span className={cn(styles.sessionWho, "chalk-soft")}>
+              {p.name ?? "No booking or request with this address"} · {p.email}
+            </span>
+            <span className={cn(styles.sessionWhere, "chalk-soft")}>
+              The {p.emailName}
+              {p.reference ? ` (${p.reference})` : ""}
+              {p.detail ? `: ${p.detail}` : ""}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 

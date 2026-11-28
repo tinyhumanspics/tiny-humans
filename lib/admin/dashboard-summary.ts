@@ -1,7 +1,7 @@
 import { todayInZone } from "@/lib/booking/timezone";
 import { sourceLabel } from "@/lib/tracking/attribution";
 import { bucketKey, bucketStarts, type BucketUnit, type DashboardPeriod } from "./dashboard-period";
-import type { DashboardBucket, DashboardLeadMonth, DashboardShare, DashboardTotals } from "./dashboard-types";
+import type { DashboardBucket, DashboardEmailProblem, DashboardLeadMonth, DashboardShare, DashboardTotals } from "./dashboard-types";
 
 /** A booking as the dashboard counts it (see lib/admin/dashboard.ts for the query). */
 export interface DashboardBookingRow {
@@ -46,6 +46,45 @@ export interface DashboardPaymentRow {
   paidAt: Date;
   cents: number;
   kind: "session" | "deposit" | "extras";
+}
+
+/** A delivery problem as saved from Resend's webhook (email_events). */
+export interface DashboardEmailEventRow {
+  occurredAt: Date;
+  type: string;
+  recipient: string;
+  bookingReference: string | null;
+  category: string | null;
+  detail: string | null;
+}
+
+/**
+ * Who each delivery problem was about: the booking named on the email, else the newest booking with that address, else
+ * the newest request with it; the studio's own address says so. `emailName` names the email from its category tag.
+ */
+export function problemRows(
+  events: DashboardEmailEventRow[],
+  people: { bookings: { email: string; name: string; reference: string; createdAt: Date }[]; requests: { email: string; firstName: string; createdAt: Date }[] },
+  studioEmail: string,
+  emailName: (category: string | null) => string,
+): DashboardEmailProblem[] {
+  const lower = (s: string) => s.trim().toLowerCase();
+  const newest = <T extends { createdAt: Date }>(list: T[]) => [...list].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+  return events.map((e) => {
+    const email = lower(e.recipient);
+    const named = e.bookingReference ? people.bookings.find((b) => b.reference === e.bookingReference && lower(b.email) === email) : undefined;
+    const booking = named ?? newest(people.bookings.filter((b) => lower(b.email) === email));
+    const request = newest(people.requests.filter((r) => lower(r.email) === email));
+    return {
+      at: e.occurredAt.toISOString(),
+      kind: e.type as DashboardEmailProblem["kind"],
+      email,
+      name: email === lower(studioEmail) ? "Your studio inbox" : (booking?.name ?? request?.firstName ?? null),
+      emailName: emailName(e.category),
+      reference: e.bookingReference ?? booking?.reference ?? null,
+      detail: e.detail,
+    };
+  });
 }
 
 const isOn = (r: DashboardBookingRow) => r.status === "confirmed" || r.status === "rescheduled";

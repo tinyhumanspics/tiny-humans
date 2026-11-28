@@ -86,6 +86,9 @@ test("the dashboard opens on this month, steps to other months and picks dates",
     sources: [{ label: "Meta ads", bookings: 3, revenueCents: 54700 }, { label: "Direct", bookings: 1, revenueCents: 24900 }],
     changes: { cancelled: 1, depositNotPaid: 2, rescheduled: 1 },
     emails: { sent: 5, failed: 0, problems: 1 },
+    emailProblems: [
+      { at: "2026-11-24T20:10:00Z", kind: "bounced", email: "sofia@gmial.com", name: "Sofia Martinez", emailName: "confirmation email", reference: "TH-20261124-7386", detail: "Mailbox does not exist" },
+    ],
   });
   const november = month(
     "2026-11-01",
@@ -145,6 +148,11 @@ test("the dashboard opens on this month, steps to other months and picks dates",
   await expect(page.getByRole("region", { name: "Where bookings come from" }).getByText("Meta ads")).toBeVisible();
   await expect(page.getByRole("region", { name: "By bundle" }).getByText("3 · $447")).toBeVisible();
   await expect(page.getByRole("region", { name: "Changes and emails" }).getByText("Deposit not paid (time released)")).toBeVisible();
+  // who the delivery problem was (owner, Nov 26)
+  const problems = page.getByRole("list", { name: "Delivery problems" });
+  await expect(problems.getByText("Bounced · Nov 24, 3:10 PM")).toBeVisible();
+  await expect(problems.getByText("Sofia Martinez · sofia@gmial.com")).toBeVisible();
+  await expect(problems.getByText("The confirmation email (TH-20261124-7386): Mailbox does not exist")).toBeVisible();
   await expect(page.getByText("Sessions not paid yet")).toBeVisible();
 
   // the month before

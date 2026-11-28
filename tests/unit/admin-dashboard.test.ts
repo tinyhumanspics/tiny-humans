@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bucketLabel, bucketStarts, monthOf, parsePeriod, periodLabel, shiftMonth, unitFor, weekStartKey } from "@/lib/admin/dashboard-period";
-import { summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "@/lib/admin/dashboard-summary";
+import { problemRows, summarizePeriod, type DashboardBookingRow, type DashboardPaymentRow, type DashboardRequestRow, type DashboardShootRow } from "@/lib/admin/dashboard-summary";
 
 const tz = "America/New_York";
 const row = (r: Partial<DashboardBookingRow>): DashboardBookingRow => ({
@@ -184,5 +184,37 @@ describe("summarizePeriod", () => {
     const fall = summarizePeriod({ bookings: [row({})], requests: [], payments: [pay("2026-11-14T20:00:00Z", 19900, "session")], shoots: [] }, { from: "2026-09-01", to: "2026-11-30" }, "week", tz);
     expect(fall.buckets[0].start).toBe("2026-08-31");
     expect(fall.buckets.find((b) => b.start === "2026-11-09")).toEqual({ start: "2026-11-09", paidCents: 19900, bookedCents: 24900, bookings: 1, leads: 0, shoots: 0 });
+  });
+});
+
+describe("who each delivery problem was about (owner, Nov 26)", () => {
+  const event = (e: Partial<Parameters<typeof problemRows>[0][number]>) => ({ occurredAt: new Date("2026-11-24T20:10:00Z"), type: "bounced", recipient: "sofia@gmial.com", bookingReference: null, category: "resend_customer", detail: "Mailbox does not exist", ...e });
+  const people = {
+    bookings: [
+      { email: "Sofia@gmial.com", name: "Sofia Martinez", reference: "TH-20261124-7386", createdAt: new Date("2026-11-24T07:05:00Z") },
+      { email: "sofia@gmial.com", name: "Sofia M. (older)", reference: "TH-20260901-1111", createdAt: new Date("2026-09-01T07:05:00Z") },
+    ],
+    requests: [{ email: "ana@example.com", firstName: "Ana", createdAt: new Date("2026-11-20T15:00:00Z") }],
+  };
+  const name = (c: string | null) => (c === "resend_customer" ? "confirmation email" : "email");
+
+  it("names the family from the booking on the email, else their newest booking, else their request", () => {
+    const [tagged, untagged, request, nobody, studio] = problemRows(
+      [
+        event({ bookingReference: "TH-20260901-1111" }),
+        event({}),
+        event({ recipient: "ana@example.com", type: "complained", category: null, detail: null }),
+        event({ recipient: "typo@exmaple.com" }),
+        event({ recipient: "hello@tinyhumans.photography", type: "failed" }),
+      ],
+      people,
+      "Hello@TinyHumans.photography",
+      name,
+    );
+    expect(tagged).toMatchObject({ name: "Sofia M. (older)", reference: "TH-20260901-1111", emailName: "confirmation email", kind: "bounced", at: "2026-11-24T20:10:00.000Z" });
+    expect(untagged).toMatchObject({ name: "Sofia Martinez", reference: "TH-20261124-7386" });
+    expect(request).toMatchObject({ name: "Ana", reference: null, kind: "complained", emailName: "email", detail: null });
+    expect(nobody.name).toBeNull();
+    expect(studio.name).toBe("Your studio inbox");
   });
 });
