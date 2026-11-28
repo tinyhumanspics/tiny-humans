@@ -4,18 +4,19 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 
 ## Live now
 - Site EN + /es. Briefs 01–05 and 05b done. Ads relaunch after OWNER-ACTIONS 7–9.
-- Owner (Nov 23–24): intro on every home load; Shoots: Signature poses, Family photos; no /admin footer;
-  bundle looks (0048) on cards + /book; /book prop ideas → notes; Cream retired, darkGreen = Sage Green.
-  Nov 25: reminders list bundle looks; the 24 h one asks for backdrops till picked. /admin dashboard opens on
-  this month (any month, dates): For it (shoots, to collect, leads) + During (paid, booked, leads)
-- Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, review ≤ 2 lines.
+- Owner (Nov 23–24): intro on each home load; Shoots: Signature poses, Family photos; no /admin footer;
+  bundle looks (0048) on cards + /book; /book prop ideas → notes; Cream retired, darkGreen = Sage.
+  Nov 25: reminders list looks; 24 h one asks for backdrops till picked. /admin dashboard opens on
+  this month: For (shoots, to collect, leads) + During (paid, booked, leads). Nov 28: Coming up
+  lead buttons; email problems list.
+- Ad page /home-sweet-home (+/es): no menu, H1 by `?c=a|b|c`, 200 px photo, 2-line review.
   /es price line: "Traslado gratis hasta 30 millas…" (30 free mi, then $1.50/mi).
 - /book: bundle radio rows, 2-column times, screen 2 a form. Help line: "Best at days 5–14, up to 4 weeks."
 - Pay link (#22): the $50 first; after paying, the same page asks home + ages (required) + backdrops, each a form;
   saves rebuild the Outlook event. Both reminders ask for home + ages (button to the link) until saved.
   Owner email/text name the new order.
 - Every Lead carries `lead_source` ("website" / "booking_link"): CAPI, Pixel and the CAPI log line.
-- Smooth scroll only without reduced motion (lib/scroll.ts).
+- Smooth scroll only without reduced motion.
 
 ## Next
 - Nov 24 (after midnight Miami): on production, ad page, home, /bundles, /book, EN + ES: no "Offer ends", was/now,
@@ -35,7 +36,7 @@ From Nov 21 Carlos builds the site: wherever AGENTS.md or a brief says "ask the 
 - /admin → Photos: "Big top photo"; rename "IMG 7378", "UPDATED 10", "Adrian BTS", "Alondra BTS"; Spanish photo
   names ("manda" → "manta"; accents in "Bebé", "Detrás", "Cálido").
 - Geraldine (Dec 10): her address via her link/Prepare page, or an /admin "Edit address" (owner to pick).
-- Policy words ("your baby sets the pace" in hero subs) → brief 06. /admin Seasonal screen → brief 06.
+- Policy words ("your baby sets the pace" in hero subs) → brief 06. /admin Seasonal: removed Nov 28.
 - plan/OWNER-ACTIONS.md 7–13. Feb 1 → Valentine's theme, back Mar 1. CSP: enforce after reading `csp` logs.
 
 ## Watch out (details: grep docs/archive/CLAUDE-2026-11.md)

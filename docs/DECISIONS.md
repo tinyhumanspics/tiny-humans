@@ -63,6 +63,6 @@ One line per standing decision: `date · decision · source`. Newer lines win. H
 - 2026-11-23 · Chalk intro on / and /es at every load; reveals never fade out · owner
 - 2026-11-24 · Signature poses; Family photos; bundle looks = description; /book prop ideas; Cream retired; darkGreen = Sage · owner
 - 2026-11-25 · Reminders: looks, backdrop ask; dashboard For month (shoot day) + During · owner
-- 2026-11-21 · Seasonal offer boxes are cut from public pages (#26); /admin Seasonal goes in brief 06 · Carlos
+- 2026-11-21 · Seasonal offer boxes cut from public pages (#26); /admin Seasonal removed Nov 28 (owner) · Carlos
 - 2026-11-14 · Confirmed requests book with the ZIP; the rest comes on /backdrop · brief 02
 - 2026-11-14 · "Text me" wording owner-approved (no lawyer); release signed at the session · owner
